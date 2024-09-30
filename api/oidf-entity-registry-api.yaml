@@ -1,0 +1,59 @@
+openapi: 3.0.1
+info:
+  title: OIDF Entity Registry API
+  description: TODO ...
+  version: 1.0.0 - draft
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: https://dummy.com
+    description: Local Development environment (Mock Data)
+tags:
+  - name: lookup
+    description: API functions for finding registered entity data
+  - name: admin
+    description: Administrative API functions for updating the Entity Registry
+paths:
+  /oidf/registry/v1/{subject}:
+    get:
+      tags:
+        - lookup
+        - admin
+      summary: Get entity data based on subject
+      description: TODO
+      operationId: getEntity
+      parameters:
+        - name: subject
+          in: path
+          required: true
+          schema:
+            type: string
+          description: TODO
+      responses:
+        '200':
+          description: Found a PersonID associated to this identity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/entity_type'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    entity_type:
+      description: Representation of entity data (TODO ...)
+      type: object
+      properties:
+        subject:
+          type: string
+          description: Subject name
+      required:
+        - subject

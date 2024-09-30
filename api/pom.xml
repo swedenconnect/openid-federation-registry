@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>se.swedenconnect.oidf</groupId>
+    <artifactId>oidf-entity-registry-parent</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>oidf-entity-registry-api</artifactId>
+  <packaging>jar</packaging>
+  <name>Sweden Connect :: OpenID Federation :: Entity Registry :: API</name>
+  <description>API implementation for Sweden Connect OpenID Federation Entity Registry</description>
+  <url>https://www.swedenconnect.se</url>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-annotations</artifactId>
+      <version>2.2.22</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.openapitools</groupId>
+      <artifactId>jackson-databind-nullable</artifactId>
+      <version>0.2.6</version>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+
+    <plugins>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.build.directory}/generated-sources/openapi/src/main/generated</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.openapitools</groupId>
+        <artifactId>openapi-generator-maven-plugin</artifactId>
+        <version>7.8.0</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${pom.basedir}/oidf-entity-registry-api.yaml</inputSpec>
+              <generatorName>java</generatorName>
+              <generateApis>false</generateApis>
+              <generateModels>true</generateModels>
+              <generateApiTests>false</generateApiTests>
+              <generateModelTests>false</generateModelTests>
+              <generateSupportingFiles>false</generateSupportingFiles>
+              <!--
+              <schemaMappings>
+                operation_id_type=se.digg.solid.data.OperationID,
+                credential_id_type=se.digg.solid.data.CredentialID,
+                person_id_type=se.digg.solid.data.PersonID,
+                jwe_receiver_public_key_type=se.digg.solid.data.jwk.JwkPublicKey,
+                jwk_public_rsa_type=se.digg.solid.data.jwk.JwkRSAPublicKey,
+                jwk_public_ec_type=se.digg.solid.data.jwk.JwkECPublicKey
+              </schemaMappings>
+              -->
+              <configOptions>
+                <useJakartaEe>true</useJakartaEe>
+                <!--
+                <useSpringBoot3>true</useSpringBoot3>
+                -->
+                <modelPackage>se.swedenconnect.oidf.registry.api.model</modelPackage>
+                <packageName>se.swedenconnect.oidf.registry.api</packageName>
+                <generateBuilders>true</generateBuilders>
+                <serializationLibrary>jackson</serializationLibrary>
+                <!--
+                <library>webclient</library>
+                -->
+                <library>apache-httpclient</library> <!-- TODO -->
+                <sourceFolder>src/main/generated</sourceFolder>
+              </configOptions>
+            </configuration>
+          </execution>
+        </executions>
+
+      </plugin>
+
+    </plugins>
+  </build>
+
+
+</project>

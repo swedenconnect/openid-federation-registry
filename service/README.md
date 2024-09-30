@@ -1,8 +1,8 @@
-![Logo](docs/images/sweden-connect.png)
+![Logo](../docs/images/sweden-connect.png)
 
-# Entity Registry for OpenID Federation
+# OIDF Entity Registry Service
 
-Entity Registry for an OpenID Federation Node
+A SpringBoot REST-service implementing the OIDF Entity Registry API
 
 ---
 
@@ -17,6 +17,3 @@ The OIDF Entity Registry is Open Source software released under the [Apache Lice
 -----
 
 Copyright &copy; 2024, [Myndigheten för digital förvaltning - Swedish Agency for Digital Government (DIGG)](http://www.digg.se). Licensed under version 2.0 of the [Apache License](http://www.apache.org/licenses/LICENSE-2.0).
-
-
-
