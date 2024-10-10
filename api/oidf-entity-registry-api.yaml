@@ -1,42 +1,17 @@
-openapi: 3.0.1
+openapi: 3.0.0
 info:
-  title: OIDF Entity Registry API
-  description: TODO ...
-  version: 1.0.0 - draft
+  title: Entity Management API
+  description: API for managing entities with configuration details
+  version: 0.0.1
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
 servers:
-  - url: https://dummy.com
-    description: Local Development environment (Mock Data)
-tags:
-  - name: lookup
-    description: API functions for finding registered entity data
-  - name: admin
-    description: Administrative API functions for updating the Entity Registry
-paths:
-  /oidf/registry/v1/{subject}:
-    get:
-      tags:
-        - lookup
-        - admin
-      summary: Get entity data based on subject
-      description: TODO
-      operationId: getEntity
-      parameters:
-        - name: subject
-          in: path
-          required: true
-          schema:
-            type: string
-          description: TODO
-      responses:
-        '200':
-          description: Found a PersonID associated to this identity
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/entity_type'
+  - url: https://api.example.com/oidf
+    description: Registry API server
+
+security:
+  - bearerAuth: []
 
 components:
 
@@ -48,12 +23,149 @@ components:
 
   schemas:
 
-    entity_type:
-      description: Representation of entity data (TODO ...)
+    Entity:
       type: object
       properties:
         subject:
           type: string
-          description: Subject name
-      required:
-        - subject
+          description: The Entity Identifier of the subject
+        jwk:
+          type: array
+          items:
+            $ref: '#/components/schemas/JWKSource'
+          description: An array of JWK sources to validate Entity Configuration if the entity is not hosted
+        location:
+          type: string
+          description: The location URL of Entity Configuration for this entity if not Hosted
+        policy:
+          type: string
+          description: The file name of a policy if applicable
+        hosted:
+          $ref: '#/components/schemas/hosted'
+          description: Hosted entity information if the entity has hosted metadata
+        intermediate:
+          type: boolean
+          description: true if the entity is an intermediate entity
+    JWKSource:
+      type: object
+      properties:
+        kid:
+          type: string
+          description: The kid of the key if the source is a certificate file
+        cert-location:
+          type: string
+          description: The location of a certificate file
+        base64jwk:
+          type: string
+          description: Base64 encoded JWK json string as alternative to kid and cert-location
+    hosted:
+      type: object
+      properties:
+        metadata:
+          type: string
+          description: The name of the metadata file
+        trust-marks:
+          type: array
+          items:
+            $ref: '#/components/schemas/trustMarkSource'
+          description: An array of Trust Marks granted to the subject
+    trustMarkSource:
+      type: object
+      properties:
+        trust-mark-id:
+          type: string
+          description: The ID of the Trust Mark
+        issuer:
+          type: string
+          description: The Entity Identifier of the Trust Mark issuer
+
+paths:
+  /registry/v1:
+    post:
+      summary: Create a new entity
+      tags:
+        - entities
+      requestBody:
+        description: Entity to be created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Entity'
+      responses:
+        '201':
+          description: Entity created successfully
+    get:
+      summary: Get all entities
+      tags:
+        - entities
+      responses:
+        '200':
+          description: A list of entities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Entity'
+
+  /registry/v1/{entityId}:
+    get:
+      summary: Get a specific entity by ID
+      tags:
+        - entities
+      parameters:
+        - name: entityId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The ID of the entity to retrieve
+      responses:
+        '200':
+          description: Entity details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity'
+        '404':
+          description: Entity not found
+    put:
+      summary: Update a specific entity by ID
+      tags:
+        - entities
+      parameters:
+        - name: entityId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The ID of the entity to update
+      requestBody:
+        description: Entity data to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Entity'
+      responses:
+        '200':
+          description: Entity updated successfully
+        '404':
+          description: Entity not found
+    delete:
+      summary: Delete a specific entity by ID
+      tags:
+        - entities
+      parameters:
+        - name: entityId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The ID of the entity to delete
+      responses:
+        '204':
+          description: Entity deleted successfully
+        '404':
+          description: Entity not found
