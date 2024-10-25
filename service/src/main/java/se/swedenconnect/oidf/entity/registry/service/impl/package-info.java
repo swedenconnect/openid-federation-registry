@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 /**
- * OIDF Entity Registry API.
+ * Service implementation classes.
  *
- * @author Martin Lindström
+ * @author David Goldring
  */
-package se.swedenconnect.oidf.entity.api;
+package se.swedenconnect.oidf.entity.registry.service.impl;

@@ -23,7 +23,7 @@ components:
 
   schemas:
 
-    Entity:
+    entity:
       type: object
       properties:
         subject:
@@ -32,7 +32,7 @@ components:
         jwk:
           type: array
           items:
-            $ref: '#/components/schemas/JWKSource'
+            $ref: '#/components/schemas/jwk-source'
           description: An array of JWK sources to validate Entity Configuration if the entity is not hosted
         location:
           type: string
@@ -42,11 +42,10 @@ components:
           description: The file name of a policy if applicable
         hosted:
           $ref: '#/components/schemas/hosted'
-          description: Hosted entity information if the entity has hosted metadata
         intermediate:
           type: boolean
           description: true if the entity is an intermediate entity
-    JWKSource:
+    jwk-source:
       type: object
       properties:
         kid:
@@ -60,6 +59,7 @@ components:
           description: Base64 encoded JWK json string as alternative to kid and cert-location
     hosted:
       type: object
+      description: Hosted entity information if the entity has hosted metadata
       properties:
         metadata:
           type: string
@@ -67,9 +67,9 @@ components:
         trust-marks:
           type: array
           items:
-            $ref: '#/components/schemas/trustMarkSource'
+            $ref: '#/components/schemas/trust-mark-source'
           description: An array of Trust Marks granted to the subject
-    trustMarkSource:
+    trust-mark-source:
       type: object
       properties:
         trust-mark-id:
@@ -91,7 +91,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Entity'
+              $ref: '#/components/schemas/entity'
       responses:
         '201':
           description: Entity created successfully
@@ -107,7 +107,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Entity'
+                  $ref: '#/components/schemas/entity'
 
   /registry/v1/{entityId}:
     get:
@@ -127,7 +127,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Entity'
+                $ref: '#/components/schemas/entity'
         '404':
           description: Entity not found
     put:
@@ -147,7 +147,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Entity'
+              $ref: '#/components/schemas/entity'
       responses:
         '200':
           description: Entity updated successfully

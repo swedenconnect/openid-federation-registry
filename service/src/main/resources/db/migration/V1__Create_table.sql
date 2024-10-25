@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Sweden Connect
+ * Copyright 2024 Sweden Connect.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
- * OIDF Entity Registry API.
- *
- * @author Martin Lindström
- */
-package se.swedenconnect.oidf.entity.api;
+CREATE TABLE if not exists entities(
+   id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
+   subject VARCHAR(255) NOT NULL UNIQUE,
+   entity JSON
+);
+ALTER TABLE entities ADD UNIQUE (subject);

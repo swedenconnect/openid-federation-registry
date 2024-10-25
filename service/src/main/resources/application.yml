@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: EntityRegistryService
+
+  threads:
+    virtual:
+      enabled: true
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  docker:
+    compose:
+      enabled: true
+
+logging:
+  level:
+    se:
+      swedenconnect:
+        oidf: debug

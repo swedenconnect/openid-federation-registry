@@ -1,0 +1,32 @@
+# Docker compose file managed by Spring Boot for
+# setting up needed containers during development.
+services:
+  db:
+    image: mariadb:11.2
+    container_name: maria_db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test
+    ports:
+      - "3306:3306"
+    networks:
+      - app-network
+
+#  app:
+#    image: ghcr.io/swedenconnect/oidf-entity-registry
+#    depends_on:
+#      - db
+#    ports:
+#      - "8080:8080"
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:mariadb://db:3306/testdb
+#      SPRING_DATASOURCE_USERNAME: test
+#      SPRING_DATASOURCE_PASSWORD: test
+#    networks:
+#      - app-network
+
+networks:
+  app-network:
+    driver: bridge

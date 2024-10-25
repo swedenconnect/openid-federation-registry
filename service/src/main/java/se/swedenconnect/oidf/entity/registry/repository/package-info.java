@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 /**
- * OIDF Entity Registry API.
+ * Repository interfaces.
  *
- * @author Martin Lindström
+ * @author David Goldring
  */
-package se.swedenconnect.oidf.entity.api;
+package se.swedenconnect.oidf.entity.registry.repository;
