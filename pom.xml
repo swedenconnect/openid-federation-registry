@@ -79,6 +79,7 @@
     <nimbus-jose-jwt.version>9.41.1</nimbus-jose-jwt.version>
     <jackson.version>2.18.0</jackson.version>
     <slf4j.version>2.0.13</slf4j.version>
+    <spring-boot.version>3.3.4</spring-boot.version>
   </properties>
 
   <repositories>
@@ -108,6 +109,14 @@
   <dependencyManagement>
 
     <dependencies>
+
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring-boot.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
 
       <dependency>
         <groupId>jakarta.servlet</groupId>
@@ -174,6 +183,15 @@
         <artifactId>jackson-annotations</artifactId>
         <version>${jackson.version}</version>
       </dependency>
+
+      <!-- Checker Framework -->
+      <dependency>
+        <groupId>org.checkerframework</groupId>
+        <artifactId>checker-qual</artifactId>
+        <version>3.37.0</version>
+        <scope>compile</scope>
+      </dependency>
+
 
     </dependencies>
 
@@ -496,5 +514,6 @@
         </plugins>
       </build>
     </profile>
+
   </profiles>
 </project>

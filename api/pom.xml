@@ -89,6 +89,7 @@
                 <useSpringBoot3>true</useSpringBoot3>
                 -->
                 <modelPackage>se.swedenconnect.oidf.registry.api.model</modelPackage>
+                <serializableModel>true</serializableModel>
                 <packageName>se.swedenconnect.oidf.registry.api</packageName>
                 <generateBuilders>true</generateBuilders>
                 <serializationLibrary>jackson</serializationLibrary>
@@ -105,6 +106,21 @@
       </plugin>
 
     </plugins>
+
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+
+    <testResources>
+      <testResource>
+        <directory>src/test/resources</directory>
+        <filtering>true</filtering>
+      </testResource>
+    </testResources>
+
   </build>
 
 

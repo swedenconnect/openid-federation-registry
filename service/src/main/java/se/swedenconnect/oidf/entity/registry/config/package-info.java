@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Sweden Connect
+ * Copyright 2024 Sweden Connect.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 /**
- * OIDF Entity Registry API.
+ * Package for configuration classes.
  *
- * @author Martin Lindström
+ * @author David Goldring
  */
-package se.swedenconnect.oidf.entity.api;
+package se.swedenconnect.oidf.entity.registry.config;
