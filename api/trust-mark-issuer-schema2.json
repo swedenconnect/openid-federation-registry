@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "trust-mark-issuer": {
+      "type": "object",
+      "properties": {
+        "issuer-entity-id": {
+          "type": "string",
+          "format": "uri"
+        },
+        "trust-mark-validity-duration": {
+          "type": "string",
+          "pattern": "^PT\\d+M$"
+        },
+        "sign-key": {
+          "type": "string"
+        },
+        "trust-marks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "trust-mark-id": {
+                "type": "string",
+                "format": "uri"
+              },
+              "logo-uri": {
+                "type": "string",
+                "format": "uri"
+              },
+              "ref-uri": {
+                "type": "string",
+                "format": "uri"
+              },
+              "subjects": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "sub": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "granted": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "expires": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "revoked": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["sub", "granted", "expires", "revoked"]
+                }
+              }
+            },
+            "required": ["trust-mark-id", "logo-uri", "ref-uri", "subjects"]
+          }
+        }
+      },
+      "required": ["issuer-entity-id", "trust-mark-validity-duration", "sign-key", "trust-marks"]
+    }
+  },
+  "required": ["trust-mark-issuer"]
+}

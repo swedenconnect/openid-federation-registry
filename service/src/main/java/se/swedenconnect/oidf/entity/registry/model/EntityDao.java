@@ -27,6 +27,7 @@ public class EntityDao {
   @GeneratedValue(strategy = GenerationType.AUTO)
   private long id;
 
+  @Column(unique = true)
   private String subject;
 
   @Column(columnDefinition = "TEXT")
