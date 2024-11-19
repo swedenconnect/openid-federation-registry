@@ -25,9 +25,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 
 import se.swedenconnect.oidf.entity.registry.repository.EntityRepository;
+import se.swedenconnect.oidf.entity.registry.repository.PolicyRepository;
 import se.swedenconnect.oidf.entity.registry.service.EntityService;
+import se.swedenconnect.oidf.entity.registry.service.PolicyService;
 import se.swedenconnect.oidf.entity.registry.service.impl.FileEntityService;
 import se.swedenconnect.oidf.entity.registry.service.impl.JpaEntityService;
+import se.swedenconnect.oidf.entity.registry.service.impl.JpaPolicyService;
 
 /**
  * ServiceConfigTest is a test class for the ServiceConfig Spring configuration class.
@@ -40,6 +43,7 @@ import se.swedenconnect.oidf.entity.registry.service.impl.JpaEntityService;
 public class ServiceConfigTest {
 
   private EntityRepository entityRepository;
+  private PolicyRepository policyRepository;
   private ServiceConfig serviceConfig;
   private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -51,7 +55,8 @@ public class ServiceConfigTest {
   @BeforeEach
   public void setUp() {
     entityRepository = mock(EntityRepository.class);
-    serviceConfig = new ServiceConfig(entityRepository);
+    policyRepository = mock(PolicyRepository.class);
+    serviceConfig = new ServiceConfig(entityRepository, policyRepository);
   }
 
   /**
@@ -80,5 +85,20 @@ public class ServiceConfigTest {
     assertThat(jpaService).isNotNull();
     assertThat(jpaService).isInstanceOf(JpaEntityService.class);
     assertSame(entityRepository, ((JpaEntityService) jpaService).getRepository());
+  }
+
+  /**
+   * Tests the jpaPolicyService bean provided by the ServiceConfig.
+   * <p>
+   * The test verifies that the jpaPolicyService bean is not null, confirms
+   * that it is an instance of the JpaPolicyService class, and
+   * asserts that the JpaPolicyService is configured with the correct repository.
+   */
+  @Test
+  public void testJpaPolicyServiceBean() {
+    PolicyService policyService = serviceConfig.jpaPolicyService(this.objectMapper);
+    assertThat(policyService).isNotNull();
+    assertThat(policyService).isInstanceOf(JpaPolicyService.class);
+    assertSame(policyRepository, ((JpaPolicyService) policyService).getPolicyRepository());
   }
 }

@@ -21,9 +21,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import se.swedenconnect.oidf.entity.registry.repository.EntityRepository;
+import se.swedenconnect.oidf.entity.registry.repository.PolicyRepository;
 import se.swedenconnect.oidf.entity.registry.service.EntityService;
+import se.swedenconnect.oidf.entity.registry.service.PolicyService;
 import se.swedenconnect.oidf.entity.registry.service.impl.FileEntityService;
 import se.swedenconnect.oidf.entity.registry.service.impl.JpaEntityService;
+import se.swedenconnect.oidf.entity.registry.service.impl.JpaPolicyService;
 
 /**
  * A Spring configuration class that defines beans for different implementations of the EntityService interface.
@@ -34,14 +37,17 @@ import se.swedenconnect.oidf.entity.registry.service.impl.JpaEntityService;
 public class ServiceConfig {
 
   private final EntityRepository entityRepository;
+  private final PolicyRepository policyRepository;
 
   /**
-   * Constructs a new ServiceConfig with the specified EntityRepository.
+   * Constructs a new ServiceConfig with the specified repositories.
    *
-   * @param entityRepository the repository used by the JpaEntityService for CRUD operations.
+   * @param entityRepository the {@link EntityRepository} used for accessing and performing CRUD operations on entities
+   * @param policyRepository the {@link PolicyRepository} used for accessing and performing CRUD operations on policies
    */
-  public ServiceConfig(final EntityRepository entityRepository) {
+  public ServiceConfig(final EntityRepository entityRepository, final PolicyRepository policyRepository) {
     this.entityRepository = entityRepository;
+    this.policyRepository = policyRepository;
   }
 
   /**
@@ -70,4 +76,19 @@ public class ServiceConfig {
   public EntityService jpaEntityService(final ObjectMapper objectMapper) {
     return new JpaEntityService(this.entityRepository, objectMapper);
   }
+
+  /**
+   * Provides an instance of JpaPolicyService, which implements the PolicyService interface.
+   * This service manages policy objects using a JPA repository and handles JSON conversion
+   * using the provided ObjectMapper.
+   *
+   * @param objectMapper the ObjectMapper used for JSON conversion between Policy objects and their DAO representations.
+   * @return an instance of JpaPolicyService.
+   */
+  @Bean
+  @Qualifier("jpaPolicyService")
+  public PolicyService jpaPolicyService(final ObjectMapper objectMapper) {
+    return new JpaPolicyService(this.policyRepository, objectMapper);
+  }
+
 }

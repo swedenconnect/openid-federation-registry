@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-CREATE TABLE if not exists entities(
-   id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
-   subject VARCHAR(255) NOT NULL UNIQUE,
-   entity JSON
-);
-ALTER TABLE entities ADD UNIQUE (subject);
+package se.swedenconnect.oidf.entity.registry.service;
 
-CREATE TABLE IF NOT EXISTS policies (
-   id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
-   name VARCHAR(255) NOT NULL UNIQUE,
-   policy JSON
-);
-ALTER TABLE policies ADD UNIQUE (name);
+import se.swedenconnect.oidf.entity.registry.controller.PolicyDto;
+
+/**
+ * PolicyService is an interface that extends the CrudService interface and provides
+ * CRUD operations specifically for managing JSON Policy objects.
+ *
+ * @author David Goldring
+ */
+public interface PolicyService extends CrudService<PolicyDto, String> {
+}

@@ -13,16 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-CREATE TABLE if not exists entities(
-   id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
-   subject VARCHAR(255) NOT NULL UNIQUE,
-   entity JSON
-);
-ALTER TABLE entities ADD UNIQUE (subject);
+package se.swedenconnect.oidf.entity.registry.controller;
 
-CREATE TABLE IF NOT EXISTS policies (
-   id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
-   name VARCHAR(255) NOT NULL UNIQUE,
-   policy JSON
-);
-ALTER TABLE policies ADD UNIQUE (name);
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+/**
+ * Data Transfer Object (DTO) for representing a policy.
+ * <p>
+ * This record encapsulates the information about a policy which includes
+ * the policy's name and the policy content itself.
+ *
+ * @author David Goldring
+ */
+public record PolicyDto(
+    @JsonProperty("name")
+    String name,
+    @JsonProperty("policy")
+    String policy
+) {}
