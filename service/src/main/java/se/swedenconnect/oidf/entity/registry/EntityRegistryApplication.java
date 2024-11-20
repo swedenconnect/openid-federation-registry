@@ -17,6 +17,7 @@ package se.swedenconnect.oidf.entity.registry;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 /**
  * Main application class for the Entity Registry Application.
@@ -24,6 +25,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @author David Goldring
  */
 @SpringBootApplication
+@ConfigurationPropertiesScan
 public class EntityRegistryApplication {
 
 	/**

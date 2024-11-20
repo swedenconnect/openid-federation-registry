@@ -43,6 +43,9 @@ public class EntityEntity {
   private long id;
 
   @Column(unique = true)
+  private String issuer;
+
+  @Column(unique = true)
   private String subject;
 
   @Column(columnDefinition = "TEXT")

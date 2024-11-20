@@ -55,6 +55,7 @@ public class JpaEntityService implements EntityService {
   public Entity create(final Entity entity) {
     final var dao = new EntityEntity();
     try {
+      dao.setIssuer(entity.getIssuer());
       dao.setSubject(entity.getSubject());
       dao.setEntity(this.objectMapper.writeValueAsString(entity));
       this.repository.save(dao);

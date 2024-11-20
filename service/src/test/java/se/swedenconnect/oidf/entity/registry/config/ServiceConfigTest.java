@@ -30,6 +30,7 @@ import se.swedenconnect.oidf.entity.registry.entity.EntityService;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyService;
 import se.swedenconnect.oidf.entity.registry.entity.JpaEntityService;
 import se.swedenconnect.oidf.entity.registry.policy.JpaPolicyService;
+import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectRepository;
 
 /**
  * ServiceConfigTest is a test class for the ServiceConfig Spring configuration class.
@@ -43,6 +44,7 @@ public class ServiceConfigTest {
 
   private EntityRepository entityRepository;
   private PolicyRepository policyRepository;
+  private TrustMarkSubjectRepository trustMarkSubjectRepository;
   private ServiceConfig serviceConfig;
   private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -55,7 +57,8 @@ public class ServiceConfigTest {
   public void setUp() {
     entityRepository = mock(EntityRepository.class);
     policyRepository = mock(PolicyRepository.class);
-    serviceConfig = new ServiceConfig(entityRepository, policyRepository);
+    trustMarkSubjectRepository = mock(TrustMarkSubjectRepository.class);
+    serviceConfig = new ServiceConfig(entityRepository, policyRepository,trustMarkSubjectRepository);
   }
 
   /**

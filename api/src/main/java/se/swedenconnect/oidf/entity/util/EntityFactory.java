@@ -127,6 +127,7 @@ public class EntityFactory {
     public static Entity createEntityWithJwkSource(final String subject, final List<JwkSource> jwk, final String location, final String policy, final boolean intermediate) {
         final Entity entity = new Entity();
 
+        entity.setIssuer("http://tmi.digg.se");
         entity.setSubject(subject);
         entity.setJwk(jwk);
         entity.setLocation(location);

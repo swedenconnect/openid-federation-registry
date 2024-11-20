@@ -35,6 +35,9 @@ components:
     entity:
       type: object
       properties:
+        issuer:
+          type: string
+          description: The issuer for this entity
         subject:
           type: string
           description: The Entity Identifier of the subject
