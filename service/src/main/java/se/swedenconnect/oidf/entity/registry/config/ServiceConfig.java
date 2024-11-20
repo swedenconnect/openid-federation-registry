@@ -20,13 +20,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import se.swedenconnect.oidf.entity.registry.repository.EntityRepository;
-import se.swedenconnect.oidf.entity.registry.repository.PolicyRepository;
-import se.swedenconnect.oidf.entity.registry.service.EntityService;
-import se.swedenconnect.oidf.entity.registry.service.PolicyService;
-import se.swedenconnect.oidf.entity.registry.service.impl.FileEntityService;
-import se.swedenconnect.oidf.entity.registry.service.impl.JpaEntityService;
-import se.swedenconnect.oidf.entity.registry.service.impl.JpaPolicyService;
+import se.swedenconnect.oidf.entity.registry.entity.EntityRepository;
+import se.swedenconnect.oidf.entity.registry.policy.PolicyRepository;
+import se.swedenconnect.oidf.entity.registry.entity.EntityService;
+import se.swedenconnect.oidf.entity.registry.policy.PolicyService;
+import se.swedenconnect.oidf.entity.registry.entity.JpaEntityService;
+import se.swedenconnect.oidf.entity.registry.policy.JpaPolicyService;
 
 /**
  * A Spring configuration class that defines beans for different implementations of the EntityService interface.
@@ -48,18 +47,6 @@ public class ServiceConfig {
   public ServiceConfig(final EntityRepository entityRepository, final PolicyRepository policyRepository) {
     this.entityRepository = entityRepository;
     this.policyRepository = policyRepository;
-  }
-
-  /**
-   * Provides an instance of FileEntityService, which implements the EntityService interface.
-   * This service manages entity objects using a file-based storage mechanism.
-   *
-   * @return an instance of FileEntityService.
-   */
-  @Bean
-  @Qualifier("fileEntityService")
-  public EntityService fileEntityService() {
-    return new FileEntityService();
   }
 
   /**
