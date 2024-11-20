@@ -24,13 +24,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 
-import se.swedenconnect.oidf.entity.registry.repository.EntityRepository;
-import se.swedenconnect.oidf.entity.registry.repository.PolicyRepository;
-import se.swedenconnect.oidf.entity.registry.service.EntityService;
-import se.swedenconnect.oidf.entity.registry.service.PolicyService;
-import se.swedenconnect.oidf.entity.registry.service.impl.FileEntityService;
-import se.swedenconnect.oidf.entity.registry.service.impl.JpaEntityService;
-import se.swedenconnect.oidf.entity.registry.service.impl.JpaPolicyService;
+import se.swedenconnect.oidf.entity.registry.entity.EntityRepository;
+import se.swedenconnect.oidf.entity.registry.policy.PolicyRepository;
+import se.swedenconnect.oidf.entity.registry.entity.EntityService;
+import se.swedenconnect.oidf.entity.registry.policy.PolicyService;
+import se.swedenconnect.oidf.entity.registry.entity.JpaEntityService;
+import se.swedenconnect.oidf.entity.registry.policy.JpaPolicyService;
 
 /**
  * ServiceConfigTest is a test class for the ServiceConfig Spring configuration class.
@@ -57,19 +56,6 @@ public class ServiceConfigTest {
     entityRepository = mock(EntityRepository.class);
     policyRepository = mock(PolicyRepository.class);
     serviceConfig = new ServiceConfig(entityRepository, policyRepository);
-  }
-
-  /**
-   * Tests the fileEntityService bean provided by the ServiceConfig.
-   * <p>
-   * The test verifies that the fileEntityService bean is not null and
-   * confirms that it is an instance of FileEntityService class.
-   */
-  @Test
-  public void testFileEntityServiceBean() {
-    EntityService fileService = serviceConfig.fileEntityService();
-    assertThat(fileService).isNotNull();
-    assertThat(fileService).isInstanceOf(FileEntityService.class);
   }
 
   /**
