@@ -74,6 +74,8 @@ public class PolicyControllerIT {
     // Act
     ResponseEntity<PolicyRecord> response = this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    assertThat(response.getBody()).isNotNull();
+    assertThat(response.getBody().getPolicyId()).isNotNull();
 
     response = this.restTemplate.postForEntity("/registry/v1/entities", policy, PolicyRecord.class);
 

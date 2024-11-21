@@ -60,10 +60,11 @@ public class JpaPolicyService implements PolicyService {
   @Override
   public PolicyRecord create(final PolicyRecord policy) {
     if (this.isValidPolicy(policy)) {
-      PolicyEntity policyEntity = new PolicyEntity();
+      final PolicyEntity policyEntity = new PolicyEntity();
       policyEntity.setPolicy(policy.getPolicy());
       policyEntity.setName(policy.getName());
-      this.policyRepository.save(policyEntity);
+      final PolicyEntity savedPolicy = this.policyRepository.save(policyEntity);
+      policy.setPolicyId(savedPolicy.getExternalId());
     }
     else {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid JSON policy");
@@ -72,9 +73,9 @@ public class JpaPolicyService implements PolicyService {
   }
 
   @Override
-  public PolicyRecord get(final String name) {
-    return this.policyRepository.findByName(name)
-        .map(dao -> new PolicyRecord.Builder().name(dao.getName()).policy(dao.getPolicy()).build())
+  public PolicyRecord get(final String policy_id) {
+    return this.policyRepository.findByExternalId(policy_id)
+        .map(dao -> new PolicyRecord.Builder().name(dao.getName()).policyId(policy_id).policy(dao.getPolicy()).build())
         .orElse(null);
   }
 
@@ -86,8 +87,8 @@ public class JpaPolicyService implements PolicyService {
   }
 
   @Override
-  public PolicyRecord update(final String name, final PolicyRecord policy) {
-    final var dao = this.policyRepository.findByName(name).orElse(null);
+  public PolicyRecord update(final String policy_id, final PolicyRecord policy) {
+    final var dao = this.policyRepository.findByExternalId(policy_id).orElse(null);
     if (dao != null) {
       try {
         dao.setPolicy(this.objectMapper.writeValueAsString(policy));
@@ -103,8 +104,8 @@ public class JpaPolicyService implements PolicyService {
   }
 
   @Override
-  public void delete(final String name) {
-    this.policyRepository.findByName(name).ifPresent(this.policyRepository::delete);
+  public void delete(final String policy_id) {
+    this.policyRepository.findByExternalId(policy_id).ifPresent(this.policyRepository::delete);
   }
 
   /**

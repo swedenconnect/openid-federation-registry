@@ -21,6 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.containers.MariaDBContainer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import se.swedenconnect.oidf.registry.api.model.Entity;
+import se.swedenconnect.oidf.registry.api.model.EntityHosted;
 
 /**
  * Test class for the EntityController.
@@ -86,8 +88,8 @@ public class EntityControllerTest {
     final var subject = "https://example.com/subject/1";
 
     entity.setSubject(subject);
-    entity.setLocation("exampleLocation");
-    entity.setPolicy("examplePolicy");
+    entity.setIssuer("http://issuer");
+    entity.setPolicyId("policyID");
 
     mockMvc.perform(post("/registry/v1/entities")
             .contentType(MediaType.APPLICATION_JSON)
@@ -115,8 +117,8 @@ public class EntityControllerTest {
     final var subject = "https://example.com/subject/2";
 
     entity.setSubject(subject);
-    entity.setLocation("exampleLocation");
-    entity.setPolicy("examplePolicy");
+    entity.setIssuer("http://issuer");
+    entity.setPolicyId("policyID");
 
     mockMvc.perform(post("/registry/v1/entities")
             .contentType(MediaType.APPLICATION_JSON)
@@ -149,20 +151,20 @@ public class EntityControllerTest {
     final var subject = "https://example.com/subject/3";
 
     entity.setSubject(subject);
-    entity.setLocation("exampleLocation");
-    entity.setPolicy("examplePolicy");
+    entity.setIssuer("http://issuer");
+    entity.setPolicyId("policyID");
 
     mockMvc.perform(post("/registry/v1/entities")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(entity)))
         .andExpect(status().isCreated());
 
-    entity.setLocation("updatedLocation");
+    entity.setHosted(EntityHosted.builder().authorityHints(List.of("http://hint1")).build());
     mockMvc.perform(put("/registry/v1/entities/{entityId}", URLEncoder.encode(subject, StandardCharsets.UTF_8))
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(entity)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.location").value("updatedLocation"));
+        .andExpect(jsonPath("$.hosted.authority_hints").value("http://hint1"));
   }
 
   /**
@@ -184,8 +186,8 @@ public class EntityControllerTest {
     final var subject = "https://example.com/subject/4";
 
     entity.setSubject(subject);
-    entity.setLocation("exampleLocation");
-    entity.setPolicy("examplePolicy");
+    entity.setIssuer("http://issuer");
+    entity.setPolicyId("policyID");
 
     mockMvc.perform(post("/registry/v1/entities")
             .contentType(MediaType.APPLICATION_JSON)

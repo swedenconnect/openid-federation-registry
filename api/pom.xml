@@ -86,6 +86,7 @@
 
                 <library>apache-httpclient</library> <!-- TODO -->
                 <sourceFolder>src/main/generated</sourceFolder>
+                <openApiNullable>false</openApiNullable>
               </configOptions>
             </configuration>
           </execution>

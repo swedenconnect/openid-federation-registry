@@ -66,16 +66,17 @@ class FederationServiceApiControllerIT {
 
   @Test
   void entityRecord() throws ParseException {
-    final Entity entity = EntityFactory.createDefaultEntity("http://sub.digg.se");
+    final Entity entity = EntityFactory.createDefaultEntity("http://tmi.digg.se","http://sub.digg.se");
     final ResponseEntity<Entity> createResponse = restTemplate.postForEntity("/registry/v1/entities", entity, Entity.class);
-    assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
     final ResponseEntity<String> response = restTemplate
         .getForEntity("/api/v1/federationservice/entity_record?iss=http://tmi.digg.se", String.class);
     System.out.println(response);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    SignedJWT.parse(response.getBody());
+    final SignedJWT signedJWT = SignedJWT.parse(response.getBody());
 
+    System.out.println(signedJWT.getJWTClaimsSet().toString(true));
 
   }
 }

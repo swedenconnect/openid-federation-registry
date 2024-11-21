@@ -1,5 +1,8 @@
 package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -20,8 +23,8 @@ import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectRepositor
 import se.swedenconnect.oidf.entity.registry.trustmark.TrustmarkSubjectEntity;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Service to collect data to federation services
@@ -31,6 +34,7 @@ import java.util.UUID;
 @Slf4j
 public class FederationServiceApiService {
 
+  private final ObjectMapper mapper = new ObjectMapper();
   private final JWK signKey;
   private final EntityRepository entityRepository;
   private final PolicyRepository policyRepository;
@@ -132,17 +136,36 @@ public class FederationServiceApiService {
   }
 
   /**
-   * Taking a list of json blobs and set it as a claim in JWT
+   * Taking a list of json blobs and set it as a claim in JWT.
+   * Claim is structured like this:
+   * {
+   *   "data": [
+   *      {
+   *        "fields":"From JsonRecords"
+   *      }
+   *   ]
+   * }
    *
    * @param claimName Name of claim in JWT. It will also be set as type in JWT header
-   * @param jsonRecords Lst och Json blobbs
+   * @param jsonRecords List och string Json blobs.
    * @return SignedJwt With keyid set from signed key.
-   * @throws JOSEException If there is a problem with signing JWT
+   * @throws JOSEException If there is a problem with JWT signing
    */
   protected SignedJWT signJsonRecords(final String claimName, final List<String> jsonRecords) throws JOSEException {
+
+    final List<Map<String,Object>> jsonClaims = jsonRecords.stream().map((js) -> {
+      try {
+        return this.mapper.readValue(js, new TypeReference<Map<String,Object>>() {});
+      }
+      catch (JsonProcessingException e) {
+        throw new RuntimeException(e);
+      }
+    }).toList();
+
+
     final RSASSASigner signer = new RSASSASigner(this.signKey.toRSAKey());
     final JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .claim(claimName, jsonRecords)
+        .claim(claimName, Map.of("data",jsonClaims))
         .build();
 
     final JWSAlgorithm alg = signer.supportedJWSAlgorithms().stream().findFirst().orElseThrow();

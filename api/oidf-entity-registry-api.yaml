@@ -28,68 +28,84 @@ components:
         name:
           type: string
           description: The name of the Policy. Must match the top node in the policy json string
+        policy_id:
+          type: string
+          description: Uniq identifyer for a policy
         policy:
           type: string
           description: The json object describing the Policy
 
+
     entity:
       type: object
+      description: A representation of an EntityRecord.
       properties:
         issuer:
           type: string
-          description: The issuer for this entity
+          description: The identity of the entity issuing the record. This field is required.
         subject:
           type: string
-          description: The Entity Identifier of the subject
-        jwk:
-          type: array
-          items:
-            $ref: '#/components/schemas/jwk-source'
-          description: An array of JWK sources to validate Entity Configuration if the entity is not hosted
-        location:
+          description: The identity of the subject associated with the record. This field is required.
+        policy_id:
           type: string
-          description: The location URL of Entity Configuration for this entity if not Hosted
-        policy:
-          type: string
-          description: The file name of a policy if applicable
+          nullable: true
+          description: The id of the policy associated with the entity.
         hosted:
-          $ref: '#/components/schemas/hosted'
-        intermediate:
-          type: boolean
-          description: true if the entity is an intermediate entity
-    jwk-source:
-      type: object
-      properties:
-        kid:
-          type: string
-          description: The kid of the key if the source is a certificate file
-        cert-location:
-          type: string
-          description: The location of a certificate file
-        base64jwk:
-          type: string
-          description: Base64 encoded JWK json string as alternative to kid and cert-location
-    hosted:
-      type: object
-      description: Hosted entity information if the entity has hosted metadata
-      properties:
-        metadata:
-          type: string
-          description: The name of the metadata file
-        trust-marks:
-          type: array
-          items:
-            $ref: '#/components/schemas/trust-mark-source'
-          description: An array of Trust Marks granted to the subject
-    trust-mark-source:
-      type: object
-      properties:
-        trust-mark-id:
-          type: string
-          description: The ID of the Trust Mark
-        issuer:
-          type: string
-          description: The Entity Identifier of the Trust Mark issuer
+          type: object
+          description: Contains details about a hosted record service.
+          properties:
+            authority_hints:
+              type: array
+              description: A list of authority hints used in the record.
+              items:
+                type: string
+            trust_mark_sources:
+              type: array
+              description: A list of sources for trust marks.
+              items:
+                type: object
+                properties:
+                  trust_mark_id:
+                    type: string
+                    nullable: true
+                    description: The identifier of the Trust Mark.
+                  issuer:
+                    type: string
+                    nullable: true
+                    description: The issuer of the Trust Mark.
+        jwks:
+          type: object
+          description: A JSON Web Key Set (JWKS) containing keys used to verify signed objects.
+          properties:
+            keys:
+              type: array
+              description: A list of cryptographic keys in JWKS format.
+              items:
+                type: object
+                properties:
+                  kty:
+                    type: string
+                    nullable: true
+                    description: The type of cryptographic key, e.g., "RSA".
+                  kid:
+                    type: string
+                    nullable: true
+                    description: The identifier of the key.
+                  use:
+                    type: string
+                    nullable: true
+                    description: The intended use of the key, e.g., "sig" for signing.
+                  n:
+                    type: string
+                    nullable: true
+                    description: The modulus of the RSA key, Base64URL-encoded.
+                  e:
+                    type: string
+                    nullable: true
+                    description: The exponent of the RSA key, Base64URL-encoded.
+      required:
+        - issuer
+        - subject
 
 
 paths:

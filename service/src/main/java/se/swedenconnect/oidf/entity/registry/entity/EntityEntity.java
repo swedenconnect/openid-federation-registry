@@ -36,16 +36,16 @@ import lombok.ToString;
 @Setter
 @Entity
 @ToString
-@Table(name = "entities", uniqueConstraints = @UniqueConstraint(columnNames = "subject"))
+@Table(name = "entities")
 public class EntityEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   private long id;
 
-  @Column(unique = true)
+  @Column
   private String issuer;
 
-  @Column(unique = true)
+  @Column
   private String subject;
 
   @Column(columnDefinition = "TEXT")

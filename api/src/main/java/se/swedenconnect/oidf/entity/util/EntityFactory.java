@@ -15,27 +15,26 @@
  */
 package se.swedenconnect.oidf.entity.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import se.swedenconnect.oidf.registry.api.model.Entity;
-import se.swedenconnect.oidf.registry.api.model.JwkSource;
-import se.swedenconnect.oidf.registry.api.model.Hosted;
-import se.swedenconnect.oidf.registry.api.model.TrustMarkSource;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
- * Factory class for creating instances of {@link Entity}, {@link JwkSource},
- * {@link Hosted}, and {@link TrustMarkSource}.
+ * Factory class for creating instances of {@link Entity}, from a json set
  *
  * @author David Goldring
  */
 public class EntityFactory {
 
+
+    private static final ObjectMapper mapper = new ObjectMapper();
     /**
      * URL representing the first subject in the system.
      * This constant is used as a default subject when creating entities.
      */
     public final static String SUBJECT_1 = "https://example.com/subject/1";
+
+    public final static String ISSUER_1 = "https://example.com/issuer/1";
 
     /**
      * The constant URL for a second subject.
@@ -53,9 +52,54 @@ public class EntityFactory {
      */
     public final static String SUBJECT_DEFAULT = SUBJECT_1;
 
+
+    private static final String entityJsonData = """
+        {
+            "issuer": "%s",
+            "subject": "%s",
+            "policy_id": "policy-123",
+            "hosted": {
+              "authority_hints": [
+                "https://example.com/hint1",
+                "https://example.com/hint2"
+              ],
+              "trust_mark_sources": [
+                {
+                  "trust_mark_id": "https://trust.example.com/tm1",
+                  "issuer": "https://trust.example.com/issuer1"
+                },
+                {
+                  "trust_mark_id": "https://trust.example.com/tm2",
+                  "issuer": "https://trust.example.com/issuer2"
+                }
+              ]
+            },
+            "jwks": {
+              "keys": [
+                {
+                  "kty": "RSA",
+                  "kid": "key1",
+                  "use": "sig",
+                  "n": "v1hGQlmTWwoA8V3yHdF-...",
+                  "e": "AQAB"
+                },
+                {
+                  "kty": "RSA",
+                  "kid": "key2",
+                  "use": "enc",
+                  "n": "w2Hfg34VWQowQAx3HtP-...",
+                  "e": "AQAB"
+                }
+              ]
+            }
+        }
+        """;
+
+
+
     /**
      * Creates an instance of {@link Entity} with default values.
-     * Uses {@link JwkSource} by default and does not include a {@link Hosted} object.
+     * Uses JwksSource by default and does not include a Hosted object.
      *
      * @return an instance of {@link Entity}
      */
@@ -65,192 +109,31 @@ public class EntityFactory {
 
     /**
      * Creates a default instance of {@link Entity} with given subject.
-     * Uses a default {@link JwkSource} and predefined URL and policy.
+     * Uses a default JwksSource and predefined URL and policy.
      *
      * @param subject the subject of the entity
      * @return an instance of {@link Entity}
      */
     public static Entity createDefaultEntity(String subject) {
-        final List<JwkSource> jwkSources = new ArrayList<>();
-        jwkSources.add(createJwkSource(
-            null,
-            null,
-            "eyJrdHki.....HRBIn0="
-        ));
-
-        return createEntityWithJwkSource(
-            subject,
-            jwkSources,
-            "https://example.com/subject/3/.well-known/openid-federation",
-            "policy2.json",
-            false
-        );
+        return createDefaultEntity(ISSUER_1,subject);
     }
 
-    /**
-     * Creates an instance of {@link Entity} using a {@link Hosted} object.
-     * {@link JwkSource} list will be set to null.
-     *
-     * @param subject      the subject of the entity
-     * @param location     the location URL
-     * @param policy       the policy file name
-     * @param hosted       the hosted object
-     * @param intermediate whether the entity is intermediate
-     *
-     * @return an instance of {@link Entity}
-     */
-    public static Entity createEntityWithHosted(final String subject, final String location, final String policy, final Hosted hosted, final boolean intermediate) {
-        final Entity entity = new Entity();
-
-        entity.setSubject(subject);
-        entity.setJwk(null); // Ensuring JwkSource is null
-        entity.setLocation(location);
-        entity.setPolicy(policy);
-        entity.setHosted(hosted);
-        entity.setIntermediate(intermediate);
-
-        return entity;
+    public static String createDefaultJsonEntity(String issuer,String subject) {
+        return entityJsonData.formatted(issuer, subject);
     }
 
-    /**
-     * Creates an instance of {@link Entity} using {@link JwkSource} list.
-     * {@link Hosted} will be set to null.
-     *
-     * @param subject      the subject of the entity
-     * @param jwk          the list of JWK sources
-     * @param location     the location URL
-     * @param policy       the policy file name
-     * @param intermediate whether the entity is intermediate
-     *
-     * @return an instance of {@link Entity}
-     */
-    public static Entity createEntityWithJwkSource(final String subject, final List<JwkSource> jwk, final String location, final String policy, final boolean intermediate) {
-        final Entity entity = new Entity();
-
-        entity.setIssuer("http://tmi.digg.se");
-        entity.setSubject(subject);
-        entity.setJwk(jwk);
-        entity.setLocation(location);
-        entity.setPolicy(policy);
-        entity.setHosted(null); // Ensuring Hosted is null
-        entity.setIntermediate(intermediate);
-
-        return entity;
+    public static String createDefaultJsonEntity() {
+        return entityJsonData.formatted(ISSUER_1, SUBJECT_1);
     }
 
-    /**
-     * Creates an instance of {@link JwkSource} with specified values.
-     *
-     * @param kid          the key identifier
-     * @param certLocation the location of the certificate file
-     * @param base64jwk    the base64 encoded JWK json string
-     *
-     * @return an instance of {@link JwkSource}
-     */
-    public static JwkSource createJwkSource(final String kid, final String certLocation, final String base64jwk) {
-        final JwkSource jwkSource = new JwkSource();
+    public static Entity createDefaultEntity(String issuer,String subject) {
 
-        jwkSource.setKid(kid);
-        jwkSource.setCertLocation(certLocation);
-        jwkSource.setBase64jwk(base64jwk);
-
-        return jwkSource;
+        try {
+            return mapper.readValue(entityJsonData.formatted(issuer, subject), Entity.class);
+        }
+        catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    /**
-     * Creates an instance of {@link Hosted} with specified values.
-     *
-     * @param metadata   the metadata file name
-     * @param trustMarks the list of trust marks
-     *
-     * @return an instance of {@link Hosted}
-     */
-    public static Hosted createHosted(final String metadata, final List<TrustMarkSource> trustMarks) {
-        final Hosted hosted = new Hosted();
-
-        hosted.setMetadata(metadata);
-        hosted.setTrustMarks(trustMarks);
-
-        return hosted;
-    }
-
-    /**
-     * Creates an instance of {@link TrustMarkSource} with specified values.
-     *
-     * @param trustMarkId the ID of the Trust Mark
-     * @param issuer      the Entity Identifier of the Trust Mark issuer
-     *
-     * @return an instance of {@link TrustMarkSource}
-     */
-    public static TrustMarkSource createTrustMarkSource(final String trustMarkId, final String issuer) {
-        final TrustMarkSource trustMarkSource = new TrustMarkSource();
-
-        trustMarkSource.setTrustMarkId(trustMarkId);
-        trustMarkSource.setIssuer(issuer);
-
-        return trustMarkSource;
-    }
-
-    // Methods for creating pre-defined entities based on example data from
-    // https://github.com/swedenconnect/openid-federation-node/blob/main/README.md
-
-    /**
-     * Creates an entity with specific Hosted object and one Trust Mark.
-     * Subject: {@code "https://example.com/subject/1"}
-     *
-     * @return an instance of {@link Entity}
-     */
-    public static Entity createEntityWithSingleTrustMark() {
-        final List<TrustMarkSource> trustMarkSources = new ArrayList<>();
-        trustMarkSources.add(createTrustMarkSource(
-            "https://example.com/trust-mark-id/2",
-            "https://example.com/trust_mark"
-        ));
-        final Hosted hosted = createHosted("subj1metadata.json", trustMarkSources);
-
-        return createEntityWithHosted(
-            "https://example.com/subject/1",
-            null,
-            "policy1.json",
-            hosted,
-            false
-        );
-    }
-
-    /**
-     * Creates an entity with specific Hosted object and multiple Trust Marks.
-     * Subject: {@code "https://example.com/subject/2"}
-     *
-     * @return an instance of {@link Entity}
-     */
-    public static Entity createEntityWithMultipleTrustMarks() {
-        final List<TrustMarkSource> trustMarkSources = new ArrayList<>();
-        trustMarkSources.add(createTrustMarkSource(
-            "https://example.com/trust-mark-id/1",
-            "https://example.com/trust_mark"
-        ));
-        trustMarkSources.add(createTrustMarkSource(
-            "https://example.com/trust-mark-id/2",
-            "https://example.com/trust_mark"
-        ));
-        final Hosted hosted = createHosted("subj2metadata.json", trustMarkSources);
-
-        return createEntityWithHosted(
-            SUBJECT_2,
-            null,
-            "policy1.json",
-            hosted,
-            false
-        );
-    }
-
-    /**
-     * Creates an entity with JwkSource and no Hosted object.
-     * Subject: {@code "https://example.com/subject/3"}
-     *
-     * @return an instance of {@link Entity}
-     */
-    public static Entity createEntityWithJwkSourceOnly() {
-      return createDefaultEntity();
-    }
 }
