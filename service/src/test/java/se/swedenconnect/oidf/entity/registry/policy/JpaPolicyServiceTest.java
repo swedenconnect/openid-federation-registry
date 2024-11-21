@@ -129,7 +129,7 @@ public class JpaPolicyServiceTest {
     policyEntity.setName("Test Policy");
     policyEntity.setPolicy("{\"key\":\"value\"}");
 
-    when(policyRepository.findByName("Test Policy")).thenReturn(Optional.of(policyEntity));
+    when(policyRepository.findByExternalId("Test Policy")).thenReturn(Optional.of(policyEntity));
 
     // When
     PolicyRecord foundPolicy = jpaPolicyService.get("Test Policy");
@@ -182,7 +182,7 @@ public class JpaPolicyServiceTest {
 
     PolicyRecord updateDto = new PolicyRecord.Builder().name("Updated Policy").policy("{\"newKey\":\"newValue\"}").build();
 
-    when(policyRepository.findByName("Existing Policy")).thenReturn(Optional.of(existingPolicy));
+    when(policyRepository.findByExternalId("Existing Policy")).thenReturn(Optional.of(existingPolicy));
     when(objectMapper.writeValueAsString(any(PolicyRecord.class))).thenReturn(updateDto.getPolicy());
 
     // When
@@ -205,7 +205,7 @@ public class JpaPolicyServiceTest {
     policyEntity.setName("Policy to be deleted");
     policyEntity.setPolicy("{\"key\":\"value\"}");
 
-    when(policyRepository.findByName("Policy to be deleted")).thenReturn(Optional.of(policyEntity));
+    when(policyRepository.findByExternalId("Policy to be deleted")).thenReturn(Optional.of(policyEntity));
 
     // When
     jpaPolicyService.delete("Policy to be deleted");

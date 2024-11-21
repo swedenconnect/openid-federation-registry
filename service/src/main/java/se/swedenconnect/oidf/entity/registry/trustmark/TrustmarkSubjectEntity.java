@@ -14,54 +14,43 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.entity.registry.policy;
+package se.swedenconnect.oidf.entity.registry.trustmark;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.util.UUID;
-
 /**
- * PolicyDao is a JPA entity representing a database table for storing policies
- * as JSON objects with the policy id as key.
+ * TrustMarkSubjectEntity is a JPA entity representing a database table for storing entities
+ * as JSON objects with the objects Subject value as key.
  *
- * @author David Goldring
+ * @author Per Fredrik Plars
  */
 @Getter
 @Setter
 @Entity
 @ToString
-@Table(name = "policies", uniqueConstraints = @UniqueConstraint(columnNames = "name"))
-public class PolicyEntity {
+@Table(name = "trustmark_subject")
+public class TrustmarkSubjectEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   private long id;
 
-  @Column(name="external_id", unique = true)
-  private String externalId;
+  @Column
+  private String issuer;
 
-  @Column(unique = true)
-  private String name;
+  @Column
+  private String trustmarkId;
+
+  @Column
+  private String subject;
 
   @Column(columnDefinition = "TEXT")
-  private String policy;
-
-  /**
-   * Creating a uuid for the externalId field
-   */
-  @PrePersist
-  public void prePersist(){
-    externalId = UUID.randomUUID().toString();
-  }
+  private String trustmarksubject;
 }
-
-

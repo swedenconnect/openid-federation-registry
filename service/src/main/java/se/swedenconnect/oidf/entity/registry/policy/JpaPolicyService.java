@@ -1,17 +1,18 @@
 /*
- * Copyright 2024 Sweden Connect.
+ * Copyright 2024 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 package se.swedenconnect.oidf.entity.registry.policy;
 
@@ -60,10 +61,11 @@ public class JpaPolicyService implements PolicyService {
   @Override
   public PolicyRecord create(final PolicyRecord policy) {
     if (this.isValidPolicy(policy)) {
-      PolicyEntity policyEntity = new PolicyEntity();
+      final PolicyEntity policyEntity = new PolicyEntity();
       policyEntity.setPolicy(policy.getPolicy());
       policyEntity.setName(policy.getName());
-      this.policyRepository.save(policyEntity);
+      final PolicyEntity savedPolicy = this.policyRepository.save(policyEntity);
+      policy.setPolicyId(savedPolicy.getExternalId());
     }
     else {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid JSON policy");
@@ -72,9 +74,9 @@ public class JpaPolicyService implements PolicyService {
   }
 
   @Override
-  public PolicyRecord get(final String name) {
-    return this.policyRepository.findByName(name)
-        .map(dao -> new PolicyRecord.Builder().name(dao.getName()).policy(dao.getPolicy()).build())
+  public PolicyRecord get(final String policy_id) {
+    return this.policyRepository.findByExternalId(policy_id)
+        .map(dao -> new PolicyRecord.Builder().name(dao.getName()).policyId(policy_id).policy(dao.getPolicy()).build())
         .orElse(null);
   }
 
@@ -86,8 +88,8 @@ public class JpaPolicyService implements PolicyService {
   }
 
   @Override
-  public PolicyRecord update(final String name, final PolicyRecord policy) {
-    final var dao = this.policyRepository.findByName(name).orElse(null);
+  public PolicyRecord update(final String policy_id, final PolicyRecord policy) {
+    final var dao = this.policyRepository.findByExternalId(policy_id).orElse(null);
     if (dao != null) {
       try {
         dao.setPolicy(this.objectMapper.writeValueAsString(policy));
@@ -103,15 +105,16 @@ public class JpaPolicyService implements PolicyService {
   }
 
   @Override
-  public void delete(final String name) {
-    this.policyRepository.findByName(name).ifPresent(this.policyRepository::delete);
+  public void delete(final String policy_id) {
+    this.policyRepository.findByExternalId(policy_id).ifPresent(this.policyRepository::delete);
   }
 
   /**
    * Validates if the provided policy DTO contains a valid JSON structure.
    *
    * @param policy the policy data transfer object containing the JSON policy string to validate
-   * @return {@code true} if the policy string is valid JSON and contains the expected structure; {@code false} otherwise
+   * @return {@code true} if the policy string is valid JSON and contains the expected structure;
+   * {@code false} otherwise
    */
   private boolean isValidPolicy(final PolicyRecord policy) {
     try {

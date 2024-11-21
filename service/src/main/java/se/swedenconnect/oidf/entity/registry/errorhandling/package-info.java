@@ -15,8 +15,6 @@
  *
  */
 /**
- * Sweden Connect Entity Registry for OpenID Federation
- *
- * @author David Goldring
+ * Package for errorhandling
  */
-package se.swedenconnect.oidf.entity.registry;
+package se.swedenconnect.oidf.entity.registry.errorhandling;

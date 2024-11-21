@@ -18,8 +18,6 @@ package se.swedenconnect.oidf.entity.util;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import se.swedenconnect.oidf.registry.api.model.Entity;
-import se.swedenconnect.oidf.registry.api.model.JwkSource;
-import se.swedenconnect.oidf.registry.api.model.Hosted;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,101 +64,4 @@ public class EntityFactoryTest {
     assertEquals(subject, entity.getSubject());
   }
 
-  /**
-   * Tests the creation of an entity using the EntityFactory with a Hosted object and additional parameters.
-   * <p>
-   * The method performs the following checks:
-   * - Verifies that the created entity is not null.
-   * - Validates that the subject, location, policy, and hosted attributes of the entity match the expected values.
-   * - Confirms that the intermediate flag is set correctly.
-   * - Ensures that the entity's JWK list is null.
-   */
-  @Test
-  public void testCreateEntityWithHosted() {
-    // Prepare data for the test
-    String subject = EntityFactory.SUBJECT_1;
-    String location = "https://example.com/location";
-    String policy = "policy-file";
-    boolean intermediate = true;
-
-    Hosted hosted = new Hosted(/* parameters */);
-
-    // Test creating an entity with a Hosted object
-    Entity entity = EntityFactory.createEntityWithHosted(subject, location, policy, hosted, intermediate);
-
-    assertNotNull(entity);
-
-    // Verify attributes
-    assertEquals(subject, entity.getSubject());
-    assertEquals(location, entity.getLocation());
-    assertEquals(policy, entity.getPolicy());
-    assertEquals(intermediate, entity.getIntermediate());
-    assertEquals(hosted, entity.getHosted());
-
-    // Ensure JwkSource list is null
-    assertNull(entity.getJwk());
-  }
-
-  /**
-   * Tests the creation of an entity using the EntityFactory with a list of JwkSource objects.
-   * <p>
-   * This method verifies the following:
-   * - An entity is successfully created and is not null.
-   * - The entity's subject, location, policy, intermediate flag, and JWK list are set to the expected values.
-   * - The Hosted object within the entity is null.
-   */
-  @Test
-  public void testCreateEntityWithJwkSource() {
-    // Prepare data for the test
-    List<JwkSource> jwkList = new ArrayList<>();
-    jwkList.add(new JwkSource(/* parameters */));
-
-    String subject = EntityFactory.SUBJECT_1;
-    String location = "https://example.com/location";
-    String policy = "policy-file";
-    boolean intermediate = false;
-
-    // Test creating an entity with a list of JwkSource
-    Entity entity = EntityFactory.createEntityWithJwkSource(subject, jwkList, location, policy, intermediate);
-
-    assertNotNull(entity);
-
-    // Verify attributes
-    assertEquals(subject, entity.getSubject());
-    assertEquals(location, entity.getLocation());
-    assertEquals(policy, entity.getPolicy());
-    assertEquals(intermediate, entity.getIntermediate());
-    assertEquals(jwkList, entity.getJwk());
-
-    // Ensure Hosted object is null
-    assertNull(entity.getHosted());
-  }
-
-  /**
-   * Tests the creation of a JwkSource using the EntityFactory.
-   * <p>
-   * This method verifies the following:
-   * - The JwkSource is successfully created and is not null.
-   * - The kid attribute of the JwkSource matches the expected value.
-   * - The certLoc attribute of the JwkSource matches the expected value.
-   * - The base64jwk attribute of the JwkSource matches the expected value.
-   */
-  @Test
-  public void testCreateJwkSource() {
-    // Prepare data for the test
-    String kid = "key-id";
-    String certLoc = "key-type";
-    String base64jwk = "sig";
-
-    // Test creating a JwkSource
-    JwkSource jwkSource = EntityFactory.createJwkSource(kid, certLoc, base64jwk);
-
-    // Verify that the JwkSource is not null
-    assertNotNull(jwkSource);
-
-    // Verify attributes
-    assertEquals(kid, jwkSource.getKid());
-    assertEquals(certLoc, jwkSource.getCertLocation());
-    assertEquals(base64jwk, jwkSource.getBase64jwk());
-  }
 }

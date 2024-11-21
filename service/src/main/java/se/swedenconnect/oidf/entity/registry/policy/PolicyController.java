@@ -1,17 +1,18 @@
 /*
- * Copyright 2024 Sweden Connect.
+ * Copyright 2024 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 package se.swedenconnect.oidf.entity.registry.policy;
 
@@ -71,6 +72,10 @@ public class PolicyController {
   @PostMapping
   public PolicyRecord createPolicy(@RequestBody final PolicyRecord policy, final HttpServletResponse response) {
     log.debug("POST: {}", policy);
+    if(policy.getPolicyId()!=null && !policy.getPolicyId().isBlank()){
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Policy_id exist use update endpoint");
+    }
 
     PolicyRecord dto = this.policyService.create(policy);
     response.setStatus(HttpServletResponse.SC_CREATED);
@@ -113,28 +118,31 @@ public class PolicyController {
   /**
    * Updates an existing policy in the entity registry.
    *
-   * @param name The name of the policy to update.
+   * @param policy_id The policy_id of the policy to update.
    * @param policy A {@link PolicyRecord} object containing the updated details of the policy.
    * @return A {@link PolicyRecord} object representing the updated policy.
    */
-  @PutMapping("/{name}")
-   public PolicyRecord updatePolicy(@PathVariable("name") final String name, @RequestBody PolicyRecord policy) {
+  @PutMapping("/{policy_id}")
+   public PolicyRecord updatePolicy(@PathVariable("policy_id") final String policy_id,
+      @RequestBody PolicyRecord policy) {
      log.debug("PUT: {}", policy);
-
-     return this.policyService.update(name, policy);
+     if(!policy_id.equals(policy.getPolicyId())) {
+       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PolicyId has to be the same in path and object");
+     }
+     return this.policyService.update(policy_id, policy);
    }
 
   /**
-   * Deletes a policy by its name from the entity registry.
+   * Deletes a policy by its policy_id from the entity registry.
    *
-   * @param name the name of the policy to be deleted
+   * @param policy_id the policy_id of the policy to be deleted
    * @param response the {@link HttpServletResponse} object used to set the response status
    */
-  @DeleteMapping("/{name}")
-   public void deletePolicy(@PathVariable("name") final String name, final HttpServletResponse response) {
-     log.debug("DELETE: {}", name);
+  @DeleteMapping("/{policy_id}")
+   public void deletePolicy(@PathVariable("policy_id") final String policy_id, final HttpServletResponse response) {
+     log.debug("DELETE: {}", policy_id);
 
-     this.policyService.delete(name);
+     this.policyService.delete(policy_id);
      response.setStatus(HttpServletResponse.SC_NO_CONTENT);
    }
 }

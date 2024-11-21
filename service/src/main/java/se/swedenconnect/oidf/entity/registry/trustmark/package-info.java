@@ -15,8 +15,8 @@
  *
  */
 /**
- * Sweden Connect Entity Registry for OpenID Federation
+ * Sweden Connect Trustmark Registry for OpenID Federation
  *
- * @author David Goldring
+ * @author Per Fredrik Plars
  */
-package se.swedenconnect.oidf.entity.registry;
+package se.swedenconnect.oidf.entity.registry.trustmark;

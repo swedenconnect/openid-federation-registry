@@ -67,6 +67,13 @@
       <organizationUrl>https://www.digg.se</organizationUrl>
     </developer>
 
+    <developer>
+      <name>Per Fredrik Plars</name>
+      <email>extern.perfredik.plars@digg.se</email>
+      <organization>Digg</organization>
+      <organizationUrl>https://www.digg.se</organizationUrl>
+    </developer>
+
   </developers>
 
   <properties>
@@ -77,11 +84,11 @@
     <!-- Dependency Versions -->
     <bc.version>1.78.1</bc.version>
     <nimbus-jose-jwt.version>9.41.1</nimbus-jose-jwt.version>
+    <nimbus-oauth2-oidc-sdk.version>11.20.1</nimbus-oauth2-oidc-sdk.version>
     <jackson.version>2.18.0</jackson.version>
     <slf4j.version>2.0.13</slf4j.version>
     <spring-boot.version>3.3.5</spring-boot.version>
   </properties>
-
   <repositories>
     <repository>
       <id>central</id>
@@ -176,7 +183,11 @@
         <artifactId>nimbus-jose-jwt</artifactId>
         <version>${nimbus-jose-jwt.version}</version>
       </dependency>
-
+      <dependency>
+        <groupId>com.nimbusds</groupId>
+        <artifactId>oauth2-oidc-sdk</artifactId>
+        <version>${nimbus-oauth2-oidc-sdk.version}</version>
+      </dependency>
       <!-- Jackson -->
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
@@ -339,6 +350,7 @@
             </execution>
             <execution>
               <id>report</id>
+              <phase>verify</phase>
               <goals>
                 <goal>report</goal>
               </goals>
@@ -356,6 +368,13 @@
               <configuration>
                 <rules>
                   <dependencyConvergence/>
+                  <banDuplicatePomDependencyVersions/>
+                  <requireMavenVersion>
+                    <version>3.8.8</version>
+                  </requireMavenVersion>
+                  <requireJavaVersion>
+                    <version>21</version>
+                  </requireJavaVersion>
                 </rules>
               </configuration>
               <goals>
@@ -364,7 +383,63 @@
             </execution>
           </executions>
         </plugin>
-
+        <!-- Style-check -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>3.6.0</version>
+          <executions>
+            <execution>
+              <phase>verify</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
+          <dependencies>
+            <dependency>
+              <groupId>com.puppycrawl.tools</groupId>
+              <artifactId>checkstyle</artifactId>
+              <version>10.20.0</version>
+            </dependency>
+          </dependencies>
+          <configuration>
+            <excludes>**/test/**/*</excludes>
+            <excludeGeneratedSources>true</excludeGeneratedSources>
+            <checkstyleRules>
+              <module name="Checker">
+                <module name="Header">
+                  <property name="header" value="/*\n * Copyright 2024 Sweden Connect"/>
+                </module>
+                <module name="LineLength">
+                  <property name="max" value="120"/>
+                </module>
+                <module name="JavadocPackage"/>
+                <module name="TreeWalker">
+                  <module name="JavadocType">
+                    <property name="authorFormat" value="\S"/>
+                  </module>
+                  <module name="MissingJavadocMethod">
+                    <property name="scope" value="public"/>
+                  </module>
+                  <module name="MissingJavadocType">
+                    <property name="scope" value="public"/>
+                  </module>
+                  <module name="JavadocMethod">
+                    <property name="accessModifiers" value="public,package"/>
+                    <property name="allowMissingParamTags" value="false"/>
+                    <property name="allowMissingReturnTag" value="false"/>
+                  </module>
+                </module>
+              </module>
+            </checkstyleRules>
+            <lineLength>120</lineLength>
+            <logViolationsToConsole>true</logViolationsToConsole>
+            <failOnViolation>false</failOnViolation>
+            <failsOnError>false</failsOnError>
+            <skip>false</skip>
+          </configuration>
+        </plugin>
       </plugins>
 
     </pluginManagement>
@@ -417,7 +492,10 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
       </plugin>
-
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+      </plugin>
       <!-- run mvn jacoco:report -->
       <plugin>
         <groupId>org.jacoco</groupId>

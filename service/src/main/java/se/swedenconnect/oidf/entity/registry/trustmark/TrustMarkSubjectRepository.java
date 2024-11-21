@@ -14,35 +14,28 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.entity.registry.entity;
+package se.swedenconnect.oidf.entity.registry.trustmark;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * EntityRepository is a JPA repository interface for accessing and performing
- * CRUD operations on {@link EntityEntity} entities stored in the database.
+ * CRUD operations on {@link TrustmarkSubjectEntity} entities stored in database.
  * <p>
  * It extends the {@link JpaRepository} interface which provides JPA related methods
  * for standard data access layers.
  *
- * @author David Goldring
+ * @author Per Fredrik Plars
  */
-public interface EntityRepository extends JpaRepository<EntityEntity, Long> {
+public interface TrustMarkSubjectRepository extends JpaRepository<TrustmarkSubjectEntity, Long> {
   /**
-   * Finds an entity by its subject.
+   *  Find trustmarksubject on issuer and trustmark
    *
-   * @param subject the unique subject of the entity to be found
-   * @return an Optional containing the entity if found, or an empty Optional if no entity with the given subject exists
+   * @param issuer Issuer of trustmarks
+   * @param trustmarkId Trustmarkid
+   * @return List of trustmarksubjects
    */
-  Optional<EntityEntity> findBySubject(String subject);
-
-  /**
-   * Find by Entity Issuer
-   * @param issuer Issuer
-   * @return List of Entity for this issuer
-   */
-  List<EntityEntity> findByIssuer(String issuer);
+  List<TrustmarkSubjectEntity> findByIssuerAndTrustmarkId(final String issuer, final String trustmarkId);
 }
