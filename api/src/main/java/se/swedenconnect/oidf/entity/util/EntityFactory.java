@@ -1,17 +1,18 @@
 /*
- * Copyright 2024 Sweden Connect.
+ * Copyright 2024 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 package se.swedenconnect.oidf.entity.util;
 
@@ -118,14 +119,30 @@ public class EntityFactory {
         return createDefaultEntity(ISSUER_1,subject);
     }
 
+    /**
+     * Getting a test json
+     * @param issuer Issuer id to set in json
+     * @param subject Subject id to set in json
+     * @return Json
+     */
     public static String createDefaultJsonEntity(String issuer,String subject) {
         return entityJsonData.formatted(issuer, subject);
     }
 
+    /**
+     * Getting a test json
+     * @return Json
+     */
     public static String createDefaultJsonEntity() {
         return entityJsonData.formatted(ISSUER_1, SUBJECT_1);
     }
 
+    /**
+     * Creating a full EntityObject
+     * @param issuer Issuer set in entityobject
+     * @param subject Subject set in entityobject
+     * @return Entity object with selected issuer and subject
+     */
     public static Entity createDefaultEntity(String issuer,String subject) {
 
         try {

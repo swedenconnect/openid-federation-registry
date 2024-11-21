@@ -405,6 +405,7 @@
           </dependencies>
           <configuration>
             <excludes>**/test/**/*</excludes>
+            <excludeGeneratedSources>true</excludeGeneratedSources>
             <checkstyleRules>
               <module name="Checker">
                 <module name="Header">
@@ -436,7 +437,7 @@
             <logViolationsToConsole>true</logViolationsToConsole>
             <failOnViolation>false</failOnViolation>
             <failsOnError>false</failsOnError>
-            <skip>true</skip>
+            <skip>false</skip>
           </configuration>
         </plugin>
       </plugins>
