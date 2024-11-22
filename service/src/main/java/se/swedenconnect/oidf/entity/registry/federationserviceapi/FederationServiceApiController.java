@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * FederationService API
@@ -37,14 +38,14 @@ import java.util.Optional;
 @RequestMapping("/api/v1/federationservice")
 public class FederationServiceApiController {
 
-  private final FederationServiceApiService federationServiceApiService;
+  private final FederationApiService federationApiService;
 
   /**
    * FederationService API
-   * @param federationServiceApiService FederationService
+   * @param federationApiService FederationService
    */
-  public FederationServiceApiController(final FederationServiceApiService federationServiceApiService) {
-    this.federationServiceApiService = federationServiceApiService;
+  public FederationServiceApiController(final FederationApiService federationApiService) {
+    this.federationApiService = federationApiService;
   }
 
   /**
@@ -54,13 +55,13 @@ public class FederationServiceApiController {
    * @param subject Subject is optional
    * @return SignedJWT with a claim for trust_mark
    */
-  @GetMapping(value="/trust_mark_sub_record", produces = "application/jwt")
+  @GetMapping(value="/trust_mark", produces = "application/jwt")
   public String trustMarkRecord(
       @RequestParam(name="iss") final String issuer,
       @RequestParam(name="trustmark_id") final String trustmarkId,
       @RequestParam(name="sub", required = false) final String subject){
 
-    return federationServiceApiService.trustMarkRecord(new EntityID(issuer),trustmarkId, Optional.ofNullable(subject));
+    return federationApiService.trustMarkRecord(new EntityID(issuer),trustmarkId, Optional.ofNullable(subject));
   }
 
   /**
@@ -69,8 +70,8 @@ public class FederationServiceApiController {
    * @return SignedJWT with a claim for policy_record
    */
   @GetMapping(value="/policy_record", produces = "application/jwt")
-  public String policyRecord(@RequestParam(name="policy_id") final String policyId){
-    return federationServiceApiService.policyRecord(policyId);
+  public String policyRecord(@RequestParam(name="policy_id") final UUID policyId){
+    return federationApiService.policyRecord(policyId);
   }
 
   /**
@@ -80,7 +81,7 @@ public class FederationServiceApiController {
    */
   @GetMapping(value="/entity_record", produces = "application/jwt")
   public String entityRecord(@RequestParam(name="iss") final String issuer){
-    return federationServiceApiService.entityRecord(new EntityID(issuer));
+    return federationApiService.entityRecord(new EntityID(issuer));
   }
 
 

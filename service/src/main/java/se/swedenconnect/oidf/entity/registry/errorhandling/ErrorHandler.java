@@ -21,10 +21,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
@@ -43,10 +45,29 @@ import java.util.Optional;
 @ControllerAdvice
 public class ErrorHandler extends ResponseEntityExceptionHandler {
 
+  /**
+   * Mapping IllegalArgumentException to 400 BAD_REQUEST
+   * @param e Injected IllegalArgumentException
+   * @param request WebRequest
+   * @return Response object with error and error_description
+   */
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<Object> handle(IllegalArgumentException e,final WebRequest request){
+    return handleExceptionInternal(e,
+        ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400),e.getMessage()),
+        new HttpHeaders(),
+        HttpStatusCode.valueOf(400),
+        request);
+  }
+
   @Override
-  protected ResponseEntity<Object> handleExceptionInternal(final Exception ex, final Object body,
+  protected ResponseEntity<Object> handleExceptionInternal(
+      final Exception ex,
+      final Object body,
       final HttpHeaders headers,
-      final HttpStatusCode statusCode, final WebRequest request) {
+      final HttpStatusCode statusCode,
+      final WebRequest request) {
+
     if (statusCode.is5xxServerError()) {
       log.error("Error serving request:'%s'".formatted(ex.getMessage()), ex);
     }

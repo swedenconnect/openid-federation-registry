@@ -35,7 +35,6 @@ components:
           type: string
           description: The json object describing the Policy
 
-
     entity:
       type: object
       description: A representation of an EntityRecord.
@@ -82,27 +81,8 @@ components:
               description: A list of cryptographic keys in JWKS format.
               items:
                 type: object
-                properties:
-                  kty:
-                    type: string
-                    nullable: true
-                    description: The type of cryptographic key, e.g., "RSA".
-                  kid:
-                    type: string
-                    nullable: true
-                    description: The identifier of the key.
-                  use:
-                    type: string
-                    nullable: true
-                    description: The intended use of the key, e.g., "sig" for signing.
-                  n:
-                    type: string
-                    nullable: true
-                    description: The modulus of the RSA key, Base64URL-encoded.
-                  e:
-                    type: string
-                    nullable: true
-                    description: The exponent of the RSA key, Base64URL-encoded.
+                additionalProperties: true
+
       required:
         - issuer
         - subject

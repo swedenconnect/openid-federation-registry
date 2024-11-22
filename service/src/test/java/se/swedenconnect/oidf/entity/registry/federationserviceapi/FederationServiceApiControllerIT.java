@@ -1,5 +1,6 @@
 package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
@@ -16,13 +17,18 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.entity.util.EntityFactory;
 import se.swedenconnect.oidf.registry.api.model.Entity;
+import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
 import java.text.ParseException;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
- * oidf-entity-registry
+ * Testing federation api
  *
  * @author Per Fredrik Plars
  */
@@ -44,39 +50,111 @@ class FederationServiceApiControllerIT {
   @ServiceConnection
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
 
-
-  @BeforeEach
-  void setUp() {
-  }
-
-  @AfterEach
-  void tearDown() {
+  @Test
+  void trustMarkRecordNotFound() {
+    final ResponseEntity<String> fedRes = restTemplate
+        .getForEntity("/api/v1/federationservice/trust_mark"
+            + "?iss=http://tmi.digg.se&trustmark_id=http://www.digg.se/loa", String.class);
+    if(fedRes.getStatusCode().isError()){
+      log.error(fedRes.getBody());
+    }
+    assertThat(HttpStatus.NOT_FOUND).isEqualTo(fedRes.getStatusCode());
   }
 
   @Test
-  void trustMarkRecord() {
+  void policyRecordSuccess() throws ParseException {
+    final PolicyRecord policy = new PolicyRecord.Builder()
+        .name("policy-name")
+        .policy(" {\"policy\":\"default\"}")
+        .build();
 
+    final ResponseEntity<PolicyRecord> response = this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+    final ResponseEntity<String> fedRes = restTemplate
+        .getForEntity("/api/v1/federationservice/policy_record?policy_id="+response.getBody().getPolicyId(), String.class);
+    if(fedRes.getStatusCode().isError()){
+      log.error(fedRes.getBody());
+    }
+    assertThat(fedRes.getStatusCode()).isEqualTo(HttpStatus.OK);
+    
+
+    final SignedJWT signedJWT  = SignedJWT.parse(fedRes.getBody());
+    assertEquals(new JOSEObjectType("policy-record+jwt"),signedJWT.getHeader().getType());
+    assertNotNull(signedJWT.getHeader().getKeyID());
+    final Map<String,Object> claim = signedJWT.getJWTClaimsSet().getJSONObjectClaim("policy-record");
+    assertNotNull(claim);
+  }
+
+  @Test
+  void policyRecordBadRequest() throws ParseException {
+
+    final ResponseEntity<String> fedRes = restTemplate
+        .getForEntity("/api/v1/federationservice/policy_record?policy_id=notAnUuid", String.class);
+    if(fedRes.getStatusCode().isError()){
+      log.error(fedRes.getBody());
+    }
+    assertThat(HttpStatus.BAD_REQUEST).isEqualTo(fedRes.getStatusCode());
+
+  }
+
+  @Test
+  void policyRecordNotFound() throws ParseException {
+
+    final ResponseEntity<String> fedRes = restTemplate
+        .getForEntity("/api/v1/federationservice/policy_record?policy_id=" + UUID.randomUUID(), String.class);
+    if(fedRes.getStatusCode().isError()){
+      log.error(fedRes.getBody());
+    }
+    assertThat(HttpStatus.NOT_FOUND).isEqualTo(fedRes.getStatusCode());
 
 
   }
 
   @Test
-  void policyRecord() {
-  }
-
-  @Test
-  void entityRecord() throws ParseException {
-    final Entity entity = EntityFactory.createDefaultEntity("http://tmi.digg.se","http://sub.digg.se");
+  void entityRecordSuccess() throws ParseException {
+    final String issuer = "http://tmi.digg.se/" + UUID.randomUUID();
+    final Entity entity = EntityFactory.createDefaultEntity(issuer,"http://sub.digg.se");
     final ResponseEntity<Entity> createResponse = restTemplate.postForEntity("/registry/v1/entities", entity, Entity.class);
     assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
     final ResponseEntity<String> response = restTemplate
-        .getForEntity("/api/v1/federationservice/entity_record?iss=http://tmi.digg.se", String.class);
-    System.out.println(response);
-    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    final SignedJWT signedJWT = SignedJWT.parse(response.getBody());
+        .getForEntity("/api/v1/federationservice/entity_record?iss="+issuer, String.class);
 
-    System.out.println(signedJWT.getJWTClaimsSet().toString(true));
+    if(response.getStatusCode().isError()){
+      log.error(response.getBody());
+    }
+    assertThat(HttpStatus.OK).isEqualTo(response.getStatusCode());
+
+    final SignedJWT signedJWT  = SignedJWT.parse(response.getBody());
+    assertEquals(new JOSEObjectType("entity-record+jwt"),signedJWT.getHeader().getType());
+    assertNotNull(signedJWT.getHeader().getKeyID());
+    final Map<String,Object> claim = signedJWT.getJWTClaimsSet().getJSONObjectClaim("entity-records");
+    assertNotNull(claim);
+
+  }
+
+  @Test
+  void entityRecordNotFound() throws ParseException {
+
+    final ResponseEntity<String> response = restTemplate
+        .getForEntity("/api/v1/federationservice/entity_record?iss=http://notfound.digg.se", String.class);
+    if(response.getStatusCode().isError()){
+      log.error(response.getBody());
+    }
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
+  }
+
+  @Test
+  void entityRecordBadRequest() throws ParseException {
+
+    final ResponseEntity<String> response = restTemplate
+        .getForEntity("/api/v1/federationservice/entity_record?iss=f", String.class);
+    if(response.getStatusCode().isError()){
+      log.error(response.getBody());
+    }
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
   }
 }

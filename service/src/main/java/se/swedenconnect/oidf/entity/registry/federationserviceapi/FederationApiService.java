@@ -39,9 +39,11 @@ import se.swedenconnect.oidf.entity.registry.policy.PolicyRepository;
 import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectRepository;
 import se.swedenconnect.oidf.entity.registry.trustmark.TrustmarkSubjectEntity;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Service to collect data to federation services
@@ -49,7 +51,7 @@ import java.util.Optional;
  * @author Per Fredrik Plars
  */
 @Slf4j
-public class FederationServiceApiService {
+public class FederationApiService {
 
   private final ObjectMapper mapper = new ObjectMapper();
   private final JWK signKey;
@@ -64,7 +66,7 @@ public class FederationServiceApiService {
    * @param policyRepository PolicyRepository
    * @param trustMarkSubjectRepository TrustMarkSubjectRepository
    */
-  public FederationServiceApiService(final EntityRepository entityRepository, final JWK signKey,
+  public FederationApiService(final EntityRepository entityRepository, final JWK signKey,
       final PolicyRepository policyRepository,
       final TrustMarkSubjectRepository trustMarkSubjectRepository) {
     this.entityRepository = entityRepository;
@@ -89,7 +91,7 @@ public class FederationServiceApiService {
           "Unable to find entity for issuer:'%s'".formatted(issuer));
     }
     try {
-      return signJsonRecords("entity-records",
+      return signJsonRecords("entity-record",
           recordEntity.stream().map(EntityEntity::getEntity).toList()).serialize();
     }
     catch (JOSEException e) {
@@ -110,13 +112,15 @@ public class FederationServiceApiService {
       final Optional<String> subject) {
     Optional.ofNullable(issuer)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Issuer is mandatory"));
-    Optional.ofNullable(trustmarkId).filter(String::isBlank)
+    Optional.ofNullable(trustmarkId)
+        .filter(id -> !id.isBlank())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "trustmarkId is mandatory"));
 
     final List<TrustmarkSubjectEntity> trustmarkSubjectEntities =
         this.trustMarkSubjectRepository.findByIssuerAndTrustmarkId(issuer.getValue(),trustmarkId)
             .stream()
-            .filter(trustmarkSubjectEntity -> subject.isEmpty() || trustmarkSubjectEntity.equals(subject.get()))
+            .filter(trustmarkSubjectEntity -> subject.isEmpty() ||
+                trustmarkSubjectEntity.getSubject().equals(subject.get()))
             .toList();
 
     if (trustmarkSubjectEntities.isEmpty()) {
@@ -125,7 +129,7 @@ public class FederationServiceApiService {
               .formatted(issuer,trustmarkId,subject));
     }
     try {
-      return signJsonRecords("trustmarks-record",
+      return signJsonRecords("trustmark-record",
           trustmarkSubjectEntities.stream().map(TrustmarkSubjectEntity::getTrustmarksubject).toList()).serialize();
     }
     catch (JOSEException e) {
@@ -136,22 +140,18 @@ public class FederationServiceApiService {
 
   /**
    * Getting one policyrecord according to policyid
-   * @param policyId External policyid
+   * @param policyId External policyid, expect UUID format
    * @return Signed JWT containing PolicyRecords
    */
-  public String policyRecord(final String policyId) {
+  public String policyRecord(final UUID policyId) {
 
-    final String externalID = Optional.ofNullable(policyId)
-        .filter(String::isBlank)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "policyId is mandatory"));
-
-    final PolicyEntity policyEntity = this.policyRepository.findByExternalId(externalID)
+    final PolicyEntity policyEntity = this.policyRepository.findByExternalId(policyId.toString())
         .orElseThrow(() ->
             new ResponseStatusException(HttpStatus.NOT_FOUND,
-                "Unable to find policy for id:'%s'".formatted(externalID)));
+                "Unable to find policy for id:'%s'".formatted(policyId.toString())));
 
     try {
-      return signJsonRecords("policy-records", List.of(policyEntity.getPolicy())).serialize();
+      return signJsonRecords("policy-record", List.of(policyEntity.getPolicy())).serialize();
     }
     catch (JOSEException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
@@ -190,6 +190,9 @@ public class FederationServiceApiService {
     final RSASSASigner signer = new RSASSASigner(this.signKey.toRSAKey());
     final JWTClaimsSet claims = new JWTClaimsSet.Builder()
         .claim(claimName, Map.of("data",jsonClaims))
+        .issueTime(new Date())
+        .jwtID(UUID.randomUUID().toString())
+        .issuer("oidf-registry")
         .build();
 
     final JWSAlgorithm alg = signer.supportedJWSAlgorithms().stream().findFirst().orElseThrow();
