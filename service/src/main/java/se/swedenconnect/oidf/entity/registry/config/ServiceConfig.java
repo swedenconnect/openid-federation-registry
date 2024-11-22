@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Primary;
 import se.swedenconnect.oidf.entity.registry.entity.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.entity.EntityService;
 import se.swedenconnect.oidf.entity.registry.entity.JpaEntityService;
-import se.swedenconnect.oidf.entity.registry.federationserviceapi.FederationServiceApiService;
+import se.swedenconnect.oidf.entity.registry.federationserviceapi.FederationApiService;
 import se.swedenconnect.oidf.entity.registry.policy.JpaPolicyService;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyRepository;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyService;
@@ -95,9 +95,9 @@ public class ServiceConfig {
    * @throws ParseException If there is some trouble parsing configuration
    */
   @Bean
-  public FederationServiceApiService federationServiceApiService(RegistryProperties registryProperties)
+  public FederationApiService federationServiceApiService(RegistryProperties registryProperties)
       throws ParseException {
-      return new FederationServiceApiService(entityRepository,
+      return new FederationApiService(entityRepository,
           registryProperties.federationserviceapiSignKeyJWK(),
           policyRepository,trustMarkSubjectRepository);
   }
