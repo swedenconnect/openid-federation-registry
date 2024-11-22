@@ -90,6 +90,7 @@ public class EntityControllerTest {
     entity.setSubject(subject);
     entity.setIssuer("http://issuer");
     entity.setPolicyId("policyID");
+    entity.setIssuer("http://iss.example.se");
 
     mockMvc.perform(post("/registry/v1/entities")
             .contentType(MediaType.APPLICATION_JSON)
@@ -119,6 +120,7 @@ public class EntityControllerTest {
     entity.setSubject(subject);
     entity.setIssuer("http://issuer");
     entity.setPolicyId("policyID");
+
 
     mockMvc.perform(post("/registry/v1/entities")
             .contentType(MediaType.APPLICATION_JSON)
@@ -153,6 +155,7 @@ public class EntityControllerTest {
     entity.setSubject(subject);
     entity.setIssuer("http://issuer");
     entity.setPolicyId("policyID");
+
 
     mockMvc.perform(post("/registry/v1/entities")
             .contentType(MediaType.APPLICATION_JSON)

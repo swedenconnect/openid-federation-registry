@@ -22,6 +22,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -36,16 +37,16 @@ import lombok.ToString;
 @Setter
 @Entity
 @ToString
-@Table(name = "entities")
+@Table(name = "entities",uniqueConstraints = { @UniqueConstraint(columnNames = { "issuer", "subject" }) })
 public class EntityEntity {
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
 
-  @Column
+  @Column(nullable = false)
   private String issuer;
 
-  @Column
+  @Column(nullable = false)
   private String subject;
 
   @Column(columnDefinition = "TEXT")

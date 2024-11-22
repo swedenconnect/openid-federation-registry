@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
-@ActiveProfiles("test")
+@ActiveProfiles("h2")
 class PolicyRepositoryTest {
 
   @Autowired
@@ -33,34 +33,26 @@ class PolicyRepositoryTest {
 
   @Test
   public void testSaveAndFindPolicy() {
-    PolicyEntity policy = new PolicyEntity();
+    final PolicyEntity policy = new PolicyEntity();
     policy.setName("Test Policy");
     policy.setPolicy("{ \"key\": \"value\" }");
 
-    policyRepository.save(policy);
+    this.policyRepository.save(policy);
 
-    PolicyEntity foundPolicy = policyRepository.findById(policy.getId()).orElse(null);
+    final PolicyEntity foundPolicy = this.policyRepository.findById(policy.getId()).orElse(null);
 
     assertThat(foundPolicy).isNotNull();
     assertThat(foundPolicy.getId()).isEqualTo(policy.getId());
     assertThat(foundPolicy.getName()).isEqualTo(policy.getName());
     assertThat(foundPolicy.getPolicy()).isEqualTo(policy.getPolicy());
+
+    final PolicyEntity foundPolicyByExtID = this.policyRepository.findByExternalId(policy.getExternalId())
+        .orElse(null);
+
+    assertThat(foundPolicyByExtID).isNotNull();
+
   }
 
-  @Test
-  public void testUniqueNameConstraint() {
-    PolicyEntity policy1 = new PolicyEntity();
-    policy1.setName("Unique Policy");
-    policy1.setPolicy("{ \"key\": \"value1\" }");
 
-    policyRepository.save(policy1);
-
-    PolicyEntity policy2 = new PolicyEntity();
-    policy2.setName("Unique Policy");
-    policy2.setPolicy("{ \"key\": \"value2\" }");
-
-    // Expect a DataIntegrityViolationException as the unique constraint is violated
-    assertThatThrownBy(() -> policyRepository.saveAndFlush(policy2)).isInstanceOf(DataIntegrityViolationException.class);
-  }
 
 }

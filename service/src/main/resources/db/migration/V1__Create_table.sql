@@ -13,16 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-CREATE TABLE if not exists entities(
-   id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
-   subject VARCHAR(255) NOT NULL UNIQUE,
-   entity JSON
-);
-ALTER TABLE entities ADD UNIQUE (subject);
 
-CREATE TABLE IF NOT EXISTS policies (
-   id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT,
-   name VARCHAR(255) NOT NULL UNIQUE,
-   policy JSON
-);
-ALTER TABLE policies ADD UNIQUE (name);
+CREATE TABLE if not exists entities (
+    id bigint not null PRIMARY KEY AUTO_INCREMENT,
+    entity TEXT  not null,
+    issuer varchar(255)  not null,
+    subject varchar(255)  not null
+) engine=InnoDB;
+
+CREATE TABLE if not exists policies (
+    id bigint not null PRIMARY KEY AUTO_INCREMENT,
+    external_id varchar(255) not null,
+    name varchar(255) not null,
+    policy TEXT not null
+) engine=InnoDB;
+
+CREATE TABLE if not exists trustmark_subject (
+    id bigint not null PRIMARY KEY AUTO_INCREMENT,
+    issuer varchar(255) not null,
+    subject varchar(255) not null,
+    trustmark_id varchar(255)  not null,
+    trustmarksubject TEXT  not null
+) engine=InnoDB;
+
+alter table if exists entities
+   add constraint entities_const unique (issuer, subject);
+
+alter table if exists policies
+   add constraint policies_const unique (external_id);
+
+alter table if exists trustmark_subject
+   add constraint trustmark_subject_const unique (issuer, trustmark_id, subject);

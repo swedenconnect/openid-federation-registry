@@ -16,10 +16,12 @@
 package se.swedenconnect.oidf.entity.registry.entity;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Optional;
@@ -31,7 +33,7 @@ import java.util.Optional;
  * @author David Goldring
  */
 @DataJpaTest
-@ActiveProfiles("test")
+@ActiveProfiles("h2")
 public class EntityRepositoryTest {
 
   @Autowired
@@ -48,6 +50,7 @@ public class EntityRepositoryTest {
     EntityEntity entity = new EntityEntity();
     entity.setSubject("https://example.com/subject/1");
     entity.setEntity("{\"name\": \"Example Entity\"}");
+    entity.setIssuer("http://iss");
 
     // When
     EntityEntity savedEntity = entityRepository.save(entity);
@@ -55,6 +58,27 @@ public class EntityRepositoryTest {
     // Then
     assertThat(savedEntity.getSubject()).isEqualTo("https://example.com/subject/1");
     assertThat(savedEntity.getEntity()).isEqualTo("{\"name\": \"Example Entity\"}");
+  }
+
+
+  @Test
+  public void testSaveEntityDuplicate() {
+    // Given
+    final EntityEntity entity = new EntityEntity();
+    entity.setSubject("https://example.com/subject/1");
+    entity.setEntity("{\"name\": \"Example Entity\"}");
+    entity.setIssuer("http://iss");
+
+    // When
+    final EntityEntity savedEntity = entityRepository.save(entity);
+
+
+    final EntityEntity entityDuplicate = new EntityEntity();
+    entityDuplicate.setSubject("https://example.com/subject/1");
+    entityDuplicate.setEntity("{\"name\": \"Example Entity\"}");
+    entityDuplicate.setIssuer("http://iss");
+    assertThatThrownBy(() -> this.entityRepository.saveAndFlush(entityDuplicate)).isInstanceOf(
+        DataIntegrityViolationException.class).hasMessageStartingWith("could not execute statement [Unique index or primary key violation");;
   }
 
   /**
@@ -68,6 +92,8 @@ public class EntityRepositoryTest {
     EntityEntity entity = new EntityEntity();
     entity.setSubject("https://example.com/subject/2");
     entity.setEntity("{\"name\": \"Another Entity\"}");
+    entity.setIssuer("http://iss");
+
     EntityEntity savedEntity = entityRepository.save(entity);
 
     // When
@@ -91,6 +117,8 @@ public class EntityRepositoryTest {
     EntityEntity entity = new EntityEntity();
     entity.setSubject("https://example.com/subject/3");
     entity.setEntity("{\"name\": \"Entity to be deleted\"}");
+    entity.setIssuer("http://iss");
+
     EntityEntity savedEntity = entityRepository.save(entity);
 
     // When

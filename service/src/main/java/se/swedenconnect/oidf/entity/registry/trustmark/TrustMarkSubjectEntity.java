@@ -22,6 +22,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -36,21 +37,22 @@ import lombok.ToString;
 @Setter
 @Entity
 @ToString
-@Table(name = "trustmark_subject")
-public class TrustmarkSubjectEntity {
+@Table(name = "trustmark_subject",
+    uniqueConstraints = { @UniqueConstraint(columnNames = { "issuer", "trustmarkId","subject" }) })
+public class TrustMarkSubjectEntity {
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
 
-  @Column
+  @Column(nullable = false)
   private String issuer;
 
-  @Column
+  @Column(nullable = false)
   private String trustmarkId;
 
-  @Column
+  @Column(nullable = false)
   private String subject;
 
-  @Column(columnDefinition = "TEXT")
+  @Column(columnDefinition = "TEXT",nullable = false)
   private String trustmarksubject;
 }

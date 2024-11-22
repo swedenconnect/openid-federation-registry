@@ -80,7 +80,7 @@ public class PolicyControllerIT {
     response = this.restTemplate.postForEntity("/registry/v1/entities", policy, PolicyRecord.class);
 
     // Assert
-    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
   }
 
   /**

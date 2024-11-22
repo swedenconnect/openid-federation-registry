@@ -22,14 +22,14 @@ import java.util.List;
 
 /**
  * EntityRepository is a JPA repository interface for accessing and performing
- * CRUD operations on {@link TrustmarkSubjectEntity} entities stored in database.
+ * CRUD operations on {@link TrustMarkSubjectEntity} entities stored in database.
  * <p>
  * It extends the {@link JpaRepository} interface which provides JPA related methods
  * for standard data access layers.
  *
  * @author Per Fredrik Plars
  */
-public interface TrustMarkSubjectRepository extends JpaRepository<TrustmarkSubjectEntity, Long> {
+public interface TrustMarkSubjectRepository extends JpaRepository<TrustMarkSubjectEntity, Long> {
   /**
    *  Find trustmarksubject on issuer and trustmark
    *
@@ -37,5 +37,5 @@ public interface TrustMarkSubjectRepository extends JpaRepository<TrustmarkSubje
    * @param trustmarkId Trustmarkid
    * @return List of trustmarksubjects
    */
-  List<TrustmarkSubjectEntity> findByIssuerAndTrustmarkId(final String issuer, final String trustmarkId);
+  List<TrustMarkSubjectEntity> findByIssuerAndTrustmarkId(final String issuer, final String trustmarkId);
 }
