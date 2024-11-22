@@ -16,7 +16,6 @@
  */
 package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,8 +35,8 @@ import se.swedenconnect.oidf.entity.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.entity.registry.entity.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyEntity;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyRepository;
-import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectRepository;
 import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectEntity;
+import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectRepository;
 
 import java.util.Date;
 import java.util.List;

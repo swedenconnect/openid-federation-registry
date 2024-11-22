@@ -30,15 +30,10 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.entity.util.EntityFactory;
 import se.swedenconnect.oidf.registry.api.model.Entity;
-import se.swedenconnect.oidf.registry.api.model.EntityHosted;
-import se.swedenconnect.oidf.registry.api.model.EntityJwks;
-import se.swedenconnect.oidf.registry.api.model.EntityHostedTrustMarkSourcesInner;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
