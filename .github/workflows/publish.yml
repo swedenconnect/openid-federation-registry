@@ -25,4 +25,4 @@ jobs:
           java-version: '21'
           cache: 'maven'
       - run: mvn clean install
-      - run: cd oidf-services; DOCKER_REPO=ghcr.io mvn clean package jib:build
+      - run: cd service; DOCKER_REPO=ghcr.io mvn clean package jib:build
