@@ -143,7 +143,7 @@ public class EntityFactory {
      * @param subject Subject set in entityobject
      * @return Entity object with selected issuer and subject
      */
-    public static Entity createDefaultEntity(String issuer,String subject) {
+    public static Entity createDefaultEntity(String issuer, String subject) {
 
         try {
             return mapper.readValue(entityJsonData.formatted(issuer, subject), Entity.class);

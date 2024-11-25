@@ -76,7 +76,11 @@ public class JpaPolicyService implements PolicyService {
   @Override
   public PolicyRecord get(final String policy_id) {
     return this.policyRepository.findByExternalId(policy_id)
-        .map(dao -> new PolicyRecord.Builder().name(dao.getName()).policyId(policy_id).policy(dao.getPolicy()).build())
+        .map(entity ->  PolicyRecord.builder()
+            .name(entity.getName())
+            .policyId(entity.getExternalId())
+            .policy(entity.getPolicy())
+            .build())
         .orElse(null);
   }
 

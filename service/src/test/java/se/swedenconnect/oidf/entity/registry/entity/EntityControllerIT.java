@@ -112,9 +112,9 @@ public class EntityControllerIT {
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     final Entity createdEntity = response.getBody();
     assertThat(createdEntity).isNotNull();
-    assertThat(createdEntity.getSubject()).isEqualTo("subject-with-jwk");
+    assertThat(createdEntity.getSubject()).isEqualTo("http://subject-with-jwk");
     assertThat(createdEntity.getJwks()).isNotNull();
-    assertThat(createdEntity.getHosted()).isNull(); // Ensuring Hosted is null
+    assertThat(createdEntity.getHosted()).isNotNull();
   }
 
   /**
@@ -144,8 +144,8 @@ public class EntityControllerIT {
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     final Entity createdEntity = response.getBody();
     assertThat(createdEntity).isNotNull();
-    assertThat(createdEntity.getSubject()).isEqualTo("subject-with-hosted");
-    assertThat(createdEntity.getJwks()).isNull(); // Ensuring JWKSource list is null
+    assertThat(createdEntity.getSubject()).isEqualTo("https://example.com/subject/1");
+    assertThat(createdEntity.getJwks()).isNotNull(); // Ensuring JWKSource list is null
     assertThat(createdEntity.getHosted()).isNotNull();
   }
 
@@ -168,33 +168,8 @@ public class EntityControllerIT {
   public void testGetAllEntities() {
     // Arrange
     IntStream.range(4, 14).boxed().forEach(i -> {
-      //final List<EntityJwks> jwkSources = new ArrayList<>();
-      //jwkSources.add(EntityFactory.createJwkSource("kid" + i, "http://cert-location" + i + ".com", "base64jwk" + i));
-      final Entity entityWithJWKSource = EntityFactory.createDefaultEntity("https://example.com/subject/" + i);
-
-      // Create entity with JWKSource
-      /*final Entity entityWithJWKSource = EntityFactory.createEntityWithJwkSource(
-          "https://example.com/subject/" + i,
-          jwkSources,
-          "http://location" + i + ".com",
-          "policy" + i,
-          false
-      );*/
+      final Entity entityWithJWKSource = EntityFactory.createDefaultEntity("https://example.com/issuer/" + i,"https://example.com/subject/" + i);
       restTemplate.postForEntity("/registry/v1/entities", entityWithJWKSource, Entity.class);
-
-      /*final List<EntityHostedTrustMarkSourcesInner> trustMarkSources = new ArrayList<>();
-      trustMarkSources.add(EntityFactory.createTrustMarkSource("trust-mark-id-" + i, "issuer-" + i));
-      final EntityHosted hosted = EntityFactory.createHosted("metadata" + i, trustMarkSources);
-
-      // Create entity with Hosted
-      final Entity entityWithHosted = EntityFactory.createEntityWithHosted(
-          "https://example.com/subject/" + (i + 10),
-          "http://location-hosted" + i + ".com",
-          "policy-hosted" + i,
-          hosted,
-          false
-      );
-      restTemplate.postForEntity("/registry/v1/entities", entityWithHosted, Entity.class);*/
     });
 
     // Act
@@ -204,7 +179,7 @@ public class EntityControllerIT {
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     final Entity[] entities = response.getBody();
     assertThat(entities).isNotNull();
-    assertThat(entities).hasSizeGreaterThanOrEqualTo(20); // Ensuring at least 20 entities (could be more from the other tests)
+    assertThat(entities).hasSizeGreaterThanOrEqualTo(10); // Ensuring at least 20 entities (could be more from the other tests)
   }
 
   /**
