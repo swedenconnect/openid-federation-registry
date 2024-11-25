@@ -47,41 +47,41 @@ public class TrustMarkSubjectRepositoryTest {
   @Test
   public void testSaveEntity() {
     // Given
-    TrustMarkSubjectEntity tmi = new TrustMarkSubjectEntity();
-    tmi.setSubject("https://example.com/subject/1");
-    tmi.setTrustmarksubject("{\"name\": \"Example Entity\"}");
-    tmi.setIssuer("http://iss");
-    tmi.setTrustmarkId("http://tmid.example.se");
+    final TrustMarkSubjectEntity tmi =  TrustMarkSubjectEntity.builder()
+        .issuer("http://iss")
+        .subject("http://sub")
+        .trustmarkId("http://tmid")
+        .trustmarksubjectJson("{\"name\": \"Example Entity\"}")
+        .build();
 
     // When
     TrustMarkSubjectEntity savedtmi = trustMarkSubjectRepository.save(tmi);
 
     // Then
-    assertThat(savedtmi.getSubject()).isEqualTo("https://example.com/subject/1");
-    assertThat(savedtmi.getTrustmarksubject()).isEqualTo("{\"name\": \"Example Entity\"}");
+    assertThat(savedtmi.getSubject()).isEqualTo("http://sub");
+    assertThat(savedtmi.getTrustmarksubjectJson()).isEqualTo("{\"name\": \"Example Entity\"}");
   }
 
 
   @Test
   public void testSaveEntityDuplicate() {
     // Given
-    final TrustMarkSubjectEntity tmi = new TrustMarkSubjectEntity();
-    tmi.setSubject("https://example.com/subject/1");
-    tmi.setTrustmarksubject("{\"name\": \"Example Entity\"}");
-    tmi.setIssuer("http://iss");
-    tmi.setTrustmarkId("http://tmid.example.se");
+    final TrustMarkSubjectEntity tmi =  TrustMarkSubjectEntity.builder()
+        .issuer("http://iss")
+        .subject("http://sub")
+        .trustmarkId("http://tmid")
+        .trustmarksubjectJson("{}")
+        .build();
 
     // When
     final TrustMarkSubjectEntity savedtmi = this.trustMarkSubjectRepository.save(tmi);
 
 
-    final TrustMarkSubjectEntity tmiDuplicate = new TrustMarkSubjectEntity();
-    tmiDuplicate.setSubject("https://example.com/subject/1");
-    tmiDuplicate.setTrustmarksubject("{\"name\": \"Example Entity\"}");
-    tmiDuplicate.setIssuer("http://iss");
-    tmiDuplicate.setTrustmarkId("http://tmid.example.se");
+    final TrustMarkSubjectEntity tmiDuplicate = tmi.toBuilder().id(0).build();
+
     assertThatThrownBy(() -> this.trustMarkSubjectRepository.saveAndFlush(tmiDuplicate)).isInstanceOf(
-        DataIntegrityViolationException.class).hasMessageStartingWith("could not execute statement [Unique index or primary key violation");
+        DataIntegrityViolationException.class)
+        .hasMessageStartingWith("could not execute statement [Unique index or primary key violation");
   }
 
   /**
@@ -92,11 +92,12 @@ public class TrustMarkSubjectRepositoryTest {
   @Test
   public void testFindById() {
     // Given
-    TrustMarkSubjectEntity tmi = new TrustMarkSubjectEntity();
-    tmi.setSubject("https://example.com/subject/2");
-    tmi.setTrustmarksubject("{\"name\": \"Another Entity\"}");
-    tmi.setIssuer("http://iss");
-    tmi.setTrustmarkId("http://tmid.example.se");
+    final TrustMarkSubjectEntity tmi =  TrustMarkSubjectEntity.builder()
+        .issuer("http://iss")
+        .subject("http://sub")
+        .trustmarkId("http://tmid")
+        .trustmarksubjectJson("{}")
+        .build();
 
     TrustMarkSubjectEntity savedtmi = this.trustMarkSubjectRepository.save(tmi);
 
@@ -107,7 +108,7 @@ public class TrustMarkSubjectRepositoryTest {
     assertThat(foundtmi).isPresent();
     assertThat(foundtmi.get().getId()).isEqualTo(savedtmi.getId());
     assertThat(foundtmi.get().getSubject()).isEqualTo(savedtmi.getSubject());
-    assertThat(foundtmi.get().getTrustmarksubject()).isEqualTo(savedtmi.getTrustmarksubject());
+    assertThat(foundtmi.get().getTrustmarksubjectJson()).isEqualTo(savedtmi.getTrustmarksubjectJson());
   }
 
   /**
@@ -118,11 +119,12 @@ public class TrustMarkSubjectRepositoryTest {
   @Test
   public void testDeleteEntity() {
     // Given
-    TrustMarkSubjectEntity tmi = new TrustMarkSubjectEntity();
-    tmi.setSubject("https://example.com/subject/3");
-    tmi.setTrustmarksubject("{\"name\": \"Entity to be deleted\"}");
-    tmi.setIssuer("http://iss");
-    tmi.setTrustmarkId("http://tmid.example.se");
+    final TrustMarkSubjectEntity tmi =  TrustMarkSubjectEntity.builder()
+        .issuer("http://iss")
+        .subject("http://sub")
+        .trustmarkId("http://tmid")
+        .trustmarksubjectJson("{}")
+        .build();
 
     TrustMarkSubjectEntity savedtmi = this.trustMarkSubjectRepository.save(tmi);
 

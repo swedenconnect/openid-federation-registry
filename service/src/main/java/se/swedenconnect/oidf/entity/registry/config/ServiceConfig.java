@@ -28,7 +28,9 @@ import se.swedenconnect.oidf.entity.registry.federationserviceapi.FederationApiS
 import se.swedenconnect.oidf.entity.registry.policy.JpaPolicyService;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyRepository;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyService;
+import se.swedenconnect.oidf.entity.registry.trustmark.JpaTrustMarkSubjectService;
 import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectRepository;
+import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectService;
 
 import java.text.ParseException;
 
@@ -86,6 +88,17 @@ public class ServiceConfig {
   @Qualifier("jpaPolicyService")
   public PolicyService jpaPolicyService(final ObjectMapper objectMapper) {
     return new JpaPolicyService(this.policyRepository, objectMapper);
+  }
+
+  /**
+   * TrustMarkSubjectService
+   * @param objectMapper the ObjectMapper used for JSON conversion between Policy objects and their DAO representations.
+   * @return an instance of TrustMarkSubjectService.
+   */
+  @Bean
+  @Qualifier("jpaTrustMarkSubjectService")
+  public TrustMarkSubjectService jpaTrustMarkSubjectService(final ObjectMapper objectMapper) {
+    return new JpaTrustMarkSubjectService(this.trustMarkSubjectRepository, objectMapper);
   }
 
   /**

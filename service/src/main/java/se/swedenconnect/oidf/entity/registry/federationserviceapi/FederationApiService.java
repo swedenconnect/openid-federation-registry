@@ -129,7 +129,7 @@ public class FederationApiService {
     }
     try {
       return signJsonRecords("trustmark-record",
-          trustmarkSubjectEntities.stream().map(TrustMarkSubjectEntity::getTrustmarksubject).toList()).serialize();
+          trustmarkSubjectEntities.stream().map(TrustMarkSubjectEntity::getTrustmarksubjectJson).toList()).serialize();
     }
     catch (JOSEException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);

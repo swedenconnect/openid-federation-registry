@@ -14,16 +14,26 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.entity.registry.policy;
+package se.swedenconnect.oidf.entity.registry.trustmark;
 
 import se.swedenconnect.oidf.entity.registry.common.CrudService;
-import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
+import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
+
+import java.util.List;
 
 /**
- * PolicyService is an interface that extends the CrudService interface and provides
+ * TrustMarkSubjectService is an interface that extends the CrudService interface and provides
  * CRUD operations specifically for managing JSON Policy objects.
  *
- * @author David Goldring
+ * @author Per Fredrk Plars
  */
-public interface PolicyService extends CrudService<PolicyRecord, String> {
+public interface TrustMarkSubjectService extends CrudService<TrustMarkSubjectRecord, String> {
+   /**
+    * Getting all TrustMarkSubjectRecord for issuer and trustmarkid
+    * @param issuer Issuer entityid
+    * @param trustmarkId TrustmarkId
+    * @return List of TrustMarkSubjectRecord
+    */
+   List<TrustMarkSubjectRecord> getAll(String issuer,String trustmarkId);
+
 }

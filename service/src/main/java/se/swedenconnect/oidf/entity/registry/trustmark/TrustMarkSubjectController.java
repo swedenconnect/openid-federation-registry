@@ -14,13 +14,12 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.entity.registry.policy;
+package se.swedenconnect.oidf.entity.registry.trustmark;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,119 +29,104 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
-
-import java.util.List;
+import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
 
 /**
- * PolicyController is a REST controller for managing policies in the entity registry.
- * It provides endpoints for creating, updating, retrieving, and deleting policy records.
+ * TrustMarkController is a REST controller for managing policies in the entity registry. It provides endpoints for
+ * creating, updating, retrieving, and deleting trustMark records.
  * <p>
- * The controller utilizes {@link PolicyService} to perform the required operations.
+ * The controller utilizes {@link TrustMarkSubjectService} to perform the required operations.
  *
- * @author David Goldring
+ * @author Per Fredrik Plars
  */
 @Slf4j
 @RestController
-@RequestMapping("/registry/v1/policies")
-public class PolicyController {
+@RequestMapping("/registry/v1/trustmarksubject")
+public class TrustMarkSubjectController {
 
   /**
-   * The {@code policyService} is an instance of the {@link PolicyService} class.
+   * The {@code TrustMarkSubjectService} is an instance of the {@link TrustMarkSubjectService} class.
    */
-  private final PolicyService policyService;
+  private final TrustMarkSubjectService trustMarkSubjectService;
 
   /**
-   * Constructs a new PolicyController with the specified PolicyService implementation.
+   * Constructs a new TrustMarkController with the specified TrustMarkSubjectService implementation.
    *
-   * @param policyService the {@link PolicyService} implementation used for managing policy operations
+   * @param trustMarkSubjectService the {@link TrustMarkSubjectService} implementation used for managing trustMark
+   *     operations
    */
-  public PolicyController(@Qualifier("jpaPolicyService") PolicyService policyService) {
-    this.policyService = policyService;
+  public TrustMarkSubjectController(
+      @Qualifier("jpaTrustMarkSubjectService") TrustMarkSubjectService trustMarkSubjectService) {
+    this.trustMarkSubjectService = trustMarkSubjectService;
   }
 
   /**
-   * Creates a new policy in the entity registry.
+   * Creates a new trustMark in the entity registry.
    *
-   * @param policy a {@link PolicyRecord} object containing the details of the policy to be created
+   * @param trustMark a {@link TrustMarkSubjectRecord} object containing the details of the trustMark to be created
    * @param response the {@link HttpServletResponse} object used to set the response status
-   *
-   * @return a {@link PolicyRecord} object representing the created policy
+   * @return a {@link TrustMarkSubjectRecord} object representing the created trustMark
    */
   @PostMapping
-  public PolicyRecord createPolicy(@RequestBody final PolicyRecord policy, final HttpServletResponse response) {
-    log.debug("POST: {}", policy);
-    if(policy.getPolicyId()!=null && !policy.getPolicyId().isBlank()){
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-          "Policy_id exist use update endpoint");
-    }
+  public TrustMarkSubjectRecord createTrustMarkSubject(@RequestBody final TrustMarkSubjectRecord trustMark,
+      final HttpServletResponse response) {
+    log.debug("POST: {}", trustMark);
 
-    PolicyRecord dto = this.policyService.create(policy);
+    final TrustMarkSubjectRecord record = this.trustMarkSubjectService.create(trustMark);
     response.setStatus(HttpServletResponse.SC_CREATED);
-
-    return dto;
+    return record;
   }
 
   /**
-   * Retrieves a list of all policy records from the entity registry.
+   * Retrieves a trustMarks by its issuer
    *
-   * @return a list of {@link PolicyRecord} representing the policy records
+   * @param trustMarkSubjectId the name of the trustMark to be retrieved
+   * @return a {@link TrustMarkSubjectRecord} object representing the trustMark, if found
    */
-  @GetMapping
-  public List<PolicyRecord> getAllPolicies() {
-    List<PolicyRecord> policies = this.policyService.getAll();
-    log.debug("GET all: {}", policies);
+  @GetMapping("/{trustMarkSubjectId}")
+  public TrustMarkSubjectRecord getTrustMarkSubjectById(
+      @PathVariable("trustMarkSubjectId") final String trustMarkSubjectId) {
+    log.debug("GET by trustMarkSubjectId: {}", trustMarkSubjectId);
 
-    return ResponseEntity.ok(policies).getBody();
-  }
-
-  /**
-   * Retrieves a policy by its name from the entity registry.
-   *
-   * @param name the name of the policy to be retrieved
-   *
-   * @return a {@link PolicyRecord} object representing the policy, if found
-   */
-  @GetMapping("/{name}")
-  public PolicyRecord getPolicyByName(@PathVariable("name") final String name) {
-    log.debug("GET by name: {}", name);
-
-    PolicyRecord dto = this.policyService.get(name);
+    TrustMarkSubjectRecord dto = this.trustMarkSubjectService.get(trustMarkSubjectId);
     if (dto == null) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Policy not found");
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "TrustMark not found");
     }
 
     return dto;
   }
 
   /**
-   * Updates an existing policy in the entity registry.
+   * Updates an existing trustMark in the entity registry.
    *
-   * @param policy_id The policy_id of the policy to update.
-   * @param policy A {@link PolicyRecord} object containing the updated details of the policy.
-   * @return A {@link PolicyRecord} object representing the updated policy.
+   * @param trustMarkSubjectId The trustMarkSubjectId of the trustMarkSubject to update.
+   * @param trustMark A {@link TrustMarkSubjectRecord} object containing the updated details of the
+   *     trustMarkSubject.
+   * @return A {@link TrustMarkSubjectRecord} object representing the updated trustMark.
    */
-  @PutMapping("/{policy_id}")
-   public PolicyRecord updatePolicy(@PathVariable("policy_id") final String policy_id,
-      @RequestBody PolicyRecord policy) {
-     log.debug("PUT: {}", policy);
-     if(!policy_id.equals(policy.getPolicyId())) {
-       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PolicyId has to be the same in path and object");
-     }
-     return this.policyService.update(policy_id, policy);
-   }
+  @PutMapping("/{trustMarkSubjectId}")
+  public TrustMarkSubjectRecord updateTrustMarkSubject(
+      @PathVariable("trustMarkSubjectId") final String trustMarkSubjectId,
+      @RequestBody TrustMarkSubjectRecord trustMark) {
+    log.debug("PUT: {}", trustMark);
+    if (!trustMarkSubjectId.equals(trustMark.getTrustMarkSubjectId())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "TrustMarkId has to be the same in path and object");
+    }
+    return this.trustMarkSubjectService.update(trustMarkSubjectId, trustMark);
+  }
 
   /**
-   * Deletes a policy by its policy_id from the entity registry.
+   * Deletes a trustMark by its trustMarkSubjectId from the entity registry.
    *
-   * @param policy_id the policy_id of the policy to be deleted
+   * @param trustMarkSubjectId the trustMarkSubjectId of the trustMarkSubject to be deleted
    * @param response the {@link HttpServletResponse} object used to set the response status
    */
-  @DeleteMapping("/{policy_id}")
-   public void deletePolicy(@PathVariable("policy_id") final String policy_id, final HttpServletResponse response) {
-     log.debug("DELETE: {}", policy_id);
+  @DeleteMapping("/{trustMark_id}")
+  public void deleteTrustMark(@PathVariable("trustMarkSubjectId") final String trustMarkSubjectId,
+      final HttpServletResponse response) {
+    log.debug("DELETE: {}", trustMarkSubjectId);
 
-     this.policyService.delete(policy_id);
-     response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-   }
+    this.trustMarkSubjectService.delete(trustMarkSubjectId);
+    response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+  }
 }

@@ -22,6 +22,37 @@ components:
       bearerFormat: JWT
 
   schemas:
+    trust-mark-subject-record:
+      type: object
+      description: A representation of an  trust-mark-subject-record.
+      properties:
+        trust_mark_subject_id:
+          type: string
+          description: The identity of this trust-mark-subject-record
+        issuer:
+          type: string
+          description: The identity of the entity issuing the record. This field is required.
+        trust_mark_id:
+          type: string
+          description: Identity of the trust-mark-id.
+        subject:
+          type: string
+          description: The identity of the subject associated with the record. This field is required.
+        revoked:
+          type: boolean
+          description: Indicates whether the subject's access has been revoked.
+        granted:
+          type: string
+          format: date-time
+          nullable: true
+          description: The timestamp when subject is granted, can be in a future date.
+        expires:
+          type: string
+          format: date-time
+          nullable: true
+          description: The timestamp when the subject will expire.
+
+
     policy-record:
       type: object
       properties:
@@ -49,6 +80,10 @@ components:
           type: string
           nullable: true
           description: The id of the policy associated with the entity.
+        override_configuration_location:
+          type: string
+          nullable: true
+          description: Location of metadata
         hosted:
           type: object
           description: Contains details about a hosted record service.

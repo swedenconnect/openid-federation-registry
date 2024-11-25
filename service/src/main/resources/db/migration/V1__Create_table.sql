@@ -30,10 +30,11 @@ CREATE TABLE if not exists policies (
 
 CREATE TABLE if not exists trustmark_subject (
     id bigint not null PRIMARY KEY AUTO_INCREMENT,
+    external_id varchar(255) not null,
     issuer varchar(255) not null,
     subject varchar(255) not null,
     trustmark_id varchar(255)  not null,
-    trustmarksubject TEXT  not null
+    trustmarksubject_json TEXT  not null
 ) engine=InnoDB;
 
 alter table if exists entities
