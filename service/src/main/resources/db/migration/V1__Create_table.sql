@@ -16,10 +16,14 @@
 
 CREATE TABLE if not exists entities (
     id bigint not null PRIMARY KEY AUTO_INCREMENT,
+    external_id varchar(255) not null,
     entity TEXT  not null,
     issuer varchar(255)  not null,
     subject varchar(255)  not null
 ) engine=InnoDB;
+
+alter table if exists entities
+   add constraint entities_const unique (issuer, subject);
 
 CREATE TABLE if not exists policies (
     id bigint not null PRIMARY KEY AUTO_INCREMENT,
@@ -27,6 +31,9 @@ CREATE TABLE if not exists policies (
     name varchar(255) not null,
     policy TEXT not null
 ) engine=InnoDB;
+
+alter table if exists policies
+   add constraint policies_const unique (external_id);
 
 CREATE TABLE if not exists trustmark_subject (
     id bigint not null PRIMARY KEY AUTO_INCREMENT,
@@ -36,12 +43,6 @@ CREATE TABLE if not exists trustmark_subject (
     trustmark_id varchar(255)  not null,
     trustmarksubject_json TEXT  not null
 ) engine=InnoDB;
-
-alter table if exists entities
-   add constraint entities_const unique (issuer, subject);
-
-alter table if exists policies
-   add constraint policies_const unique (external_id);
 
 alter table if exists trustmark_subject
    add constraint trustmark_subject_const unique (issuer, trustmark_id, subject);
