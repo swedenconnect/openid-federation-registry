@@ -189,14 +189,14 @@ public class JpaPolicyServiceTest {
         .Builder()
         .name("Updated Policy")
         .policy("{\"newKey\":\"newValue\"}")
-        .policyId(UUID.randomUUID().toString())
+        .policyRecordId(UUID.randomUUID().toString())
         .build();
 
-    when(this.policyRepository.findByExternalId(updateRecord.getPolicyId())).thenReturn(Optional.of(existingPolicy));
+    when(this.policyRepository.findByExternalId(updateRecord.getPolicyRecordId())).thenReturn(Optional.of(existingPolicy));
     when(this.objectMapper.writeValueAsString(any(PolicyRecord.class))).thenReturn(updateRecord.getPolicy());
 
     // When
-    final PolicyRecord updatedPolicy = this.jpaPolicyService.update(updateRecord.getPolicyId(), updateRecord);
+    final PolicyRecord updatedPolicy = this.jpaPolicyService.update(updateRecord.getPolicyRecordId(), updateRecord);
 
     // Then
     assertThat(updatedPolicy).isNotNull();

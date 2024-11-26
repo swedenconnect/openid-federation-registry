@@ -59,7 +59,7 @@ public class JpaTrustMarkSubjectService implements TrustMarkSubjectService {
 
       final TrustMarkSubjectEntity trustMarkSubjectEntity = repository.save(entity);
       return trustMarkSubjectRecord.toBuilder()
-          .trustMarkSubjectId(trustMarkSubjectEntity.getExternalId())
+          .trustMarkId(trustMarkSubjectEntity.getExternalId())
           .build();
     }
     catch (JsonProcessingException e) {
@@ -110,7 +110,7 @@ public class JpaTrustMarkSubjectService implements TrustMarkSubjectService {
 
   @Override
   public TrustMarkSubjectRecord update(final String trustMarkSubjectId, final TrustMarkSubjectRecord record) {
-    if (!trustMarkSubjectId.equals(record.getTrustMarkSubjectId())){
+    if (!trustMarkSubjectId.equals(record.getTrustMarkSubjectRecordId())){
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "TrustMarkSubjectId has to match in json payload.");
     }
     final TrustMarkSubjectEntity entity = this.repository.findByExternalId(trustMarkSubjectId).orElse(null);

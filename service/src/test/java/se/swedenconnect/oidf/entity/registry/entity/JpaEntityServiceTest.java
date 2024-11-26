@@ -239,7 +239,7 @@ class JpaEntityServiceTest {
     entityEntity.setSubject(record.getSubject());
     entityEntity.setIssuer(record.getIssuer());
     entityEntity.setEntity(objectMapper.writeValueAsString(record));
-    record.setEntityId(extId);
+    record.setEntityRecordId(extId);
     when(repository.findByExternalId(extId)).thenReturn(Optional.of(entityEntity));
 
     // When
@@ -247,7 +247,7 @@ class JpaEntityServiceTest {
 
     // Then
     assertThat(resultRecord).isNotNull();
-    assertThat(resultRecord.getEntityId()).isEqualTo(extId);
+    assertThat(resultRecord.getEntityRecordId()).isEqualTo(extId);
     verify(repository, times(1)).save(any(EntityEntity.class));
   }
 
@@ -266,7 +266,7 @@ class JpaEntityServiceTest {
 
     final String extId = UUID.randomUUID().toString();
     when(repository.findByExternalId(extId)).thenReturn(Optional.empty());
-    record.setEntityId(extId);
+    record.setEntityRecordId(extId);
     // When
     final EntityRecord result = entityService.update(extId, record);
 

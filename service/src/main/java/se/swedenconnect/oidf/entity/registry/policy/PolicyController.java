@@ -71,10 +71,6 @@ public class PolicyController {
   @PostMapping
   public ResponseEntity<PolicyRecord> createPolicy(@RequestBody final PolicyRecord policy) {
     log.debug("POST: {}", policy);
-    if(policy.getPolicyId() != null){
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PolicyId can not be set on creation!");
-
-    }
 
     final PolicyRecord record = this.policyService.create(policy);
     return ResponseEntity.status(HttpStatus.CREATED).body(record);

@@ -26,9 +26,9 @@ components:
       type: object
       description: A representation of an  trust-mark-subject-record.
       properties:
-        trust_mark_subject_id:
+        trust_mark_subject_record_id:
           type: string
-          nullable: true
+          nullable: false
           description: The identity of this trust-mark-subject-record
         issuer:
           type: string
@@ -55,7 +55,11 @@ components:
           format: date-time
           nullable: true
           description: The timestamp when the subject will expire.
-
+      required:
+        - trust_mark_subject_record_id
+        - issuer
+        - trust_mark_id
+        - subject
 
     policy-record:
       type: object
@@ -63,18 +67,22 @@ components:
         name:
           type: string
           description: The name of the Policy. Must match the top node in the policy json string
-        policy_id:
+        policy_record_id:
           type: string
           description: Uniq identifyer for a policy
         policy:
           type: string
           description: The json object describing the Policy
+      required:
+        - policy_record_id
+        - name
+        - policy
 
     entity-record:
       type: object
       description: A representation of an EntityRecord.
       properties:
-        entity_id:
+        entity_record_id:
           type: string
           description: Id of the record, used for delete and update
         issuer:
@@ -126,6 +134,7 @@ components:
                 additionalProperties: true
 
       required:
+        - entity_record_id
         - issuer
         - subject
 

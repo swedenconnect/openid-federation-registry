@@ -59,7 +59,7 @@ class FederationServiceApiControllerIT {
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
     final ResponseEntity<String> fedRes = restTemplate
-        .getForEntity("/api/v1/federationservice/policy_record?policy_id="+response.getBody().getPolicyId(), String.class);
+        .getForEntity("/api/v1/federationservice/policy_record?policy_id="+response.getBody().getPolicyRecordId(), String.class);
     if(fedRes.getStatusCode().isError()){
       log.error(fedRes.getBody());
     }

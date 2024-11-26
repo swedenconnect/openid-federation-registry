@@ -133,7 +133,7 @@ public class EntityControllerTest {
     final EntityRecord createdRecord = objectMapper.readValue(result.getResponse()
         .getContentAsString(),EntityRecord.class);
 
-    this.mockMvc.perform(get("/registry/v1/entities/{entityId}",createdRecord.getEntityId() ))
+    this.mockMvc.perform(get("/registry/v1/entities/{entityId}",createdRecord.getEntityRecordId() ))
         .andExpect(status().isOk())
         //.andExpect(jsonPath("$.entityId").value(subject))
         .andExpect(jsonPath("$.subject").value(subject));
@@ -169,10 +169,10 @@ public class EntityControllerTest {
         .andExpect(status().isCreated()).andReturn();
     final EntityRecord createdRecord = objectMapper.readValue(result.getResponse()
         .getContentAsString(),EntityRecord.class);
-    record.setEntityId(createdRecord.getEntityId());
+    record.setEntityRecordId(createdRecord.getEntityRecordId());
 
     record.setHosted(EntityRecordHosted.builder().authorityHints(List.of("http://hint1")).build());
-    mockMvc.perform(put("/registry/v1/entities/{entityId}", createdRecord.getEntityId())
+    mockMvc.perform(put("/registry/v1/entities/{entityId}", createdRecord.getEntityRecordId())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(record)))
         .andExpect(status().isOk())

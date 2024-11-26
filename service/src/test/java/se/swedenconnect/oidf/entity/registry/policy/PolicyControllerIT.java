@@ -77,14 +77,14 @@ public class PolicyControllerIT {
     ResponseEntity<PolicyRecord> response = this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     assertThat(response.getBody()).isNotNull();
-    assertThat(response.getBody().getPolicyId()).isNotNull();
+    assertThat(response.getBody().getPolicyRecordId()).isNotNull();
 
-    policy.setPolicyId(response.getBody().getPolicyId());
+    policy.setPolicyRecordId(response.getBody().getPolicyRecordId());
 
     response = this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
 
     // Assert
-    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
   }
 
   /**
@@ -178,13 +178,13 @@ public class PolicyControllerIT {
     final HttpEntity<PolicyRecord> requestUpdate = new HttpEntity<>( PolicyRecord.builder()
         .name("openid_relying_party")
         .policy(updatedPolicyBody)
-        .policyId(createdPolicy.getPolicyId())
+        .policyRecordId(createdPolicy.getPolicyRecordId())
         .build());
 
-    this.restTemplate.put("/registry/v1/policies/{policy_id}", requestUpdate, createdPolicy.getPolicyId());
+    this.restTemplate.put("/registry/v1/policies/{policy_id}", requestUpdate, createdPolicy.getPolicyRecordId());
 
     final ResponseEntity<PolicyRecord> updateResponse = this.restTemplate
-        .getForEntity("/registry/v1/policies/{policy_id}", PolicyRecord.class, createdPolicy.getPolicyId());
+        .getForEntity("/registry/v1/policies/{policy_id}", PolicyRecord.class, createdPolicy.getPolicyRecordId());
 
     // Assert
     assertThat(updateResponse.getStatusCode()).isEqualTo(HttpStatus.OK);

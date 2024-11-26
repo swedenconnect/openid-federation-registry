@@ -203,8 +203,8 @@ public class EntityControllerIT {
     // Arrange
     ResponseEntity<EntityRecord[]> response = restTemplate.getForEntity("/registry/v1/entities", EntityRecord[].class);
     if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-      Arrays.stream(response.getBody()).filter(e -> e.getEntityId() != null).forEach(
-          e -> restTemplate.delete("/registry/v1/entities/{id}", e.getEntityId()));
+      Arrays.stream(response.getBody()).filter(e -> e.getEntityRecordId() != null).forEach(
+          e -> restTemplate.delete("/registry/v1/entities/{id}", e.getEntityRecordId()));
     }
 
     // Act
@@ -234,8 +234,8 @@ public class EntityControllerIT {
     assertThat(createdEntity).isNotNull();
 
     assert createdEntity.getSubject() != null;
-    final String entityId = createResponse.getBody().getEntityId();
-    createdEntity.setEntityId(entityId);
+    final String entityId = createResponse.getBody().getEntityRecordId();
+    createdEntity.setEntityRecordId(entityId);
 
     // Act
     final HttpEntity<EntityRecord> requestUpdate = new HttpEntity<>(createdEntity);

@@ -61,7 +61,7 @@ public class JpaEntityService implements EntityService {
       entity.setSubject(entityRecord.getSubject());
       entity.setEntity(this.objectMapper.writeValueAsString(entityRecord));
       final EntityEntity savedEntity = this.repository.save(entity);
-      entityRecord.setEntityId(savedEntity.getExternalId());
+      entityRecord.setEntityRecordId(savedEntity.getExternalId());
       return entityRecord;
     }
     catch (JsonProcessingException e) {
@@ -101,7 +101,7 @@ public class JpaEntityService implements EntityService {
 
   @Override
   public EntityRecord update(final String entityid, final EntityRecord entityRecord) {
-    if (!entityid.equals(entityRecord.getEntityId())){
+    if (!entityid.equals(entityRecord.getEntityRecordId())){
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Entityid has to match in json payload.");
     }
 
