@@ -21,11 +21,14 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+
+import java.util.UUID;
 
 /**
  * EntityDao is a JPA entity representing a database table for storing entities
@@ -43,6 +46,9 @@ public class EntityEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
 
+  @Column(name="external_id", unique = true,updatable = false)
+  private String externalId;
+
   @Column(nullable = false)
   private String issuer;
 
@@ -51,4 +57,12 @@ public class EntityEntity {
 
   @Column(columnDefinition = "TEXT")
   private String entity;
+
+  /**
+   * Creating a uuid for the externalId field
+   */
+  @PrePersist
+  public void prePersist(){
+    externalId = "E:"+ UUID.randomUUID();
+  }
 }
