@@ -21,13 +21,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-
-import java.util.UUID;
 
 /**
  * PolicyDao is a JPA entity representing a database table for storing policies
@@ -45,7 +42,7 @@ public class PolicyEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
 
-  @Column(name="external_id", unique = true)
+  @Column(name="external_id", unique = true, updatable = false)
   private String externalId;
 
   @Column
@@ -54,13 +51,6 @@ public class PolicyEntity {
   @Column(columnDefinition = "TEXT")
   private String policy;
 
-  /**
-   * Creating a uuid for the externalId field
-   */
-  @PrePersist
-  public void prePersist(){
-    externalId = UUID.randomUUID().toString();
-  }
 }
 
 

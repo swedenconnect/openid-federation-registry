@@ -16,7 +16,6 @@
  */
 package se.swedenconnect.oidf.entity.registry.entity;
 
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -33,9 +32,8 @@ import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.entity.api.OidfEntityRegistryApi;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * REST Controller for handling entity registry operations.
@@ -97,17 +95,12 @@ public class EntityController {
    * @return the entity corresponding to the provided identifier
    */
   @GetMapping("/{entityId}")
-  public EntityRecord getEntityById(@PathVariable("entityId") final String entityId) {
+  public EntityRecord getEntityById(@PathVariable("entityId") final UUID entityId) {
     log.debug("GET: by id: {}", entityId);
-
-    final var decoded = URLDecoder.decode(entityId, StandardCharsets.UTF_8);
-    final EntityRecord entity = this.entityService.get(decoded);
+    final EntityRecord entity = this.entityService.get(entityId.toString());
     if (entity == null) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Entity not found");
     }
-
-    log.debug("GET result: {}", entity);
-
     return entity;
   }
 
@@ -119,23 +112,22 @@ public class EntityController {
    * @return the updated entity object
    */
   @PutMapping("/{entityId}")
-  public EntityRecord updateEntity(@PathVariable("entityId") final String entityId, @RequestBody EntityRecord entity) {
+  public EntityRecord updateEntity(@PathVariable("entityId") final UUID entityId, @RequestBody EntityRecord entity) {
     log.debug("PUT: {}", entity);
-    return this.entityService.update(entityId, entity);
+    return this.entityService.update(entityId.toString(), entity);
   }
 
   /**
    * Deletes an entity identified by the provided entity ID.
    *
    * @param entityId the unique identifier of the entity to be deleted
-   * @param response the HttpServletResponse object to set the response status
+   * @return ResponseEntity no content
    */
   @DeleteMapping("/{entityId}")
-  public void deleteEntity(@PathVariable("entityId") final String entityId, final HttpServletResponse response) {
+  public ResponseEntity<Void> deleteEntity(@PathVariable("entityId") final UUID entityId) {
     log.debug("DELETE: {}", entityId);
-
-    this.entityService.delete(URLDecoder.decode(entityId, StandardCharsets.UTF_8));
-    response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+    this.entityService.delete(entityId.toString());
+    return ResponseEntity.noContent().build();
   }
 
 }

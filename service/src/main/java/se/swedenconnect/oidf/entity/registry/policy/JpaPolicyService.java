@@ -17,18 +17,21 @@
 package se.swedenconnect.oidf.entity.registry.policy;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
- * JpaPolicyService is an implementation of the {@link PolicyService} interface
- * that uses JPA for managing JSON Policy objects in the database.
+ * JpaPolicyService is an implementation of the {@link PolicyService} interface that uses JPA for managing JSON Policy
+ * objects in the database.
  *
  * <ul>
  *   <li>Provide implementation for CRUD operations on policies stored as JSON objects.</li>
@@ -51,7 +54,8 @@ public class JpaPolicyService implements PolicyService {
    * Construct a JpaPolicyService with the provided repository and object mapper.
    *
    * @param policyRepository the JPA repository
-   * @param objectMapper the ObjectMapper used for JSON conversion between Policy strings and their DAO representations
+   * @param objectMapper the ObjectMapper used for JSON conversion between Policy strings and their DAO
+   *     representations
    */
   public JpaPolicyService(final PolicyRepository policyRepository, final ObjectMapper objectMapper) {
     this.policyRepository = policyRepository;
@@ -59,56 +63,42 @@ public class JpaPolicyService implements PolicyService {
   }
 
   @Override
-  public PolicyRecord create(final PolicyRecord policy) {
-    if (this.isValidPolicy(policy)) {
-      final PolicyEntity policyEntity = new PolicyEntity();
-      policyEntity.setPolicy(policy.getPolicy());
-      policyEntity.setName(policy.getName());
-      final PolicyEntity savedPolicy = this.policyRepository.save(policyEntity);
-      policy.setPolicyRecordId(savedPolicy.getExternalId());
+  public PolicyRecord create(final PolicyRecord record) {
+    try {
+      return this.policyRepository.findByExternalId(record.getPolicyRecordId())
+          .or(() -> Optional.of(new PolicyEntity()))
+          .map(entity -> mergeRecordIntoEntity(record, entity))
+          .map(this.policyRepository::save)
+          .map(this::toRecord)
+          .orElseThrow();
     }
-    else {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid JSON policy");
+    catch (
+        DataIntegrityViolationException e) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "TrustMarkSubjectRecord already exists");
     }
-    return policy;
   }
 
   @Override
   public PolicyRecord get(final String policy_id) {
     return this.policyRepository.findByExternalId(policy_id)
-        .map(entity ->  PolicyRecord.builder()
-            .name(entity.getName())
-            .policyRecordId(entity.getExternalId())
-            .policy(entity.getPolicy())
-            .build())
+        .map(this::toRecord)
         .orElse(null);
   }
 
   @Override
   public List<PolicyRecord> getAll() {
     return this.policyRepository.findAll()
-        .stream().map(dao -> new PolicyRecord.Builder().name(dao.getName()).policy(dao.getPolicy()).build())
+        .stream()
+        .map(this::toRecord)
         .toList();
   }
 
   @Override
-  public PolicyRecord update(final String policy_id, final PolicyRecord policy) {
-    if(!policy_id.equals(policy.getPolicyRecordId())) {
+  public PolicyRecord update(final String policy_id, final PolicyRecord record) {
+    if (!policy_id.equals(record.getPolicyRecordId())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PolicyId has to be the same in path and object");
     }
-    final var dao = this.policyRepository.findByExternalId(policy_id).orElse(null);
-    if (dao != null) {
-      try {
-        dao.setPolicy(this.objectMapper.writeValueAsString(policy));
-        dao.setName(policy.getName());
-        this.policyRepository.save(dao);
-        return policy;
-      }
-      catch (JsonProcessingException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    return null;
+    return this.create(record);
   }
 
   @Override
@@ -116,21 +106,28 @@ public class JpaPolicyService implements PolicyService {
     this.policyRepository.findByExternalId(policy_id).ifPresent(this.policyRepository::delete);
   }
 
-  /**
-   * Validates if the provided policy DTO contains a valid JSON structure.
-   *
-   * @param policy the policy data transfer object containing the JSON policy string to validate
-   * @return {@code true} if the policy string is valid JSON and contains the expected structure;
-   * {@code false} otherwise
-   */
-  private boolean isValidPolicy(final PolicyRecord policy) {
+  private PolicyRecord toRecord(PolicyEntity policyEntity) {
+    return PolicyRecord.builder()
+        .policyRecordId(policyEntity.getExternalId())
+        .name(policyEntity.getName())
+        .policy(policyEntity.getPolicy())
+        .build();
+  }
+
+  private PolicyEntity mergeRecordIntoEntity(final PolicyRecord record, final PolicyEntity entity) {
     try {
-      this.objectMapper.readTree(policy.getPolicy());
-      return true;
+      final JsonNode policyJson = objectMapper.readTree(record.getPolicy());
+      entity.setPolicy(this.objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(policyJson));
+      entity.setName(record.getName());
+      entity.setExternalId(record.getPolicyRecordId());
+      if (entity.getExternalId() == null) {
+        entity.setExternalId(record.getPolicyRecordId());
+      }
+      return entity;
     }
-    catch (Exception e) {
-      log.debug("Invalid JSON policy: {}", e.getMessage());
-      return false;
+    catch (JsonProcessingException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to parse json, in policy record ", e);
     }
   }
+
 }

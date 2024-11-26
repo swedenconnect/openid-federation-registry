@@ -21,16 +21,12 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-
-import java.util.UUID;
 
 /**
  * TrustMarkSubjectEntity is a JPA entity representing a database table for storing entities
@@ -51,7 +47,7 @@ public class TrustMarkSubjectEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
 
-  @Column(name="external_id", unique = true)
+  @Column(name="external_id", unique = true, updatable = false)
   private String externalId;
 
   @Column(nullable = false)
@@ -66,12 +62,4 @@ public class TrustMarkSubjectEntity {
   @Column(columnDefinition = "TEXT", nullable = false)
   private String trustmarksubjectJson;
 
-
-  /**
-   * Creating a uuid for the externalId field
-   */
-  @PrePersist
-  public void prePersist(){
-    externalId = UUID.randomUUID().toString();
-  }
 }

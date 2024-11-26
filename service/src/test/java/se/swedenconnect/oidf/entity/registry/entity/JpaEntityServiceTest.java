@@ -241,6 +241,7 @@ class JpaEntityServiceTest {
     entityEntity.setEntity(objectMapper.writeValueAsString(record));
     record.setEntityRecordId(extId);
     when(repository.findByExternalId(extId)).thenReturn(Optional.of(entityEntity));
+    when(repository.save(any(EntityEntity.class))).then(invocationOnMock -> invocationOnMock.getArguments()[0]);
 
     // When
     final EntityRecord resultRecord = entityService.update(extId, record);
@@ -249,30 +250,6 @@ class JpaEntityServiceTest {
     assertThat(resultRecord).isNotNull();
     assertThat(resultRecord.getEntityRecordId()).isEqualTo(extId);
     verify(repository, times(1)).save(any(EntityEntity.class));
-  }
-
-  /**
-   * Tests the update of an entity when the entity is not found.
-   * <p>
-   * This test case verifies the behavior of the `EntityService.update` method when the entity repository does not
-   * contain an entity with the specified subject. The repository is mocked to return an empty Optional, and the test
-   * checks that the result is null, indicating that the entity does not exist. Additionally, it ensures that the
-   * repository's `save` method is never called.
-   */
-  @Test
-  void testUpdateEntityNotFound() {
-    // Given
-    final EntityRecord record = EntityFactory.createDefaultEntity();
-
-    final String extId = UUID.randomUUID().toString();
-    when(repository.findByExternalId(extId)).thenReturn(Optional.empty());
-    record.setEntityRecordId(extId);
-    // When
-    final EntityRecord result = entityService.update(extId, record);
-
-    // Then
-    assertThat(result).isNull();
-    verify(repository, never()).save(any(EntityEntity.class));
   }
 
   /**

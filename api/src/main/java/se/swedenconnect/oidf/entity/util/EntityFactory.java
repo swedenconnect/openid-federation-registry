@@ -20,6 +20,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 
+import java.util.UUID;
+
 /**
  * Factory class for creating instances of {@link EntityRecord}, from a json set
  *
@@ -58,6 +60,7 @@ public class EntityFactory {
         {
             "issuer": "%s",
             "subject": "%s",
+            "entity_record_id":"%s",
             "policy_id": "policy-123",
             "hosted": {
               "authority_hints": [
@@ -126,7 +129,7 @@ public class EntityFactory {
      * @return Json
      */
     public static String createDefaultJsonEntity(String issuer,String subject) {
-        return entityJsonData.formatted(issuer, subject);
+        return entityJsonData.formatted(issuer, subject, UUID.randomUUID().toString());
     }
 
     /**
@@ -134,7 +137,7 @@ public class EntityFactory {
      * @return Json
      */
     public static String createDefaultJsonEntity() {
-        return entityJsonData.formatted(ISSUER_1, SUBJECT_1);
+        return entityJsonData.formatted(ISSUER_1, SUBJECT_1,UUID.randomUUID().toString());
     }
 
     /**
@@ -144,9 +147,9 @@ public class EntityFactory {
      * @return Entity object with selected issuer and subject
      */
     public static EntityRecord createDefaultEntity(String issuer, String subject) {
-
         try {
-            return mapper.readValue(entityJsonData.formatted(issuer, subject), EntityRecord.class);
+            return mapper.readValue(
+                entityJsonData.formatted(issuer, subject,UUID.randomUUID().toString()), EntityRecord.class);
         }
         catch (JsonProcessingException e) {
             throw new RuntimeException(e);

@@ -53,9 +53,11 @@ class FederationServiceApiControllerIT {
     final PolicyRecord policy = new PolicyRecord.Builder()
         .name("policy-name")
         .policy(" {\"policy\":\"default\"}")
+        .policyRecordId(UUID.randomUUID().toString())
         .build();
 
-    final ResponseEntity<PolicyRecord> response = this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
+    final ResponseEntity<PolicyRecord> response =
+        this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
     final ResponseEntity<String> fedRes = restTemplate
@@ -102,7 +104,8 @@ class FederationServiceApiControllerIT {
   void entityRecordSuccess() throws ParseException {
     final String issuer = "http://tmi.digg.se/" + UUID.randomUUID();
     final EntityRecord entity = EntityFactory.createDefaultEntity(issuer,"http://sub.digg.se");
-    final ResponseEntity<EntityRecord> createResponse = restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
+    final ResponseEntity<EntityRecord> createResponse =
+        restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
     assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
     final ResponseEntity<String> response = restTemplate

@@ -30,6 +30,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
+import java.util.UUID;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -67,28 +68,30 @@ public class PolicyControllerIT {
    * and verifies that the response status is `HttpStatus.BAD_REQUEST`.
    */
   @Test
-  public void testCreatePolicyWithPolicyIdSet() {
+  public void testCreatePolicy() {
     // Arrange
     final PolicyRecord policy = new PolicyRecord.Builder()
         .name("policy-name")
         .policy("{}")
+        .policyRecordId(UUID.randomUUID().toString())
         .build();
     // Act
-    ResponseEntity<PolicyRecord> response = this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
+    final ResponseEntity<PolicyRecord> response =
+        this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     assertThat(response.getBody()).isNotNull();
-    assertThat(response.getBody().getPolicyRecordId()).isNotNull();
+    assertThat(response.getBody().getPolicyRecordId()).isEqualTo(policy.getPolicyRecordId());
 
+    policy.setName("UpdatedValue");
     policy.setPolicyRecordId(response.getBody().getPolicyRecordId());
 
-    ResponseEntity<String> reSave = this.restTemplate.postForEntity("/registry/v1/policies", policy, String.class);
+    final ResponseEntity<String> reSave = this.restTemplate.postForEntity("/registry/v1/policies", policy, String.class);
     if(reSave.getStatusCode().isError()){
       log.error(String.valueOf(reSave.getBody()));
     }
 
-
     // Assert
-    assertThat(reSave.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    assertThat(reSave.getStatusCode()).isEqualTo(HttpStatus.CREATED);
   }
 
   /**
@@ -105,7 +108,11 @@ public class PolicyControllerIT {
   public void testGetAllPolicies() {
     // Arrange
     IntStream.range(13, 43).boxed().forEach(i -> {
-          final PolicyRecord policy = new PolicyRecord.Builder().name("policy-name-" + i).policy("{}").build();
+          final PolicyRecord policy = new PolicyRecord.Builder()
+              .name("policy-name-" + i)
+              .policyRecordId(UUID.randomUUID().toString())
+              .policy("{}")
+              .build();
           this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
         }
     );
@@ -154,8 +161,13 @@ public class PolicyControllerIT {
         }""";
 
     // Arrange
-    final PolicyRecord policy = new PolicyRecord.Builder().name("openid_relying_party").policy(policyBody).build();
-    final var createResponse = this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
+    final PolicyRecord policy =  PolicyRecord.builder()
+        .name("openid_relying_party")
+        .policy(policyBody)
+        .policyRecordId(UUID.randomUUID().toString())
+        .build();
+
+    final ResponseEntity<PolicyRecord> createResponse = this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
     final PolicyRecord createdPolicy = createResponse.getBody();
     assertThat(createdPolicy).isNotNull();
 
@@ -195,7 +207,9 @@ public class PolicyControllerIT {
     final PolicyRecord updatedPolicy = updateResponse.getBody();
     assertThat(updatedPolicy).isNotNull();
     assertThat(updatedPolicy.getPolicy())
-        .containsSequence("\\\"scope\\\" : {\\n      \\\"subset_of\\\" : [ \\\"openid\\\", \\\"profile\\\", \\\"email\\\"]");
+        .containsSequence("\"scope\" : {\n"
+            + "      \"subset_of\" : [ \"openid\", \"profile\", \"email\" ]\n"
+            + "    }");
   }
 
   /**
@@ -218,20 +232,27 @@ public class PolicyControllerIT {
   @Test
   public void testDeletePolicy() {
     // Arrange
-    final String policyName = "delete-policy-name";
-    final PolicyRecord policy = new PolicyRecord.Builder().name(policyName).policy("{}").build();
-    ResponseEntity<PolicyRecord> policyDtoResponseEntity =
+
+    final PolicyRecord policy = PolicyRecord.builder()
+        .name("delete-policy-name")
+        .policyRecordId(UUID.randomUUID().toString())
+        .policy("{}")
+        .build();
+
+    final ResponseEntity<PolicyRecord> policyDtoResponseEntity =
         this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
     assertThat(policyDtoResponseEntity.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
     // Act
-    final ResponseEntity<Void> deletedResponse = this.restTemplate.exchange("/registry/v1/policies/{name}", HttpMethod.DELETE, null, Void.class, policyName);
+    final ResponseEntity<Void> deletedResponse =
+        this.restTemplate.exchange("/registry/v1/policies/{name}", HttpMethod.DELETE, null, Void.class, policy.getPolicyRecordId());
 
     // Assert
     assertThat(deletedResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
     // Verify it's deleted
-    final ResponseEntity<PolicyRecord> getResponse = this.restTemplate.getForEntity("/registry/v1/policies/{name}", PolicyRecord.class, policyName);
+    final ResponseEntity<PolicyRecord> getResponse =
+        this.restTemplate.getForEntity("/registry/v1/policies/{name}", PolicyRecord.class, policy.getPolicyRecordId());
     assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
   }
 }

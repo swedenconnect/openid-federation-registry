@@ -25,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * JpaEntityService is an implementation of the EntityService interface that uses a JPA repository to perform CRUD
@@ -54,18 +55,15 @@ public class JpaEntityService implements EntityService {
   }
 
   @Override
-  public EntityRecord create(final EntityRecord entityRecord) {
-    final EntityEntity entity = new EntityEntity();
+  public EntityRecord create(final EntityRecord record) {
+
     try {
-      entity.setIssuer(entityRecord.getIssuer());
-      entity.setSubject(entityRecord.getSubject());
-      entity.setEntity(this.objectMapper.writeValueAsString(entityRecord));
-      final EntityEntity savedEntity = this.repository.save(entity);
-      entityRecord.setEntityRecordId(savedEntity.getExternalId());
-      return entityRecord;
-    }
-    catch (JsonProcessingException e) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Malformed JSON: " + e.getMessage());
+      return this.repository.findByExternalId(record.getEntityRecordId())
+          .or(() -> Optional.of(new EntityEntity()))
+          .map(entity -> mergeRecordIntoEntity(record,entity))
+          .map(this.repository::save)
+          .map(this::toRecord)
+          .orElseThrow();
     }
     catch (DataIntegrityViolationException e) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Issuer and Subject already exist");
@@ -75,28 +73,16 @@ public class JpaEntityService implements EntityService {
   @Override
   public EntityRecord get(final String entityid) {
     return this.repository.findByExternalId(entityid)
-        .map(entity -> {
-          try {
-            return this.objectMapper.readValue(entity.getEntity(), EntityRecord.class);
-          }
-          catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-          }
-        })
+        .map(this::toRecord)
         .orElse(null);
   }
 
   @Override
   public List<EntityRecord> getAll() {
     return this.repository.findAll()
-        .stream().map(entity -> {
-          try {
-            return this.objectMapper.readValue(entity.getEntity(), EntityRecord.class);
-          }
-          catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-          }
-        }).toList();
+        .stream()
+        .map(this::toRecord)
+        .toList();
   }
 
   @Override
@@ -104,29 +90,37 @@ public class JpaEntityService implements EntityService {
     if (!entityid.equals(entityRecord.getEntityRecordId())){
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Entityid has to match in json payload.");
     }
+    return this.create(entityRecord);
 
-    final EntityEntity entity = this.repository.findByExternalId(entityid).orElse(null);
-    if (entity == null) {
-      return null;
-    }
-    try {
-      if (!entityRecord.getIssuer().equals(entity.getIssuer())) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can not change issuer");
-      }
-      if (!entityRecord.getSubject().equals(entity.getSubject())) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can not change subject");
-      }
-      entity.setEntity(this.objectMapper.writeValueAsString(entityRecord));
-      this.repository.save(entity);
-      return entityRecord;
-    }
-    catch (JsonProcessingException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   @Override
   public void delete(final String entityid) {
     this.repository.findByExternalId(entityid).ifPresent(this.repository::delete);
+  }
+
+
+  private EntityRecord toRecord(EntityEntity entity){
+    try {
+      return this.objectMapper.readValue(entity.getEntity(), EntityRecord.class);
+    }
+    catch (JsonProcessingException e) {
+      throw new RuntimeException("Unable to map json entity to record",e);
+    }
+  }
+
+  private EntityEntity mergeRecordIntoEntity(final EntityRecord record,final EntityEntity entity){
+    try {
+      entity.setIssuer(record.getIssuer());
+      entity.setSubject(record.getSubject());
+      entity.setEntity(this.objectMapper.writeValueAsString(record));
+      if(entity.getExternalId() == null){
+        entity.setExternalId(record.getEntityRecordId());
+      }
+      return entity;
+    }
+    catch (JsonProcessingException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to map record to entity",e);
+    }
   }
 }

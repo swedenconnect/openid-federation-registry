@@ -31,9 +31,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 import se.swedenconnect.oidf.registry.api.model.EntityRecordHosted;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -88,13 +87,14 @@ public class EntityControllerTest {
    */
   @Test
   public void testCreateEntity() throws Exception {
-    EntityRecord record = new EntityRecord();
-    final var subject = "https://example.com/subject/1";
+    final EntityRecord record = new EntityRecord();
+    final String subject = "https://example.com/subject/1";
 
     record.setSubject(subject);
     record.setIssuer("http://issuer");
     record.setPolicyId("policyID");
     record.setIssuer("http://iss.example.se");
+    record.setEntityRecordId(UUID.randomUUID().toString());
 
     mockMvc.perform(post("/registry/v1/entities")
             .contentType(MediaType.APPLICATION_JSON)
@@ -124,6 +124,7 @@ public class EntityControllerTest {
     record.setSubject(subject);
     record.setIssuer("http://issuer");
     record.setPolicyId("policyID");
+    record.setEntityRecordId(UUID.randomUUID().toString());
 
 
     final MvcResult result = this.mockMvc.perform(post("/registry/v1/entities")
@@ -161,6 +162,8 @@ public class EntityControllerTest {
     record.setSubject(subject);
     record.setIssuer("http://issuer");
     record.setPolicyId("policyID");
+    record.setEntityRecordId(UUID.randomUUID().toString());
+
 
 
     final MvcResult result = this.mockMvc.perform(post("/registry/v1/entities")
@@ -194,19 +197,21 @@ public class EntityControllerTest {
    */
   @Test
   public void testDeleteEntity() throws Exception {
-    EntityRecord record = new EntityRecord();
-    final var subject = "https://example.com/subject/4";
+    final EntityRecord record = new EntityRecord();
+    final String subject = "https://example.com/subject/40";
 
     record.setSubject(subject);
     record.setIssuer("http://issuer");
     record.setPolicyId("policyID");
+    record.setEntityRecordId(UUID.randomUUID().toString());
+
 
     mockMvc.perform(post("/registry/v1/entities")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(record)))
         .andExpect(status().isCreated());
 
-    mockMvc.perform(delete("/registry/v1/entities/{entityId}", URLEncoder.encode(subject, StandardCharsets.UTF_8)))
+    mockMvc.perform(delete("/registry/v1/entities/{entityId}", record.getEntityRecordId()))
         .andExpect(status().isNoContent());
   }
 

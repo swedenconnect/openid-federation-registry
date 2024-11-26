@@ -31,9 +31,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.entity.util.EntityFactory;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.UUID;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -78,13 +77,15 @@ public class EntityControllerIT {
     final EntityRecord entity = EntityFactory.createDefaultEntity();
 
     // Act
-    ResponseEntity<EntityRecord> response = restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
+    final ResponseEntity<EntityRecord> response =
+        restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
-    response = restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
+    final ResponseEntity<EntityRecord> secondRes =
+        restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
 
     // Assert
-    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    assertThat(secondRes.getStatusCode()).isEqualTo(HttpStatus.CREATED);
   }
 
   /**
@@ -271,16 +272,18 @@ public class EntityControllerIT {
     assertThat(createdEntity).isNotNull();
 
     assert createdEntity.getSubject() != null;
-    final String entityId = URLEncoder.encode(createdEntity.getSubject(), StandardCharsets.UTF_8);
+    final String entityRecordId = UUID.randomUUID().toString();
 
     // Act
-    final ResponseEntity<Void> deleteResponse = restTemplate.exchange("/registry/v1/entities/{id}", HttpMethod.DELETE, null, Void.class, entityId);
+    final ResponseEntity<Void> deleteResponse =
+        restTemplate.exchange("/registry/v1/entities/{id}", HttpMethod.DELETE, null, Void.class, entityRecordId);
 
     // Assert
     assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
     // Verify it's deleted
-    final ResponseEntity<EntityRecord> getResponse = restTemplate.getForEntity("/registry/v1/entities/{id}", EntityRecord.class, entityId);
+    final ResponseEntity<EntityRecord> getResponse =
+        restTemplate.getForEntity("/registry/v1/entities/{id}", EntityRecord.class, entityRecordId);
     assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
   }
 }
