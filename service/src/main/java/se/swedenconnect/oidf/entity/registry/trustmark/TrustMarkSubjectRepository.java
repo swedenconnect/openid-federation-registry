@@ -17,19 +17,21 @@
 package se.swedenconnect.oidf.entity.registry.trustmark;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import se.swedenconnect.oidf.entity.registry.policy.PolicyEntity;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * EntityRepository is a JPA repository interface for accessing and performing
- * CRUD operations on {@link TrustmarkSubjectEntity} entities stored in database.
+ * CRUD operations on {@link TrustMarkSubjectEntity} entities stored in database.
  * <p>
  * It extends the {@link JpaRepository} interface which provides JPA related methods
  * for standard data access layers.
  *
  * @author Per Fredrik Plars
  */
-public interface TrustMarkSubjectRepository extends JpaRepository<TrustmarkSubjectEntity, Long> {
+public interface TrustMarkSubjectRepository extends JpaRepository<TrustMarkSubjectEntity, Long> {
   /**
    *  Find trustmarksubject on issuer and trustmark
    *
@@ -37,5 +39,14 @@ public interface TrustMarkSubjectRepository extends JpaRepository<TrustmarkSubje
    * @param trustmarkId Trustmarkid
    * @return List of trustmarksubjects
    */
-  List<TrustmarkSubjectEntity> findByIssuerAndTrustmarkId(final String issuer, final String trustmarkId);
+  List<TrustMarkSubjectEntity> findByIssuerAndTrustmarkId(final String issuer, final String trustmarkId);
+
+
+  /**
+   * Resolve TrustMarkSubjectEntity by its externalId
+   * @param externalId UUID
+   * @return an Optional containing the TrustMarkSubjectEntity if found, or an empty Optional if no
+   * TrustMarkSubjectEntity exist
+   */
+  Optional<TrustMarkSubjectEntity> findByExternalId(String externalId);
 }

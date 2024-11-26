@@ -3,17 +3,13 @@ package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.junit.jupiter.Container;
+import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.entity.util.EntityFactory;
 import se.swedenconnect.oidf.registry.api.model.Entity;
@@ -35,20 +31,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Slf4j
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("h2")
 class FederationServiceApiControllerIT {
   @Autowired
   private TestRestTemplate restTemplate;
 
-  /**
-   * A static instance of the MariaDBContainer using version 11.2 of the MariaDB image.
-   * This container is managed by the Spring framework with the use of {@code @Container}
-   * and {@code @ServiceConnection} annotations.
-   * The instance facilitates database management for integration testing by providing
-   * an isolated database environment.
-   */
-  @Container
-  @ServiceConnection
-  public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
 
   @Test
   void trustMarkRecordNotFound() {
@@ -129,7 +116,7 @@ class FederationServiceApiControllerIT {
     final SignedJWT signedJWT  = SignedJWT.parse(response.getBody());
     assertEquals(new JOSEObjectType("entity-record+jwt"),signedJWT.getHeader().getType());
     assertNotNull(signedJWT.getHeader().getKeyID());
-    final Map<String,Object> claim = signedJWT.getJWTClaimsSet().getJSONObjectClaim("entity-records");
+    final Map<String,Object> claim = signedJWT.getJWTClaimsSet().getJSONObjectClaim("entity-record");
     assertNotNull(claim);
 
   }

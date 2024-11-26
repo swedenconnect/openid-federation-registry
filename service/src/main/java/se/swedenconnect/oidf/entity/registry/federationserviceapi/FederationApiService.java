@@ -16,7 +16,6 @@
  */
 package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,8 +35,8 @@ import se.swedenconnect.oidf.entity.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.entity.registry.entity.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyEntity;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyRepository;
+import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectEntity;
 import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectRepository;
-import se.swedenconnect.oidf.entity.registry.trustmark.TrustmarkSubjectEntity;
 
 import java.util.Date;
 import java.util.List;
@@ -116,11 +115,11 @@ public class FederationApiService {
         .filter(id -> !id.isBlank())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "trustmarkId is mandatory"));
 
-    final List<TrustmarkSubjectEntity> trustmarkSubjectEntities =
+    final List<TrustMarkSubjectEntity> trustmarkSubjectEntities =
         this.trustMarkSubjectRepository.findByIssuerAndTrustmarkId(issuer.getValue(),trustmarkId)
             .stream()
-            .filter(trustmarkSubjectEntity -> subject.isEmpty() ||
-                trustmarkSubjectEntity.getSubject().equals(subject.get()))
+            .filter(trustMarkSubjectEntity -> subject.isEmpty() ||
+                trustMarkSubjectEntity.getSubject().equals(subject.get()))
             .toList();
 
     if (trustmarkSubjectEntities.isEmpty()) {
@@ -130,7 +129,7 @@ public class FederationApiService {
     }
     try {
       return signJsonRecords("trustmark-record",
-          trustmarkSubjectEntities.stream().map(TrustmarkSubjectEntity::getTrustmarksubject).toList()).serialize();
+          trustmarkSubjectEntities.stream().map(TrustMarkSubjectEntity::getTrustmarksubjectJson).toList()).serialize();
     }
     catch (JOSEException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);

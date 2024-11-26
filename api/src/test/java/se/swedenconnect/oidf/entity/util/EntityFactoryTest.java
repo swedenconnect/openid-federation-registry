@@ -16,11 +16,10 @@
 package se.swedenconnect.oidf.entity.util;
 
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 import se.swedenconnect.oidf.registry.api.model.Entity;
 
-import java.util.ArrayList;
-import java.util.List;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * The EntityFactoryTest class contains unit tests for the methods in the EntityFactory class.

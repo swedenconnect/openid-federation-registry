@@ -21,10 +21,16 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+
+import java.util.UUID;
 
 /**
  * TrustMarkSubjectEntity is a JPA entity representing a database table for storing entities
@@ -36,21 +42,36 @@ import lombok.ToString;
 @Setter
 @Entity
 @ToString
-@Table(name = "trustmark_subject")
-public class TrustmarkSubjectEntity {
+@Builder(toBuilder = true)
+
+@Table(name = "trustmark_subject",
+    uniqueConstraints = { @UniqueConstraint(columnNames = { "issuer", "trustmarkId","subject" }) })
+public class TrustMarkSubjectEntity {
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
 
-  @Column
+  @Column(name="external_id", unique = true)
+  private String externalId;
+
+  @Column(nullable = false)
   private String issuer;
 
-  @Column
+  @Column(nullable = false)
   private String trustmarkId;
 
-  @Column
+  @Column(nullable = false)
   private String subject;
 
-  @Column(columnDefinition = "TEXT")
-  private String trustmarksubject;
+  @Column(columnDefinition = "TEXT", nullable = false)
+  private String trustmarksubjectJson;
+
+
+  /**
+   * Creating a uuid for the externalId field
+   */
+  @PrePersist
+  public void prePersist(){
+    externalId = UUID.randomUUID().toString();
+  }
 }

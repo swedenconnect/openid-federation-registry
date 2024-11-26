@@ -23,7 +23,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -40,16 +39,16 @@ import java.util.UUID;
 @Setter
 @Entity
 @ToString
-@Table(name = "policies", uniqueConstraints = @UniqueConstraint(columnNames = "name"))
+@Table(name = "policies")
 public class PolicyEntity {
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
 
   @Column(name="external_id", unique = true)
   private String externalId;
 
-  @Column(unique = true)
+  @Column
   private String name;
 
   @Column(columnDefinition = "TEXT")

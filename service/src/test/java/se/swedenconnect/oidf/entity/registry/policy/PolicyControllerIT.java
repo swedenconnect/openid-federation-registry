@@ -59,28 +59,32 @@ public class PolicyControllerIT {
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
 
   /**
-   * Tests that creating multiple entities with the same subject returns a conflict status.
+   * Tests that creating multiple entities with the same policy_id returns BAD_REQUEST.
    * <p>
-   * This test ensures that the API correctly handles attempts to create duplicate entities.
+   * This test ensures that the API correctly handles attempts to create policies entities when policy_id is set.
    * Initially, it creates an entity with a default subject and verifies the response status
-   * is `HttpStatus.CREATED`. Then, it tries to create another entity with the same subject
-   * and verifies that the response status is `HttpStatus.CONFLICT`.
+   * is `HttpStatus.CREATED`. Then, it tries to create another entity with the created policy_id
+   * and verifies that the response status is `HttpStatus.BAD_REQUEST`.
    */
   @Test
-  public void testCreateMultiplePoliciesWithSameName() {
+  public void testCreatePolicyWithPolicyIdSet() {
     // Arrange
-    final PolicyRecord policy = new PolicyRecord.Builder().name("policy-name").policy("{}").build();
-
+    final PolicyRecord policy = new PolicyRecord.Builder()
+        .name("policy-name")
+        .policy("{}")
+        .build();
     // Act
     ResponseEntity<PolicyRecord> response = this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     assertThat(response.getBody()).isNotNull();
     assertThat(response.getBody().getPolicyId()).isNotNull();
 
-    response = this.restTemplate.postForEntity("/registry/v1/entities", policy, PolicyRecord.class);
+    policy.setPolicyId(response.getBody().getPolicyId());
+
+    response = this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
 
     // Assert
-    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
   }
 
   /**
@@ -171,16 +175,23 @@ public class PolicyControllerIT {
           }
         }""";
 
-    final HttpEntity<PolicyRecord> requestUpdate = new HttpEntity<>(new PolicyRecord.Builder().name("openid_relying_party").policy(updatedPolicyBody).build());
-    this.restTemplate.put("/registry/v1/policies/{name}", requestUpdate, "openid_relying_party");
+    final HttpEntity<PolicyRecord> requestUpdate = new HttpEntity<>( PolicyRecord.builder()
+        .name("openid_relying_party")
+        .policy(updatedPolicyBody)
+        .policyId(createdPolicy.getPolicyId())
+        .build());
 
-    final ResponseEntity<PolicyRecord> updateResponse = this.restTemplate.getForEntity("/registry/v1/policies/{name}", PolicyRecord.class, "openid_relying_party");
+    this.restTemplate.put("/registry/v1/policies/{policy_id}", requestUpdate, createdPolicy.getPolicyId());
+
+    final ResponseEntity<PolicyRecord> updateResponse = this.restTemplate
+        .getForEntity("/registry/v1/policies/{policy_id}", PolicyRecord.class, createdPolicy.getPolicyId());
 
     // Assert
     assertThat(updateResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
     final PolicyRecord updatedPolicy = updateResponse.getBody();
     assertThat(updatedPolicy).isNotNull();
-    assertThat(updatedPolicy.getPolicy()).containsSequence("\\\"scope\\\" : {\\n      \\\"subset_of\\\" : [ \\\"openid\\\", \\\"profile\\\", \\\"email\\\"]");
+    assertThat(updatedPolicy.getPolicy())
+        .containsSequence("\\\"scope\\\" : {\\n      \\\"subset_of\\\" : [ \\\"openid\\\", \\\"profile\\\", \\\"email\\\"]");
   }
 
   /**

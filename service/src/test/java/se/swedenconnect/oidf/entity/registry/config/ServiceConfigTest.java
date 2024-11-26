@@ -15,22 +15,21 @@
  */
 package se.swedenconnect.oidf.entity.registry.config;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-
 import se.swedenconnect.oidf.entity.registry.entity.EntityRepository;
-import se.swedenconnect.oidf.entity.registry.policy.PolicyRepository;
 import se.swedenconnect.oidf.entity.registry.entity.EntityService;
-import se.swedenconnect.oidf.entity.registry.policy.PolicyService;
 import se.swedenconnect.oidf.entity.registry.entity.JpaEntityService;
 import se.swedenconnect.oidf.entity.registry.policy.JpaPolicyService;
+import se.swedenconnect.oidf.entity.registry.policy.PolicyRepository;
+import se.swedenconnect.oidf.entity.registry.policy.PolicyService;
 import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectRepository;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.Mockito.mock;
 
 /**
  * ServiceConfigTest is a test class for the ServiceConfig Spring configuration class.

@@ -97,17 +97,17 @@ public class PolicyController {
   }
 
   /**
-   * Retrieves a policy by its name from the entity registry.
+   * Retrieves a policy by its policy_id from the entity registry.
    *
-   * @param name the name of the policy to be retrieved
+   * @param policyId the name of the policy to be retrieved
    *
    * @return a {@link PolicyRecord} object representing the policy, if found
    */
-  @GetMapping("/{name}")
-  public PolicyRecord getPolicyByName(@PathVariable("name") final String name) {
-    log.debug("GET by name: {}", name);
+  @GetMapping("/{policyId}")
+  public PolicyRecord getPolicyByPolicyId(@PathVariable("policyId") final String policyId) {
+    log.debug("GET by policyId: {}", policyId);
 
-    PolicyRecord dto = this.policyService.get(name);
+    final PolicyRecord dto = this.policyService.get(policyId);
     if (dto == null) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Policy not found");
     }
