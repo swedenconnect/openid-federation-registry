@@ -65,7 +65,7 @@ public class JpaPolicyService implements PolicyService {
       policyEntity.setPolicy(policy.getPolicy());
       policyEntity.setName(policy.getName());
       final PolicyEntity savedPolicy = this.policyRepository.save(policyEntity);
-      policy.setPolicyId(savedPolicy.getExternalId());
+      policy.setPolicyRecordId(savedPolicy.getExternalId());
     }
     else {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid JSON policy");
@@ -78,7 +78,7 @@ public class JpaPolicyService implements PolicyService {
     return this.policyRepository.findByExternalId(policy_id)
         .map(entity ->  PolicyRecord.builder()
             .name(entity.getName())
-            .policyId(entity.getExternalId())
+            .policyRecordId(entity.getExternalId())
             .policy(entity.getPolicy())
             .build())
         .orElse(null);
@@ -93,6 +93,9 @@ public class JpaPolicyService implements PolicyService {
 
   @Override
   public PolicyRecord update(final String policy_id, final PolicyRecord policy) {
+    if(!policy_id.equals(policy.getPolicyRecordId())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PolicyId has to be the same in path and object");
+    }
     final var dao = this.policyRepository.findByExternalId(policy_id).orElse(null);
     if (dao != null) {
       try {

@@ -59,7 +59,7 @@ public class JpaTrustMarkSubjectService implements TrustMarkSubjectService {
 
       final TrustMarkSubjectEntity trustMarkSubjectEntity = repository.save(entity);
       return trustMarkSubjectRecord.toBuilder()
-          .trustMarkSubjectId(trustMarkSubjectEntity.getExternalId())
+          .trustMarkSubjectRecordId(trustMarkSubjectEntity.getExternalId())
           .build();
     }
     catch (JsonProcessingException e) {

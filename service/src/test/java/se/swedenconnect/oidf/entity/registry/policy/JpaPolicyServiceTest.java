@@ -29,6 +29,7 @@ import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -180,17 +181,23 @@ public class JpaPolicyServiceTest {
   @Test
   public void testUpdatePolicy() throws Exception {
     // Given
+    final String policyID = UUID.randomUUID().toString();
     PolicyEntity existingPolicy = new PolicyEntity();
     existingPolicy.setName("Existing Policy");
     existingPolicy.setPolicy("{\"oldKey\":\"oldValue\"}");
+    existingPolicy.setExternalId(policyID);
 
-    PolicyRecord updateDto = new PolicyRecord.Builder().name("Updated Policy").policy("{\"newKey\":\"newValue\"}").build();
 
-    when(policyRepository.findByExternalId("Existing Policy")).thenReturn(Optional.of(existingPolicy));
+    final PolicyRecord updateDto = new PolicyRecord.Builder()
+        .name("Updated Policy")
+        .policyRecordId(policyID)
+        .policy("{\"newKey\":\"newValue\"}").build();
+
+    when(policyRepository.findByExternalId(policyID)).thenReturn(Optional.of(existingPolicy));
     when(objectMapper.writeValueAsString(any(PolicyRecord.class))).thenReturn(updateDto.getPolicy());
 
     // When
-    PolicyRecord updatedPolicy = jpaPolicyService.update("Existing Policy", updateDto);
+    PolicyRecord updatedPolicy = jpaPolicyService.update(policyID, updateDto);
 
     // Then
     assertThat(updatedPolicy).isNotNull();

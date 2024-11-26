@@ -26,17 +26,21 @@ components:
       type: object
       description: A representation of an  trust-mark-subject-record.
       properties:
-        trust_mark_subject_id:
+        trust_mark_subject_record_id:
           type: string
+          nullable: false
           description: The identity of this trust-mark-subject-record
         issuer:
           type: string
+          nullable: false
           description: The identity of the entity issuing the record. This field is required.
         trust_mark_id:
           type: string
+          nullable: false
           description: Identity of the trust-mark-id.
         subject:
           type: string
+          nullable: false
           description: The identity of the subject associated with the record. This field is required.
         revoked:
           type: boolean
@@ -51,7 +55,11 @@ components:
           format: date-time
           nullable: true
           description: The timestamp when the subject will expire.
-
+      required:
+        - trust_mark_subject_record_id
+        - issuer
+        - trust_mark_id
+        - subject
 
     policy-record:
       type: object
@@ -59,17 +67,24 @@ components:
         name:
           type: string
           description: The name of the Policy. Must match the top node in the policy json string
-        policy_id:
+        policy_record_id:
           type: string
           description: Uniq identifyer for a policy
         policy:
           type: string
           description: The json object describing the Policy
+      required:
+        - policy_record_id
+        - name
+        - policy
 
-    entity:
+    entity-record:
       type: object
       description: A representation of an EntityRecord.
       properties:
+        entity_record_id:
+          type: string
+          description: Id of the record, used for delete and update
         issuer:
           type: string
           description: The identity of the entity issuing the record. This field is required.
@@ -78,7 +93,7 @@ components:
           description: The identity of the subject associated with the record. This field is required.
         policy_id:
           type: string
-          nullable: true
+          nullable: false
           description: The id of the policy associated with the entity.
         override_configuration_location:
           type: string
@@ -119,6 +134,7 @@ components:
                 additionalProperties: true
 
       required:
+        - entity_record_id
         - issuer
         - subject
 
@@ -135,7 +151,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/entity'
+              $ref: '#/components/schemas/entity-record'
       responses:
         '201':
           description: Entity created successfully
@@ -151,7 +167,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/entity'
+                  $ref: '#/components/schemas/entity-record'
 
   /registry/v1/{entityId}:
     get:
@@ -171,7 +187,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/entity'
+                $ref: '#/components/schemas/entity-record'
         '404':
           description: Entity not found
     put:
@@ -191,7 +207,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/entity'
+              $ref: '#/components/schemas/entity-record'
       responses:
         '200':
           description: Entity updated successfully

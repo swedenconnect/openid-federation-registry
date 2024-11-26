@@ -72,7 +72,7 @@ public class PolicyController {
   @PostMapping
   public PolicyRecord createPolicy(@RequestBody final PolicyRecord policy, final HttpServletResponse response) {
     log.debug("POST: {}", policy);
-    if(policy.getPolicyId()!=null && !policy.getPolicyId().isBlank()){
+    if(policy.getPolicyRecordId()!=null && !policy.getPolicyRecordId().isBlank()){
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
           "Policy_id exist use update endpoint");
     }
@@ -126,7 +126,7 @@ public class PolicyController {
    public PolicyRecord updatePolicy(@PathVariable("policy_id") final String policy_id,
       @RequestBody PolicyRecord policy) {
      log.debug("PUT: {}", policy);
-     if(!policy_id.equals(policy.getPolicyId())) {
+     if(!policy_id.equals(policy.getPolicyRecordId())) {
        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PolicyId has to be the same in path and object");
      }
      return this.policyService.update(policy_id, policy);
