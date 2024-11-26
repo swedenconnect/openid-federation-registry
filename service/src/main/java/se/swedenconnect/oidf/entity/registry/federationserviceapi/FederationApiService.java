@@ -113,7 +113,7 @@ public class FederationApiService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Issuer is mandatory"));
     Optional.ofNullable(trustmarkId)
         .filter(id -> !id.isBlank())
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "trustmarkId is mandatory"));
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "TrustmarkId is mandatory"));
 
     final List<TrustMarkSubjectEntity> trustmarkSubjectEntities =
         this.trustMarkSubjectRepository.findByIssuerAndTrustmarkId(issuer.getValue(),trustmarkId)
@@ -142,12 +142,12 @@ public class FederationApiService {
    * @param policyId External policyid, expect UUID format
    * @return Signed JWT containing PolicyRecords
    */
-  public String policyRecord(final UUID policyId) {
+  public String policyRecord(final String policyId) {
 
-    final PolicyEntity policyEntity = this.policyRepository.findByExternalId(policyId.toString())
+    final PolicyEntity policyEntity = this.policyRepository.findByExternalId(policyId)
         .orElseThrow(() ->
             new ResponseStatusException(HttpStatus.NOT_FOUND,
-                "Unable to find policy for id:'%s'".formatted(policyId.toString())));
+                "Unable to find policy for id:'%s'".formatted(policyId)));
 
     try {
       return signJsonRecords("policy-record", List.of(policyEntity.getPolicy())).serialize();
@@ -162,9 +162,14 @@ public class FederationApiService {
    * Taking a list of json blobs and set it as a claim in JWT.
    * Claim is structured like this:
    * {
-   *   "data": [
+   *   [
    *      {
-   *        "fields":"From JsonRecords"
+   *        "issuer":"http://iss",
+   *        "subject":"http://sub"
+   *      },
+   *      {
+   *        "issuer":"http://iss"
+   *        "subject":"http://sub"
    *      }
    *   ]
    * }
@@ -176,7 +181,7 @@ public class FederationApiService {
    */
   protected SignedJWT signJsonRecords(final String claimName, final List<String> jsonRecords) throws JOSEException {
 
-    final List<Map<String,Object>> jsonClaims = jsonRecords.stream().map((js) -> {
+    final List<Map<String,Object>> jsonClaimsData = jsonRecords.stream().map((js) -> {
       try {
         return this.mapper.readValue(js, new TypeReference<Map<String,Object>>() {});
       }
@@ -186,17 +191,18 @@ public class FederationApiService {
     }).toList();
 
 
+
     final RSASSASigner signer = new RSASSASigner(this.signKey.toRSAKey());
     final JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .claim(claimName, Map.of("data",jsonClaims))
         .issueTime(new Date())
         .jwtID(UUID.randomUUID().toString())
         .issuer("oidf-registry")
+        .claim(claimName.replace('-','_'), jsonClaimsData)
         .build();
 
     final JWSAlgorithm alg = signer.supportedJWSAlgorithms().stream().findFirst().orElseThrow();
     final JWSHeader header = new JWSHeader.Builder(alg)
-        .type(new JOSEObjectType(claimName + "+jwt"))
+        .type(new JOSEObjectType(claimName.replace('_','-')+ "+jwt"))
         .keyID(this.signKey.getKeyID())
         .build();
 
@@ -204,5 +210,7 @@ public class FederationApiService {
     jwt.sign(signer);
     return jwt;
   }
+
+
 
 }

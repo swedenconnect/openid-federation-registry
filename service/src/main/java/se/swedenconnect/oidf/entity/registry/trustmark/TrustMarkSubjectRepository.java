@@ -17,7 +17,6 @@
 package se.swedenconnect.oidf.entity.registry.trustmark;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import se.swedenconnect.oidf.entity.registry.policy.PolicyEntity;
 
 import java.util.List;
 import java.util.Optional;

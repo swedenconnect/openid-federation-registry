@@ -45,7 +45,7 @@ public class PolicyEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
 
-  @Column(name="external_id", unique = true)
+  @Column(name="external_id", unique = true,updatable = false)
   private String externalId;
 
   @Column
@@ -59,7 +59,7 @@ public class PolicyEntity {
    */
   @PrePersist
   public void prePersist(){
-    externalId = UUID.randomUUID().toString();
+    externalId = "P:"+UUID.randomUUID();
   }
 }
 

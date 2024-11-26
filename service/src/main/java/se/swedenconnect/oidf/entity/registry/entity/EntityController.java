@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.entity.api.OidfEntityRegistryApi;
-import se.swedenconnect.oidf.registry.api.model.Entity;
+import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -44,7 +44,7 @@ import java.util.List;
  * in the registry. This controller inherits from the {@link OidfEntityRegistryApi} interface and
  * interacts with the EntityService to perform CRUD operations on entities.
  * <p>
- * The {@link Entity} object is serialized to a JSON structure and saved to some storage with the
+ * The {@link EntityRecord} object is serialized to a JSON structure and saved to some storage with the
  * {@code subject} member of the {@code Entity} object as searchable key.
  *
  * @author David Goldring
@@ -69,16 +69,13 @@ public class EntityController {
    * Creates a new entity in the registry.
    *
    * @param entity the entity to be created
-   * @param response the HTTP servlet response to set the status code
    * @return the created entity
    */
   @PostMapping
-  public Entity createEntity(@RequestBody final Entity entity, final HttpServletResponse response) {
+  public ResponseEntity<EntityRecord> createEntity(@RequestBody final EntityRecord entity) {
     log.debug("POST: {}", entity);
-    Entity createdEntity = this.entityService.create(entity);
-    response.setStatus(HttpServletResponse.SC_CREATED);
-
-    return createdEntity;
+    final EntityRecord createdEntity = this.entityService.create(entity);
+    return ResponseEntity.status(HttpStatus.CREATED).body(createdEntity);
   }
 
   /**
@@ -87,11 +84,10 @@ public class EntityController {
    * @return a list of all entities
    */
   @GetMapping
-  public List<Entity> getAllEntities() {
-    List<Entity> entities = this.entityService.getAll();
+  public ResponseEntity<List<EntityRecord>> getAllEntities() {
+    final List<EntityRecord> entities = this.entityService.getAll();
     log.debug("GET: {}", entities);
-
-    return ResponseEntity.ok(entities).getBody();
+    return ResponseEntity.ok(entities);
   }
 
   /**
@@ -101,11 +97,11 @@ public class EntityController {
    * @return the entity corresponding to the provided identifier
    */
   @GetMapping("/{entityId}")
-  public Entity getEntityById(@PathVariable("entityId") final String entityId) {
+  public EntityRecord getEntityById(@PathVariable("entityId") final String entityId) {
     log.debug("GET: by id: {}", entityId);
 
     final var decoded = URLDecoder.decode(entityId, StandardCharsets.UTF_8);
-    final Entity entity = this.entityService.get(decoded);
+    final EntityRecord entity = this.entityService.get(decoded);
     if (entity == null) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Entity not found");
     }
@@ -123,12 +119,9 @@ public class EntityController {
    * @return the updated entity object
    */
   @PutMapping("/{entityId}")
-  public Entity updateEntity(@PathVariable("entityId") final String entityId, @RequestBody Entity entity) {
+  public EntityRecord updateEntity(@PathVariable("entityId") final String entityId, @RequestBody EntityRecord entity) {
     log.debug("PUT: {}", entity);
-
-    final var decoded = URLDecoder.decode(entityId, StandardCharsets.UTF_8);
-
-    return this.entityService.update(decoded, entity);
+    return this.entityService.update(entityId, entity);
   }
 
   /**

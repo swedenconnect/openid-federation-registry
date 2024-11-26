@@ -16,7 +16,7 @@
 package se.swedenconnect.oidf.entity.util;
 
 import org.junit.jupiter.api.Test;
-import se.swedenconnect.oidf.registry.api.model.Entity;
+import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -38,11 +38,11 @@ public class EntityFactoryTest {
    */
   @Test
   public void testCreateDefaultEntity() {
-    Entity entity = EntityFactory.createDefaultEntity();
+    final EntityRecord record = EntityFactory.createDefaultEntity();
 
-    assertNotNull(entity);
+    assertNotNull(record);
 
-    assertEquals(EntityFactory.SUBJECT_DEFAULT, entity.getSubject());
+    assertEquals(EntityFactory.SUBJECT_DEFAULT, record.getSubject());
   }
 
   /**
@@ -54,13 +54,13 @@ public class EntityFactoryTest {
    */
   @Test
   public void testCreateDefaultEntityWithSubject() {
-    String subject = EntityFactory.SUBJECT_2;
+    final String subject = EntityFactory.SUBJECT_2;
 
-    Entity entity = EntityFactory.createDefaultEntity(subject);
+    final EntityRecord entityRecord = EntityFactory.createDefaultEntity(subject);
 
-    assertNotNull(entity);
+    assertNotNull(entityRecord);
 
-    assertEquals(subject, entity.getSubject());
+    assertEquals(subject, entityRecord.getSubject());
   }
 
 }

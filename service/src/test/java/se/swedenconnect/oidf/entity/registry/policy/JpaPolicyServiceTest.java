@@ -29,6 +29,7 @@ import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -180,23 +181,28 @@ public class JpaPolicyServiceTest {
   @Test
   public void testUpdatePolicy() throws Exception {
     // Given
-    PolicyEntity existingPolicy = new PolicyEntity();
+    final PolicyEntity existingPolicy = new PolicyEntity();
     existingPolicy.setName("Existing Policy");
     existingPolicy.setPolicy("{\"oldKey\":\"oldValue\"}");
 
-    PolicyRecord updateDto = new PolicyRecord.Builder().name("Updated Policy").policy("{\"newKey\":\"newValue\"}").build();
+    final PolicyRecord updateRecord = new PolicyRecord
+        .Builder()
+        .name("Updated Policy")
+        .policy("{\"newKey\":\"newValue\"}")
+        .policyId(UUID.randomUUID().toString())
+        .build();
 
-    when(policyRepository.findByExternalId("Existing Policy")).thenReturn(Optional.of(existingPolicy));
-    when(objectMapper.writeValueAsString(any(PolicyRecord.class))).thenReturn(updateDto.getPolicy());
+    when(this.policyRepository.findByExternalId(updateRecord.getPolicyId())).thenReturn(Optional.of(existingPolicy));
+    when(this.objectMapper.writeValueAsString(any(PolicyRecord.class))).thenReturn(updateRecord.getPolicy());
 
     // When
-    PolicyRecord updatedPolicy = jpaPolicyService.update("Existing Policy", updateDto);
+    final PolicyRecord updatedPolicy = this.jpaPolicyService.update(updateRecord.getPolicyId(), updateRecord);
 
     // Then
     assertThat(updatedPolicy).isNotNull();
-    assertThat(updatedPolicy.getName()).isEqualTo(updateDto.getName());
-    assertThat(updatedPolicy.getPolicy()).isEqualTo(updateDto.getPolicy());
-    verify(policyRepository, times(1)).save(existingPolicy);
+    assertThat(updatedPolicy.getName()).isEqualTo(updateRecord.getName());
+    assertThat(updatedPolicy.getPolicy()).isEqualTo(updateRecord.getPolicy());
+    verify(this.policyRepository, times(1)).save(existingPolicy);
   }
 
   /**

@@ -93,6 +93,9 @@ public class JpaPolicyService implements PolicyService {
 
   @Override
   public PolicyRecord update(final String policy_id, final PolicyRecord policy) {
+    if(!policy_id.equals(policy.getPolicyId())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PolicyId has to be the same in path and object");
+    }
     final var dao = this.policyRepository.findByExternalId(policy_id).orElse(null);
     if (dao != null) {
       try {

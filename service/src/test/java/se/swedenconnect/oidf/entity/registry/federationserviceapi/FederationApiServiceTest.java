@@ -11,7 +11,6 @@ import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -42,7 +41,7 @@ class FederationApiServiceTest {
     final SignedJWT signedJWT  = SignedJWT.parse(jwtser);
     assertEquals(new JOSEObjectType("trust-mark+jwt"),signedJWT.getHeader().getType());
     assertNotNull(signedJWT.getHeader().getKeyID());
-    final Map<String,Object> claim = signedJWT.getJWTClaimsSet().getJSONObjectClaim("trust-mark");
+    final List<Object> claim = signedJWT.getJWTClaimsSet().getListClaim("trust_mark");
     assertNotNull(claim);
 
   }

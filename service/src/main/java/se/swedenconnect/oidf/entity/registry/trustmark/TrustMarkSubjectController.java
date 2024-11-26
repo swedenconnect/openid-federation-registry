@@ -20,6 +20,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -64,17 +65,15 @@ public class TrustMarkSubjectController {
    * Creates a new trustMark in the entity registry.
    *
    * @param trustMark a {@link TrustMarkSubjectRecord} object containing the details of the trustMark to be created
-   * @param response the {@link HttpServletResponse} object used to set the response status
    * @return a {@link TrustMarkSubjectRecord} object representing the created trustMark
    */
   @PostMapping
-  public TrustMarkSubjectRecord createTrustMarkSubject(@RequestBody final TrustMarkSubjectRecord trustMark,
-      final HttpServletResponse response) {
+  public ResponseEntity<TrustMarkSubjectRecord> createTrustMarkSubject(
+      @RequestBody final TrustMarkSubjectRecord trustMark) {
     log.debug("POST: {}", trustMark);
 
     final TrustMarkSubjectRecord record = this.trustMarkSubjectService.create(trustMark);
-    response.setStatus(HttpServletResponse.SC_CREATED);
-    return record;
+    return ResponseEntity.status(HttpStatus.CREATED).body(record);
   }
 
   /**

@@ -110,16 +110,19 @@ public class JpaTrustMarkSubjectService implements TrustMarkSubjectService {
 
   @Override
   public TrustMarkSubjectRecord update(final String trustMarkSubjectId, final TrustMarkSubjectRecord record) {
+    if (!trustMarkSubjectId.equals(record.getTrustMarkSubjectId())){
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "TrustMarkSubjectId has to match in json payload.");
+    }
     final TrustMarkSubjectEntity entity = this.repository.findByExternalId(trustMarkSubjectId).orElse(null);
     if (entity != null) {
       try {
-        if (record.getIssuer() == null || record.getIssuer().equals(entity.getIssuer())) {
+        if (record.getIssuer() != null && !record.getIssuer().equals(entity.getIssuer())) {
           throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can not change issuer");
         }
-        if (record.getSubject() == null || record.getSubject().equals(entity.getSubject())) {
+        if (record.getSubject() != null && !record.getSubject().equals(entity.getSubject())) {
           throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can not change subject");
         }
-        if (record.getTrustMarkId() == null || record.getTrustMarkId().equals(entity.getTrustmarkId())) {
+        if (record.getTrustMarkId() != null && record.getTrustMarkId().equals(entity.getTrustmarkId())) {
           throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Can not change trustmark");
         }
 

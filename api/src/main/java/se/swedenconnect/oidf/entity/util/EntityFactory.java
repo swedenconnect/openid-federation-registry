@@ -18,10 +18,10 @@ package se.swedenconnect.oidf.entity.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import se.swedenconnect.oidf.registry.api.model.Entity;
+import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 
 /**
- * Factory class for creating instances of {@link Entity}, from a json set
+ * Factory class for creating instances of {@link EntityRecord}, from a json set
  *
  * @author David Goldring
  */
@@ -48,7 +48,7 @@ public class EntityFactory {
     public final static String SUBJECT_3 = "https://example.com/subject/3";
 
     /**
-     * The default subject used for creating instances of {@link Entity}.
+     * The default subject used for creating instances of {@link EntityRecord}.
      * This constant is typically used when no specific subject is provided.
      */
     public final static String SUBJECT_DEFAULT = SUBJECT_1;
@@ -99,23 +99,23 @@ public class EntityFactory {
 
 
     /**
-     * Creates an instance of {@link Entity} with default values.
+     * Creates an instance of {@link EntityRecord} with default values.
      * Uses JwksSource by default and does not include a Hosted object.
      *
-     * @return an instance of {@link Entity}
+     * @return an instance of {@link EntityRecord}
      */
-    public static Entity createDefaultEntity() {
+    public static EntityRecord createDefaultEntity() {
         return createDefaultEntity(SUBJECT_DEFAULT);
     }
 
     /**
-     * Creates a default instance of {@link Entity} with given subject.
+     * Creates a default instance of {@link EntityRecord} with given subject.
      * Uses a default JwksSource and predefined URL and policy.
      *
      * @param subject the subject of the entity
-     * @return an instance of {@link Entity}
+     * @return an instance of {@link EntityRecord}
      */
-    public static Entity createDefaultEntity(String subject) {
+    public static EntityRecord createDefaultEntity(String subject) {
         return createDefaultEntity(ISSUER_1,subject);
     }
 
@@ -143,10 +143,10 @@ public class EntityFactory {
      * @param subject Subject set in entityobject
      * @return Entity object with selected issuer and subject
      */
-    public static Entity createDefaultEntity(String issuer, String subject) {
+    public static EntityRecord createDefaultEntity(String issuer, String subject) {
 
         try {
-            return mapper.readValue(entityJsonData.formatted(issuer, subject), Entity.class);
+            return mapper.readValue(entityJsonData.formatted(issuer, subject), EntityRecord.class);
         }
         catch (JsonProcessingException e) {
             throw new RuntimeException(e);

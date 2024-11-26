@@ -65,22 +65,19 @@ public class PolicyController {
    * Creates a new policy in the entity registry.
    *
    * @param policy a {@link PolicyRecord} object containing the details of the policy to be created
-   * @param response the {@link HttpServletResponse} object used to set the response status
    *
    * @return a {@link PolicyRecord} object representing the created policy
    */
   @PostMapping
-  public PolicyRecord createPolicy(@RequestBody final PolicyRecord policy, final HttpServletResponse response) {
+  public ResponseEntity<PolicyRecord> createPolicy(@RequestBody final PolicyRecord policy) {
     log.debug("POST: {}", policy);
-    if(policy.getPolicyId()!=null && !policy.getPolicyId().isBlank()){
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-          "Policy_id exist use update endpoint");
+    if(policy.getPolicyId() != null){
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PolicyId can not be set on creation!");
+
     }
 
-    PolicyRecord dto = this.policyService.create(policy);
-    response.setStatus(HttpServletResponse.SC_CREATED);
-
-    return dto;
+    final PolicyRecord record = this.policyService.create(policy);
+    return ResponseEntity.status(HttpStatus.CREATED).body(record);
   }
 
   /**
@@ -89,11 +86,11 @@ public class PolicyController {
    * @return a list of {@link PolicyRecord} representing the policy records
    */
   @GetMapping
-  public List<PolicyRecord> getAllPolicies() {
+  public ResponseEntity<List<PolicyRecord>> getAllPolicies() {
     List<PolicyRecord> policies = this.policyService.getAll();
     log.debug("GET all: {}", policies);
 
-    return ResponseEntity.ok(policies).getBody();
+    return ResponseEntity.ok(policies);
   }
 
   /**
@@ -107,12 +104,11 @@ public class PolicyController {
   public PolicyRecord getPolicyByPolicyId(@PathVariable("policyId") final String policyId) {
     log.debug("GET by policyId: {}", policyId);
 
-    final PolicyRecord dto = this.policyService.get(policyId);
-    if (dto == null) {
+    final PolicyRecord record = this.policyService.get(policyId);
+    if (record == null) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Policy not found");
     }
-
-    return dto;
+    return record;
   }
 
   /**
@@ -126,9 +122,6 @@ public class PolicyController {
    public PolicyRecord updatePolicy(@PathVariable("policy_id") final String policy_id,
       @RequestBody PolicyRecord policy) {
      log.debug("PUT: {}", policy);
-     if(!policy_id.equals(policy.getPolicyId())) {
-       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PolicyId has to be the same in path and object");
-     }
      return this.policyService.update(policy_id, policy);
    }
 

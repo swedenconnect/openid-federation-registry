@@ -26,7 +26,6 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -51,7 +50,7 @@ public class TrustMarkSubjectEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
 
-  @Column(name="external_id", unique = true)
+  @Column(name="external_id", unique = true,updatable = false)
   private String externalId;
 
   @Column(nullable = false)
@@ -72,6 +71,6 @@ public class TrustMarkSubjectEntity {
    */
   @PrePersist
   public void prePersist(){
-    externalId = UUID.randomUUID().toString();
+    externalId = "TMS:"+UUID.randomUUID();
   }
 }

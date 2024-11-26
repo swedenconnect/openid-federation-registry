@@ -12,11 +12,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.entity.util.EntityFactory;
-import se.swedenconnect.oidf.registry.api.model.Entity;
+import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
 import java.text.ParseException;
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -69,20 +69,8 @@ class FederationServiceApiControllerIT {
     final SignedJWT signedJWT  = SignedJWT.parse(fedRes.getBody());
     assertEquals(new JOSEObjectType("policy-record+jwt"),signedJWT.getHeader().getType());
     assertNotNull(signedJWT.getHeader().getKeyID());
-    final Map<String,Object> claim = signedJWT.getJWTClaimsSet().getJSONObjectClaim("policy-record");
+    final List<Object> claim = signedJWT.getJWTClaimsSet().getListClaim("policy_record");
     assertNotNull(claim);
-  }
-
-  @Test
-  void policyRecordBadRequest() throws ParseException {
-
-    final ResponseEntity<String> fedRes = restTemplate
-        .getForEntity("/api/v1/federationservice/policy_record?policy_id=notAnUuid", String.class);
-    if(fedRes.getStatusCode().isError()){
-      log.error(fedRes.getBody());
-    }
-    assertThat(HttpStatus.BAD_REQUEST).isEqualTo(fedRes.getStatusCode());
-
   }
 
   @Test
@@ -101,8 +89,8 @@ class FederationServiceApiControllerIT {
   @Test
   void entityRecordSuccess() throws ParseException {
     final String issuer = "http://tmi.digg.se/" + UUID.randomUUID();
-    final Entity entity = EntityFactory.createDefaultEntity(issuer,"http://sub.digg.se");
-    final ResponseEntity<Entity> createResponse = restTemplate.postForEntity("/registry/v1/entities", entity, Entity.class);
+    final EntityRecord entity = EntityFactory.createDefaultEntity(issuer,"http://sub.digg.se");
+    final ResponseEntity<EntityRecord> createResponse = restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
     assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
     final ResponseEntity<String> response = restTemplate
@@ -116,7 +104,7 @@ class FederationServiceApiControllerIT {
     final SignedJWT signedJWT  = SignedJWT.parse(response.getBody());
     assertEquals(new JOSEObjectType("entity-record+jwt"),signedJWT.getHeader().getType());
     assertNotNull(signedJWT.getHeader().getKeyID());
-    final Map<String,Object> claim = signedJWT.getJWTClaimsSet().getJSONObjectClaim("entity-record");
+    final List<Object> claim = signedJWT.getJWTClaimsSet().getListClaim("entity_record");
     assertNotNull(claim);
 
   }

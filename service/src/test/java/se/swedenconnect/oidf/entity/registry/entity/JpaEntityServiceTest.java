@@ -24,11 +24,12 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.entity.util.EntityFactory;
-import se.swedenconnect.oidf.registry.api.model.Entity;
+import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -43,10 +44,9 @@ import static org.mockito.Mockito.when;
 /**
  * Unit tests for the {@link JpaEntityService} class.
  * <p>
- * This class is responsible for testing the various methods and functionalities
- * of the {@link JpaEntityService} class using mocked dependencies.
- * The tests ensure the correct behavior of CRUD operations, exception handling,
- * and interactions with the {@link EntityRepository} and {@link ObjectMapper}.
+ * This class is responsible for testing the various methods and functionalities of the {@link JpaEntityService} class
+ * using mocked dependencies. The tests ensure the correct behavior of CRUD operations, exception handling, and
+ * interactions with the {@link EntityRepository} and {@link ObjectMapper}.
  *
  * @author David Goldring
  */
@@ -69,18 +69,16 @@ class JpaEntityServiceTest {
   /**
    * Tests the successful creation of an entity.
    * <p>
-   * This test case verifies that an entity can be created successfully with
-   * the given subject and that the saved entity is returned as expected. 
-   * It mocks the repository save operation to ensure the method call occurs and 
-   * checks that the returned entity has the intended subject.
+   * This test case verifies that an entity can be created successfully with the given subject and that the saved entity
+   * is returned as expected. It mocks the repository save operation to ensure the method call occurs and checks that
+   * the returned entity has the intended subject.
    *
-   * @throws JsonProcessingException if there is a processing error when converting 
-   *                                 the entity to a JSON string.
+   * @throws JsonProcessingException if there is a processing error when converting the entity to a JSON string.
    */
   @Test
   void testCreateEntitySuccess() throws JsonProcessingException {
     // Given
-    Entity entity = EntityFactory.createDefaultEntity();
+    EntityRecord entity = EntityFactory.createDefaultEntity();
     EntityEntity entityEntity = new EntityEntity();
     entityEntity.setSubject(EntityFactory.SUBJECT_DEFAULT);
     entityEntity.setEntity(objectMapper.writeValueAsString(entity));
@@ -88,7 +86,7 @@ class JpaEntityServiceTest {
     when(repository.save(any(EntityEntity.class))).thenReturn(entityEntity);
 
     // When
-    Entity result = entityService.create(entity);
+    EntityRecord result = entityService.create(entity);
 
     // Then
     assertThat(result).isNotNull();
@@ -99,18 +97,18 @@ class JpaEntityServiceTest {
   /**
    * Tests the creation of an entity when a JsonProcessingException occurs.
    * <p>
-   * This test case verifies that a ResponseStatusException with HttpStatus.BAD_REQUEST is thrown when the 
-   * ObjectMapper fails to process the entity into a JSON string due to a JsonProcessingException.
+   * This test case verifies that a ResponseStatusException with HttpStatus.BAD_REQUEST is thrown when the ObjectMapper
+   * fails to process the entity into a JSON string due to a JsonProcessingException.
    *
    * @throws JsonProcessingException if there is a processing error when converting the entity to a JSON string.
    */
   @Test
   void testCreateEntityJsonProcessingException() throws JsonProcessingException {
     // Given
-    Entity entity = EntityFactory.createDefaultEntity();
+    EntityRecord entity = EntityFactory.createDefaultEntity();
 
     // Mock objectMapper to throw JsonProcessingException
-    doThrow(JsonProcessingException.class).when(objectMapper).writeValueAsString(any(Entity.class));
+    doThrow(JsonProcessingException.class).when(objectMapper).writeValueAsString(any(EntityRecord.class));
 
     // When
     Throwable thrown = catchThrowable(() -> entityService.create(entity));
@@ -124,15 +122,14 @@ class JpaEntityServiceTest {
   /**
    * Tests the creation of an entity when a DataIntegrityViolationException occurs.
    * <p>
-   * This test case verifies that a ResponseStatusException with HttpStatus.CONFLICT is thrown when
-   * the repository save operation throws a DataIntegrityViolationException. It ensures that the
-   * repository's save method is called once with any EntityDao instance and checks that the thrown
-   * exception has the expected status code.
+   * This test case verifies that a ResponseStatusException with HttpStatus.CONFLICT is thrown when the repository save
+   * operation throws a DataIntegrityViolationException. It ensures that the repository's save method is called once
+   * with any EntityDao instance and checks that the thrown exception has the expected status code.
    */
   @Test
   void testCreateEntityDataIntegrityViolationException() {
     // Given
-    Entity entity = EntityFactory.createDefaultEntity();
+    EntityRecord entity = EntityFactory.createDefaultEntity();
 
     doThrow(DataIntegrityViolationException.class).when(repository).save(any(EntityEntity.class));
 
@@ -148,13 +145,11 @@ class JpaEntityServiceTest {
   /**
    * Tests the retrieval of an entity by its subject.
    * <p>
-   * This test case verifies that the `EntityService.get` method correctly retrieves an entity 
-   * when provided with a valid subject. It sets up a mock repository to return an `EntityDao` 
-   * object with the specific subject and checks that the returned `Entity` object is not null 
-   * and has the expected subject.
+   * This test case verifies that the `EntityService.get` method correctly retrieves an entity when provided with a
+   * valid subject. It sets up a mock repository to return an `EntityDao` object with the specific subject and checks
+   * that the returned `Entity` object is not null and has the expected subject.
    *
-   * @throws JsonProcessingException if there is a processing error when converting 
-   *                                 the entity to a JSON string.
+   * @throws JsonProcessingException if there is a processing error when converting the entity to a JSON string.
    */
   @Test
   void testGetEntity() throws JsonProcessingException {
@@ -164,10 +159,10 @@ class JpaEntityServiceTest {
     entityEntity.setSubject(subject);
     entityEntity.setEntity(objectMapper.writeValueAsString(EntityFactory.createDefaultEntity(subject)));
 
-    when(repository.findBySubject(subject)).thenReturn(Optional.of(entityEntity));
+    when(repository.findByExternalId(subject)).thenReturn(Optional.of(entityEntity));
 
     // When
-    Entity result = entityService.get(subject);
+    EntityRecord result = entityService.get(subject);
 
     // Then
     assertThat(result).isNotNull();
@@ -177,19 +172,18 @@ class JpaEntityServiceTest {
   /**
    * Tests the retrieval of an entity when the entity is not found.
    * <p>
-   * This test case verifies the behavior of the `EntityService.get` method when
-   * the entity repository does not contain an entity with the specified subject.
-   * The repository is mocked to return an empty Optional, and the test checks 
+   * This test case verifies the behavior of the `EntityService.get` method when the entity repository does not contain
+   * an entity with the specified subject. The repository is mocked to return an empty Optional, and the test checks
    * that the result is null, indicating that the entity does not exist.
    */
   @Test
   void testGetEntityNotFound() {
     // Given
     String subject = EntityFactory.SUBJECT_DEFAULT;
-    when(repository.findBySubject(anyString())).thenReturn(Optional.empty());
+    when(repository.findByExternalId(anyString())).thenReturn(Optional.empty());
 
     // When
-    Entity result = entityService.get(subject);
+    EntityRecord result = entityService.get(subject);
 
     // Then
     assertThat(result).isNull();
@@ -198,13 +192,11 @@ class JpaEntityServiceTest {
   /**
    * Tests the retrieval of all entities.
    * <p>
-   * This test case verifies that the `EntityService.getAll` method correctly
-   * retrieves all entities stored in the repository. It sets up mock repository 
-   * to return a predefined list of `EntityDao` objects and checks that the 
+   * This test case verifies that the `EntityService.getAll` method correctly retrieves all entities stored in the
+   * repository. It sets up mock repository to return a predefined list of `EntityDao` objects and checks that the
    * returned `List<Entity>` is not empty and contains the expected number of entities.
    *
-   * @throws JsonProcessingException if there is a processing error when converting
-   *                                 entities to JSON strings.
+   * @throws JsonProcessingException if there is a processing error when converting entities to JSON strings.
    */
   @Test
   void testGetAllEntities() throws JsonProcessingException {
@@ -214,14 +206,14 @@ class JpaEntityServiceTest {
     for (int i = 1; i <= numberOfDaos; i++) {
       EntityEntity entityEntity = new EntityEntity();
       entityEntity.setSubject("https://example.com/subject/" + i);
-      entityEntity.setEntity(objectMapper.writeValueAsString(new Entity()));
+      entityEntity.setEntity(objectMapper.writeValueAsString(new EntityRecord()));
       entityEntities.add(entityEntity);
     }
 
     when(repository.findAll()).thenReturn(entityEntities);
 
     // When
-    List<Entity> result = entityService.getAll();
+    List<EntityRecord> result = entityService.getAll();
 
     // Then
     assertThat(result).isNotEmpty();
@@ -231,53 +223,52 @@ class JpaEntityServiceTest {
   /**
    * Tests the successful update of an existing entity.
    * <p>
-   * This test case verifies that an entity can be updated successfully with the given subject.
-   * It ensures that the repository's `save` method is called once with an `EntityDao` instance,
-   * and that the returned `Entity` has the intended subject.
+   * This test case verifies that an entity can be updated successfully with the given subject. It ensures that the
+   * repository's `save` method is called once with an `EntityDao` instance, and that the returned `Entity` has the
+   * intended subject.
    *
    * @throws JsonProcessingException if there is a processing error when converting the entity to a JSON string.
    */
   @Test
   void testUpdateEntitySuccess() throws JsonProcessingException {
     // Given
-    Entity entity = EntityFactory.createDefaultEntity();
+    final EntityRecord record = EntityFactory.createDefaultEntity();
 
-    String subject = EntityFactory.SUBJECT_DEFAULT;
-
-    EntityEntity entityEntity = new EntityEntity();
-    entityEntity.setSubject(subject);
-    entityEntity.setEntity(objectMapper.writeValueAsString(entity));
-
-    when(repository.findBySubject(subject)).thenReturn(Optional.of(entityEntity));
+    final String extId = UUID.randomUUID().toString();
+    final EntityEntity entityEntity = new EntityEntity();
+    entityEntity.setSubject(record.getSubject());
+    entityEntity.setIssuer(record.getIssuer());
+    entityEntity.setEntity(objectMapper.writeValueAsString(record));
+    record.setEntityId(extId);
+    when(repository.findByExternalId(extId)).thenReturn(Optional.of(entityEntity));
 
     // When
-    Entity result = entityService.update(subject, entity);
+    final EntityRecord resultRecord = entityService.update(extId, record);
 
     // Then
-    assertThat(result).isNotNull();
-    assertThat(result.getSubject()).isEqualTo(subject);
+    assertThat(resultRecord).isNotNull();
+    assertThat(resultRecord.getEntityId()).isEqualTo(extId);
     verify(repository, times(1)).save(any(EntityEntity.class));
   }
 
   /**
    * Tests the update of an entity when the entity is not found.
    * <p>
-   * This test case verifies the behavior of the `EntityService.update` method when
-   * the entity repository does not contain an entity with the specified subject.
-   * The repository is mocked to return an empty Optional, and the test checks
-   * that the result is null, indicating that the entity does not exist.
-   * Additionally, it ensures that the repository's `save` method is never called.
+   * This test case verifies the behavior of the `EntityService.update` method when the entity repository does not
+   * contain an entity with the specified subject. The repository is mocked to return an empty Optional, and the test
+   * checks that the result is null, indicating that the entity does not exist. Additionally, it ensures that the
+   * repository's `save` method is never called.
    */
   @Test
   void testUpdateEntityNotFound() {
     // Given
-    Entity entity = EntityFactory.createDefaultEntity();
+    final EntityRecord record = EntityFactory.createDefaultEntity();
 
-    String subject = EntityFactory.SUBJECT_DEFAULT;
-    when(repository.findBySubject(subject)).thenReturn(Optional.empty());
-
+    final String extId = UUID.randomUUID().toString();
+    when(repository.findByExternalId(extId)).thenReturn(Optional.empty());
+    record.setEntityId(extId);
     // When
-    Entity result = entityService.update(subject, entity);
+    final EntityRecord result = entityService.update(extId, record);
 
     // Then
     assertThat(result).isNull();
@@ -287,10 +278,9 @@ class JpaEntityServiceTest {
   /**
    * Tests the deletion of an existing entity.
    * <p>
-   * This method verifies that the `EntityService.delete` method successfully deletes an entity
-   * with a given subject. It mocks the repository to return an existing `EntityDao` when the
-   * subject is queried and checks that the `delete` method of the repository is called exactly
-   * once.
+   * This method verifies that the `EntityService.delete` method successfully deletes an entity with a given subject. It
+   * mocks the repository to return an existing `EntityDao` when the subject is queried and checks that the `delete`
+   * method of the repository is called exactly once.
    */
   @Test
   void testDeleteEntity() {
@@ -298,35 +288,35 @@ class JpaEntityServiceTest {
     String subject = EntityFactory.SUBJECT_3;
     EntityEntity entityEntity = new EntityEntity();
     entityEntity.setSubject(subject);
-    when(repository.findBySubject(subject)).thenReturn(Optional.of(entityEntity));
+    when(repository.findByExternalId(subject)).thenReturn(Optional.of(entityEntity));
 
     // When
     entityService.delete(subject);
 
     // Then
-    verify(repository, times(1)).findBySubject(subject);
+    verify(repository, times(1)).findByExternalId(subject);
     verify(repository, times(1)).delete(entityEntity);
   }
 
   /**
    * Tests the behavior of the `delete` method when attempting to delete a non-existent entity.
    * <p>
-   * This test case verifies that when the `entityService.delete` method is called with a subject
-   * that does not correspond to any existing entity in the repository, the delete operation is
-   * not performed. It mocks the repository to return an empty Optional when queried for the
-   * subject and checks that the `repository.delete` method is never called.
+   * This test case verifies that when the `entityService.delete` method is called with a subject that does not
+   * correspond to any existing entity in the repository, the delete operation is not performed. It mocks the repository
+   * to return an empty Optional when queried for the subject and checks that the `repository.delete` method is never
+   * called.
    */
   @Test
   void testDeleteEntityNotFound() {
     // Given
     String subject = EntityFactory.SUBJECT_3;
-    when(repository.findBySubject(subject)).thenReturn(Optional.empty());
+    when(repository.findByExternalId(subject)).thenReturn(Optional.empty());
 
     // When
     entityService.delete(subject);
 
     // Then
-    verify(repository, times(1)).findBySubject(subject);
+    verify(repository, times(1)).findByExternalId(subject);
     verify(repository, never()).delete(any(EntityEntity.class));
   }
 }

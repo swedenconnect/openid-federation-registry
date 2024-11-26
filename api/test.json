@@ -1,0 +1,85 @@
+{
+  "iss": "oidf-registry",
+  "trust_mark": [
+    {
+      "issuer": "https://example.com/issuer/1",
+      "subject": "https://example.com/subject/1",
+      "policy_id": "policy-123",
+      "hosted": {
+        "authority_hints": [
+          "https://example.com/hint1",
+          "https://example.com/hint2"
+        ],
+        "trust_mark_sources": [
+          {
+            "trust_mark_id": "https://trust.example.com/tm1",
+            "issuer": "https://trust.example.com/issuer1"
+          },
+          {
+            "trust_mark_id": "https://trust.example.com/tm2",
+            "issuer": "https://trust.example.com/issuer2"
+          }
+        ]
+      },
+      "jwks": {
+        "keys": [
+          {
+            "kty": "RSA",
+            "kid": "key1",
+            "use": "sig",
+            "n": "v1hGQlmTWwoA8V3yHdF-...",
+            "e": "AQAB"
+          },
+          {
+            "kty": "RSA",
+            "kid": "key2",
+            "use": "enc",
+            "n": "w2Hfg34VWQowQAx3HtP-...",
+            "e": "AQAB"
+          }
+        ]
+      }
+    },
+    {
+      "issuer": "http://iss1",
+      "subject": "http://sub1",
+      "policy_id": "policy-123",
+      "hosted": {
+        "authority_hints": [
+          "https://example.com/hint1",
+          "https://example.com/hint2"
+        ],
+        "trust_mark_sources": [
+          {
+            "trust_mark_id": "https://trust.example.com/tm1",
+            "issuer": "https://trust.example.com/issuer1"
+          },
+          {
+            "trust_mark_id": "https://trust.example.com/tm2",
+            "issuer": "https://trust.example.com/issuer2"
+          }
+        ]
+      },
+      "jwks": {
+        "keys": [
+          {
+            "kty": "RSA",
+            "kid": "key1",
+            "use": "sig",
+            "n": "v1hGQlmTWwoA8V3yHdF-...",
+            "e": "AQAB"
+          },
+          {
+            "kty": "RSA",
+            "kid": "key2",
+            "use": "enc",
+            "n": "w2Hfg34VWQowQAx3HtP-...",
+            "e": "AQAB"
+          }
+        ]
+      }
+    }
+  ],
+  "iat": 1732550320,
+  "jti": "5b8172f4-fdf2-482d-9265-e4568e458f43"
+}
