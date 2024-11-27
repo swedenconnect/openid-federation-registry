@@ -169,13 +169,13 @@ paths:
                 items:
                   $ref: '#/components/schemas/entity-record'
 
-  /registry/v1/{entityId}:
+  /registry/v1/{entityRecordId}:
     get:
       summary: Get a specific entity by ID
       tags:
         - entities
       parameters:
-        - name: entityId
+        - name: entityRecordId
           in: path
           required: true
           schema:
@@ -195,7 +195,7 @@ paths:
       tags:
         - entities
       parameters:
-        - name: entityId
+        - name: entityRecordId
           in: path
           required: true
           schema:
@@ -218,7 +218,7 @@ paths:
       tags:
         - entities
       parameters:
-        - name: entityId
+        - name: entityRecordId
           in: path
           required: true
           schema:

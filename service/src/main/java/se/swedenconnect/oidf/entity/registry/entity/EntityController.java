@@ -91,13 +91,13 @@ public class EntityController {
   /**
    * Retrieves an entity by its identifier.
    *
-   * @param entityId the unique identifier of the entity to be retrieved
+   * @param entityRecordId the unique identifier of the entity to be retrieved
    * @return the entity corresponding to the provided identifier
    */
-  @GetMapping("/{entityId}")
-  public EntityRecord getEntityById(@PathVariable("entityId") final UUID entityId) {
-    log.debug("GET: by id: {}", entityId);
-    final EntityRecord entity = this.entityService.get(entityId.toString());
+  @GetMapping("/{entityRecordId}")
+  public EntityRecord getEntityById(@PathVariable("entityRecordId") final UUID entityRecordId) {
+    log.debug("GET: by id: {}", entityRecordId);
+    final EntityRecord entity = this.entityService.get(entityRecordId.toString());
     if (entity == null) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Entity not found");
     }
@@ -107,26 +107,29 @@ public class EntityController {
   /**
    * Updates an existing entity with the provided entity details.
    *
-   * @param entityId the unique identifier of the entity to be updated
+   * @param entityRecordId the unique identifier of the entity to be updated
    * @param entity the entity object containing updated details
    * @return the updated entity object
    */
-  @PutMapping("/{entityId}")
-  public EntityRecord updateEntity(@PathVariable("entityId") final UUID entityId, @RequestBody EntityRecord entity) {
+  @PutMapping("/{entityRecordId}")
+  public EntityRecord updateEntity
+  (@PathVariable("entityRecordId") final UUID entityRecordId,
+      @RequestBody EntityRecord entity) {
+
     log.debug("PUT: {}", entity);
-    return this.entityService.update(entityId.toString(), entity);
+    return this.entityService.update(entityRecordId.toString(), entity);
   }
 
   /**
    * Deletes an entity identified by the provided entity ID.
    *
-   * @param entityId the unique identifier of the entity to be deleted
+   * @param entityRecordId the unique identifier of the entity to be deleted
    * @return ResponseEntity no content
    */
-  @DeleteMapping("/{entityId}")
-  public ResponseEntity<Void> deleteEntity(@PathVariable("entityId") final UUID entityId) {
-    log.debug("DELETE: {}", entityId);
-    this.entityService.delete(entityId.toString());
+  @DeleteMapping("/{entityRecordId}")
+  public ResponseEntity<Void> deleteEntity(@PathVariable("entityRecordId") final UUID entityRecordId) {
+    log.debug("DELETE: {}", entityRecordId);
+    this.entityService.delete(entityRecordId.toString());
     return ResponseEntity.noContent().build();
   }
 
