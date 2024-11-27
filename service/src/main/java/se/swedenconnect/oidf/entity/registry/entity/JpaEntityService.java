@@ -22,16 +22,17 @@ import lombok.Getter;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
-import se.swedenconnect.oidf.registry.api.model.Entity;
+import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
- * JpaEntityService is an implementation of the EntityService interface that uses a JPA repository
- * to perform CRUD operations on Entity objects.
+ * JpaEntityService is an implementation of the EntityService interface that uses a JPA repository to perform CRUD
+ * operations on Entity objects.
  * <p>
- * This service utilizes the ObjectMapper from the Jackson library to handle JSON conversion
- * between Entity objects and their DAO ({@link EntityEntity}) representations.
+ * This service utilizes the ObjectMapper from the Jackson library to handle JSON conversion between Entity objects and
+ * their DAO ({@link EntityEntity}) representations.
  *
  * @author David Goldring
  */
@@ -45,7 +46,8 @@ public class JpaEntityService implements EntityService {
    * Constructs a JpaEntityService with the provided repository and object mapper.
    *
    * @param repository the JPA repository used for CRUD operations on Entity objects
-   * @param objectMapper the ObjectMapper used for JSON conversion between Entity objects and their DAO representations
+   * @param objectMapper the ObjectMapper used for JSON conversion between Entity objects and their DAO
+   *     representations
    */
   public JpaEntityService(final EntityRepository repository, final ObjectMapper objectMapper) {
     this.repository = repository;
@@ -53,69 +55,72 @@ public class JpaEntityService implements EntityService {
   }
 
   @Override
-  public Entity create(final Entity entity) {
-    final var dao = new EntityEntity();
+  public EntityRecord create(final EntityRecord record) {
+
     try {
-      dao.setIssuer(entity.getIssuer());
-      dao.setSubject(entity.getSubject());
-      dao.setEntity(this.objectMapper.writeValueAsString(entity));
-      this.repository.save(dao);
-    }
-    catch (JsonProcessingException e) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Malformed JSON: " + e.getMessage());
+      return this.repository.findByExternalId(record.getEntityRecordId())
+          .or(() -> Optional.of(new EntityEntity()))
+          .map(entity -> this.mergeRecordIntoEntity(record,entity))
+          .map(this.repository::save)
+          .map(this::toRecord)
+          .orElseThrow();
     }
     catch (DataIntegrityViolationException e) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT, "Subject already exists:");
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "Issuer and Subject already exist");
     }
-    return entity;
   }
 
   @Override
-  public Entity get(final String subject) {
-    return this.repository.findBySubject(subject)
-        .map(dao -> {
-          try {
-            return this.objectMapper.readValue(dao.getEntity(), Entity.class);
-          }
-          catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-          }
-        })
+  public EntityRecord get(final String entityRecordId) {
+    return this.repository.findByExternalId(entityRecordId)
+        .map(this::toRecord)
         .orElse(null);
   }
 
   @Override
-  public List<Entity> getAll() {
+  public List<EntityRecord> getAll() {
     return this.repository.findAll()
-        .stream().map(dao -> {
-          try {
-            return this.objectMapper.readValue(dao.getEntity(), Entity.class);
-          }
-          catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-          }
-        }).toList();
+        .stream()
+        .map(this::toRecord)
+        .toList();
   }
 
   @Override
-  public Entity update(final String subject, final Entity entity) {
-    final var dao = this.repository.findBySubject(subject).orElse(null);
-    if (dao != null) {
-      try {
-        dao.setSubject(subject);
-        dao.setEntity(this.objectMapper.writeValueAsString(entity));
-        this.repository.save(dao);
-        return entity;
-      }
-      catch (JsonProcessingException e) {
-        throw new RuntimeException(e);
-      }
+  public EntityRecord update(final String entityRecordId, final EntityRecord entityRecord) {
+    if (!entityRecordId.equals(entityRecord.getEntityRecordId())){
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "EntityRecordId has to match in json payload.");
     }
-    return null;
+    return this.create(entityRecord);
+
   }
 
   @Override
-  public void delete(final String subject) {
-    this.repository.findBySubject(subject).ifPresent(this.repository::delete);
+  public void delete(final String entityRecordId) {
+    this.repository.findByExternalId(entityRecordId).ifPresent(this.repository::delete);
+  }
+
+
+  private EntityRecord toRecord(EntityEntity entity){
+    try {
+      return this.objectMapper.readValue(entity.getEntity(), EntityRecord.class);
+    }
+    catch (JsonProcessingException e) {
+      throw new RuntimeException("Unable to map json entity to record",e);
+    }
+  }
+
+  private EntityEntity mergeRecordIntoEntity(final EntityRecord record,final EntityEntity entity){
+    try {
+      entity.setIssuer(record.getIssuer());
+      entity.setSubject(record.getSubject());
+      entity.setEntity(this.objectMapper.writeValueAsString(record));
+      if(entity.getExternalId() == null){
+        entity.setExternalId(record.getEntityRecordId());
+      }
+      return entity;
+    }
+    catch (JsonProcessingException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to map record to entity",e);
+    }
   }
 }

@@ -12,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.entity.util.EntityFactory;
-import se.swedenconnect.oidf.registry.api.model.Entity;
+import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
 import java.text.ParseException;
@@ -53,13 +53,15 @@ class FederationServiceApiControllerIT {
     final PolicyRecord policy = new PolicyRecord.Builder()
         .name("policy-name")
         .policy(" {\"policy\":\"default\"}")
+        .policyRecordId(UUID.randomUUID().toString())
         .build();
 
-    final ResponseEntity<PolicyRecord> response = this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
+    final ResponseEntity<PolicyRecord> response =
+        this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
     final ResponseEntity<String> fedRes = restTemplate
-        .getForEntity("/api/v1/federationservice/policy_record?policy_id="+response.getBody().getPolicyId(), String.class);
+        .getForEntity("/api/v1/federationservice/policy_record?policy_id="+response.getBody().getPolicyRecordId(), String.class);
     if(fedRes.getStatusCode().isError()){
       log.error(fedRes.getBody());
     }
@@ -101,8 +103,9 @@ class FederationServiceApiControllerIT {
   @Test
   void entityRecordSuccess() throws ParseException {
     final String issuer = "http://tmi.digg.se/" + UUID.randomUUID();
-    final Entity entity = EntityFactory.createDefaultEntity(issuer,"http://sub.digg.se");
-    final ResponseEntity<Entity> createResponse = restTemplate.postForEntity("/registry/v1/entities", entity, Entity.class);
+    final EntityRecord entity = EntityFactory.createDefaultEntity(issuer,"http://sub.digg.se");
+    final ResponseEntity<EntityRecord> createResponse =
+        restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
     assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
     final ResponseEntity<String> response = restTemplate

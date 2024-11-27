@@ -43,6 +43,9 @@ public class EntityEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
 
+  @Column(name="external_id", unique = true, updatable = false)
+  private String externalId;
+
   @Column(nullable = false)
   private String issuer;
 
@@ -51,4 +54,6 @@ public class EntityEntity {
 
   @Column(columnDefinition = "TEXT")
   private String entity;
+
+
 }

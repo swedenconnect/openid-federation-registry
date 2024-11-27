@@ -17,13 +17,13 @@
 package se.swedenconnect.oidf.entity.registry.entity;
 
 import se.swedenconnect.oidf.entity.registry.common.CrudService;
-import se.swedenconnect.oidf.registry.api.model.Entity;
+import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 
 /**
  * EntityService is an interface that extends the CrudService interface and provides
- * CRUD operations specifically for managing {@link Entity} objects identified by a String.
+ * CRUD operations specifically for managing {@link EntityRecord} objects identified by a String.
  *
  * @author David Goldring
  */
-public interface EntityService extends CrudService<Entity, String> {
+public interface EntityService extends CrudService<EntityRecord, String> {
 }

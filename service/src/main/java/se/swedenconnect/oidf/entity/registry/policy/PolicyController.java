@@ -16,7 +16,6 @@
  */
 package se.swedenconnect.oidf.entity.registry.policy;
 
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -33,10 +32,11 @@ import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
- * PolicyController is a REST controller for managing policies in the entity registry.
- * It provides endpoints for creating, updating, retrieving, and deleting policy records.
+ * PolicyController is a REST controller for managing policies in the entity registry. It provides endpoints for
+ * creating, updating, retrieving, and deleting policy records.
  * <p>
  * The controller utilizes {@link PolicyService} to perform the required operations.
  *
@@ -65,22 +65,13 @@ public class PolicyController {
    * Creates a new policy in the entity registry.
    *
    * @param policy a {@link PolicyRecord} object containing the details of the policy to be created
-   * @param response the {@link HttpServletResponse} object used to set the response status
-   *
    * @return a {@link PolicyRecord} object representing the created policy
    */
   @PostMapping
-  public PolicyRecord createPolicy(@RequestBody final PolicyRecord policy, final HttpServletResponse response) {
+  public ResponseEntity<PolicyRecord> createPolicy(@RequestBody final PolicyRecord policy) {
     log.debug("POST: {}", policy);
-    if(policy.getPolicyId()!=null && !policy.getPolicyId().isBlank()){
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-          "Policy_id exist use update endpoint");
-    }
-
-    PolicyRecord dto = this.policyService.create(policy);
-    response.setStatus(HttpServletResponse.SC_CREATED);
-
-    return dto;
+    final PolicyRecord dto = this.policyService.create(policy);
+    return ResponseEntity.status(HttpStatus.CREATED).body(dto);
   }
 
   /**
@@ -89,60 +80,58 @@ public class PolicyController {
    * @return a list of {@link PolicyRecord} representing the policy records
    */
   @GetMapping
-  public List<PolicyRecord> getAllPolicies() {
+  public ResponseEntity<List<PolicyRecord>> getAllPolicies() {
     List<PolicyRecord> policies = this.policyService.getAll();
     log.debug("GET all: {}", policies);
-
-    return ResponseEntity.ok(policies).getBody();
+    return ResponseEntity.ok(policies);
   }
 
   /**
-   * Retrieves a policy by its policy_id from the entity registry.
+   * Retrieves a policy by its policyRecordId from the entity registry.
    *
-   * @param policyId the name of the policy to be retrieved
-   *
+   * @param policyRecordId the name of the policy to be retrieved
    * @return a {@link PolicyRecord} object representing the policy, if found
    */
-  @GetMapping("/{policyId}")
-  public PolicyRecord getPolicyByPolicyId(@PathVariable("policyId") final String policyId) {
-    log.debug("GET by policyId: {}", policyId);
+  @GetMapping("/{policyRecordId}")
+  public PolicyRecord getPolicyByPolicyId(@PathVariable("policyRecordId") final UUID policyRecordId) {
+    log.debug("GET by policyRecordId: {}", policyRecordId);
 
-    final PolicyRecord dto = this.policyService.get(policyId);
-    if (dto == null) {
+    final PolicyRecord record = this.policyService.get(policyRecordId.toString());
+    if (record == null) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Policy not found");
     }
 
-    return dto;
+    return record;
   }
 
   /**
    * Updates an existing policy in the entity registry.
    *
-   * @param policy_id The policy_id of the policy to update.
+   * @param policyRecordId The policyRecordId of the policy to update.
    * @param policy A {@link PolicyRecord} object containing the updated details of the policy.
    * @return A {@link PolicyRecord} object representing the updated policy.
    */
-  @PutMapping("/{policy_id}")
-   public PolicyRecord updatePolicy(@PathVariable("policy_id") final String policy_id,
+  @PutMapping("/{policyRecordId}")
+  public PolicyRecord updatePolicy(
+      @PathVariable("policyRecordId") final UUID policyRecordId,
       @RequestBody PolicyRecord policy) {
-     log.debug("PUT: {}", policy);
-     if(!policy_id.equals(policy.getPolicyId())) {
-       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PolicyId has to be the same in path and object");
-     }
-     return this.policyService.update(policy_id, policy);
-   }
+    log.debug("PUT: {}", policy);
+    if (!policyRecordId.toString().equals(policy.getPolicyRecordId())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PolicyId has to be the same in path and object");
+    }
+    return this.policyService.update(policyRecordId.toString(), policy);
+  }
 
   /**
-   * Deletes a policy by its policy_id from the entity registry.
+   * Deletes a policy by its policyRecordId from the entity registry.
    *
-   * @param policy_id the policy_id of the policy to be deleted
-   * @param response the {@link HttpServletResponse} object used to set the response status
+   * @param policyRecordId the policyRecordId of the policy to be deleted
+   * @return ResponseEntity no content
    */
-  @DeleteMapping("/{policy_id}")
-   public void deletePolicy(@PathVariable("policy_id") final String policy_id, final HttpServletResponse response) {
-     log.debug("DELETE: {}", policy_id);
-
-     this.policyService.delete(policy_id);
-     response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-   }
+  @DeleteMapping("/{policyRecordId}")
+  public ResponseEntity<Void> deletePolicy(@PathVariable("policyRecordId") final UUID policyRecordId) {
+    log.debug("DELETE: {}", policyRecordId);
+    this.policyService.delete(policyRecordId.toString());
+    return ResponseEntity.noContent().build();
+  }
 }

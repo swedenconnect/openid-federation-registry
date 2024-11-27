@@ -78,7 +78,8 @@ public class EntityRepositoryTest {
     entityDuplicate.setEntity("{\"name\": \"Example Entity\"}");
     entityDuplicate.setIssuer("http://iss");
     assertThatThrownBy(() -> this.entityRepository.saveAndFlush(entityDuplicate)).isInstanceOf(
-        DataIntegrityViolationException.class).hasMessageStartingWith("could not execute statement [Unique index or primary key violation");;
+        DataIntegrityViolationException.class)
+        .hasMessageStartingWith("could not execute statement [Unique index or primary key violation");
   }
 
   /**

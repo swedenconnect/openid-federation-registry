@@ -32,12 +32,12 @@ import java.util.Optional;
  */
 public interface EntityRepository extends JpaRepository<EntityEntity, Long> {
   /**
-   * Finds an entity by its subject.
-   *
-   * @param subject the unique subject of the entity to be found
-   * @return an Optional containing the entity if found, or an empty Optional if no entity with the given subject exists
+   * Resolve EntityEntity by its externalId
+   * @param externalId UUID
+   * @return an Optional containing the EntityEntity if found, or an empty Optional if no
+   * EntityEntity exist
    */
-  Optional<EntityEntity> findBySubject(String subject);
+  Optional<EntityEntity> findByExternalId(String externalId);
 
   /**
    * Find by Entity Issuer

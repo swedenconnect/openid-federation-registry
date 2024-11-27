@@ -16,7 +16,6 @@
  */
 package se.swedenconnect.oidf.entity.registry.entity;
 
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -31,11 +30,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.entity.api.OidfEntityRegistryApi;
-import se.swedenconnect.oidf.registry.api.model.Entity;
+import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * REST Controller for handling entity registry operations.
@@ -44,7 +42,7 @@ import java.util.List;
  * in the registry. This controller inherits from the {@link OidfEntityRegistryApi} interface and
  * interacts with the EntityService to perform CRUD operations on entities.
  * <p>
- * The {@link Entity} object is serialized to a JSON structure and saved to some storage with the
+ * The {@link EntityRecord} object is serialized to a JSON structure and saved to some storage with the
  * {@code subject} member of the {@code Entity} object as searchable key.
  *
  * @author David Goldring
@@ -69,16 +67,13 @@ public class EntityController {
    * Creates a new entity in the registry.
    *
    * @param entity the entity to be created
-   * @param response the HTTP servlet response to set the status code
    * @return the created entity
    */
   @PostMapping
-  public Entity createEntity(@RequestBody final Entity entity, final HttpServletResponse response) {
+  public ResponseEntity<EntityRecord> createEntity(@RequestBody final EntityRecord entity) {
     log.debug("POST: {}", entity);
-    Entity createdEntity = this.entityService.create(entity);
-    response.setStatus(HttpServletResponse.SC_CREATED);
-
-    return createdEntity;
+    final EntityRecord createdEntity = this.entityService.create(entity);
+    return ResponseEntity.status(HttpStatus.CREATED).body(createdEntity);
   }
 
   /**
@@ -87,62 +82,55 @@ public class EntityController {
    * @return a list of all entities
    */
   @GetMapping
-  public List<Entity> getAllEntities() {
-    List<Entity> entities = this.entityService.getAll();
-    log.debug("GET: {}", entities);
-
-    return ResponseEntity.ok(entities).getBody();
+  public ResponseEntity<List<EntityRecord>> getAllEntities() {
+    final List<EntityRecord> entities = this.entityService.getAll();
+    log.debug("GETAll: {}", entities);
+    return ResponseEntity.ok(entities);
   }
 
   /**
    * Retrieves an entity by its identifier.
    *
-   * @param entityId the unique identifier of the entity to be retrieved
+   * @param entityRecordId the unique identifier of the entity to be retrieved
    * @return the entity corresponding to the provided identifier
    */
-  @GetMapping("/{entityId}")
-  public Entity getEntityById(@PathVariable("entityId") final String entityId) {
-    log.debug("GET: by id: {}", entityId);
-
-    final var decoded = URLDecoder.decode(entityId, StandardCharsets.UTF_8);
-    final Entity entity = this.entityService.get(decoded);
+  @GetMapping("/{entityRecordId}")
+  public EntityRecord getEntityById(@PathVariable("entityRecordId") final UUID entityRecordId) {
+    log.debug("GET: by id: {}", entityRecordId);
+    final EntityRecord entity = this.entityService.get(entityRecordId.toString());
     if (entity == null) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Entity not found");
     }
-
-    log.debug("GET result: {}", entity);
-
     return entity;
   }
 
   /**
    * Updates an existing entity with the provided entity details.
    *
-   * @param entityId the unique identifier of the entity to be updated
+   * @param entityRecordId the unique identifier of the entity to be updated
    * @param entity the entity object containing updated details
    * @return the updated entity object
    */
-  @PutMapping("/{entityId}")
-  public Entity updateEntity(@PathVariable("entityId") final String entityId, @RequestBody Entity entity) {
+  @PutMapping("/{entityRecordId}")
+  public EntityRecord updateEntity
+  (@PathVariable("entityRecordId") final UUID entityRecordId,
+      @RequestBody EntityRecord entity) {
+
     log.debug("PUT: {}", entity);
-
-    final var decoded = URLDecoder.decode(entityId, StandardCharsets.UTF_8);
-
-    return this.entityService.update(decoded, entity);
+    return this.entityService.update(entityRecordId.toString(), entity);
   }
 
   /**
    * Deletes an entity identified by the provided entity ID.
    *
-   * @param entityId the unique identifier of the entity to be deleted
-   * @param response the HttpServletResponse object to set the response status
+   * @param entityRecordId the unique identifier of the entity to be deleted
+   * @return ResponseEntity no content
    */
-  @DeleteMapping("/{entityId}")
-  public void deleteEntity(@PathVariable("entityId") final String entityId, final HttpServletResponse response) {
-    log.debug("DELETE: {}", entityId);
-
-    this.entityService.delete(URLDecoder.decode(entityId, StandardCharsets.UTF_8));
-    response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+  @DeleteMapping("/{entityRecordId}")
+  public ResponseEntity<Void> deleteEntity(@PathVariable("entityRecordId") final UUID entityRecordId) {
+    log.debug("DELETE: {}", entityRecordId);
+    this.entityService.delete(entityRecordId.toString());
+    return ResponseEntity.noContent().build();
   }
 
 }

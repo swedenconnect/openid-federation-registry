@@ -24,15 +24,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import se.swedenconnect.oidf.registry.api.model.Entity;
-import se.swedenconnect.oidf.registry.api.model.EntityHosted;
+import se.swedenconnect.oidf.registry.api.model.EntityRecord;
+import se.swedenconnect.oidf.registry.api.model.EntityRecordHosted;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -87,17 +87,18 @@ public class EntityControllerTest {
    */
   @Test
   public void testCreateEntity() throws Exception {
-    Entity entity = new Entity();
-    final var subject = "https://example.com/subject/1";
+    final EntityRecord record = new EntityRecord();
+    final String subject = "https://example.com/subject/1";
 
-    entity.setSubject(subject);
-    entity.setIssuer("http://issuer");
-    entity.setPolicyId("policyID");
-    entity.setIssuer("http://iss.example.se");
+    record.setSubject(subject);
+    record.setIssuer("http://issuer");
+    record.setPolicyRecordId(UUID.randomUUID().toString());
+    record.setIssuer("http://iss.example.se");
+    record.setEntityRecordId(UUID.randomUUID().toString());
 
     mockMvc.perform(post("/registry/v1/entities")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsBytes(entity)))
+            .content(objectMapper.writeValueAsBytes(record)))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.subject").value(subject));
   }
@@ -117,20 +118,23 @@ public class EntityControllerTest {
    */
   @Test
   public void testGetEntity() throws Exception {
-    Entity entity = new Entity();
-    final var subject = "https://example.com/subject/2";
+    final EntityRecord record = new EntityRecord();
+    final String subject = "https://example.com/subject/2";
 
-    entity.setSubject(subject);
-    entity.setIssuer("http://issuer");
-    entity.setPolicyId("policyID");
+    record.setSubject(subject);
+    record.setIssuer("http://issuer");
+    record.setPolicyRecordId(UUID.randomUUID().toString());
+    record.setEntityRecordId(UUID.randomUUID().toString());
 
 
-    mockMvc.perform(post("/registry/v1/entities")
+    final MvcResult result = this.mockMvc.perform(post("/registry/v1/entities")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsBytes(entity)))
-        .andExpect(status().isCreated());
+            .content(objectMapper.writeValueAsBytes(record)))
+        .andExpect(status().isCreated()).andReturn();
+    final EntityRecord createdRecord = objectMapper.readValue(result.getResponse()
+        .getContentAsString(),EntityRecord.class);
 
-    mockMvc.perform(get("/registry/v1/entities/{entityId}", URLEncoder.encode(subject, StandardCharsets.UTF_8)))
+    this.mockMvc.perform(get("/registry/v1/entities/{entityId}",createdRecord.getEntityRecordId() ))
         .andExpect(status().isOk())
         //.andExpect(jsonPath("$.entityId").value(subject))
         .andExpect(jsonPath("$.subject").value(subject));
@@ -152,23 +156,28 @@ public class EntityControllerTest {
    */
   @Test
   public void testUpdateEntity() throws Exception {
-    Entity entity = new Entity();
+    EntityRecord record = new EntityRecord();
     final var subject = "https://example.com/subject/3";
 
-    entity.setSubject(subject);
-    entity.setIssuer("http://issuer");
-    entity.setPolicyId("policyID");
+    record.setSubject(subject);
+    record.setIssuer("http://issuer");
+    record.setPolicyRecordId(UUID.randomUUID().toString());
+    record.setEntityRecordId(UUID.randomUUID().toString());
 
 
-    mockMvc.perform(post("/registry/v1/entities")
+
+    final MvcResult result = this.mockMvc.perform(post("/registry/v1/entities")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsBytes(entity)))
-        .andExpect(status().isCreated());
+            .content(objectMapper.writeValueAsBytes(record)))
+        .andExpect(status().isCreated()).andReturn();
+    final EntityRecord createdRecord = objectMapper.readValue(result.getResponse()
+        .getContentAsString(),EntityRecord.class);
+    record.setEntityRecordId(createdRecord.getEntityRecordId());
 
-    entity.setHosted(EntityHosted.builder().authorityHints(List.of("http://hint1")).build());
-    mockMvc.perform(put("/registry/v1/entities/{entityId}", URLEncoder.encode(subject, StandardCharsets.UTF_8))
+    record.setHosted(EntityRecordHosted.builder().authorityHints(List.of("http://hint1")).build());
+    mockMvc.perform(put("/registry/v1/entities/{entityId}", createdRecord.getEntityRecordId())
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsBytes(entity)))
+            .content(objectMapper.writeValueAsBytes(record)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.hosted.authority_hints").value("http://hint1"));
   }
@@ -188,19 +197,21 @@ public class EntityControllerTest {
    */
   @Test
   public void testDeleteEntity() throws Exception {
-    Entity entity = new Entity();
-    final var subject = "https://example.com/subject/4";
+    final EntityRecord record = new EntityRecord();
+    final String subject = "https://example.com/subject/40";
 
-    entity.setSubject(subject);
-    entity.setIssuer("http://issuer");
-    entity.setPolicyId("policyID");
+    record.setSubject(subject);
+    record.setIssuer("http://issuer");
+    record.setPolicyRecordId(UUID.randomUUID().toString());
+    record.setEntityRecordId(UUID.randomUUID().toString());
+
 
     mockMvc.perform(post("/registry/v1/entities")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsBytes(entity)))
+            .content(objectMapper.writeValueAsBytes(record)))
         .andExpect(status().isCreated());
 
-    mockMvc.perform(delete("/registry/v1/entities/{entityId}", URLEncoder.encode(subject, StandardCharsets.UTF_8)))
+    mockMvc.perform(delete("/registry/v1/entities/{entityId}", record.getEntityRecordId()))
         .andExpect(status().isNoContent());
   }
 
