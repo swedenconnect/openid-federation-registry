@@ -65,13 +65,13 @@ public class FederationServiceApiController {
   }
 
   /**
-   * Getting policy by there policy_id
-   * @param policyId PolicyId for this record
+   * Getting policy by there policy_record_id
+   * @param policyRecordId PolicyRecordId for this record
    * @return SignedJWT with a claim for policy_record
    */
   @GetMapping(value="/policy_record", produces = "application/jwt")
-  public String policyRecord(@RequestParam(name="policy_id") final UUID policyId){
-    return federationApiService.policyRecord(policyId);
+  public String policyRecord(@RequestParam(name="policy_record_id") final UUID policyRecordId){
+    return federationApiService.policyRecord(policyRecordId);
   }
 
   /**

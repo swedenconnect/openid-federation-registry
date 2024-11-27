@@ -60,11 +60,11 @@ public class PolicyControllerIT {
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
 
   /**
-   * Tests that creating multiple entities with the same policy_id returns BAD_REQUEST.
+   * Tests that creating multiple entities with the same policy_record_id returns BAD_REQUEST.
    * <p>
-   * This test ensures that the API correctly handles attempts to create policies entities when policy_id is set.
+   * This test ensures that the API correctly handles attempts to create policies entities when policy_record_id is set.
    * Initially, it creates an entity with a default subject and verifies the response status
-   * is `HttpStatus.CREATED`. Then, it tries to create another entity with the created policy_id
+   * is `HttpStatus.CREATED`. Then, it tries to create another entity with the created policy_record_id
    * and verifies that the response status is `HttpStatus.BAD_REQUEST`.
    */
   @Test
@@ -197,10 +197,10 @@ public class PolicyControllerIT {
         .policyRecordId(createdPolicy.getPolicyRecordId())
         .build());
 
-    this.restTemplate.put("/registry/v1/policies/{policy_id}", requestUpdate, createdPolicy.getPolicyRecordId());
+    this.restTemplate.put("/registry/v1/policies/{policy_record_id}", requestUpdate, createdPolicy.getPolicyRecordId());
 
     final ResponseEntity<PolicyRecord> updateResponse = this.restTemplate
-        .getForEntity("/registry/v1/policies/{policy_id}", PolicyRecord.class, createdPolicy.getPolicyRecordId());
+        .getForEntity("/registry/v1/policies/{policy_record_id}", PolicyRecord.class, createdPolicy.getPolicyRecordId());
 
     // Assert
     assertThat(updateResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
