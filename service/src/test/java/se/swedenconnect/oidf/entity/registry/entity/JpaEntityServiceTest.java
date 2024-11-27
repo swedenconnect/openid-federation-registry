@@ -23,6 +23,8 @@ import org.mockito.Mockito;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import se.swedenconnect.oidf.entity.registry.policy.PolicyEntity;
+import se.swedenconnect.oidf.entity.registry.policy.PolicyRepository;
 import se.swedenconnect.oidf.entity.util.EntityFactory;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 
@@ -53,6 +55,7 @@ import static org.mockito.Mockito.when;
 class JpaEntityServiceTest {
 
   private EntityRepository repository;
+  private PolicyRepository policyRepository;
   private JpaEntityService entityService;
   private ObjectMapper objectMapper;
 
@@ -62,8 +65,9 @@ class JpaEntityServiceTest {
   @BeforeEach
   void setUp() {
     repository = Mockito.mock(EntityRepository.class);
+    policyRepository = Mockito.mock(PolicyRepository.class);
     objectMapper = Mockito.spy(new ObjectMapper());
-    entityService = new JpaEntityService(repository, objectMapper);
+    entityService = new JpaEntityService(repository,policyRepository, objectMapper);
   }
 
   /**
@@ -78,20 +82,22 @@ class JpaEntityServiceTest {
   @Test
   void testCreateEntitySuccess() throws JsonProcessingException {
     // Given
-    EntityRecord entity = EntityFactory.createDefaultEntity();
-    EntityEntity entityEntity = new EntityEntity();
+    final EntityRecord entity = EntityFactory.createDefaultEntity();
+    final EntityEntity entityEntity = new EntityEntity();
     entityEntity.setSubject(EntityFactory.SUBJECT_DEFAULT);
     entityEntity.setEntity(objectMapper.writeValueAsString(entity));
 
-    when(repository.save(any(EntityEntity.class))).thenReturn(entityEntity);
+    when(this.policyRepository.findByExternalId(anyString())).thenReturn(Optional.of(new PolicyEntity()));
+
+    when(this.repository.save(any(EntityEntity.class))).thenReturn(entityEntity);
 
     // When
-    EntityRecord result = entityService.create(entity);
+    final EntityRecord result = entityService.create(entity);
 
     // Then
     assertThat(result).isNotNull();
     assertThat(result.getSubject()).isEqualTo(EntityFactory.SUBJECT_DEFAULT);
-    verify(repository, times(1)).save(any(EntityEntity.class));
+    verify(this.repository, times(1)).save(any(EntityEntity.class));
   }
 
   /**
@@ -105,18 +111,18 @@ class JpaEntityServiceTest {
   @Test
   void testCreateEntityJsonProcessingException() throws JsonProcessingException {
     // Given
-    EntityRecord entity = EntityFactory.createDefaultEntity();
+    final EntityRecord entity = EntityFactory.createDefaultEntity();
 
     // Mock objectMapper to throw JsonProcessingException
     doThrow(JsonProcessingException.class).when(objectMapper).writeValueAsString(any(EntityRecord.class));
 
     // When
-    Throwable thrown = catchThrowable(() -> entityService.create(entity));
+    final Throwable thrown = catchThrowable(() -> entityService.create(entity));
 
     // Then
     assertThat(thrown).isInstanceOf(ResponseStatusException.class);
     assertThat(((ResponseStatusException) thrown).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    verify(repository, never()).save(any(EntityEntity.class));
+    verify(this.repository, never()).save(any(EntityEntity.class));
   }
 
   /**
@@ -129,17 +135,18 @@ class JpaEntityServiceTest {
   @Test
   void testCreateEntityDataIntegrityViolationException() {
     // Given
-    EntityRecord entity = EntityFactory.createDefaultEntity();
+    final EntityRecord entity = EntityFactory.createDefaultEntity();
+    when(this.policyRepository.findByExternalId(anyString())).thenReturn(Optional.of(new PolicyEntity()));
 
-    doThrow(DataIntegrityViolationException.class).when(repository).save(any(EntityEntity.class));
+    doThrow(DataIntegrityViolationException.class).when(this.repository).save(any(EntityEntity.class));
 
     // When
-    Throwable thrown = catchThrowable(() -> entityService.create(entity));
+    final Throwable thrown = catchThrowable(() -> entityService.create(entity));
 
     // Then
     assertThat(thrown).isInstanceOf(ResponseStatusException.class);
     assertThat(((ResponseStatusException) thrown).getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-    verify(repository, times(1)).save(any(EntityEntity.class));
+    verify(this.repository, times(1)).save(any(EntityEntity.class));
   }
 
   /**
@@ -154,15 +161,15 @@ class JpaEntityServiceTest {
   @Test
   void testGetEntity() throws JsonProcessingException {
     // Given
-    String subject = "https://example.com/subject/12";
-    EntityEntity entityEntity = new EntityEntity();
+    final String subject = "https://example.com/subject/12";
+    final EntityEntity entityEntity = new EntityEntity();
     entityEntity.setSubject(subject);
     entityEntity.setEntity(objectMapper.writeValueAsString(EntityFactory.createDefaultEntity(subject)));
 
-    when(repository.findByExternalId(subject)).thenReturn(Optional.of(entityEntity));
+    when(this.repository.findByExternalId(subject)).thenReturn(Optional.of(entityEntity));
 
     // When
-    EntityRecord result = entityService.get(subject);
+    final EntityRecord result = entityService.get(subject);
 
     // Then
     assertThat(result).isNotNull();
@@ -240,8 +247,9 @@ class JpaEntityServiceTest {
     entityEntity.setIssuer(record.getIssuer());
     entityEntity.setEntity(objectMapper.writeValueAsString(record));
     record.setEntityRecordId(extId);
-    when(repository.findByExternalId(extId)).thenReturn(Optional.of(entityEntity));
-    when(repository.save(any(EntityEntity.class))).then(invocationOnMock -> invocationOnMock.getArguments()[0]);
+    when(this.repository.findByExternalId(extId)).thenReturn(Optional.of(entityEntity));
+    when(this.policyRepository.findByExternalId(anyString())).thenReturn(Optional.of(new PolicyEntity()));
+    when(this.repository.save(any(EntityEntity.class))).then(invocationOnMock -> invocationOnMock.getArguments()[0]);
 
     // When
     final EntityRecord resultRecord = entityService.update(extId, record);
@@ -249,7 +257,7 @@ class JpaEntityServiceTest {
     // Then
     assertThat(resultRecord).isNotNull();
     assertThat(resultRecord.getEntityRecordId()).isEqualTo(extId);
-    verify(repository, times(1)).save(any(EntityEntity.class));
+    verify(this.repository, times(1)).save(any(EntityEntity.class));
   }
 
   /**

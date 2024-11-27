@@ -62,7 +62,7 @@ public class EntityFactory {
             "subject": "%s",
             "entity_record_id":"%s",
             "policy_record_id": "3ea2aace-18b3-439e-88b1-61d232f20fe9",
-            "hosted": {
+            "hosted_record": {
               "authority_hints": [
                 "https://example.com/hint1",
                 "https://example.com/hint2"

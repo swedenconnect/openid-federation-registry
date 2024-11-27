@@ -11,10 +11,10 @@ import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * oidf-entity-registry
@@ -33,17 +33,18 @@ class FederationApiServiceTest {
     final FederationApiService federationApiService =
         new FederationApiService(null,federationserviceapiSignKeyJWK(),null,null);
 
-    final  SignedJWT jwt = federationApiService.signJsonRecords("trust-mark",
+    final  SignedJWT jwt = federationApiService.signJsonRecords("trust-marks",
         List.of(EntityFactory.createDefaultJsonEntity(),
             EntityFactory.createDefaultJsonEntity("http://iss1","http://sub1")));
 
     final String jwtser = jwt.serialize();
 
     final SignedJWT signedJWT  = SignedJWT.parse(jwtser);
-    assertEquals(new JOSEObjectType("trust-mark+jwt"),signedJWT.getHeader().getType());
+    assertEquals(new JOSEObjectType("trust-marks+jwt"),signedJWT.getHeader().getType());
     assertNotNull(signedJWT.getHeader().getKeyID());
-    final Map<String,Object> claim = signedJWT.getJWTClaimsSet().getJSONObjectClaim("trust-mark");
+    final List<Object> claim = signedJWT.getJWTClaimsSet().getListClaim("trust_marks");
     assertNotNull(claim);
+    assertTrue(!claim.isEmpty());
 
   }
 }

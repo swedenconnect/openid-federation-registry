@@ -30,6 +30,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.entity.util.EntityFactory;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
+import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -75,14 +76,16 @@ public class EntityControllerIT {
   public void testCreateMultipleEntityWithSameSubject() {
     // Arrange
     final EntityRecord entity = EntityFactory.createDefaultEntity();
+    entity.setPolicyRecordId(createPolicy());
+
 
     // Act
     final ResponseEntity<EntityRecord> response =
-        restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
+        this.restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
     final ResponseEntity<EntityRecord> secondRes =
-        restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
+        this.restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
 
     // Assert
     assertThat(secondRes.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -105,10 +108,11 @@ public class EntityControllerIT {
   public void testCreateEntityWithJWKSource() {
     // Arrange
     final EntityRecord entity = EntityFactory.createDefaultEntity("http://subject-with-jwk");
+    entity.setPolicyRecordId(createPolicy());
 
     // Act
     final ResponseEntity<EntityRecord> response =
-        restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
+        this.restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
 
     // Assert
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -116,7 +120,7 @@ public class EntityControllerIT {
     assertThat(createdEntity).isNotNull();
     assertThat(createdEntity.getSubject()).isEqualTo("http://subject-with-jwk");
     assertThat(createdEntity.getJwks()).isNotNull();
-    assertThat(createdEntity.getHosted()).isNotNull();
+    assertThat(createdEntity.getHostedRecord()).isNotNull();
   }
 
   /**
@@ -138,10 +142,11 @@ public class EntityControllerIT {
   public void testCreateEntityWithHosted() {
 
     final EntityRecord entity = EntityFactory.createDefaultEntity("http://iss40","http://subj40");
+    entity.setPolicyRecordId(createPolicy());
 
     // Act
     final ResponseEntity<EntityRecord> response =
-        restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
+        this.restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
 
     // Assert
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -149,7 +154,7 @@ public class EntityControllerIT {
     assertThat(createdEntity).isNotNull();
     assertThat(createdEntity.getSubject()).isEqualTo("http://subj40");
     assertThat(createdEntity.getJwks()).isNotNull();
-    assertThat(createdEntity.getHosted()).isNotNull();
+    assertThat(createdEntity.getHostedRecord()).isNotNull();
   }
 
   /**
@@ -169,16 +174,21 @@ public class EntityControllerIT {
    */
   @Test
   public void testGetAllEntities() {
+    final String policyRecordId = createPolicy();
+
     // Arrange
     IntStream.range(4, 14).boxed().forEach(i -> {
       final EntityRecord entityWithJWKSource =
-          EntityFactory.createDefaultEntity("https://example.com/issuer/" + i,"https://example.com/subject/" + i);
-      restTemplate.postForEntity("/registry/v1/entities", entityWithJWKSource, EntityRecord.class);
+          EntityFactory.createDefaultEntity(
+              "https://example.com/issuer/" + i,
+              "https://example.com/subject/" + i);
+      entityWithJWKSource.setPolicyRecordId(policyRecordId);
+      this.restTemplate.postForEntity("/registry/v1/entities", entityWithJWKSource, EntityRecord.class);
     });
 
     // Act
     final ResponseEntity<EntityRecord[]> response =
-        restTemplate.getForEntity("/registry/v1/entities", EntityRecord[].class);
+        this.restTemplate.getForEntity("/registry/v1/entities", EntityRecord[].class);
 
     // Assert
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -199,16 +209,18 @@ public class EntityControllerIT {
 
     final EntityRecord entityWithJWKSource =
         EntityFactory.createDefaultEntity("https://iss.com/issuer/","https://sub.com/subject/");
-    restTemplate.postForEntity("/registry/v1/entities", entityWithJWKSource, EntityRecord.class);
+    entityWithJWKSource.setPolicyRecordId(createPolicy());
+
+    this.restTemplate.postForEntity("/registry/v1/entities", entityWithJWKSource, EntityRecord.class);
     // Arrange
-    final ResponseEntity<EntityRecord[]> response = restTemplate.getForEntity("/registry/v1/entities", EntityRecord[].class);
+    final ResponseEntity<EntityRecord[]> response = this.restTemplate.getForEntity("/registry/v1/entities", EntityRecord[].class);
     if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
       Arrays.stream(response.getBody()).filter(e -> e.getEntityRecordId() != null).forEach(
-          e -> restTemplate.delete("/registry/v1/entities/{id}", e.getEntityRecordId()));
+          e -> this.restTemplate.delete("/registry/v1/entities/{id}", e.getEntityRecordId()));
     }
 
     // Act
-    final ResponseEntity<EntityRecord[]> secondRetry = restTemplate.getForEntity("/registry/v1/entities", EntityRecord[].class);
+    final ResponseEntity<EntityRecord[]> secondRetry = this.restTemplate.getForEntity("/registry/v1/entities", EntityRecord[].class);
 
     // Assert
     assertThat(secondRetry.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -227,9 +239,10 @@ public class EntityControllerIT {
   public void testUpdateEntity() {
     // Arrange
     final EntityRecord entity = EntityFactory.createDefaultEntity("http://update-entity-subject");
+    entity.setPolicyRecordId(createPolicy());
 
     final ResponseEntity<EntityRecord> createResponse =
-        restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
+        this.restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
     final EntityRecord createdEntity = createResponse.getBody();
     assertThat(createdEntity).isNotNull();
 
@@ -239,10 +252,10 @@ public class EntityControllerIT {
 
     // Act
     final HttpEntity<EntityRecord> requestUpdate = new HttpEntity<>(createdEntity);
-    restTemplate.put("/registry/v1/entities/{id}", requestUpdate, entityId);
+    this.restTemplate.put("/registry/v1/entities/{id}", requestUpdate, entityId);
 
     final ResponseEntity<EntityRecord> updateResponse =
-        restTemplate.getForEntity("/registry/v1/entities/{id}", EntityRecord.class, entityId);
+        this.restTemplate.getForEntity("/registry/v1/entities/{id}", EntityRecord.class, entityId);
 
     // Assert
     assertThat(updateResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -267,7 +280,9 @@ public class EntityControllerIT {
   public void testDeleteEntity() {
     // Arrange
     final EntityRecord entity = EntityFactory.createDefaultEntity("delete-entity-subject");
-    final ResponseEntity<EntityRecord> createResponse = restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
+    entity.setPolicyRecordId(createPolicy());
+
+    final ResponseEntity<EntityRecord> createResponse = this.restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
     final EntityRecord createdEntity = createResponse.getBody();
     assertThat(createdEntity).isNotNull();
 
@@ -276,14 +291,27 @@ public class EntityControllerIT {
 
     // Act
     final ResponseEntity<Void> deleteResponse =
-        restTemplate.exchange("/registry/v1/entities/{id}", HttpMethod.DELETE, null, Void.class, entityRecordId);
+        this.restTemplate.exchange("/registry/v1/entities/{id}", HttpMethod.DELETE, null, Void.class, entityRecordId);
 
     // Assert
     assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
     // Verify it's deleted
     final ResponseEntity<EntityRecord> getResponse =
-        restTemplate.getForEntity("/registry/v1/entities/{id}", EntityRecord.class, entityRecordId);
+        this.restTemplate.getForEntity("/registry/v1/entities/{id}", EntityRecord.class, entityRecordId);
     assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+  }
+
+  private String createPolicy(){
+    final PolicyRecord policy = new PolicyRecord.Builder()
+        .name("policy-name")
+        .policy("{}")
+        .policyRecordId(UUID.randomUUID().toString())
+        .build();
+    // Act
+    final ResponseEntity<PolicyRecord> response =
+        this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    return policy.getPolicyRecordId();
   }
 }

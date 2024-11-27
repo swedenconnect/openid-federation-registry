@@ -96,7 +96,7 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-testcontainers</artifactId>
-      <version>3.3.0</version>
+      <version>3.3.4</version>
       <scope>test</scope>
     </dependency>
 
@@ -139,13 +139,13 @@
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>3.4.3</version>
+        <version>3.4.4</version>
         <configuration>
           <from>
             <image>amazoncorretto:21-alpine3.20</image>
           </from>
           <to>
-            <image>${env.DOCKER_REPO}/oidf-entity-registry</image>
+            <image>${env.DOCKER_REPO}/swedenconnect/oidf-entity-registry</image>
           </to>
           <container>
             <creationTime>USE_CURRENT_TIMESTAMP</creationTime>

@@ -73,7 +73,7 @@ public class ServiceConfig {
   @Primary
   @Qualifier("jpaEntityService")
   public EntityService jpaEntityService(final ObjectMapper objectMapper) {
-    return new JpaEntityService(this.entityRepository, objectMapper);
+    return new JpaEntityService(this.entityRepository,this.policyRepository, objectMapper);
   }
 
   /**

@@ -90,7 +90,7 @@ public class FederationApiService {
           "Unable to find entity for issuer:'%s'".formatted(issuer));
     }
     try {
-      return signJsonRecords("entity-record",
+      return signJsonRecords("entity-records",
           recordEntity.stream().map(EntityEntity::getEntity).toList()).serialize();
     }
     catch (JOSEException e) {
@@ -128,7 +128,7 @@ public class FederationApiService {
               .formatted(issuer,trustmarkId,subject));
     }
     try {
-      return signJsonRecords("trustmark-record",
+      return signJsonRecords("trustmark-records",
           trustmarkSubjectEntities.stream().map(TrustMarkSubjectEntity::getTrustmarksubjectJson).toList()).serialize();
     }
     catch (JOSEException e) {
@@ -150,7 +150,7 @@ public class FederationApiService {
                 "Unable to find policy for id:'%s'".formatted(policyId.toString())));
 
     try {
-      return signJsonRecords("policy-record", List.of(policyEntity.getPolicy())).serialize();
+      return signJsonRecords("policy-records", List.of(policyEntity.getPolicy())).serialize();
     }
     catch (JOSEException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
@@ -176,7 +176,7 @@ public class FederationApiService {
    */
   protected SignedJWT signJsonRecords(final String claimName, final List<String> jsonRecords) throws JOSEException {
 
-    final List<Map<String,Object>> jsonClaims = jsonRecords.stream().map((js) -> {
+    final List<Map<String,Object>> jsonClaimsData = jsonRecords.stream().map((js) -> {
       try {
         return this.mapper.readValue(js, new TypeReference<Map<String,Object>>() {});
       }
@@ -186,17 +186,18 @@ public class FederationApiService {
     }).toList();
 
 
+
     final RSASSASigner signer = new RSASSASigner(this.signKey.toRSAKey());
     final JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .claim(claimName, Map.of("data",jsonClaims))
         .issueTime(new Date())
         .jwtID(UUID.randomUUID().toString())
         .issuer("oidf-registry")
+        .claim(claimName.replace('-','_'), jsonClaimsData)
         .build();
 
     final JWSAlgorithm alg = signer.supportedJWSAlgorithms().stream().findFirst().orElseThrow();
     final JWSHeader header = new JWSHeader.Builder(alg)
-        .type(new JOSEObjectType(claimName + "+jwt"))
+        .type(new JOSEObjectType(claimName.replace('_','-')+ "+jwt"))
         .keyID(this.signKey.getKeyID())
         .build();
 
@@ -204,5 +205,7 @@ public class FederationApiService {
     jwt.sign(signer);
     return jwt;
   }
+
+
 
 }
