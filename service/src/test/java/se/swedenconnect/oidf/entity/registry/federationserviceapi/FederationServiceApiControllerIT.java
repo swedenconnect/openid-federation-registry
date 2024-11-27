@@ -53,7 +53,16 @@ class FederationServiceApiControllerIT {
   void policyRecordSuccess() throws ParseException {
     final PolicyRecord policy = new PolicyRecord.Builder()
         .name("policy-name")
-        .policy(" {\"policy\":\"default\"}")
+        .policy(" {\n"
+            + "  \"openid_relying_party\" : {\n"
+            + "    \"grant_types\" : {\n"
+            + "      \"subset_of\" : [ \"authorization_code\" ]\n"
+            + "    },\n"
+            + "    \"response_types\" : {\n"
+            + "      \"subset_of\" : [ \"code\" ]\n"
+            + "    }\n"
+            + "  }\n"
+            + "}")
         .policyRecordId(UUID.randomUUID().toString())
         .build();
 
@@ -62,7 +71,7 @@ class FederationServiceApiControllerIT {
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
     final ResponseEntity<String> fedRes = this.restTemplate
-        .getForEntity("/api/v1/federationservice/policy_record?policy_id="+response.getBody().getPolicyRecordId(), String.class);
+        .getForEntity("/api/v1/federationservice/policy_record?policy_record_id="+response.getBody().getPolicyRecordId(), String.class);
     if(fedRes.getStatusCode().isError()){
       log.error(fedRes.getBody());
     }
@@ -83,7 +92,7 @@ class FederationServiceApiControllerIT {
   void policyRecordBadRequest() throws ParseException {
 
     final ResponseEntity<String> fedRes = this.restTemplate
-        .getForEntity("/api/v1/federationservice/policy_record?policy_id=notAnUuid", String.class);
+        .getForEntity("/api/v1/federationservice/policy_record?policy_record_id=notAnUuid", String.class);
     if(fedRes.getStatusCode().isError()){
       log.error(fedRes.getBody());
     }
@@ -95,7 +104,7 @@ class FederationServiceApiControllerIT {
   void policyRecordNotFound() throws ParseException {
 
     final ResponseEntity<String> fedRes = this.restTemplate
-        .getForEntity("/api/v1/federationservice/policy_record?policy_id=" + UUID.randomUUID(), String.class);
+        .getForEntity("/api/v1/federationservice/policy_record?policy_record_id=" + UUID.randomUUID(), String.class);
     if(fedRes.getStatusCode().isError()){
       log.error(fedRes.getBody());
     }

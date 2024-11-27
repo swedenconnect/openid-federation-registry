@@ -138,16 +138,16 @@ public class FederationApiService {
   }
 
   /**
-   * Getting one policyrecord according to policyid
-   * @param policyId External policyid, expect UUID format
+   * Getting one policyrecord according to policyRecordId
+   * @param policyRecordId External policyRecordId, expect UUID format
    * @return Signed JWT containing PolicyRecords
    */
-  public String policyRecord(final UUID policyId) {
+  public String policyRecord(final UUID policyRecordId) {
 
-    final PolicyEntity policyEntity = this.policyRepository.findByExternalId(policyId.toString())
+    final PolicyEntity policyEntity = this.policyRepository.findByExternalId(policyRecordId.toString())
         .orElseThrow(() ->
             new ResponseStatusException(HttpStatus.NOT_FOUND,
-                "Unable to find policy for id:'%s'".formatted(policyId.toString())));
+                "Unable to find policy for id:'%s'".formatted(policyRecordId.toString())));
 
     try {
       return signJsonRecords("policy-records", List.of(policyEntity.getPolicy())).serialize();
