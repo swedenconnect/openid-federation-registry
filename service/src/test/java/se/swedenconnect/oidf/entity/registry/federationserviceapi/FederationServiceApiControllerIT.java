@@ -40,7 +40,7 @@ class FederationServiceApiControllerIT {
 
   @Test
   void trustMarkRecordNotFound() {
-    final ResponseEntity<String> fedRes = restTemplate
+    final ResponseEntity<String> fedRes = this.restTemplate
         .getForEntity("/api/v1/federationservice/trust_mark"
             + "?iss=http://tmi.digg.se&trustmark_id=http://www.digg.se/loa", String.class);
     if(fedRes.getStatusCode().isError()){
@@ -61,7 +61,7 @@ class FederationServiceApiControllerIT {
         this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
-    final ResponseEntity<String> fedRes = restTemplate
+    final ResponseEntity<String> fedRes = this.restTemplate
         .getForEntity("/api/v1/federationservice/policy_record?policy_id="+response.getBody().getPolicyRecordId(), String.class);
     if(fedRes.getStatusCode().isError()){
       log.error(fedRes.getBody());
@@ -82,7 +82,7 @@ class FederationServiceApiControllerIT {
   @Test
   void policyRecordBadRequest() throws ParseException {
 
-    final ResponseEntity<String> fedRes = restTemplate
+    final ResponseEntity<String> fedRes = this.restTemplate
         .getForEntity("/api/v1/federationservice/policy_record?policy_id=notAnUuid", String.class);
     if(fedRes.getStatusCode().isError()){
       log.error(fedRes.getBody());
@@ -94,7 +94,7 @@ class FederationServiceApiControllerIT {
   @Test
   void policyRecordNotFound() throws ParseException {
 
-    final ResponseEntity<String> fedRes = restTemplate
+    final ResponseEntity<String> fedRes = this.restTemplate
         .getForEntity("/api/v1/federationservice/policy_record?policy_id=" + UUID.randomUUID(), String.class);
     if(fedRes.getStatusCode().isError()){
       log.error(fedRes.getBody());
@@ -108,11 +108,12 @@ class FederationServiceApiControllerIT {
   void entityRecordSuccess() throws ParseException {
     final String issuer = "http://tmi.digg.se/" + UUID.randomUUID();
     final EntityRecord entity = EntityFactory.createDefaultEntity(issuer,"http://sub.digg.se");
+    entity.setPolicyRecordId(createPolicy());
     final ResponseEntity<EntityRecord> createResponse =
-        restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
+        this.restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
     assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
-    final ResponseEntity<String> response = restTemplate
+    final ResponseEntity<String> response = this.restTemplate
         .getForEntity("/api/v1/federationservice/entity_record?iss="+issuer, String.class);
 
     if(response.getStatusCode().isError()){
@@ -133,7 +134,7 @@ class FederationServiceApiControllerIT {
   @Test
   void entityRecordNotFound() throws ParseException {
 
-    final ResponseEntity<String> response = restTemplate
+    final ResponseEntity<String> response = this.restTemplate
         .getForEntity("/api/v1/federationservice/entity_record?iss=http://notfound.digg.se", String.class);
     if(response.getStatusCode().isError()){
       log.error(response.getBody());
@@ -145,7 +146,7 @@ class FederationServiceApiControllerIT {
   @Test
   void entityRecordBadRequest() throws ParseException {
 
-    final ResponseEntity<String> response = restTemplate
+    final ResponseEntity<String> response = this.restTemplate
         .getForEntity("/api/v1/federationservice/entity_record?iss=f", String.class);
     if(response.getStatusCode().isError()){
       log.error(response.getBody());
@@ -153,4 +154,18 @@ class FederationServiceApiControllerIT {
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
   }
+
+  private String createPolicy(){
+    final PolicyRecord policy = new PolicyRecord.Builder()
+        .name("policy-name")
+        .policy("{}")
+        .policyRecordId(UUID.randomUUID().toString())
+        .build();
+    // Act
+    final ResponseEntity<PolicyRecord> response =
+        this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    return policy.getPolicyRecordId();
+  }
+
 }

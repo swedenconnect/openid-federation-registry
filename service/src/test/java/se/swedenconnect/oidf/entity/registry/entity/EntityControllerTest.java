@@ -30,6 +30,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 import se.swedenconnect.oidf.registry.api.model.EntityRecordHostedRecord;
+import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
 import java.util.List;
 import java.util.UUID;
@@ -87,16 +88,29 @@ public class EntityControllerTest {
    */
   @Test
   public void testCreateEntity() throws Exception {
+    final PolicyRecord policyRecord = PolicyRecord.builder()
+        .name("TestPolicy")
+        .policyRecordId(UUID.randomUUID().toString())
+        .policy("{\"Test Policy\":\"value\"}")
+        .build();
+    this.mockMvc.perform(post("/registry/v1/policies")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsBytes(policyRecord)))
+        .andExpect(status().isCreated());
+
+
+
+
     final EntityRecord record = new EntityRecord();
     final String subject = "https://example.com/subject/1";
 
     record.setSubject(subject);
     record.setIssuer("http://issuer");
-    record.setPolicyRecordId(UUID.randomUUID().toString());
+    record.setPolicyRecordId(policyRecord.getPolicyRecordId());
     record.setIssuer("http://iss.example.se");
     record.setEntityRecordId(UUID.randomUUID().toString());
 
-    mockMvc.perform(post("/registry/v1/entities")
+    this.mockMvc.perform(post("/registry/v1/entities")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(record)))
         .andExpect(status().isCreated())
@@ -118,12 +132,22 @@ public class EntityControllerTest {
    */
   @Test
   public void testGetEntity() throws Exception {
+    final PolicyRecord policyRecord = PolicyRecord.builder()
+        .name("TestPolicy")
+        .policyRecordId(UUID.randomUUID().toString())
+        .policy("{\"Test Policy\":\"value\"}")
+        .build();
+    this.mockMvc.perform(post("/registry/v1/policies")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsBytes(policyRecord)))
+        .andExpect(status().isCreated());
+
     final EntityRecord record = new EntityRecord();
     final String subject = "https://example.com/subject/2";
 
     record.setSubject(subject);
     record.setIssuer("http://issuer");
-    record.setPolicyRecordId(UUID.randomUUID().toString());
+    record.setPolicyRecordId(policyRecord.getPolicyRecordId());
     record.setEntityRecordId(UUID.randomUUID().toString());
 
 
@@ -156,12 +180,22 @@ public class EntityControllerTest {
    */
   @Test
   public void testUpdateEntity() throws Exception {
-    EntityRecord record = new EntityRecord();
-    final var subject = "https://example.com/subject/3";
+    final PolicyRecord policyRecord = PolicyRecord.builder()
+        .name("TestPolicy")
+        .policyRecordId(UUID.randomUUID().toString())
+        .policy("{\"Test Policy\":\"value\"}")
+        .build();
+    this.mockMvc.perform(post("/registry/v1/policies")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsBytes(policyRecord)))
+        .andExpect(status().isCreated());
+
+    final EntityRecord record = new EntityRecord();
+    final String subject = "https://example.com/subject/3";
 
     record.setSubject(subject);
     record.setIssuer("http://issuer");
-    record.setPolicyRecordId(UUID.randomUUID().toString());
+    record.setPolicyRecordId(policyRecord.getPolicyRecordId());
     record.setEntityRecordId(UUID.randomUUID().toString());
 
 
@@ -175,7 +209,7 @@ public class EntityControllerTest {
     record.setEntityRecordId(createdRecord.getEntityRecordId());
 
     record.setHostedRecord(EntityRecordHostedRecord.builder().authorityHints(List.of("http://hint1")).build());
-    mockMvc.perform(put("/registry/v1/entities/{entityId}", createdRecord.getEntityRecordId())
+    this.mockMvc.perform(put("/registry/v1/entities/{entityId}", createdRecord.getEntityRecordId())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(record)))
         .andExpect(status().isOk())
@@ -197,21 +231,31 @@ public class EntityControllerTest {
    */
   @Test
   public void testDeleteEntity() throws Exception {
+    final PolicyRecord policyRecord = PolicyRecord.builder()
+        .name("TestPolicy")
+        .policyRecordId(UUID.randomUUID().toString())
+        .policy("{\"Test Policy\":\"value\"}")
+        .build();
+    this.mockMvc.perform(post("/registry/v1/policies")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsBytes(policyRecord)))
+        .andExpect(status().isCreated());
+
     final EntityRecord record = new EntityRecord();
     final String subject = "https://example.com/subject/40";
 
     record.setSubject(subject);
     record.setIssuer("http://issuer");
-    record.setPolicyRecordId(UUID.randomUUID().toString());
+    record.setPolicyRecordId(policyRecord.getPolicyRecordId());
     record.setEntityRecordId(UUID.randomUUID().toString());
 
 
-    mockMvc.perform(post("/registry/v1/entities")
+    this.mockMvc.perform(post("/registry/v1/entities")
             .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsBytes(record)))
+            .content(this.objectMapper.writeValueAsBytes(record)))
         .andExpect(status().isCreated());
 
-    mockMvc.perform(delete("/registry/v1/entities/{entityId}", record.getEntityRecordId()))
+    this.mockMvc.perform(delete("/registry/v1/entities/{entityId}", record.getEntityRecordId()))
         .andExpect(status().isNoContent());
   }
 
@@ -226,7 +270,7 @@ public class EntityControllerTest {
    */
   @Test
   public void testGetAllEntities() throws Exception {
-    mockMvc.perform(get("/registry/v1/entities"))
+    this.mockMvc.perform(get("/registry/v1/entities"))
         .andExpect(status().isOk());
   }
 }
