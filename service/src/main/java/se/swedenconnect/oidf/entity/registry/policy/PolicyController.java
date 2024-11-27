@@ -87,16 +87,16 @@ public class PolicyController {
   }
 
   /**
-   * Retrieves a policy by its policy_id from the entity registry.
+   * Retrieves a policy by its policyRecordId from the entity registry.
    *
-   * @param policyId the name of the policy to be retrieved
+   * @param policyRecordId the name of the policy to be retrieved
    * @return a {@link PolicyRecord} object representing the policy, if found
    */
-  @GetMapping("/{policyId}")
-  public PolicyRecord getPolicyByPolicyId(@PathVariable("policyId") final UUID policyId) {
-    log.debug("GET by policyId: {}", policyId);
+  @GetMapping("/{policyRecordId}")
+  public PolicyRecord getPolicyByPolicyId(@PathVariable("policyRecordId") final UUID policyRecordId) {
+    log.debug("GET by policyRecordId: {}", policyRecordId);
 
-    final PolicyRecord record = this.policyService.get(policyId.toString());
+    final PolicyRecord record = this.policyService.get(policyRecordId.toString());
     if (record == null) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Policy not found");
     }
@@ -107,31 +107,31 @@ public class PolicyController {
   /**
    * Updates an existing policy in the entity registry.
    *
-   * @param policy_id The policy_id of the policy to update.
+   * @param policyRecordId The policyRecordId of the policy to update.
    * @param policy A {@link PolicyRecord} object containing the updated details of the policy.
    * @return A {@link PolicyRecord} object representing the updated policy.
    */
-  @PutMapping("/{policy_id}")
+  @PutMapping("/{policyRecordId}")
   public PolicyRecord updatePolicy(
-      @PathVariable("policy_id") final UUID policy_id,
+      @PathVariable("policyRecordId") final UUID policyRecordId,
       @RequestBody PolicyRecord policy) {
     log.debug("PUT: {}", policy);
-    if (!policy_id.toString().equals(policy.getPolicyRecordId())) {
+    if (!policyRecordId.toString().equals(policy.getPolicyRecordId())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PolicyId has to be the same in path and object");
     }
-    return this.policyService.update(policy_id.toString(), policy);
+    return this.policyService.update(policyRecordId.toString(), policy);
   }
 
   /**
-   * Deletes a policy by its policy_id from the entity registry.
+   * Deletes a policy by its policyRecordId from the entity registry.
    *
-   * @param policy_id the policy_id of the policy to be deleted
+   * @param policyRecordId the policyRecordId of the policy to be deleted
    * @return ResponseEntity no content
    */
-  @DeleteMapping("/{policy_id}")
-  public ResponseEntity<Void> deletePolicy(@PathVariable("policy_id") final UUID policy_id) {
-    log.debug("DELETE: {}", policy_id);
-    this.policyService.delete(policy_id.toString());
+  @DeleteMapping("/{policyRecordId}")
+  public ResponseEntity<Void> deletePolicy(@PathVariable("policyRecordId") final UUID policyRecordId) {
+    log.debug("DELETE: {}", policyRecordId);
+    this.policyService.delete(policyRecordId.toString());
     return ResponseEntity.noContent().build();
   }
 }

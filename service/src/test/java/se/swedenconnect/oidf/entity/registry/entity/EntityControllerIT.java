@@ -194,25 +194,25 @@ public class EntityControllerIT {
    * It then performs a request to retrieve all entities and verifies that the response status is HTTP OK
    * and that the response body is empty.
    */
-  //@Test TODO: Ignoring this test until next PR, where we will use an external id.
+  @Test
   public void testGetAllEntitiesWithNoEntities() {
 
     final EntityRecord entityWithJWKSource =
         EntityFactory.createDefaultEntity("https://iss.com/issuer/","https://sub.com/subject/");
     restTemplate.postForEntity("/registry/v1/entities", entityWithJWKSource, EntityRecord.class);
     // Arrange
-    ResponseEntity<EntityRecord[]> response = restTemplate.getForEntity("/registry/v1/entities", EntityRecord[].class);
+    final ResponseEntity<EntityRecord[]> response = restTemplate.getForEntity("/registry/v1/entities", EntityRecord[].class);
     if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
       Arrays.stream(response.getBody()).filter(e -> e.getEntityRecordId() != null).forEach(
           e -> restTemplate.delete("/registry/v1/entities/{id}", e.getEntityRecordId()));
     }
 
     // Act
-    response = restTemplate.getForEntity("/registry/v1/entities", EntityRecord[].class);
+    final ResponseEntity<EntityRecord[]> secondRetry = restTemplate.getForEntity("/registry/v1/entities", EntityRecord[].class);
 
     // Assert
-    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    assertThat(response.getBody()).isEmpty();
+    assertThat(secondRetry.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(secondRetry.getBody()).isEmpty();
   }
 
   /**

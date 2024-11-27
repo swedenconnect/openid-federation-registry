@@ -91,7 +91,7 @@ components:
         subject:
           type: string
           description: The identity of the subject associated with the record. This field is required.
-        policy_id:
+        policy_record_id:
           type: string
           nullable: false
           description: The id of the policy associated with the entity.

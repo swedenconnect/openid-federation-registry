@@ -60,7 +60,7 @@ public class JpaEntityService implements EntityService {
     try {
       return this.repository.findByExternalId(record.getEntityRecordId())
           .or(() -> Optional.of(new EntityEntity()))
-          .map(entity -> mergeRecordIntoEntity(record,entity))
+          .map(entity -> this.mergeRecordIntoEntity(record,entity))
           .map(this.repository::save)
           .map(this::toRecord)
           .orElseThrow();
@@ -71,8 +71,8 @@ public class JpaEntityService implements EntityService {
   }
 
   @Override
-  public EntityRecord get(final String entityid) {
-    return this.repository.findByExternalId(entityid)
+  public EntityRecord get(final String entityRecordId) {
+    return this.repository.findByExternalId(entityRecordId)
         .map(this::toRecord)
         .orElse(null);
   }
@@ -86,17 +86,17 @@ public class JpaEntityService implements EntityService {
   }
 
   @Override
-  public EntityRecord update(final String entityid, final EntityRecord entityRecord) {
-    if (!entityid.equals(entityRecord.getEntityRecordId())){
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Entityid has to match in json payload.");
+  public EntityRecord update(final String entityRecordId, final EntityRecord entityRecord) {
+    if (!entityRecordId.equals(entityRecord.getEntityRecordId())){
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "EntityRecordId has to match in json payload.");
     }
     return this.create(entityRecord);
 
   }
 
   @Override
-  public void delete(final String entityid) {
-    this.repository.findByExternalId(entityid).ifPresent(this.repository::delete);
+  public void delete(final String entityRecordId) {
+    this.repository.findByExternalId(entityRecordId).ifPresent(this.repository::delete);
   }
 
 

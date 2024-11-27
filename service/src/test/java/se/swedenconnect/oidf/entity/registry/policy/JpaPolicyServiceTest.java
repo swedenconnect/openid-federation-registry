@@ -68,38 +68,7 @@ public class JpaPolicyServiceTest {
     MockitoAnnotations.openMocks(this);
   }
 
-  /**
-   * Tests the {@code create} method of the {@code JpaPolicyService} class.
-   * <p>
-   * This test validates that a new policy can be successfully created and saved. The test asserts that the created
-   * policy is not null and that its properties match the original input data. It also verifies that the {@code save}
-   * method of the repository is called exactly once.
-   */
 
-  public void testCreateValidPolicy() {
-    // Given
-    final String policyName = "Test Policy";
-
-    final PolicyRecord policyRecord = PolicyRecord.builder()
-        .name(policyName)
-        .policyRecordId(UUID.randomUUID().toString())
-        .policy("{\"Test Policy\":\"value\"}")
-        .build();
-    final PolicyEntity policyEntity = new PolicyEntity();
-    policyEntity.setName(policyRecord.getName());
-    policyEntity.setPolicy(policyRecord.getPolicy());
-
-    when(this.policyRepository.save(any(PolicyEntity.class))).thenReturn(policyEntity);
-
-    // When
-    final PolicyRecord createdPolicy = this.jpaPolicyService.create(policyRecord);
-
-    // Then
-    assertThat(createdPolicy).isNotNull();
-    assertThat(createdPolicy.getName()).isEqualTo(policyRecord.getName());
-    assertThat(createdPolicy.getPolicy()).isEqualTo(policyRecord.getPolicy());
-    verify(this.policyRepository, times(1)).save(any(PolicyEntity.class));
-  }
 
   /**
    * Tests the {@code create} method of the {@code JpaPolicyService} class when given an invalid policy.

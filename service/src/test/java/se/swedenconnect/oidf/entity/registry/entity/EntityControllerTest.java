@@ -92,7 +92,7 @@ public class EntityControllerTest {
 
     record.setSubject(subject);
     record.setIssuer("http://issuer");
-    record.setPolicyId("policyID");
+    record.setPolicyRecordId(UUID.randomUUID().toString());
     record.setIssuer("http://iss.example.se");
     record.setEntityRecordId(UUID.randomUUID().toString());
 
@@ -123,7 +123,7 @@ public class EntityControllerTest {
 
     record.setSubject(subject);
     record.setIssuer("http://issuer");
-    record.setPolicyId("policyID");
+    record.setPolicyRecordId(UUID.randomUUID().toString());
     record.setEntityRecordId(UUID.randomUUID().toString());
 
 
@@ -161,7 +161,7 @@ public class EntityControllerTest {
 
     record.setSubject(subject);
     record.setIssuer("http://issuer");
-    record.setPolicyId("policyID");
+    record.setPolicyRecordId(UUID.randomUUID().toString());
     record.setEntityRecordId(UUID.randomUUID().toString());
 
 
@@ -202,7 +202,7 @@ public class EntityControllerTest {
 
     record.setSubject(subject);
     record.setIssuer("http://issuer");
-    record.setPolicyId("policyID");
+    record.setPolicyRecordId(UUID.randomUUID().toString());
     record.setEntityRecordId(UUID.randomUUID().toString());
 
 

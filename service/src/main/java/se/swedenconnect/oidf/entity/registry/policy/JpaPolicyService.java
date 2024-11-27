@@ -67,7 +67,7 @@ public class JpaPolicyService implements PolicyService {
     try {
       return this.policyRepository.findByExternalId(record.getPolicyRecordId())
           .or(() -> Optional.of(new PolicyEntity()))
-          .map(entity -> mergeRecordIntoEntity(record, entity))
+          .map(entity -> this.mergeRecordIntoEntity(record, entity))
           .map(this.policyRepository::save)
           .map(this::toRecord)
           .orElseThrow();
@@ -79,8 +79,8 @@ public class JpaPolicyService implements PolicyService {
   }
 
   @Override
-  public PolicyRecord get(final String policy_id) {
-    return this.policyRepository.findByExternalId(policy_id)
+  public PolicyRecord get(final String policyRecordId) {
+    return this.policyRepository.findByExternalId(policyRecordId)
         .map(this::toRecord)
         .orElse(null);
   }
@@ -94,16 +94,16 @@ public class JpaPolicyService implements PolicyService {
   }
 
   @Override
-  public PolicyRecord update(final String policy_id, final PolicyRecord record) {
-    if (!policy_id.equals(record.getPolicyRecordId())) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PolicyId has to be the same in path and object");
+  public PolicyRecord update(final String policyRecordId, final PolicyRecord record) {
+    if (!policyRecordId.equals(record.getPolicyRecordId())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PolicyRecordId has to be the same in path and object");
     }
     return this.create(record);
   }
 
   @Override
-  public void delete(final String policy_id) {
-    this.policyRepository.findByExternalId(policy_id).ifPresent(this.policyRepository::delete);
+  public void delete(final String policyRecordId) {
+    this.policyRepository.findByExternalId(policyRecordId).ifPresent(this.policyRepository::delete);
   }
 
   private PolicyRecord toRecord(PolicyEntity policyEntity) {

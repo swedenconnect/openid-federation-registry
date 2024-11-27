@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Handling trustmark CRUD opertions
+ * Handling trustmark CRUD operations
  *
  * @author Per Fredrik Plars
  */
@@ -52,8 +52,8 @@ public class JpaTrustMarkSubjectService implements TrustMarkSubjectService {
   public TrustMarkSubjectRecord create(final TrustMarkSubjectRecord record) {
     try {
       return this.repository.findByExternalId(record.getTrustMarkSubjectRecordId())
-          .or(() -> Optional.of( TrustMarkSubjectEntity.builder().build()))
-          .map(entity -> mergeRecordIntoEntity(record,entity))
+          .or(() -> Optional.of(TrustMarkSubjectEntity.builder().build()))
+          .map(entity -> this.mergeRecordIntoEntity(record,entity))
           .map(this.repository::save)
           .map(this::toRecord)
           .orElseThrow();
@@ -64,8 +64,8 @@ public class JpaTrustMarkSubjectService implements TrustMarkSubjectService {
   }
 
   @Override
-  public TrustMarkSubjectRecord get(final String trustMarkSubjectId) {
-    return this.repository.findByExternalId(trustMarkSubjectId)
+  public TrustMarkSubjectRecord get(final String trustMarkSubjectRecordId) {
+    return this.repository.findByExternalId(trustMarkSubjectRecordId)
         .map(this::toRecord)
         .orElse(null);
   }
@@ -92,16 +92,17 @@ public class JpaTrustMarkSubjectService implements TrustMarkSubjectService {
   }
 
   @Override
-  public TrustMarkSubjectRecord update(final String trustMarkSubjectId, final TrustMarkSubjectRecord record) {
-    if (!trustMarkSubjectId.equals(record.getTrustMarkSubjectRecordId())){
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "trustMarkSubjectId has to match in json payload.");
+  public TrustMarkSubjectRecord update(final String trustMarkSubjectRecordId, final TrustMarkSubjectRecord record) {
+    if (!trustMarkSubjectRecordId.equals(record.getTrustMarkSubjectRecordId())){
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "TrustMarkSubjectRecordId has to match in json payload.");
     }
     return this.create(record);
   }
 
   @Override
-  public void delete(final String trustMarkSubjectId) {
-    this.repository.findByExternalId(trustMarkSubjectId).ifPresent(this.repository::delete);
+  public void delete(final String trustMarkSubjectRecordId) {
+    this.repository.findByExternalId(trustMarkSubjectRecordId).ifPresent(this.repository::delete);
   }
 
   private TrustMarkSubjectRecord toRecord(TrustMarkSubjectEntity entity){

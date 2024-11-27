@@ -84,7 +84,7 @@ public class EntityController {
   @GetMapping
   public ResponseEntity<List<EntityRecord>> getAllEntities() {
     final List<EntityRecord> entities = this.entityService.getAll();
-    log.debug("GET: {}", entities);
+    log.debug("GETAll: {}", entities);
     return ResponseEntity.ok(entities);
   }
 

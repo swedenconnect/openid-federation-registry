@@ -61,7 +61,7 @@ public class EntityFactory {
             "issuer": "%s",
             "subject": "%s",
             "entity_record_id":"%s",
-            "policy_id": "policy-123",
+            "policy_record_id": "3ea2aace-18b3-439e-88b1-61d232f20fe9",
             "hosted": {
               "authority_hints": [
                 "https://example.com/hint1",
