@@ -16,12 +16,13 @@ import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
 import java.text.ParseException;
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Testing federation api
@@ -69,10 +70,13 @@ class FederationServiceApiControllerIT {
     
 
     final SignedJWT signedJWT  = SignedJWT.parse(fedRes.getBody());
-    assertEquals(new JOSEObjectType("policy-record+jwt"),signedJWT.getHeader().getType());
+    assertEquals(new JOSEObjectType("policy-records+jwt"),signedJWT.getHeader().getType());
     assertNotNull(signedJWT.getHeader().getKeyID());
-    final Map<String,Object> claim = signedJWT.getJWTClaimsSet().getJSONObjectClaim("policy-record");
+
+    final List<Object> claim = signedJWT.getJWTClaimsSet().getListClaim("policy_records");
     assertNotNull(claim);
+    assertTrue(!claim.isEmpty());
+
   }
 
   @Test
@@ -117,10 +121,12 @@ class FederationServiceApiControllerIT {
     assertThat(HttpStatus.OK).isEqualTo(response.getStatusCode());
 
     final SignedJWT signedJWT  = SignedJWT.parse(response.getBody());
-    assertEquals(new JOSEObjectType("entity-record+jwt"),signedJWT.getHeader().getType());
+    assertEquals(new JOSEObjectType("entity-records+jwt"),signedJWT.getHeader().getType());
     assertNotNull(signedJWT.getHeader().getKeyID());
-    final Map<String,Object> claim = signedJWT.getJWTClaimsSet().getJSONObjectClaim("entity-record");
+
+    final List<Object> claim = signedJWT.getJWTClaimsSet().getListClaim("entity_records");
     assertNotNull(claim);
+    assertTrue(!claim.isEmpty());
 
   }
 

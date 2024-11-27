@@ -38,7 +38,7 @@ public class EntityFactoryTest {
    */
   @Test
   public void testCreateDefaultEntity() {
-    EntityRecord entity = EntityFactory.createDefaultEntity();
+    final EntityRecord entity = EntityFactory.createDefaultEntity();
 
     assertNotNull(entity);
 
@@ -54,9 +54,9 @@ public class EntityFactoryTest {
    */
   @Test
   public void testCreateDefaultEntityWithSubject() {
-    String subject = EntityFactory.SUBJECT_2;
+    final String subject = EntityFactory.SUBJECT_2;
 
-    EntityRecord entity = EntityFactory.createDefaultEntity(subject);
+    final EntityRecord entity = EntityFactory.createDefaultEntity(subject);
 
     assertNotNull(entity);
 

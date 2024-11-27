@@ -29,7 +29,7 @@ import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
-import se.swedenconnect.oidf.registry.api.model.EntityRecordHosted;
+import se.swedenconnect.oidf.registry.api.model.EntityRecordHostedRecord;
 
 import java.util.List;
 import java.util.UUID;
@@ -174,12 +174,12 @@ public class EntityControllerTest {
         .getContentAsString(),EntityRecord.class);
     record.setEntityRecordId(createdRecord.getEntityRecordId());
 
-    record.setHosted(EntityRecordHosted.builder().authorityHints(List.of("http://hint1")).build());
+    record.setHostedRecord(EntityRecordHostedRecord.builder().authorityHints(List.of("http://hint1")).build());
     mockMvc.perform(put("/registry/v1/entities/{entityId}", createdRecord.getEntityRecordId())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(record)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.hosted.authority_hints").value("http://hint1"));
+        .andExpect(jsonPath("$.hosted_record.authority_hints").value("http://hint1"));
   }
 
   /**

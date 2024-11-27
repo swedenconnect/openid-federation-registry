@@ -116,7 +116,7 @@ public class EntityControllerIT {
     assertThat(createdEntity).isNotNull();
     assertThat(createdEntity.getSubject()).isEqualTo("http://subject-with-jwk");
     assertThat(createdEntity.getJwks()).isNotNull();
-    assertThat(createdEntity.getHosted()).isNotNull();
+    assertThat(createdEntity.getHostedRecord()).isNotNull();
   }
 
   /**
@@ -149,7 +149,7 @@ public class EntityControllerIT {
     assertThat(createdEntity).isNotNull();
     assertThat(createdEntity.getSubject()).isEqualTo("http://subj40");
     assertThat(createdEntity.getJwks()).isNotNull();
-    assertThat(createdEntity.getHosted()).isNotNull();
+    assertThat(createdEntity.getHostedRecord()).isNotNull();
   }
 
   /**

@@ -99,7 +99,7 @@ components:
           type: string
           nullable: true
           description: Location of metadata
-        hosted:
+        hosted_record:
           type: object
           description: Contains details about a hosted record service.
           properties:
