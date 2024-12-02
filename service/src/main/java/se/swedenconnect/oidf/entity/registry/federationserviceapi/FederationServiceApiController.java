@@ -61,7 +61,7 @@ public class FederationServiceApiController {
       @RequestParam(name="trustmark_id") final String trustmarkId,
       @RequestParam(name="sub", required = false) final String subject){
 
-    return federationApiService.trustMarkRecord(new EntityID(issuer),trustmarkId, Optional.ofNullable(subject));
+    return this.federationApiService.trustMarkRecord(new EntityID(issuer),trustmarkId, Optional.ofNullable(subject));
   }
 
   /**
@@ -71,7 +71,7 @@ public class FederationServiceApiController {
    */
   @GetMapping(value="/policy_record", produces = "application/jwt")
   public String policyRecord(@RequestParam(name="policy_record_id") final UUID policyRecordId){
-    return federationApiService.policyRecord(policyRecordId);
+    return this.federationApiService.policyRecord(policyRecordId);
   }
 
   /**
@@ -81,7 +81,7 @@ public class FederationServiceApiController {
    */
   @GetMapping(value="/entity_record", produces = "application/jwt")
   public String entityRecord(@RequestParam(name="iss") final String issuer){
-    return federationApiService.entityRecord(new EntityID(issuer));
+    return this.federationApiService.entityRecord(new EntityID(issuer));
   }
 
 

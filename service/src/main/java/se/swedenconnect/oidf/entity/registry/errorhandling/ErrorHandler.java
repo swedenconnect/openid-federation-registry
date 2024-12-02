@@ -51,8 +51,8 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
    * @return Response object with error and error_description
    */
   @ExceptionHandler(IllegalArgumentException.class)
-  public ResponseEntity<Object> handle(IllegalArgumentException e,final WebRequest request){
-    return handleExceptionInternal(e,
+  public ResponseEntity<Object> handle(final IllegalArgumentException e,final WebRequest request){
+    return this.handleExceptionInternal(e,
         ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400),e.getMessage()),
         new HttpHeaders(),
         HttpStatusCode.valueOf(400),
@@ -74,8 +74,8 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
   }
 
   @Override
-  protected ResponseEntity<Object> createResponseEntity(@Nullable Object body, HttpHeaders headers,
-      HttpStatusCode statusCode, WebRequest request) {
+  protected ResponseEntity<Object> createResponseEntity(@Nullable final Object body, final HttpHeaders headers,
+      final HttpStatusCode statusCode, final WebRequest request) {
     String error = HttpStatus.valueOf(statusCode.value()).getReasonPhrase();
     String errorDescription = "Unknown server error";
     if (body instanceof ProblemDetail) {

@@ -62,7 +62,7 @@ public class JpaEntityService implements EntityService {
 
   @Override
   public EntityRecord create(final EntityRecord record) {
-    verifyPolicyRecordId(record);
+    this.verifyPolicyRecordId(record);
     try {
       return this.repository.findByExternalId(record.getEntityRecordId())
           .or(() -> Optional.of(new EntityEntity()))
@@ -71,7 +71,7 @@ public class JpaEntityService implements EntityService {
           .map(this::toRecord)
           .orElseThrow();
     }
-    catch (DataIntegrityViolationException e) {
+    catch (final DataIntegrityViolationException e) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Issuer and Subject already exist");
     }
   }
@@ -105,19 +105,19 @@ public class JpaEntityService implements EntityService {
     this.repository.findByExternalId(entityRecordId).ifPresent(this.repository::delete);
   }
 
-  private void verifyPolicyRecordId(EntityRecord record) {
+  private void verifyPolicyRecordId(final EntityRecord record) {
     Assert.notNull(record,"Record can not be null");
     Assert.hasText(record.getPolicyRecordId(),"PolicyRecordId has to be present");
-    if(policyRepository.findByExternalId(record.getPolicyRecordId()).isEmpty()){
+    if(this.policyRepository.findByExternalId(record.getPolicyRecordId()).isEmpty()){
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PolicyRecordId is not found.");
     }
   }
 
-  private EntityRecord toRecord(EntityEntity entity) {
+  private EntityRecord toRecord(final EntityEntity entity) {
     try {
       return this.objectMapper.readValue(entity.getEntity(), EntityRecord.class);
     }
-    catch (JsonProcessingException e) {
+    catch (final JsonProcessingException e) {
       throw new RuntimeException("Unable to map json entity to record", e);
     }
   }
@@ -132,7 +132,7 @@ public class JpaEntityService implements EntityService {
       }
       return entity;
     }
-    catch (JsonProcessingException e) {
+    catch (final JsonProcessingException e) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to map record to entity", e);
     }
   }

@@ -18,7 +18,6 @@ package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
@@ -92,10 +91,10 @@ public class FederationApiService {
           "Unable to find entity for issuer:'%s'".formatted(issuer));
     }
     try {
-      return signJsonRecords("entity-records",
+      return this.signJsonRecords("entity-records",
           recordEntity.stream().map(EntityEntity::getEntity).toList()).serialize();
     }
-    catch (JOSEException e) {
+    catch (final JOSEException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
     }
   }
@@ -130,10 +129,10 @@ public class FederationApiService {
               .formatted(issuer,trustmarkId,subject));
     }
     try {
-      return signJsonRecords("trustmark-records",
+      return this.signJsonRecords("trustmark-records",
           trustmarkSubjectEntities.stream().map(TrustMarkSubjectEntity::getTrustmarksubjectJson).toList()).serialize();
     }
-    catch (JOSEException e) {
+    catch (final JOSEException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
     }
 
@@ -161,11 +160,11 @@ public class FederationApiService {
       policyClaim.put("policy",policy);
 
       final String claimName = "policy_record";
-      final JWTClaimsSet.Builder claimsSet = defaultClaimSet();
+      final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
       claimsSet.claim(claimName, policyClaim);
-      return signJWT(claimName,claimsSet.build()).serialize();
+      return this.signJWT(claimName,claimsSet.build()).serialize();
     }
-    catch (JOSEException  | JsonProcessingException e) {
+    catch (final JOSEException  | JsonProcessingException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
     }
 
@@ -193,14 +192,14 @@ public class FederationApiService {
       try {
         return this.mapper.readValue(js, new TypeReference<Map<String,Object>>() {});
       }
-      catch (JsonProcessingException e) {
+      catch (final JsonProcessingException e) {
         throw new RuntimeException(e);
       }
     }).toList();
 
-    final JWTClaimsSet.Builder claimsSet = defaultClaimSet();
+    final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
     claimsSet.claim(claimName.replace('-','_'), jsonClaimsData);
-    return signJWT(claimName,claimsSet.build());
+    return this.signJWT(claimName,claimsSet.build());
   }
 
 
@@ -211,7 +210,7 @@ public class FederationApiService {
         .issuer("oidf-registry");
   }
 
-  private SignedJWT signJWT(String jwtTypeName,JWTClaimsSet jwtClaimsSet) throws JOSEException {
+  private SignedJWT signJWT(final String jwtTypeName,final JWTClaimsSet jwtClaimsSet) throws JOSEException {
     final RSASSASigner signer = new RSASSASigner(this.signKey.toRSAKey());
     final JWSAlgorithm alg = signer.supportedJWSAlgorithms().stream().findFirst().orElseThrow();
     final JWSHeader header = new JWSHeader.Builder(alg)
@@ -222,5 +221,7 @@ public class FederationApiService {
     jwt.sign(signer);
     return jwt;
   }
+
+
 
 }
