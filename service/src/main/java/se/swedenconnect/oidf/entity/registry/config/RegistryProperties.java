@@ -29,32 +29,51 @@ import java.util.Base64;
  * Properties for RegistryService
  *
  * @author Per Fredrik Plars
- * @param federationserviceapiSignKey Key used to sign outgoing JWT for federationapi.
+ * @param federationServiceApi federationapi settings.
  */
 @ConfigurationProperties("openid.federation.registry")
-public record RegistryProperties(String federationserviceapiSignKey) {
+public record RegistryProperties(FederationAPIProperties federationServiceApi) {
 
   /**
    * Validate properties
    */
   @PostConstruct
   public void validate(){
-    Assert.hasText(this.federationserviceapiSignKey,"Expected federationserviceapiSignKey");
-    try {
-      federationserviceapiSignKey();
-    }
-    catch (final Exception e) {
-      throw new IllegalArgumentException("FederationserviceapiSignKey has the wrong format can not be parsed",e);
-    }
+    Assert.notNull(this.federationServiceApi,
+        "openid.federation.registry.federatonServiceApi Is needed in configuration");
+    this.federationServiceApi.validate();
   }
 
   /**
-   * Parsing  federationserviceapiSignKey to a JWK
-   * @return JWK
-   * @throws ParseException If there is an error to pars signkey
+   * Properties for Federation API
+   * @param signKeyAlias Alias for the key used to sign outgoing JWT:S
+   * @param issuer Issuer that is set on outgoing JWT:s
    */
-  public JWK federationserviceapiSignKeyJWK() throws ParseException {
-    return JWK.parse(new String(Base64.getDecoder()
-        .decode(this.federationserviceapiSignKey), Charset.defaultCharset()));
+  public record FederationAPIProperties(String signKeyAlias,String issuer){
+    /**
+     * Parsing  federationserviceapi SignKey to a JWK
+     * @return JWK
+     * @throws ParseException If there is an error to pars signkey
+     */
+    public JWK federationserviceapiSignKeyJWK() throws ParseException {
+      return JWK.parse(new String(Base64.getDecoder()
+          .decode(this.signKeyAlias), Charset.defaultCharset()));
+    }
+    /**
+     * Validate properties
+     */
+    public void validate(){
+      Assert.hasText(
+          this.signKeyAlias,"Expected openid.federation.registry.federatonServiceApi.sign_key_alias");
+      Assert.hasText(this.issuer,"Expected openid.federation.registry.federatonServiceApi.issuer");
+      try {
+        this.federationserviceapiSignKeyJWK();
+      }
+      catch (final Exception e) {
+        throw new IllegalArgumentException("FederationserviceapiSignKey has the wrong format can not be parsed",e);
+      }
+    }
+
   }
+
 }

@@ -58,6 +58,7 @@ public class FederationApiService {
   private final EntityRepository entityRepository;
   private final PolicyRepository policyRepository;
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
+  private final String jwkIssuer;
 
   /**
    * Creating a FederationServiceApiService
@@ -65,14 +66,19 @@ public class FederationApiService {
    * @param signKey Key used to sign outgoing JWT
    * @param policyRepository PolicyRepository
    * @param trustMarkSubjectRepository TrustMarkSubjectRepository
+   * @param jwkIssuer Issuer that is set on out going JWT:s
    */
-  public FederationApiService(final EntityRepository entityRepository, final JWK signKey,
+  public FederationApiService(
+      final EntityRepository entityRepository,
+      final JWK signKey,
       final PolicyRepository policyRepository,
-      final TrustMarkSubjectRepository trustMarkSubjectRepository) {
+      final TrustMarkSubjectRepository trustMarkSubjectRepository,
+      final String jwkIssuer) {
     this.entityRepository = entityRepository;
     this.policyRepository = policyRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
     this.signKey = signKey;
+    this.jwkIssuer = jwkIssuer;
 
   }
 
@@ -207,7 +213,7 @@ public class FederationApiService {
     return  new JWTClaimsSet.Builder()
         .issueTime(new Date())
         .jwtID(UUID.randomUUID().toString())
-        .issuer("oidf-registry");
+        .issuer(this.jwkIssuer);
   }
 
   private SignedJWT signJWT(final String jwtTypeName,final JWTClaimsSet jwtClaimsSet) throws JOSEException {

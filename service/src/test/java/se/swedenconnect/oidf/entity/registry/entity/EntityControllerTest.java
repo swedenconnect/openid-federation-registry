@@ -98,9 +98,6 @@ public class EntityControllerTest {
             .content(objectMapper.writeValueAsBytes(policyRecord)))
         .andExpect(status().isCreated());
 
-
-
-
     final EntityRecord record = new EntityRecord();
     final String subject = "https://example.com/subject/1";
 
