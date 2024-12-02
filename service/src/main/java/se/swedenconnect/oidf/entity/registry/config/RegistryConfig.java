@@ -40,7 +40,7 @@ import java.text.ParseException;
  * @author David Goldring
  */
 @Configuration
-public class ServiceConfig {
+public class RegistryConfig {
 
   private final EntityRepository entityRepository;
   private final PolicyRepository policyRepository;
@@ -54,7 +54,7 @@ public class ServiceConfig {
    * @param trustMarkSubjectRepository the {@link TrustMarkSubjectRepository}
    * used for accessing and performing CRUD operations on policies
    */
-  public ServiceConfig(final EntityRepository entityRepository, final PolicyRepository policyRepository,
+  public RegistryConfig(final EntityRepository entityRepository, final PolicyRepository policyRepository,
       final TrustMarkSubjectRepository trustMarkSubjectRepository) {
     this.entityRepository = entityRepository;
     this.policyRepository = policyRepository;
@@ -108,11 +108,11 @@ public class ServiceConfig {
    * @throws ParseException If there is some trouble parsing configuration
    */
   @Bean
-  public FederationApiService federationServiceApiService(RegistryProperties registryProperties)
+  public FederationApiService federationServiceApiService(final RegistryProperties registryProperties)
       throws ParseException {
-      return new FederationApiService(entityRepository,
+      return new FederationApiService(this.entityRepository,
           registryProperties.federationserviceapiSignKeyJWK(),
-          policyRepository,trustMarkSubjectRepository);
+          this.policyRepository,this.trustMarkSubjectRepository);
   }
 
 }

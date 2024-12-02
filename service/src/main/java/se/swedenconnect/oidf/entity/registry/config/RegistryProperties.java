@@ -39,11 +39,11 @@ public record RegistryProperties(String federationserviceapiSignKey) {
    */
   @PostConstruct
   public void validate(){
-    Assert.hasText(federationserviceapiSignKey,"Expected federationserviceapiSignKey");
+    Assert.hasText(this.federationserviceapiSignKey,"Expected federationserviceapiSignKey");
     try {
       federationserviceapiSignKey();
     }
-    catch (Exception e) {
+    catch (final Exception e) {
       throw new IllegalArgumentException("FederationserviceapiSignKey has the wrong format can not be parsed",e);
     }
   }
@@ -54,6 +54,7 @@ public record RegistryProperties(String federationserviceapiSignKey) {
    * @throws ParseException If there is an error to pars signkey
    */
   public JWK federationserviceapiSignKeyJWK() throws ParseException {
-    return JWK.parse(new String(Base64.getDecoder().decode(federationserviceapiSignKey), Charset.defaultCharset()));
+    return JWK.parse(new String(Base64.getDecoder()
+        .decode(this.federationserviceapiSignKey), Charset.defaultCharset()));
   }
 }

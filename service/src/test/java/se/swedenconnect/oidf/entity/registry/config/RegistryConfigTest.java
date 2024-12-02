@@ -39,12 +39,12 @@ import static org.mockito.Mockito.mock;
  * @author David Goldring
  */
 @AutoConfigureMockMvc
-public class ServiceConfigTest {
+public class RegistryConfigTest {
 
   private EntityRepository entityRepository;
   private PolicyRepository policyRepository;
   private TrustMarkSubjectRepository trustMarkSubjectRepository;
-  private ServiceConfig serviceConfig;
+  private RegistryConfig registryConfig;
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   /**
@@ -57,7 +57,7 @@ public class ServiceConfigTest {
     entityRepository = mock(EntityRepository.class);
     policyRepository = mock(PolicyRepository.class);
     trustMarkSubjectRepository = mock(TrustMarkSubjectRepository.class);
-    serviceConfig = new ServiceConfig(entityRepository, policyRepository,trustMarkSubjectRepository);
+    registryConfig = new RegistryConfig(entityRepository, policyRepository,trustMarkSubjectRepository);
   }
 
   /**
@@ -69,7 +69,7 @@ public class ServiceConfigTest {
    */
   @Test
   public void testJpaEntityServiceBean() {
-    EntityService jpaService = serviceConfig.jpaEntityService(this.objectMapper);
+    EntityService jpaService = registryConfig.jpaEntityService(this.objectMapper);
     assertThat(jpaService).isNotNull();
     assertThat(jpaService).isInstanceOf(JpaEntityService.class);
     assertSame(entityRepository, ((JpaEntityService) jpaService).getRepository());
@@ -84,7 +84,7 @@ public class ServiceConfigTest {
    */
   @Test
   public void testJpaPolicyServiceBean() {
-    PolicyService policyService = serviceConfig.jpaPolicyService(this.objectMapper);
+    PolicyService policyService = registryConfig.jpaPolicyService(this.objectMapper);
     assertThat(policyService).isNotNull();
     assertThat(policyService).isInstanceOf(JpaPolicyService.class);
     assertSame(policyRepository, ((JpaPolicyService) policyService).getPolicyRepository());

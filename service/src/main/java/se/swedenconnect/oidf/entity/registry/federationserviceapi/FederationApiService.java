@@ -90,10 +90,10 @@ public class FederationApiService {
           "Unable to find entity for issuer:'%s'".formatted(issuer));
     }
     try {
-      return signJsonRecords("entity-records",
+      return this.signJsonRecords("entity-records",
           recordEntity.stream().map(EntityEntity::getEntity).toList()).serialize();
     }
-    catch (JOSEException e) {
+    catch (final JOSEException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
     }
   }
@@ -128,10 +128,10 @@ public class FederationApiService {
               .formatted(issuer,trustmarkId,subject));
     }
     try {
-      return signJsonRecords("trustmark-records",
+      return this.signJsonRecords("trustmark-records",
           trustmarkSubjectEntities.stream().map(TrustMarkSubjectEntity::getTrustmarksubjectJson).toList()).serialize();
     }
-    catch (JOSEException e) {
+    catch (final JOSEException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
     }
 
@@ -150,9 +150,9 @@ public class FederationApiService {
                 "Unable to find policy for id:'%s'".formatted(policyRecordId.toString())));
 
     try {
-      return signJsonRecords("policy-records", List.of(policyEntity.getPolicy())).serialize();
+      return this.signJsonRecords("policy-records", List.of(policyEntity.getPolicy())).serialize();
     }
-    catch (JOSEException e) {
+    catch (final JOSEException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
     }
 
@@ -180,7 +180,7 @@ public class FederationApiService {
       try {
         return this.mapper.readValue(js, new TypeReference<Map<String,Object>>() {});
       }
-      catch (JsonProcessingException e) {
+      catch (final JsonProcessingException e) {
         throw new RuntimeException(e);
       }
     }).toList();

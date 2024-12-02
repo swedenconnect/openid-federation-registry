@@ -56,7 +56,7 @@ public class TrustMarkSubjectController {
    *     operations
    */
   public TrustMarkSubjectController(
-      @Qualifier("jpaTrustMarkSubjectService") TrustMarkSubjectService trustMarkSubjectService) {
+      @Qualifier("jpaTrustMarkSubjectService")final TrustMarkSubjectService trustMarkSubjectService) {
     this.trustMarkSubjectService = trustMarkSubjectService;
   }
 
@@ -88,12 +88,11 @@ public class TrustMarkSubjectController {
       @PathVariable("trustMarkSubjectId") final String trustMarkSubjectId) {
     log.debug("GET by trustMarkSubjectId: {}", trustMarkSubjectId);
 
-    TrustMarkSubjectRecord dto = this.trustMarkSubjectService.get(trustMarkSubjectId);
-    if (dto == null) {
+    final TrustMarkSubjectRecord record = this.trustMarkSubjectService.get(trustMarkSubjectId);
+    if (record == null) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "TrustMark not found");
     }
-
-    return dto;
+    return record;
   }
 
   /**
@@ -107,7 +106,7 @@ public class TrustMarkSubjectController {
   @PutMapping("/{trustMarkSubjectId}")
   public TrustMarkSubjectRecord updateTrustMarkSubject(
       @PathVariable("trustMarkSubjectId") final String trustMarkSubjectId,
-      @RequestBody TrustMarkSubjectRecord trustMark) {
+      @RequestBody final TrustMarkSubjectRecord trustMark) {
     log.debug("PUT: {}", trustMark);
     if (!trustMarkSubjectId.equals(trustMark.getTrustMarkSubjectRecordId())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "TrustMarkId has to be the same in path and object");

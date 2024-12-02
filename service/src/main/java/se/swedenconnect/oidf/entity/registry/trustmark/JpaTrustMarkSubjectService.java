@@ -58,7 +58,7 @@ public class JpaTrustMarkSubjectService implements TrustMarkSubjectService {
           .map(this::toRecord)
           .orElseThrow();
     }
-    catch (DataIntegrityViolationException e) {
+    catch (final DataIntegrityViolationException e) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "TrustMarkSubjectRecord already exists");
     }
   }
@@ -84,7 +84,7 @@ public class JpaTrustMarkSubjectService implements TrustMarkSubjectService {
    * @param trustmarkId TrustmarkId
    * @return List of TrustMarkSubjectRecord
    */
-  public List<TrustMarkSubjectRecord> getAll(String issuer,String trustmarkId) {
+  public List<TrustMarkSubjectRecord> getAll(final String issuer, final String trustmarkId) {
     return this.repository.findByIssuerAndTrustmarkId(issuer,trustmarkId)
         .stream()
         .map(this::toRecord)
@@ -105,11 +105,11 @@ public class JpaTrustMarkSubjectService implements TrustMarkSubjectService {
     this.repository.findByExternalId(trustMarkSubjectRecordId).ifPresent(this.repository::delete);
   }
 
-  private TrustMarkSubjectRecord toRecord(TrustMarkSubjectEntity entity){
+  private TrustMarkSubjectRecord toRecord(final TrustMarkSubjectEntity entity){
     try {
       return this.objectMapper.readValue(entity.getTrustmarksubjectJson(), TrustMarkSubjectRecord.class);
     }
-    catch (JsonProcessingException e) {
+    catch (final JsonProcessingException e) {
       throw new RuntimeException("Unable to map json entity to record",e);
     }
   }
@@ -123,14 +123,14 @@ public class JpaTrustMarkSubjectService implements TrustMarkSubjectService {
           .issuer(record.getIssuer())
           .trustmarkId(record.getTrustMarkId())
           .subject(record.getSubject())
-          .trustmarksubjectJson(objectMapper.writeValueAsString(record))
+          .trustmarksubjectJson(this.objectMapper.writeValueAsString(record))
           .build();
       if(entity.getExternalId() == null){
         newEntity.setExternalId(record.getTrustMarkSubjectRecordId());
       }
       return newEntity;
     }
-    catch (JsonProcessingException e) {
+    catch (final JsonProcessingException e) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to map record to TrustMarkSubjectEntity",e);
     }
   }

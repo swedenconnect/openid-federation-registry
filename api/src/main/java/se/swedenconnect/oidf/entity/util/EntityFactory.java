@@ -118,7 +118,7 @@ public class EntityFactory {
      * @param subject the subject of the entity
      * @return an instance of {@link EntityRecord}
      */
-    public static EntityRecord createDefaultEntity(String subject) {
+    public static EntityRecord createDefaultEntity(final String subject) {
         return createDefaultEntity(ISSUER_1,subject);
     }
 
@@ -128,7 +128,7 @@ public class EntityFactory {
      * @param subject Subject id to set in json
      * @return Json
      */
-    public static String createDefaultJsonEntity(String issuer,String subject) {
+    public static String createDefaultJsonEntity(final String issuer,final String subject) {
         return entityJsonData.formatted(issuer, subject, UUID.randomUUID().toString());
     }
 
@@ -146,12 +146,12 @@ public class EntityFactory {
      * @param subject Subject set in entityobject
      * @return Entity object with selected issuer and subject
      */
-    public static EntityRecord createDefaultEntity(String issuer, String subject) {
+    public static EntityRecord createDefaultEntity(final String issuer, final String subject) {
         try {
             return mapper.readValue(
                 entityJsonData.formatted(issuer, subject,UUID.randomUUID().toString()), EntityRecord.class);
         }
-        catch (JsonProcessingException e) {
+        catch (final JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
