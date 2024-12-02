@@ -396,40 +396,48 @@
             </dependency>
           </dependencies>
           <configuration>
-            <excludes>**/test/**/*</excludes>
+            <includeTestResources>false</includeTestResources>
+            <includeTestSourceDirectory>false</includeTestSourceDirectory>
+
             <excludeGeneratedSources>true</excludeGeneratedSources>
             <checkstyleRules>
-              <module name="Checker">
-                <module name="Header">
-                  <property name="header" value="/*\n * Copyright 2024 Sweden Connect"/>
+            <module name="Checker">
+              <module name="Header">
+                <property name="header" value="/*\n * Copyright 2024 Sweden Connect"/>
+              </module>
+              <module name="LineLength">
+                <property name="max" value="120"/>
+              </module>
+              <module name="JavadocPackage"/>
+              <module name="TreeWalker">
+                <module name="RequireThis">
+                  <property name="checkFields" value="true"/>
+                  <property name="checkMethods" value="true"/>
+                  <property name="validateOnlyOverlapping" value="false"/>
                 </module>
-                <module name="LineLength">
-                  <property name="max" value="120"/>
+                <module name="FinalLocalVariable">
+                  <property name="tokens" value="VARIABLE_DEF,PARAMETER_DEF"/>
                 </module>
-                <module name="JavadocPackage"/>
-                <module name="TreeWalker">
-                  <module name="JavadocType">
-                    <property name="authorFormat" value="\S"/>
-                  </module>
-                  <module name="MissingJavadocMethod">
-                    <property name="scope" value="public"/>
-                  </module>
-                  <module name="MissingJavadocType">
-                    <property name="scope" value="public"/>
-                  </module>
-                  <module name="JavadocMethod">
-                    <property name="accessModifiers" value="public,package"/>
-                    <property name="allowMissingParamTags" value="false"/>
-                    <property name="allowMissingReturnTag" value="false"/>
-                  </module>
+                <module name="JavadocType">
+                  <property name="authorFormat" value="\S"/>
+                </module>
+                <module name="MissingJavadocMethod">
+                  <property name="scope" value="public"/>
+                </module>
+                <module name="MissingJavadocType">
+                  <property name="scope" value="public"/>
+                </module>
+                <module name="JavadocMethod">
+                  <property name="accessModifiers" value="public,package"/>
+                  <property name="allowMissingParamTags" value="false"/>
+                  <property name="allowMissingReturnTag" value="false"/>
                 </module>
               </module>
-            </checkstyleRules>
+            </module>
+          </checkstyleRules>
             <lineLength>120</lineLength>
             <logViolationsToConsole>true</logViolationsToConsole>
-            <failOnViolation>false</failOnViolation>
-            <failsOnError>false</failsOnError>
-            <skip>false</skip>
+
           </configuration>
         </plugin>
         <!-- Test -->

@@ -114,7 +114,7 @@ public class EntityController {
   @PutMapping("/{entityRecordId}")
   public EntityRecord updateEntity
   (@PathVariable("entityRecordId") final UUID entityRecordId,
-      @RequestBody EntityRecord entity) {
+      final @RequestBody EntityRecord entity) {
 
     log.debug("PUT: {}", entity);
     return this.entityService.update(entityRecordId.toString(), entity);

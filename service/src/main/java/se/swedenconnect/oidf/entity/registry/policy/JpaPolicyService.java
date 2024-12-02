@@ -72,8 +72,7 @@ public class JpaPolicyService implements PolicyService {
           .map(this::toRecord)
           .orElseThrow();
     }
-    catch (
-        DataIntegrityViolationException e) {
+    catch (final DataIntegrityViolationException e) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "TrustMarkSubjectRecord already exists");
     }
   }
@@ -106,7 +105,7 @@ public class JpaPolicyService implements PolicyService {
     this.policyRepository.findByExternalId(policyRecordId).ifPresent(this.policyRepository::delete);
   }
 
-  private PolicyRecord toRecord(PolicyEntity policyEntity) {
+  private PolicyRecord toRecord(final PolicyEntity policyEntity) {
     return PolicyRecord.builder()
         .policyRecordId(policyEntity.getExternalId())
         .name(policyEntity.getName())
@@ -116,7 +115,7 @@ public class JpaPolicyService implements PolicyService {
 
   private PolicyEntity mergeRecordIntoEntity(final PolicyRecord record, final PolicyEntity entity) {
     try {
-      final JsonNode policyJson = objectMapper.readTree(record.getPolicy());
+      final JsonNode policyJson = this.objectMapper.readTree(record.getPolicy());
       entity.setPolicy(this.objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(policyJson));
       entity.setName(record.getName());
       entity.setExternalId(record.getPolicyRecordId());
@@ -125,7 +124,7 @@ public class JpaPolicyService implements PolicyService {
       }
       return entity;
     }
-    catch (JsonProcessingException e) {
+    catch (final JsonProcessingException e) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to parse json, in policy record ", e);
     }
   }

@@ -57,7 +57,7 @@ public class PolicyController {
    *
    * @param policyService the {@link PolicyService} implementation used for managing policy operations
    */
-  public PolicyController(@Qualifier("jpaPolicyService") PolicyService policyService) {
+  public PolicyController(final @Qualifier("jpaPolicyService") PolicyService policyService) {
     this.policyService = policyService;
   }
 
@@ -81,7 +81,7 @@ public class PolicyController {
    */
   @GetMapping
   public ResponseEntity<List<PolicyRecord>> getAllPolicies() {
-    List<PolicyRecord> policies = this.policyService.getAll();
+    final List<PolicyRecord> policies = this.policyService.getAll();
     log.debug("GET all: {}", policies);
     return ResponseEntity.ok(policies);
   }
@@ -114,7 +114,7 @@ public class PolicyController {
   @PutMapping("/{policyRecordId}")
   public PolicyRecord updatePolicy(
       @PathVariable("policyRecordId") final UUID policyRecordId,
-      @RequestBody PolicyRecord policy) {
+      @RequestBody final PolicyRecord policy) {
     log.debug("PUT: {}", policy);
     if (!policyRecordId.toString().equals(policy.getPolicyRecordId())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PolicyId has to be the same in path and object");
