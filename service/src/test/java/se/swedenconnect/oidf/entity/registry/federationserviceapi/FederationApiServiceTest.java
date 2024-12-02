@@ -2,7 +2,9 @@ package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.proc.JWSVerifierFactory;
 import com.nimbusds.jwt.SignedJWT;
 import org.junit.jupiter.api.Test;
 import se.swedenconnect.oidf.entity.util.EntityFactory;
@@ -17,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * oidf-entity-registry
+ * oidf-entity-registry tests
  *
  * @author Per Fredrik Plars
  */
@@ -44,7 +46,7 @@ class FederationApiServiceTest {
     assertNotNull(signedJWT.getHeader().getKeyID());
     final List<Object> claim = signedJWT.getJWTClaimsSet().getListClaim("trust_marks");
     assertNotNull(claim);
-    assertTrue(!claim.isEmpty());
+    assertEquals(2,claim.size());
 
   }
 }

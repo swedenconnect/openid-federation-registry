@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
@@ -39,6 +40,7 @@ import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectEntity;
 import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectRepository;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -149,10 +151,21 @@ public class FederationApiService {
             new ResponseStatusException(HttpStatus.NOT_FOUND,
                 "Unable to find policy for id:'%s'".formatted(policyRecordId.toString())));
 
+
+
     try {
-      return signJsonRecords("policy-records", List.of(policyEntity.getPolicy())).serialize();
+      final Map<String,Object> policy =
+          this.mapper.readValue(policyEntity.getPolicy(), new TypeReference<Map<String,Object>>() {});
+      final Map<String,Object> policyClaim = new HashMap<>();
+      policyClaim.put("policy_record_id",policyEntity.getExternalId());
+      policyClaim.put("policy",policy);
+
+      final String claimName = "policy_record";
+      final JWTClaimsSet.Builder claimsSet = defaultClaimSet();
+      claimsSet.claim(claimName, policyClaim);
+      return signJWT(claimName,claimsSet.build()).serialize();
     }
-    catch (JOSEException e) {
+    catch (JOSEException  | JsonProcessingException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
     }
 
@@ -185,27 +198,29 @@ public class FederationApiService {
       }
     }).toList();
 
-
-
-    final RSASSASigner signer = new RSASSASigner(this.signKey.toRSAKey());
-    final JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .issueTime(new Date())
-        .jwtID(UUID.randomUUID().toString())
-        .issuer("oidf-registry")
-        .claim(claimName.replace('-','_'), jsonClaimsData)
-        .build();
-
-    final JWSAlgorithm alg = signer.supportedJWSAlgorithms().stream().findFirst().orElseThrow();
-    final JWSHeader header = new JWSHeader.Builder(alg)
-        .type(new JOSEObjectType(claimName.replace('_','-')+ "+jwt"))
-        .keyID(this.signKey.getKeyID())
-        .build();
-
-    final SignedJWT jwt = new SignedJWT(header, claims);
-    jwt.sign(signer);
-    return jwt;
+    final JWTClaimsSet.Builder claimsSet = defaultClaimSet();
+    claimsSet.claim(claimName.replace('-','_'), jsonClaimsData);
+    return signJWT(claimName,claimsSet.build());
   }
 
 
+  private JWTClaimsSet.Builder defaultClaimSet(){
+    return  new JWTClaimsSet.Builder()
+        .issueTime(new Date())
+        .jwtID(UUID.randomUUID().toString())
+        .issuer("oidf-registry");
+  }
+
+  private SignedJWT signJWT(String jwtTypeName,JWTClaimsSet jwtClaimsSet) throws JOSEException {
+    final RSASSASigner signer = new RSASSASigner(this.signKey.toRSAKey());
+    final JWSAlgorithm alg = signer.supportedJWSAlgorithms().stream().findFirst().orElseThrow();
+    final JWSHeader header = new JWSHeader.Builder(alg)
+        .type(new JOSEObjectType(jwtTypeName.replace('_','-')+ "+jwt"))
+        .keyID(this.signKey.getKeyID())
+        .build();
+    final SignedJWT jwt = new SignedJWT(header, jwtClaimsSet);
+    jwt.sign(signer);
+    return jwt;
+  }
 
 }
