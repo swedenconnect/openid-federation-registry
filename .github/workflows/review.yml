@@ -6,9 +6,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      packages: read
-      contents: read
+    permissions: read-all
+
 
     steps:
       - uses: actions/checkout@v4
