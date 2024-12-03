@@ -18,5 +18,6 @@ jobs:
           cache: 'maven'
           server-id: github
       - run: mvn -U clean verify
+      - run: mvn -V
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
