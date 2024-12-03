@@ -24,6 +24,7 @@
       <releases>
         <enabled>true</enabled>
       </releases>
+      <layout>default</layout>
     </repository>
   </repositories>
 
