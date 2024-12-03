@@ -105,7 +105,6 @@
   </distributionManagement>
 
   <modules>
-    <module>api</module>
     <module>service</module>
   </modules>
 
