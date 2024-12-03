@@ -17,6 +17,6 @@ jobs:
           java-version: '21'
           cache: 'maven'
           server-id: github
-      - run: mvn clean verify
+      - run: mvn -U -X clean verify
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
