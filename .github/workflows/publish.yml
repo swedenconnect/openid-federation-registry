@@ -24,5 +24,8 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
+          server-id: gh-swedenconnect-common
+          server-username: GITHUB_ACTOR
+          server-password: ${{ secrets.GITHUB_TOKEN }}
       - run: mvn clean install
       - run: cd service; DOCKER_REPO=ghcr.io mvn clean package jib:build
