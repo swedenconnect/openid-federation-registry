@@ -6,8 +6,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions: write-all
-
+    permissions:
+      packages: read
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -17,7 +18,8 @@ jobs:
           java-version: '21'
           cache: 'maven'
           server-id: github
-      - run: mvn -U clean verify
       - run: mvn -V
+      - run: mvn -U clean verify
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
