@@ -6,6 +6,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions: write-all
+
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -13,4 +16,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
-      - run: mvn -U clean compile
+
+      - run: mvn -U compile
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
