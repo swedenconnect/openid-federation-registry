@@ -18,6 +18,12 @@
       <id>github</id>
       <name>Github Swedenconnect Common</name>
       <url>https://maven.pkg.github.com/swedenconnect/openid-federation-commons</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
     </repository>
   </repositories>
 
