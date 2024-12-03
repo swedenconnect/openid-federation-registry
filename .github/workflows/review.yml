@@ -16,7 +16,9 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
-
-      - run: mvn -U compile
+          server-id: gh-swedenconnect-common
+          server-username: ${{ env.GITHUB_ACTOR }}
+          server-password: ${{ secrets.GITHUB_TOKEN }}
+      - run: mvn clean verify
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
