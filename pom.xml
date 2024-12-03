@@ -19,7 +19,7 @@
       <url>https://repo1.maven.org/maven2/</url>
     </repository>
     <repository>
-      <id>gh-swedenconnect-common</id>
+      <id>github</id>
       <name>Github Swedenconnect Common</name>
       <url>https://maven.pkg.github.com/swedenconnect/openid-federation-commons</url>
     </repository>
