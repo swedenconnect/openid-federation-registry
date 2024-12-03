@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions: read-all
+    permissions: write-all
 
 
     steps:
@@ -17,6 +17,6 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      - run: mvn -X -U clean verify
+      - run: mvn -U clean verify
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
