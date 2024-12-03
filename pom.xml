@@ -34,8 +34,6 @@
       <artifactId>openid-federation-entity-registry-api</artifactId>
       <version>1.0.0-SNAPSHOT</version>
     </dependency>
-
-
   </dependencies>
 
 
