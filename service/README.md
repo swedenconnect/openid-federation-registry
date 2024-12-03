@@ -10,7 +10,8 @@ A SpringBoot REST-service implementing the OIDF Entity Registry API
 
 ### Overview
 
-This project is a Spring Boot service designed to store and serve OpenID Connect Federation entity configurations. The service provides RESTful APIs for creating, retrieving, updating, and managing OpenID Connect Federation entities.
+This project is a Spring Boot service designed to store and serve OpenID Connect Federation entity configurations. 
+The service provides RESTful APIs for creating, retrieving, updating, and managing OpenID Connect Federation entities.
 
 ### Features
 
@@ -73,7 +74,7 @@ and then:
 
 ```sh
 docker-compose -f ../docker-compose.yaml up -d
-mvn spring-boot:run -Dspring-boot.run.profiles=<profile>
+mvn spring-boot:run --spring.config.import=config/local/local-dev.yml
 ```
 
 #### Viewing API Documentation

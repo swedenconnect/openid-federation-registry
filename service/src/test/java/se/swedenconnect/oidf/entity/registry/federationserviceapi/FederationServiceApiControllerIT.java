@@ -17,6 +17,7 @@ import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
 import java.text.ParseException;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -79,13 +80,14 @@ class FederationServiceApiControllerIT {
     
 
     final SignedJWT signedJWT  = SignedJWT.parse(fedRes.getBody());
-    assertEquals(new JOSEObjectType("policy-records+jwt"),signedJWT.getHeader().getType());
+    assertEquals(new JOSEObjectType("policy-record+jwt"),signedJWT.getHeader().getType());
     assertNotNull(signedJWT.getHeader().getKeyID());
 
-    final List<Object> claim = signedJWT.getJWTClaimsSet().getListClaim("policy_records");
+    final Map<String, Object> claim = signedJWT.getJWTClaimsSet().getJSONObjectClaim("policy_record");
     assertNotNull(claim);
     assertTrue(!claim.isEmpty());
-
+    assertThat( (String)claim.get("policy_record_id")).isNotEmpty();
+    assertNotNull(claim.get("policy"));
   }
 
   @Test

@@ -39,6 +39,7 @@ import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectEntity;
 import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectRepository;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -57,6 +58,7 @@ public class FederationApiService {
   private final EntityRepository entityRepository;
   private final PolicyRepository policyRepository;
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
+  private final String jwkIssuer;
 
   /**
    * Creating a FederationServiceApiService
@@ -64,14 +66,19 @@ public class FederationApiService {
    * @param signKey Key used to sign outgoing JWT
    * @param policyRepository PolicyRepository
    * @param trustMarkSubjectRepository TrustMarkSubjectRepository
+   * @param jwkIssuer Issuer that is set on out going JWT:s
    */
-  public FederationApiService(final EntityRepository entityRepository, final JWK signKey,
+  public FederationApiService(
+      final EntityRepository entityRepository,
+      final JWK signKey,
       final PolicyRepository policyRepository,
-      final TrustMarkSubjectRepository trustMarkSubjectRepository) {
+      final TrustMarkSubjectRepository trustMarkSubjectRepository,
+      final String jwkIssuer) {
     this.entityRepository = entityRepository;
     this.policyRepository = policyRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
     this.signKey = signKey;
+    this.jwkIssuer = jwkIssuer;
 
   }
 
@@ -149,10 +156,21 @@ public class FederationApiService {
             new ResponseStatusException(HttpStatus.NOT_FOUND,
                 "Unable to find policy for id:'%s'".formatted(policyRecordId.toString())));
 
+
+
     try {
-      return this.signJsonRecords("policy-records", List.of(policyEntity.getPolicy())).serialize();
+      final Map<String,Object> policy =
+          this.mapper.readValue(policyEntity.getPolicy(), new TypeReference<Map<String,Object>>() {});
+      final Map<String,Object> policyClaim = new HashMap<>();
+      policyClaim.put("policy_record_id",policyEntity.getExternalId());
+      policyClaim.put("policy",policy);
+
+      final String claimName = "policy_record";
+      final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
+      claimsSet.claim(claimName, policyClaim);
+      return this.signJWT(claimName,claimsSet.build()).serialize();
     }
-    catch (final JOSEException e) {
+    catch (final JOSEException  | JsonProcessingException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
     }
 
@@ -185,23 +203,27 @@ public class FederationApiService {
       }
     }).toList();
 
+    final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
+    claimsSet.claim(claimName.replace('-','_'), jsonClaimsData);
+    return this.signJWT(claimName,claimsSet.build());
+  }
 
 
-    final RSASSASigner signer = new RSASSASigner(this.signKey.toRSAKey());
-    final JWTClaimsSet claims = new JWTClaimsSet.Builder()
+  private JWTClaimsSet.Builder defaultClaimSet(){
+    return  new JWTClaimsSet.Builder()
         .issueTime(new Date())
         .jwtID(UUID.randomUUID().toString())
-        .issuer("oidf-registry")
-        .claim(claimName.replace('-','_'), jsonClaimsData)
-        .build();
+        .issuer(this.jwkIssuer);
+  }
 
+  private SignedJWT signJWT(final String jwtTypeName,final JWTClaimsSet jwtClaimsSet) throws JOSEException {
+    final RSASSASigner signer = new RSASSASigner(this.signKey.toRSAKey());
     final JWSAlgorithm alg = signer.supportedJWSAlgorithms().stream().findFirst().orElseThrow();
     final JWSHeader header = new JWSHeader.Builder(alg)
-        .type(new JOSEObjectType(claimName.replace('_','-')+ "+jwt"))
+        .type(new JOSEObjectType(jwtTypeName.replace('_','-')+ "+jwt"))
         .keyID(this.signKey.getKeyID())
         .build();
-
-    final SignedJWT jwt = new SignedJWT(header, claims);
+    final SignedJWT jwt = new SignedJWT(header, jwtClaimsSet);
     jwt.sign(signer);
     return jwt;
   }

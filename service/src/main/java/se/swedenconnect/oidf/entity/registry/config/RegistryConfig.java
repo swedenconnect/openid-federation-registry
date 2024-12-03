@@ -49,10 +49,12 @@ public class RegistryConfig {
   /**
    * Constructs a new ServiceConfig with the specified repositories.
    *
-   * @param entityRepository the {@link EntityRepository} used for accessing and performing CRUD operations on entities
-   * @param policyRepository the {@link PolicyRepository} used for accessing and performing CRUD operations on policies
-   * @param trustMarkSubjectRepository the {@link TrustMarkSubjectRepository}
-   * used for accessing and performing CRUD operations on policies
+   * @param entityRepository the {@link EntityRepository} used for accessing and performing CRUD operations on
+   *     entities
+   * @param policyRepository the {@link PolicyRepository} used for accessing and performing CRUD operations on
+   *     policies
+   * @param trustMarkSubjectRepository the {@link TrustMarkSubjectRepository} used for accessing and performing CRUD
+   *     operations on policies
    */
   public RegistryConfig(final EntityRepository entityRepository, final PolicyRepository policyRepository,
       final TrustMarkSubjectRepository trustMarkSubjectRepository) {
@@ -62,26 +64,26 @@ public class RegistryConfig {
   }
 
   /**
-   * Provides an instance of JpaEntityService, which implements the EntityService interface.
-   * This service manages entity objects using a JPA repository and handles JSON conversion
-   * using the provided ObjectMapper.
+   * Provides an instance of JpaEntityService, which implements the EntityService interface. This service manages entity
+   * objects using a JPA repository and handles JSON conversion using the provided ObjectMapper.
    *
-   * @param objectMapper the ObjectMapper used for JSON conversion between Entity objects and their DAO representations.
+   * @param objectMapper the ObjectMapper used for JSON conversion between Entity objects and their DAO
+   *     representations.
    * @return an instance of JpaEntityService.
    */
   @Bean
   @Primary
   @Qualifier("jpaEntityService")
   public EntityService jpaEntityService(final ObjectMapper objectMapper) {
-    return new JpaEntityService(this.entityRepository,this.policyRepository, objectMapper);
+    return new JpaEntityService(this.entityRepository, this.policyRepository, objectMapper);
   }
 
   /**
-   * Provides an instance of JpaPolicyService, which implements the PolicyService interface.
-   * This service manages policy objects using a JPA repository and handles JSON conversion
-   * using the provided ObjectMapper.
+   * Provides an instance of JpaPolicyService, which implements the PolicyService interface. This service manages policy
+   * objects using a JPA repository and handles JSON conversion using the provided ObjectMapper.
    *
-   * @param objectMapper the ObjectMapper used for JSON conversion between Policy objects and their DAO representations.
+   * @param objectMapper the ObjectMapper used for JSON conversion between Policy objects and their DAO
+   *     representations.
    * @return an instance of JpaPolicyService.
    */
   @Bean
@@ -92,7 +94,9 @@ public class RegistryConfig {
 
   /**
    * TrustMarkSubjectService
-   * @param objectMapper the ObjectMapper used for JSON conversion between Policy objects and their DAO representations.
+   *
+   * @param objectMapper the ObjectMapper used for JSON conversion between Policy objects and their DAO
+   *     representations.
    * @return an instance of TrustMarkSubjectService.
    */
   @Bean
@@ -103,6 +107,7 @@ public class RegistryConfig {
 
   /**
    * Creating trustMarkSubjectRepository
+   *
    * @param registryProperties Properties
    * @return FederationServiceApiService
    * @throws ParseException If there is some trouble parsing configuration
@@ -110,9 +115,15 @@ public class RegistryConfig {
   @Bean
   public FederationApiService federationServiceApiService(final RegistryProperties registryProperties)
       throws ParseException {
-      return new FederationApiService(this.entityRepository,
-          registryProperties.federationserviceapiSignKeyJWK(),
-          this.policyRepository,this.trustMarkSubjectRepository);
+    final RegistryProperties.FederationAPIProperties federationAPIProperties =
+        registryProperties.federationServiceApi();
+    return new FederationApiService(
+        this.entityRepository,
+        federationAPIProperties.federationserviceapiSignKeyJWK(),
+        this.policyRepository,
+        this.trustMarkSubjectRepository,
+        federationAPIProperties.issuer()
+    );
   }
 
 }
