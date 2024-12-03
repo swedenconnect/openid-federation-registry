@@ -28,7 +28,7 @@ import org.springframework.http.ResponseEntity;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import se.swedenconnect.oidf.entity.util.EntityFactory;
+import se.swedenconnect.oidf.entity.registry.fixture.EntityFactory;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 

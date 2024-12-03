@@ -2,12 +2,10 @@ package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.proc.JWSVerifierFactory;
 import com.nimbusds.jwt.SignedJWT;
 import org.junit.jupiter.api.Test;
-import se.swedenconnect.oidf.entity.util.EntityFactory;
+import se.swedenconnect.oidf.entity.registry.fixture.EntityFactory;
 
 import java.nio.charset.Charset;
 import java.text.ParseException;
@@ -16,7 +14,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * oidf-entity-registry tests
