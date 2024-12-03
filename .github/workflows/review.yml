@@ -17,10 +17,7 @@ jobs:
           java-version: '21'
           cache: 'maven'
           server-id: github
-          server-username: GITHUB_ACTOR
-          server-password: GITHUB_TOKEN
-
       - run: mvn clean verify
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_ACTOR: GITHUB_ACTOR
+          GITHUB_ACTOR: ${{ secrets.GITHUB_ACTOR }}
