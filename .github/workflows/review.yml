@@ -17,4 +17,8 @@ jobs:
           java-version: '21'
           cache: 'maven'
           server-id: gh-swedenconnect-common
-      - run: mvn -X clean verify
+          server-username: GITHUB_ACTOR
+          server-password: ${{ secrets.GITHUB_TOKEN }}
+      - run: mvn -X -U clean verify
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
