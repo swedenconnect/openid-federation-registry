@@ -7,13 +7,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      packages: read
+      packages: write
       contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: s4u/maven-settings-action@v3.1.0
         with:
-          repositories: '[{"id":"github","name":"Github","url":"https://maven.pkg.github.com/swedenconnect/*",
+          repositories: '[{"id":"github","url":"https://maven.pkg.github.com/swedenconnect/*",
           "snapshots":{"enabled":"true"}}]'
       - uses: actions/setup-java@v4
         name: Compile
