@@ -100,7 +100,7 @@
     <repository>
       <id>github</id>
       <name>Sweden Connect Internal via Github</name>
-      <url>https://maven.pkg.github.com/swedenconnect/</url>
+      <url>https://maven.pkg.github.com/swedenconnect/*</url>
       <snapshots>
         <enabled>true</enabled>
       </snapshots>
