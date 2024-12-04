@@ -14,11 +14,11 @@ jobs:
 
       - run: envsubst < .github/settings.xml > .github/settings-out.xml
         env:
-          GITHUB_USER: ${{github.user}}
+          GITHUB_USER: ${{github.actor}}
           GITHUB_PASSWORD: ${{secrets.GITHUB_TOKEN}}
       - run: echo "u:$GITHUB_USER"
         env:
-          GITHUB_USER: ${{github.user}}
+          GITHUB_USER: ${{github.actor}}
           GITHUB_PASSWORD: ${{secrets.GITHUB_TOKEN}}
       - uses: actions/setup-java@v4
         name: Verify
