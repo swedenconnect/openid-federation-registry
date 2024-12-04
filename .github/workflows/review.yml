@@ -11,26 +11,15 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: s4u/maven-settings-action@v3.1.0
-        with:
-          repositories: '[{"id":"github","url":"https://maven.pkg.github.com/swedenconnect/*",
-          "snapshots":{"enabled":true}}]'
-          servers: '[{"id": "github", "username": "${{github.actor}}", "password": "${{secrets.GITHUB_TOKEN}}"}]'
-          githubServer: false
-      - uses: actions/setup-java@v4
-        name: Compile
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-          overwrite-settings: false
-      - run: mvn compile
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          USER: ${{github.user}}
+          PASSWORD: ${{secrets.GITHUB_TOKEN}}
+      - run: envsubst < .github/settings.xml > .github/settings-out.xml
       - uses: actions/setup-java@v4
         name: Verify
         with:
           distribution: 'temurin'
           java-version: '21'
-      - run: mvn verify
+      - run: mvn verify --settings .github/settings-out.xml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
