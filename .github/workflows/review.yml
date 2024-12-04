@@ -12,10 +12,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         env:
-          USER: ${{github.user}}
-          PASSWORD: ${{secrets.GITHUB_TOKEN}}
-      - run: envsubst < .github/settings.xml > .github/settings-out.xml
-      - run: echo "u:$USER"
+          GITHUB_USER: ${{github.user}}
+          GITHUB_PASSWORD: ${{secrets.GITHUB_TOKEN}}
+      - run: USER=$GITHUB_USER PASSWORD=$GITHUB_PASSWORD < .github/settings.xml > .github/settings-out.xml
+      - run: echo "u:$GITHUB_USER"
       - uses: actions/setup-java@v4
         name: Verify
         with:
