@@ -20,6 +20,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
+          overwrite-setting: false
       - run: mvn verify --settings .github/settings-out.xml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
