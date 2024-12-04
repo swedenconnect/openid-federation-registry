@@ -5,7 +5,7 @@
 
   <groupId>se.swedenconnect.oidf</groupId>
   <artifactId>oidf-entity-registry-parent</artifactId>
-  <packaging>pom</packaging>
+  <packaging>jar</packaging>
   <version>1.0.0-SNAPSHOT</version>
 
   <name>Sweden Connect :: OpenID Federation :: Entity Registry :: Parent POM</name>
