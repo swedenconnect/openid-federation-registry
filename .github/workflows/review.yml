@@ -14,7 +14,7 @@ jobs:
       - uses: s4u/maven-settings-action@v3.1.0
         with:
           repositories: '[{"id":"github","url":"https://maven.pkg.github.com/swedenconnect/*",
-          "snapshots":{"enabled":"true"}}]'
+          "snapshots":{"enabled":true}}]'
       - uses: actions/setup-java@v4
         name: Compile
         with:
