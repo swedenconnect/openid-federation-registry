@@ -12,7 +12,21 @@
   <description>Parent POM for Sweden Connect OpenID Federation Entity Registry</description>
   <url>https://www.swedenconnect.se</url>
 
+  <repositories>
 
+    <repository>
+      <id>github</id>
+      <name>Github Swedenconnect Common</name>
+      <url>https://maven.pkg.github.com/swedenconnect/openid-federation-commons</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <layout>default</layout>
+    </repository>
+  </repositories>
 
   <dependencies>
     <dependency>
