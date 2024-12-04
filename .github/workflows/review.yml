@@ -9,21 +9,11 @@ jobs:
     permissions: write-all
     steps:
       - uses: actions/checkout@v4
-
-      - run: envsubst < .github/settings.xml > .github/settings-out.xml
-        env:
-          GITHUB_USER: ${{github.actor}}
-          GITHUB_PASSWORD: ${{secrets.GITHUB_TOKEN}}
-      - run: echo "u:$GITHUB_USER"
-        env:
-          GITHUB_USER: ${{github.actor}}
-          GITHUB_PASSWORD: ${{secrets.GITHUB_TOKEN}}
       - uses: actions/setup-java@v4
         name: Verify
         with:
           distribution: 'temurin'
           java-version: '21'
-          overwrite-setting: false
-      - run: mvn verify --settings .github/settings-out.xml
+      - run: mvn verify
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
