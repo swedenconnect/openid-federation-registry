@@ -14,7 +14,7 @@ jobs:
       - uses: s4u/maven-settings-action@v3.1.0
         with:
           servers: '[{"id": "github", "username": "${{github.actor}}", "password": "${{secrets.GITHUB_TOKEN}}"}]'
-          repositories: '[{"id":"github","name":"Github","url":"https://maven.pkg.github.com/swedenconnect/*","snapshots":{"enabled":"true"}}]'
+          repositories: '[{"id":"github","name":"Github","url":"https://maven.pkg.github.com/swedenconnect/","snapshots":{"enabled":"true"}}]'
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
