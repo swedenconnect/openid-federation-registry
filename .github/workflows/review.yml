@@ -6,11 +6,24 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      packages: read
+      contents: read
     steps:
       - uses: actions/checkout@v4
+      - uses: s4u/maven-settings-action@v3.1.0
+        with:
+          servers: '[{"id": "github", "username": "${{github.actor}}", "password": "${{secrets.GITHUB_TOKEN}"}]'
+          repositories: '[{"id":"github","name":"Github","url":"https://maven.pkg.github.com/swedenconnect/*","snapshots":{"enabled":"true"}}]'
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
-          cache: 'maven'
+          overwrite-settings: false
+      - run: mvn clean compile
+        with:
+          distribution: 'temurin'
+          java-version: '21'
       - run: mvn clean verify
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
