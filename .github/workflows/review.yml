@@ -16,7 +16,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
-
+      - run: more /home/runner/.m2/settings.xml
       - run: mvn -U -X clean verify
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
