@@ -16,10 +16,17 @@ jobs:
           servers: '[{"id": "github", "username": "${{github.actor}}", "password": "${{secrets.GITHUB_TOKEN}}"}]'
           repositories: '[{"id":"github","name":"Github","url":"https://maven.pkg.github.com/swedenconnect/","snapshots":{"enabled":"true"}}]'
       - uses: actions/setup-java@v4
+        name: Compile
         with:
           distribution: 'temurin'
           java-version: '21'
           overwrite-settings: false
-      - run: mvn clean verify
+      - run: mvn compile
+      - uses: actions/setup-java@v4
+        name: Verify
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - run: mvn verify
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
