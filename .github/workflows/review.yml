@@ -11,11 +11,15 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+
+      - run: envsubst < .github/settings.xml > .github/settings-out.xml
         env:
           GITHUB_USER: ${{github.user}}
           GITHUB_PASSWORD: ${{secrets.GITHUB_TOKEN}}
-      - run: envsubst < .github/settings.xml > .github/settings-out.xml
       - run: echo "u:$GITHUB_USER"
+        env:
+          GITHUB_USER: ${{github.user}}
+          GITHUB_PASSWORD: ${{secrets.GITHUB_TOKEN}}
       - uses: actions/setup-java@v4
         name: Verify
         with:
