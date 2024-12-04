@@ -15,6 +15,8 @@ jobs:
         with:
           repositories: '[{"id":"github","url":"https://maven.pkg.github.com/swedenconnect/*",
           "snapshots":{"enabled":true}}]'
+          servers: '[{"id": "github", "username": "${{github.actor}}", "password": "${{secrets.GITHUB_TOKEN}}"}]'
+          githubServer: false
       - uses: actions/setup-java@v4
         name: Compile
         with:
