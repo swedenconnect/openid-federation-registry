@@ -15,6 +15,7 @@ jobs:
           USER: ${{github.user}}
           PASSWORD: ${{secrets.GITHUB_TOKEN}}
       - run: envsubst < .github/settings.xml > .github/settings-out.xml
+      - run: echo "u:$USER"
       - uses: actions/setup-java@v4
         name: Verify
         with:
