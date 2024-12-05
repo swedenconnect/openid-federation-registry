@@ -15,4 +15,4 @@ jobs:
           cache: 'maven'
       - run: mvn -U clean verify
         env:
-          GITHUB_TOKEN: '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'
+          GITHUB_TOKEN: ${{ secrets.SC_ACTION_SECRET }}
