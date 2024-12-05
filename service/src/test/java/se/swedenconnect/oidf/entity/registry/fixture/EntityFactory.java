@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package se.swedenconnect.oidf.entity.util;
+package se.swedenconnect.oidf.entity.registry.fixture;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

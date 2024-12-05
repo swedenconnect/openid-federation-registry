@@ -25,4 +25,6 @@ jobs:
           java-version: '21'
           cache: 'maven'
       - run: mvn clean install
+        env:
+          GITHUB_TOKEN: ${{ secrets.SC_ACTION_SECRET }}
       - run: cd service; DOCKER_REPO=ghcr.io mvn clean package jib:build

@@ -3,223 +3,281 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-  <modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>se.swedenconnect.oidf</groupId>
-    <artifactId>oidf-entity-registry-parent</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-  </parent>
+    <parent>
+        <groupId>se.swedenconnect.oidf</groupId>
+        <artifactId>oidf-entity-registry-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
 
-  <artifactId>oidf-entity-registry-service</artifactId>
-  <packaging>jar</packaging>
-  <name>Sweden Connect :: OpenID Federation :: Entity Registry :: REST Service</name>
-  <description>REST Service for Sweden Connect OpenID Federation Entity Registry</description>
-  <url>https://www.swedenconnect.se</url>
+    <artifactId>oidf-entity-registry-service</artifactId>
+    <packaging>jar</packaging>
+    <name>Sweden Connect :: OpenID Federation :: Entity Registry :: REST Service</name>
+    <description>REST Service for Sweden Connect OpenID Federation Entity Registry</description>
+    <url>https://www.swedenconnect.se</url>
 
-  <dependencies>
+    <dependencies>
 
-    <!-- Spring -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
-    </dependency>
+        <!-- Spring -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
 
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-actuator</artifactId>
-    </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
 
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-data-jpa</artifactId>
-    </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
 
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-validation</artifactId>
-    </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
 
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-docker-compose</artifactId>
-      <version>3.3.4</version>
-      <optional>true</optional>
-    </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-docker-compose</artifactId>
+            <version>3.3.4</version>
+            <optional>true</optional>
+        </dependency>
 
-    <dependency>
-      <groupId>org.springdoc</groupId>
-      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-      <version>2.3.0</version>
-    </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.3.0</version>
+        </dependency>
 
-    <!-- Database -->
-    <dependency>
-      <groupId>org.mariadb.jdbc</groupId>
-      <artifactId>mariadb-java-client</artifactId>
-      <version>3.4.1</version>
-    </dependency>
+        <!-- Database -->
+        <dependency>
+            <groupId>org.mariadb.jdbc</groupId>
+            <artifactId>mariadb-java-client</artifactId>
+            <version>3.4.1</version>
+        </dependency>
 
-    <dependency>
-      <groupId>org.flywaydb</groupId>
-      <artifactId>flyway-core</artifactId>
-    </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
 
-    <dependency>
-      <groupId>org.flywaydb</groupId>
-      <artifactId>flyway-mysql</artifactId>
-    </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+        </dependency>
 
-    <!-- OIDF API -->
-    <dependency>
-      <groupId>se.swedenconnect.oidf</groupId>
-      <artifactId>oidf-entity-registry-api</artifactId>
-      <version>1.0.0-SNAPSHOT</version>
-    </dependency>
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+        </dependency>
 
-    <dependency>
-      <groupId>com.nimbusds</groupId>
-      <artifactId>nimbus-jose-jwt</artifactId>
-    </dependency>
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>oauth2-oidc-sdk</artifactId>
+        </dependency>
+        <!-- Test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-    <dependency>
-      <groupId>com.nimbusds</groupId>
-      <artifactId>oauth2-oidc-sdk</artifactId>
-    </dependency>
-    <!-- Test -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
-      <scope>test</scope>
-    </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-testcontainers</artifactId>
+            <version>3.3.4</version>
+            <scope>test</scope>
+        </dependency>
 
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-testcontainers</artifactId>
-      <version>3.3.4</version>
-      <scope>test</scope>
-    </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <scope>test</scope>
-    </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mariadb</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>mariadb</artifactId>
-      <scope>test</scope>
-    </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
 
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <scope>test</scope>
-    </dependency>
+    </dependencies>
 
-  </dependencies>
+    <build>
 
-  <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>unpack-openapi</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>se.swedenconnect.openid-federation</groupId>
+                                    <artifactId>openid-federation-entity-registry-api</artifactId>
+                                    <version>1.0.0-SNAPSHOT</version>
+                                    <type>jar</type>
+                                    <includes>oidf-entity-registry-api.yaml</includes>
+                                    <outputDirectory>${project.build.directory}/openapi</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>7.8.0</version>
+                <executions>
 
-    <plugins>
+                    <execution>
+                      <id>gen-openapi</id>
+                      <phase>process-resources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.build.directory}/openapi/oidf-entity-registry-api.yaml</inputSpec>
+                            <generatorName>java</generatorName>
+                            <generateApis>false</generateApis>
+                            <generateModels>true</generateModels>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <generateSupportingFiles>false</generateSupportingFiles>
 
-      <plugin>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-maven-plugin</artifactId>
-        <version>3.3.4</version>
-      </plugin>
+                            <configOptions>
+                                <useJakartaEe>true</useJakartaEe>
+                                <modelPackage>se.swedenconnect.oidf.registry.api.model</modelPackage>
+                                <serializableModel>true</serializableModel>
+                                <packageName>se.swedenconnect.oidf.registry.api</packageName>
 
-      <plugin>
-        <groupId>org.flywaydb</groupId>
-        <artifactId>flyway-maven-plugin</artifactId>
-        <version>10.10.0</version>
-      </plugin>
+                                <generateBuilders>true</generateBuilders>
+                                <serializationLibrary>jackson</serializationLibrary>
 
-      <plugin>
-        <groupId>com.google.cloud.tools</groupId>
-        <artifactId>jib-maven-plugin</artifactId>
-        <version>3.4.4</version>
-        <configuration>
-          <from>
-            <image>amazoncorretto:21-alpine3.20</image>
-          </from>
-          <to>
-            <image>${env.DOCKER_REPO}/swedenconnect/oidf-entity-registry</image>
-          </to>
-          <container>
-            <creationTime>USE_CURRENT_TIMESTAMP</creationTime>
-            <jvmFlags>
-              <jvmFlag>-Djava.net.preferIPv4Stack=true</jvmFlag>
-              <jvmFlag>-Dorg.apache.xml.security.ignoreLineBreaks=true</jvmFlag>
-            </jvmFlags>
-            <ports>
-              <port>8080</port>
-            </ports>
-            <labels>
-              <org.opencontainers.image.source>
-                https://github.com/swedenconnect/oidf-entity-registry
-              </org.opencontainers.image.source>
-              <org.opencontainers.image.description>
-                Sweden Connect Entity Registry for OpenID Federation
-              </org.opencontainers.image.description>
-              <org.opencontainers.image.licenses>Apache-2.0</org.opencontainers.image.licenses>
-            </labels>
-          </container>
-        </configuration>
-        <executions>
-          <execution>
-            <phase>none</phase>
-            <id>local</id>
-            <goals>
-              <goal>dockerBuild</goal>
-            </goals>
-          </execution>
-          <execution>
-            <phase>deploy</phase>
-            <id>remote</id>
-            <goals>
-              <goal>build</goal>
-            </goals>
-            <configuration>
-              <from>
-                <platforms>
-                  <platform>
-                    <architecture>amd64</architecture>
-                    <os>linux</os>
-                  </platform>
-                  <platform>
-                    <architecture>arm64</architecture>
-                    <os>linux</os>
-                  </platform>
-                </platforms>
-              </from>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
+                                <library>apache-httpclient</library>
+                                <sourceFolder>src/main/generated</sourceFolder>
+                                <openApiNullable>false</openApiNullable>
+                            </configOptions>
+                        </configuration>
+                    </execution>
 
-    </plugins>
+                </executions>
 
-  </build>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>3.3.4</version>
+            </plugin>
 
-  <profiles>
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>10.10.0</version>
+            </plugin>
 
-    <profile>
-      <id>docker-github</id>
-      <properties>
-        <docker.username>${env.GITHUB_USER}</docker.username>
-        <docker.password>${env.GITHUB_ACCESS_TOKEN}</docker.password>
-      </properties>
-    </profile>
-    <profile>
-      <id>docker-sandbox</id>
-      <properties>
-        <docker.username>${env.SANDBOX_DOCKER_USER}</docker.username>
-        <docker.password>${env.SANDBOX_DOCKER_PW}</docker.password>
-      </properties>
-    </profile>
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <version>3.4.4</version>
+                <configuration>
+                    <from>
+                        <image>amazoncorretto:21-alpine3.20</image>
+                    </from>
+                    <to>
+                        <image>${env.DOCKER_REPO}/swedenconnect/oidf-entity-registry</image>
+                    </to>
+                    <container>
+                        <creationTime>USE_CURRENT_TIMESTAMP</creationTime>
+                        <jvmFlags>
+                            <jvmFlag>-Djava.net.preferIPv4Stack=true</jvmFlag>
+                            <jvmFlag>-Dorg.apache.xml.security.ignoreLineBreaks=true</jvmFlag>
+                        </jvmFlags>
+                        <ports>
+                            <port>8080</port>
+                        </ports>
+                        <labels>
+                            <org.opencontainers.image.source>
+                                https://github.com/swedenconnect/oidf-entity-registry
+                            </org.opencontainers.image.source>
+                            <org.opencontainers.image.description>
+                                Sweden Connect Entity Registry for OpenID Federation
+                            </org.opencontainers.image.description>
+                            <org.opencontainers.image.licenses>Apache-2.0</org.opencontainers.image.licenses>
+                        </labels>
+                    </container>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>none</phase>
+                        <id>local</id>
+                        <goals>
+                            <goal>dockerBuild</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <phase>deploy</phase>
+                        <id>remote</id>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                        <configuration>
+                            <from>
+                                <platforms>
+                                    <platform>
+                                        <architecture>amd64</architecture>
+                                        <os>linux</os>
+                                    </platform>
+                                    <platform>
+                                        <architecture>arm64</architecture>
+                                        <os>linux</os>
+                                    </platform>
+                                </platforms>
+                            </from>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
-  </profiles>
+        </plugins>
+
+    </build>
+
+    <profiles>
+
+        <profile>
+            <id>docker-github</id>
+            <properties>
+                <docker.username>${env.GITHUB_USER}</docker.username>
+                <docker.password>${env.GITHUB_ACCESS_TOKEN}</docker.password>
+            </properties>
+        </profile>
+        <profile>
+            <id>docker-sandbox</id>
+            <properties>
+                <docker.username>${env.SANDBOX_DOCKER_USER}</docker.username>
+                <docker.password>${env.SANDBOX_DOCKER_PW}</docker.password>
+            </properties>
+        </profile>
+
+    </profiles>
 
 </project>

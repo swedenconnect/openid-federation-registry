@@ -13,4 +13,6 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
-      - run: mvn clean verify
+      - run: mvn -U clean verify
+        env:
+          GITHUB_TOKEN: ${{ secrets.SC_ACTION_SECRET }}

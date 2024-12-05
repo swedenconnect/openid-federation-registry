@@ -29,7 +29,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-import se.swedenconnect.oidf.entity.api.OidfEntityRegistryApi;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 
 import java.util.List;
@@ -39,7 +38,7 @@ import java.util.UUID;
  * REST Controller for handling entity registry operations.
  * <p>
  * Provides endpoints for creating, retrieving, updating, and deleting entities
- * in the registry. This controller inherits from the {@link OidfEntityRegistryApi} interface and
+ * in the registry. The controller
  * interacts with the EntityService to perform CRUD operations on entities.
  * <p>
  * The {@link EntityRecord} object is serialized to a JSON structure and saved to some storage with the

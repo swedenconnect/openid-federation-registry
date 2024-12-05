@@ -11,7 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import se.swedenconnect.oidf.entity.util.EntityFactory;
+import se.swedenconnect.oidf.entity.registry.fixture.EntityFactory;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
