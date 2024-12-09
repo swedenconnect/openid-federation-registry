@@ -20,6 +20,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -56,7 +57,7 @@ public class TrustMarkSubjectController {
    *     operations
    */
   public TrustMarkSubjectController(
-      @Qualifier("jpaTrustMarkSubjectService")final TrustMarkSubjectService trustMarkSubjectService) {
+      @Qualifier("jpaTrustMarkSubjectService") final TrustMarkSubjectService trustMarkSubjectService) {
     this.trustMarkSubjectService = trustMarkSubjectService;
   }
 
@@ -68,7 +69,7 @@ public class TrustMarkSubjectController {
    * @return a {@link TrustMarkSubjectRecord} object representing the created trustMark
    */
   @PostMapping
-  public TrustMarkSubjectRecord createTrustMarkSubject(@RequestBody final TrustMarkSubjectRecord trustMark,
+  public TrustMarkSubjectRecord createTrustMarkSubject(@RequestBody @Validated final TrustMarkSubjectRecord trustMark,
       final HttpServletResponse response) {
     log.debug("POST: {}", trustMark);
 
@@ -106,7 +107,7 @@ public class TrustMarkSubjectController {
   @PutMapping("/{trustMarkSubjectId}")
   public TrustMarkSubjectRecord updateTrustMarkSubject(
       @PathVariable("trustMarkSubjectId") final String trustMarkSubjectId,
-      @RequestBody final TrustMarkSubjectRecord trustMark) {
+      @RequestBody @Validated  final TrustMarkSubjectRecord trustMark) {
     log.debug("PUT: {}", trustMark);
     if (!trustMarkSubjectId.equals(trustMark.getTrustMarkSubjectRecordId())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "TrustMarkId has to be the same in path and object");

@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -69,7 +70,7 @@ public class EntityController {
    * @return the created entity
    */
   @PostMapping
-  public ResponseEntity<EntityRecord> createEntity(@RequestBody final EntityRecord entity) {
+  public ResponseEntity<EntityRecord> createEntity(@RequestBody @Validated final EntityRecord entity) {
     log.debug("POST: {}", entity);
     final EntityRecord createdEntity = this.entityService.create(entity);
     return ResponseEntity.status(HttpStatus.CREATED).body(createdEntity);
@@ -113,7 +114,7 @@ public class EntityController {
   @PutMapping("/{entityRecordId}")
   public EntityRecord updateEntity
   (@PathVariable("entityRecordId") final UUID entityRecordId,
-      final @RequestBody EntityRecord entity) {
+      final @RequestBody @Validated  EntityRecord entity) {
 
     log.debug("PUT: {}", entity);
     return this.entityService.update(entityRecordId.toString(), entity);

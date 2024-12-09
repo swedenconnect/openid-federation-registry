@@ -102,7 +102,7 @@ public class EntityControllerTest {
     final String subject = "https://example.com/subject/1";
 
     record.setSubject(subject);
-    record.setIssuer("http://issuer");
+    record.setIssuer("http://issuer.swedenconnect.se");
     record.setPolicyRecordId(policyRecord.getPolicyRecordId());
     record.setIssuer("http://iss.example.se");
     record.setEntityRecordId(UUID.randomUUID().toString());
@@ -143,7 +143,7 @@ public class EntityControllerTest {
     final String subject = "https://example.com/subject/2";
 
     record.setSubject(subject);
-    record.setIssuer("http://issuer");
+    record.setIssuer("http://issuer.swedenconnect.se");
     record.setPolicyRecordId(policyRecord.getPolicyRecordId());
     record.setEntityRecordId(UUID.randomUUID().toString());
 
@@ -191,7 +191,7 @@ public class EntityControllerTest {
     final String subject = "https://example.com/subject/3";
 
     record.setSubject(subject);
-    record.setIssuer("http://issuer");
+    record.setIssuer("http://issuer.swedenconnect.se");
     record.setPolicyRecordId(policyRecord.getPolicyRecordId());
     record.setEntityRecordId(UUID.randomUUID().toString());
 
@@ -242,7 +242,7 @@ public class EntityControllerTest {
     final String subject = "https://example.com/subject/40";
 
     record.setSubject(subject);
-    record.setIssuer("http://issuer");
+    record.setIssuer("http://issuer.swedenconnect.se");
     record.setPolicyRecordId(policyRecord.getPolicyRecordId());
     record.setEntityRecordId(UUID.randomUUID().toString());
 

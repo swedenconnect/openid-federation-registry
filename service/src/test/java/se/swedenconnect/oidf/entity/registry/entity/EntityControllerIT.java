@@ -141,9 +141,8 @@ public class EntityControllerIT {
   @Test
   public void testCreateEntityWithHosted() {
 
-    final EntityRecord entity = EntityFactory.createDefaultEntity("http://iss40","http://subj40");
+    final EntityRecord entity = EntityFactory.createDefaultEntity("http://iss40.swedenconnect.se","http://subj40.swedenconnect.se");
     entity.setPolicyRecordId(createPolicy());
-
     // Act
     final ResponseEntity<EntityRecord> response =
         this.restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
@@ -152,7 +151,7 @@ public class EntityControllerIT {
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     final EntityRecord createdEntity = response.getBody();
     assertThat(createdEntity).isNotNull();
-    assertThat(createdEntity.getSubject()).isEqualTo("http://subj40");
+    assertThat(createdEntity.getSubject()).isEqualTo("http://subj40.swedenconnect.se");
     assertThat(createdEntity.getJwks()).isNotNull();
     assertThat(createdEntity.getHostedRecord()).isNotNull();
   }
@@ -183,7 +182,8 @@ public class EntityControllerIT {
               "https://example.com/issuer/" + i,
               "https://example.com/subject/" + i);
       entityWithJWKSource.setPolicyRecordId(policyRecordId);
-      this.restTemplate.postForEntity("/registry/v1/entities", entityWithJWKSource, EntityRecord.class);
+      final ResponseEntity<EntityRecord> response = this.restTemplate.postForEntity("/registry/v1/entities", entityWithJWKSource, EntityRecord.class);
+      assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     });
 
     // Act

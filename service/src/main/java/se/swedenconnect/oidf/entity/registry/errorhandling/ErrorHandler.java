@@ -18,17 +18,25 @@
 package se.swedenconnect.oidf.entity.registry.errorhandling;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -46,14 +54,37 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
   /**
    * Mapping IllegalArgumentException to 400 BAD_REQUEST
+   *
    * @param e Injected IllegalArgumentException
    * @param request WebRequest
    * @return Response object with error and error_description
    */
   @ExceptionHandler(IllegalArgumentException.class)
-  public ResponseEntity<Object> handle(final IllegalArgumentException e,final WebRequest request){
+  public ResponseEntity<Object> handle(final IllegalArgumentException e, final WebRequest request) {
     return this.handleExceptionInternal(e,
-        ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400),e.getMessage()),
+        ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), e.getMessage()),
+        new HttpHeaders(),
+        HttpStatusCode.valueOf(400),
+        request);
+  }
+
+  @Override
+  protected ResponseEntity<Object> handleMethodArgumentNotValid(
+      final MethodArgumentNotValidException ex,
+      final HttpHeaders headers,
+      final HttpStatusCode status,
+      final WebRequest request) {
+
+    final String errorMessage = ex.getBindingResult().getFieldErrors().stream().map((FieldError error) -> {
+          final String fieldName = error.getObjectName() + "." + error.getField();
+          final String rejectedValue = error.getRejectedValue() == null ? "null" : error.getRejectedValue().toString();
+          final String message = error.getDefaultMessage();
+
+          return fieldName + " -> " + rejectedValue + " :" + message;
+        }).reduce((string, string2) -> String.join("|", string, string2))
+        .orElse("No field errors");
+    return this.handleExceptionInternal(ex,
+        ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), errorMessage),
         new HttpHeaders(),
         HttpStatusCode.valueOf(400),
         request);
