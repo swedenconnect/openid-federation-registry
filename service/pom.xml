@@ -175,6 +175,8 @@
                                 <library>apache-httpclient</library>
                                 <sourceFolder>src/main/generated</sourceFolder>
                                 <openApiNullable>false</openApiNullable>
+                                <performBeanValidation>true</performBeanValidation>
+                                <useBeanValidation>true</useBeanValidation>
                             </configOptions>
                         </configuration>
                     </execution>

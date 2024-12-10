@@ -43,7 +43,7 @@ class FederationServiceApiControllerIT {
   void trustMarkRecordNotFound() {
     final ResponseEntity<String> fedRes = this.restTemplate
         .getForEntity("/api/v1/federationservice/trust_mark"
-            + "?iss=http://tmi.digg.se&trustmark_id=http://www.digg.se/loa", String.class);
+            + "?iss=http://tmi.swedenconnect.se&trustmark_id=http://www.swedenconnect.se/loa", String.class);
     if(fedRes.getStatusCode().isError()){
       log.error(fedRes.getBody());
     }

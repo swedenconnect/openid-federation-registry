@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -68,7 +69,7 @@ public class PolicyController {
    * @return a {@link PolicyRecord} object representing the created policy
    */
   @PostMapping
-  public ResponseEntity<PolicyRecord> createPolicy(@RequestBody final PolicyRecord policy) {
+  public ResponseEntity<PolicyRecord> createPolicy(@RequestBody @Validated final PolicyRecord policy) {
     log.debug("POST: {}", policy);
     final PolicyRecord dto = this.policyService.create(policy);
     return ResponseEntity.status(HttpStatus.CREATED).body(dto);
@@ -114,7 +115,7 @@ public class PolicyController {
   @PutMapping("/{policyRecordId}")
   public PolicyRecord updatePolicy(
       @PathVariable("policyRecordId") final UUID policyRecordId,
-      @RequestBody final PolicyRecord policy) {
+      @RequestBody @Validated  final PolicyRecord policy) {
     log.debug("PUT: {}", policy);
     if (!policyRecordId.toString().equals(policy.getPolicyRecordId())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PolicyId has to be the same in path and object");

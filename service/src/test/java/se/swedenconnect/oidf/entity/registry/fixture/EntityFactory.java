@@ -58,45 +58,51 @@ public class EntityFactory {
 
     private static final String entityJsonData = """
         {
-            "issuer": "%s",
-            "subject": "%s",
-            "entity_record_id":"%s",
-            "policy_record_id": "3ea2aace-18b3-439e-88b1-61d232f20fe9",
-            "hosted_record": {
-              "authority_hints": [
-                "https://example.com/hint1",
-                "https://example.com/hint2"
-              ],
-              "trust_mark_sources": [
-                {
-                  "trust_mark_id": "https://trust.example.com/tm1",
-                  "issuer": "https://trust.example.com/issuer1"
-                },
-                {
-                  "trust_mark_id": "https://trust.example.com/tm2",
-                  "issuer": "https://trust.example.com/issuer2"
-                }
-              ]
-            },
-            "jwks": {
-              "keys": [
-                {
-                  "kty": "RSA",
-                  "kid": "key1",
-                  "use": "sig",
-                  "n": "v1hGQlmTWwoA8V3yHdF-...",
-                  "e": "AQAB"
-                },
-                {
-                  "kty": "RSA",
-                  "kid": "key2",
-                  "use": "enc",
-                  "n": "w2Hfg34VWQowQAx3HtP-...",
-                  "e": "AQAB"
-                }
-              ]
-            }
-        }
+           "entity_record_id": "123e4567-e89b-12d3-a456-426614174000",
+           "issuer": "%s",
+           "subject": "%s",
+           "policy_record_id": "%s",
+           "override_configuration_location": "https://config.example.com/metadata",
+           "hosted_record": {
+             "metadata": {
+               "key1": "value1",
+               "key2": "value2"
+             },
+             "authority_hints": [
+               "https://authority1.example.com",
+               "https://authority2.example.com"
+             ],
+             "trust_mark_sources": [
+               {
+                 "trust_mark_id": "tm12345",
+                 "issuer": "https://trustmark.example.com"
+               },
+               {
+                 "trust_mark_id": null,
+                 "issuer": null
+               }
+             ]
+           },
+           "jwks": {
+             "keys": [
+               {
+                 "kty": "RSA",
+                 "kid": "key1",
+                 "use": "sig",
+                 "n": "random_base64url_value",
+                 "e": "AQAB"
+               },
+               {
+                 "kty": "EC",
+                 "kid": "key2",
+                 "use": "enc",
+                 "crv": "P-256",
+                 "x": "random_base64url_value",
+                 "y": "random_base64url_value"
+               }
+             ]
+           }
+         }
         """;
 
 
@@ -141,15 +147,20 @@ public class EntityFactory {
     }
 
     /**
-     * Creating a full EntityObject
+     * Creating a full EntityObject with random policyid and entityrecordid
      * @param issuer Issuer set in entityobject
      * @param subject Subject set in entityobject
      * @return Entity object with selected issuer and subject
      */
     public static EntityRecord createDefaultEntity(final String issuer, final String subject) {
         try {
-            return mapper.readValue(
-                entityJsonData.formatted(issuer, subject,UUID.randomUUID().toString()), EntityRecord.class);
+            EntityRecord entityRecord =  mapper.readValue(
+                entityJsonData, EntityRecord.class);
+            entityRecord.setEntityRecordId(UUID.randomUUID().toString());
+            entityRecord.setPolicyRecordId(UUID.randomUUID().toString());
+            entityRecord.setIssuer(issuer);
+            entityRecord.setSubject(subject);
+            return entityRecord;
         }
         catch (final JsonProcessingException e) {
             throw new RuntimeException(e);
