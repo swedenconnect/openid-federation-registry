@@ -21,7 +21,6 @@ import se.swedenconnect.oidf.registry.api.model.EntityRecordHostedRecord;
 import se.swedenconnect.oidf.registry.api.model.EntityRecordHostedRecordTrustMarkSourcesInner;
 import se.swedenconnect.oidf.registry.api.model.EntityRecordJwks;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;

@@ -23,9 +23,9 @@ import org.mockito.Mockito;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import se.swedenconnect.oidf.entity.registry.fixture.EntityFactory;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyEntity;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyRepository;
-import se.swedenconnect.oidf.entity.registry.fixture.EntityFactory;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 
 import java.util.ArrayList;
