@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.entity.registry.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nimbusds.jose.jwk.JWK;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,7 +32,11 @@ import se.swedenconnect.oidf.entity.registry.policy.PolicyService;
 import se.swedenconnect.oidf.entity.registry.trustmark.JpaTrustMarkSubjectService;
 import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectRepository;
 import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectService;
+import se.swedenconnect.security.credential.PkiCredential;
+import se.swedenconnect.security.credential.bundle.CredentialBundles;
+import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
 
+import java.security.KeyStore;
 import java.text.ParseException;
 
 /**
@@ -109,17 +114,26 @@ public class RegistryConfig {
    * Creating trustMarkSubjectRepository
    *
    * @param registryProperties Properties
+   * @param credentialBundles Bundle for reading keys
    * @return FederationServiceApiService
    * @throws ParseException If there is some trouble parsing configuration
    */
   @Bean
-  public FederationApiService federationServiceApiService(final RegistryProperties registryProperties)
+  public FederationApiService federationServiceApiService(final RegistryProperties registryProperties,
+      final CredentialBundles credentialBundles)
       throws ParseException {
     final RegistryProperties.FederationAPIProperties federationAPIProperties =
         registryProperties.federationServiceApi();
+
+    final String signKeyAlias = federationAPIProperties.signKeyAlias();
+
+    final PkiCredential signKey = credentialBundles.getCredential(signKeyAlias);
+    final JwkTransformerFunction function = new JwkTransformerFunction();
+    final JWK jwk = function.apply(signKey);
+
     return new FederationApiService(
         this.entityRepository,
-        federationAPIProperties.federationserviceapiSignKeyJWK(),
+        jwk,
         this.policyRepository,
         this.trustMarkSubjectRepository,
         federationAPIProperties.issuer()

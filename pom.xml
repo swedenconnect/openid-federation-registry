@@ -90,6 +90,7 @@
     <jackson.version>2.18.0</jackson.version>
     <slf4j.version>2.0.13</slf4j.version>
     <spring-boot.version>3.3.5</spring-boot.version>
+    <credentials-support.version>2.0.0</credentials-support.version>
   </properties>
 
   <repositories>
@@ -126,7 +127,16 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-
+      <dependency>
+        <groupId>se.swedenconnect.security</groupId>
+        <artifactId>credentials-support-spring-boot-starter</artifactId>
+        <version>${credentials-support.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>se.swedenconnect.security</groupId>
+        <artifactId>credentials-support-nimbus</artifactId>
+        <version>${credentials-support.version}</version>
+      </dependency>
       <dependency>
         <groupId>jakarta.servlet</groupId>
         <artifactId>jakarta.servlet-api</artifactId>
