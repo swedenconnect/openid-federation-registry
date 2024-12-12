@@ -1,8 +1,10 @@
 package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 
 import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,8 +16,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.entity.registry.fixture.EntityFactory;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
+import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
 
 import java.text.ParseException;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -48,6 +52,54 @@ class FederationServiceApiControllerIT {
       log.error(fedRes.getBody());
     }
     assertThat(HttpStatus.NOT_FOUND).isEqualTo(fedRes.getStatusCode());
+  }
+
+  /**
+   * Creating TrustMarkSubjectRecord then gets the federation JWT to make sure it works
+   * @throws ParseException
+   */
+  @Test
+  void trustMarkRecordSuccess() throws ParseException {
+
+    final TrustMarkSubjectRecord record = TrustMarkSubjectRecord.builder()
+        .trustMarkSubjectRecordId(UUID.randomUUID().toString())
+        .issuer("http://www.swedenconnect.se/issuer")
+        .trustMarkId("http://www.swedenconnect.se/trustmarkid")
+        .subject("http://www.swedenconnect.se/subject")
+        .revoked(true)
+        .granted(OffsetDateTime.now())
+        .expires(OffsetDateTime.now().plusDays(10))
+        .build();
+
+    final ResponseEntity<String> response =
+        this.restTemplate.postForEntity("/registry/v1/trustmarksubject", record, String.class);
+    if (response.getStatusCode().isError()) {
+      log.info(response.getBody());
+    }
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+    final ResponseEntity<String> fedRes = this.restTemplate
+        .getForEntity("/api/v1/federationservice/trust_mark"
+            + "?iss=http://www.swedenconnect.se/issuer&trustmark_id=http://www.swedenconnect.se/trustmarkid", String.class);
+    if(fedRes.getStatusCode().isError()){
+      log.error(fedRes.getBody());
+    }
+    assertThat(HttpStatus.OK).isEqualTo(fedRes.getStatusCode());
+
+    final SignedJWT tms = SignedJWT.parse(fedRes.getBody());
+    final JWTClaimsSet claimsSet = tms.getJWTClaimsSet();
+    final List<Object> records = claimsSet.getListClaim("trustmark_records");
+
+    records.stream()
+        .map(o -> (Map<String,Object>)o)
+        .forEach(stringObjectMap -> {
+          Assert.assertEquals(record.getSubject(),stringObjectMap.get("subject"));
+          Assert.assertEquals(record.getExpires().toInstant().toString(),stringObjectMap.get("expires"));
+          Assert.assertEquals(record.getGranted().toInstant().toString(),stringObjectMap.get("granted"));
+          Assert.assertEquals(record.getRevoked(),stringObjectMap.get("revoked"));
+
+        });
+
   }
 
   @Test
