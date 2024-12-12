@@ -54,6 +54,10 @@ class FederationServiceApiControllerIT {
     assertThat(HttpStatus.NOT_FOUND).isEqualTo(fedRes.getStatusCode());
   }
 
+  /**
+   * Creating TrustMarkSubjectRecord then gets the federation JWT to make sure it works
+   * @throws ParseException
+   */
   @Test
   void trustMarkRecordSuccess() throws ParseException {
 
