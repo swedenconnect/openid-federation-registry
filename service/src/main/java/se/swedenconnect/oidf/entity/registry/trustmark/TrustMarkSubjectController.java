@@ -121,8 +121,8 @@ public class TrustMarkSubjectController {
    * @param trustMarkSubjectId the trustMarkSubjectId of the trustMarkSubject to be deleted
    * @param response the {@link HttpServletResponse} object used to set the response status
    */
-  @DeleteMapping("/{trustMark_id}")
-  public void deleteTrustMark(@PathVariable("trustMarkSubjectId") final String trustMarkSubjectId,
+  @DeleteMapping("/{trustMarkSubjectId}")
+  public void deleteTrustMarkSubject(@PathVariable("trustMarkSubjectId") final String trustMarkSubjectId,
       final HttpServletResponse response) {
     log.debug("DELETE: {}", trustMarkSubjectId);
 
