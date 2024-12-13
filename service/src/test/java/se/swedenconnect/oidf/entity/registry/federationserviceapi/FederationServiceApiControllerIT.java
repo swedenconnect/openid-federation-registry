@@ -69,8 +69,8 @@ class FederationServiceApiControllerIT {
         .trustMarkId("http://www.swedenconnect.se/trustmarkid")
         .subject("http://www.swedenconnect.se/subject")
         .revoked(true)
-        .granted(OffsetDateTime.of(LocalDateTime.now(), ZoneOffset.UTC))
-        .expires(OffsetDateTime.of(LocalDateTime.now(), ZoneOffset.UTC).plusDays(10))
+        .granted(LocalDateTime.now())
+        .expires(LocalDateTime.now())
         .build();
 
     final ResponseEntity<String> response =

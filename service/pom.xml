@@ -177,6 +177,9 @@
                                 <openApiNullable>false</openApiNullable>
                                 <performBeanValidation>true</performBeanValidation>
                                 <useBeanValidation>true</useBeanValidation>
+                                <java8>true</java8>
+                                <dateLibrary>java8-localdatetime</dateLibrary>
+
                             </configOptions>
                         </configuration>
                     </execution>
