@@ -19,7 +19,9 @@ import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
 
 import java.text.ParseException;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -67,8 +69,8 @@ class FederationServiceApiControllerIT {
         .trustMarkId("http://www.swedenconnect.se/trustmarkid")
         .subject("http://www.swedenconnect.se/subject")
         .revoked(true)
-        .granted(OffsetDateTime.now())
-        .expires(OffsetDateTime.now().plusDays(10))
+        .granted(OffsetDateTime.of(LocalDateTime.now(), ZoneOffset.UTC))
+        .expires(OffsetDateTime.of(LocalDateTime.now(), ZoneOffset.UTC).plusDays(10))
         .build();
 
     final ResponseEntity<String> response =
