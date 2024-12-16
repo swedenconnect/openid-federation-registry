@@ -94,11 +94,12 @@ class FederationServiceApiControllerIT {
 
     records.stream()
         .map(o -> (Map<String,Object>)o)
-        .forEach(stringObjectMap -> {
-          Assert.assertEquals(record.getSubject(),stringObjectMap.get("subject"));
-          Assert.assertEquals(record.getExpires().toString(),stringObjectMap.get("expires"));
-          Assert.assertEquals(record.getGranted().toString(),stringObjectMap.get("granted"));
-          Assert.assertEquals(record.getRevoked(),stringObjectMap.get("revoked"));
+        .forEach(claimMap -> {
+          log.info("Record:{} Claim{}",record.toString(),claimMap.toString());
+          Assert.assertEquals(record.getSubject(),claimMap.get("subject"));
+          Assert.assertEquals(record.getExpires().toString(),claimMap.get("expires"));
+          Assert.assertEquals(record.getGranted().toString(),claimMap.get("granted"));
+          Assert.assertEquals(record.getRevoked(),claimMap.get("revoked"));
 
         });
 
