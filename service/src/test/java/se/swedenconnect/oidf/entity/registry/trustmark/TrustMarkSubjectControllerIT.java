@@ -26,11 +26,11 @@ import org.springframework.http.ResponseEntity;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
 
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -61,7 +61,7 @@ public class TrustMarkSubjectControllerIT {
    * Doing CRUD operations on TrustMarkSubject
    */
   @Test
-  public void testCRUD() {
+  public void testCRUD() throws JsonProcessingException {
 
     final TrustMarkSubjectRecord record = TrustMarkSubjectRecord.builder()
         .trustMarkSubjectRecordId(UUID.randomUUID().toString())
@@ -69,9 +69,8 @@ public class TrustMarkSubjectControllerIT {
         .trustMarkId("http://www.swedenconnect.se/trustmarkid")
         .subject("http://www.swedenconnect.se/subject")
         .revoked(true)
-        .granted(OffsetDateTime.of(LocalDateTime.now(), ZoneOffset.UTC))
+        .granted(LocalDateTime.now())
         .build();
-
     final ResponseEntity<String> create =
         this.restTemplate.postForEntity("/registry/v1/trustmarksubject", record, String.class);
     if (create.getStatusCode().isError()) {
@@ -80,7 +79,7 @@ public class TrustMarkSubjectControllerIT {
     assertThat(create.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
 
-    record.setExpires(OffsetDateTime.of(LocalDateTime.now(), ZoneOffset.UTC));
+    record.setExpires(LocalDateTime.now());
     this.restTemplate.put("/registry/v1/trustmarksubject/"+record.getTrustMarkSubjectRecordId(), record);
 
     final ResponseEntity<TrustMarkSubjectRecord> read =
