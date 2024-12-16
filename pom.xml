@@ -84,11 +84,8 @@
     <maven.compiler.target>21</maven.compiler.target>
 
     <!-- Dependency Versions -->
-    <bc.version>1.78.1</bc.version>
     <nimbus-jose-jwt.version>9.41.1</nimbus-jose-jwt.version>
     <nimbus-oauth2-oidc-sdk.version>11.20.1</nimbus-oauth2-oidc-sdk.version>
-    <jackson.version>2.18.0</jackson.version>
-    <slf4j.version>2.0.13</slf4j.version>
     <spring-boot.version>3.3.5</spring-boot.version>
   </properties>
 
@@ -116,9 +113,7 @@
   </modules>
 
   <dependencyManagement>
-
     <dependencies>
-
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
@@ -128,55 +123,11 @@
       </dependency>
 
       <dependency>
-        <groupId>jakarta.servlet</groupId>
-        <artifactId>jakarta.servlet-api</artifactId>
-        <version>6.1.0</version>
-      </dependency>
-
-      <dependency>
-        <groupId>jakarta.annotation</groupId>
-        <artifactId>jakarta.annotation-api</artifactId>
-        <version>3.0.0</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.projectlombok</groupId>
-        <artifactId>lombok</artifactId>
-        <version>1.18.34</version>
-        <optional>true</optional>
-      </dependency>
-
-      <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
         <type>pom</type>
         <version>5.11.1</version>
         <scope>import</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
-        <version>${slf4j.version}</version>
-      </dependency>
-
-      <!-- Bouncy Castle -->
-      <dependency>
-        <groupId>org.bouncycastle</groupId>
-        <artifactId>bcprov-jdk18on</artifactId>
-        <version>${bc.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.bouncycastle</groupId>
-        <artifactId>bcutil-jdk18on</artifactId>
-        <version>${bc.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.bouncycastle</groupId>
-        <artifactId>bcpkix-jdk18on</artifactId>
-        <version>${bc.version}</version>
       </dependency>
 
       <!-- Nimbus -->
@@ -190,13 +141,6 @@
         <artifactId>oauth2-oidc-sdk</artifactId>
         <version>${nimbus-oauth2-oidc-sdk.version}</version>
       </dependency>
-      <!-- Jackson -->
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-annotations</artifactId>
-        <version>${jackson.version}</version>
-      </dependency>
-
       <!-- Checker Framework -->
       <dependency>
         <groupId>org.checkerframework</groupId>
@@ -204,41 +148,14 @@
         <version>3.37.0</version>
         <scope>compile</scope>
       </dependency>
-
-
     </dependencies>
-
   </dependencyManagement>
 
   <dependencies>
-
-    <dependency>
-      <groupId>jakarta.servlet</groupId>
-      <artifactId>jakarta.servlet-api</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>jakarta.annotation</groupId>
-      <artifactId>jakarta.annotation-api</artifactId>
-    </dependency>
-
     <!-- Lombok -->
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
-    </dependency>
-
-    <!-- Logging -->
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-    </dependency>
-
-    <!-- For testing -->
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -253,18 +170,6 @@
       <artifactId>mockito-junit-jupiter</artifactId>
       <version>5.11.0</version>
       <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.assertj</groupId>
-      <artifactId>assertj-core</artifactId>
-      <version>3.26.0</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-annotations</artifactId>
     </dependency>
 
   </dependencies>
@@ -496,12 +401,10 @@
           <detectJavaApiLink>true</detectJavaApiLink>
         </configuration>
       </plugin>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-site-plugin</artifactId>
       </plugin>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
@@ -522,9 +425,7 @@
           </execution>
         </executions>
       </plugin>
-
     </plugins>
-
   </build>
 
   <profiles>
