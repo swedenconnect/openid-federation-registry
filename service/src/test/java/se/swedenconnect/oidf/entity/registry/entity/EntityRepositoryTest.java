@@ -22,6 +22,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -47,10 +48,11 @@ public class EntityRepositoryTest {
   @Test
   public void testSaveEntity() {
     // Given
-    EntityEntity entity = new EntityEntity();
+    final EntityEntity entity = new EntityEntity();
     entity.setSubject("https://example.com/subject/1");
     entity.setEntity("{\"name\": \"Example Entity\"}");
     entity.setIssuer("http://iss");
+    entity.setExternalId(UUID.randomUUID().toString());
 
     // When
     EntityEntity savedEntity = entityRepository.save(entity);
@@ -68,6 +70,7 @@ public class EntityRepositoryTest {
     entity.setSubject("https://example.com/subject/1");
     entity.setEntity("{\"name\": \"Example Entity\"}");
     entity.setIssuer("http://iss");
+    entity.setExternalId(UUID.randomUUID().toString());
 
     // When
     final EntityEntity savedEntity = entityRepository.save(entity);
@@ -77,6 +80,7 @@ public class EntityRepositoryTest {
     entityDuplicate.setSubject("https://example.com/subject/1");
     entityDuplicate.setEntity("{\"name\": \"Example Entity\"}");
     entityDuplicate.setIssuer("http://iss");
+    entityDuplicate.setExternalId(UUID.randomUUID().toString());
     assertThatThrownBy(() -> this.entityRepository.saveAndFlush(entityDuplicate)).isInstanceOf(
         DataIntegrityViolationException.class)
         .hasMessageStartingWith("could not execute statement [Unique index or primary key violation");
@@ -94,6 +98,7 @@ public class EntityRepositoryTest {
     entity.setSubject("https://example.com/subject/2");
     entity.setEntity("{\"name\": \"Another Entity\"}");
     entity.setIssuer("http://iss");
+    entity.setExternalId(UUID.randomUUID().toString());
 
     EntityEntity savedEntity = entityRepository.save(entity);
 
@@ -119,6 +124,7 @@ public class EntityRepositoryTest {
     entity.setSubject("https://example.com/subject/3");
     entity.setEntity("{\"name\": \"Entity to be deleted\"}");
     entity.setIssuer("http://iss");
+    entity.setExternalId(UUID.randomUUID().toString());
 
     EntityEntity savedEntity = entityRepository.save(entity);
 
