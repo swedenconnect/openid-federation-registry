@@ -48,6 +48,6 @@ public class AuditingConfig {
     return Optional.empty();
 
  */
-    return () -> Optional.of("DefaultSystemUser:" + UUID.randomUUID().toString());
+    return () -> Optional.of("DefaultSystemUser:" + UUID.randomUUID());
   }
 }
