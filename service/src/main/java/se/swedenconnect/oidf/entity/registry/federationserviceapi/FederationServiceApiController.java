@@ -55,7 +55,7 @@ public class FederationServiceApiController {
    * @param subject Subject is optional
    * @return SignedJWT with a claim for trust_mark
    */
-  @GetMapping(value="/trust_mark", produces = "application/jwt")
+  @GetMapping(value="/trustmarksubject_record", produces = "application/jwt")
   public String trustMarkRecord(
       @RequestParam(name="iss") final String issuer,
       @RequestParam(name="trustmark_id") final String trustmarkId,
