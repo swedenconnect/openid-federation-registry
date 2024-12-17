@@ -78,9 +78,26 @@ class FederationServiceApiControllerIT {
     }
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
+    final ResponseEntity<String> fedResEmptySub = this.restTemplate
+        .getForEntity("/api/v1/federationservice/trustmarksubject_record"
+            + "?iss=%s&trustmark_id=%s&sub=".formatted(record.getIssuer(),record.getTrustMarkId()), String.class);
+    if(fedResEmptySub.getStatusCode().isError()){
+      log.error(fedResEmptySub.getBody());
+    }
+    assertThat(HttpStatus.OK).isEqualTo(fedResEmptySub.getStatusCode());
+
+    final ResponseEntity<String> fedResSubjectSearch = this.restTemplate
+        .getForEntity("/api/v1/federationservice/trustmarksubject_record"
+            + "?iss=%s&trustmark_id=%s".formatted(record.getIssuer(),record.getTrustMarkId()), String.class);
+    if(fedResSubjectSearch.getStatusCode().isError()){
+      log.error(fedResSubjectSearch.getBody());
+    }
+    assertThat(HttpStatus.OK).isEqualTo(fedResSubjectSearch.getStatusCode());
+
+
     final ResponseEntity<String> fedRes = this.restTemplate
         .getForEntity("/api/v1/federationservice/trustmarksubject_record"
-            + "?iss=http://www.swedenconnect.se/issuer&trustmark_id=http://www.swedenconnect.se/trustmarkid", String.class);
+            + "?iss=%s&trustmark_id=%s".formatted(record.getIssuer(),record.getTrustMarkId()), String.class);
     if(fedRes.getStatusCode().isError()){
       log.error(fedRes.getBody());
     }

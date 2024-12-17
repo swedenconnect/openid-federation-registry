@@ -80,7 +80,7 @@ public class TrustMarkSubjectControllerIT {
 
 
     record.setExpires(LocalDateTime.now());
-    this.restTemplate.put("/registry/v1/trustmarksubject/"+record.getTrustMarkSubjectRecordId(), record);
+    this.restTemplate.put("/registry/v1/trustmarksubject/" + record.getTrustMarkSubjectRecordId(), record);
 
     final ResponseEntity<TrustMarkSubjectRecord> read =
         this.restTemplate.getForEntity("/registry/v1/trustmarksubject/"+record.getTrustMarkSubjectRecordId(), TrustMarkSubjectRecord.class);

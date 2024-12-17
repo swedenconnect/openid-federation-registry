@@ -61,7 +61,8 @@ public class FederationServiceApiController {
       @RequestParam(name="trustmark_id") final String trustmarkId,
       @RequestParam(name="sub", required = false) final String subject){
 
-    return this.federationApiService.trustMarkRecord(new EntityID(issuer),trustmarkId, Optional.ofNullable(subject));
+    return this.federationApiService.trustMarkRecord(new EntityID(issuer),trustmarkId,
+        Optional.ofNullable(subject).filter(s -> !s.isBlank()));
   }
 
   /**
