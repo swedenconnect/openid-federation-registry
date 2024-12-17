@@ -19,6 +19,7 @@ import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
 
 import java.text.ParseException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -112,8 +113,8 @@ class FederationServiceApiControllerIT {
         .forEach(claimMap -> {
           log.info("Record:{} Claim{}",record.toString(),claimMap.toString());
           Assert.assertEquals(record.getSubject(),claimMap.get("subject"));
-          Assert.assertEquals(record.getExpires().toString(),claimMap.get("expires"));
-          Assert.assertEquals(record.getGranted().toString(),claimMap.get("granted"));
+          Assert.assertEquals(record.getExpires().toString(), Instant.parse(claimMap.get("expires").toString()));
+          Assert.assertEquals(record.getGranted().toString(), Instant.parse(claimMap.get("granted").toString()));
           Assert.assertEquals(record.getRevoked(),claimMap.get("revoked"));
 
         });
