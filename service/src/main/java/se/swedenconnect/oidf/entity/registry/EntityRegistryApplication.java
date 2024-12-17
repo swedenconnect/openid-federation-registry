@@ -19,6 +19,7 @@ package se.swedenconnect.oidf.entity.registry;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 /**
  * Main application class for the Entity Registry Application.
@@ -27,6 +28,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
  */
 @SpringBootApplication
 @ConfigurationPropertiesScan
+@EnableJpaAuditing
 public class EntityRegistryApplication {
 
 	/**

@@ -22,6 +22,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -52,6 +53,7 @@ public class TrustMarkSubjectRepositoryTest {
         .subject("http://sub")
         .trustmarkId("http://tmid")
         .trustmarksubjectJson("{\"name\": \"Example Entity\"}")
+            .externalId(UUID.randomUUID().toString())
         .build();
 
     // When
@@ -71,6 +73,7 @@ public class TrustMarkSubjectRepositoryTest {
         .subject("http://sub")
         .trustmarkId("http://tmid")
         .trustmarksubjectJson("{}")
+            .externalId(UUID.randomUUID().toString())
         .build();
 
     // When
@@ -97,6 +100,7 @@ public class TrustMarkSubjectRepositoryTest {
         .subject("http://sub")
         .trustmarkId("http://tmid")
         .trustmarksubjectJson("{}")
+            .externalId(UUID.randomUUID().toString())
         .build();
 
     TrustMarkSubjectEntity savedtmi = this.trustMarkSubjectRepository.save(tmi);
@@ -124,6 +128,7 @@ public class TrustMarkSubjectRepositoryTest {
         .subject("http://sub")
         .trustmarkId("http://tmid")
         .trustmarksubjectJson("{}")
+            .externalId(UUID.randomUUID().toString())
         .build();
 
     TrustMarkSubjectEntity savedtmi = this.trustMarkSubjectRepository.save(tmi);

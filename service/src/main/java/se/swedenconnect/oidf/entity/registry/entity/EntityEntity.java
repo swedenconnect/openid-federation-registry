@@ -15,6 +15,7 @@
  *
  */
 package se.swedenconnect.oidf.entity.registry.entity;
+import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -36,14 +37,14 @@ import lombok.ToString;
 @Getter
 @Setter
 @Entity
-@ToString
+@ToString(callSuper = true)
 @Table(name = "entities",uniqueConstraints = { @UniqueConstraint(columnNames = { "issuer", "subject" }) })
-public class EntityEntity {
+public class EntityEntity extends BaseEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
 
-  @Column(name="external_id", unique = true, updatable = false)
+  @Column(name="external_id", unique = true, updatable = false,nullable = false)
   private String externalId;
 
   @Column(nullable = false)
@@ -54,6 +55,4 @@ public class EntityEntity {
 
   @Column(columnDefinition = "TEXT")
   private String entity;
-
-
 }

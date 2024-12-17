@@ -20,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
@@ -34,7 +36,7 @@ class PolicyRepositoryTest {
     final PolicyEntity policy = new PolicyEntity();
     policy.setName("Test Policy");
     policy.setPolicy("{ \"key\": \"value\" }");
-
+    policy.setExternalId(UUID.randomUUID().toString());
     this.policyRepository.save(policy);
 
     final PolicyEntity foundPolicy = this.policyRepository.findById(policy.getId()).orElse(null);
@@ -46,8 +48,10 @@ class PolicyRepositoryTest {
 
     final PolicyEntity foundPolicyByExtID = this.policyRepository.findByExternalId(policy.getExternalId())
         .orElse(null);
-
+    System.out.println(foundPolicyByExtID);
     assertThat(foundPolicyByExtID).isNotNull();
+    assertThat(foundPolicy.getLastModifiedDate()).isNotNull();
+    assertThat(foundPolicy.getCreatedDate()).isNotNull();
 
   }
 
