@@ -95,4 +95,73 @@ public class TrustMarkSubjectControllerIT {
     assertThat(notFound.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
   }
 
+
+  /**
+   * Testing indata validation fail
+   */
+  @Test
+  public void testIndataValidationSubjRecID() throws JsonProcessingException {
+
+    final TrustMarkSubjectRecord record = TrustMarkSubjectRecord.builder()
+        .trustMarkSubjectRecordId("WrongIdFormat")
+        .issuer("http://www.swedenconnect.se/issuer")
+        .trustMarkId("http://www.swedenconnect.se/trustmarkid")
+        .subject("http://www.swedenconnect.se/subject")
+        .revoked(true)
+        .granted(LocalDateTime.now())
+        .build();
+    final ResponseEntity<String> create =
+        this.restTemplate.postForEntity("/registry/v1/trustmarksubject", record, String.class);
+    if (create.getStatusCode().isError()) {
+      log.info(create.getBody());
+    }
+    assertThat(create.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    assertThat(create.getBody()).contains("trustMarkSubjectRecord.trustMarkSubjectRecordId -> WrongIdFormat :must match");
+  }
+
+  /**
+   * Testing indata validation fail for no subject
+   */
+  @Test
+  public void testIndataValidationNoSubject() throws JsonProcessingException {
+
+    final TrustMarkSubjectRecord record = TrustMarkSubjectRecord.builder()
+        .trustMarkSubjectRecordId(UUID.randomUUID().toString())
+        .issuer("http://www.swedenconnect.se/issuer")
+        .trustMarkId("http://www.swedenconnect.se/trustmarkid")
+        .revoked(true)
+        .granted(LocalDateTime.now())
+        .build();
+    final ResponseEntity<String> create =
+        this.restTemplate.postForEntity("/registry/v1/trustmarksubject", record, String.class);
+    if (create.getStatusCode().isError()) {
+      log.info(create.getBody());
+    }
+    assertThat(create.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    assertThat(create.getBody()).contains("trustMarkSubjectRecord.subject -> null");
+  }
+
+  /**
+   * Testing indata validation fail for trustmark
+   */
+  @Test
+  public void testIndataValidationTrustMarkId() throws JsonProcessingException {
+
+    final TrustMarkSubjectRecord record = TrustMarkSubjectRecord.builder()
+        .trustMarkSubjectRecordId(UUID.randomUUID().toString())
+        .issuer("http://www.swedenconnect.se/issuer")
+        .trustMarkId("WrongFormat")
+        .subject("http://www.swedenconnect.se/subject")
+        .revoked(true)
+        .granted(LocalDateTime.now())
+        .build();
+    final ResponseEntity<String> create =
+        this.restTemplate.postForEntity("/registry/v1/trustmarksubject", record, String.class);
+    if (create.getStatusCode().isError()) {
+      log.info(create.getBody());
+    }
+    assertThat(create.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    assertThat(create.getBody()).contains("trustMarkSubjectRecord.trustMarkId -> WrongFormat :must match");
+  }
+
 }
