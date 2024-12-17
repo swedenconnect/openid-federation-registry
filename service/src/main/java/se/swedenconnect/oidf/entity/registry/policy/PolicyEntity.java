@@ -1,9 +1,6 @@
 /*
  * Copyright 2024 Sweden Connect
  *
- * This class extends Auditable to include audit fields like createdDate, lastModifiedDate,
- * createdBy, and lastModifiedBy.
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
