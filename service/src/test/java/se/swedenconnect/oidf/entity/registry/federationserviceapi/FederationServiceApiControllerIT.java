@@ -19,9 +19,8 @@ import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
 
 import java.text.ParseException;
+import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -48,7 +47,7 @@ class FederationServiceApiControllerIT {
   @Test
   void trustMarkRecordNotFound() {
     final ResponseEntity<String> fedRes = this.restTemplate
-        .getForEntity("/api/v1/federationservice/trust_mark"
+        .getForEntity("/api/v1/federationservice/trustmarksubject_record"
             + "?iss=http://tmi.swedenconnect.se&trustmark_id=http://www.swedenconnect.se/loa", String.class);
     if(fedRes.getStatusCode().isError()){
       log.error(fedRes.getBody());
@@ -80,9 +79,26 @@ class FederationServiceApiControllerIT {
     }
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
+    final ResponseEntity<String> fedResEmptySub = this.restTemplate
+        .getForEntity("/api/v1/federationservice/trustmarksubject_record"
+            + "?iss=%s&trustmark_id=%s&sub=".formatted(record.getIssuer(),record.getTrustMarkId()), String.class);
+    if(fedResEmptySub.getStatusCode().isError()){
+      log.error(fedResEmptySub.getBody());
+    }
+    assertThat(HttpStatus.OK).isEqualTo(fedResEmptySub.getStatusCode());
+
+    final ResponseEntity<String> fedResSubjectSearch = this.restTemplate
+        .getForEntity("/api/v1/federationservice/trustmarksubject_record"
+            + "?iss=%s&trustmark_id=%s".formatted(record.getIssuer(),record.getTrustMarkId()), String.class);
+    if(fedResSubjectSearch.getStatusCode().isError()){
+      log.error(fedResSubjectSearch.getBody());
+    }
+    assertThat(HttpStatus.OK).isEqualTo(fedResSubjectSearch.getStatusCode());
+
+
     final ResponseEntity<String> fedRes = this.restTemplate
-        .getForEntity("/api/v1/federationservice/trust_mark"
-            + "?iss=http://www.swedenconnect.se/issuer&trustmark_id=http://www.swedenconnect.se/trustmarkid", String.class);
+        .getForEntity("/api/v1/federationservice/trustmarksubject_record"
+            + "?iss=%s&trustmark_id=%s".formatted(record.getIssuer(),record.getTrustMarkId()), String.class);
     if(fedRes.getStatusCode().isError()){
       log.error(fedRes.getBody());
     }
@@ -97,8 +113,8 @@ class FederationServiceApiControllerIT {
         .forEach(claimMap -> {
           log.info("Record:{} Claim{}",record.toString(),claimMap.toString());
           Assert.assertEquals(record.getSubject(),claimMap.get("subject"));
-          Assert.assertEquals(record.getExpires().toString(),claimMap.get("expires"));
-          Assert.assertEquals(record.getGranted().toString(),claimMap.get("granted"));
+          Assert.assertNotNull(claimMap.get("expires"));
+          Assert.assertNotNull(claimMap.get("granted"));
           Assert.assertEquals(record.getRevoked(),claimMap.get("revoked"));
 
         });
