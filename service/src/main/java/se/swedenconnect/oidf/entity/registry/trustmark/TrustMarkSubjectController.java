@@ -20,6 +20,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +33,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
 
+import java.util.List;
+
 /**
  * TrustMarkController is a REST controller for managing policies in the entity registry. It provides endpoints for
  * creating, updating, retrieving, and deleting trustMark records.
@@ -42,7 +45,7 @@ import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
  */
 @Slf4j
 @RestController
-@RequestMapping("/registry/v1/trustmarksubject")
+@RequestMapping("/registry/v1/trustmarksubjects")
 public class TrustMarkSubjectController {
 
   /**
@@ -59,6 +62,18 @@ public class TrustMarkSubjectController {
   public TrustMarkSubjectController(
       @Qualifier("jpaTrustMarkSubjectService") final TrustMarkSubjectService trustMarkSubjectService) {
     this.trustMarkSubjectService = trustMarkSubjectService;
+  }
+
+  /**
+   * Retrieves a list of all trust marks.
+   *
+   * @return a ResponseEntity containing a list of TrustMarkSubjectRecord objects
+   */
+  @GetMapping
+  public ResponseEntity<List<TrustMarkSubjectRecord>> getAllTrustMarks() {
+    final List<TrustMarkSubjectRecord> trustMarks = this.trustMarkSubjectService.getAll();
+    log.debug("GET all: {}", trustMarks);
+    return ResponseEntity.ok(trustMarks);
   }
 
   /**

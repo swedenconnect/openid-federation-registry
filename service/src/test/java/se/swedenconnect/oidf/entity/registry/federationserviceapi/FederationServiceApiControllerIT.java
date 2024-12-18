@@ -19,7 +19,8 @@ import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
 
 import java.text.ParseException;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -67,12 +68,12 @@ class FederationServiceApiControllerIT {
         .trustMarkId("http://www.swedenconnect.se/trustmarkid")
         .subject("http://www.swedenconnect.se/subject")
         .revoked(true)
-        .granted(LocalDateTime.now())
-        .expires(LocalDateTime.now())
+        .granted(OffsetDateTime.now(ZoneId.of("UTC")))
+        .expires(OffsetDateTime.now(ZoneId.of("UTC")))
         .build();
 
     final ResponseEntity<String> response =
-        this.restTemplate.postForEntity("/registry/v1/trustmarksubject", record, String.class);
+        this.restTemplate.postForEntity("/registry/v1/trustmarksubjects", record, String.class);
     if (response.getStatusCode().isError()) {
       log.info(response.getBody());
     }

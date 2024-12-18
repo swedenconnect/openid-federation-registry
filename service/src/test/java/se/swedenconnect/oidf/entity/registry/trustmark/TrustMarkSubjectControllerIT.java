@@ -29,9 +29,12 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
 
-import java.time.LocalDateTime;
 
+
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -69,29 +72,30 @@ public class TrustMarkSubjectControllerIT {
         .trustMarkId("http://www.swedenconnect.se/trustmarkid")
         .subject("http://www.swedenconnect.se/subject")
         .revoked(true)
-        .granted(LocalDateTime.now())
+        .granted(OffsetDateTime.now(ZoneId.of("UTC")))
         .build();
+
     final ResponseEntity<String> create =
-        this.restTemplate.postForEntity("/registry/v1/trustmarksubject", record, String.class);
+        this.restTemplate.postForEntity("/registry/v1/trustmarksubjects", record, String.class);
     if (create.getStatusCode().isError()) {
       log.info(create.getBody());
     }
     assertThat(create.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
 
-    record.setExpires(LocalDateTime.now());
-    this.restTemplate.put("/registry/v1/trustmarksubject/" + record.getTrustMarkSubjectRecordId(), record);
+    record.setExpires(OffsetDateTime.now(ZoneId.of("UTC")));
+    this.restTemplate.put("/registry/v1/trustmarksubjects/" + record.getTrustMarkSubjectRecordId(), record);
 
     final ResponseEntity<TrustMarkSubjectRecord> read =
-        this.restTemplate.getForEntity("/registry/v1/trustmarksubject/"+record.getTrustMarkSubjectRecordId(), TrustMarkSubjectRecord.class);
+        this.restTemplate.getForEntity("/registry/v1/trustmarksubjects/"+record.getTrustMarkSubjectRecordId(),
+                TrustMarkSubjectRecord.class);
     assertThat(read.getStatusCode()).isEqualTo(HttpStatus.OK);
-
     assertThat(record).isNotNull().isEqualTo(read.getBody());
 
-    this.restTemplate.delete("/registry/v1/trustmarksubject/"+record.getTrustMarkSubjectRecordId());
+    this.restTemplate.delete("/registry/v1/trustmarksubjects/"+record.getTrustMarkSubjectRecordId());
 
     final ResponseEntity<TrustMarkSubjectRecord> notFound =
-        this.restTemplate.getForEntity("/registry/v1/trustmarksubject/"+record.getTrustMarkSubjectRecordId(), TrustMarkSubjectRecord.class);
+        this.restTemplate.getForEntity("/registry/v1/trustmarksubjects/"+record.getTrustMarkSubjectRecordId(), TrustMarkSubjectRecord.class);
     assertThat(notFound.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
   }
 
@@ -108,10 +112,10 @@ public class TrustMarkSubjectControllerIT {
         .trustMarkId("http://www.swedenconnect.se/trustmarkid")
         .subject("http://www.swedenconnect.se/subject")
         .revoked(true)
-        .granted(LocalDateTime.now())
+        .granted(OffsetDateTime.now(ZoneId.of("UTC")))
         .build();
     final ResponseEntity<String> create =
-        this.restTemplate.postForEntity("/registry/v1/trustmarksubject", record, String.class);
+        this.restTemplate.postForEntity("/registry/v1/trustmarksubjects", record, String.class);
     if (create.getStatusCode().isError()) {
       log.info(create.getBody());
     }
@@ -130,10 +134,10 @@ public class TrustMarkSubjectControllerIT {
         .issuer("http://www.swedenconnect.se/issuer")
         .trustMarkId("http://www.swedenconnect.se/trustmarkid")
         .revoked(true)
-        .granted(LocalDateTime.now())
+        .granted(OffsetDateTime.now(ZoneId.of("UTC")))
         .build();
     final ResponseEntity<String> create =
-        this.restTemplate.postForEntity("/registry/v1/trustmarksubject", record, String.class);
+        this.restTemplate.postForEntity("/registry/v1/trustmarksubjects", record, String.class);
     if (create.getStatusCode().isError()) {
       log.info(create.getBody());
     }
@@ -153,15 +157,46 @@ public class TrustMarkSubjectControllerIT {
         .trustMarkId("WrongFormat")
         .subject("http://www.swedenconnect.se/subject")
         .revoked(true)
-        .granted(LocalDateTime.now())
+        .granted(OffsetDateTime.now(ZoneId.of("UTC")))
         .build();
     final ResponseEntity<String> create =
-        this.restTemplate.postForEntity("/registry/v1/trustmarksubject", record, String.class);
+        this.restTemplate.postForEntity("/registry/v1/trustmarksubjects", record, String.class);
     if (create.getStatusCode().isError()) {
       log.info(create.getBody());
     }
     assertThat(create.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     assertThat(create.getBody()).contains("trustMarkSubjectRecord.trustMarkId -> WrongFormat :must match");
+  }
+
+  /**
+   * Tests the retrieval of all TrustMarkSubject records from the registry.
+   * The method validates that the API endpoint for retrieving records responds correctly
+   * with a status of HTTP 200 OK and a non-null body containing the expected number of records.
+   */
+  @Test
+  public void testGetAllTrustMarkSubjects() {
+    // Arrange
+    IntStream.range(10, 15).boxed().forEach(i -> {
+      final TrustMarkSubjectRecord trustMarkSubjectRecord = new TrustMarkSubjectRecord.Builder()
+          .trustMarkSubjectRecordId(UUID.randomUUID().toString())
+          .issuer("https://www.swedenconnect.se/issuer-" + i)
+          .subject("https://www.swedenconnect.se/subject-" + i)
+          .trustMarkId("https://www.swedenconnect.se/trustmarkid-" + i)
+          .revoked(false)
+          .granted(OffsetDateTime.now(ZoneId.of("UTC")))
+          .expires(OffsetDateTime.now(ZoneId.of("UTC")).plusDays(i))
+          .build();
+      this.restTemplate.postForEntity("/registry/v1/trustmarksubjects", trustMarkSubjectRecord, TrustMarkSubjectRecord.class);
+    });
+
+    // Act
+    final ResponseEntity<TrustMarkSubjectRecord[]> response = this.restTemplate.getForEntity("/registry/v1/trustmarksubjects", TrustMarkSubjectRecord[].class);
+
+    // Assert
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    final TrustMarkSubjectRecord[] trustMarkSubjectRecords = response.getBody();
+    assertThat(trustMarkSubjectRecords).isNotNull();
+    assertThat(trustMarkSubjectRecords).hasSizeGreaterThanOrEqualTo(5);
   }
 
 }
