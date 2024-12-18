@@ -1,5 +1,6 @@
 package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.jwk.JWK;
@@ -35,7 +36,8 @@ class FederationApiServiceTest {
             federationserviceapiSignKeyJWK(),
             null,
             null,
-            "http://issuer");
+            "http://issuer",
+        new ObjectMapper());
 
     final SignedJWT jwt = federationApiService.signJsonRecords("trust-marks",
         List.of(EntityFactory.createDefaultJsonEntity(),
