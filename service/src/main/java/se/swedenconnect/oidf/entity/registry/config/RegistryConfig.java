@@ -109,20 +109,25 @@ public class RegistryConfig {
    * Creating trustMarkSubjectRepository
    *
    * @param registryProperties Properties
+   * @param mapper ObjectMapper that will create json with the right time handling
    * @return FederationServiceApiService
    * @throws ParseException If there is some trouble parsing configuration
    */
   @Bean
-  public FederationApiService federationServiceApiService(final RegistryProperties registryProperties)
+  public FederationApiService federationServiceApiService(final RegistryProperties registryProperties,
+                                                          final ObjectMapper mapper)
       throws ParseException {
+
     final RegistryProperties.FederationAPIProperties federationAPIProperties =
         registryProperties.federationServiceApi();
+
     return new FederationApiService(
         this.entityRepository,
         federationAPIProperties.federationserviceapiSignKeyJWK(),
         this.policyRepository,
         this.trustMarkSubjectRepository,
-        federationAPIProperties.issuer()
+        federationAPIProperties.issuer(),
+            mapper
     );
   }
 

@@ -53,7 +53,7 @@ import java.util.UUID;
 @Slf4j
 public class FederationApiService {
 
-  private final ObjectMapper mapper = new ObjectMapper();
+  private final ObjectMapper mapper;
   private final JWK signKey;
   private final EntityRepository entityRepository;
   private final PolicyRepository policyRepository;
@@ -67,19 +67,21 @@ public class FederationApiService {
    * @param policyRepository PolicyRepository
    * @param trustMarkSubjectRepository TrustMarkSubjectRepository
    * @param jwkIssuer Issuer that is set on out going JWT:s
+   * @param mapper ObjectMapper setup with the right handling for date formatting
    */
   public FederationApiService(
       final EntityRepository entityRepository,
       final JWK signKey,
       final PolicyRepository policyRepository,
       final TrustMarkSubjectRepository trustMarkSubjectRepository,
-      final String jwkIssuer) {
+      final String jwkIssuer,
+      final ObjectMapper mapper) {
     this.entityRepository = entityRepository;
     this.policyRepository = policyRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
     this.signKey = signKey;
     this.jwkIssuer = jwkIssuer;
-
+    this.mapper = mapper;
   }
 
   /**
