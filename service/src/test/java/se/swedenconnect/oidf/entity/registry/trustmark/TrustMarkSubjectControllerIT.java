@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.testcontainers.containers.MariaDBContainer;
@@ -29,8 +30,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
 
-import java.time.LocalDateTime;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,6 +56,8 @@ public class TrustMarkSubjectControllerIT {
   @Container
   @ServiceConnection
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
+
+  private RestTemplateBuilder restTemplateBuilder;
   @Autowired
   private TestRestTemplate restTemplate;
 
@@ -61,7 +65,8 @@ public class TrustMarkSubjectControllerIT {
    * Doing CRUD operations on TrustMarkSubject
    */
   @Test
-  public void testCRUD() throws JsonProcessingException {
+  public void testCRUD() throws JsonProcessingException, com.fasterxml.jackson.core.JsonProcessingException {
+
 
     final TrustMarkSubjectRecord record = TrustMarkSubjectRecord.builder()
         .trustMarkSubjectRecordId(UUID.randomUUID().toString())
@@ -69,8 +74,9 @@ public class TrustMarkSubjectControllerIT {
         .trustMarkId("http://www.swedenconnect.se/trustmarkid")
         .subject("http://www.swedenconnect.se/subject")
         .revoked(true)
-        .granted(LocalDateTime.now())
+        .granted(OffsetDateTime.now(ZoneId.of("UTC")))
         .build();
+
     final ResponseEntity<String> create =
         this.restTemplate.postForEntity("/registry/v1/trustmarksubject", record, String.class);
     if (create.getStatusCode().isError()) {
@@ -79,13 +85,13 @@ public class TrustMarkSubjectControllerIT {
     assertThat(create.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
 
-    record.setExpires(LocalDateTime.now());
+    record.setExpires(OffsetDateTime.now(ZoneId.of("UTC")));
     this.restTemplate.put("/registry/v1/trustmarksubject/" + record.getTrustMarkSubjectRecordId(), record);
 
     final ResponseEntity<TrustMarkSubjectRecord> read =
-        this.restTemplate.getForEntity("/registry/v1/trustmarksubject/"+record.getTrustMarkSubjectRecordId(), TrustMarkSubjectRecord.class);
+        this.restTemplate.getForEntity("/registry/v1/trustmarksubject/"+record.getTrustMarkSubjectRecordId(),
+                TrustMarkSubjectRecord.class);
     assertThat(read.getStatusCode()).isEqualTo(HttpStatus.OK);
-
     assertThat(record).isNotNull().isEqualTo(read.getBody());
 
     this.restTemplate.delete("/registry/v1/trustmarksubject/"+record.getTrustMarkSubjectRecordId());
@@ -108,7 +114,7 @@ public class TrustMarkSubjectControllerIT {
         .trustMarkId("http://www.swedenconnect.se/trustmarkid")
         .subject("http://www.swedenconnect.se/subject")
         .revoked(true)
-        .granted(LocalDateTime.now())
+        .granted(OffsetDateTime.now(ZoneId.of("UTC")))
         .build();
     final ResponseEntity<String> create =
         this.restTemplate.postForEntity("/registry/v1/trustmarksubject", record, String.class);
@@ -130,7 +136,7 @@ public class TrustMarkSubjectControllerIT {
         .issuer("http://www.swedenconnect.se/issuer")
         .trustMarkId("http://www.swedenconnect.se/trustmarkid")
         .revoked(true)
-        .granted(LocalDateTime.now())
+        .granted(OffsetDateTime.now(ZoneId.of("UTC")))
         .build();
     final ResponseEntity<String> create =
         this.restTemplate.postForEntity("/registry/v1/trustmarksubject", record, String.class);
@@ -153,7 +159,7 @@ public class TrustMarkSubjectControllerIT {
         .trustMarkId("WrongFormat")
         .subject("http://www.swedenconnect.se/subject")
         .revoked(true)
-        .granted(LocalDateTime.now())
+        .granted(OffsetDateTime.now(ZoneId.of("UTC")))
         .build();
     final ResponseEntity<String> create =
         this.restTemplate.postForEntity("/registry/v1/trustmarksubject", record, String.class);

@@ -178,7 +178,7 @@
                                 <performBeanValidation>true</performBeanValidation>
                                 <useBeanValidation>true</useBeanValidation>
                                 <java8>true</java8>
-                                <dateLibrary>java8-localdatetime</dateLibrary>
+                                <dateLibrary>java8</dateLibrary>
 
                             </configOptions>
                         </configuration>

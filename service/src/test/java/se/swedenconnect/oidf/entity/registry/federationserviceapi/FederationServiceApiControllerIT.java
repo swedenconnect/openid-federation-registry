@@ -1,5 +1,7 @@
 package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
@@ -19,7 +21,8 @@ import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
 
 import java.text.ParseException;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -41,7 +44,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class FederationServiceApiControllerIT {
   @Autowired
   private TestRestTemplate restTemplate;
-
+@Autowired
+private ObjectMapper objectMapper;
 
   @Test
   void trustMarkRecordNotFound() {
@@ -59,7 +63,7 @@ class FederationServiceApiControllerIT {
    * @throws ParseException
    */
   @Test
-  void trustMarkRecordSuccess() throws ParseException {
+  void trustMarkRecordSuccess() throws ParseException, JsonProcessingException {
 
     final TrustMarkSubjectRecord record = TrustMarkSubjectRecord.builder()
         .trustMarkSubjectRecordId(UUID.randomUUID().toString())
@@ -67,8 +71,8 @@ class FederationServiceApiControllerIT {
         .trustMarkId("http://www.swedenconnect.se/trustmarkid")
         .subject("http://www.swedenconnect.se/subject")
         .revoked(true)
-        .granted(LocalDateTime.now())
-        .expires(LocalDateTime.now())
+        .granted(OffsetDateTime.now(ZoneId.of("UTC")))
+        .expires(OffsetDateTime.now(ZoneId.of("UTC")))
         .build();
 
     final ResponseEntity<String> response =
@@ -114,6 +118,8 @@ class FederationServiceApiControllerIT {
           Assert.assertEquals(record.getSubject(),claimMap.get("subject"));
           Assert.assertNotNull(claimMap.get("expires"));
           Assert.assertNotNull(claimMap.get("granted"));
+          Assert.assertEquals(record.getExpires().toString(),claimMap.get("expires"));
+          Assert.assertEquals(record.getGranted().toString(),claimMap.get("granted"));
           Assert.assertEquals(record.getRevoked(),claimMap.get("revoked"));
 
         });
