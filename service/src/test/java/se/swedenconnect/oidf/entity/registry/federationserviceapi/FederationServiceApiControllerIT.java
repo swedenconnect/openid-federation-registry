@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.entity.registry.fixture.EntityFactory;
+import se.swedenconnect.oidf.entity.registry.fixture.PolicyFactory;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
@@ -128,20 +129,7 @@ private ObjectMapper objectMapper;
 
   @Test
   void policyRecordSuccess() throws ParseException {
-    final PolicyRecord policy = new PolicyRecord.Builder()
-        .name("policy-name")
-        .policy(" {\n"
-            + "  \"openid_relying_party\" : {\n"
-            + "    \"grant_types\" : {\n"
-            + "      \"subset_of\" : [ \"authorization_code\" ]\n"
-            + "    },\n"
-            + "    \"response_types\" : {\n"
-            + "      \"subset_of\" : [ \"code\" ]\n"
-            + "    }\n"
-            + "  }\n"
-            + "}")
-        .policyRecordId(UUID.randomUUID().toString())
-        .build();
+    final PolicyRecord policy = PolicyFactory.record();
 
     final ResponseEntity<PolicyRecord> response =
         this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
@@ -243,11 +231,7 @@ private ObjectMapper objectMapper;
   }
 
   private String createPolicy(){
-    final PolicyRecord policy = new PolicyRecord.Builder()
-        .name("policy-name")
-        .policy("{}")
-        .policyRecordId(UUID.randomUUID().toString())
-        .build();
+    final PolicyRecord policy = PolicyFactory.record();
     // Act
     final ResponseEntity<PolicyRecord> response =
         this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);

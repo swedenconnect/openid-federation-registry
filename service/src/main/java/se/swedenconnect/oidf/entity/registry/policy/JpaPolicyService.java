@@ -17,17 +17,19 @@
 package se.swedenconnect.oidf.entity.registry.policy;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+
 
 /**
  * JpaPolicyService is an implementation of the {@link PolicyService} interface that uses JPA for managing JSON Policy
@@ -106,17 +108,17 @@ public class JpaPolicyService implements PolicyService {
   }
 
   private PolicyRecord toRecord(final PolicyEntity policyEntity) {
-    return PolicyRecord.builder()
-        .policyRecordId(policyEntity.getExternalId())
-        .name(policyEntity.getName())
-        .policy(policyEntity.getPolicy())
-        .build();
+    try {
+      return this.objectMapper.readValue(policyEntity.getPolicy(), PolicyRecord.class);
+    }
+    catch (final JsonProcessingException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to map record to entity", e);
+    }
   }
 
   private PolicyEntity mergeRecordIntoEntity(final PolicyRecord record, final PolicyEntity entity) {
     try {
-      final JsonNode policyJson = this.objectMapper.readTree(record.getPolicy());
-      entity.setPolicy(this.objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(policyJson));
+      entity.setPolicy(this.objectMapper.writeValueAsString(record));
       entity.setName(record.getName());
       entity.setExternalId(record.getPolicyRecordId());
       if (entity.getExternalId() == null) {
