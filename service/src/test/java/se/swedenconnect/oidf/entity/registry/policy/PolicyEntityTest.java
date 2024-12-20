@@ -50,7 +50,7 @@ class PolicyEntityTest {
    * Verifies the functionality of the getters and setters of the PolicyDao class.
    */
   @Test
-  public void testEntityDaoSettersAndGetters() {
+  public void testEntitySettersAndGetters() {
     PolicyEntity policyEntity = new PolicyEntity();
 
     policyEntity.setId(1L);
@@ -66,7 +66,7 @@ class PolicyEntityTest {
    * Test the default constructor of the PolicyDao class.
    */
   @Test
-  public void testEntityDaoDefaultConstructor() {
+  public void testEntityDefaultConstructor() {
     PolicyEntity policyEntity = new PolicyEntity();
 
     assertThat(policyEntity.getId()).isEqualTo(0L);
@@ -78,7 +78,7 @@ class PolicyEntityTest {
    * Test the toString method of the PolicyDao class.
    */
   @Test
-  public void testPolicyDaoToString() {
+  public void testPolicyEntityToString() {
     PolicyEntity policyEntity = new PolicyEntity();
     policyEntity.setId(1L);
     policyEntity.setName("openid_relying_party");

@@ -28,11 +28,13 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import se.swedenconnect.oidf.entity.registry.fixture.PolicyFactory;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 import se.swedenconnect.oidf.registry.api.model.EntityRecordHostedRecord;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -88,11 +90,7 @@ public class EntityControllerTest {
    */
   @Test
   public void testCreateEntity() throws Exception {
-    final PolicyRecord policyRecord = PolicyRecord.builder()
-        .name("TestPolicy")
-        .policyRecordId(UUID.randomUUID().toString())
-        .policy("{\"Test Policy\":\"value\"}")
-        .build();
+    final PolicyRecord policyRecord = PolicyFactory.record();
     this.mockMvc.perform(post("/registry/v1/policies")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(policyRecord)))
@@ -129,11 +127,7 @@ public class EntityControllerTest {
    */
   @Test
   public void testGetEntity() throws Exception {
-    final PolicyRecord policyRecord = PolicyRecord.builder()
-        .name("TestPolicy")
-        .policyRecordId(UUID.randomUUID().toString())
-        .policy("{\"Test Policy\":\"value\"}")
-        .build();
+    final PolicyRecord policyRecord = PolicyFactory.record();
     this.mockMvc.perform(post("/registry/v1/policies")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(policyRecord)))
@@ -177,11 +171,7 @@ public class EntityControllerTest {
    */
   @Test
   public void testUpdateEntity() throws Exception {
-    final PolicyRecord policyRecord = PolicyRecord.builder()
-        .name("TestPolicy")
-        .policyRecordId(UUID.randomUUID().toString())
-        .policy("{\"Test Policy\":\"value\"}")
-        .build();
+    final PolicyRecord policyRecord = PolicyFactory.record();
     this.mockMvc.perform(post("/registry/v1/policies")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(policyRecord)))
@@ -228,11 +218,7 @@ public class EntityControllerTest {
    */
   @Test
   public void testDeleteEntity() throws Exception {
-    final PolicyRecord policyRecord = PolicyRecord.builder()
-        .name("TestPolicy")
-        .policyRecordId(UUID.randomUUID().toString())
-        .policy("{\"Test Policy\":\"value\"}")
-        .build();
+    final PolicyRecord policyRecord = PolicyFactory.record();
     this.mockMvc.perform(post("/registry/v1/policies")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(policyRecord)))
