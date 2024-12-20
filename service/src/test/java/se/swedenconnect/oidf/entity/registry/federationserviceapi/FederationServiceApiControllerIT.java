@@ -77,7 +77,7 @@ private ObjectMapper objectMapper;
         .build();
 
     final ResponseEntity<String> response =
-        this.restTemplate.postForEntity("/registry/v1/trustmarksubject", record, String.class);
+        this.restTemplate.postForEntity("/registry/v1/trustmarksubjects", record, String.class);
     if (response.getStatusCode().isError()) {
       log.info(response.getBody());
     }
