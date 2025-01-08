@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.entity.registry.entity.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.entity.EntityService;
 import se.swedenconnect.oidf.entity.registry.entity.JpaEntityService;
@@ -115,7 +116,8 @@ public class RegistryConfig {
    */
   @Bean
   public FederationApiService federationServiceApiService(final RegistryProperties registryProperties,
-                                                          final ObjectMapper mapper)
+                                                          final ObjectMapper mapper,
+                                                          final RegistryAuditService registryAuditService)
       throws ParseException {
 
     final RegistryProperties.FederationAPIProperties federationAPIProperties =
@@ -127,7 +129,8 @@ public class RegistryConfig {
         this.policyRepository,
         this.trustMarkSubjectRepository,
         federationAPIProperties.issuer(),
-            mapper
+            mapper,
+        registryAuditService
     );
   }
 

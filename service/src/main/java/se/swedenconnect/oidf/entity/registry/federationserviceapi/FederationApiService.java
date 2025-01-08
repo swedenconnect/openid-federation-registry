@@ -31,6 +31,7 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.entity.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.entity.registry.entity.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyEntity;
@@ -59,7 +60,7 @@ public class FederationApiService {
   private final PolicyRepository policyRepository;
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
   private final String jwkIssuer;
-
+private final RegistryAuditService registryAuditService;
   /**
    * Creating a FederationServiceApiService
    * @param entityRepository EntityRepository
@@ -75,13 +76,15 @@ public class FederationApiService {
       final PolicyRepository policyRepository,
       final TrustMarkSubjectRepository trustMarkSubjectRepository,
       final String jwkIssuer,
-      final ObjectMapper mapper) {
+      final ObjectMapper mapper,
+      final RegistryAuditService registryAuditService) {
     this.entityRepository = entityRepository;
     this.policyRepository = policyRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
     this.signKey = signKey;
     this.jwkIssuer = jwkIssuer;
     this.mapper = mapper;
+    this.registryAuditService = registryAuditService;
   }
 
   /**
@@ -99,8 +102,10 @@ public class FederationApiService {
           "Unable to find entity for issuer:'%s'".formatted(issuer));
     }
     try {
-      return this.signJsonRecords("entity-records",
+      final String jwt =  this.signJsonRecords("entity-records",
           recordEntity.stream().map(EntityEntity::getEntity).toList()).serialize();
+      registryAuditService.federationEntityRead(issuer);
+      return jwt;
     }
     catch (final JOSEException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
@@ -137,8 +142,10 @@ public class FederationApiService {
               .formatted(issuer,trustmarkId,subject));
     }
     try {
-      return this.signJsonRecords("trustmark-records",
+      final String jwt = this.signJsonRecords("trustmark-records",
           trustmarkSubjectEntities.stream().map(TrustMarkSubjectEntity::getTrustmarksubjectJson).toList()).serialize();
+      registryAuditService.federationTrustMarkSubjectRead(issuer,trustmarkId,subject.orElse(null));
+      return jwt;
     }
     catch (final JOSEException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
@@ -157,20 +164,16 @@ public class FederationApiService {
         .orElseThrow(() ->
             new ResponseStatusException(HttpStatus.NOT_FOUND,
                 "Unable to find policy for id:'%s'".formatted(policyRecordId.toString())));
-
-
-
     try {
       final Map<String,Object> policy =
           this.mapper.readValue(policyEntity.getPolicy(), new TypeReference<Map<String,Object>>() {});
-      final Map<String,Object> policyClaim = new HashMap<>();
-      policyClaim.put("policy_record_id",policyEntity.getExternalId());
-      policyClaim.put("policy",policy);
 
       final String claimName = "policy_record";
       final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
-      claimsSet.claim(claimName, policyClaim);
-      return this.signJWT(claimName,claimsSet.build()).serialize();
+      claimsSet.claim(claimName, policy);
+      final String jwt = this.signJWT(claimName,claimsSet.build()).serialize();
+      registryAuditService.federationPolicyRead(policyRecordId);
+      return jwt;
     }
     catch (final JOSEException  | JsonProcessingException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);

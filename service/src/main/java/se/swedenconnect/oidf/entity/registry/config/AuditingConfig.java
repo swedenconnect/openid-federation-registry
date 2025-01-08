@@ -16,9 +16,11 @@
  */
 package se.swedenconnect.oidf.entity.registry.config;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
+import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -50,4 +52,11 @@ public class AuditingConfig {
  */
     return () -> Optional.of("DefaultSystemUser:" + UUID.randomUUID());
   }
+
+  @Bean
+  public RegistryAuditService registryAuditService(ApplicationEventPublisher publisher){
+    return new RegistryAuditService(publisher);
+  }
+
+
 }
