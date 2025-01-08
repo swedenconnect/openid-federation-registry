@@ -161,12 +161,8 @@ public class FederationApiService {
 
 
     try {
-      final Map<String,Object> policy =
+      final Map<String,Object> policyClaim =
           this.mapper.readValue(policyEntity.getPolicy(), new TypeReference<Map<String,Object>>() {});
-      final Map<String,Object> policyClaim = new HashMap<>();
-      policyClaim.put("policy_record_id",policyEntity.getExternalId());
-      policyClaim.put("policy",policy);
-
       final String claimName = "policy_record";
       final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
       claimsSet.claim(claimName, policyClaim);

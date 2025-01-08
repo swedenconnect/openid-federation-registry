@@ -24,6 +24,7 @@ import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
 import java.text.ParseException;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -72,8 +73,8 @@ private ObjectMapper objectMapper;
         .trustMarkId("http://www.swedenconnect.se/trustmarkid")
         .subject("http://www.swedenconnect.se/subject")
         .revoked(true)
-        .granted(OffsetDateTime.now(ZoneId.of("UTC")))
-        .expires(OffsetDateTime.now(ZoneId.of("UTC")))
+        .granted(OffsetDateTime.now(ZoneId.of("UTC")).truncatedTo(ChronoUnit.SECONDS))
+        .expires(OffsetDateTime.now(ZoneId.of("UTC")).truncatedTo(ChronoUnit.SECONDS))
         .build();
 
     final ResponseEntity<String> response =
@@ -152,6 +153,9 @@ private ObjectMapper objectMapper;
     assertTrue(!claim.isEmpty());
     assertThat( (String)claim.get("policy_record_id")).isNotEmpty();
     assertNotNull(claim.get("policy"));
+    final Map<String,Object> policyClaim = (Map<String, Object>) claim.get("policy");
+    assertNotNull(policyClaim.get("openid_relying_party"));
+
   }
 
   @Test
