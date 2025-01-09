@@ -165,12 +165,12 @@ private final RegistryAuditService registryAuditService;
             new ResponseStatusException(HttpStatus.NOT_FOUND,
                 "Unable to find policy for id:'%s'".formatted(policyRecordId.toString())));
     try {
-      final Map<String,Object> policy =
+      final Map<String,Object> policyClaim =
           this.mapper.readValue(policyEntity.getPolicy(), new TypeReference<Map<String,Object>>() {});
 
       final String claimName = "policy_record";
       final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
-      claimsSet.claim(claimName, policy);
+      claimsSet.claim(claimName, policyClaim);
       final String jwt = this.signJWT(claimName,claimsSet.build()).serialize();
       registryAuditService.federationPolicyRead(policyRecordId);
       return jwt;
