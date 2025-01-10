@@ -23,6 +23,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
 import org.springframework.web.server.ResponseStatusException;
+import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyRepository;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 
@@ -44,32 +45,39 @@ public class JpaEntityService implements EntityService {
   private final EntityRepository repository;
   private final PolicyRepository policyRepository;
   private final ObjectMapper objectMapper;
+  private final RegistryAuditService registryAuditService;
 
   /**
-   * Constructs a JpaEntityService with the provided repository and object mapper.
+   * Constructs a new instance of {@code JpaEntityService} with the specified dependencies.
    *
-   * @param repository the JPA repository used for CRUD operations on Entity objects
-   * @param policyRepository the JPA repository used for CRUD operations on Policy objects
-   * @param objectMapper the ObjectMapper used for JSON conversion between Entity objects and their DAO
-   *     representations
+   * @param repository the {@link EntityRepository} used for CRUD operations on entities.
+   * @param policyRepository the {@link PolicyRepository} used for accessing and managing policy entities.
+   * @param objectMapper the {@link ObjectMapper} responsible for handling JSON serialization and deserialization.
+   * @param registryAuditService the {@link RegistryAuditService} used for auditing operations related to entities and
+   * policies.
    */
   public JpaEntityService(final EntityRepository repository, final PolicyRepository policyRepository,
-      final ObjectMapper objectMapper) {
+      final ObjectMapper objectMapper,
+      final RegistryAuditService registryAuditService) {
     this.repository = repository;
     this.policyRepository = policyRepository;
     this.objectMapper = objectMapper;
+    this.registryAuditService = registryAuditService;
+
   }
 
   @Override
   public EntityRecord create(final EntityRecord record) {
     this.verifyPolicyRecordId(record);
     try {
-      return this.repository.findByExternalId(record.getEntityRecordId())
+      final EntityRecord result = this.repository.findByExternalId(record.getEntityRecordId())
           .or(() -> Optional.of(new EntityEntity()))
           .map(entity -> this.mergeRecordIntoEntity(record, entity))
           .map(this.repository::save)
           .map(this::toRecord)
           .orElseThrow();
+      this.registryAuditService.entityWrite(result.getEntityRecordId(),record,result);
+      return result;
     }
     catch (final DataIntegrityViolationException e) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Issuer and Subject already exist");
@@ -102,7 +110,11 @@ public class JpaEntityService implements EntityService {
 
   @Override
   public void delete(final String entityRecordId) {
-    this.repository.findByExternalId(entityRecordId).ifPresent(this.repository::delete);
+    this.repository.findByExternalId(entityRecordId)
+        .map(entityEntity -> {
+          this.registryAuditService.entityDelete(entityRecordId,this.toRecord(entityEntity));
+          return entityEntity;
+        }).ifPresent(this.repository::delete);
   }
 
   private void verifyPolicyRecordId(final EntityRecord record) {

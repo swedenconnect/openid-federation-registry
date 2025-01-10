@@ -15,7 +15,6 @@
  *
  */
 package se.swedenconnect.oidf.entity.registry.entity;
-import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -27,6 +26,7 @@ import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
 /**
  * EntityDao is a JPA entity representing a database table for storing entities

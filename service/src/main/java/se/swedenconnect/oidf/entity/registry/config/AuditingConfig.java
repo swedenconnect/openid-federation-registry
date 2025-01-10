@@ -16,11 +16,13 @@
  */
 package se.swedenconnect.oidf.entity.registry.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
 import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
+import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditServiceEvent;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -53,9 +55,21 @@ public class AuditingConfig {
     return () -> Optional.of("DefaultSystemUser:" + UUID.randomUUID());
   }
 
+  /**
+   * Creates a {@link RegistryAuditService} bean that provides audit logging functionality for actions
+   * performed within the Federation API. This method configures and returns an instance of
+   * {@link RegistryAuditServiceEvent}, which implements the {@link RegistryAuditService} interface.
+   *
+   * @param publisher the {@link ApplicationEventPublisher} used for publishing audit events.
+   * @param currentUser the {@link AuditorAware} implementation to provide information about the current auditor.
+   * @param objectMapper the {@link ObjectMapper} instance for handling JSON serialization and deserialization.
+   * @return an instance of {@link RegistryAuditServiceEvent} configured with the provided parameters.
+   */
   @Bean
-  public RegistryAuditService registryAuditService(ApplicationEventPublisher publisher){
-    return new RegistryAuditService(publisher);
+  public RegistryAuditService registryAuditService(final ApplicationEventPublisher publisher,
+      final AuditorAware<String> currentUser,
+      final ObjectMapper objectMapper){
+    return new RegistryAuditServiceEvent(publisher,currentUser,objectMapper);
   }
 
 

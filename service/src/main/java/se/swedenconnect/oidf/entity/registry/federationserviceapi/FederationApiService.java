@@ -40,7 +40,6 @@ import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectEntity;
 import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectRepository;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -60,15 +59,18 @@ public class FederationApiService {
   private final PolicyRepository policyRepository;
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
   private final String jwkIssuer;
-private final RegistryAuditService registryAuditService;
+  private final RegistryAuditService registryAuditService;
+
   /**
-   * Creating a FederationServiceApiService
-   * @param entityRepository EntityRepository
-   * @param signKey Key used to sign outgoing JWT
-   * @param policyRepository PolicyRepository
-   * @param trustMarkSubjectRepository TrustMarkSubjectRepository
-   * @param jwkIssuer Issuer that is set on out going JWT:s
-   * @param mapper ObjectMapper setup with the right handling for date formatting
+   * Constructs a FederationApiService instance to handle OpenID Connect Federation related operations.
+   *
+   * @param entityRepository the repository for managing entity records
+   * @param signKey the JSON Web Key (JWK) used for signing operations
+   * @param policyRepository the repository for managing policy records
+   * @param trustMarkSubjectRepository the repository for managing trust mark subject records
+   * @param jwkIssuer the issuer associated with the JSON Web Key (JWK)
+   * @param mapper the object mapper for JSON processing
+   * @param registryAuditService the service responsible for auditing registry operations
    */
   public FederationApiService(
       final EntityRepository entityRepository,
@@ -104,7 +106,7 @@ private final RegistryAuditService registryAuditService;
     try {
       final String jwt =  this.signJsonRecords("entity-records",
           recordEntity.stream().map(EntityEntity::getEntity).toList()).serialize();
-      registryAuditService.federationEntityRead(issuer);
+      this.registryAuditService.federationEntityRead(issuer);
       return jwt;
     }
     catch (final JOSEException e) {
@@ -144,7 +146,7 @@ private final RegistryAuditService registryAuditService;
     try {
       final String jwt = this.signJsonRecords("trustmark-records",
           trustmarkSubjectEntities.stream().map(TrustMarkSubjectEntity::getTrustmarksubjectJson).toList()).serialize();
-      registryAuditService.federationTrustMarkSubjectRead(issuer,trustmarkId,subject.orElse(null));
+      this.registryAuditService.federationTrustMarkSubjectRead(issuer,trustmarkId,subject.orElse(null));
       return jwt;
     }
     catch (final JOSEException e) {
@@ -172,7 +174,7 @@ private final RegistryAuditService registryAuditService;
       final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
       claimsSet.claim(claimName, policyClaim);
       final String jwt = this.signJWT(claimName,claimsSet.build()).serialize();
-      registryAuditService.federationPolicyRead(policyRecordId);
+      this.registryAuditService.federationPolicyRead(policyRecordId);
       return jwt;
     }
     catch (final JOSEException  | JsonProcessingException e) {

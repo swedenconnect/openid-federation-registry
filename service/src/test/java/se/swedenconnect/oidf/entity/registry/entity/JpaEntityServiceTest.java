@@ -23,6 +23,7 @@ import org.mockito.Mockito;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditServiceLog;
 import se.swedenconnect.oidf.entity.registry.fixture.EntityFactory;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyEntity;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyRepository;
@@ -67,7 +68,7 @@ class JpaEntityServiceTest {
     repository = Mockito.mock(EntityRepository.class);
     policyRepository = Mockito.mock(PolicyRepository.class);
     objectMapper = Mockito.spy(new ObjectMapper());
-    entityService = new JpaEntityService(repository,policyRepository, objectMapper);
+    entityService = new JpaEntityService(repository,policyRepository, objectMapper,new RegistryAuditServiceLog());
   }
 
   /**
@@ -270,9 +271,11 @@ class JpaEntityServiceTest {
   @Test
   void testDeleteEntity() {
     // Given
-    String subject = EntityFactory.SUBJECT_3;
-    EntityEntity entityEntity = new EntityEntity();
+    final String subject = EntityFactory.SUBJECT_3;
+    final EntityEntity entityEntity = new EntityEntity();
     entityEntity.setSubject(subject);
+    EntityFactory.mergeRecordIntoEntity(EntityFactory.createDefaultEntity(),entityEntity);
+
     when(repository.findByExternalId(subject)).thenReturn(Optional.of(entityEntity));
 
     // When
