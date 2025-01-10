@@ -23,17 +23,14 @@ import lombok.extern.slf4j.Slf4j;
  * that is responsible for emitting audit events by logging them using the SLF4J
  * logger. This implementation ensures that audit events are captured in a structured
  * and consistent manner for monitoring and compliance purposes.
- *
  * The primary responsibility of this class is to process and log audit events
  * by invoking the `toAuditEvent` method of the {@link FederationAuditEvent} class
  * and rendering the resulting audit data as a log entry.
- *
  * Features:
  * - Logs audit events with a predefined principal value when no specific principal
  *   is identified.
  * - Processes all types of {@link FederationAuditEvent} by converting them to
- *   a {@link AuditEvent} and formatting them into structured logs.
- *
+ *   a and formatting them into structured logs.
  * The implementation provides a concrete mechanism for logging audit events,
  * with the option to include additional contextual data for audit compliance.
  *

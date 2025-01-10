@@ -102,9 +102,8 @@ public class PolicyControllerIT {
   public void testGetAllPolicies() {
     PolicyFactory.records()
         .limit(10)
-        .forEach((policy) -> {
-          this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
-        });
+        .forEach((policy) ->
+            this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class));
 
     // Act
     final ResponseEntity<PolicyRecord[]> response = this.restTemplate.getForEntity("/registry/v1/policies", PolicyRecord[].class);

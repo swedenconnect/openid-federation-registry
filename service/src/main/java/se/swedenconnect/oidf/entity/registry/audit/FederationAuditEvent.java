@@ -27,7 +27,6 @@ import java.util.Optional;
 /**
  * Represents an audit event specific to federation-related actions, capturing details
  * about the event type, issuer, subject, associated trust mark, old data, and new data.
- *
  * Instances of this class encapsulate the details of a specific audit event.
  * It provides a mechanism to convert the event into a standardized {@link AuditEvent}
  * format with additional structured data.

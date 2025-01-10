@@ -67,7 +67,7 @@ public class JpaPolicyServiceTest {
    * method of the repository is called exactly once.
    */
   @Test
-  public void testCreateValidPolicy() throws JsonProcessingException {
+  public void testCreateValidPolicy() {
 
     final PolicyRecord policyRecord = PolicyFactory.record();
 

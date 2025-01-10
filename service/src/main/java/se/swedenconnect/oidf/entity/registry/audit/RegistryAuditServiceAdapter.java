@@ -31,12 +31,10 @@ import java.util.UUID;
  * audit event logging functionality for the Federation API. This service utilizes an
  * ApplicationEventPublisher to publish audit events and an AuditorAware<String> to determine
  * the current user performing the actions.
- *
  * It logs the following types of actions as audit events
  * - Read operations for federation entities
  * - Read operations for trust marks subject to an entity
  * - Read operations for federation policies
- *
  * Audit events are constructed using FederationAuditEvent builder and are published using
  * the configured ApplicationEventPublisher.
  *

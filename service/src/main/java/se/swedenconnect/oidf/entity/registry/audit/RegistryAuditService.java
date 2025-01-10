@@ -27,9 +27,7 @@ import java.util.UUID;
  * RegistryAuditService defines an interface for auditing specific read operations within a federation API.
  * Implementations of this interface are responsible for logging or handling details related to these read
  * actions, often for monitoring or compliance purposes.
- *
  * The interface provides methods to audit the following types of operations:
- *
  * - Reading information about a federation entity.
  * - Reading details about a trust mark associated with a federation entity.
  * - Reading a federation policy by its unique identifier.
