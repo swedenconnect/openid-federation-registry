@@ -1,6 +1,8 @@
 name: Automated publication of docker image
 on:
   push:
+    tags-ignore:
+      - '**'
     branches:
       - main
 jobs:
