@@ -70,34 +70,6 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
     this(new ObjectMapper());
   }
 
-  @Override
-  public void federationEntityRead(final EntityID issuer) {
-    this.emitEvent(
-        FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.FEDERATION_API_ENTITY_READ)
-            .issuer(issuer.toString())
-            .build());
-  }
-
-  @Override
-  public void federationTrustMarkSubjectRead(final EntityID issuer, final String trustMarkId, final String subject) {
-    this.emitEvent(
-        FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.FEDERATION_API_TRUSTMARK_SUBJECT_READ)
-            .issuer(issuer.toString())
-            .trustMarkId(trustMarkId)
-            .subject(subject)
-            .build());
-  }
-
-  @Override
-  public void federationPolicyRead(final UUID policyId) {
-    this.emitEvent(
-        FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.FEDERATION_API_POLICY_READ)
-            .extId(policyId.toString())
-            .build());
-  }
 
   @Override
   public void policyWrite(final String policyId, final PolicyRecord oldRecord, final PolicyRecord newRecord) {

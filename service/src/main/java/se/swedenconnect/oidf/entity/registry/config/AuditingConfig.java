@@ -17,12 +17,17 @@
 package se.swedenconnect.oidf.entity.registry.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.boot.actuate.audit.InMemoryAuditEventRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
+import se.swedenconnect.oidf.entity.registry.audit.AuditEventLogListener;
 import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
-import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditServiceEvent;
+import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditEventPublisher;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -58,19 +63,42 @@ public class AuditingConfig {
   /**
    * Creates a {@link RegistryAuditService} bean that provides audit logging functionality for actions
    * performed within the Federation API. This method configures and returns an instance of
-   * {@link RegistryAuditServiceEvent}, which implements the {@link RegistryAuditService} interface.
+   * {@link RegistryAuditEventPublisher}, which implements the {@link RegistryAuditService} interface.
    *
    * @param publisher the {@link ApplicationEventPublisher} used for publishing audit events.
    * @param currentUser the {@link AuditorAware} implementation to provide information about the current auditor.
    * @param objectMapper the {@link ObjectMapper} instance for handling JSON serialization and deserialization.
-   * @return an instance of {@link RegistryAuditServiceEvent} configured with the provided parameters.
+   * @return an instance of {@link RegistryAuditEventPublisher} configured with the provided parameters.
    */
   @Bean
   public RegistryAuditService registryAuditService(final ApplicationEventPublisher publisher,
       final AuditorAware<String> currentUser,
       final ObjectMapper objectMapper){
-    return new RegistryAuditServiceEvent(publisher,currentUser,objectMapper);
+    return new RegistryAuditEventPublisher(publisher,currentUser,objectMapper);
   }
 
+  /**
+   * Creates and returns a new instance of {@link AuditEventLogListener},
+   * a listener that processes and logs audit events based on the configured log level.
+   *
+   * @return an instance of {@link AuditEventLogListener}.
+   */
+  @Bean
+  public AuditEventLogListener auditEventLogListener(){
+      return new AuditEventLogListener();
+  }
+
+  /**
+   * Provides an instance of {@link InMemoryAuditEventRepository} for storing audit events
+   * in-memory. This bean will only be created if no other {@link AuditEventRepository}
+   * bean is defined in the application context.
+   *
+   * @return an instance of {@link InMemoryAuditEventRepository}.
+   */
+  @Bean
+  @ConditionalOnMissingBean({ AuditEventRepository.class})
+  InMemoryAuditEventRepository auditEventRepository() {
+    return new InMemoryAuditEventRepository();
+  }
 
 }

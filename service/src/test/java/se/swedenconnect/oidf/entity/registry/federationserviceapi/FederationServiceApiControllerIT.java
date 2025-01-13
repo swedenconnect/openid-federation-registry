@@ -40,14 +40,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Per Fredrik Plars
  */
 @Slf4j
-@Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("h2")
 class FederationServiceApiControllerIT {
   @Autowired
   private TestRestTemplate restTemplate;
-@Autowired
-private ObjectMapper objectMapper;
 
   @Test
   void trustMarkRecordNotFound() {

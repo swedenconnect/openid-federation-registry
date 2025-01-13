@@ -37,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author Per Fredrik Plars
  */
 @Slf4j
-public class RegistryAuditServiceLog extends RegistryAuditServiceAdapter {
+public class RegistryAuditLogger extends RegistryAuditServiceAdapter {
   @Override
   protected void emitEvent(final FederationAuditEvent event) {
     log.info(event.toAuditEvent("<NoPrincipal>").toString());

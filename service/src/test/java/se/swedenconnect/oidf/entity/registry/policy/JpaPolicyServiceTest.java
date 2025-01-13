@@ -15,13 +15,12 @@
  */
 package se.swedenconnect.oidf.entity.registry.policy;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditServiceLog;
+import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditLogger;
 import se.swedenconnect.oidf.entity.registry.fixture.PolicyFactory;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
@@ -57,7 +56,7 @@ public class JpaPolicyServiceTest {
   @BeforeEach
   public void setUp() {
     MockitoAnnotations.openMocks(this);
-    jpaPolicyService = new JpaPolicyService(policyRepository,new ObjectMapper(),new RegistryAuditServiceLog());
+    jpaPolicyService = new JpaPolicyService(policyRepository,new ObjectMapper(),new RegistryAuditLogger());
   }
   /**
    * Tests the {@code create} method of the {@code JpaPolicyService} class.

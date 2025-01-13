@@ -23,7 +23,7 @@ import org.mockito.Mockito;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
-import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditServiceLog;
+import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditLogger;
 import se.swedenconnect.oidf.entity.registry.fixture.EntityFactory;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyEntity;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyRepository;
@@ -68,7 +68,7 @@ class JpaEntityServiceTest {
     repository = Mockito.mock(EntityRepository.class);
     policyRepository = Mockito.mock(PolicyRepository.class);
     objectMapper = Mockito.spy(new ObjectMapper());
-    entityService = new JpaEntityService(repository,policyRepository, objectMapper,new RegistryAuditServiceLog());
+    entityService = new JpaEntityService(repository,policyRepository, objectMapper,new RegistryAuditLogger());
   }
 
   /**

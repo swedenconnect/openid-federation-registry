@@ -307,8 +307,8 @@
             <excludeGeneratedSources>true</excludeGeneratedSources>
             <checkstyleRules>
             <module name="Checker">
-              <module name="Header">
-                <property name="header" value="/*\n * Copyright 2024 Sweden Connect"/>
+              <module name="RegexpHeader">
+                <property name="header" value="^/\*\n \* Copyright (2024|2025|2024-2025) Sweden Connect.*$"/>
               </module>
               <module name="LineLength">
                 <property name="max" value="120"/>

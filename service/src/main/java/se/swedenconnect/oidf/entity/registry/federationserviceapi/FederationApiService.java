@@ -59,7 +59,7 @@ public class FederationApiService {
   private final PolicyRepository policyRepository;
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
   private final String jwkIssuer;
-  private final RegistryAuditService registryAuditService;
+
 
   /**
    * Constructs a FederationApiService instance to handle OpenID Connect Federation related operations.
@@ -70,7 +70,6 @@ public class FederationApiService {
    * @param trustMarkSubjectRepository the repository for managing trust mark subject records
    * @param jwkIssuer the issuer associated with the JSON Web Key (JWK)
    * @param mapper the object mapper for JSON processing
-   * @param registryAuditService the service responsible for auditing registry operations
    */
   public FederationApiService(
       final EntityRepository entityRepository,
@@ -78,15 +77,13 @@ public class FederationApiService {
       final PolicyRepository policyRepository,
       final TrustMarkSubjectRepository trustMarkSubjectRepository,
       final String jwkIssuer,
-      final ObjectMapper mapper,
-      final RegistryAuditService registryAuditService) {
+      final ObjectMapper mapper) {
     this.entityRepository = entityRepository;
     this.policyRepository = policyRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
     this.signKey = signKey;
     this.jwkIssuer = jwkIssuer;
     this.mapper = mapper;
-    this.registryAuditService = registryAuditService;
   }
 
   /**
@@ -106,7 +103,6 @@ public class FederationApiService {
     try {
       final String jwt =  this.signJsonRecords("entity-records",
           recordEntity.stream().map(EntityEntity::getEntity).toList()).serialize();
-      this.registryAuditService.federationEntityRead(issuer);
       return jwt;
     }
     catch (final JOSEException e) {
@@ -144,10 +140,8 @@ public class FederationApiService {
               .formatted(issuer,trustmarkId,subject));
     }
     try {
-      final String jwt = this.signJsonRecords("trustmark-records",
+      return this.signJsonRecords("trustmark-records",
           trustmarkSubjectEntities.stream().map(TrustMarkSubjectEntity::getTrustmarksubjectJson).toList()).serialize();
-      this.registryAuditService.federationTrustMarkSubjectRead(issuer,trustmarkId,subject.orElse(null));
-      return jwt;
     }
     catch (final JOSEException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
@@ -173,9 +167,7 @@ public class FederationApiService {
       final String claimName = "policy_record";
       final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
       claimsSet.claim(claimName, policyClaim);
-      final String jwt = this.signJWT(claimName,claimsSet.build()).serialize();
-      this.registryAuditService.federationPolicyRead(policyRecordId);
-      return jwt;
+      return this.signJWT(claimName,claimsSet.build()).serialize();
     }
     catch (final JOSEException  | JsonProcessingException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);

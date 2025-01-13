@@ -24,7 +24,7 @@ class RegistryAuditServiceAdapterTest {
   void policyWrite_shouldEmitEventWithCorrectAttributes() throws JsonProcessingException {
 
     final Stack<AuditEvent> stack = new Stack<>();
-    final RegistryAuditService auditService = new RegistryAuditServiceLog() {
+    final RegistryAuditService auditService = new RegistryAuditLogger() {
       @Override
       protected void emitEvent(final FederationAuditEvent event) {
         super.emitEvent(event);

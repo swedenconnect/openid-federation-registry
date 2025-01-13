@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditServiceLog;
+import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditLogger;
 import se.swedenconnect.oidf.entity.registry.entity.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.entity.EntityService;
 import se.swedenconnect.oidf.entity.registry.entity.JpaEntityService;
@@ -58,7 +58,7 @@ public class RegistryConfigTest {
     policyRepository = mock(PolicyRepository.class);
     trustMarkSubjectRepository = mock(TrustMarkSubjectRepository.class);
     registryConfig = new RegistryConfig(entityRepository, policyRepository,trustMarkSubjectRepository,
-        new RegistryAuditServiceLog(),
+        new RegistryAuditLogger(),
         new ObjectMapper());
   }
 

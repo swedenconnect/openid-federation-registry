@@ -35,35 +35,7 @@ import java.util.UUID;
  * @author Per Fredrik Plars
  */
 public interface RegistryAuditService {
-  /**
-   * Audits a read operation performed on a federation entity in the context of the Federation API.
-   * Implementations of the interface should handle or log this event for purposes such as monitoring
-   * or compliance.
-   *
-   * @param issuer the unique identifier of the entity that is being read. Represents the issuing
-   *               federation entity's ID in the operation.
-   */
-  void federationEntityRead(EntityID issuer);
 
-  /**
-   * Audits a read operation performed on a trust mark subject associated with a federation entity.
-   * Implementations of this method should handle or log this action for purposes such as monitoring,
-   * compliance, or debugging.
-   *
-   * @param issuer the unique identifier of the entity that issued the trust mark.
-   * @param trustMarkId the unique identifier of the trust mark being read.
-   * @param subject the subject associated with the trust mark.
-   */
-  void federationTrustMarkSubjectRead(EntityID issuer, String trustMarkId, String subject);
-
-  /**
-   * Audits a read operation performed on a federation policy by its unique identifier.
-   * Implementations of this method should handle or log the event for purposes such
-   * as monitoring, compliance, or debugging.
-   *
-   * @param policyId the unique identifier of the federation policy being read
-   */
-  void federationPolicyRead(UUID policyId);
 
   /**
    * Audits a write operation performed on a federation policy. This method is invoked

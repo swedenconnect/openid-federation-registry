@@ -6,7 +6,6 @@ import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.SignedJWT;
 import org.junit.jupiter.api.Test;
-import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditServiceLog;
 import se.swedenconnect.oidf.entity.registry.fixture.EntityFactory;
 
 import java.nio.charset.Charset;
@@ -38,7 +37,7 @@ class FederationApiServiceTest {
             null,
             null,
             "http://issuer",
-        new ObjectMapper(),new RegistryAuditServiceLog());
+        new ObjectMapper());
 
     final SignedJWT jwt = federationApiService.signJsonRecords("trust-marks",
         List.of(EntityFactory.createDefaultJsonEntity(),

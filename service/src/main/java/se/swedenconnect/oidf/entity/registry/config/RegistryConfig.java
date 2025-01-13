@@ -117,8 +117,6 @@ public class RegistryConfig {
    *                            signing keys and issuer details.
    * @param mapper the ObjectMapper used for handling JSON serialization
    *               and deserialization.
-   * @param registryAuditService the service used to manage auditing
-   *                              within the registry.
    * @return an instance of FederationApiService configured with the
    *         necessary dependencies.
    * @throws ParseException if there is an error in parsing
@@ -126,8 +124,7 @@ public class RegistryConfig {
    */
   @Bean
   public FederationApiService federationServiceApiService(final RegistryProperties registryProperties,
-                                                          final ObjectMapper mapper,
-                                                          final RegistryAuditService registryAuditService)
+                                                          final ObjectMapper mapper)
       throws ParseException {
 
     final RegistryProperties.FederationAPIProperties federationAPIProperties =
@@ -139,8 +136,7 @@ public class RegistryConfig {
         this.policyRepository,
         this.trustMarkSubjectRepository,
         federationAPIProperties.issuer(),
-            mapper,
-        registryAuditService
+            mapper
     );
   }
 

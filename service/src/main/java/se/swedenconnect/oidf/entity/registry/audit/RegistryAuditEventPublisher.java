@@ -18,7 +18,9 @@ package se.swedenconnect.oidf.entity.registry.audit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.actuate.audit.listener.AuditApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationListener;
 import org.springframework.data.domain.AuditorAware;
 
 /**
@@ -36,7 +38,7 @@ import org.springframework.data.domain.AuditorAware;
  * @author Per Fredrik Plars
  */
 @Slf4j
-public class RegistryAuditServiceEvent extends RegistryAuditServiceAdapter {
+public class RegistryAuditEventPublisher extends RegistryAuditServiceAdapter {
 
   private final ApplicationEventPublisher publisher;
   private final AuditorAware<String> currentUser;
@@ -50,7 +52,7 @@ public class RegistryAuditServiceEvent extends RegistryAuditServiceAdapter {
    * @param currentUser the AuditorAware<String> responsible for determining the current user performing the actions.
    * @param mapper the ObjectMapper responsible for handling JSON conversion or serialization processes.
    */
-  public RegistryAuditServiceEvent(
+  public RegistryAuditEventPublisher(
       final ApplicationEventPublisher publisher,
       final AuditorAware<String> currentUser,
       final ObjectMapper mapper) {
@@ -62,7 +64,8 @@ public class RegistryAuditServiceEvent extends RegistryAuditServiceAdapter {
 
  @Override
   protected void emitEvent(final FederationAuditEvent event) {
-    this.publisher.publishEvent(event.toAuditEvent(this.currentUser.getCurrentAuditor().orElse("<NoActiveUserSet>")));
+    this.publisher.publishEvent(new AuditApplicationEvent(
+        event.toAuditEvent(this.currentUser.getCurrentAuditor().orElse("<NoActiveUserSet>"))));
   }
 
 }
