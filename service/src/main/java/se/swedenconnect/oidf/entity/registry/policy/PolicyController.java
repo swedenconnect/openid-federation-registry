@@ -71,8 +71,8 @@ public class PolicyController {
   @PostMapping
   public ResponseEntity<PolicyRecord> createPolicy(@RequestBody @Validated final PolicyRecord policy) {
     log.debug("POST: {}", policy);
-    final PolicyRecord dto = this.policyService.create(policy);
-    return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+    final PolicyRecord record = this.policyService.create(policy);
+    return ResponseEntity.status(HttpStatus.CREATED).body(record);
   }
 
   /**

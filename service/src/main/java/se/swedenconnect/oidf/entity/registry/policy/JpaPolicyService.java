@@ -23,11 +23,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
-import se.swedenconnect.oidf.registry.api.model.EntityRecord;
+import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 
@@ -51,28 +50,36 @@ public class JpaPolicyService implements PolicyService {
   @Getter
   private final PolicyRepository policyRepository;
   private final ObjectMapper objectMapper;
-
+  private final RegistryAuditService auditService;
   /**
-   * Construct a JpaPolicyService with the provided repository and object mapper.
+   * Constructs a new instance of {@code JpaPolicyService} which handles policy-related operations
+   * using a JPA repository. This class is responsible for interacting with the data layer and
+   * performing policy CRUD (Create, Read, Update, Delete) operations.
    *
-   * @param policyRepository the JPA repository
-   * @param objectMapper the ObjectMapper used for JSON conversion between Policy strings and their DAO
-   *     representations
+   * @param policyRepository the {@link PolicyRepository} used for accessing and modifying policy data
+   * @param objectMapper the {@link ObjectMapper} used for JSON serialization and deserialization of policy objects
+   * @param auditService the {@link RegistryAuditService} used for logging and auditing operations
    */
-  public JpaPolicyService(final PolicyRepository policyRepository, final ObjectMapper objectMapper) {
+  public JpaPolicyService(final PolicyRepository policyRepository,
+      final ObjectMapper objectMapper,
+      final RegistryAuditService auditService) {
     this.policyRepository = policyRepository;
     this.objectMapper = objectMapper;
+    this.auditService = auditService;
   }
 
   @Override
   public PolicyRecord create(final PolicyRecord record) {
     try {
-      return this.policyRepository.findByExternalId(record.getPolicyRecordId())
+
+      final PolicyRecord result = this.policyRepository.findByExternalId(record.getPolicyRecordId())
           .or(() -> Optional.of(new PolicyEntity()))
           .map(entity -> this.mergeRecordIntoEntity(record, entity))
           .map(this.policyRepository::save)
           .map(this::toRecord)
           .orElseThrow();
+      this.auditService.policyWrite(result.getPolicyRecordId(),record,result);
+      return result;
     }
     catch (final DataIntegrityViolationException e) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "TrustMarkSubjectRecord already exists");
@@ -104,7 +111,12 @@ public class JpaPolicyService implements PolicyService {
 
   @Override
   public void delete(final String policyRecordId) {
-    this.policyRepository.findByExternalId(policyRecordId).ifPresent(this.policyRepository::delete);
+    this.policyRepository.findByExternalId(policyRecordId)
+        .map(policyEntity -> {
+          this.auditService.policyDelete(policyRecordId, this.toRecord(policyEntity));
+          return policyEntity;
+        })
+        .ifPresent(this.policyRepository::delete);
   }
 
   private PolicyRecord toRecord(final PolicyEntity policyEntity) {

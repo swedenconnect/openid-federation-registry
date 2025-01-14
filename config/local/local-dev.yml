@@ -3,6 +3,13 @@ server:
   compression:
     enabled: true
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
+
 spring:
   application:
     name: EntityRegistryService

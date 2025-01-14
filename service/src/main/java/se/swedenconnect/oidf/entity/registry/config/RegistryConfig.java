@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.entity.registry.entity.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.entity.EntityService;
 import se.swedenconnect.oidf.entity.registry.entity.JpaEntityService;
@@ -52,74 +53,82 @@ public class RegistryConfig {
   private final EntityRepository entityRepository;
   private final PolicyRepository policyRepository;
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
-
+  private final RegistryAuditService registryAuditService;
+  private final ObjectMapper objectMapper;
   /**
-   * Constructs a new ServiceConfig with the specified repositories.
+   * Constructs an instance of the RegistryConfig class, initializing its dependencies.
    *
-   * @param entityRepository the {@link EntityRepository} used for accessing and performing CRUD operations on
-   *     entities
-   * @param policyRepository the {@link PolicyRepository} used for accessing and performing CRUD operations on
-   *     policies
-   * @param trustMarkSubjectRepository the {@link TrustMarkSubjectRepository} used for accessing and performing CRUD
-   *     operations on policies
+   * @param entityRepository the repository used for accessing and managing entity-related data
+   * @param policyRepository the repository used for accessing and managing policy-related data
+   * @param trustMarkSubjectRepository the repository used for accessing and managing trustmark subject-related data
+   * @param registryAuditService the service used for managing auditing operations in the registry
+   * @param objectMapper the object mapper for JSON serialization and deserialization
    */
   public RegistryConfig(final EntityRepository entityRepository, final PolicyRepository policyRepository,
-      final TrustMarkSubjectRepository trustMarkSubjectRepository) {
+      final TrustMarkSubjectRepository trustMarkSubjectRepository,
+      final RegistryAuditService registryAuditService,
+      final ObjectMapper objectMapper) {
     this.entityRepository = entityRepository;
     this.policyRepository = policyRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
+    this.registryAuditService = registryAuditService;
+    this.objectMapper = objectMapper;
   }
 
   /**
    * Provides an instance of JpaEntityService, which implements the EntityService interface. This service manages entity
    * objects using a JPA repository and handles JSON conversion using the provided ObjectMapper.
    *
-   * @param objectMapper the ObjectMapper used for JSON conversion between Entity objects and their DAO
-   *     representations.
    * @return an instance of JpaEntityService.
    */
   @Bean
   @Primary
   @Qualifier("jpaEntityService")
-  public EntityService jpaEntityService(final ObjectMapper objectMapper) {
-    return new JpaEntityService(this.entityRepository, this.policyRepository, objectMapper);
+  public EntityService jpaEntityService() {
+    return new JpaEntityService(
+        this.entityRepository,
+        this.policyRepository,
+        this.objectMapper,
+        this.registryAuditService);
   }
 
   /**
    * Provides an instance of JpaPolicyService, which implements the PolicyService interface. This service manages policy
    * objects using a JPA repository and handles JSON conversion using the provided ObjectMapper.
    *
-   * @param objectMapper the ObjectMapper used for JSON conversion between Policy objects and their DAO
-   *     representations.
+
    * @return an instance of JpaPolicyService.
    */
   @Bean
   @Qualifier("jpaPolicyService")
-  public PolicyService jpaPolicyService(final ObjectMapper objectMapper) {
-    return new JpaPolicyService(this.policyRepository, objectMapper);
+  public PolicyService jpaPolicyService() {
+    return new JpaPolicyService(this.policyRepository, this.objectMapper,this.registryAuditService);
   }
 
   /**
    * TrustMarkSubjectService
    *
-   * @param objectMapper the ObjectMapper used for JSON conversion between Policy objects and their DAO
-   *     representations.
    * @return an instance of TrustMarkSubjectService.
    */
   @Bean
   @Qualifier("jpaTrustMarkSubjectService")
-  public TrustMarkSubjectService jpaTrustMarkSubjectService(final ObjectMapper objectMapper) {
-    return new JpaTrustMarkSubjectService(this.trustMarkSubjectRepository, objectMapper);
+  public TrustMarkSubjectService jpaTrustMarkSubjectService() {
+    return new JpaTrustMarkSubjectService(this.trustMarkSubjectRepository, this.objectMapper,this.registryAuditService);
   }
 
   /**
-   * Creating trustMarkSubjectRepository
+   * Provides an instance of the FederationApiService for managing federation-related operations.
    *
-   * @param registryProperties Properties
+   * @param registryProperties the registry configuration properties, which include
+   *                            settings for the federation service API such as
+   *                            signing keys and issuer details.
+   * @param mapper the ObjectMapper used for handling JSON serialization
+   *               and deserialization.
    * @param credentialBundles Bundle for reading keys
-   * @param mapper ObjectMapper that will create json with the right time handling
-   * @return FederationServiceApiService
-   * @throws ParseException If there is some trouble parsing configuration
+   * @return an instance of FederationApiService configured with the
+   *         necessary dependencies.
+   * @throws ParseException if there is an error in parsing
+   *                        federation service API configuration properties.
    */
   @Bean
   public FederationApiService federationServiceApiService(final RegistryProperties registryProperties,

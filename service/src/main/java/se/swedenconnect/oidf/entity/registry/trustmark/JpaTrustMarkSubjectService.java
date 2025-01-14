@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
 
 import java.util.List;
@@ -36,27 +37,36 @@ import java.util.Optional;
 public class JpaTrustMarkSubjectService implements TrustMarkSubjectService {
   private final TrustMarkSubjectRepository repository;
   private final ObjectMapper objectMapper;
+  private final RegistryAuditService registryAuditService;
 
   /**
-   * Constructor for JpaTrustMarkSubjectService
-   * @param repository TrustMarkSubjectRepository
-   * @param objectMapper Objectmapper
+   * JpaTrustMarkSubjectService is an implementation of the TrustMarkSubjectService interface,
+   * responsible for managing TrustMarkSubjectRecord entities in the database.
+   * This service handles CRUD operations and additional queries for TrustMarkSubject entities.
+   *
+   * @param repository the repository used for database operations on TrustMarkSubject entities
+   * @param objectMapper the object mapper for handling JSON serialization and deserialization
+   * @param registryAuditService the service used for auditing and logging registry actions
    */
   public JpaTrustMarkSubjectService(final TrustMarkSubjectRepository repository,
-      final ObjectMapper objectMapper) {
+      final ObjectMapper objectMapper,
+      final RegistryAuditService registryAuditService) {
     this.repository = repository;
     this.objectMapper = objectMapper;
+    this.registryAuditService = registryAuditService;
   }
 
   @Override
   public TrustMarkSubjectRecord create(final TrustMarkSubjectRecord record) {
     try {
-      return this.repository.findByExternalId(record.getTrustMarkSubjectRecordId())
+      final TrustMarkSubjectRecord result = this.repository.findByExternalId(record.getTrustMarkSubjectRecordId())
           .or(() -> Optional.of(TrustMarkSubjectEntity.builder().build()))
           .map(entity -> this.mergeRecordIntoEntity(record,entity))
           .map(this.repository::save)
           .map(this::toRecord)
           .orElseThrow();
+      this.registryAuditService.trustmarkSubjectWrite(result.getTrustMarkSubjectRecordId(),record,result);
+      return result;
     }
     catch (final DataIntegrityViolationException e) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "TrustMarkSubjectRecord already exists");
@@ -102,7 +112,13 @@ public class JpaTrustMarkSubjectService implements TrustMarkSubjectService {
 
   @Override
   public void delete(final String trustMarkSubjectRecordId) {
-    this.repository.findByExternalId(trustMarkSubjectRecordId).ifPresent(this.repository::delete);
+    this.repository.findByExternalId(trustMarkSubjectRecordId)
+        .map(trustMarkSubjectEntity -> {
+          this.registryAuditService
+              .trustmarkSubjectDelete(trustMarkSubjectRecordId,this.toRecord(trustMarkSubjectEntity));
+          return trustMarkSubjectEntity;
+        })
+        .ifPresent(this.repository::delete);
   }
 
   private TrustMarkSubjectRecord toRecord(final TrustMarkSubjectEntity entity){

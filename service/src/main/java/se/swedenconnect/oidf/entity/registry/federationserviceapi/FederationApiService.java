@@ -31,6 +31,7 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.entity.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.entity.registry.entity.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyEntity;
@@ -39,7 +40,6 @@ import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectEntity;
 import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectRepository;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -60,14 +60,16 @@ public class FederationApiService {
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
   private final String jwkIssuer;
 
+
   /**
-   * Creating a FederationServiceApiService
-   * @param entityRepository EntityRepository
-   * @param signKey Key used to sign outgoing JWT
-   * @param policyRepository PolicyRepository
-   * @param trustMarkSubjectRepository TrustMarkSubjectRepository
-   * @param jwkIssuer Issuer that is set on out going JWT:s
-   * @param mapper ObjectMapper setup with the right handling for date formatting
+   * Constructs a FederationApiService instance to handle OpenID Connect Federation related operations.
+   *
+   * @param entityRepository the repository for managing entity records
+   * @param signKey the JSON Web Key (JWK) used for signing operations
+   * @param policyRepository the repository for managing policy records
+   * @param trustMarkSubjectRepository the repository for managing trust mark subject records
+   * @param jwkIssuer the issuer associated with the JSON Web Key (JWK)
+   * @param mapper the object mapper for JSON processing
    */
   public FederationApiService(
       final EntityRepository entityRepository,
@@ -99,8 +101,9 @@ public class FederationApiService {
           "Unable to find entity for issuer:'%s'".formatted(issuer));
     }
     try {
-      return this.signJsonRecords("entity-records",
+      final String jwt =  this.signJsonRecords("entity-records",
           recordEntity.stream().map(EntityEntity::getEntity).toList()).serialize();
+      return jwt;
     }
     catch (final JOSEException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
@@ -157,12 +160,10 @@ public class FederationApiService {
         .orElseThrow(() ->
             new ResponseStatusException(HttpStatus.NOT_FOUND,
                 "Unable to find policy for id:'%s'".formatted(policyRecordId.toString())));
-
-
-
     try {
       final Map<String,Object> policyClaim =
           this.mapper.readValue(policyEntity.getPolicy(), new TypeReference<Map<String,Object>>() {});
+
       final String claimName = "policy_record";
       final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
       claimsSet.claim(claimName, policyClaim);

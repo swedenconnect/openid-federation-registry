@@ -15,32 +15,21 @@
  */
 package se.swedenconnect.oidf.entity.registry.policy;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
+import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditLogger;
 import se.swedenconnect.oidf.entity.registry.fixture.PolicyFactory;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -59,10 +48,6 @@ public class JpaPolicyServiceTest {
   @Mock
   private PolicyRepository policyRepository;
 
-  @Spy
-  private ObjectMapper objectMapper = new ObjectMapper();
-
-  @InjectMocks
   private JpaPolicyService jpaPolicyService;
 
   /**
@@ -71,6 +56,7 @@ public class JpaPolicyServiceTest {
   @BeforeEach
   public void setUp() {
     MockitoAnnotations.openMocks(this);
+    jpaPolicyService = new JpaPolicyService(policyRepository,new ObjectMapper(),new RegistryAuditLogger());
   }
   /**
    * Tests the {@code create} method of the {@code JpaPolicyService} class.
@@ -80,7 +66,7 @@ public class JpaPolicyServiceTest {
    * method of the repository is called exactly once.
    */
   @Test
-  public void testCreateValidPolicy() throws JsonProcessingException {
+  public void testCreateValidPolicy() {
 
     final PolicyRecord policyRecord = PolicyFactory.record();
 
@@ -150,9 +136,7 @@ public class JpaPolicyServiceTest {
   @Test
   public void testDeletePolicy() {
     // Given
-    final PolicyEntity policyEntity = new PolicyEntity();
-    policyEntity.setName("Policy to be deleted");
-    policyEntity.setPolicy("{\"key\":\"value\"}");
+    final PolicyEntity policyEntity = PolicyFactory.entity();
     policyEntity.setExternalId(UUID.randomUUID().toString());
     when(this.policyRepository.findByExternalId(policyEntity.getExternalId())).thenReturn(Optional.of(policyEntity));
 

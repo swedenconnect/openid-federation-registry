@@ -15,8 +15,6 @@
  */
 package se.swedenconnect.oidf.entity.registry.policy;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,9 +102,8 @@ public class PolicyControllerIT {
   public void testGetAllPolicies() {
     PolicyFactory.records()
         .limit(10)
-        .forEach((policy) -> {
-          this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class);
-        });
+        .forEach((policy) ->
+            this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class));
 
     // Act
     final ResponseEntity<PolicyRecord[]> response = this.restTemplate.getForEntity("/registry/v1/policies", PolicyRecord[].class);

@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditLogger;
 import se.swedenconnect.oidf.entity.registry.entity.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.entity.EntityService;
 import se.swedenconnect.oidf.entity.registry.entity.JpaEntityService;
@@ -45,7 +46,6 @@ public class RegistryConfigTest {
   private PolicyRepository policyRepository;
   private TrustMarkSubjectRepository trustMarkSubjectRepository;
   private RegistryConfig registryConfig;
-  private final ObjectMapper objectMapper = new ObjectMapper();
 
   /**
    * Sets up the testing environment before each test execution.
@@ -57,7 +57,9 @@ public class RegistryConfigTest {
     entityRepository = mock(EntityRepository.class);
     policyRepository = mock(PolicyRepository.class);
     trustMarkSubjectRepository = mock(TrustMarkSubjectRepository.class);
-    registryConfig = new RegistryConfig(entityRepository, policyRepository,trustMarkSubjectRepository);
+    registryConfig = new RegistryConfig(entityRepository, policyRepository,trustMarkSubjectRepository,
+        new RegistryAuditLogger(),
+        new ObjectMapper());
   }
 
   /**
@@ -69,7 +71,7 @@ public class RegistryConfigTest {
    */
   @Test
   public void testJpaEntityServiceBean() {
-    EntityService jpaService = registryConfig.jpaEntityService(this.objectMapper);
+    EntityService jpaService = registryConfig.jpaEntityService();
     assertThat(jpaService).isNotNull();
     assertThat(jpaService).isInstanceOf(JpaEntityService.class);
     assertSame(entityRepository, ((JpaEntityService) jpaService).getRepository());
@@ -84,7 +86,7 @@ public class RegistryConfigTest {
    */
   @Test
   public void testJpaPolicyServiceBean() {
-    PolicyService policyService = registryConfig.jpaPolicyService(this.objectMapper);
+    PolicyService policyService = registryConfig.jpaPolicyService();
     assertThat(policyService).isNotNull();
     assertThat(policyService).isInstanceOf(JpaPolicyService.class);
     assertSame(policyRepository, ((JpaPolicyService) policyService).getPolicyRepository());

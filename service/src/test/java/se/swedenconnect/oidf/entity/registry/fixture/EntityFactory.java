@@ -18,6 +18,8 @@ package se.swedenconnect.oidf.entity.registry.fixture;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.web.server.ResponseStatusException;
+import se.swedenconnect.oidf.entity.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 
 import java.util.UUID;
@@ -164,6 +166,32 @@ public class EntityFactory {
         }
         catch (final JsonProcessingException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Merges the data from the provided {@link EntityRecord} into an existing {@link EntityEntity} object.
+     * Updates the issuer, subject, and entity fields of the {@link EntityEntity}.
+     * Sets the externalId of the {@link EntityEntity} if it is null, using the entityRecordId from {@link EntityRecord}.
+     * Throws an exception in case of JSON processing errors during mapping.
+     *
+     * @param record the {@link EntityRecord} containing the data to be merged
+     * @param entity the {@link EntityEntity} to be updated with data from the given {@link EntityRecord}
+     * @return the updated {@link EntityEntity} object with the merged data
+     * @throws ResponseStatusException if a JSON processing error occurs during data mapping
+     */
+    public static EntityEntity mergeRecordIntoEntity(final EntityRecord record, final EntityEntity entity) {
+        try {
+            entity.setIssuer(record.getIssuer());
+            entity.setSubject(record.getSubject());
+            entity.setEntity(mapper.writeValueAsString(record));
+            if (entity.getExternalId() == null) {
+                entity.setExternalId(record.getEntityRecordId());
+            }
+            return entity;
+        }
+        catch (final JsonProcessingException e) {
+            throw new IllegalArgumentException("Unable to map record to entity", e);
         }
     }
 

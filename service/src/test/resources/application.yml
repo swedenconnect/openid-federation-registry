@@ -27,3 +27,9 @@ credential:
           alias: rsa1
           key-password: Test1234
 
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
