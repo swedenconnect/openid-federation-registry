@@ -53,7 +53,7 @@ import java.util.UUID;
 @Slf4j
 public class FederationApiService {
 
-  private final ObjectMapper mapper = new ObjectMapper();
+  private final ObjectMapper mapper;
   private final JWK signKey;
   private final EntityRepository entityRepository;
   private final PolicyRepository policyRepository;
@@ -67,19 +67,21 @@ public class FederationApiService {
    * @param policyRepository PolicyRepository
    * @param trustMarkSubjectRepository TrustMarkSubjectRepository
    * @param jwkIssuer Issuer that is set on out going JWT:s
+   * @param mapper ObjectMapper setup with the right handling for date formatting
    */
   public FederationApiService(
       final EntityRepository entityRepository,
       final JWK signKey,
       final PolicyRepository policyRepository,
       final TrustMarkSubjectRepository trustMarkSubjectRepository,
-      final String jwkIssuer) {
+      final String jwkIssuer,
+      final ObjectMapper mapper) {
     this.entityRepository = entityRepository;
     this.policyRepository = policyRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
     this.signKey = signKey;
     this.jwkIssuer = jwkIssuer;
-
+    this.mapper = mapper;
   }
 
   /**
@@ -159,12 +161,8 @@ public class FederationApiService {
 
 
     try {
-      final Map<String,Object> policy =
+      final Map<String,Object> policyClaim =
           this.mapper.readValue(policyEntity.getPolicy(), new TypeReference<Map<String,Object>>() {});
-      final Map<String,Object> policyClaim = new HashMap<>();
-      policyClaim.put("policy_record_id",policyEntity.getExternalId());
-      policyClaim.put("policy",policy);
-
       final String claimName = "policy_record";
       final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
       claimsSet.claim(claimName, policyClaim);

@@ -23,10 +23,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
 /**
  * TrustMarkSubjectEntity is a JPA entity representing a database table for storing entities
@@ -37,17 +40,18 @@ import lombok.ToString;
 @Getter
 @Setter
 @Entity
-@ToString
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder(toBuilder = true)
-
+@ToString(callSuper = true)
 @Table(name = "trustmark_subject",
     uniqueConstraints = { @UniqueConstraint(columnNames = { "issuer", "trustmarkId","subject" }) })
-public class TrustMarkSubjectEntity {
+public class TrustMarkSubjectEntity extends BaseEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
 
-  @Column(name="external_id", unique = true, updatable = false)
+  @Column(name="external_id", unique = true, updatable = false,nullable = false)
   private String externalId;
 
   @Column(nullable = false)

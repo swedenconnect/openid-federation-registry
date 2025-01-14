@@ -33,6 +33,7 @@ import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
@@ -305,7 +306,7 @@ public class EntityControllerIT {
   private String createPolicy(){
     final PolicyRecord policy = new PolicyRecord.Builder()
         .name("policy-name")
-        .policy("{}")
+        .policy(Map.of("key","value"))
         .policyRecordId(UUID.randomUUID().toString())
         .build();
     // Act

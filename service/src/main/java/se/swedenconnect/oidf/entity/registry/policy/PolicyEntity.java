@@ -25,6 +25,7 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
 /**
  * PolicyDao is a JPA entity representing a database table for storing policies
@@ -35,14 +36,14 @@ import lombok.ToString;
 @Getter
 @Setter
 @Entity
-@ToString
+@ToString(callSuper = true)
 @Table(name = "policies")
-public class PolicyEntity {
+public class PolicyEntity extends BaseEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
 
-  @Column(name="external_id", unique = true, updatable = false)
+  @Column(name="external_id", unique = true, updatable = false,nullable = false)
   private String externalId;
 
   @Column

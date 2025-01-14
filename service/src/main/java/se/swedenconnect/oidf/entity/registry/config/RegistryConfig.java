@@ -42,7 +42,9 @@ import java.text.ParseException;
 /**
  * A Spring configuration class that defines beans for different implementations of the EntityService interface.
  *
+ * @author Per Fredrik Plars
  * @author David Goldring
+ *
  */
 @Configuration
 public class RegistryConfig {
@@ -115,13 +117,16 @@ public class RegistryConfig {
    *
    * @param registryProperties Properties
    * @param credentialBundles Bundle for reading keys
+   * @param mapper ObjectMapper that will create json with the right time handling
    * @return FederationServiceApiService
    * @throws ParseException If there is some trouble parsing configuration
    */
   @Bean
   public FederationApiService federationServiceApiService(final RegistryProperties registryProperties,
-      final CredentialBundles credentialBundles)
+      final CredentialBundles credentialBundles,
+      final ObjectMapper mapper)
       throws ParseException {
+
     final RegistryProperties.FederationAPIProperties federationAPIProperties =
         registryProperties.federationServiceApi();
 
@@ -136,7 +141,8 @@ public class RegistryConfig {
         jwk,
         this.policyRepository,
         this.trustMarkSubjectRepository,
-        federationAPIProperties.issuer()
+        federationAPIProperties.issuer(),
+            mapper
     );
   }
 

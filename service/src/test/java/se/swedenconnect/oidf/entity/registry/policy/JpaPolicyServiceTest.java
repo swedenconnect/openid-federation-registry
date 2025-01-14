@@ -24,11 +24,14 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import se.swedenconnect.oidf.entity.registry.fixture.PolicyFactory;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -56,8 +59,8 @@ public class JpaPolicyServiceTest {
   @Mock
   private PolicyRepository policyRepository;
 
-  @Mock
-  private ObjectMapper objectMapper;
+  @Spy
+  private ObjectMapper objectMapper = new ObjectMapper();
 
   @InjectMocks
   private JpaPolicyService jpaPolicyService;
@@ -79,21 +82,13 @@ public class JpaPolicyServiceTest {
   @Test
   public void testCreateValidPolicy() throws JsonProcessingException {
 
-    final PolicyRecord policyRecord = PolicyRecord.builder()
-        .name("TestPolicy")
-        .policyRecordId(UUID.randomUUID().toString())
-        .policy("{\"Test Policy\":\"value\"}")
-        .build();
+    final PolicyRecord policyRecord = PolicyFactory.record();
 
-    final PolicyEntity entityReturnedOnSave = new PolicyEntity();
+    final PolicyEntity entityReturnedOnSave = PolicyFactory.entity();
     entityReturnedOnSave.setName(policyRecord.getName());
     entityReturnedOnSave.setExternalId(policyRecord.getPolicyRecordId());
-    entityReturnedOnSave.setPolicy(policyRecord.getPolicy());
 
-    final  ObjectWriter objectWriter = mock(ObjectWriter.class);
-    when(objectWriter.writeValueAsString(any())).thenReturn("hej");
-    when(this.objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
-    when(this.policyRepository.save(any(PolicyEntity.class))).thenReturn(entityReturnedOnSave);
+     when(this.policyRepository.save(any(PolicyEntity.class))).thenReturn(entityReturnedOnSave);
 
     // When
     final PolicyRecord createdPolicy = this.jpaPolicyService.create(policyRecord);
@@ -106,30 +101,7 @@ public class JpaPolicyServiceTest {
   }
 
 
-  /**
-   * Tests the {@code create} method of the {@code JpaPolicyService} class when given an invalid policy.
-   * <p>
-   * This test ensures that an attempt to create a policy with invalid JSON content results in a
-   * {@link ResponseStatusException} with a {@link HttpStatus#BAD_REQUEST BAD_REQUEST} status.
-   *
-   * @throws JsonProcessingException if there is a problem processing JSON content
-   */
-  @Test
-  public void testCreateInvalidPolicy() throws JsonProcessingException {
-    // Given
-    final PolicyRecord policyRecord = new PolicyRecord.Builder().name("Invalid Policy").policy("Invalid JSON").build();
-    doThrow(JsonMappingException.class).when(objectMapper).readTree(any(String.class));
-    when(this.policyRepository.save(any(PolicyEntity.class))).then(invocationOnMock -> invocationOnMock.getArguments()[0]);
 
-    // When
-    final Throwable thrown = catchThrowable(() -> jpaPolicyService.create(policyRecord));
-
-    // Then
-    assertThat(thrown).isInstanceOf(ResponseStatusException.class);
-    assertThat(((ResponseStatusException) thrown).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-
-    verify(this.policyRepository, never()).save(any(PolicyEntity.class));
-  }
 
   /**
    * Tests the {@code get} method of the {@code JpaPolicyService} class.
@@ -139,19 +111,17 @@ public class JpaPolicyServiceTest {
   @Test
   public void testGetPolicy() {
     // Given
-    final PolicyEntity policyEntity = new PolicyEntity();
-    policyEntity.setName("Test Policy");
-    policyEntity.setPolicy("{\"key\":\"value\"}");
+    final PolicyEntity policyEntity = PolicyFactory.entity();
 
-    when(this.policyRepository.findByExternalId("Test Policy")).thenReturn(Optional.of(policyEntity));
+    when(this.policyRepository.findByExternalId(policyEntity.getExternalId())).thenReturn(Optional.of(policyEntity));
 
     // When
-    PolicyRecord foundPolicy = jpaPolicyService.get("Test Policy");
+    final PolicyRecord foundPolicy = jpaPolicyService.get(policyEntity.getExternalId());
 
     // Then
     assertThat(foundPolicy).isNotNull();
     assertThat(foundPolicy.getName()).isEqualTo(policyEntity.getName());
-    assertThat(foundPolicy.getPolicy()).isEqualTo(policyEntity.getPolicy());
+    assertThat(foundPolicy.getPolicy()).isNotEmpty();
   }
 
   /**
@@ -161,25 +131,17 @@ public class JpaPolicyServiceTest {
    */
   @Test
   public void testGetAllPolicies() {
-    // Given
-    final int numberOfPolicies = 42;
-    final List<PolicyEntity> policyEntities = new java.util.ArrayList<>();
-    for (int i = 1; i <= numberOfPolicies; i++) {
-      PolicyEntity policyEntity = new PolicyEntity();
-      policyEntity.setName("Policy " + i);
-      policyEntity.setPolicy("{\"key" + i + "\":\"value" + i + "\"}");
-      policyEntities.add(policyEntity);
-    }
 
-    when(this.policyRepository.findAll()).thenReturn(policyEntities);
+    int entityCount = 42;
+    when(this.policyRepository.findAll()).thenReturn(PolicyFactory.entities().limit(entityCount).toList());
 
     // When
     final List<PolicyRecord> policies = jpaPolicyService.getAll();
 
     // Then
     assertThat(policies).isNotNull();
-    assertThat(policies).hasSize(numberOfPolicies);
-    assertThat(policies.getFirst().getName()).isEqualTo("Policy 1");
+    assertThat(policies).hasSize(entityCount);
+    assertThat(policies.getFirst().getName()).isEqualTo("policy-name-test:1");
   }
 
   /**
