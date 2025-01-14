@@ -50,15 +50,7 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi) {
    * @param issuer Issuer that is set on outgoing JWT:s
    */
   public record FederationAPIProperties(String signKeyAlias,String issuer){
-    /**
-     * Parsing  federationserviceapi SignKey to a JWK
-     * @return JWK
-     * @throws ParseException If there is an error to pars signkey
-     */
-    public JWK federationserviceapiSignKeyJWK() throws ParseException {
-      return JWK.parse(new String(Base64.getDecoder()
-          .decode(this.signKeyAlias), Charset.defaultCharset()));
-    }
+
     /**
      * Validate properties
      */
@@ -66,12 +58,7 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi) {
       Assert.hasText(
           this.signKeyAlias,"Expected openid.federation.registry.federatonServiceApi.sign_key_alias");
       Assert.hasText(this.issuer,"Expected openid.federation.registry.federatonServiceApi.issuer");
-      try {
-        this.federationserviceapiSignKeyJWK();
-      }
-      catch (final Exception e) {
-        throw new IllegalArgumentException("FederationserviceapiSignKey has the wrong format can not be parsed",e);
-      }
+
     }
 
   }

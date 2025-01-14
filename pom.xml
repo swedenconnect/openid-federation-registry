@@ -33,22 +33,8 @@
 
   <developers>
     <developer>
-      <name>Martin Lindström</name>
-      <email>extern.martin.lindstrom@digg.se</email>
-      <organization>Digg</organization>
-      <organizationUrl>https://www.digg.se</organizationUrl>
-    </developer>
-
-    <developer>
-      <name>Stefan Santesson</name>
-      <email>extern.stefan.santesson@digg.se</email>
-      <organization>Digg</organization>
-      <organizationUrl>https://www.digg.se</organizationUrl>
-    </developer>
-
-    <developer>
-      <name>Felix Hellman</name>
-      <email>extern.felix.hellman@digg.se</email>
+      <name>Per Fredrik Plars</name>
+      <email>extern.perfredik.plars@digg.se</email>
       <organization>Digg</organization>
       <organizationUrl>https://www.digg.se</organizationUrl>
     </developer>
@@ -59,21 +45,6 @@
       <organization>Digg</organization>
       <organizationUrl>https://www.digg.se</organizationUrl>
     </developer>
-
-    <developer>
-      <name>Mattias Kesti</name>
-      <email>extern.mattias.kesti@digg.se</email>
-      <organization>Digg</organization>
-      <organizationUrl>https://www.digg.se</organizationUrl>
-    </developer>
-
-    <developer>
-      <name>Per Fredrik Plars</name>
-      <email>extern.perfredik.plars@digg.se</email>
-      <organization>Digg</organization>
-      <organizationUrl>https://www.digg.se</organizationUrl>
-    </developer>
-
   </developers>
 
   <properties>
@@ -86,7 +57,8 @@
     <!-- Dependency Versions -->
     <nimbus-jose-jwt.version>9.41.1</nimbus-jose-jwt.version>
     <nimbus-oauth2-oidc-sdk.version>11.20.1</nimbus-oauth2-oidc-sdk.version>
-    <spring-boot.version>3.3.5</spring-boot.version>
+    <spring-boot.version>3.4.1</spring-boot.version>
+    <credentials-support.version>2.0.0</credentials-support.version>
   </properties>
 
   <repositories>
@@ -121,7 +93,22 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-
+      <dependency>
+        <groupId>se.swedenconnect.security</groupId>
+        <artifactId>credentials-support-spring-boot-starter</artifactId>
+        <version>${credentials-support.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>se.swedenconnect.security</groupId>
+        <artifactId>credentials-support-nimbus</artifactId>
+        <version>${credentials-support.version}</version>
+      </dependency>
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
