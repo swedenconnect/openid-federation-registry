@@ -26,6 +26,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
-      - run: cd service; DOCKER_REPO=ghcr.io mvn clean package jib:build
+      - run: cd service; DOCKER_REPO=ghcr.io mvn clean package jib:build --no-transfer-progress
+
         env:
           GITHUB_TOKEN: ${{ secrets.SC_ACTION_SECRET }}
