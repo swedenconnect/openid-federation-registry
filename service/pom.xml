@@ -247,7 +247,7 @@
                         </goals>
                     </execution>
                     <execution>
-                        <phase>deploy</phase>
+                        <phase>none</phase>
                         <id>remote</id>
                         <goals>
                             <goal>build</goal>
