@@ -70,6 +70,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
     this(new ObjectMapper());
   }
 
+  /**
+   * The RegistryAuditServiceAdapter class handles the audit operations for different entities
+   * (policies, entities, and trustmarks) in the system.
+   * This adapter provides a framework for emitting audit events based on operations
+   * performed on these entities. Each method corresponds to a specific event type.
+   */
 
   @Override
   public void policyWrite(final String policyId, final PolicyRecord oldRecord, final PolicyRecord newRecord) {

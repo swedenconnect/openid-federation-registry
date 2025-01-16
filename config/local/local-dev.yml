@@ -39,6 +39,13 @@ spring:
     compose:
       enabled: true
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          public-key-location: file:config/local/public_auth_cert.pem
+
+
 logging:
   level:
     se:
