@@ -248,6 +248,7 @@
                     </execution>
                     <execution>
                         <phase>none</phase>
+                        <id>default-cli</id>
                         <goals>
                             <goal>build</goal>
                         </goals>
