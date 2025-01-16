@@ -27,6 +27,13 @@ credential:
           alias: rsa1
           key-password: Test1234
 
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          public-key-location: classpath:public_auth_cert.pem
+          audiences: https://registry.local.swedenconnect.se
 
 management:
   endpoints:
