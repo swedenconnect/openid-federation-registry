@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Sweden Connect
+ * Copyright 2025 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,26 +11,25 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ *  limitations under the License.
  */
 package se.swedenconnect.oidf.entity.registry.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.boot.actuate.audit.InMemoryAuditEventRepository;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import se.swedenconnect.oidf.entity.registry.audit.AuditEventLogListener;
-import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditEventPublisher;
+import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Configuration for auditing metadata.
@@ -49,15 +48,13 @@ public class AuditingConfig {
    */
   @Bean
   public AuditorAware<String> auditorProvider() {
-/*
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication != null && authentication.isAuthenticated()) {
-      return Optional.of(authentication.getName()); // Autentiserad användare
-    }
-    return Optional.empty();
-
- */
-    return () -> Optional.of("DefaultSystemUser:" + UUID.randomUUID());
+    return () -> {
+      final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+      if (authentication != null && authentication.isAuthenticated()) {
+        return Optional.of(authentication.getName());
+      }
+      return Optional.empty();
+    };
   }
 
   /**
