@@ -1,7 +1,22 @@
+/*
+ * Copyright 2025 Sweden Connect
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
@@ -14,7 +29,6 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.entity.registry.fixture.EntityFactory;
 import se.swedenconnect.oidf.entity.registry.fixture.PolicyFactory;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
@@ -204,6 +218,35 @@ class FederationServiceApiControllerIT {
     final List<Object> claim = signedJWT.getJWTClaimsSet().getListClaim("entity_records");
     assertNotNull(claim);
     assertTrue(!claim.isEmpty());
+
+  }
+
+  @Test
+  void submoduleRecordSuccess() throws ParseException {
+
+    final ResponseEntity<String> response = this.restTemplate
+        .getForEntity("/api/v1/federationservice/submodules?instanceid=" + UUID.randomUUID(), String.class);
+
+    if (response.getStatusCode().isError()) {
+      log.error(response.getBody());
+    }
+    assertThat(HttpStatus.OK).isEqualTo(response.getStatusCode());
+
+    final SignedJWT signedJWT = SignedJWT.parse(response.getBody());
+    assertEquals(new JOSEObjectType("module-records+jwt"), signedJWT.getHeader().getType());
+    assertNotNull(signedJWT.getHeader().getKeyID());
+
+    final Map<String, Object> claim = signedJWT.getJWTClaimsSet().getJSONObjectClaim("module_records");
+    assertNotNull(claim);
+    assertTrue(!claim.isEmpty());
+    final ModuleResponse moduleResponse = ModuleResponse.fromJson(claim);
+    assertNotNull(moduleResponse.getResolvers());
+    assertNotNull(moduleResponse.getTrustAnchors());
+    assertNotNull(moduleResponse.getTrustMarkIssuers());
+
+    assertTrue(moduleResponse.getResolvers().isEmpty());
+    assertTrue(moduleResponse.getTrustAnchors().isEmpty());
+    assertTrue(moduleResponse.getTrustMarkIssuers().isEmpty());
 
   }
 

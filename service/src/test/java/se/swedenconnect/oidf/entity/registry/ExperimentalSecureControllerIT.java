@@ -94,8 +94,9 @@ class ExperimentalSecureControllerIT {
   void createJWT() {
     final String jwt = createJwt();
     assertNotNull(jwt);
-    System.out.println(jwt);
+    System.out.println("Bearer " + jwt + "\n");
   }
+
   private String createJwt() {
     try {
       final JWTClaimsSet claims = new com.nimbusds.jwt.JWTClaimsSet.Builder()
