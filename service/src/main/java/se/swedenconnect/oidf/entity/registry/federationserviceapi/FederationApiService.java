@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Sweden Connect
+ * Copyright 2025 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,8 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ *  limitations under the License.
  */
 package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 
@@ -30,8 +29,8 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.Assert;
 import org.springframework.web.server.ResponseStatusException;
-import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.entity.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.entity.registry.entity.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyEntity;
@@ -39,6 +38,7 @@ import se.swedenconnect.oidf.entity.registry.policy.PolicyRepository;
 import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectEntity;
 import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectRepository;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -155,7 +155,7 @@ public class FederationApiService {
    * @return Signed JWT containing PolicyRecords
    */
   public String policyRecord(final UUID policyRecordId) {
-
+    Assert.notNull(policyRecordId, "policyRecordId is mandatory");
     final PolicyEntity policyEntity = this.policyRepository.findByExternalId(policyRecordId.toString())
         .orElseThrow(() ->
             new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -170,6 +170,31 @@ public class FederationApiService {
       return this.signJWT(claimName,claimsSet.build()).serialize();
     }
     catch (final JOSEException  | JsonProcessingException e) {
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
+    }
+
+  }
+
+  /**
+   * Retrieves submodule records using the provided instance identifier.
+   *
+   * @param instanceId the unique identifier of the instance for which the submodule records are requested;
+   * @return a signed JWT string containing claims for the submodule record.
+   * @throws IllegalArgumentException if the instanceId is null.
+   * @throws ResponseStatusException if an error occurs during the signing of the response.
+   */
+  public String submoduleRecord(final UUID instanceId) {
+    Assert.notNull(instanceId, "instanceId is mandatory");
+    try {
+      final String claimName = "module_records";
+      final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
+      claimsSet.claim(claimName, Map.of(
+          "resolvers", Collections.emptyList(),
+          "trust-anchors", Collections.emptyList(),
+          "trust-mark-issuers", Collections.emptyList()));
+      return this.signJWT(claimName, claimsSet.build()).serialize();
+    }
+    catch (final JOSEException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
     }
 
@@ -226,7 +251,6 @@ public class FederationApiService {
     jwt.sign(signer);
     return jwt;
   }
-
 
 
 }
