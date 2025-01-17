@@ -16,14 +16,9 @@
  */
 package se.swedenconnect.oidf.entity.registry.config;
 
-import com.nimbusds.jose.jwk.JWK;
 import jakarta.annotation.PostConstruct;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.Assert;
-
-import java.nio.charset.Charset;
-import java.text.ParseException;
-import java.util.Base64;
 
 /**
  * Properties for RegistryService
