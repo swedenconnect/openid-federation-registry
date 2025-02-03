@@ -46,7 +46,8 @@ public class ExperimentalSecureController {
   @GetMapping("/policies")
   public String policiesRead() {
     this.auditService.policyWrite(UUID.randomUUID().toString(),
-        PolicyRecord.builder().name("ExperimentalSecureController-READ").build(), PolicyRecord.builder().build());
+        PolicyRecord.builder().name("ExperimentalSecureController-READ").policyRecordId(UUID.randomUUID().toString())
+            .build(), PolicyRecord.builder().build());
     return "Read UUID: " + this.generateUuid();
   }
 
@@ -58,7 +59,9 @@ public class ExperimentalSecureController {
   @PostMapping("/policies")
   public String policiesWrite() {
     this.auditService.policyWrite(UUID.randomUUID().toString(),
-        PolicyRecord.builder().name("ExperimentalSecureController-WRITE").build(), PolicyRecord.builder().build());
+        PolicyRecord.builder().name("ExperimentalSecureController-WRITE")
+            .policyRecordId(UUID.randomUUID().toString()).build(),
+        PolicyRecord.builder().policyRecordId(UUID.randomUUID().toString()).build());
 
     return "Write UUID: " + this.generateUuid();
   }
