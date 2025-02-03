@@ -30,7 +30,9 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
- * oidf-entity-registry
+ * The PropertyValidators class provides utility methods for creating and resolving
+ * property validators based on configuration strings. These validators enforce
+ * various constraints and checks on input key-value pairs.
  *
  * @author Per Fredrik Plars
  */
@@ -39,7 +41,16 @@ public class PropertyValidators {
 
   public static final ObjectMapper mapper = new ObjectMapper();
 
-  public PropertyValidator resolveValidator(String validatorNameSetting) {
+  /**
+   * Resolves and creates a composite {@link PropertyValidator} from a given configuration string. Each validator is
+   * created based on the provided string and executed sequentially.
+   *
+   * @param validatorNameSetting a string containing validator definitions separated by the pipe ('|') character. If
+   *     the string is null or blank, a no-operation validator is returned.
+   * @return a {@link PropertyValidator} that applies all the resolved validators. If no validators are resolved, a
+   *     no-operation validator is returned.
+   */
+  public PropertyValidator resolveValidator(final String validatorNameSetting) {
     log.debug("Resolving validators: {}", validatorNameSetting);
 
     if (validatorNameSetting == null || validatorNameSetting.isBlank()) {
@@ -57,7 +68,16 @@ public class PropertyValidators {
 
   }
 
-  protected PropertyValidator propertyValidatorCreator(String validatorNameSetting) {
+  /**
+   * Creates and returns a PropertyValidator based on the provided validator name and configuration.
+   * The validatorNameSetting parameter specifies the type of validator and its configuration,
+   * typically in the format "validatorName:configuration".
+   *
+   * @param validatorNameSetting the type and configuration of the desired validator
+   * @return the created PropertyValidator instance for the specified type and configuration
+   * @throws IllegalArgumentException if the validator type specified in validatorNameSetting is unknown
+   */
+  protected PropertyValidator propertyValidatorCreator(final String validatorNameSetting) {
     log.debug("Creating validator: {}", validatorNameSetting);
     final String[] split = validatorNameSetting.trim().split(":");
     final String name = split[0];
@@ -65,20 +85,20 @@ public class PropertyValidators {
 
     return switch (name) {
       case "req" -> (String key, String value) -> {
-        throwIf(() -> value == null || value.isBlank(), key, "Required validation failed");
+        this.throwIf(() -> value == null || value.isBlank(), key, "Required validation failed");
       };
-      case "regex" -> (String key, String value) -> throwIf(() ->
+      case "regex" -> (String key, String value) -> this.throwIf(() ->
           !value.isBlank() && !value.matches(conf), key, "Regex validation failed");
-      case "min" -> (String key, String value) -> throwIf(() ->
+      case "min" -> (String key, String value) -> this.throwIf(() ->
               !value.isBlank() && value.length() < Integer.parseInt(conf),
           key, "Value has to be grater then %s".formatted(conf));
-      case "max" -> (String key, String value) -> throwIf(() ->
+      case "max" -> (String key, String value) -> this.throwIf(() ->
               !value.isBlank() && value.length() >= Integer.parseInt(conf),
           key, "Value has to be less then %s".formatted(conf));
-      case "json" -> isJson();
-      case "jwks" -> jwksValidator(conf);
-      case "url" -> isUrl();
-      case "jwk" -> isJWK();
+      case "json" -> this.isJson();
+      case "jwks" -> this.jwksValidator(conf);
+      case "url" -> this.isUrl();
+      case "jwk" -> this.isJWK();
 
       default -> throw new IllegalArgumentException("Unknown validator: " + name);
     };
@@ -89,7 +109,7 @@ public class PropertyValidators {
       try {
         new URI(value).toURL();
       }
-      catch (Exception e) {
+      catch (final Exception e) {
         throw new PropertyValidationFailException(key, "Value is not a valid URL: " + e.getMessage());
       }
     };
@@ -100,7 +120,7 @@ public class PropertyValidators {
       try {
         mapper.readTree(value);
       }
-      catch (Exception e) {
+      catch (final Exception e) {
         throw new PropertyValidationFailException(key, "Value is not a valid JSON: " + e.getMessage());
       }
     };
@@ -111,17 +131,17 @@ public class PropertyValidators {
       try {
         JWK.parse(value);
       }
-      catch (ParseException e) {
+      catch (final ParseException e) {
         throw new PropertyValidationFailException(key, "Value is not a valid JWK: " + e.getMessage());
       }
     };
   }
 
-  private PropertyValidator jwksValidator(String conf) {
+  private PropertyValidator jwksValidator(final String conf) {
 
-    boolean isPublicCheck = "public".equalsIgnoreCase(conf) || conf.isBlank();
-    boolean hasKidCheck = "kid".equalsIgnoreCase(conf) || conf.isBlank();
-    boolean hasKeysCheck = "req".equalsIgnoreCase(conf) || conf.isBlank();
+    final boolean isPublicCheck = "public".equalsIgnoreCase(conf) || conf.isBlank();
+    final boolean hasKidCheck = "kid".equalsIgnoreCase(conf) || conf.isBlank();
+    final boolean hasKeysCheck = "req".equalsIgnoreCase(conf) || conf.isBlank();
 
     return (key, value) -> {
       try {
@@ -153,20 +173,20 @@ public class PropertyValidators {
             }
 
           }
-          catch (ParseException e) {
+          catch (final ParseException e) {
             throw new PropertyValidationFailException(key, "Unable to parse key element");
           }
 
         });
       }
-      catch (JsonProcessingException e) {
+      catch (final JsonProcessingException e) {
         throw new PropertyValidationFailException(key, "Value is not a valid JSON. " + e.getMessage());
       }
 
     };
   }
 
-  private void throwIf(Supplier<Boolean> predicate, String keyName, String failMessage) {
+  private void throwIf(final Supplier<Boolean> predicate, final String keyName, final String failMessage) {
     if (predicate.get()) {
       throw new PropertyValidationFailException(keyName, failMessage);
     }

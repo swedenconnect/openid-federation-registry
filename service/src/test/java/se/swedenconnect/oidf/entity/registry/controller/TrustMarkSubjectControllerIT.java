@@ -1,19 +1,19 @@
 /*
- * Copyright 2024 Sweden Connect.
+ * Copyright 2025 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  limitations under the License.
  */
-package se.swedenconnect.oidf.entity.registry.trustmark;
+package se.swedenconnect.oidf.entity.registry.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -22,6 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -31,6 +32,8 @@ import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
@@ -112,13 +115,18 @@ public class TrustMarkSubjectControllerIT {
         .revoked(true)
         .granted(OffsetDateTime.now(ZoneId.of("UTC")))
         .build();
-    final ResponseEntity<String> create =
-        this.restTemplate.postForEntity("/registry/v1/trustmarksubjects", record, String.class);
+
+    final ResponseEntity<ProblemDetail> create =
+        this.restTemplate.postForEntity("/registry/v1/trustmarksubjects", record, ProblemDetail.class);
     if (create.getStatusCode().isError()) {
-      log.info(create.getBody());
+      log.info(create.getBody().toString());
     }
     assertThat(create.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    assertThat(create.getBody()).contains("trustMarkSubjectRecord.trustMarkSubjectRecordId -> WrongIdFormat :must match");
+
+    final List<Map<String, String>> reply = (List<Map<String, String>>) create.getBody().getProperties().get("cause");
+    assertThat(reply.getFirst().get("field")).contains("trustMarkSubjectRecord.trustMarkSubjectRecordId");
+    assertThat(reply.getFirst().get("detail")).contains("must match");
+
   }
 
   /**
@@ -134,13 +142,15 @@ public class TrustMarkSubjectControllerIT {
         .revoked(true)
         .granted(OffsetDateTime.now(ZoneId.of("UTC")))
         .build();
-    final ResponseEntity<String> create =
-        this.restTemplate.postForEntity("/registry/v1/trustmarksubjects", record, String.class);
+    final ResponseEntity<ProblemDetail> create =
+        this.restTemplate.postForEntity("/registry/v1/trustmarksubjects", record, ProblemDetail.class);
     if (create.getStatusCode().isError()) {
-      log.info(create.getBody());
+      log.info(create.getBody().toString());
     }
     assertThat(create.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    assertThat(create.getBody()).contains("trustMarkSubjectRecord.subject -> null");
+
+    final List<Map<String, String>> reply = (List<Map<String, String>>) create.getBody().getProperties().get("cause");
+    assertThat(reply.getFirst().get("field")).contains("trustMarkSubjectRecord.subject");
   }
 
   /**
@@ -157,13 +167,17 @@ public class TrustMarkSubjectControllerIT {
         .revoked(true)
         .granted(OffsetDateTime.now(ZoneId.of("UTC")))
         .build();
-    final ResponseEntity<String> create =
-        this.restTemplate.postForEntity("/registry/v1/trustmarksubjects", record, String.class);
+
+    final ResponseEntity<ProblemDetail> create =
+        this.restTemplate.postForEntity("/registry/v1/trustmarksubjects", record, ProblemDetail.class);
     if (create.getStatusCode().isError()) {
-      log.info(create.getBody());
+      log.info(create.getBody().toString());
     }
     assertThat(create.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    assertThat(create.getBody()).contains("trustMarkSubjectRecord.trustMarkId -> WrongFormat :must match");
+
+    final List<Map<String, String>> reply = (List<Map<String, String>>) create.getBody().getProperties().get("cause");
+    assertThat(reply.getFirst().get("field")).contains("trustMarkSubjectRecord.trustMarkId");
+    assertThat(reply.getFirst().get("detail")).contains("must match");
   }
 
   /**

@@ -28,6 +28,7 @@ import java.util.Optional;
  * for standard data access layers.
  *
  * @author David Goldring
+ * @author Per Fredrik Plars
  */
 public interface PolicyRepository extends JpaRepository<PolicyEntity, Long>{
   /**

@@ -121,11 +121,8 @@ public class PropertyValidatorsTest {
 
   @Test
   public void testResolveValidator_jwksValidator_invalidJwk() {
-
     final String invalidJwkValue = "{\"keys\":[]}";
-
-    final PropertyValidator result = propertyValidators.resolveValidator("jwks:public");
-
+    final PropertyValidator result = propertyValidators.resolveValidator("jwks");
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", invalidJwkValue));
   }
 }

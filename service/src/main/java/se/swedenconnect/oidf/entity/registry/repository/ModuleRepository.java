@@ -25,14 +25,34 @@ import java.util.Optional;
 
 /**
  * Repository interface for managing SettingsEntity.
+ * @author Per Fredrik Plars
  */
 @Repository
 public interface ModuleRepository extends JpaRepository<ModuleEntity, Long> {
 
+  /**
+   * Retrieves a {@link ModuleEntity} based on the provided external ID.
+   *
+   * @param externalid the unique external identifier of the module to search for
+   * @return an {@link Optional} containing the found {@link ModuleEntity}, or an empty {@link Optional} if no entity
+   *     was found
+   */
   Optional<ModuleEntity> findByExternalId(String externalid);
 
+  /**
+   * Retrieves a {@link ModuleEntity} based on the provided external ID and module type.
+   *
+   * @param externalid the unique external identifier of the module to search for
+   * @param moduleType the type of the module to search for
+   * @return an {@link Optional}*/
   Optional<ModuleEntity> findByExternalIdAndModuleType(String externalid, String moduleType);
 
+  /**
+   * Retrieves a list of {@link ModuleEntity} objects that match the specified module type.
+   *
+   * @param moduleType the type of modules to search for
+   * @return a list of {@link ModuleEntity} objects matching the specified module type
+   */
   List<ModuleEntity> findByModuleType(String moduleType);
 
 }

@@ -21,17 +21,28 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
+import java.util.Set;
+
+/**
+ * The OrganizationEntity class represents an organization in the system. This class maps to the "organization" table in
+ * the database. It extends the BaseEntity class, inheriting audit fields for created/modified dates and other user
+ * metadata.
+ *
+ * @author Per Fredrik Plars
+ */
 @Getter
 @Setter
 @Entity
 @Table(name = "organization")
-
 public class OrganizationEntity extends BaseEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,5 +56,13 @@ public class OrganizationEntity extends BaseEntity {
   @Size(max = 255)
   @Column(name = "organization")
   private String organization;
+
+  @ManyToMany
+  @JoinTable(
+      name = "organization_instance_link",
+      joinColumns = @JoinColumn(name = "organization_id"),
+      inverseJoinColumns = @JoinColumn(name = "instance_id")
+  )
+  private Set<InstanceEntity> instances;
 
 }

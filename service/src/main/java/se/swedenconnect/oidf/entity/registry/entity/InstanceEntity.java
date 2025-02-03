@@ -19,17 +19,26 @@ package se.swedenconnect.oidf.entity.registry.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
+import java.util.Set;
+
+/**
+ * The InstanceEntity class represents an instance in the system and maps to the "instance" table in the database. It
+ * extends the BaseEntity class, inheriting fields for auditing purposes such as created/modified dates and user
+ * metadata. This entity contains information regarding an instance and its associations with other entities.
+ *
+ * @author Per Fredrik Plars
+ */
 @Getter
 @Setter
 @Entity
 @Table(name = "instance")
-
 public class InstanceEntity extends BaseEntity {
   @Id
   @Size(max = 50)
@@ -39,5 +48,8 @@ public class InstanceEntity extends BaseEntity {
   @Size(max = 255)
   @Column(name = "name")
   private String name;
+
+  @ManyToMany(mappedBy = "instances")
+  private Set<OrganizationEntity> organizations;
 
 }

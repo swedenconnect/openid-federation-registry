@@ -17,20 +17,23 @@
 package se.swedenconnect.oidf.entity.registry.validation;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 /**
- * oidf-entity-registry
+ * Exception that is thrown when a property validation fails.
  *
  * @author Per Fredrik Plars
  */
 @Getter
-@NoArgsConstructor
-
 public class PropertyValidationFailException extends RuntimeException {
-  String filedName;
-  String validationFailMessage;
+  final String filedName;
+  final String validationFailMessage;
 
+  /**
+   * Constructs a PropertyValidationFailException with the specified field name and validation failure message.
+   *
+   * @param filedName the name of the field that failed validation
+   * @param validationFailMessage the message describing the validation failure
+   */
   public PropertyValidationFailException(final String filedName, final String validationFailMessage) {
     super("Key:%s - %s".formatted(filedName, validationFailMessage));
     this.validationFailMessage = validationFailMessage;

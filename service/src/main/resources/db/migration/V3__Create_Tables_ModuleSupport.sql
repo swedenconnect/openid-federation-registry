@@ -47,30 +47,13 @@ CREATE TABLE IF NOT EXISTS `instance`
 )
     ENGINE = InnoDB;
 
-
-CREATE TABLE IF NOT EXISTS `module`
-(
-    `module_id`          BIGINT       NOT NULL AUTO_INCREMENT,
-    `external_id`        varchar(255) not null,
-
-    `instance_id`        VARCHAR(255),
-    `module_type`        VARCHAR(255),
-    `userdomain_id`      INT,
-
-    `created_by`         VARCHAR(255) NOT NULL,
-    `last_modified_by`   VARCHAR(255) NOT NULL,
-    `created_date`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `last_modified_date` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (`module_id`)
-)
-    ENGINE = InnoDB;
-
 CREATE TABLE IF NOT EXISTS `organization`
 (
-    `organization_id`    INT          NOT NULL AUTO_INCREMENT,
+    `organization_id`    BIGINT       NOT NULL AUTO_INCREMENT,
     `external_id`        varchar(255) not null,
     `entityid_filter`    VARCHAR(255) NULL comment 'What type of entityid that can be used. ex https://*.swedenconnect.se/*',
-    `organization`       VARCHAR(255) NULL comment 'Org name that matches the or in JWT token. Ex DIGG,KALIXKOMMUN',
+    `org_id`             VARCHAR(255) NULL comment 'Org id that matches the claim in JWT token.',
+    `org_name`           VARCHAR(255) NULL comment 'Org nam that matches the claim in JWT token. Ex DIGG,KALIXKOMMUN',
 
     `created_by`         VARCHAR(255) NOT NULL,
     `last_modified_by`   VARCHAR(255) NOT NULL,
@@ -79,3 +62,47 @@ CREATE TABLE IF NOT EXISTS `organization`
     PRIMARY KEY (`organization_id`)
 )
     ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `organization_instance_link`
+(
+    `organization_id` BIGINT       NOT NULL,
+    `instance_id`     VARCHAR(255) NOT NULL,
+
+
+    `created_by`         VARCHAR(255) NOT NULL,
+    `last_modified_by`   VARCHAR(255) NOT NULL,
+    `created_date`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `last_modified_date` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`organization_id`, `instance_id`)
+)
+    ENGINE = InnoDB;
+
+ALTER TABLE `organization_instance_link`
+    ADD CONSTRAINT fk_org_instance_organization
+        FOREIGN KEY (`organization_id`) REFERENCES `organization` (`organization_id`)
+            ON DELETE CASCADE;
+
+ALTER TABLE `organization_instance_link`
+    ADD CONSTRAINT fk_org_instance_instance
+        FOREIGN KEY (`instance_id`) REFERENCES `instance` (`instance_id`)
+            ON DELETE CASCADE;
+
+
+CREATE TABLE IF NOT EXISTS `module`
+(
+    `module_id`   BIGINT       NOT NULL AUTO_INCREMENT,
+    `external_id`        varchar(255) not null,
+    `instance_id` VARCHAR(255) not null,
+    `module_type` VARCHAR(255),
+    `created_by`         VARCHAR(255) NOT NULL,
+    `last_modified_by`   VARCHAR(255) NOT NULL,
+    `created_date`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `last_modified_date` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`module_id`),
+    FOREIGN KEY (`instance_id`) REFERENCES `instance` (`instance_id`)
+)
+    ENGINE = InnoDB;
+
+
+
+

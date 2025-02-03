@@ -26,11 +26,17 @@ import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Entity class representing the 'module' table in the database. This class is a representation of a module entity and
+ * extends the {@link BaseEntity}, inheriting auditing fields like created date, last modified date, created by, and
+ * last modified by.
+ *
+ * @author Per Fredrik Plars
+ */
 @Getter
 @Setter
 @Entity
 @Table(name = "module")
-
 public class ModuleEntity extends BaseEntity {
 
   @Id
@@ -55,7 +61,19 @@ public class ModuleEntity extends BaseEntity {
   })
   private List<SettingsEntity> settingsEntityList;
 
-  public Optional<SettingsEntity> getSettingsEntity(String key) {
+  @ManyToOne(fetch = FetchType.EAGER)
+  @JoinColumn(name = "instance_id", nullable = false)
+  private InstanceEntity instance;
+
+  /**
+   * Retrieves the {@link SettingsEntity} associated with the specified key. The method searches through the list of
+   * settings entities and returns an optional containing the first entity matching the given key, if one exists.
+   *
+   * @param key the key to search for in the list of settings entities
+   * @return an {@link Optional} containing the matching {@link SettingsEntity} if found, otherwise an empty
+   *     {@link Optional}
+   */
+  public Optional<SettingsEntity> getSettingsEntity(final String key) {
     return this.settingsEntityList.stream()
         .filter(s -> s.getKey().equals(key))
         .findFirst();

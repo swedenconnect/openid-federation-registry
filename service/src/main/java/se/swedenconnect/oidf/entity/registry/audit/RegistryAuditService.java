@@ -99,17 +99,22 @@ public interface RegistryAuditService {
   void trustmarkSubjectDelete(String trustMarkSubjectRecordId,TrustMarkSubjectRecord deletedRecord);
 
   /**
-   * Audits a write operation performed on settings records. This method is invoked when a settings record is created,
-   * updated, or modified. It logs or handles the event for monitoring, compliance, or debugging purposes.
+   * Audits a write operation performed on a settings record. This method is used to log or handle
+   * the event when a settings record is created, updated, or modified within the system for purposes
+   * such as monitoring, compliance, or debugging.
+   *
+   * @param optionsRecordId the unique identifier of the settings record being written or updated.
+   * @param oldRecord the previous state of the settings record. Can be null if the record is being created.
+   * @param newRecord the new state of the settings record after the write operation.
    */
-  void settingsWrite(String OptionsRecordId, OptionsRecord oldRecord, OptionsRecord newRecord);
+  void settingsWrite(String optionsRecordId, OptionsRecord oldRecord, OptionsRecord newRecord);
 
   /**
    * Logs or handles the deletion of a settings record. This method is used to audit the removal of a settings record
    * within the system for purposes such as monitoring, compliance, or debugging.
    *
-   * @param OptionsRecordId the unique identifier of the settings record being deleted.
+   * @param optionsRecordId the unique identifier of the settings record being deleted.
    * @param deletedRecord the record containing the details of the deleted settings record.
    */
-  void settingsDelete(String OptionsRecordId, OptionsRecord deletedRecord);
+  void settingsDelete(String optionsRecordId, OptionsRecord deletedRecord);
 }

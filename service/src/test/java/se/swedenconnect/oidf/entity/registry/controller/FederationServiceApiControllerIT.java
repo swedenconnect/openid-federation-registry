@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.entity.registry.federationserviceapi;
+package se.swedenconnect.oidf.entity.registry.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEObjectType;
@@ -28,6 +28,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
+import se.swedenconnect.oidf.entity.registry.federationserviceapi.ModuleResponse;
 import se.swedenconnect.oidf.entity.registry.fixture.EntityFactory;
 import se.swedenconnect.oidf.entity.registry.fixture.PolicyFactory;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;

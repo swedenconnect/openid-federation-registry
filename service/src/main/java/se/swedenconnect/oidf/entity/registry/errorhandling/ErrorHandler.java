@@ -63,9 +63,20 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         request);
   }
 
+  /**
+   * Handles exceptions of the type {@code PropertyValidationFailException} and maps them to a response with an HTTP 400
+   * Bad Request status. The response includes a problem detail structure with specific error information about the
+   * validation failure.
+   *
+   * @param e the {@code PropertyValidationFailException} raised due to a validation failure
+   * @param request the web request during which the exception was raised
+   * @return a {@code ResponseEntity} object containing the problem detail with the error type, cause, and other
+   *     information
+   */
   @ExceptionHandler(PropertyValidationFailException.class)
   public ResponseEntity<Object> handle(final PropertyValidationFailException e, final WebRequest request) {
-    final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), e.getMessage());
+    final ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), e.getMessage());
     problemDetail.setProperty("cause", List.of(
         Map.of("field", e.getFiledName(), "detail", e.getValidationFailMessage()))
     );
@@ -94,7 +105,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
           final String fieldName = error.getObjectName() + "." + error.getField();
           final String rejectedValue = error.getRejectedValue() == null ? "null" : error.getRejectedValue().toString();
           final String message = error.getDefaultMessage();
-          return Map.of("filed", fieldName, "detail", message, "rejectedValue", rejectedValue);
+          return Map.of("field", fieldName, "detail", message, "rejectedValue", rejectedValue);
         }).toList();
     problemDetail.setProperty("cause", detailProblem);
 

@@ -8,7 +8,7 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     show-sql: true
     hibernate:
-      ddl-auto: none
+      ddl-auto: create-drop
 
     properties:
       hibernate:
@@ -18,3 +18,15 @@ spring:
   sql:
     init:
       mode: always
+
+openid:
+  federation:
+    registry:
+      federation_service_api:
+        issuer: "http://oidf-registry.swedenconnect.se"
+        sign-key-alias: federationapi
+      instances:
+        - instance_id: "123e4567-e89b-12d3-a456-426614174000"
+          name: "Swedenconnect"
+        - instance_id: "223e4567-e89b-12d3-a456-426614174001"
+          name: "ENA"

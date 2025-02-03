@@ -17,11 +17,20 @@
 package se.swedenconnect.oidf.entity.registry.validation;
 
 /**
- * PropertyValidation interface
+ * An interface for defining property validation rules. Implementations of this interface
+ * are used to apply specific validation logic to key-value pairs, ensuring that the data
+ * adheres to specified constraints or requirements.
  *
- * @author Per Fredrik Plars
+ *  @author Per Fredrik Plars
  */
 public interface PropertyValidator {
-
+  /**
+   * Validates a property based on the provided key and value. The method applies predefined validation rules and throws
+   * an exception if the validation fails.
+   *
+   * @param key the property key to be validated
+   * @param value the property value to be validated
+   * @throws PropertyValidationFailException if the validation for the property fails
+   */
   void validate(String key, String value) throws PropertyValidationFailException;
 }

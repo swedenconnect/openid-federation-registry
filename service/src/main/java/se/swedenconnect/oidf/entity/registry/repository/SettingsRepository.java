@@ -24,6 +24,8 @@ import java.util.List;
 
 /**
  * Repository interface for managing SettingsEntity.
+ *
+ * @author Per Fredrik Plars
  */
 @Repository
 public interface SettingsRepository extends JpaRepository<SettingsEntity, Long> {

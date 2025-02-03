@@ -18,6 +18,8 @@ package se.swedenconnect.oidf.entity.registry.entity;
 
 /**
  * Enumeration representing the types of foreign keys (FkKeyType) used within the system.
+ *
+ * @author Per Fredrik Plars
  */
 public enum FkKeyType {
   RESOLVER, INTERMEDIATE, TRUSTANCHOR, TRUSTMARKISSUER, TRUSTMARK

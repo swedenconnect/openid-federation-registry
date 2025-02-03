@@ -30,7 +30,9 @@ import se.swedenconnect.oidf.entity.registry.service.JpaOptionsService;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 
 /**
- * oidf-entity-registry
+ * Controller class for managing operations on options-related configurations.
+ * Provides endpoints to retrieve, create, update, and delete configurations
+ * associated with specific option groups and identifiers.
  *
  * @author Per Fredrik Plars
  */
@@ -39,36 +41,66 @@ import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 public class OptionsApiController {
   private final JpaOptionsService service;
 
+  /**
+   * Constructs an OptionsApiController instance with the specified service. This controller manages operations on
+   * option-related configurations using the provided JpaOptionsService for data access and processing.
+   *
+   * @param service The JpaOptionsService instance used to manage configurations.
+   */
   public OptionsApiController(final JpaOptionsService service) {
     this.service = service;
   }
 
+  /**
+   * Retrieves optional data based on the specified option group and identifier.
+   *
+   * @param optionsgroup The option group to retrieve the data for.
+   * @param identifyer The identifier used to fetch the relevant options record.
+   * @return A {@link ResponseEntity} containing the retrieved options record or an
+   * appropriate response in case of an error.
+   */
   @GetMapping("/{optionsgroup}/{identifyer}")
   public ResponseEntity<?> getOptionalData(
-      @PathVariable("optionsgroup") String optionsgroup,
-      @PathVariable(name = "identifyer") String identifyer) {
+      @PathVariable("optionsgroup") final String optionsgroup,
+      @PathVariable(name = "identifyer") final String identifyer) {
 
-    final OptionsRecord optionsRecord = service.get(FkKeyType.valueOf(optionsgroup.toUpperCase()), identifyer);
+    final OptionsRecord optionsRecord = this.service.get(FkKeyType.valueOf(optionsgroup.toUpperCase()), identifyer);
 
     return ResponseEntity.ok(optionsRecord);
   }
 
+  /**
+   * Retrieves the configuration template for the specified options group.
+   *
+   * @param optionsgroup The options group for which the template configuration is to be retrieved.
+   * @return A {@link ResponseEntity} containing the template configuration as an {@link OptionsRecord}
+   *         if found, or a NOT_FOUND status with an error message if the configuration does not exist.
+   */
   @GetMapping("/{optionsgroup}")
   public ResponseEntity<?> getTemplateConfig(
-      @PathVariable("optionsgroup") String optionsgroup) {
+      @PathVariable("optionsgroup") final String optionsgroup) {
 
-    final OptionsRecord optionsRecord = service.getTemplate(FkKeyType.valueOf(optionsgroup.toUpperCase()));
+    final OptionsRecord optionsRecord = this.service.getTemplate(FkKeyType.valueOf(optionsgroup.toUpperCase()));
     if (optionsRecord == null) {
       return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Configuration not found.");
     }
     return ResponseEntity.ok(optionsRecord);
   }
 
+  /**
+   * Updates the configuration for a specific options group and identifier.
+   * Creates or updates an {@link OptionsRecord} based on the provided data.
+   *
+   * @param optionsgroup The options group to which the configuration belongs.
+   * @param identifyer The identifier of the specific configuration to update.
+   * @param record The {@link OptionsRecord} containing the new or updated configuration data.
+   * @return A {@link ResponseEntity} containing the updated {@link OptionsRecord} and a CREATED status if successful.
+   */
   @PostMapping("/{optionsgroup}/{identifyer}")
   public ResponseEntity<?> updateConfig(
-      @PathVariable("optionsgroup") String optionsgroup,
-      @PathVariable(name = "identifyer") String identifyer,
-      @RequestBody OptionsRecord record) {
+      @PathVariable("optionsgroup") final String optionsgroup,
+      @PathVariable(name = "identifyer") final String identifyer,
+      @RequestBody final OptionsRecord record) {
 
     final OptionsRecord optionsRecord = this.service.create(
         FkKeyType.valueOf(optionsgroup.toUpperCase()), identifyer, record);
@@ -79,15 +111,15 @@ public class OptionsApiController {
   /**
    * DELETE: Deletes a specific configuration.
    *
-   * @param configgroup The configuration group.
+   * @param optionsgroup The configuration group.
    * @param identifyer The identifier of the configuration.
    * @return Success message.
    */
   @DeleteMapping("/{configgroup}/{identifyer}")
   public ResponseEntity<?> deleteConfig(
-      @PathVariable String configgroup,
-      @PathVariable String identifyer) {
-
+      @PathVariable final String optionsgroup,
+      @PathVariable final String identifyer) {
+    this.service.delete(FkKeyType.valueOf(optionsgroup.toUpperCase()), identifyer);
     return ResponseEntity.ok("Configuration deleted successfully.");
   }
 

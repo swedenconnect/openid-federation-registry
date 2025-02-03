@@ -167,6 +167,7 @@ VALUES ('TEMPLATE',
         'Flyway',
         'Flyway');
 
+
 /*
  * Copyright 2025 Sweden Connect
  *
@@ -182,6 +183,7 @@ VALUES ('TEMPLATE',
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 
 -- TrustMarks
 
