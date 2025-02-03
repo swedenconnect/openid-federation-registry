@@ -77,6 +77,7 @@ public class AuditEventIT {
     assertNotNull(policyEvent.getFirst().getTimestamp());
     assertNotNull(policyEvent.getFirst().getData());
     assertEquals(2,policyEvent.getFirst().getData().size());
+    System.out.println(policyEvent.getFirst().getData().toString());
     assertNotNull(policyEvent.getFirst().getData().get("extId"));
     assertNotNull(policyEvent.getFirst().getData().get("newData"));
   }
