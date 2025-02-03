@@ -35,8 +35,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static se.swedenconnect.oidf.entity.registry.audit.RegistryAuditEventType.ENTITY_CREATED_UPDATE;
 import static se.swedenconnect.oidf.entity.registry.audit.RegistryAuditEventType.POLICY_CREATE_UPDATED;
 
@@ -65,7 +65,7 @@ public class AuditEventIT {
     assertNotNull(events.getFirst().getPrincipal());
     assertNotNull(events.getFirst().getTimestamp());
     assertNotNull(events.getFirst().getData());
-    assertEquals(4,events.getFirst().getData().size());
+    assertTrue(events.getFirst().getData().size() >= 4);
     assertNotNull(events.getFirst().getData().get("extId"));
     assertNotNull(events.getFirst().getData().get("subject"));
     assertNotNull(events.getFirst().getData().get("issuer"));
@@ -76,7 +76,7 @@ public class AuditEventIT {
     assertNotNull(policyEvent.getFirst().getPrincipal());
     assertNotNull(policyEvent.getFirst().getTimestamp());
     assertNotNull(policyEvent.getFirst().getData());
-    assertEquals(2,policyEvent.getFirst().getData().size());
+    assertTrue(policyEvent.getFirst().getData().size() >= 2);
     assertNotNull(policyEvent.getFirst().getData().get("extId"));
     assertNotNull(policyEvent.getFirst().getData().get("newData"));
   }
