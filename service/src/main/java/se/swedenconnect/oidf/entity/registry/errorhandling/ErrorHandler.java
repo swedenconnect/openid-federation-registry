@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Sweden Connect
+ * Copyright 2025 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,8 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ *  limitations under the License.
  */
 
 package se.swedenconnect.oidf.entity.registry.errorhandling;
@@ -30,7 +29,9 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import se.swedenconnect.oidf.entity.registry.validation.PropertyValidationFailException;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -57,6 +58,20 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
   public ResponseEntity<Object> handle(final IllegalArgumentException e, final WebRequest request) {
     return this.handleExceptionInternal(e,
         ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), e.getMessage()),
+        new HttpHeaders(),
+        HttpStatusCode.valueOf(400),
+        request);
+  }
+
+  @ExceptionHandler(PropertyValidationFailException.class)
+  public ResponseEntity<Object> handle(final PropertyValidationFailException e, final WebRequest request) {
+    final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), e.getMessage());
+    problemDetail.setProperty("validatondetails", List.of(
+        Map.of("field", e.getFiledName(), "error", e.getValidationFailMessage()))
+    );
+
+    return this.handleExceptionInternal(e,
+        problemDetail,
         new HttpHeaders(),
         HttpStatusCode.valueOf(400),
         request);
@@ -101,15 +116,8 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
   @Override
   protected ResponseEntity<Object> createResponseEntity(@Nullable final Object body, final HttpHeaders headers,
       final HttpStatusCode statusCode, final WebRequest request) {
-    String error = HttpStatus.valueOf(statusCode.value()).getReasonPhrase();
-    String errorDescription = "Unknown server error";
-    if (body instanceof ProblemDetail) {
-      error = Optional.ofNullable(((ProblemDetail) body).getTitle())
-          .orElse("server_error").toLowerCase().replace(' ', '_');
-      errorDescription = ((ProblemDetail) body).getDetail();
-    }
-    return new ResponseEntity<>(
-        Map.of("error", error, "error_description", errorDescription), headers, statusCode);
+    return new ResponseEntity<>(body, headers, statusCode);
+
   }
 
 }

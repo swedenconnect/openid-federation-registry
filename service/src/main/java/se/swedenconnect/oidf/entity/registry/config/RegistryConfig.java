@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Sweden Connect
+ * Copyright 2025 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,8 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ *  limitations under the License.
  */
 package se.swedenconnect.oidf.entity.registry.config;
 
@@ -23,6 +22,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
+import se.swedenconnect.oidf.entity.registry.configapi.JpaOptionsService;
 import se.swedenconnect.oidf.entity.registry.entity.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.entity.EntityService;
 import se.swedenconnect.oidf.entity.registry.entity.JpaEntityService;
@@ -30,6 +30,9 @@ import se.swedenconnect.oidf.entity.registry.federationserviceapi.FederationApiS
 import se.swedenconnect.oidf.entity.registry.policy.JpaPolicyService;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyRepository;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyService;
+import se.swedenconnect.oidf.entity.registry.repository.InstanceRepository;
+import se.swedenconnect.oidf.entity.registry.repository.ModuleRepository;
+import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.entity.registry.trustmark.JpaTrustMarkSubjectService;
 import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectRepository;
 import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectService;
@@ -37,7 +40,6 @@ import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.bundle.CredentialBundles;
 import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
 
-import java.security.KeyStore;
 import java.text.ParseException;
 
 /**
@@ -50,10 +52,13 @@ import java.text.ParseException;
 @Configuration
 public class RegistryConfig {
 
+  private final SettingsRepository settingsRepository;
   private final EntityRepository entityRepository;
   private final PolicyRepository policyRepository;
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
   private final RegistryAuditService registryAuditService;
+  private final ModuleRepository moduleRepository;
+  final InstanceRepository instanceRepository;
   private final ObjectMapper objectMapper;
   /**
    * Constructs an instance of the RegistryConfig class, initializing its dependencies.
@@ -67,12 +72,18 @@ public class RegistryConfig {
   public RegistryConfig(final EntityRepository entityRepository, final PolicyRepository policyRepository,
       final TrustMarkSubjectRepository trustMarkSubjectRepository,
       final RegistryAuditService registryAuditService,
-      final ObjectMapper objectMapper) {
+      final ObjectMapper objectMapper,
+      final SettingsRepository settingsRepository,
+      final ModuleRepository moduleRepository,
+      final InstanceRepository instanceRepository) {
     this.entityRepository = entityRepository;
     this.policyRepository = policyRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
     this.registryAuditService = registryAuditService;
     this.objectMapper = objectMapper;
+    this.settingsRepository = settingsRepository;
+    this.moduleRepository = moduleRepository;
+    this.instanceRepository = instanceRepository;
   }
 
   /**
@@ -103,6 +114,15 @@ public class RegistryConfig {
   @Qualifier("jpaPolicyService")
   public PolicyService jpaPolicyService() {
     return new JpaPolicyService(this.policyRepository, this.objectMapper,this.registryAuditService);
+  }
+
+  @Bean
+  @Qualifier("jpaSettingService")
+  public JpaOptionsService jpaSettingsService() {
+    return new JpaOptionsService(this.settingsRepository,
+        this.moduleRepository,
+        this.registryAuditService,
+        this.instanceRepository);
   }
 
   /**

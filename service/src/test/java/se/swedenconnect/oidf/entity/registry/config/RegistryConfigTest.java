@@ -1,17 +1,17 @@
 /*
- * Copyright 2024 Sweden Connect.
+ * Copyright 2025 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  limitations under the License.
  */
 package se.swedenconnect.oidf.entity.registry.config;
 
@@ -26,6 +26,9 @@ import se.swedenconnect.oidf.entity.registry.entity.JpaEntityService;
 import se.swedenconnect.oidf.entity.registry.policy.JpaPolicyService;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyRepository;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyService;
+import se.swedenconnect.oidf.entity.registry.repository.InstanceRepository;
+import se.swedenconnect.oidf.entity.registry.repository.ModuleRepository;
+import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectRepository;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -45,7 +48,10 @@ public class RegistryConfigTest {
   private EntityRepository entityRepository;
   private PolicyRepository policyRepository;
   private TrustMarkSubjectRepository trustMarkSubjectRepository;
+  private SettingsRepository settingsRepository;
   private RegistryConfig registryConfig;
+  private ModuleRepository moduleRepository;
+  private InstanceRepository instanceRepository;
 
   /**
    * Sets up the testing environment before each test execution.
@@ -57,9 +63,15 @@ public class RegistryConfigTest {
     entityRepository = mock(EntityRepository.class);
     policyRepository = mock(PolicyRepository.class);
     trustMarkSubjectRepository = mock(TrustMarkSubjectRepository.class);
+    settingsRepository = mock(SettingsRepository.class);
+    moduleRepository = mock(ModuleRepository.class);
+    instanceRepository = mock(InstanceRepository.class);
     registryConfig = new RegistryConfig(entityRepository, policyRepository,trustMarkSubjectRepository,
         new RegistryAuditLogger(),
-        new ObjectMapper());
+        new ObjectMapper(),
+        settingsRepository,
+        moduleRepository,
+        instanceRepository);
   }
 
   /**
@@ -71,7 +83,7 @@ public class RegistryConfigTest {
    */
   @Test
   public void testJpaEntityServiceBean() {
-    EntityService jpaService = registryConfig.jpaEntityService();
+    final EntityService jpaService = registryConfig.jpaEntityService();
     assertThat(jpaService).isNotNull();
     assertThat(jpaService).isInstanceOf(JpaEntityService.class);
     assertSame(entityRepository, ((JpaEntityService) jpaService).getRepository());

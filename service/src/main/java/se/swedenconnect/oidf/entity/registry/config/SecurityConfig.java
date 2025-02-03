@@ -11,8 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ *  limitations under the License.
  */
 package se.swedenconnect.oidf.entity.registry.config;
 
@@ -51,6 +50,12 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
     http
+        /*.exceptionHandling(conf ->
+            conf.authenticationEntryPoint((req, res, ex) -> {
+              throw ex;
+            }))
+*/
+
         .oauth2ResourceServer(oauth2 -> oauth2
             .jwt(Customizer.withDefaults()))
         .csrf(AbstractHttpConfigurer::disable)
@@ -60,6 +65,7 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.GET, "/secure/policies/**").hasAuthority("SCOPE_policies_read")
             .requestMatchers(HttpMethod.POST, "/secure/policies/**").hasAuthority("SCOPE_policies_write")
 
+            .requestMatchers("/registry/v1/options/**").permitAll()
             .requestMatchers("/registry/v1/entities/**").permitAll()
             .requestMatchers("/registry/v1/trustmarksubjects/**").permitAll()
             .requestMatchers("/registry/v1/policies/**").permitAll()
@@ -67,6 +73,7 @@ public class SecurityConfig {
             .requestMatchers("/api/v1/federationservice/**").permitAll() // Always open
             .requestMatchers("/actuator/**").permitAll()
             .anyRequest().denyAll()
+
         );
     return http.build();
   }

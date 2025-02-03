@@ -21,7 +21,6 @@ import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -41,6 +40,7 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -120,20 +120,20 @@ class FederationServiceApiControllerIT {
     }
     assertThat(HttpStatus.OK).isEqualTo(fedRes.getStatusCode());
 
-    final SignedJWT tms = SignedJWT.parse(fedRes.getBody());
+    final SignedJWT tms = SignedJWT.parse(Objects.requireNonNull(fedRes.getBody()));
     final JWTClaimsSet claimsSet = tms.getJWTClaimsSet();
     final List<Object> records = claimsSet.getListClaim("trustmark_records");
 
     records.stream()
         .map(o -> (Map<String,Object>)o)
         .forEach(claimMap -> {
-          log.info("Record:{} Claim{}",record.toString(),claimMap.toString());
-          Assert.assertEquals(record.getSubject(),claimMap.get("subject"));
-          Assert.assertNotNull(claimMap.get("expires"));
-          Assert.assertNotNull(claimMap.get("granted"));
-          Assert.assertEquals(record.getExpires().toString(),claimMap.get("expires"));
-          Assert.assertEquals(record.getGranted().toString(),claimMap.get("granted"));
-          Assert.assertEquals(record.getRevoked(),claimMap.get("revoked"));
+          log.info("Record:{} Claim{}", record, claimMap.toString());
+          assertEquals(record.getSubject(), claimMap.get("subject"));
+          assertNotNull(claimMap.get("expires"));
+          assertNotNull(claimMap.get("granted"));
+          assertEquals(record.getExpires().toString(), claimMap.get("expires"));
+          assertEquals(record.getGranted().toString(), claimMap.get("granted"));
+          assertEquals(record.getRevoked(), claimMap.get("revoked"));
 
         });
 

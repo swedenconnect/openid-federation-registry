@@ -13,27 +13,18 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.entity.registry.audit;
+
+package se.swedenconnect.oidf.entity.registry.jpaentity;
 
 /**
- * Enumerates the types of events that can be audited within a registry system.
- * This enumeration supports both write operations (e.g., create, update, delete) and
- * read operations made through the federation API.
+ * oidf-entity-registry
  *
  * @author Per Fredrik Plars
  */
-public enum RegistryAuditEventType {
-
-  ENTITY_CREATED_UPDATE,
-  ENTITY_DELETED,
-
-  SETTING_CREATED_UPDATE,
-  SETTING_DELETED,
-
-  POLICY_CREATE_UPDATED,
-  POLICY_DELETED,
-
-  TRUSTMARK_SUBJECT_CREATE_UPDATE,
-  TRUSTMARK_SUBJECT_DELETED
-
+public enum SettingDataType {
+  TEXT,
+  DATE,
+  DATETIME,
+  OPTIONS,
+  BOOLEAN
 }

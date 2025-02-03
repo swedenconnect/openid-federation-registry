@@ -35,7 +35,7 @@ import se.swedenconnect.oidf.entity.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.entity.registry.entity.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyEntity;
 import se.swedenconnect.oidf.entity.registry.policy.PolicyRepository;
-import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectEntity;
+import se.swedenconnect.oidf.entity.registry.jpaentity.TrustMarkSubjectEntity;
 import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectRepository;
 
 import java.util.Collections;

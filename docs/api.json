@@ -1,0 +1,57 @@
+{
+  "endpointExample": "GET|POST|DELETE /config/{configgroup}/{identifyer} GET /config/tmi POST /config/tmi GET /config/tmi/WERWE-WERW-WERWE-WRWE-WERE",
+  "config": {
+    "links": {
+      "save": "/config/tm/{uuidSetByCaller}",
+      "update": "/config/tm/ecae10bf-fe2d-4b43-b078-c5598d5d592c",
+      "delete": "/config/tm/ecae10bf-fe2d-4b43-b078-c5598d5d592c",
+      "list": "/config/list/tm"
+    },
+    "data": [
+      {
+        "key": "trust-mark-issuer",
+        "value_type": "Options",
+        "description": "Select a trustmarkIssuer that this TrustMark belongs to",
+        "validation": "req",
+        "options": [
+          {
+            "key": "uuid1",
+            "value": "http://id.swedenconnect.se/loa3",
+            "selected": true
+          },
+          {
+            "key": "uuid2",
+            "value": "http://id.swedenconnect.se/loa3",
+            "selected": false
+          }
+        ]
+      },
+      {
+        "key": "resolve-response-duration",
+        "value": "1",
+        "description": "Validity duration for a trustmark jwk. After this period a new one needs to be issued. Value is expressed in hours",
+        "value_type": "Number",
+        "validation": "req"
+      },
+      {
+        "key": "all-options",
+        "value": "PT1H",
+        "value_type": "String|Text|Date|Options|Number",
+        "validation": "req | min:5 |JSON | publicJWKS",
+        "description": "This section shows the default values that can exist in this format",
+        "options": [
+          {
+            "key": "uuid1",
+            "value": "http://id.swedenconnect.se/loa3",
+            "selected": false
+          },
+          {
+            "key": "uuid2",
+            "value": "http://id.swedenconnect.se/loa2",
+            "selected": true
+          }
+        ]
+      }
+    ]
+  }
+}
