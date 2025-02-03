@@ -18,7 +18,6 @@ package se.swedenconnect.oidf.entity.registry.errorhandling;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +32,8 @@ import se.swedenconnect.oidf.entity.registry.validation.PropertyValidationFailEx
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+
+import static se.swedenconnect.oidf.entity.registry.errorhandling.ErrorTypes.INVALID_PARAMETER;
 
 /**
  * Error Handler ControllerAdvice.
@@ -66,36 +66,42 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
   @ExceptionHandler(PropertyValidationFailException.class)
   public ResponseEntity<Object> handle(final PropertyValidationFailException e, final WebRequest request) {
     final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), e.getMessage());
-    problemDetail.setProperty("validatondetails", List.of(
-        Map.of("field", e.getFiledName(), "error", e.getValidationFailMessage()))
+    problemDetail.setProperty("cause", List.of(
+        Map.of("field", e.getFiledName(), "detail", e.getValidationFailMessage()))
     );
+    problemDetail.setType(INVALID_PARAMETER);
 
     return this.handleExceptionInternal(e,
         problemDetail,
         new HttpHeaders(),
-        HttpStatusCode.valueOf(400),
+        HttpStatusCode.valueOf(problemDetail.getStatus()),
         request);
   }
 
   @Override
   protected ResponseEntity<Object> handleMethodArgumentNotValid(
-      final MethodArgumentNotValidException ex,
+      final MethodArgumentNotValidException e,
       final HttpHeaders headers,
       final HttpStatusCode status,
       final WebRequest request) {
 
-    final String errorMessage = ex.getBindingResult().getFieldErrors().stream().map((FieldError error) -> {
+    final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400),
+        "MethodArgumentNotValidException");
+    problemDetail.setType(INVALID_PARAMETER);
+
+    final List<Map<String, String>> detailProblem =
+        e.getBindingResult().getFieldErrors().stream().map((FieldError error) -> {
           final String fieldName = error.getObjectName() + "." + error.getField();
           final String rejectedValue = error.getRejectedValue() == null ? "null" : error.getRejectedValue().toString();
           final String message = error.getDefaultMessage();
+          return Map.of("filed", fieldName, "detail", message, "rejectedValue", rejectedValue);
+        }).toList();
+    problemDetail.setProperty("cause", detailProblem);
 
-          return fieldName + " -> " + rejectedValue + " :" + message;
-        }).reduce((string, string2) -> String.join("|", string, string2))
-        .orElse("No field errors");
-    return this.handleExceptionInternal(ex,
-        ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), errorMessage),
+    return this.handleExceptionInternal(e,
+        problemDetail,
         new HttpHeaders(),
-        HttpStatusCode.valueOf(400),
+        HttpStatusCode.valueOf(problemDetail.getStatus()),
         request);
   }
 

@@ -14,17 +14,9 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.entity.registry.repository;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-import se.swedenconnect.oidf.entity.registry.entity.InstanceEntity;
-
 /**
- * Repository interface for managing InstanceEntity objects. Extends JpaRepository to provide standard CRUD operations
- * for the InstanceEntity.
+ * JPA Repositories
+ *
+ * @author Per Fredrik Plars
  */
-@Repository
-public interface InstanceRepository extends JpaRepository<InstanceEntity, String> {
-
-}
+package se.swedenconnect.oidf.entity.registry.repository;

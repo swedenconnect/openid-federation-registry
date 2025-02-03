@@ -14,17 +14,15 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.entity.registry.repository;
+package se.swedenconnect.oidf.entity.registry.errorhandling;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-import se.swedenconnect.oidf.entity.registry.entity.InstanceEntity;
+import java.net.URI;
 
 /**
- * Repository interface for managing InstanceEntity objects. Extends JpaRepository to provide standard CRUD operations
- * for the InstanceEntity.
+ * Define error type constants
+ *
+ * @author Per Fredrik Plars
  */
-@Repository
-public interface InstanceRepository extends JpaRepository<InstanceEntity, String> {
-
+public final class ErrorTypes {
+  public static final URI INVALID_PARAMETER = URI.create("https://oidf.swedenconnect.se/error/invalid_parameter");
 }

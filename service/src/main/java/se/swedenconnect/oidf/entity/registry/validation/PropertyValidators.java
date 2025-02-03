@@ -120,7 +120,8 @@ public class PropertyValidators {
   private PropertyValidator jwksValidator(String conf) {
 
     boolean isPublicCheck = "public".equalsIgnoreCase(conf) || conf.isBlank();
-    boolean hasKidCheck = "private".equalsIgnoreCase(conf) || conf.isBlank();
+    boolean hasKidCheck = "kid".equalsIgnoreCase(conf) || conf.isBlank();
+    boolean hasKeysCheck = "req".equalsIgnoreCase(conf) || conf.isBlank();
 
     return (key, value) -> {
       try {
@@ -130,6 +131,11 @@ public class PropertyValidators {
         if (!keys.isArray()) {
           throw new PropertyValidationFailException(key, "keys element is expected to be an array");
         }
+
+        if (hasKeysCheck && !keys.elements().hasNext()) {
+          throw new PropertyValidationFailException(key, "keys element is expected");
+        }
+
         keys.elements().forEachRemaining(keyNode -> {
 
           if (hasKidCheck && !keyNode.hasNonNull("kid")) {

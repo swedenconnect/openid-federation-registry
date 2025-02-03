@@ -157,9 +157,9 @@
                         <configuration>
                             <artifactItems>
                                 <artifactItem>
-                                    <groupId>se.swedenconnect.openid-federation</groupId>
+                                    <groupId>se.swedenconnect.oidf</groupId>
                                     <artifactId>openid-federation-entity-registry-api</artifactId>
-                                    <version>1.0.0-SNAPSHOT</version>
+                                    <version>0.3.4-SNAPSHOT</version>
                                     <type>jar</type>
                                     <includes>oidf-entity-registry-api.yaml</includes>
                                     <outputDirectory>${project.build.directory}/openapi</outputDirectory>
@@ -182,8 +182,8 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${basedir}/src/main/resources/oidf-entity-registry-api.yaml</inputSpec>
-                            <!--inputSpec>${project.build.directory}/openapi/oidf-entity-registry-api.yaml</inputSpec-->
+                            <!--inputSpec>${basedir}/src/main/resources/oidf-entity-registry-api.yaml</inputSpec-->
+                            <inputSpec>${project.build.directory}/openapi/oidf-entity-registry-api.yaml</inputSpec>
                             <generatorName>java</generatorName>
                             <generateApis>false</generateApis>
                             <generateModels>true</generateModels>

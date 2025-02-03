@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package se.swedenconnect.oidf.entity.registry.service;
 
-package se.swedenconnect.oidf.entity.registry.repository;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-import se.swedenconnect.oidf.entity.registry.entity.InstanceEntity;
+import se.swedenconnect.oidf.entity.registry.common.CrudService;
+import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 
 /**
- * Repository interface for managing InstanceEntity objects. Extends JpaRepository to provide standard CRUD operations
- * for the InstanceEntity.
+ * EntityService is an interface that extends the CrudService interface and provides
+ * CRUD operations specifically for managing {@link EntityRecord} objects identified by a String.
+ *
+ * @author David Goldring
  */
-@Repository
-public interface InstanceRepository extends JpaRepository<InstanceEntity, String> {
-
+public interface EntityService extends CrudService<EntityRecord, String> {
 }

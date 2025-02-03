@@ -20,7 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ActiveProfiles;
-import se.swedenconnect.oidf.entity.registry.jpaentity.TrustMarkSubjectEntity;
+import se.swedenconnect.oidf.entity.registry.entity.TrustMarkSubjectEntity;
+import se.swedenconnect.oidf.entity.registry.repository.TrustMarkSubjectRepository;
 
 import java.util.Optional;
 import java.util.UUID;

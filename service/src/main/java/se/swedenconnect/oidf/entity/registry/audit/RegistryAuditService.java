@@ -16,8 +16,8 @@
 package se.swedenconnect.oidf.entity.registry.audit;
 
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
+import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
-import se.swedenconnect.oidf.registry.api.model.SettingsRecord;
 import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
 
 /**
@@ -102,14 +102,14 @@ public interface RegistryAuditService {
    * Audits a write operation performed on settings records. This method is invoked when a settings record is created,
    * updated, or modified. It logs or handles the event for monitoring, compliance, or debugging purposes.
    */
-  void settingsWrite(String settingsRecordId, SettingsRecord oldRecord, SettingsRecord newRecord);
+  void settingsWrite(String OptionsRecordId, OptionsRecord oldRecord, OptionsRecord newRecord);
 
   /**
    * Logs or handles the deletion of a settings record. This method is used to audit the removal of a settings record
    * within the system for purposes such as monitoring, compliance, or debugging.
    *
-   * @param settingsRecordId the unique identifier of the settings record being deleted.
+   * @param OptionsRecordId the unique identifier of the settings record being deleted.
    * @param deletedRecord the record containing the details of the deleted settings record.
    */
-  void settingsDelete(String settingsRecordId, SettingsRecord deletedRecord);
+  void settingsDelete(String OptionsRecordId, OptionsRecord deletedRecord);
 }

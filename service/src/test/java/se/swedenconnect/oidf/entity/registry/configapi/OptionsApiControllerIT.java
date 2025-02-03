@@ -21,8 +21,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.test.context.ActiveProfiles;
-import se.swedenconnect.oidf.entity.registry.jpaentity.FkKeyType;
-import se.swedenconnect.oidf.registry.api.model.SettingsRecord;
+import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
+import se.swedenconnect.oidf.entity.registry.service.JpaOptionsService;
+import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 
 /**
  * oidf-entity-registry
@@ -41,8 +42,8 @@ class OptionsApiControllerIT {
 
   @Test
   void testGetOptions() {
-    final SettingsRecord settingsRecord =
+    final OptionsRecord OptionsRecord =
         jpaOptionsService.get(FkKeyType.TRUSTMARKISSUER, "49c15858-df50-426e-ace8-99961fcfbcfd");
-    System.out.println(settingsRecord);
+    System.out.println(OptionsRecord);
   }
 }

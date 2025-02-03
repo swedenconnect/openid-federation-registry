@@ -22,23 +22,30 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
 /**
- * EntityDao is a JPA entity representing a database table for storing entities
+ * TrustMarkSubjectEntity is a JPA entity representing a database table for storing entities
  * as JSON objects with the objects Subject value as key.
  *
- * @author David Goldring
+ * @author Per Fredrik Plars
  */
 @Getter
 @Setter
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder(toBuilder = true)
 @ToString(callSuper = true)
-@Table(name = "entities",uniqueConstraints = { @UniqueConstraint(columnNames = { "issuer", "subject" }) })
-public class EntityEntity extends BaseEntity {
+@Table(name = "trustmark_subject",
+    uniqueConstraints = { @UniqueConstraint(columnNames = { "issuer", "trustmarkId","subject" }) })
+public class TrustMarkSubjectEntity extends BaseEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
@@ -50,8 +57,12 @@ public class EntityEntity extends BaseEntity {
   private String issuer;
 
   @Column(nullable = false)
+  private String trustmarkId;
+
+  @Column(nullable = false)
   private String subject;
 
-  @Column(columnDefinition = "TEXT")
-  private String entity;
+  @Column(columnDefinition = "TEXT", nullable = false)
+  private String trustmarksubjectJson;
+
 }

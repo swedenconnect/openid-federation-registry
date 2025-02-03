@@ -19,8 +19,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
+import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
-import se.swedenconnect.oidf.registry.api.model.SettingsRecord;
 import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
 
 /**
@@ -143,23 +143,23 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void settingsWrite(final String settingsRecordId, final SettingsRecord oldSettings,
-      final SettingsRecord newSettings) {
+  public void settingsWrite(final String OptionsRecordId, final OptionsRecord oldSettings,
+      final OptionsRecord newSettings) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.TRUSTMARK_SUBJECT_CREATE_UPDATE)
-            .extId(settingsRecordId)
+            .extId(OptionsRecordId)
             .oldData(this.toJson(oldSettings))
             .newData(this.toJson(newSettings))
             .build());
   }
 
   @Override
-  public void settingsDelete(final String settingsRecordId, final SettingsRecord deleteRecord) {
+  public void settingsDelete(final String OptionsRecordId, final OptionsRecord deleteRecord) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.SETTING_DELETED)
-            .extId(settingsRecordId)
+            .extId(OptionsRecordId)
             .oldData(this.toJson(deleteRecord))
             .build());
   }

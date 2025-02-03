@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package se.swedenconnect.oidf.entity.registry.entity;
 
 import jakarta.persistence.Column;
@@ -21,37 +22,47 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
 /**
- * EntityDao is a JPA entity representing a database table for storing entities
- * as JSON objects with the objects Subject value as key.
- *
- * @author David Goldring
+ * Entity class representing the 'Settings' table in the database.
  */
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder(toBuilder = true)
 @Entity
-@ToString(callSuper = true)
-@Table(name = "entities",uniqueConstraints = { @UniqueConstraint(columnNames = { "issuer", "subject" }) })
-public class EntityEntity extends BaseEntity {
+@Table(name = "Settings")
+public class SettingsEntity extends BaseEntity {
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private long id;
+  @Column(name = "property_id", nullable = false, updatable = false)
+  private Long propertyId;
 
-  @Column(name="external_id", unique = true, updatable = false,nullable = false)
-  private String externalId;
+  @Column(name = "fk_id", nullable = false)
+  private String fkId;
 
-  @Column(nullable = false)
-  private String issuer;
+  @Column(name = "fk_type", nullable = false)
+  private String fkType;
 
-  @Column(nullable = false)
-  private String subject;
+  @Column(name = "data_key", nullable = false)
+  private String key;
 
-  @Column(columnDefinition = "TEXT")
-  private String entity;
+  @Column(name = "description")
+  private String description;
+
+  @Column(name = "validation")
+  private String validation;
+
+  @Column(name = "data_type")
+  private String valueDataType;
+
+  @Column(name = "data_value")
+  private String value;
+
 }

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package se.swedenconnect.oidf.entity.registry.entity;
 
 import jakarta.persistence.Column;
@@ -21,37 +22,28 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
-/**
- * EntityDao is a JPA entity representing a database table for storing entities
- * as JSON objects with the objects Subject value as key.
- *
- * @author David Goldring
- */
 @Getter
 @Setter
 @Entity
-@ToString(callSuper = true)
-@Table(name = "entities",uniqueConstraints = { @UniqueConstraint(columnNames = { "issuer", "subject" }) })
-public class EntityEntity extends BaseEntity {
+@Table(name = "organization")
+
+public class OrganizationEntity extends BaseEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private long id;
+  @Column(name = "organization_id", nullable = false)
+  private Integer id;
 
-  @Column(name="external_id", unique = true, updatable = false,nullable = false)
-  private String externalId;
+  @Size(max = 255)
+  @Column(name = "entityid_filter")
+  private String entityidFilter;
 
-  @Column(nullable = false)
-  private String issuer;
+  @Size(max = 255)
+  @Column(name = "organization")
+  private String organization;
 
-  @Column(nullable = false)
-  private String subject;
-
-  @Column(columnDefinition = "TEXT")
-  private String entity;
 }

@@ -18,7 +18,7 @@ package se.swedenconnect.oidf.entity.registry.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import se.swedenconnect.oidf.entity.registry.jpaentity.SettingsEntity;
+import se.swedenconnect.oidf.entity.registry.entity.SettingsEntity;
 
 import java.util.List;
 
