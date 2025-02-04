@@ -56,13 +56,23 @@ public class SecurityConfig {
         .csrf(AbstractHttpConfigurer::disable)
 
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/secure/").authenticated()
-            .requestMatchers(HttpMethod.GET, "/secure/policies/**").hasAuthority("SCOPE_policies_read")
-            .requestMatchers(HttpMethod.POST, "/secure/policies/**").hasAuthority("SCOPE_policies_write")
+            .requestMatchers("/registry/v1/entities/**").authenticated()
+            .requestMatchers(HttpMethod.GET, "/registry/v1/entities/**")
+            .hasAuthority("SCOPE_entities_read")
+            .requestMatchers(HttpMethod.POST, "/registry/v1/entities/**")
+            .hasAuthority("SCOPE_entities_write")
 
-            .requestMatchers("/registry/v1/entities/**").permitAll()
-            .requestMatchers("/registry/v1/trustmarksubjects/**").permitAll()
-            .requestMatchers("/registry/v1/policies/**").permitAll()
+            .requestMatchers("/registry/v1/trustmarksubjects/**").authenticated()
+            .requestMatchers(HttpMethod.GET, "/registry/v1/trustmarksubjects/**")
+            .hasAuthority("SCOPE_trustmarksubjects_read")
+            .requestMatchers(HttpMethod.POST, "/registry/v1/trustmarksubjects/**")
+            .hasAuthority("SCOPE_trustmarksubjects_write")
+
+            .requestMatchers("/registry/v1/policies/**").authenticated()
+            .requestMatchers(HttpMethod.GET, "/registry/v1/policies/**")
+            .hasAuthority("SCOPE_policies_read")
+            .requestMatchers(HttpMethod.POST, "/registry/v1/policies/**")
+            .hasAuthority("SCOPE_policies_write")
 
             .requestMatchers("/api/v1/federationservice/**").permitAll() // Always open
             .requestMatchers("/actuator/**").permitAll()

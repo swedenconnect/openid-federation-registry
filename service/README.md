@@ -41,15 +41,6 @@ cd oidf-entity-registry/service
 
 #### Build the Project
 
-Before building this project, ensure that you have built the API part.
-
-```sh
-cd ../api
-mvn clean install
-```
-
-Return to the root directory of this project and build it:
-
 ```sh
 cd ../service
 mvn clean install
@@ -57,10 +48,30 @@ mvn clean install
 
 #### Run the Application
 
-```sh
-mvn spring-boot:run -Dspring-boot.run.profiles=<profile>
-```
+Registry is part of OpenId Federation and are called by both the [Federation Nodes](https://github.com/swedenconnect/openid-federation-services), and the [Registry Admin Tool](https://github.com/swedenconnect/openid-federation-registry-admin). The Registry is also dependent on both an sql-database and Redis.
+The easiest way to handle all those dependencies is to run the Docker compose [local-environment](https://github.com/swedenconnect/local-environment) for OpenId Federatioin.
 
+```sh
+git clone git@github.com:swedenconnect/local-environment.git
+cd local-environment/openidfederation
+docker compose up -d
+```
+Since we are going to work on Registry, we need to stop that container:
+```sh
+docker compose down oidf-registry
+```
+Or locally add "excluded" to oidf-registry in the compose.yml file, before starting docker compose.
+```
+oidf-registry:
+    profiles: ["excluded"]
+    ...
+```
+Then start the Registry application by:
+
+```sh
+mvn spring-boot:run -Dspring-boot.run.profiles=local
+```
+##### Alternative run option:
 The project uses Spring Boot 3 built-in support for Docker Compose, using `../docker-compose.yaml` and handling starting and stopping of the container. If you wish to manage the Docker Compose yourself, unable the Spring Boot handling with:
 
 ```yaml

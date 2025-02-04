@@ -31,7 +31,6 @@ import java.util.UUID;
  */
 public class EntityFactory {
 
-
     private static final ObjectMapper mapper = new ObjectMapper();
     /**
      * URL representing the first subject in the system.
@@ -56,7 +55,6 @@ public class EntityFactory {
      * This constant is typically used when no specific subject is provided.
      */
     public final static String SUBJECT_DEFAULT = SUBJECT_1;
-
 
     private static final String entityJsonData = """
         {
@@ -106,8 +104,6 @@ public class EntityFactory {
            }
          }
         """;
-
-
 
     /**
      * Creates an instance of {@link EntityRecord} with default values.

@@ -22,12 +22,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import se.swedenconnect.oidf.entity.registry.fixture.JwtTestUtils;
 import se.swedenconnect.oidf.entity.registry.fixture.PolicyFactory;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 import se.swedenconnect.oidf.registry.api.model.EntityRecordHostedRecord;
@@ -36,10 +38,7 @@ import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 import java.util.List;
 import java.util.UUID;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -61,6 +60,9 @@ public class EntityControllerTest {
 
   @Autowired
   private ObjectMapper objectMapper;
+
+  @Autowired
+  private JwtTestUtils jwtTestUtils;
 
   /**
    * A static instance of MariaDBContainer configured to use the MariaDB 11.2 image.
@@ -91,6 +93,7 @@ public class EntityControllerTest {
   public void testCreateEntity() throws Exception {
     final PolicyRecord policyRecord = PolicyFactory.record();
     this.mockMvc.perform(post("/registry/v1/policies")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUtils.createJwt())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(policyRecord)))
         .andExpect(status().isCreated());
@@ -105,6 +108,7 @@ public class EntityControllerTest {
     record.setEntityRecordId(UUID.randomUUID().toString());
 
     this.mockMvc.perform(post("/registry/v1/entities")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUtils.createJwt())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(record)))
         .andExpect(status().isCreated())
@@ -128,6 +132,7 @@ public class EntityControllerTest {
   public void testGetEntity() throws Exception {
     final PolicyRecord policyRecord = PolicyFactory.record();
     this.mockMvc.perform(post("/registry/v1/policies")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUtils.createJwt())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(policyRecord)))
         .andExpect(status().isCreated());
@@ -142,13 +147,15 @@ public class EntityControllerTest {
 
 
     final MvcResult result = this.mockMvc.perform(post("/registry/v1/entities")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUtils.createJwt())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(record)))
         .andExpect(status().isCreated()).andReturn();
     final EntityRecord createdRecord = objectMapper.readValue(result.getResponse()
         .getContentAsString(),EntityRecord.class);
 
-    this.mockMvc.perform(get("/registry/v1/entities/{entityId}",createdRecord.getEntityRecordId() ))
+    this.mockMvc.perform(get("/registry/v1/entities/{entityId}",createdRecord.getEntityRecordId())
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUtils.createJwt()))
         .andExpect(status().isOk())
         //.andExpect(jsonPath("$.entityId").value(subject))
         .andExpect(jsonPath("$.subject").value(subject));
@@ -172,6 +179,7 @@ public class EntityControllerTest {
   public void testUpdateEntity() throws Exception {
     final PolicyRecord policyRecord = PolicyFactory.record();
     this.mockMvc.perform(post("/registry/v1/policies")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUtils.createJwt())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(policyRecord)))
         .andExpect(status().isCreated());
@@ -187,6 +195,7 @@ public class EntityControllerTest {
 
 
     final MvcResult result = this.mockMvc.perform(post("/registry/v1/entities")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUtils.createJwt())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(record)))
         .andExpect(status().isCreated()).andReturn();
@@ -196,6 +205,7 @@ public class EntityControllerTest {
 
     record.setHostedRecord(EntityRecordHostedRecord.builder().authorityHints(List.of("http://hint1")).build());
     this.mockMvc.perform(put("/registry/v1/entities/{entityId}", createdRecord.getEntityRecordId())
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUtils.createJwt())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(record)))
         .andExpect(status().isOk())
@@ -219,6 +229,7 @@ public class EntityControllerTest {
   public void testDeleteEntity() throws Exception {
     final PolicyRecord policyRecord = PolicyFactory.record();
     this.mockMvc.perform(post("/registry/v1/policies")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUtils.createJwt())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(policyRecord)))
         .andExpect(status().isCreated());
@@ -233,11 +244,13 @@ public class EntityControllerTest {
 
 
     this.mockMvc.perform(post("/registry/v1/entities")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUtils.createJwt())
             .contentType(MediaType.APPLICATION_JSON)
             .content(this.objectMapper.writeValueAsBytes(record)))
         .andExpect(status().isCreated());
 
-    this.mockMvc.perform(delete("/registry/v1/entities/{entityId}", record.getEntityRecordId()))
+    this.mockMvc.perform(delete("/registry/v1/entities/{entityId}", record.getEntityRecordId())
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUtils.createJwt()))
         .andExpect(status().isNoContent());
   }
 
@@ -252,7 +265,8 @@ public class EntityControllerTest {
    */
   @Test
   public void testGetAllEntities() throws Exception {
-    this.mockMvc.perform(get("/registry/v1/entities"))
+    this.mockMvc.perform(get("/registry/v1/entities")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUtils.createJwt()))
         .andExpect(status().isOk());
   }
 }
