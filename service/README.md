@@ -48,8 +48,8 @@ mvn clean install
 
 #### Run the Application
 
-Registry is part of OpenId Federation and are called by both the [Federation Nodes](https://github.com/swedenconnect/openid-federation-services), and the [Registry Admin Tool](https://github.com/swedenconnect/openid-federation-registry-admin). The Registry is also dependent on both an sql-database and Redis.
-The easiest way to handle all those dependencies is to run the Docker compose [local-environment](https://github.com/swedenconnect/local-environment) for OpenId Federatioin.
+Registry is part of OpenId Federation and are called by both the [Federation Nodes](https://github.com/swedenconnect/openid-federation-services), and the [Registry Admin Tool](https://github.com/swedenconnect/openid-federation-registry-admin). The Registry is also dependent on both a SQL database and Redis.
+The easiest way to handle all those dependencies is to run the Docker compose [local-environment](https://github.com/swedenconnect/local-environment) for OpenID Federation.
 
 ```sh
 git clone git@github.com:swedenconnect/local-environment.git
