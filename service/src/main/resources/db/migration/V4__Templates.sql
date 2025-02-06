@@ -7,7 +7,7 @@ VALUES ('TEMPLATE',
         'The EntityId that this module will have',
         'TEXT',
         '',
-        'req | url',
+        'required | url',
         'Flyway',
         'Flyway');
 
@@ -19,7 +19,7 @@ VALUES ('TEMPLATE',
         'Alias where the module is mounted ex https://www.swedenconnect.se/{alias}',
         'TEXT',
         '',
-        'req',
+        'required',
         'Flyway',
         'Flyway');
 
@@ -31,7 +31,7 @@ VALUES ('TEMPLATE',
         'If this module instance should be active or not',
         'BOOLEAN',
         'true',
-        '',
+        'required',
         'Flyway',
         'Flyway');
 
@@ -43,7 +43,7 @@ VALUES ('TEMPLATE',
         'Instance that this TMS will belong to',
         'OPTIONS',
         '',
-        'req',
+        'required',
         'Flyway',
         'Flyway');
 
@@ -55,7 +55,7 @@ VALUES ('TEMPLATE',
         'Validity for the token representing the trustmark. Expressed in hours.',
         'NUMERIC',
         '1',
-        'req | min:1 | max:24',
+        'required | min:1 | max:24',
         'Flyway',
         'Flyway');
 
@@ -126,7 +126,7 @@ VALUES ('TEMPLATE',
         'Duration of the response. Expressed in hours.',
         'NUMERIC',
         '2',
-        'req | min:1 | max:2',
+        'required | min:1 | max:48',
         'Flyway',
         'Flyway');
 
@@ -139,7 +139,7 @@ VALUES ('TEMPLATE',
         'URL to trustanchor that will be used to build trustchanin ',
         'TEXT',
         '',
-        'req | url',
+        'required | url',
         'Flyway',
         'Flyway');
 
@@ -151,7 +151,7 @@ VALUES ('TEMPLATE',
         'Trusted keys, JWKS format',
         'TEXT',
         '',
-        'req | jwks',
+        'required | jwks',
         'Flyway',
         'Flyway');
 
@@ -162,8 +162,8 @@ VALUES ('TEMPLATE',
         'step-retry-time',
         'Time between a failed step and retry. Expressed in sec',
         'NUMERIC',
-        '60',
-        'req',
+        '20',
+        'required | min:30 | max:180',
         'Flyway',
         'Flyway');
 
@@ -195,7 +195,7 @@ VALUES ('TEMPLATE',
         'Trustmark identity,',
         'TEXT',
         '',
-        'req | url',
+        'required | url',
         'Flyway',
         'Flyway');
 
@@ -207,7 +207,7 @@ VALUES ('TEMPLATE',
         'Url that points to a logotype image',
         'TEXT',
         '',
-        'req | url',
+        'required | url',
         'Flyway',
         'Flyway');
 
@@ -219,7 +219,7 @@ VALUES ('TEMPLATE',
         'Reference url, usually pointing to a documentation page',
         'TEXT',
         '',
-        'req | url',
+        'required | url',
         'Flyway',
         'Flyway');
 
@@ -231,7 +231,7 @@ VALUES ('TEMPLATE',
         'Delegation JWK according to oidf specification',
         'TEXT',
         '',
-        'req | jwk:delegation',
+        'required | jwk:delegation',
         'Flyway',
         'Flyway');
 

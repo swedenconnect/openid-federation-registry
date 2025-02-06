@@ -44,31 +44,110 @@ public class PropertyValidatorsTest {
   }
 
   @Test
-  public void testResolveValidator_requiredValidator() {
-    final PropertyValidator result = propertyValidators.resolveValidator("req");
-    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", ""));
-    assertDoesNotThrow(() -> result.validate("key", "value"));
+  public void testResolveValidator_lengthValidator() {
+    final PropertyValidator result = propertyValidators.resolveValidator("length:5,10");
+    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "abcd"));
+    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "abcdefghijk"));
+    assertDoesNotThrow(() -> result.validate("key", "abcde"));
   }
 
   @Test
-  public void testResolveValidator_regexValidator() {
-    final PropertyValidator result = propertyValidators.resolveValidator("regex:^\\d+$");
-    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "abcd"));
-    assertDoesNotThrow(() -> result.validate("key", "12345"));
+  public void testResolveValidator_requiredValidator() {
+    final PropertyValidator result = propertyValidators.resolveValidator("required");
+    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", ""));
+    assertDoesNotThrow(() -> result.validate("key", "non-empty"));
+  }
+
+  @Test
+  public void testResolveValidator_emailValidator() {
+    final PropertyValidator result = propertyValidators.resolveValidator("email");
+    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "invalid"));
+    assertDoesNotThrow(() -> result.validate("key", "test@example.com"));
+  }
+
+  @Test
+  public void testResolveValidator_endsWithValidator() {
+    final PropertyValidator result = propertyValidators.resolveValidator("ends_with:xyz");
+    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "abc"));
+    assertDoesNotThrow(() -> result.validate("key", "abcxyz"));
+  }
+
+  @Test
+  public void testResolveValidator_startsWithValidator() {
+    final PropertyValidator result = propertyValidators.resolveValidator("starts_with:abc");
+    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "xyz"));
+    assertDoesNotThrow(() -> result.validate("key", "abcxyz"));
+  }
+
+  @Test
+  public void testResolveValidator_containsValidator() {
+    final PropertyValidator result = propertyValidators.resolveValidator("contains:abc");
+    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "xyz"));
+    assertDoesNotThrow(() -> result.validate("key", "xyzabcxyz"));
+  }
+
+  @Test
+  public void testResolveValidator_alphaValidator() {
+    final PropertyValidator result = propertyValidators.resolveValidator("alpha");
+    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "abc123"));
+    assertDoesNotThrow(() -> result.validate("key", "abcdef"));
+  }
+
+  @Test
+  public void testResolveValidator_alphanumericValidator() {
+    final PropertyValidator result = propertyValidators.resolveValidator("alphanumeric");
+    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "abc$%"));
+    assertDoesNotThrow(() -> result.validate("key", "abc123"));
+  }
+
+  @Test
+  public void testResolveValidator_numberValidator() {
+    final PropertyValidator result = propertyValidators.resolveValidator("number");
+    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "abc"));
+    assertDoesNotThrow(() -> result.validate("key", "123.45"));
+  }
+
+  @Test
+  public void testResolveValidator_dateValidator() {
+    final PropertyValidator result = propertyValidators.resolveValidator("date");
+    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "invalid-date"));
+    assertDoesNotThrow(() -> result.validate("key", "2023-01-01"));
+  }
+
+  @Test
+  public void testResolveValidator_betweenValidator() {
+    final PropertyValidator result = propertyValidators.resolveValidator("between:1,10");
+    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "0"));
+    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "11"));
+    assertDoesNotThrow(() -> result.validate("key", "5"));
+  }
+
+  @Test
+  public void testResolveValidator_urlValidator() {
+    final PropertyValidator result = propertyValidators.resolveValidator("url");
+    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "invalid-url"));
+    assertDoesNotThrow(() -> result.validate("key", "https://example.com"));
+  }
+
+  @Test
+  public void testResolveValidator_matchesValidator() {
+    final PropertyValidator result = propertyValidators.resolveValidator("matches:^\\d{3}-\\d{2}-\\d{4}$");
+    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "1234"));
+    assertDoesNotThrow(() -> result.validate("key", "123-45-6789"));
   }
 
   @Test
   public void testResolveValidator_minValidator() {
     final PropertyValidator result = propertyValidators.resolveValidator("min:5");
-    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "1234"));
-    assertDoesNotThrow(() -> result.validate("key", "12345"));
+    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "3"));
+    assertDoesNotThrow(() -> result.validate("key", "10"));
   }
 
   @Test
   public void testResolveValidator_maxValidator() {
-    final PropertyValidator result = propertyValidators.resolveValidator("max:5");
-    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "123456"));
-    assertDoesNotThrow(() -> result.validate("key", "123"));
+    final PropertyValidator result = propertyValidators.resolveValidator("max:10.1");
+    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "40"));
+    assertDoesNotThrow(() -> result.validate("key", "10"));
   }
 
   @Test

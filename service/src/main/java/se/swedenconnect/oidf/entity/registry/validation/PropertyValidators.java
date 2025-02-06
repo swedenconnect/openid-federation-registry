@@ -28,6 +28,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * The PropertyValidators class provides utility methods for creating and resolving
@@ -84,24 +86,222 @@ public class PropertyValidators {
     final String conf = split.length > 1 ? split[1] : "";
 
     return switch (name) {
-      case "req" -> (String key, String value) -> {
-        this.throwIf(() -> value == null || value.isBlank(), key, "Required validation failed");
-      };
-      case "regex" -> (String key, String value) -> this.throwIf(() ->
-          !value.isBlank() && !value.matches(conf), key, "Regex validation failed");
+
       case "min" -> (String key, String value) -> this.throwIf(() ->
-              !value.isBlank() && value.length() < Integer.parseInt(conf),
+              !value.isBlank() && Double.parseDouble(value) < Double.parseDouble(conf),
           key, "Value has to be grater then %s".formatted(conf));
+
       case "max" -> (String key, String value) -> this.throwIf(() ->
-              !value.isBlank() && value.length() >= Integer.parseInt(conf),
+              !value.isBlank() && Double.parseDouble(value) > Double.parseDouble(conf),
           key, "Value has to be less then %s".formatted(conf));
+
+      case "length" -> this.hasLength(conf);
       case "json" -> this.isJson();
       case "jwks" -> this.jwksValidator(conf);
-      case "url" -> this.isUrl();
       case "jwk" -> this.isJWK();
+
+      case "required" -> (key, value) ->
+          this.throwIf(() -> value == null || value.isBlank(),
+              key, "Field is required");
+
+      case "email" -> (key, value) ->
+          this.throwIf(() -> !value.isBlank() &&
+                  !value.matches("^[A-Za-z0-9+_.-]+@(.+)$"),
+              key, "Invalid email format");
+
+      case "ends_with" -> validateEndsWith(conf);
+
+      case "starts_with" -> validateStartsWith(conf);
+
+      case "contains" -> validateContains(conf);
+
+      case "alpha" -> (key, value) ->
+          this.throwIf(() -> !value.isBlank() &&
+                  !value.matches("^[A-Za-z]+$"),
+              key, "Must contain only letters");
+
+      case "alphanumeric" -> (key, value) ->
+          this.throwIf(() -> !value.isBlank() &&
+                  !value.matches("^[A-Za-z0-9]+$"),
+              key, "Must contain only letters and numbers");
+
+      case "number" -> (key, value) ->
+          this.throwIf(() -> !value.isBlank() &&
+                  !value.matches("^-?\\d*\\.?\\d+$"),
+              key, "Must be a number");
+
+      case "date" -> validateDate();
+
+      case "between" -> validateBetween(conf);
+
+      case "url" -> validateUrl();
+
+      case "matches" -> validateMatches(conf);
 
       default -> throw new IllegalArgumentException("Unknown validator: " + name);
     };
+  }
+
+  private PropertyValidator validateEndsWith(final String suffix) {
+    if (suffix == null || suffix.isBlank()) {
+      throw new IllegalArgumentException("ends_with validator requires a suffix");
+    }
+    return (key, value) -> this.throwIf(
+        () -> !value.isBlank() && !value.endsWith(suffix),
+        key, "Must end with: " + suffix
+    );
+  }
+
+  private PropertyValidator validateStartsWith(final String prefix) {
+    if (prefix == null || prefix.isBlank()) {
+      throw new IllegalArgumentException("starts_with validator requires a prefix");
+    }
+    return (key, value) -> this.throwIf(
+        () -> !value.isBlank() && !value.startsWith(prefix),
+        key, "Must start with: " + prefix
+    );
+  }
+
+  private PropertyValidator validateContains(final String substring) {
+    if (substring == null || substring.isBlank()) {
+      throw new IllegalArgumentException("contains validator requires a substring");
+    }
+    return (key, value) -> this.throwIf(
+        () -> !value.isBlank() && !value.contains(substring),
+        key, "Must contain: " + substring
+    );
+  }
+
+  private PropertyValidator validateDate() {
+    return (key, value) -> {
+      if (value == null || value.isBlank()) {
+        return;
+      }
+      try {
+        java.time.LocalDate.parse(value);
+      }
+      catch (Exception e) {
+        throw new PropertyValidationFailException(key, "Invalid date format. Use YYYY-MM-DD");
+      }
+    };
+  }
+
+  private PropertyValidator validateBetween(final String conf) {
+    if (conf == null || !conf.contains(",")) {
+      throw new IllegalArgumentException("between validator requires min,max format");
+    }
+    String[] parts = conf.split(",");
+    if (parts.length != 2) {
+      throw new IllegalArgumentException("between validator requires exactly two values");
+    }
+    try {
+      double min = Double.parseDouble(parts[0]);
+      double max = Double.parseDouble(parts[1]);
+      return (key, value) -> {
+        if (value == null || value.isBlank()) {
+          return;
+        }
+        double number = Double.parseDouble(value);
+        this.throwIf(
+            () -> number < min || number > max,
+            key, "Value must be between %s and %s".formatted(min, max)
+        );
+      };
+    }
+    catch (NumberFormatException e) {
+      throw new IllegalArgumentException("between validator requires numeric values");
+    }
+  }
+
+  private PropertyValidator validateUrl() {
+    return (key, value) -> {
+      if (value == null || value.isBlank()) {
+        return;
+      }
+      try {
+        new URI(value).toURL();
+      }
+      catch (Exception e) {
+        throw new PropertyValidationFailException(key, "Invalid URL format");
+      }
+    };
+  }
+
+  private PropertyValidator validateMatches(final String regex) {
+    if (regex == null || regex.isBlank()) {
+      throw new IllegalArgumentException("matches validator requires a regex pattern");
+    }
+    try {
+      Pattern.compile(regex);
+    }
+    catch (PatternSyntaxException e) {
+      throw new IllegalArgumentException("Invalid regex pattern: " + e.getMessage());
+    }
+    return (key, value) -> this.throwIf(
+        () -> !value.isBlank() && !value.matches(regex),
+        key, "Value does not match required pattern"
+    );
+  }
+
+  private PropertyValidator hasLength(final String conf) {
+    // Validate configuration first
+    final int[] limits = validateLengthConfiguration(conf);
+    final int minLength = limits[0];
+    final int maxLength = limits[1];
+
+    // Return the validator with clean validation logic
+    return (key, value) -> {
+      if (value == null || value.isBlank()) {
+        return;
+      }
+
+      final int length = value.length();
+      if (length < minLength) {
+        throw new PropertyValidationFailException(key,
+            "Value has to be at least %d characters long".formatted(minLength));
+      }
+      if (length > maxLength) {
+        throw new PropertyValidationFailException(key,
+            "Value cannot be longer than %d characters".formatted(maxLength));
+      }
+    };
+  }
+
+  private int[] validateLengthConfiguration(final String conf) {
+    if (conf == null || conf.isBlank()) {
+      throw new IllegalArgumentException("Length validator requires configuration in format 'min,max'");
+    }
+
+    final String[] limits = conf.split(",");
+    if (limits.length != 2) {
+      throw new IllegalArgumentException(
+          "Invalid length validator configuration. Expected format 'min,max', got: '%s'"
+              .formatted(conf));
+    }
+
+    try {
+      final int minLength = Integer.parseInt(limits[0]);
+      final int maxLength = Integer.parseInt(limits[1]);
+
+      if (minLength < 0 || maxLength < 0) {
+        throw new IllegalArgumentException(
+            "Length limits cannot be negative. Got min: %d, max: %d"
+                .formatted(minLength, maxLength));
+      }
+
+      if (minLength > maxLength) {
+        throw new IllegalArgumentException(
+            "Minimum length cannot be greater than maximum length. Got min: %d, max: %d"
+                .formatted(minLength, maxLength));
+      }
+
+      return new int[] { minLength, maxLength };
+    }
+    catch (NumberFormatException e) {
+      throw new IllegalArgumentException(
+          "Invalid length validator configuration. Both values must be integers, got: '%s'"
+              .formatted(conf));
+    }
   }
 
   private PropertyValidator isUrl() {

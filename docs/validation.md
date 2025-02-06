@@ -1,19 +1,38 @@
 # Validation
 
-On every property a validation rule can be applied, they can be combined by using the following syntax:
-"req | min:2 | max:6" this means that a word has to exist and be grater that 2 but less then 6 characters in length.
+Properties can have validation rules applied and combined using pipe ('|') syntax. For example:
+"required|length:2,10|email" means a value must exist, be between 2-10 characters, and be a valid email format.
 
-Syntax for adding con to the rule looks like {rule}:{config} ex min:3
+Syntax for validator configuration: {rule}:{config}
 
 ## Description of the validation rules
 
-| Rule   | conf                  | Description                                                                  | Example          |
-|--------|-----------------------|------------------------------------------------------------------------------|------------------|
-| req    | {no options}          | Requred that the value is not blank, white space is trimmed                  |                  |
-| min    | numeric length        | Minimum characterlength                                                      | min:3            |
-| max    | numeric length        | Maximum characterlength                                                      | max:5            |
-| regexp | ex ^\d+$              | Reg exp that has to match                                                    | regex:^\d+$      |
-| jwk    |                       | Test that is is parable                                                      | jwk              |
-| jwks   | {none},kid,req,public | req, min one key. public ensure the key is public, kid ensure kid is present | jwks or jwks:kid |
+| Rule         | Config         | Description                                                                  | Example           |
+|--------------|----------------|------------------------------------------------------------------------------|-------------------|
+| required     | {no options}   | Ensures value is not null or blank (whitespace trimmed)                      | required          |
+| min          | numeric value  | Validates number is greater than specified value                             | min:10            |
+| max          | numeric value  | Validates number is less than specified value                                | max:100           |
+| length       | min,max        | Ensures string length is between min and max values                          | length:3,10       |
+| json         | {no options}   | Validates string is valid JSON format                                        | json              |
+| jwk          | {no options}   | Validates string is valid JWK format                                         | jwk               |
+| jwks         | public,kid,req | Validates JWKS: req=requires keys, public=public keys only, kid=requires kid | jwks:public       |
+| email        | {no options}   | Validates string is valid email format                                       | email             |
+| ends_with    | suffix string  | Validates string ends with specified suffix                                  | ends_with:.com    |
+| starts_with  | prefix string  | Validates string starts with specified prefix                                | starts_with:https |
+| contains     | substring      | Validates string contains specified substring                                | contains:test     |
+| alpha        | {no options}   | Validates string contains only letters                                       | alpha             |
+| alphanumeric | {no options}   | Validates string contains only letters and numbers                           | alphanumeric      |
+| number       | {no options}   | Validates value is a valid number (includes decimals)                        | number            |
+| date         | {no options}   | Validates string is valid date in YYYY-MM-DD format                          | date              |
+| between      | min,max        | Validates number is between min and max values                               | between:1,100     |
+| url          | {no options}   | Validates string is valid URL format                                         | url               |
+| matches      | regex pattern  | Validates string matches specified regex pattern                             | matches:^[A-Z]+$  |
 
+### Examples of combined validation
 
+```text
+"required|length:3,50|email" - Required email between 3-50 characters
+"number|between:0,100" - Optional number between 0 and 100
+"required|url|starts_with:https" - Required HTTPS URL
+"required|json|jwks:public" - Required JWKS with public keys only
+```
