@@ -54,7 +54,7 @@ public class ModuleEntity extends BaseEntity {
   @Column(name = "module_type", nullable = false)
   private String moduleType;
 
-  @OneToMany(cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
+  @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
   @JoinColumns({
       @JoinColumn(name = "fk_type", referencedColumnName = "module_type", insertable = false, updatable = false),
       @JoinColumn(name = "fk_id", referencedColumnName = "module_id", insertable = false, updatable = false)

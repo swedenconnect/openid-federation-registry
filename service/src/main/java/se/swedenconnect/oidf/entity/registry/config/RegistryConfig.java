@@ -33,7 +33,6 @@ import se.swedenconnect.oidf.entity.registry.repository.TrustMarkSubjectReposito
 import se.swedenconnect.oidf.entity.registry.service.EntityService;
 import se.swedenconnect.oidf.entity.registry.service.FederationApiService;
 import se.swedenconnect.oidf.entity.registry.service.JpaEntityService;
-import se.swedenconnect.oidf.entity.registry.service.JpaOptionsService;
 import se.swedenconnect.oidf.entity.registry.service.JpaPolicyService;
 import se.swedenconnect.oidf.entity.registry.service.JpaTrustMarkSubjectService;
 import se.swedenconnect.oidf.entity.registry.service.PolicyService;
@@ -120,22 +119,6 @@ public class RegistryConfig {
   @Qualifier("jpaPolicyService")
   public PolicyService jpaPolicyService() {
     return new JpaPolicyService(this.policyRepository, this.objectMapper,this.registryAuditService);
-  }
-
-  /**
-   * Provides an instance of JpaOptionsService, which manages application settings and modules using the specified
-   * repositories and services.
-   *
-   * @return an instance of JpaOptionsService configured with dependencies for settings, modules, registry audit, and
-   *     instance management.
-   */
-  @Bean
-  @Qualifier("jpaSettingService")
-  public JpaOptionsService jpaSettingsService() {
-    return new JpaOptionsService(this.settingsRepository,
-        this.moduleRepository,
-        this.registryAuditService,
-        this.instanceRepository);
   }
 
   /**

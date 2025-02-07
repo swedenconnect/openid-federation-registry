@@ -109,11 +109,11 @@ public class PropertyValidators {
                   !value.matches("^[A-Za-z0-9+_.-]+@(.+)$"),
               key, "Invalid email format");
 
-      case "ends_with" -> validateEndsWith(conf);
+      case "ends_with" -> this.validateEndsWith(conf);
 
-      case "starts_with" -> validateStartsWith(conf);
+      case "starts_with" -> this.validateStartsWith(conf);
 
-      case "contains" -> validateContains(conf);
+      case "contains" -> this.validateContains(conf);
 
       case "alpha" -> (key, value) ->
           this.throwIf(() -> !value.isBlank() &&
@@ -130,13 +130,13 @@ public class PropertyValidators {
                   !value.matches("^-?\\d*\\.?\\d+$"),
               key, "Must be a number");
 
-      case "date" -> validateDate();
+      case "date" -> this.validateDate();
 
-      case "between" -> validateBetween(conf);
+      case "between" -> this.validateBetween(conf);
 
-      case "url" -> validateUrl();
+      case "url" -> this.validateUrl();
 
-      case "matches" -> validateMatches(conf);
+      case "matches" -> this.validateMatches(conf);
 
       default -> throw new IllegalArgumentException("Unknown validator: " + name);
     };
@@ -180,7 +180,7 @@ public class PropertyValidators {
       try {
         java.time.LocalDate.parse(value);
       }
-      catch (Exception e) {
+      catch (final Exception e) {
         throw new PropertyValidationFailException(key, "Invalid date format. Use YYYY-MM-DD");
       }
     };
@@ -190,25 +190,25 @@ public class PropertyValidators {
     if (conf == null || !conf.contains(",")) {
       throw new IllegalArgumentException("between validator requires min,max format");
     }
-    String[] parts = conf.split(",");
+    final String[] parts = conf.split(",");
     if (parts.length != 2) {
       throw new IllegalArgumentException("between validator requires exactly two values");
     }
     try {
-      double min = Double.parseDouble(parts[0]);
-      double max = Double.parseDouble(parts[1]);
+      final double min = Double.parseDouble(parts[0]);
+      final double max = Double.parseDouble(parts[1]);
       return (key, value) -> {
         if (value == null || value.isBlank()) {
           return;
         }
-        double number = Double.parseDouble(value);
+        final double number = Double.parseDouble(value);
         this.throwIf(
             () -> number < min || number > max,
             key, "Value must be between %s and %s".formatted(min, max)
         );
       };
     }
-    catch (NumberFormatException e) {
+    catch (final NumberFormatException e) {
       throw new IllegalArgumentException("between validator requires numeric values");
     }
   }
@@ -221,7 +221,7 @@ public class PropertyValidators {
       try {
         new URI(value).toURL();
       }
-      catch (Exception e) {
+      catch (final Exception e) {
         throw new PropertyValidationFailException(key, "Invalid URL format");
       }
     };
@@ -234,7 +234,7 @@ public class PropertyValidators {
     try {
       Pattern.compile(regex);
     }
-    catch (PatternSyntaxException e) {
+    catch (final PatternSyntaxException e) {
       throw new IllegalArgumentException("Invalid regex pattern: " + e.getMessage());
     }
     return (key, value) -> this.throwIf(
@@ -244,12 +244,10 @@ public class PropertyValidators {
   }
 
   private PropertyValidator hasLength(final String conf) {
-    // Validate configuration first
-    final int[] limits = validateLengthConfiguration(conf);
+    final int[] limits = this.validateLengthConfiguration(conf);
     final int minLength = limits[0];
     final int maxLength = limits[1];
 
-    // Return the validator with clean validation logic
     return (key, value) -> {
       if (value == null || value.isBlank()) {
         return;
@@ -297,7 +295,7 @@ public class PropertyValidators {
 
       return new int[] { minLength, maxLength };
     }
-    catch (NumberFormatException e) {
+    catch (final NumberFormatException e) {
       throw new IllegalArgumentException(
           "Invalid length validator configuration. Both values must be integers, got: '%s'"
               .formatted(conf));

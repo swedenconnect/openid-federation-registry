@@ -22,12 +22,15 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
-import se.swedenconnect.oidf.entity.registry.service.JpaOptionsService;
+import se.swedenconnect.oidf.entity.registry.service.OptionsCRUDSelector;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
+
+import java.util.UUID;
 
 /**
  * Controller class for managing operations on options-related configurations.
@@ -39,16 +42,15 @@ import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 @RestController
 @RequestMapping("/registry/v1/options")
 public class OptionsApiController {
-  private final JpaOptionsService service;
+  private final OptionsCRUDSelector optionsCRUDSelector;
 
   /**
-   * Constructs an OptionsApiController instance with the specified service. This controller manages operations on
-   * option-related configurations using the provided JpaOptionsService for data access and processing.
+   * Constructor for the OptionsApiController.
    *
-   * @param service The JpaOptionsService instance used to manage configurations.
+   * @param optionsCRUDSelector    the selector used for determining CRUD operations-related logic for options.
    */
-  public OptionsApiController(final JpaOptionsService service) {
-    this.service = service;
+  public OptionsApiController(final OptionsCRUDSelector optionsCRUDSelector) {
+    this.optionsCRUDSelector = optionsCRUDSelector;
   }
 
   /**
@@ -62,9 +64,10 @@ public class OptionsApiController {
   @GetMapping("/{optionsgroup}/{identifyer}")
   public ResponseEntity<?> getOptionalData(
       @PathVariable("optionsgroup") final String optionsgroup,
-      @PathVariable(name = "identifyer") final String identifyer) {
+      @PathVariable(name = "identifyer") final UUID identifyer) {
 
-    final OptionsRecord optionsRecord = this.service.get(FkKeyType.valueOf(optionsgroup.toUpperCase()), identifyer);
+    final OptionsRecord optionsRecord = this.optionsCRUDSelector.get(
+        FkKeyType.valueOf(optionsgroup.toUpperCase()), identifyer);
 
     return ResponseEntity.ok(optionsRecord);
   }
@@ -79,11 +82,8 @@ public class OptionsApiController {
   @GetMapping("/{optionsgroup}")
   public ResponseEntity<?> getTemplateConfig(
       @PathVariable("optionsgroup") final String optionsgroup) {
-
-    final OptionsRecord optionsRecord = this.service.getTemplate(FkKeyType.valueOf(optionsgroup.toUpperCase()));
-    if (optionsRecord == null) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Configuration not found.");
-    }
+    final OptionsRecord optionsRecord = this.optionsCRUDSelector.template(
+        FkKeyType.valueOf(optionsgroup.toUpperCase()));
     return ResponseEntity.ok(optionsRecord);
   }
 
@@ -97,15 +97,33 @@ public class OptionsApiController {
    * @return A {@link ResponseEntity} containing the updated {@link OptionsRecord} and a CREATED status if successful.
    */
   @PostMapping("/{optionsgroup}/{identifyer}")
-  public ResponseEntity<?> updateConfig(
+  public ResponseEntity<?> createConfig(
       @PathVariable("optionsgroup") final String optionsgroup,
-      @PathVariable(name = "identifyer") final String identifyer,
+      @PathVariable(name = "identifyer") final UUID identifyer,
       @RequestBody final OptionsRecord record) {
 
-    final OptionsRecord optionsRecord = this.service.create(
+    final OptionsRecord optionsRecord = this.optionsCRUDSelector.create(
         FkKeyType.valueOf(optionsgroup.toUpperCase()), identifyer, record);
     return ResponseEntity.status(HttpStatus.CREATED).body(optionsRecord);
+  }
 
+  /**
+   * Updates the configuration based on the provided options group, identifier, and configuration details.
+   *
+   * @param optionsgroup the name of the options group used to categorize the configuration
+   * @param identifyer the unique identifier for the configuration to be updated
+   * @param record the details of the configuration to be updated, encapsulated in an OptionsRecord object
+   * @return a ResponseEntity containing the updated configuration details and HTTP status
+   */
+  @PutMapping("/{optionsgroup}/{identifyer}")
+  public ResponseEntity<?> updateConfig(
+      @PathVariable("optionsgroup") final String optionsgroup,
+      @PathVariable(name = "identifyer") final UUID identifyer,
+      @RequestBody final OptionsRecord record) {
+
+    final OptionsRecord optionsRecord = this.optionsCRUDSelector.update(
+        FkKeyType.valueOf(optionsgroup.toUpperCase()), identifyer, record);
+    return ResponseEntity.status(HttpStatus.CREATED).body(optionsRecord);
   }
 
   /**
@@ -115,11 +133,11 @@ public class OptionsApiController {
    * @param identifyer The identifier of the configuration.
    * @return Success message.
    */
-  @DeleteMapping("/{configgroup}/{identifyer}")
+  @DeleteMapping("/{optionsgroup}/{identifyer}")
   public ResponseEntity<?> deleteConfig(
-      @PathVariable final String optionsgroup,
-      @PathVariable final String identifyer) {
-    this.service.delete(FkKeyType.valueOf(optionsgroup.toUpperCase()), identifyer);
+      @PathVariable("optionsgroup") final String optionsgroup,
+      @PathVariable(name = "identifyer") final UUID identifyer) {
+    this.optionsCRUDSelector.delete(FkKeyType.valueOf(optionsgroup.toUpperCase()), identifyer);
     return ResponseEntity.ok("Configuration deleted successfully.");
   }
 

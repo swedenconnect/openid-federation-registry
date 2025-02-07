@@ -48,10 +48,10 @@ public class SettingsEntity extends BaseEntity {
   @Column(name = "property_id", nullable = false, updatable = false)
   private Long propertyId;
 
-  @Column(name = "fk_id", nullable = false)
+  @Column(name = "fk_id", nullable = false, updatable = false)
   private String fkId;
 
-  @Column(name = "fk_type", nullable = false)
+  @Column(name = "fk_type", nullable = false, updatable = false)
   private String fkType;
 
   @Column(name = "data_key", nullable = false)

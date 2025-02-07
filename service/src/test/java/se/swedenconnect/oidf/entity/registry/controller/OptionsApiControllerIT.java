@@ -58,7 +58,7 @@ class OptionsApiControllerIT {
   final ObjectMapper objectMapper = new ObjectMapper();
 
   @Test
-  public void testCRUD() {
+  public void testOptionsRequest() {
 
     final ResponseEntity<String> tmi =
         this.restTemplate.getForEntity("/registry/v1/options/trustmarkissuer", String.class);
@@ -128,6 +128,15 @@ class OptionsApiControllerIT {
       log.info(tmiRead.getBody());
     }
     assertThat(tmiRead.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+    this.restTemplate.delete("/registry/v1/options/trustmarkissuer/" + id);
+    final ResponseEntity<String> tmiReadNotFound =
+        this.restTemplate.getForEntity("/registry/v1/options/trustmarkissuer/" + id, String.class);
+    if (tmiReadNotFound.getStatusCode().isError()) {
+      log.info(tmiReadNotFound.getBody());
+    }
+    assertThat(tmiReadNotFound.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
 
 
   }
