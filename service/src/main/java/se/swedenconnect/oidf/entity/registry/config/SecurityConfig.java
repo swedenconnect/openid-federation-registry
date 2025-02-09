@@ -50,30 +50,32 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
     http
-        /*.exceptionHandling(conf ->
-            conf.authenticationEntryPoint((req, res, ex) -> {
-              throw ex;
-            }))
-*/
-
         .oauth2ResourceServer(oauth2 -> oauth2
             .jwt(Customizer.withDefaults()))
         .csrf(AbstractHttpConfigurer::disable)
 
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/secure/").authenticated()
-            .requestMatchers(HttpMethod.GET, "/secure/policies/**").hasAuthority("SCOPE_policies_read")
-            .requestMatchers(HttpMethod.POST, "/secure/policies/**").hasAuthority("SCOPE_policies_write")
+            .requestMatchers("/registry/v1/entities/**").authenticated()
+            .requestMatchers(HttpMethod.GET, "/registry/v1/entities/**")
+            .hasAuthority("SCOPE_entities_read")
+            .requestMatchers(HttpMethod.POST, "/registry/v1/entities/**")
+            .hasAuthority("SCOPE_entities_write")
 
-            .requestMatchers("/registry/v1/options/**").permitAll()
-            .requestMatchers("/registry/v1/entities/**").permitAll()
-            .requestMatchers("/registry/v1/trustmarksubjects/**").permitAll()
-            .requestMatchers("/registry/v1/policies/**").permitAll()
+            .requestMatchers("/registry/v1/trustmarksubjects/**").authenticated()
+            .requestMatchers(HttpMethod.GET, "/registry/v1/trustmarksubjects/**")
+            .hasAuthority("SCOPE_trustmarksubjects_read")
+            .requestMatchers(HttpMethod.POST, "/registry/v1/trustmarksubjects/**")
+            .hasAuthority("SCOPE_trustmarksubjects_write")
+
+            .requestMatchers("/registry/v1/policies/**").authenticated()
+            .requestMatchers(HttpMethod.GET, "/registry/v1/policies/**")
+            .hasAuthority("SCOPE_policies_read")
+            .requestMatchers(HttpMethod.POST, "/registry/v1/policies/**")
+            .hasAuthority("SCOPE_policies_write")
 
             .requestMatchers("/api/v1/federationservice/**").permitAll() // Always open
             .requestMatchers("/actuator/**").permitAll()
             .anyRequest().denyAll()
-
         );
     return http.build();
   }

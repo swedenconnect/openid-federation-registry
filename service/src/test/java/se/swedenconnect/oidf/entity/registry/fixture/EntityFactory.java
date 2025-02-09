@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Sweden Connect
+ * Copyright 2025 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,8 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ *  limitations under the License.
  */
 package se.swedenconnect.oidf.entity.registry.fixture;
 
@@ -30,7 +29,6 @@ import java.util.UUID;
  * @author David Goldring
  */
 public class EntityFactory {
-
 
     private static final ObjectMapper mapper = new ObjectMapper();
     /**
@@ -56,7 +54,6 @@ public class EntityFactory {
      * This constant is typically used when no specific subject is provided.
      */
     public final static String SUBJECT_DEFAULT = SUBJECT_1;
-
 
     private static final String entityJsonData = """
         {
@@ -106,8 +103,6 @@ public class EntityFactory {
            }
          }
         """;
-
-
 
     /**
      * Creates an instance of {@link EntityRecord} with default values.

@@ -182,7 +182,6 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <!--inputSpec>${basedir}/src/main/resources/oidf-entity-registry-api.yaml</inputSpec-->
                             <inputSpec>${project.build.directory}/openapi/oidf-entity-registry-api.yaml</inputSpec>
                             <generatorName>java</generatorName>
                             <generateApis>false</generateApis>
