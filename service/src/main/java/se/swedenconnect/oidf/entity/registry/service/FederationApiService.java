@@ -36,6 +36,7 @@ import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.entity.InstanceEntity;
 import se.swedenconnect.oidf.entity.registry.entity.ModuleEntity;
 import se.swedenconnect.oidf.entity.registry.entity.PolicyEntity;
+import se.swedenconnect.oidf.entity.registry.entity.SettingsEntity;
 import se.swedenconnect.oidf.entity.registry.entity.TrustMarkSubjectEntity;
 import se.swedenconnect.oidf.entity.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.repository.InstanceRepository;
@@ -201,17 +202,9 @@ public class FederationApiService {
   public String submoduleRecord(final UUID instanceId) {
     Assert.notNull(instanceId, "instanceId is mandatory");
     try {
-
       final String claimName = "module_records";
       final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
-
       claimsSet.claim(claimName, resolveSubmodules(instanceId));
-
-     /* claimsSet.claim(claimName, Map.of(
-          "resolvers", Collections.emptyList(),
-          "trust-anchors", Collections.emptyList(),
-          "trust-mark-issuers", Collections.emptyList()));
-      */
       return this.signJWT(claimName, claimsSet.build()).serialize();
     }
     catch (final JOSEException e) {
@@ -255,8 +248,8 @@ public class FederationApiService {
     return moduleEntity.getSettingsEntityList()
         .stream()
         .collect(Collectors.toMap(
-            settingsEntity -> settingsEntity.capLetterKey(),
-            settingsEntity -> settingsEntity.castValue()
+            SettingsEntity::getKey,
+            SettingsEntity::castValue
         ));
   }
 

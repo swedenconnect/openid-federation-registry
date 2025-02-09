@@ -30,6 +30,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
+import java.time.Duration;
+
 /**
  * Entity class representing the 'Settings' table in the database.
  *
@@ -86,27 +88,12 @@ public class SettingsEntity extends BaseEntity {
       case "OPTIONS" -> value;
       case "BOOLEAN" -> Boolean.valueOf(value);
       case "NUMERIC" -> Double.valueOf(value);
+      case "DURATION" -> Duration.parse(value).toMillis();
       default -> throw new IllegalStateException("Unexpected value: " + value.toLowerCase() +
           " for data type: " + valueDataType);
     };
   }
 
-  public String capLetterKey() {
-    if (key == null || key.isEmpty()) {
-      throw new IllegalArgumentException("Input cannot be null or empty");
-    }
-
-    String[] parts = key.split("-");
-    StringBuilder result = new StringBuilder(parts[0]);
-
-    for (int i = 1; i < parts.length; i++) {
-      result.append(parts[i].substring(0, 1).toUpperCase())
-          .append(parts[i].substring(1));
-    }
-
-    return result.toString();
-
-  }
 
 
 }

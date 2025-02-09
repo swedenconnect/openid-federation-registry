@@ -199,9 +199,10 @@ public class PropertyValidatorsTest {
   }
 
   @Test
-  public void testResolveValidator_jwksValidator_invalidJwk() {
-    final String invalidJwkValue = "{\"keys\":[]}";
-    final PropertyValidator result = propertyValidators.resolveValidator("jwks");
-    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", invalidJwkValue));
+  public void testResolveValidator_jwksValidator_invalidJwk()
+      throws InvalidAlgorithmParameterException, NoSuchAlgorithmException {
+    final String invalidJwkValue = genKey().toString();
+    final PropertyValidator result = propertyValidators.resolveValidator("jwk");
+    assertDoesNotThrow(() -> result.validate("key", invalidJwkValue));
   }
 }

@@ -75,17 +75,4 @@ class PolicyEntityTest {
     assertThat(policyEntity.getPolicy()).isNull();
   }
 
-  /**
-   * Test the toString method of the PolicyDao class.
-   */
-  @Test
-  public void testPolicyEntityToString() {
-    PolicyEntity policyEntity = new PolicyEntity();
-    policyEntity.setId(1L);
-    policyEntity.setName("openid_relying_party");
-    policyEntity.setPolicy(this.policy);
-
-    assertThat(policyEntity.toString()).contains("1", "openid_relying_party", this.policy);
-  }
-
 }

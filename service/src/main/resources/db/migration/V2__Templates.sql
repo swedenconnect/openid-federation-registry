@@ -3,7 +3,7 @@ INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_valu
                      last_modified_by)
 VALUES ('TEMPLATE',
         'TRUSTMARKISSUER',
-        'entity_identifier',
+        'entity-identifier',
         'The EntityId that this module will have',
         'TEXT',
         '',
@@ -53,9 +53,21 @@ VALUES ('TEMPLATE',
         'TRUSTMARKISSUER',
         'trust-mark-token-validity-duration',
         'Validity for the token representing the trustmark. Expressed in hours.',
-        'NUMERIC',
-        '1',
-        'required | min:1 | max:24',
+        'DURATION',
+        'PT1H',
+        'required | duration',
+        'Flyway',
+        'Flyway');
+
+INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
+                     last_modified_by)
+VALUES ('TEMPLATE',
+        'TRUSTMARKISSUER',
+        'jwk',
+        'Jwk of some sort',
+        'TEXT',
+        '',
+        'required | jwk',
         'Flyway',
         'Flyway');
 
@@ -74,7 +86,7 @@ select fk_id,
 from settings
 where (data_key = 'instance_id'
     or data_key = 'active'
-    or data_key = 'entity_identifier'
+    or data_key = 'entity-identifier'
     or data_key = 'alias')
   and fk_type = 'TRUSTMARKISSUER';
 
@@ -93,7 +105,7 @@ select fk_id,
 from settings
 where (data_key = 'instance_id'
     or data_key = 'active'
-    or data_key = 'entity_identifier'
+    or data_key = 'entity-identifier'
     or data_key = 'alias')
   and fk_type = 'TRUSTMARKISSUER';
 
@@ -112,7 +124,7 @@ select fk_id,
 from settings
 where (data_key = 'instance_id'
     or data_key = 'active'
-    or data_key = 'entity_identifier'
+    or data_key = 'entity-identifier'
     or data_key = 'alias')
   and fk_type = 'TRUSTMARKISSUER';
 
@@ -124,8 +136,8 @@ VALUES ('TEMPLATE',
         'RESOLVER',
         'resolve-response-duration',
         'Duration of the response. Expressed in hours.',
-        'NUMERIC',
-        '2',
+        'DURATION',
+        'PT1H',
         'required | min:1 | max:48',
         'Flyway',
         'Flyway');

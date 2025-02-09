@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jwt.SignedJWT;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
@@ -138,13 +139,28 @@ public class PropertyValidators {
       case "between" -> this.validateBetween(conf);
 
       case "url" -> this.validateUrl();
+      case "jwt" -> this.isJWT();
 
       case "matches" -> this.validateMatches(conf);
-
+      case "duration" -> validateDuration();
       default -> throw new IllegalArgumentException("Unknown validator: " + name);
     };
   }
 
+  private PropertyValidator validateDuration() {
+    return (key, value) -> {
+      if (value == null || value.isBlank()) {
+        return;
+      }
+      try {
+        java.time.Duration.parse(value); // Parses ISO-8601 duration format
+      }
+      catch (Exception ex) {
+        throw new PropertyValidationFailException(key, "Invalid duration format. "
+            + "Expected ISO-8601 duration (e.g., PT1H30M). Error: " + ex.getMessage());
+      }
+    };
+  }
   private PropertyValidator validateEndsWith(final String suffix) {
     if (suffix == null || suffix.isBlank()) {
       throw new IllegalArgumentException("ends_with validator requires a suffix");
@@ -357,6 +373,20 @@ public class PropertyValidators {
       }
       catch (final ParseException e) {
         throw new PropertyValidationFailException(key, "Value is not a valid JWK: " + e.getMessage());
+      }
+    };
+  }
+
+  private PropertyValidator isJWT() {
+    return (key, value) -> {
+      if (value == null || value.isBlank()) {
+        return;
+      }
+      try {
+        SignedJWT.parse(value);
+      }
+      catch (final ParseException e) {
+        throw new PropertyValidationFailException(key, "Value is not a valid JWT: " + e.getMessage());
       }
     };
   }

@@ -56,9 +56,11 @@ public class TestDataOperations {
     data.elements().forEachRemaining(jsonNode -> {
       final ObjectNode valueNode = (ObjectNode) jsonNode;
       ifThen(valueNode, "active", () -> "true");
-      ifThen(valueNode, "entity_identifier", () -> "http://www.swedenconnect.se/issuer");
+      ifThen(valueNode, "entity-identifier", () -> "http://www.swedenconnect.se/issuer");
       ifThen(valueNode, "alias", () -> "tmi");
       ifThen(valueNode, "instance_id", () -> valueNode.get("options").elements().next().get("key").asText());
+      ifThen(valueNode, "jwk",
+          () -> "{\"kty\":\"EC\",\"d\":\"RVF_NZ7AJQj5RuFm3YsocqSgWmbMIQxG9WJ2HXd_YPs\",\"crv\":\"P-256\",\"kid\":\"ec-key-id\",\"x\":\"uiLBUCuinEhulOibSNXt6s2O8AelJ-BGU5Yf-r2U4cY\",\"y\":\"_Ifzyx4v0xaVoejfca9_FlYmGp9nm7e4Ie0XJHjbfE0\"}");
     });
 
     final String newTMI = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
