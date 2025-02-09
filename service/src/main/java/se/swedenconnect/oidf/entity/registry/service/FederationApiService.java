@@ -32,18 +32,28 @@ import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.entity.registry.entity.EntityEntity;
+import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
+import se.swedenconnect.oidf.entity.registry.entity.InstanceEntity;
+import se.swedenconnect.oidf.entity.registry.entity.ModuleEntity;
 import se.swedenconnect.oidf.entity.registry.entity.PolicyEntity;
 import se.swedenconnect.oidf.entity.registry.entity.TrustMarkSubjectEntity;
 import se.swedenconnect.oidf.entity.registry.repository.EntityRepository;
+import se.swedenconnect.oidf.entity.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.entity.registry.repository.PolicyRepository;
 import se.swedenconnect.oidf.entity.registry.repository.TrustMarkSubjectRepository;
 
-import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static se.swedenconnect.oidf.entity.registry.entity.FkKeyType.INTERMEDIATE;
+import static se.swedenconnect.oidf.entity.registry.entity.FkKeyType.RESOLVER;
+import static se.swedenconnect.oidf.entity.registry.entity.FkKeyType.TRUSTANCHOR;
+import static se.swedenconnect.oidf.entity.registry.entity.FkKeyType.TRUSTMARKISSUER;
 
 /**
  * Service to collect data to federation services
@@ -58,8 +68,8 @@ public class FederationApiService {
   private final EntityRepository entityRepository;
   private final PolicyRepository policyRepository;
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
+  private final InstanceRepository instanceRepository;
   private final String jwkIssuer;
-
 
   /**
    * Constructs a FederationApiService instance to handle OpenID Connect Federation related operations.
@@ -77,17 +87,20 @@ public class FederationApiService {
       final PolicyRepository policyRepository,
       final TrustMarkSubjectRepository trustMarkSubjectRepository,
       final String jwkIssuer,
-      final ObjectMapper mapper) {
+      final ObjectMapper mapper,
+      InstanceRepository instanceRepository) {
     this.entityRepository = entityRepository;
     this.policyRepository = policyRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
     this.signKey = signKey;
     this.jwkIssuer = jwkIssuer;
     this.mapper = mapper;
+    this.instanceRepository = instanceRepository;
   }
 
   /**
    * Getting entity records
+   *
    * @param issuer Issuer id
    * @return SignedJWT with Entitys
    */
@@ -101,7 +114,7 @@ public class FederationApiService {
           "Unable to find entity for issuer:'%s'".formatted(issuer));
     }
     try {
-      final String jwt =  this.signJsonRecords("entity-records",
+      final String jwt = this.signJsonRecords("entity-records",
           recordEntity.stream().map(EntityEntity::getEntity).toList()).serialize();
       return jwt;
     }
@@ -112,6 +125,7 @@ public class FederationApiService {
 
   /**
    * Getting trustmarks
+   *
    * @param issuer Issuer
    * @param trustmarkId Trustmarkid
    * @param subject Subject
@@ -128,7 +142,7 @@ public class FederationApiService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "trustmarkId is mandatory"));
 
     final List<TrustMarkSubjectEntity> trustmarkSubjectEntities =
-        this.trustMarkSubjectRepository.findByIssuerAndTrustmarkId(issuer.getValue(),trustmarkId)
+        this.trustMarkSubjectRepository.findByIssuerAndTrustmarkId(issuer.getValue(), trustmarkId)
             .stream()
             .filter(trustMarkSubjectEntity -> subject.isEmpty() ||
                 trustMarkSubjectEntity.getSubject().equals(subject.get()))
@@ -137,7 +151,7 @@ public class FederationApiService {
     if (trustmarkSubjectEntities.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND,
           "Unable to find trustMarkRecord for issuer:'%s',trustmark:'%s',subject:'%s'"
-              .formatted(issuer,trustmarkId,subject));
+              .formatted(issuer, trustmarkId, subject));
     }
     try {
       return this.signJsonRecords("trustmark-records",
@@ -151,6 +165,7 @@ public class FederationApiService {
 
   /**
    * Getting one policyrecord according to policyRecordId
+   *
    * @param policyRecordId External policyRecordId, expect UUID format
    * @return Signed JWT containing PolicyRecords
    */
@@ -161,15 +176,15 @@ public class FederationApiService {
             new ResponseStatusException(HttpStatus.NOT_FOUND,
                 "Unable to find policy for id:'%s'".formatted(policyRecordId.toString())));
     try {
-      final Map<String,Object> policyClaim =
-          this.mapper.readValue(policyEntity.getPolicy(), new TypeReference<Map<String,Object>>() {});
+      final Map<String, Object> policyClaim =
+          this.mapper.readValue(policyEntity.getPolicy(), new TypeReference<Map<String, Object>>() {});
 
       final String claimName = "policy_record";
       final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
       claimsSet.claim(claimName, policyClaim);
-      return this.signJWT(claimName,claimsSet.build()).serialize();
+      return this.signJWT(claimName, claimsSet.build()).serialize();
     }
-    catch (final JOSEException  | JsonProcessingException e) {
+    catch (final JOSEException | JsonProcessingException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
     }
 
@@ -186,30 +201,68 @@ public class FederationApiService {
   public String submoduleRecord(final UUID instanceId) {
     Assert.notNull(instanceId, "instanceId is mandatory");
     try {
+
       final String claimName = "module_records";
       final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
-      claimsSet.claim(claimName, Map.of(
+
+      claimsSet.claim(claimName, resolveSubmodules(instanceId));
+
+     /* claimsSet.claim(claimName, Map.of(
           "resolvers", Collections.emptyList(),
           "trust-anchors", Collections.emptyList(),
           "trust-mark-issuers", Collections.emptyList()));
+      */
       return this.signJWT(claimName, claimsSet.build()).serialize();
     }
     catch (final JOSEException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
     }
+  }
+
+  private Map<String, List<Map<String, Object>>> resolveSubmodules(UUID instanceid) {
+
+    final InstanceEntity instanceEntity = instanceRepository.findById(instanceid)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "No instance found for:%s".formatted(instanceid)));
+
+    final List<ModuleEntity> moduleEntities = instanceEntity.getModule();
+
+    final List<Map<String, Object>> tmi = moduleEntities.stream()
+        .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(TRUSTMARKISSUER))
+        .map(this::toMap)
+        .toList();
+
+    final List<Map<String, Object>> ta = moduleEntities.stream()
+        .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(TRUSTANCHOR) ||
+            FkKeyType.valueOf(moduleEntity.getModuleType()).equals(INTERMEDIATE))
+        .map(this::toMap)
+        .toList();
+
+    final List<Map<String, Object>> resolver = moduleEntities.stream()
+        .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(RESOLVER))
+        .map(this::toMap)
+        .toList();
+
+    final Map<String, List<Map<String, Object>>> data = new HashMap<>();
+    data.put("trust-mark-issuers", tmi);
+    data.put("trust-anchors", ta);
+    data.put("resolvers", resolver);
+    return data;
 
   }
 
+  private Map<String, Object> toMap(final ModuleEntity moduleEntity) {
+    return moduleEntity.getSettingsEntityList()
+        .stream()
+        .collect(Collectors.toMap(
+            settingsEntity -> settingsEntity.capLetterKey(),
+            settingsEntity -> settingsEntity.castValue()
+        ));
+  }
+
   /**
-   * Taking a list of json blobs and set it as a claim in JWT.
-   * Claim is structured like this:
-   * {
-   *   "data": [
-   *      {
-   *        "fields":"From JsonRecords"
-   *      }
-   *   ]
-   * }
+   * Taking a list of json blobs and set it as a claim in JWT. Claim is structured like this: { "data": [ {
+   * "fields":"From JsonRecords" } ] }
    *
    * @param claimName Name of claim in JWT. It will also be set as type in JWT header
    * @param jsonRecords List och string Json blobs.
@@ -218,9 +271,9 @@ public class FederationApiService {
    */
   protected SignedJWT signJsonRecords(final String claimName, final List<String> jsonRecords) throws JOSEException {
 
-    final List<Map<String,Object>> jsonClaimsData = jsonRecords.stream().map((js) -> {
+    final List<Map<String, Object>> jsonClaimsData = jsonRecords.stream().map((js) -> {
       try {
-        return this.mapper.readValue(js, new TypeReference<Map<String,Object>>() {});
+        return this.mapper.readValue(js, new TypeReference<Map<String, Object>>() {});
       }
       catch (final JsonProcessingException e) {
         throw new RuntimeException(e);
@@ -228,29 +281,27 @@ public class FederationApiService {
     }).toList();
 
     final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
-    claimsSet.claim(claimName.replace('-','_'), jsonClaimsData);
-    return this.signJWT(claimName,claimsSet.build());
+    claimsSet.claim(claimName.replace('-', '_'), jsonClaimsData);
+    return this.signJWT(claimName, claimsSet.build());
   }
 
-
-  private JWTClaimsSet.Builder defaultClaimSet(){
-    return  new JWTClaimsSet.Builder()
+  private JWTClaimsSet.Builder defaultClaimSet() {
+    return new JWTClaimsSet.Builder()
         .issueTime(new Date())
         .jwtID(UUID.randomUUID().toString())
         .issuer(this.jwkIssuer);
   }
 
-  private SignedJWT signJWT(final String jwtTypeName,final JWTClaimsSet jwtClaimsSet) throws JOSEException {
+  private SignedJWT signJWT(final String jwtTypeName, final JWTClaimsSet jwtClaimsSet) throws JOSEException {
     final RSASSASigner signer = new RSASSASigner(this.signKey.toRSAKey());
     final JWSAlgorithm alg = signer.supportedJWSAlgorithms().stream().findFirst().orElseThrow();
     final JWSHeader header = new JWSHeader.Builder(alg)
-        .type(new JOSEObjectType(jwtTypeName.replace('_','-')+ "+jwt"))
+        .type(new JOSEObjectType(jwtTypeName.replace('_', '-') + "+jwt"))
         .keyID(this.signKey.getKeyID())
         .build();
     final SignedJWT jwt = new SignedJWT(header, jwtClaimsSet);
     jwt.sign(signer);
     return jwt;
   }
-
 
 }

@@ -24,9 +24,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
 /**
@@ -35,7 +36,8 @@ import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
  * @author Per Fredrik Plars
  */
 @EqualsAndHashCode(callSuper = true)
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
@@ -63,10 +65,48 @@ public class SettingsEntity extends BaseEntity {
   @Column(name = "validation")
   private String validation;
 
-  @Column(name = "data_type")
+  @Column(name = "data_type", nullable = false)
   private String valueDataType;
 
   @Column(name = "data_value")
   private String value;
+
+  /**
+   * Casts the value stored in the `value` field to the corresponding data type based on the `valueDataType` field,
+   * which specifies the type as "text", "boolean", or "number".
+   *
+   * @return The casted value as an Object. If the `valueDataType` is "text", the value is returned as a String. If the
+   *     `valueDataType` is "boolean", the value is returned as a Boolean. If the `valueDataType` is "number", the value
+   *     is returned as a Double.
+   * @throws IllegalStateException if the `valueDataType` contains an unexpected or unsupported value.
+   */
+  public Object castValue() {
+    return switch (valueDataType.toUpperCase()) {
+      case "TEXT" -> value;
+      case "OPTIONS" -> value;
+      case "BOOLEAN" -> Boolean.valueOf(value);
+      case "NUMERIC" -> Double.valueOf(value);
+      default -> throw new IllegalStateException("Unexpected value: " + value.toLowerCase() +
+          " for data type: " + valueDataType);
+    };
+  }
+
+  public String capLetterKey() {
+    if (key == null || key.isEmpty()) {
+      throw new IllegalArgumentException("Input cannot be null or empty");
+    }
+
+    String[] parts = key.split("-");
+    StringBuilder result = new StringBuilder(parts[0]);
+
+    for (int i = 1; i < parts.length; i++) {
+      result.append(parts[i].substring(0, 1).toUpperCase())
+          .append(parts[i].substring(1));
+    }
+
+    return result.toString();
+
+  }
+
 
 }

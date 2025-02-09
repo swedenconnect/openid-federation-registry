@@ -28,6 +28,7 @@ import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
+import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
 
 import java.time.OffsetDateTime;
@@ -60,6 +61,10 @@ public class TrustMarkSubjectControllerIT {
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
   @Autowired
   private TestRestTemplate restTemplate;
+
+  @Autowired
+  SettingsRepository settingsRepository;
+
 
   /**
    * Doing CRUD operations on TrustMarkSubject

@@ -25,12 +25,18 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.ActiveProfiles;
+import org.testcontainers.containers.MariaDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import se.swedenconnect.oidf.entity.registry.config.RegistryProperties;
 import se.swedenconnect.oidf.entity.registry.federationserviceapi.ModuleResponse;
+import se.swedenconnect.oidf.entity.registry.federationserviceapi.TrustMarkIssuerModuleResponse;
 import se.swedenconnect.oidf.entity.registry.fixture.EntityFactory;
 import se.swedenconnect.oidf.entity.registry.fixture.PolicyFactory;
+import se.swedenconnect.oidf.entity.registry.fixture.TestDataOperations;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
@@ -45,6 +51,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -56,10 +63,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("h2")
+@Testcontainers
+
 class FederationServiceApiControllerIT {
+  @Container
+  @ServiceConnection
+  public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
+
+
   @Autowired
   private TestRestTemplate restTemplate;
+
+  @Autowired
+  private RegistryProperties registryProperties;
+
+
+
 
   @Test
   void trustMarkRecordNotFound() {
@@ -223,10 +242,14 @@ class FederationServiceApiControllerIT {
   }
 
   @Test
-  void submoduleRecordSuccess() throws ParseException {
+  void submoduleRecordSuccess() throws ParseException, JsonProcessingException {
+    final String tmiId = TestDataOperations.createTMI(restTemplate);
+
+    final String instanceId = registryProperties.instances().stream().findFirst()
+        .map(instanceProperties -> instanceProperties.instanceId().toString()).orElseThrow();
 
     final ResponseEntity<String> response = this.restTemplate
-        .getForEntity("/api/v1/federationservice/submodules?instanceid=" + UUID.randomUUID(), String.class);
+        .getForEntity("/api/v1/federationservice/submodules?instanceid=" + instanceId, String.class);
 
     if (response.getStatusCode().isError()) {
       log.error(response.getBody());
@@ -238,6 +261,7 @@ class FederationServiceApiControllerIT {
     assertNotNull(signedJWT.getHeader().getKeyID());
 
     final Map<String, Object> claim = signedJWT.getJWTClaimsSet().getJSONObjectClaim("module_records");
+    log.info("Claim:{}", claim.toString());
     assertNotNull(claim);
     assertTrue(!claim.isEmpty());
     final ModuleResponse moduleResponse = ModuleResponse.fromJson(claim);
@@ -247,7 +271,10 @@ class FederationServiceApiControllerIT {
 
     assertTrue(moduleResponse.getResolvers().isEmpty());
     assertTrue(moduleResponse.getTrustAnchors().isEmpty());
-    assertTrue(moduleResponse.getTrustMarkIssuers().isEmpty());
+
+    assertFalse(moduleResponse.getTrustMarkIssuers().isEmpty());
+    moduleResponse.getTrustMarkIssuers().forEach(TrustMarkIssuerModuleResponse::validate);
+
 
   }
 

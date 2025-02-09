@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -30,6 +31,7 @@ import java.util.Map;
  * @author Felix Hellman
  */
 @Getter
+@ToString
 public class ResolverModuleResponse {
   private List<String> trustAnchors;
   private Duration resolveResponseDuration;

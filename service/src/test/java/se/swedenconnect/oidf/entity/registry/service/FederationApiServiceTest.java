@@ -53,7 +53,7 @@ class FederationApiServiceTest {
             null,
             null,
             "http://issuer",
-        new ObjectMapper());
+            new ObjectMapper(), null);
 
     final SignedJWT jwt = federationApiService.signJsonRecords("trust-marks",
         List.of(EntityFactory.createDefaultJsonEntity(),

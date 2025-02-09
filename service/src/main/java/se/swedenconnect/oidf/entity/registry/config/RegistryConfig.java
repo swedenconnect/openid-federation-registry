@@ -167,7 +167,8 @@ public class RegistryConfig {
         this.policyRepository,
         this.trustMarkSubjectRepository,
         federationAPIProperties.issuer(),
-            mapper
+        mapper,
+        instanceRepository
     );
   }
 
@@ -183,7 +184,7 @@ public class RegistryConfig {
 
     registryProperties.instances().forEach(instance -> {
       final InstanceEntity entity = new InstanceEntity();
-      entity.setInstanceId(instance.instanceId().toString());
+      entity.setInstanceId(instance.instanceId());
       entity.setName(instance.name());
       entity.setCreatedBy("Registry-Config");
       entity.setLastModifiedBy(entity.getCreatedBy());

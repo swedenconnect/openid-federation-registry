@@ -27,6 +27,7 @@ import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -94,6 +95,8 @@ public class PropertyValidators {
       case "max" -> (String key, String value) -> this.throwIf(() ->
               !value.isBlank() && Double.parseDouble(value) > Double.parseDouble(conf),
           key, "Value has to be less then %s".formatted(conf));
+
+      case "uuid" -> isUUID();
 
       case "length" -> this.hasLength(conf);
       case "json" -> this.isJson();
@@ -227,6 +230,20 @@ public class PropertyValidators {
     };
   }
 
+  private PropertyValidator isUUID() {
+    return (key, value) -> {
+      if (value == null || value.isBlank()) {
+        return;
+      }
+      try {
+        UUID.fromString(value);
+      }
+      catch (final Exception e) {
+        throw new PropertyValidationFailException(key, "Invalid UUID format");
+      }
+    };
+  }
+
   private PropertyValidator validateMatches(final String regex) {
     if (regex == null || regex.isBlank()) {
       throw new IllegalArgumentException("matches validator requires a regex pattern");
@@ -304,6 +321,9 @@ public class PropertyValidators {
 
   private PropertyValidator isUrl() {
     return (key, value) -> {
+      if (value == null || value.isBlank()) {
+        return;
+      }
       try {
         new URI(value).toURL();
       }
@@ -315,6 +335,9 @@ public class PropertyValidators {
 
   private PropertyValidator isJson() {
     return (key, value) -> {
+      if (value == null || value.isBlank()) {
+        return;
+      }
       try {
         mapper.readTree(value);
       }
@@ -326,6 +349,9 @@ public class PropertyValidators {
 
   private PropertyValidator isJWK() {
     return (key, value) -> {
+      if (value == null || value.isBlank()) {
+        return;
+      }
       try {
         JWK.parse(value);
       }

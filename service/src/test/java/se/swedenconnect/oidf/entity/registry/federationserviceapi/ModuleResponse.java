@@ -17,6 +17,7 @@ package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import java.util.Map;
  */
 @Getter
 @Setter
+@ToString
 public class ModuleResponse {
   private List<ResolverModuleResponse> resolvers;
   private List<TrustAnchorModuleResponse> trustAnchors;

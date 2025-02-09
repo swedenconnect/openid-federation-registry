@@ -76,10 +76,10 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
   @Override
   public OptionsRecord create(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
     final Optional<ModuleEntity> moduleEntity = this.moduleRepository
-        .findByExternalIdAndModuleType(id.toString(), fkKeyType.name());
+        .findByModuleIdAndModuleType(id, fkKeyType.name());
 
     if (moduleEntity.isPresent()) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+      throw new ResponseStatusException(HttpStatus.CONFLICT,
           "Module already exists for:%s %s".formatted(fkKeyType, id));
     }
 
@@ -88,12 +88,12 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
 
     // Create
     final ModuleEntity newModuleEntity = new ModuleEntity();
-    newModuleEntity.setExternalId(id.toString());
+    newModuleEntity.setModuleId(id);
     newModuleEntity.setModuleType(fkKeyType.name());
     this.loadInstanceThrowIfNotExist(validatedInData).ifPresent(newModuleEntity::setInstance);
 
     final ModuleEntity savedModuleEntity = this.moduleRepository.saveAndFlush(newModuleEntity);
-    super.deleteInsert(fkKeyType, savedModuleEntity.getModuleId(), validatedInData);
+    super.deleteInsertSettings(fkKeyType, savedModuleEntity.getModuleId().toString(), validatedInData);
 
     return this.toRecord(validatedInData);
 
@@ -102,7 +102,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
   @Override
   public OptionsRecord update(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
     final ModuleEntity moduleEntity = this.moduleRepository
-        .findByExternalIdAndModuleType(id.toString(), fkKeyType.name())
+        .findByModuleIdAndModuleType(id, fkKeyType.name())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No template found for:%s %s".formatted(fkKeyType, id)));
 
@@ -110,7 +110,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
 
     final List<SettingsEntity> validatedInData = this.createAndValidateInputData(template, record.getOption());
     //this.loadInstanceThrowIfNotExist(validatedInData).ifPresent(moduleEntity::setInstance);
-    super.deleteInsert(fkKeyType, moduleEntity.getModuleId(), validatedInData);
+    super.deleteInsertSettings(fkKeyType, moduleEntity.getModuleId().toString(), validatedInData);
     final ModuleEntity savedModuleEntity = this.moduleRepository.saveAndFlush(moduleEntity);
     return this.toRecord(validatedInData);
   }
@@ -118,7 +118,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
   @Override
   public OptionsRecord get(final FkKeyType fkKeyType, final UUID id) {
     final ModuleEntity moduleEntity = this.moduleRepository
-        .findByExternalIdAndModuleType(id.toString(), fkKeyType.name())
+        .findByModuleIdAndModuleType(id, fkKeyType.name())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
 
@@ -141,7 +141,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
   @Override
   public void delete(final FkKeyType fkKeyType, final UUID id) {
     final ModuleEntity moduleEntity = this.moduleRepository
-        .findByExternalIdAndModuleType(id.toString(), fkKeyType.name())
+        .findByModuleIdAndModuleType(id, fkKeyType.name())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
     //this.repository.deleteAllInBatch(moduleEntity.get().getSettingsEntityList());

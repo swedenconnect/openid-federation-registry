@@ -27,7 +27,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
 /**
@@ -42,7 +41,6 @@ import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
-@ToString(callSuper = true)
 @Table(name = "trustmark_subject",
     uniqueConstraints = { @UniqueConstraint(columnNames = { "issuer", "trustmarkId","subject" }) })
 public class TrustMarkSubjectEntity extends BaseEntity {

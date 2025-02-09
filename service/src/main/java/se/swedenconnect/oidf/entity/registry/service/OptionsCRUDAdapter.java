@@ -34,6 +34,7 @@ import se.swedenconnect.oidf.registry.api.model.Values;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * oidf-entity-registry
@@ -79,7 +80,7 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
               .stream()
               .map(instanceEntity ->
                   OptionRecord.builder()
-                      .key(instanceEntity.getInstanceId())
+                      .key(instanceEntity.getInstanceId().toString())
                       .value(instanceEntity.getName())
                       .selected(value.getValue().equals(instanceEntity.getInstanceId()))
                       .build())
@@ -91,7 +92,7 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
     final List<SettingsEntity> templates = this.settingsRepository.findByFkTypeAndFkId(fkkeytype.name(), "TEMPLATE");
     if (templates.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-          "No template found for:%s %s".formatted(fkkeytype));
+          "No template found for:%s".formatted(fkkeytype));
     }
     return templates;
   }
@@ -102,6 +103,7 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
     return dataValues.stream()
         .filter(value -> value.getKey().equals("instance_id"))
         .map(SettingsEntity::getValue)
+        .map(UUID::fromString)
         .map(this.instanceRepository::findById)
         .map(instanceEntity -> instanceEntity.orElseThrow(() ->
             new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -121,6 +123,7 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
                 .filter(dataValue -> dataValue.getKey().equals(templateValue.getKey()))
                 .map(dataValue -> {
                   templateValue.setValue(dataValue.getValue());
+                  templateValue.setValueDataType(dataValue.getValueDataType());
                   return templateValue;
                 })
                 .findFirst()
@@ -139,11 +142,13 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
             dataValues.stream()
                 .filter(dataValue -> dataValue.getKey().equals(templateValue.getKey()))
                 .map(dataValue -> {
-                  final PropertyValidator validator = this.validatorFactory.resolveValidator(dataValue.getValidation());
-                  validator.validate(dataValue.getKey(), dataValue.getValue());
+                  final PropertyValidator validator =
+                      this.validatorFactory.resolveValidator(templateValue.getValidation());
+                  validator.validate(templateValue.getKey(), dataValue.getValue());
                   return SettingsEntity.builder()
                       .key(dataValue.getKey())
                       .value(dataValue.getValue())
+                      .valueDataType(dataValue.getValueType())
                       .build();
                 })
                 .findFirst()
@@ -153,13 +158,18 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
         ).toList();
   }
 
-  protected void deleteInsert(final FkKeyType fkkeytype, final String id, final List<SettingsEntity> settingsEntities) {
+  protected void deleteInsertSettings(final FkKeyType fkkeytype, final String id,
+      final List<SettingsEntity> settingsEntities) {
     this.settingsRepository.deleteAllInBatch(this.settingsRepository.findByFkTypeAndFkId(fkkeytype.name(), id));
     settingsEntities.forEach(settingsEntity -> {
       settingsEntity.setFkId(id);
       settingsEntity.setFkType(fkkeytype.name());
     });
     this.settingsRepository.saveAllAndFlush(settingsEntities);
+  }
+
+  protected List<SettingsEntity> getSettingsEntities(final FkKeyType fkkeytype, final String id) {
+    return this.settingsRepository.findByFkTypeAndFkId(fkkeytype.name(), id);
   }
 
 }

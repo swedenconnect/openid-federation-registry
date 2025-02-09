@@ -167,7 +167,6 @@ VALUES ('TEMPLATE',
         'Flyway',
         'Flyway');
 
-
 /*
  * Copyright 2025 Sweden Connect
  *
@@ -184,15 +183,26 @@ VALUES ('TEMPLATE',
  *  limitations under the License.
  */
 
-
 -- TrustMarks
 
 INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
                      last_modified_by)
 VALUES ('TEMPLATE',
         'TRUSTMARK',
-        'trust-mark-id',
-        'Trustmark identity,',
+        'trustmarkissuer_id',
+        'To what trustmarkissuer should this trustmark belong to',
+        'OPTIONS',
+        '',
+        'required | uuid',
+        'Flyway',
+        'Flyway');
+
+INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
+                     last_modified_by)
+VALUES ('TEMPLATE',
+        'TRUSTMARK',
+        'trust-mark-entity-id',
+        'Trustmark entityid, ex https://sc.swedenconnect.se/loa3',
         'TEXT',
         '',
         'required | url',
@@ -207,7 +217,7 @@ VALUES ('TEMPLATE',
         'Url that points to a logotype image',
         'TEXT',
         '',
-        'required | url',
+        'url',
         'Flyway',
         'Flyway');
 
@@ -219,7 +229,7 @@ VALUES ('TEMPLATE',
         'Reference url, usually pointing to a documentation page',
         'TEXT',
         '',
-        'required | url',
+        'url',
         'Flyway',
         'Flyway');
 
@@ -231,7 +241,7 @@ VALUES ('TEMPLATE',
         'Delegation JWK according to oidf specification',
         'TEXT',
         '',
-        'required | jwk:delegation',
+        'jwk:delegation',
         'Flyway',
         'Flyway');
 

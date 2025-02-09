@@ -21,6 +21,7 @@ import org.springframework.util.Assert;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Properties for RegistryService
@@ -66,11 +67,11 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi, L
   /**
    * Represents the properties of an individual instance managed within the registry.
    *
-   * @param <UUID> the generic type of the instance identifier.
+
    * @param instanceId the unique identifier of the instance.
    * @param name the name of the instance.
    */
-  public record InstanceProperties<UUID>(UUID instanceId, String name) {
+  public record InstanceProperties(UUID instanceId, String name) {
     /**
      * Validate properties
      */

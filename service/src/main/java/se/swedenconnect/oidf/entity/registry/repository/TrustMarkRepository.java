@@ -18,17 +18,15 @@ package se.swedenconnect.oidf.entity.registry.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import se.swedenconnect.oidf.entity.registry.entity.InstanceEntity;
+import se.swedenconnect.oidf.entity.registry.entity.TrustMarkEntity;
 
 import java.util.UUID;
 
 /**
- * Repository interface for managing InstanceEntity objects. Extends JpaRepository to provide standard CRUD operations
- * for the InstanceEntity.
+ * Repository interface for managing TrustMarkRepository.
  *
  * @author Per Fredrik Plars
  */
 @Repository
-public interface InstanceRepository extends JpaRepository<InstanceEntity, UUID> {
-
+public interface TrustMarkRepository extends JpaRepository<TrustMarkEntity, UUID> {
 }

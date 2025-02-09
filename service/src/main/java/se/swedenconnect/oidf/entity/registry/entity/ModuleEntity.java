@@ -25,6 +25,7 @@ import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Entity class representing the 'module' table in the database. This class is a representation of a module entity and
@@ -40,14 +41,8 @@ import java.util.Optional;
 public class ModuleEntity extends BaseEntity {
 
   @Id
-  @Size(max = 255)
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "module_id", nullable = false, updatable = false)
-  private String moduleId;
-
-  @Size(max = 100)
-  @Column(name = "external_id", unique = true, updatable = false, nullable = false)
-  private String externalId;
+  private UUID moduleId;
 
   @Size(max = 255)
   @NotNull
@@ -79,4 +74,6 @@ public class ModuleEntity extends BaseEntity {
         .findFirst();
   }
 
+  @OneToMany(mappedBy = "module", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
+  private List<TrustMarkEntity> trustmarks;
 }

@@ -33,6 +33,7 @@ credential:
           alias: rsa1
           key-password: Test1234
 
+
 spring:
   security:
     oauth2:
@@ -40,6 +41,13 @@ spring:
         jwt:
           public-key-location: classpath:public_auth_cert.pem
           audiences: https://registry.local.swedenconnect.se
+  jpa:
+    show-sql: true
+
+    properties:
+      hibernate:
+        format_sql: true
+
 
 management:
   endpoints:

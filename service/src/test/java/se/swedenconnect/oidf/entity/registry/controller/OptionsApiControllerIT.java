@@ -33,6 +33,7 @@ import org.springframework.http.ResponseEntity;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import se.swedenconnect.oidf.entity.registry.fixture.TestDataOperations;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -49,9 +50,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
 class OptionsApiControllerIT {
+
   @Container
   @ServiceConnection
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
+
   @Autowired
   private TestRestTemplate restTemplate;
 
@@ -90,37 +93,9 @@ class OptionsApiControllerIT {
   }
 
   @Test
-  public void testCRUDTMI() throws IOException {
+  public void testCRUDTrustMarkIssuer() throws IOException {
 
-    final ResponseEntity<String> tmi =
-        this.restTemplate.getForEntity("/registry/v1/options/trustmarkissuer", String.class);
-    if (tmi.getStatusCode().isError()) {
-      log.info(tmi.getBody());
-    }
-    assertThat(tmi.getStatusCode()).isEqualTo(HttpStatus.OK);
-    final JsonNode node = this.objectMapper.readTree(tmi.getBody());
-    final JsonNode data = node.get("option");
-
-    data.elements().forEachRemaining(jsonNode -> {
-      final ObjectNode valueNode = (ObjectNode) jsonNode;
-      ifThen(valueNode, "active", () -> "true");
-      ifThen(valueNode, "entity_identifier", () -> "http://www.swedenconnect.se/issuer");
-      ifThen(valueNode, "alias", () -> "tmi");
-      ifThen(valueNode, "instance_id", () -> valueNode.get("options").elements().next().get("key").asText());
-    });
-
-    final String newTMI = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
-    final String id = UUID.randomUUID().toString();
-    final HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-
-    final ResponseEntity<String> createdTMI =
-        this.restTemplate.postForEntity("/registry/v1/options/trustmarkissuer/" + id, new HttpEntity<>(newTMI, headers),
-            String.class);
-    if (createdTMI.getStatusCode().isError()) {
-      log.info(createdTMI.getBody());
-    }
-    assertThat(createdTMI.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    final String id = TestDataOperations.createTMI(restTemplate);
 
     final ResponseEntity<String> tmiRead =
         this.restTemplate.getForEntity("/registry/v1/options/trustmarkissuer/" + id, String.class);
@@ -137,7 +112,72 @@ class OptionsApiControllerIT {
     }
     assertThat(tmiReadNotFound.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 
+  }
 
+  @Test
+  public void testCRUDTrustMark() throws IOException {
+
+    TestDataOperations.createTMI(restTemplate);
+    final ResponseEntity<String> tm =
+        this.restTemplate.getForEntity("/registry/v1/options/trustmark", String.class);
+    if (tm.getStatusCode().isError()) {
+      log.info(tm.getBody());
+    }
+    assertThat(tm.getStatusCode()).isEqualTo(HttpStatus.OK);
+    final JsonNode node = this.objectMapper.readTree(tm.getBody());
+    final JsonNode data = node.get("option");
+
+    data.elements().forEachRemaining(jsonNode -> {
+      final ObjectNode valueNode = (ObjectNode) jsonNode;
+      ifThen(valueNode, "trust-mark-entity-id", () -> "http://www.swedenconnect.se/trustmark1");
+      ifThen(valueNode, "trustmarkissuer_id", () -> valueNode.get("options").elements().next().get("key").asText());
+    });
+
+    final String newTMI = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
+    final String id = UUID.randomUUID().toString();
+    final HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+
+    final ResponseEntity<String> createdTMI =
+        this.restTemplate.postForEntity("/registry/v1/options/trustmark/" + id, new HttpEntity<>(newTMI, headers),
+            String.class);
+    if (createdTMI.getStatusCode().isError()) {
+      log.info(createdTMI.getBody());
+    }
+    assertThat(createdTMI.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+    final ResponseEntity<String> createdTMITwice =
+        this.restTemplate.postForEntity("/registry/v1/options/trustmark/" + id, new HttpEntity<>(newTMI, headers),
+            String.class);
+    if (createdTMITwice.getStatusCode().isError()) {
+      log.info(createdTMITwice.getBody());
+    }
+    assertThat(createdTMITwice.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+
+    data.elements().forEachRemaining(jsonNode -> {
+      final ObjectNode valueNode = (ObjectNode) jsonNode;
+      ifThen(valueNode, "trust-mark-entity-id", () -> "http://www.swedenconnect.se/trustmarkUpdated");
+      ifThen(valueNode, "trustmarkissuer_id", () -> valueNode.get("options").elements().next().get("key").asText());
+    });
+
+    final String updatedTM = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
+    this.restTemplate.put("/registry/v1/options/trustmark/" + id, new HttpEntity<>(updatedTM, headers),
+        String.class);
+
+    final ResponseEntity<String> tmRead =
+        this.restTemplate.getForEntity("/registry/v1/options/trustmark/" + id, String.class);
+    if (tmRead.getStatusCode().isError()) {
+      log.info(tmRead.getBody());
+    }
+    assertThat(tmRead.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+    this.restTemplate.delete("/registry/v1/options/trustmark/" + id);
+    final ResponseEntity<String> tmReadNotFound =
+        this.restTemplate.getForEntity("/registry/v1/options/trustmark/" + id, String.class);
+    if (tmReadNotFound.getStatusCode().isError()) {
+      log.info(tmReadNotFound.getBody());
+    }
+    assertThat(tmReadNotFound.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 
   }
 

@@ -16,6 +16,7 @@
 package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 
 import lombok.Getter;
+import lombok.ToString;
 
 import java.util.Map;
 
@@ -24,6 +25,7 @@ import java.util.Map;
  *
  * @author Felix Hellman
  */
+@ToString
 @Getter
 public class TrustAnchorModuleResponse {
   /** Alias for the given module */

@@ -22,30 +22,23 @@ import se.swedenconnect.oidf.entity.registry.entity.ModuleEntity;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Repository interface for managing SettingsEntity.
  * @author Per Fredrik Plars
  */
 @Repository
-public interface ModuleRepository extends JpaRepository<ModuleEntity, Long> {
+public interface ModuleRepository extends JpaRepository<ModuleEntity, UUID> {
 
-  /**
-   * Retrieves a {@link ModuleEntity} based on the provided external ID.
-   *
-   * @param externalid the unique external identifier of the module to search for
-   * @return an {@link Optional} containing the found {@link ModuleEntity}, or an empty {@link Optional} if no entity
-   *     was found
-   */
-  Optional<ModuleEntity> findByExternalId(String externalid);
 
   /**
    * Retrieves a {@link ModuleEntity} based on the provided external ID and module type.
    *
-   * @param externalid the unique external identifier of the module to search for
+   * @param moduleId the unique  identifier of the module to search for
    * @param moduleType the type of the module to search for
    * @return an {@link Optional}*/
-  Optional<ModuleEntity> findByExternalIdAndModuleType(String externalid, String moduleType);
+  Optional<ModuleEntity> findByModuleIdAndModuleType(UUID moduleId, String moduleType);
 
   /**
    * Retrieves a list of {@link ModuleEntity} objects that match the specified module type.

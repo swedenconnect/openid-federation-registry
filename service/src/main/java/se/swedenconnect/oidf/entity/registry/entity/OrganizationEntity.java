@@ -18,8 +18,6 @@ package se.swedenconnect.oidf.entity.registry.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
@@ -31,6 +29,7 @@ import lombok.Setter;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * The OrganizationEntity class represents an organization in the system. This class maps to the "organization" table in
@@ -45,17 +44,20 @@ import java.util.Set;
 @Table(name = "organization")
 public class OrganizationEntity extends BaseEntity {
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "organization_id", nullable = false)
-  private Integer id;
+  private UUID organizationId;
 
   @Size(max = 255)
   @Column(name = "entityid_filter")
   private String entityidFilter;
 
   @Size(max = 255)
-  @Column(name = "organization")
-  private String organization;
+  @Column(name = "org_id")
+  private String orgId;
+
+  @Size(max = 255)
+  @Column(name = "org_name")
+  private String orgName;
 
   @ManyToMany
   @JoinTable(

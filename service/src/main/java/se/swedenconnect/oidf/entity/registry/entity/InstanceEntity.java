@@ -20,13 +20,16 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
+import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * The InstanceEntity class represents an instance in the system and maps to the "instance" table in the database. It
@@ -41,9 +44,8 @@ import java.util.Set;
 @Table(name = "instance")
 public class InstanceEntity extends BaseEntity {
   @Id
-  @Size(max = 50)
   @Column(name = "instance_id", nullable = false)
-  private String instanceId;
+  private UUID instanceId;
 
   @Size(max = 255)
   @Column(name = "name")
@@ -51,5 +53,16 @@ public class InstanceEntity extends BaseEntity {
 
   @ManyToMany(mappedBy = "instances")
   private Set<OrganizationEntity> organizations;
+
+  @OneToMany(mappedBy = "instance")
+  private List<ModuleEntity> module;
+
+  public List<ModuleEntity> getModuleByFKType(FkKeyType fkKeyType) {
+    return module
+        .stream()
+        .filter(moduleEntity -> moduleEntity.getModuleType().equals(fkKeyType.name()))
+        .toList();
+  }
+
 
 }

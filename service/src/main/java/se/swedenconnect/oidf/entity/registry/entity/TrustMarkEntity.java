@@ -15,40 +15,36 @@
  */
 package se.swedenconnect.oidf.entity.registry.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
-/**
- * PolicyDao is a JPA entity representing a database table for storing policies
- * as JSON objects with the policy id as key.
- *
- * @author David Goldring
- */
+import java.util.UUID;
+
+@NoArgsConstructor
 @Getter
 @Setter
 @Entity
-@Table(name = "policies")
-public class PolicyEntity extends BaseEntity {
+@ToString(callSuper = true)
+@Table(name = "trustmark")
+public class TrustMarkEntity extends BaseEntity {
+
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private long id;
+  @Column(name = "trustmark_id", nullable = false, updatable = false)
+  private UUID trustmarkId;
 
-  @Column(name="external_id", unique = true, updatable = false,nullable = false)
-  private String externalId;
-
-  @Column
-  private String name;
-
-  @Column(columnDefinition = "TEXT")
-  private String policy;
+  @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.DETACH)
+  @JoinColumn(name = "module_id", referencedColumnName = "module_id", insertable = true, updatable = false)
+  private ModuleEntity module;
 
 }
-
-
