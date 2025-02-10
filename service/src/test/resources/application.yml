@@ -5,12 +5,18 @@ logging:
       swedenconnect:
         oidf: debug
 
+
 openid:
   federation:
     registry:
       federation_service_api:
-        issuer: "http://oidf-registry.swedenconnect.se/test"
+        issuer: "http://oidf-registry.swedenconnect.se"
         sign-key-alias: federationapi
+      instances:
+        - instance_id: "123e4567-e89b-12d3-a456-426614174000"
+          name: "Swedenconnect"
+        - instance_id: "223e4567-e89b-12d3-a456-426614174001"
+          name: "ENA"
 
 credential:
   bundles:
@@ -27,6 +33,7 @@ credential:
           alias: rsa1
           key-password: Test1234
 
+
 spring:
   security:
     oauth2:
@@ -34,6 +41,13 @@ spring:
         jwt:
           public-key-location: classpath:public_auth_cert.pem
           audiences: https://registry.local.swedenconnect.se
+  jpa:
+    show-sql: true
+
+    properties:
+      hibernate:
+        format_sql: true
+
 
 management:
   endpoints:

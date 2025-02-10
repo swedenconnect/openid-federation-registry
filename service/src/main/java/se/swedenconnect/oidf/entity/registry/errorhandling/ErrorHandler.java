@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Sweden Connect
+ * Copyright 2025 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,15 +11,13 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ *  limitations under the License.
  */
 
 package se.swedenconnect.oidf.entity.registry.errorhandling;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -30,9 +28,12 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import se.swedenconnect.oidf.entity.registry.validation.PropertyValidationFailException;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+
+import static se.swedenconnect.oidf.entity.registry.errorhandling.ErrorTypes.INVALID_PARAMETER;
 
 /**
  * Error Handler ControllerAdvice.
@@ -62,25 +63,56 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         request);
   }
 
+  /**
+   * Handles exceptions of the type {@code PropertyValidationFailException} and maps them to a response with an HTTP 400
+   * Bad Request status. The response includes a problem detail structure with specific error information about the
+   * validation failure.
+   *
+   * @param e the {@code PropertyValidationFailException} raised due to a validation failure
+   * @param request the web request during which the exception was raised
+   * @return a {@code ResponseEntity} object containing the problem detail with the error type, cause, and other
+   *     information
+   */
+  @ExceptionHandler(PropertyValidationFailException.class)
+  public ResponseEntity<Object> handle(final PropertyValidationFailException e, final WebRequest request) {
+    final ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), e.getMessage());
+    problemDetail.setProperty("cause", List.of(
+        Map.of("field", e.getFiledName(), "detail", e.getValidationFailMessage()))
+    );
+    problemDetail.setType(INVALID_PARAMETER);
+
+    return this.handleExceptionInternal(e,
+        problemDetail,
+        new HttpHeaders(),
+        HttpStatusCode.valueOf(problemDetail.getStatus()),
+        request);
+  }
+
   @Override
   protected ResponseEntity<Object> handleMethodArgumentNotValid(
-      final MethodArgumentNotValidException ex,
+      final MethodArgumentNotValidException e,
       final HttpHeaders headers,
       final HttpStatusCode status,
       final WebRequest request) {
 
-    final String errorMessage = ex.getBindingResult().getFieldErrors().stream().map((FieldError error) -> {
+    final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400),
+        "MethodArgumentNotValidException");
+    problemDetail.setType(INVALID_PARAMETER);
+
+    final List<Map<String, String>> detailProblem =
+        e.getBindingResult().getFieldErrors().stream().map((FieldError error) -> {
           final String fieldName = error.getObjectName() + "." + error.getField();
           final String rejectedValue = error.getRejectedValue() == null ? "null" : error.getRejectedValue().toString();
           final String message = error.getDefaultMessage();
+          return Map.of("field", fieldName, "detail", message, "rejectedValue", rejectedValue);
+        }).toList();
+    problemDetail.setProperty("cause", detailProblem);
 
-          return fieldName + " -> " + rejectedValue + " :" + message;
-        }).reduce((string, string2) -> String.join("|", string, string2))
-        .orElse("No field errors");
-    return this.handleExceptionInternal(ex,
-        ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), errorMessage),
+    return this.handleExceptionInternal(e,
+        problemDetail,
         new HttpHeaders(),
-        HttpStatusCode.valueOf(400),
+        HttpStatusCode.valueOf(problemDetail.getStatus()),
         request);
   }
 
@@ -101,15 +133,8 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
   @Override
   protected ResponseEntity<Object> createResponseEntity(@Nullable final Object body, final HttpHeaders headers,
       final HttpStatusCode statusCode, final WebRequest request) {
-    String error = HttpStatus.valueOf(statusCode.value()).getReasonPhrase();
-    String errorDescription = "Unknown server error";
-    if (body instanceof ProblemDetail) {
-      error = Optional.ofNullable(((ProblemDetail) body).getTitle())
-          .orElse("server_error").toLowerCase().replace(' ', '_');
-      errorDescription = ((ProblemDetail) body).getDetail();
-    }
-    return new ResponseEntity<>(
-        Map.of("error", error, "error_description", errorDescription), headers, statusCode);
+    return new ResponseEntity<>(body, headers, statusCode);
+
   }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Sweden Connect
+ * Copyright 2025 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,20 +11,17 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ *  limitations under the License.
  */
 package se.swedenconnect.oidf.entity.registry.audit;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
+import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
-
-import java.util.UUID;
 
 /**
  * The RegistryAuditServiceAuditEvent class implements the RegistryAuditService interface to provide
@@ -142,6 +139,28 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
             .trustMarkId(deletedRecord.getTrustMarkId())
             .extId(trustmarkId)
             .oldData( this.toJson(deletedRecord) )
+            .build());
+  }
+
+  @Override
+  public void settingsWrite(final String OptionsRecordId, final OptionsRecord oldSettings,
+      final OptionsRecord newSettings) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(RegistryAuditEventType.TRUSTMARK_SUBJECT_CREATE_UPDATE)
+            .extId(OptionsRecordId)
+            .oldData(this.toJson(oldSettings))
+            .newData(this.toJson(newSettings))
+            .build());
+  }
+
+  @Override
+  public void settingsDelete(final String OptionsRecordId, final OptionsRecord deleteRecord) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(RegistryAuditEventType.SETTING_DELETED)
+            .extId(OptionsRecordId)
+            .oldData(this.toJson(deleteRecord))
             .build());
   }
 

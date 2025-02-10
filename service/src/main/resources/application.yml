@@ -6,6 +6,9 @@ spring:
     virtual:
       enabled: true
 
+  jackson:
+    default-property-inclusion: non_null
+
   flyway:
     enabled: true
 

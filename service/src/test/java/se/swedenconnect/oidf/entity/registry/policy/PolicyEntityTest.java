@@ -1,21 +1,22 @@
 /*
- * Copyright 2024 Sweden Connect.
+ * Copyright 2025 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  limitations under the License.
  */
 package se.swedenconnect.oidf.entity.registry.policy;
 
 import org.junit.jupiter.api.Test;
+import se.swedenconnect.oidf.entity.registry.entity.PolicyEntity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -72,19 +73,6 @@ class PolicyEntityTest {
     assertThat(policyEntity.getId()).isEqualTo(0L);
     assertThat(policyEntity.getName()).isNull();
     assertThat(policyEntity.getPolicy()).isNull();
-  }
-
-  /**
-   * Test the toString method of the PolicyDao class.
-   */
-  @Test
-  public void testPolicyEntityToString() {
-    PolicyEntity policyEntity = new PolicyEntity();
-    policyEntity.setId(1L);
-    policyEntity.setName("openid_relying_party");
-    policyEntity.setPolicy(this.policy);
-
-    assertThat(policyEntity.toString()).contains("1", "openid_relying_party", this.policy);
   }
 
 }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Sweden Connect
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package se.swedenconnect.oidf.entity.registry.fixture;
 
 import com.nimbusds.jose.crypto.RSASSASigner;
@@ -27,11 +43,10 @@ import java.util.Date;
 public class JwtTestUtils {
 
   /**
-   * Generates and signs a JSON Web Token (JWT) with predefined claims
-   * and returns it as a serialized string.
+   * Generates and signs a JSON Web Token (JWT) with predefined claims and returns it as a serialized string.
    * <p>
-   * The JWT is signed using a private key retrieved from the key store. The
-   * corresponding public key for checking the signature is set in:
+   * The JWT is signed using a private key retrieved from the key store. The corresponding public key for checking the
+   * signature is set in:
    * <pre>{@code
    *   spring:
    *   security:
@@ -65,7 +80,8 @@ public class JwtTestUtils {
       );
       signedJwt.sign(signer);
       return signedJwt.serialize();
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       throw new RuntimeException("Error creating JWT", e);
     }
   }
@@ -83,4 +99,15 @@ public class JwtTestUtils {
 
     return (java.security.PrivateKey) key;
   }
+
+  /**
+   * If a token is needed for external testing
+   *
+   * @param args No args needed
+   */
+  public static void main(String[] args) {
+    JwtTestUtils jwtTestUtils = new JwtTestUtils();
+    System.out.println(jwtTestUtils.createJwt());
+  }
+
 }

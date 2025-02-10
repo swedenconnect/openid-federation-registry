@@ -11,8 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ *  limitations under the License.
  */
 package se.swedenconnect.oidf.entity.registry.config;
 
@@ -74,8 +73,16 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, "/registry/v1/policies/**")
             .hasAuthority("SCOPE_policies_write")
 
-            .requestMatchers("/api/v1/federationservice/**").permitAll() // Always open
-            .requestMatchers("/actuator/**").permitAll()
+            .requestMatchers("/registry/v1/options/**").authenticated()
+            .requestMatchers(HttpMethod.GET, "/registry/v1/options/**")
+            .hasAuthority("SCOPE_options_read")
+            .requestMatchers(HttpMethod.POST, "/registry/v1/options/**")
+            .hasAuthority("SCOPE_options_create")
+            .requestMatchers(HttpMethod.PUT, "/registry/v1/options/**")
+            .hasAuthority("SCOPE_options_update")
+
+            .requestMatchers(HttpMethod.GET, "/api/v1/federationservice/**").permitAll() // Always open
+            .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
             .anyRequest().denyAll()
         );
     return http.build();

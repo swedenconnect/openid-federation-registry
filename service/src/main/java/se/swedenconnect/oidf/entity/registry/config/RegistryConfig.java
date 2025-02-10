@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Sweden Connect
+ * Copyright 2025 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,33 +11,36 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ *  limitations under the License.
  */
 package se.swedenconnect.oidf.entity.registry.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWK;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
-import se.swedenconnect.oidf.entity.registry.entity.EntityRepository;
-import se.swedenconnect.oidf.entity.registry.entity.EntityService;
-import se.swedenconnect.oidf.entity.registry.entity.JpaEntityService;
-import se.swedenconnect.oidf.entity.registry.federationserviceapi.FederationApiService;
-import se.swedenconnect.oidf.entity.registry.policy.JpaPolicyService;
-import se.swedenconnect.oidf.entity.registry.policy.PolicyRepository;
-import se.swedenconnect.oidf.entity.registry.policy.PolicyService;
-import se.swedenconnect.oidf.entity.registry.trustmark.JpaTrustMarkSubjectService;
-import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectRepository;
-import se.swedenconnect.oidf.entity.registry.trustmark.TrustMarkSubjectService;
+import se.swedenconnect.oidf.entity.registry.entity.InstanceEntity;
+import se.swedenconnect.oidf.entity.registry.repository.EntityRepository;
+import se.swedenconnect.oidf.entity.registry.repository.InstanceRepository;
+import se.swedenconnect.oidf.entity.registry.repository.ModuleRepository;
+import se.swedenconnect.oidf.entity.registry.repository.PolicyRepository;
+import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
+import se.swedenconnect.oidf.entity.registry.repository.TrustMarkSubjectRepository;
+import se.swedenconnect.oidf.entity.registry.service.EntityService;
+import se.swedenconnect.oidf.entity.registry.service.FederationApiService;
+import se.swedenconnect.oidf.entity.registry.service.JpaEntityService;
+import se.swedenconnect.oidf.entity.registry.service.JpaPolicyService;
+import se.swedenconnect.oidf.entity.registry.service.JpaTrustMarkSubjectService;
+import se.swedenconnect.oidf.entity.registry.service.PolicyService;
+import se.swedenconnect.oidf.entity.registry.service.TrustMarkSubjectService;
 import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.bundle.CredentialBundles;
 import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
 
-import java.security.KeyStore;
 import java.text.ParseException;
 
 /**
@@ -50,29 +53,42 @@ import java.text.ParseException;
 @Configuration
 public class RegistryConfig {
 
+  private final SettingsRepository settingsRepository;
   private final EntityRepository entityRepository;
   private final PolicyRepository policyRepository;
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
   private final RegistryAuditService registryAuditService;
+  private final ModuleRepository moduleRepository;
+  final InstanceRepository instanceRepository;
   private final ObjectMapper objectMapper;
+
   /**
-   * Constructs an instance of the RegistryConfig class, initializing its dependencies.
+   * Constructs an instance of the RegistryConfig class with the specified dependencies.
    *
-   * @param entityRepository the repository used for accessing and managing entity-related data
-   * @param policyRepository the repository used for accessing and managing policy-related data
-   * @param trustMarkSubjectRepository the repository used for accessing and managing trustmark subject-related data
-   * @param registryAuditService the service used for managing auditing operations in the registry
-   * @param objectMapper the object mapper for JSON serialization and deserialization
+   * @param entityRepository the repository used for managing entity-related data in the database.
+   * @param policyRepository the repository used for managing policy-related data in the database.
+   * @param trustMarkSubjectRepository the repository used for managing trustmark subject-related data.
+   * @param registryAuditService the service used for auditing actions and events within the registry.
+   * @param objectMapper the object mapper used for JSON serialization and deserialization.
+   * @param settingsRepository the repository used for managing application settings.
+   * @param moduleRepository the repository used for managing modules in the registry.
+   * @param instanceRepository the repository used for managing instance-related data in the registry.
    */
   public RegistryConfig(final EntityRepository entityRepository, final PolicyRepository policyRepository,
       final TrustMarkSubjectRepository trustMarkSubjectRepository,
       final RegistryAuditService registryAuditService,
-      final ObjectMapper objectMapper) {
+      final ObjectMapper objectMapper,
+      final SettingsRepository settingsRepository,
+      final ModuleRepository moduleRepository,
+      final InstanceRepository instanceRepository) {
     this.entityRepository = entityRepository;
     this.policyRepository = policyRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
     this.registryAuditService = registryAuditService;
     this.objectMapper = objectMapper;
+    this.settingsRepository = settingsRepository;
+    this.moduleRepository = moduleRepository;
+    this.instanceRepository = instanceRepository;
   }
 
   /**
@@ -151,8 +167,31 @@ public class RegistryConfig {
         this.policyRepository,
         this.trustMarkSubjectRepository,
         federationAPIProperties.issuer(),
-            mapper
+        mapper,
+        this.instanceRepository
     );
+  }
+
+  /**
+   * Initializes instances by converting the provided registry properties into entity objects
+   * and persisting them to the database.
+   *
+   * @param registryProperties the registry configuration properties containing instance information
+   *                            that will be used to populate and store {@code InstanceEntity} objects.
+   */
+  @Autowired
+  void initInstance(final RegistryProperties registryProperties) {
+
+    registryProperties.instances().forEach(instance -> {
+      final InstanceEntity entity = new InstanceEntity();
+      entity.setInstanceId(instance.instanceId());
+      entity.setName(instance.name());
+      entity.setCreatedBy("Registry-Config");
+      entity.setLastModifiedBy(entity.getCreatedBy());
+      this.instanceRepository.saveAndFlush(entity);
+
+    });
+
   }
 
 }

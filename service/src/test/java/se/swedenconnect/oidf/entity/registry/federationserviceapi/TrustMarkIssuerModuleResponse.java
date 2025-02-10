@@ -15,12 +15,16 @@
  */
 package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 
-import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
+import lombok.ToString;
+import org.springframework.util.Assert;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * TrustMarkIssuer module from registry.
@@ -28,13 +32,14 @@ import java.util.Map;
  * @author Felix Hellman
  */
 @Getter
+@ToString
 public class TrustMarkIssuerModuleResponse {
-  private Duration trustMarkValidityDuration;
+  private Duration trustMarkTokenValidityDuration;
   private EntityID entityIdentifier;
-  private JWK jwk;
+
   private String alias;
   private Boolean active;
-
+  private List<TrustMarkResponse> trustMarks;
   /**
    * Converts json object {@link java.util.HashMap} to new instance
    *
@@ -43,12 +48,29 @@ public class TrustMarkIssuerModuleResponse {
    */
   public static TrustMarkIssuerModuleResponse fromJson(final Map<String, Object> json) {
     final TrustMarkIssuerModuleResponse response = new TrustMarkIssuerModuleResponse();
-    response.trustMarkValidityDuration = (Duration) json.get("trustMarkValidityDuration");
-    response.entityIdentifier = (EntityID) json.get("entityIdentifier");
-    response.jwk = (JWK) json.get("jwk");
-    response.alias = (String) json.get("alias");
-    response.active = (Boolean) json.get("active");
+
+    try {
+      response.entityIdentifier = EntityID.parse((String) json.get("entity-identifier"));
+
+      response.alias = (String) json.get("alias");
+      response.active = (Boolean) json.get("active");
+      response.trustMarkTokenValidityDuration =
+          Duration.parse((String) json.get("trust-mark-token-validity-duration"));
+    }
+    catch (ParseException e) {
+      throw new RuntimeException(e);
+    }
+
     return response;
   }
 
+  public void validate() {
+    Assert.notNull(entityIdentifier, "entityIdentifier");
+    Assert.notNull(alias, "alias");
+    Assert.notNull(active, "active");
+    Assert.notNull(trustMarkTokenValidityDuration, "trustMarkTokenValidityDuration");
+  }
+
+  public record TrustMarkResponse(String trustMarkId, Optional<String> logoUri, Optional<String> refUri,
+      Optional<String> delegation) {}
 }

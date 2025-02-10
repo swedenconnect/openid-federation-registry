@@ -15,13 +15,14 @@
  */
 package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 
-import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import lombok.Getter;
+import lombok.ToString;
+import org.springframework.util.Assert;
 
+import java.text.ParseException;
 import java.time.Duration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,12 +31,12 @@ import java.util.Map;
  * @author Felix Hellman
  */
 @Getter
+@ToString
 public class ResolverModuleResponse {
-  private List<String> trustAnchors;
+  private String trustAnchors;
   private Duration resolveResponseDuration;
   private JWKSet trustedKeys;
   private String entityIdentifier;
-  private JWK signKey;
   private Duration stepRetryTime;
   private String alias;
   private Boolean active;
@@ -47,19 +48,35 @@ public class ResolverModuleResponse {
    * @return new instance
    */
   public static ResolverModuleResponse fromJson(final Map<String, Object> json) {
-    final ResolverModuleResponse resolver = new ResolverModuleResponse();
-    final Boolean isModuleActive = (Boolean) json.get("active");
-    resolver.active = false;
-    if (isModuleActive) {
-      resolver.trustAnchors = (List<String>) json.get("trust-anchors");
-      resolver.resolveResponseDuration = (Duration) json.get("resolve-response-duration");
-      resolver.trustedKeys = (JWKSet) json.get("trusted-keys");
-      resolver.entityIdentifier = (String) json.get("entity-identifier");
-      resolver.signKey = (JWK) json.get("sign-key");
-      resolver.stepRetryTime = (Duration) json.get("step-retry-time");
-      resolver.alias = (String) json.get("alias");
+    try {
+      final ResolverModuleResponse resolver = new ResolverModuleResponse();
+      final Boolean isModuleActive = (Boolean) json.get("active");
+      resolver.active = isModuleActive;
+      if (isModuleActive) {
+        resolver.trustAnchors = (String) json.get("trust-anchor");
+        resolver.resolveResponseDuration = Duration.parse((String) json.get("resolve-response-duration"));
+        resolver.trustedKeys = JWKSet.parse((String) json.get("trusted-keys"));
+        resolver.entityIdentifier = (String) json.get("entity-identifier");
+        resolver.stepRetryTime = Duration.parse((String) json.get("step-retry-duration"));
+        resolver.alias = (String) json.get("alias");
+      }
+      return resolver;
     }
-    return resolver;
+    catch (ParseException e) {
+      throw new RuntimeException(e);
+    }
+
   }
 
+  public void validate() {
+    Assert.notNull(entityIdentifier, "entityIdentifier");
+    Assert.notNull(alias, "alias");
+    Assert.notNull(active, "active");
+    Assert.notNull(trustAnchors, "trustAnchors");
+    Assert.notNull(resolveResponseDuration, "resolveResponseDuration");
+    Assert.notNull(trustedKeys, "trustedKeys");
+    Assert.notNull(stepRetryTime, "stepRetryTime");
+    Assert.notNull(trustAnchors, "trustAnchors");
+
+  }
 }

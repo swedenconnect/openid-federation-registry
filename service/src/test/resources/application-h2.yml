@@ -15,3 +15,23 @@ spring:
         format_sql: true
   flyway:
     enabled: false
+  sql:
+    init:
+      mode: always
+
+openid:
+  federation:
+    registry:
+      federation_service_api:
+        issuer: "http://oidf-registry.swedenconnect.se"
+        sign-key-alias: federationapi
+      instances:
+        - instance_id: "123e4567-e89b-12d3-a456-426614174000"
+          name: "Swedenconnect"
+        - instance_id: "223e4567-e89b-12d3-a456-426614174001"
+          name: "ENA"
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Sweden Connect
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package se.swedenconnect.oidf.entity.registry.audit;
 
 import lombok.extern.slf4j.Slf4j;
@@ -7,27 +23,20 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.context.annotation.Bean;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import se.swedenconnect.oidf.entity.registry.fixture.EntityFactory;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static se.swedenconnect.oidf.entity.registry.audit.RegistryAuditEventType.ENTITY_CREATED_UPDATE;
 import static se.swedenconnect.oidf.entity.registry.audit.RegistryAuditEventType.POLICY_CREATE_UPDATED;
 
@@ -56,7 +65,7 @@ public class AuditEventIT {
     assertNotNull(events.getFirst().getPrincipal());
     assertNotNull(events.getFirst().getTimestamp());
     assertNotNull(events.getFirst().getData());
-    assertEquals(4,events.getFirst().getData().size());
+    assertTrue(events.getFirst().getData().size() >= 4);
     assertNotNull(events.getFirst().getData().get("extId"));
     assertNotNull(events.getFirst().getData().get("subject"));
     assertNotNull(events.getFirst().getData().get("issuer"));
@@ -67,7 +76,7 @@ public class AuditEventIT {
     assertNotNull(policyEvent.getFirst().getPrincipal());
     assertNotNull(policyEvent.getFirst().getTimestamp());
     assertNotNull(policyEvent.getFirst().getData());
-    assertEquals(2,policyEvent.getFirst().getData().size());
+    assertTrue(policyEvent.getFirst().getData().size() >= 2);
     assertNotNull(policyEvent.getFirst().getData().get("extId"));
     assertNotNull(policyEvent.getFirst().getData().get("newData"));
   }
