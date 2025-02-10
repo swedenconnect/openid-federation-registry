@@ -99,4 +99,15 @@ public class JwtTestUtils {
 
     return (java.security.PrivateKey) key;
   }
+
+  /**
+   * If a token is needed for external testing
+   *
+   * @param args No args needed
+   */
+  public static void main(String[] args) {
+    JwtTestUtils jwtTestUtils = new JwtTestUtils();
+    System.out.println(jwtTestUtils.createJwt());
+  }
+
 }

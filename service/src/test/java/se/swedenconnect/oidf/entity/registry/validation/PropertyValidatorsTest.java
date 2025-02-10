@@ -16,22 +16,13 @@
 
 package se.swedenconnect.oidf.entity.registry.validation;
 
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.jwk.Curve;
-import com.nimbusds.jose.jwk.ECKey;
-import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import org.junit.jupiter.api.Test;
-
-import java.security.InvalidAlgorithmParameterException;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.interfaces.ECPublicKey;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static se.swedenconnect.oidf.entity.registry.fixture.TestDataOperations.genKey;
 
 public class PropertyValidatorsTest {
   final PropertyValidators propertyValidators = new PropertyValidators();
@@ -163,8 +154,7 @@ public class PropertyValidatorsTest {
   }
 
   @Test
-  public void testResolveValidator_jwksValidator_PrivateAndPublicKeys()
-      throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, JOSEException {
+  public void testResolveValidator_jwksValidator_PrivateAndPublicKeys() {
 
     final JWKSet set = new JWKSet(genKey());
 
@@ -176,18 +166,7 @@ public class PropertyValidatorsTest {
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", jwkPrivate));
   }
 
-  private JWK genKey() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
-    final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
-    keyGen.initialize(Curve.P_256.toECParameterSpec());
 
-    final KeyPair keyPair = keyGen.generateKeyPair();
-
-    final ECKey ecKey = new ECKey.Builder(Curve.P_256, (ECPublicKey) keyPair.getPublic())
-        .privateKey(keyPair.getPrivate())
-        .keyID("ec-key-id") // Ange ett unikt kid (Key ID)
-        .build();
-    return ecKey;
-  }
 
   @Test
   public void testResolveValidator_jwksValidator_noKid() {
@@ -199,8 +178,7 @@ public class PropertyValidatorsTest {
   }
 
   @Test
-  public void testResolveValidator_jwksValidator_invalidJwk()
-      throws InvalidAlgorithmParameterException, NoSuchAlgorithmException {
+  public void testResolveValidator_jwksValidator_invalidJwk() {
     final String invalidJwkValue = genKey().toString();
     final PropertyValidator result = propertyValidators.resolveValidator("jwk");
     assertDoesNotThrow(() -> result.validate("key", invalidJwkValue));

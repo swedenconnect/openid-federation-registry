@@ -59,18 +59,6 @@ VALUES ('TEMPLATE',
         'Flyway',
         'Flyway');
 
-INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
-                     last_modified_by)
-VALUES ('TEMPLATE',
-        'TRUSTMARKISSUER',
-        'jwk',
-        'Jwk of some sort',
-        'TEXT',
-        '',
-        'required | jwk',
-        'Flyway',
-        'Flyway');
-
 -- TrustAnchor
 INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
                      last_modified_by)
@@ -138,7 +126,7 @@ VALUES ('TEMPLATE',
         'Duration of the response. Expressed in hours.',
         'DURATION',
         'PT1H',
-        'required | min:1 | max:48',
+        'required | duration',
         'Flyway',
         'Flyway');
 
@@ -171,13 +159,15 @@ INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_valu
                      last_modified_by)
 VALUES ('TEMPLATE',
         'RESOLVER',
-        'step-retry-time',
-        'Time between a failed step and retry. Expressed in sec',
-        'NUMERIC',
-        '20',
-        'required | min:30 | max:180',
+        'step-retry-duration',
+        'Time between a failed step and retry.',
+        'DURATION',
+        'PT1M',
+        'required | duration',
         'Flyway',
         'Flyway');
+
+
 
 /*
  * Copyright 2025 Sweden Connect
@@ -194,6 +184,7 @@ VALUES ('TEMPLATE',
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 
 -- TrustMarks
 
@@ -245,6 +236,17 @@ VALUES ('TEMPLATE',
         'Flyway',
         'Flyway');
 
+INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
+                     last_modified_by)
+VALUES ('TEMPLATE',
+        'TRUSTMARK',
+        'delegation',
+        'Delegation JWT according to oidf specification',
+        'TEXT',
+        '',
+        'jwt:delegation',
+        'Flyway',
+        'Flyway');
 
 
 

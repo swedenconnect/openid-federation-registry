@@ -33,6 +33,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.entity.registry.config.RegistryProperties;
 import se.swedenconnect.oidf.entity.registry.federationserviceapi.ModuleResponse;
+import se.swedenconnect.oidf.entity.registry.federationserviceapi.ResolverModuleResponse;
+import se.swedenconnect.oidf.entity.registry.federationserviceapi.TrustAnchorModuleResponse;
 import se.swedenconnect.oidf.entity.registry.federationserviceapi.TrustMarkIssuerModuleResponse;
 import se.swedenconnect.oidf.entity.registry.fixture.EntityFactory;
 import se.swedenconnect.oidf.entity.registry.fixture.PolicyFactory;
@@ -51,10 +53,9 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Testing federation api
@@ -92,11 +93,11 @@ class FederationServiceApiControllerIT {
   }
 
   /**
-   * Creating TrustMarkSubjectRecord then gets the federation JWT to make sure it works
-   * @throws ParseException
+   * Test method for verifying the successful creation, retrieval, and validation of a TrustMarkSubjectRecord.
+   * @throws ParseException if there is an error in parsing the JWT or its claims.
    */
   @Test
-  void trustMarkRecordSuccess() throws ParseException, JsonProcessingException {
+  void trustMarkRecordSuccess() throws ParseException {
 
     final TrustMarkSubjectRecord record = TrustMarkSubjectRecord.builder()
         .trustMarkSubjectRecordId(UUID.randomUUID().toString())
@@ -151,8 +152,8 @@ class FederationServiceApiControllerIT {
           assertEquals(record.getSubject(), claimMap.get("subject"));
           assertNotNull(claimMap.get("expires"));
           assertNotNull(claimMap.get("granted"));
-          assertEquals(record.getExpires().toString(), claimMap.get("expires"));
-          assertEquals(record.getGranted().toString(), claimMap.get("granted"));
+          assertEquals(Objects.requireNonNull(record.getExpires()).toString(), claimMap.get("expires"));
+          assertEquals(Objects.requireNonNull(record.getGranted()).toString(), claimMap.get("granted"));
           assertEquals(record.getRevoked(), claimMap.get("revoked"));
 
         });
@@ -173,15 +174,14 @@ class FederationServiceApiControllerIT {
       log.error(fedRes.getBody());
     }
     assertThat(fedRes.getStatusCode()).isEqualTo(HttpStatus.OK);
-    
 
-    final SignedJWT signedJWT  = SignedJWT.parse(fedRes.getBody());
+    final SignedJWT signedJWT = SignedJWT.parse(Objects.requireNonNull(fedRes.getBody()));
     assertEquals(new JOSEObjectType("policy-record+jwt"),signedJWT.getHeader().getType());
     assertNotNull(signedJWT.getHeader().getKeyID());
 
     final Map<String, Object> claim = signedJWT.getJWTClaimsSet().getJSONObjectClaim("policy_record");
     assertNotNull(claim);
-    assertTrue(!claim.isEmpty());
+    assertFalse(claim.isEmpty());
     assertThat( (String)claim.get("policy_record_id")).isNotEmpty();
     assertNotNull(claim.get("policy"));
     final Map<String,Object> policyClaim = (Map<String, Object>) claim.get("policy");
@@ -190,7 +190,7 @@ class FederationServiceApiControllerIT {
   }
 
   @Test
-  void policyRecordBadRequest() throws ParseException {
+  void policyRecordBadRequest() {
 
     final ResponseEntity<String> fedRes = this.restTemplate
         .getForEntity("/api/v1/federationservice/policy_record?policy_record_id=notAnUuid", String.class);
@@ -202,7 +202,7 @@ class FederationServiceApiControllerIT {
   }
 
   @Test
-  void policyRecordNotFound() throws ParseException {
+  void policyRecordNotFound() {
 
     final ResponseEntity<String> fedRes = this.restTemplate
         .getForEntity("/api/v1/federationservice/policy_record?policy_record_id=" + UUID.randomUUID(), String.class);
@@ -231,19 +231,21 @@ class FederationServiceApiControllerIT {
     }
     assertThat(HttpStatus.OK).isEqualTo(response.getStatusCode());
 
-    final SignedJWT signedJWT  = SignedJWT.parse(response.getBody());
+    final SignedJWT signedJWT = SignedJWT.parse(Objects.requireNonNull(response.getBody()));
     assertEquals(new JOSEObjectType("entity-records+jwt"),signedJWT.getHeader().getType());
     assertNotNull(signedJWT.getHeader().getKeyID());
 
     final List<Object> claim = signedJWT.getJWTClaimsSet().getListClaim("entity_records");
     assertNotNull(claim);
-    assertTrue(!claim.isEmpty());
+    assertFalse(claim.isEmpty());
 
   }
 
   @Test
   void submoduleRecordSuccess() throws ParseException, JsonProcessingException {
-    final String tmiId = TestDataOperations.createTMI(restTemplate);
+    TestDataOperations.createTMI(restTemplate);
+    TestDataOperations.createTA(restTemplate);
+    TestDataOperations.createRESOLVER(restTemplate);
 
     final String instanceId = registryProperties.instances().stream().findFirst()
         .map(instanceProperties -> instanceProperties.instanceId().toString()).orElseThrow();
@@ -256,21 +258,24 @@ class FederationServiceApiControllerIT {
     }
     assertThat(HttpStatus.OK).isEqualTo(response.getStatusCode());
 
-    final SignedJWT signedJWT = SignedJWT.parse(response.getBody());
+    final SignedJWT signedJWT = SignedJWT.parse(Objects.requireNonNull(response.getBody()));
     assertEquals(new JOSEObjectType("module-records+jwt"), signedJWT.getHeader().getType());
     assertNotNull(signedJWT.getHeader().getKeyID());
 
     final Map<String, Object> claim = signedJWT.getJWTClaimsSet().getJSONObjectClaim("module_records");
     log.info("Claim:{}", claim.toString());
     assertNotNull(claim);
-    assertTrue(!claim.isEmpty());
+    assertFalse(claim.isEmpty());
     final ModuleResponse moduleResponse = ModuleResponse.fromJson(claim);
     assertNotNull(moduleResponse.getResolvers());
     assertNotNull(moduleResponse.getTrustAnchors());
     assertNotNull(moduleResponse.getTrustMarkIssuers());
 
-    assertTrue(moduleResponse.getResolvers().isEmpty());
-    assertTrue(moduleResponse.getTrustAnchors().isEmpty());
+    assertFalse(moduleResponse.getResolvers().isEmpty());
+    moduleResponse.getResolvers().forEach(ResolverModuleResponse::validate);
+
+    assertFalse(moduleResponse.getTrustAnchors().isEmpty());
+    moduleResponse.getTrustAnchors().forEach(TrustAnchorModuleResponse::validate);
 
     assertFalse(moduleResponse.getTrustMarkIssuers().isEmpty());
     moduleResponse.getTrustMarkIssuers().forEach(TrustMarkIssuerModuleResponse::validate);
@@ -279,7 +284,7 @@ class FederationServiceApiControllerIT {
   }
 
   @Test
-  void entityRecordNotFound() throws ParseException {
+  void entityRecordNotFound() {
 
     final ResponseEntity<String> response = this.restTemplate
         .getForEntity("/api/v1/federationservice/entity_record?iss=http://notfound.digg.se", String.class);
@@ -291,7 +296,7 @@ class FederationServiceApiControllerIT {
   }
 
   @Test
-  void entityRecordBadRequest() throws ParseException {
+  void entityRecordBadRequest() {
 
     final ResponseEntity<String> response = this.restTemplate
         .getForEntity("/api/v1/federationservice/entity_record?iss=f", String.class);

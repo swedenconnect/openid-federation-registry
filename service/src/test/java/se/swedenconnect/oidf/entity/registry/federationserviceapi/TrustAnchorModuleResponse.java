@@ -15,8 +15,11 @@
  */
 package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 
+import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
 import lombok.ToString;
+import org.springframework.util.Assert;
 
 import java.util.Map;
 
@@ -31,7 +34,7 @@ public class TrustAnchorModuleResponse {
   /** Alias for the given module */
   private String alias;
   /** EntityId for the trust anchor */
-  private String entityIdentifier;
+  private EntityID entityIdentifier;
   /** Is the module qctive */
   private Boolean active;
 
@@ -42,11 +45,21 @@ public class TrustAnchorModuleResponse {
    * @return new instance
    */
   public static TrustAnchorModuleResponse fromJson(final Map<String, Object> json) {
-    final TrustAnchorModuleResponse trustAnchorModuleResponse = new TrustAnchorModuleResponse();
-    trustAnchorModuleResponse.alias = (String) json.get("alias");
-    trustAnchorModuleResponse.entityIdentifier = (String) json.get("entity-identifier");
-    trustAnchorModuleResponse.active = (Boolean) json.get("active");
-    return trustAnchorModuleResponse;
+    try {
+      final TrustAnchorModuleResponse trustAnchorModuleResponse = new TrustAnchorModuleResponse();
+      trustAnchorModuleResponse.alias = (String) json.get("alias");
+      trustAnchorModuleResponse.entityIdentifier = EntityID.parse((String) json.get("entity-identifier"));
+      trustAnchorModuleResponse.active = (Boolean) json.get("active");
+      return trustAnchorModuleResponse;
+    }
+    catch (ParseException e) {
+      throw new RuntimeException(e);
+    }
   }
 
+  public void validate() {
+    Assert.notNull(entityIdentifier, "entityIdentifier");
+    Assert.notNull(alias, "alias");
+    Assert.notNull(active, "active");
+  }
 }

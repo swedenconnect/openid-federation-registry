@@ -37,16 +37,11 @@ public class TestRestTemplateConfig {
 
   @Bean
   public RestTemplateCustomizer restTemplateCustomizer() {
-    return restTemplate -> {
-      restTemplate.getInterceptors().add((request, body, execution) -> {
-        // Get our "fake" token
-        String token = jwtTestUtils.createJwt();
-
-        // Add to the Authorization header
-        request.getHeaders().add(HttpHeaders.AUTHORIZATION, "Bearer " + token);
-
-        return execution.execute(request, body);
-      });
-    };
+    return restTemplate -> restTemplate.getInterceptors()
+        .add((request, body, execution) -> {
+          final String token = this.jwtTestUtils.createJwt();
+          request.getHeaders().add(HttpHeaders.AUTHORIZATION, "Bearer " + token);
+          return execution.execute(request, body);
+        });
   }
 }
