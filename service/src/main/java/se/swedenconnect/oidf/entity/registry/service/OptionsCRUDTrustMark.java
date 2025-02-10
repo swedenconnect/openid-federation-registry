@@ -107,7 +107,7 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
         .filter(value -> value.getKey().equals("trustmarkissuer_id"))
         .map(SettingsEntity::getValue)
         .map(UUID::fromString)
-        .map(s -> moduleRepository.findByModuleIdAndModuleType(s, FkKeyType.TRUSTMARKISSUER.name()))
+        .map(s -> this.moduleRepository.findByModuleIdAndModuleType(s, FkKeyType.TRUSTMARKISSUER.name()))
         .map(moduleEntity -> moduleEntity.orElseThrow(() ->
             new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 "Invalid module_id, does not exist")))
@@ -150,7 +150,7 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
   @Override
   public OptionsRecord template(final FkKeyType fkKeyType) {
     final OptionsRecord optionsRecord = toRecord(getTemplateSettings(fkKeyType));
-    addOptionsForTrustMarkIssuerId(optionsRecord.getOption());
+    this.addOptionsForTrustMarkIssuerId(optionsRecord.getOption());
     return optionsRecord;
   }
 

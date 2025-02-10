@@ -79,6 +79,7 @@ public class FederationApiService {
    * @param signKey the JSON Web Key (JWK) used for signing operations
    * @param policyRepository the repository for managing policy records
    * @param trustMarkSubjectRepository the repository for managing trust mark subject records
+   * @param instanceRepository the repository for managing instances
    * @param jwkIssuer the issuer associated with the JSON Web Key (JWK)
    * @param mapper the object mapper for JSON processing
    */
@@ -89,7 +90,7 @@ public class FederationApiService {
       final TrustMarkSubjectRepository trustMarkSubjectRepository,
       final String jwkIssuer,
       final ObjectMapper mapper,
-      InstanceRepository instanceRepository) {
+      final InstanceRepository instanceRepository) {
     this.entityRepository = entityRepository;
     this.policyRepository = policyRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
@@ -204,7 +205,7 @@ public class FederationApiService {
     try {
       final String claimName = "module_records";
       final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
-      claimsSet.claim(claimName, resolveSubmodules(instanceId));
+      claimsSet.claim(claimName, this.resolveSubmodules(instanceId));
       return this.signJWT(claimName, claimsSet.build()).serialize();
     }
     catch (final JOSEException e) {
@@ -212,9 +213,9 @@ public class FederationApiService {
     }
   }
 
-  private Map<String, List<Map<String, Object>>> resolveSubmodules(UUID instanceid) {
+  private Map<String, List<Map<String, Object>>> resolveSubmodules(final UUID instanceid) {
 
-    final InstanceEntity instanceEntity = instanceRepository.findById(instanceid)
+    final InstanceEntity instanceEntity = this.instanceRepository.findById(instanceid)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No instance found for:%s".formatted(instanceid)));
 

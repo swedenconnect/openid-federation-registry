@@ -31,6 +31,8 @@ import lombok.Setter;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * Entity class representing the 'Settings' table in the database.
@@ -83,14 +85,14 @@ public class SettingsEntity extends BaseEntity {
    * @throws IllegalStateException if the `valueDataType` contains an unexpected or unsupported value.
    */
   public Object castValue() {
-    return switch (valueDataType.toUpperCase()) {
-      case "TEXT" -> value;
-      case "OPTIONS" -> value;
-      case "BOOLEAN" -> Boolean.valueOf(value);
-      case "NUMERIC" -> Double.valueOf(value);
-      case "DURATION" -> Duration.parse(value).toMillis();
-      default -> throw new IllegalStateException("Unexpected value: " + value.toLowerCase() +
-          " for data type: " + valueDataType);
+    return switch (SettingDataType.valueOf(this.valueDataType)) {
+      case TEXT -> this.value;
+      case OPTIONS -> this.value;
+      case BOOLEAN -> Boolean.valueOf(this.value);
+      case NUMERIC -> Double.valueOf(this.value);
+      case DURATION -> Duration.parse(this.value);
+      case DATE -> LocalDate.parse(this.value);
+      case DATETIME -> LocalDateTime.parse(this.value);
     };
   }
 

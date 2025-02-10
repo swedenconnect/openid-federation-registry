@@ -17,7 +17,7 @@
 package se.swedenconnect.oidf.entity.registry.entity;
 
 /**
- * oidf-entity-registry
+ * Defines the data type used in SettingsEntity
  *
  * @author Per Fredrik Plars
  */
@@ -26,5 +26,7 @@ public enum SettingDataType {
   DATE,
   DATETIME,
   OPTIONS,
-  BOOLEAN
+  BOOLEAN,
+  DURATION,
+  NUMERIC
 }

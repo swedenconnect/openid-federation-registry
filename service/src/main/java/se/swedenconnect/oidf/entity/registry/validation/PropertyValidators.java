@@ -89,20 +89,20 @@ public class PropertyValidators {
 
     return switch (name) {
 
-      case "min" -> (String key, String value) -> this.throwIf(() ->
-              !value.isBlank() && Double.parseDouble(value) < Double.parseDouble(conf),
-          key, "Value has to be grater then %s".formatted(conf));
-
-      case "max" -> (String key, String value) -> this.throwIf(() ->
-              !value.isBlank() && Double.parseDouble(value) > Double.parseDouble(conf),
-          key, "Value has to be less then %s".formatted(conf));
-
-      case "uuid" -> isUUID();
-
+      case "uuid" -> this.isUUID();
       case "length" -> this.hasLength(conf);
       case "json" -> this.isJson();
       case "jwks" -> this.jwksValidator(conf);
       case "jwk" -> this.isJWK();
+      case "ends_with" -> this.validateEndsWith(conf);
+      case "starts_with" -> this.validateStartsWith(conf);
+      case "contains" -> this.validateContains(conf);
+      case "date" -> this.validateDate();
+      case "between" -> this.validateBetween(conf);
+      case "url" -> this.validateUrl();
+      case "jwt" -> this.isJWT();
+      case "matches" -> this.validateMatches(conf);
+      case "duration" -> this.validateDuration();
 
       case "required" -> (key, value) ->
           this.throwIf(() -> value == null || value.isBlank(),
@@ -112,12 +112,6 @@ public class PropertyValidators {
           this.throwIf(() -> !value.isBlank() &&
                   !value.matches("^[A-Za-z0-9+_.-]+@(.+)$"),
               key, "Invalid email format");
-
-      case "ends_with" -> this.validateEndsWith(conf);
-
-      case "starts_with" -> this.validateStartsWith(conf);
-
-      case "contains" -> this.validateContains(conf);
 
       case "alpha" -> (key, value) ->
           this.throwIf(() -> !value.isBlank() &&
@@ -134,15 +128,14 @@ public class PropertyValidators {
                   !value.matches("^-?\\d*\\.?\\d+$"),
               key, "Must be a number");
 
-      case "date" -> this.validateDate();
+      case "min" -> (String key, String value) -> this.throwIf(() ->
+              !value.isBlank() && Double.parseDouble(value) < Double.parseDouble(conf),
+          key, "Value has to be grater then %s".formatted(conf));
 
-      case "between" -> this.validateBetween(conf);
+      case "max" -> (String key, String value) -> this.throwIf(() ->
+              !value.isBlank() && Double.parseDouble(value) > Double.parseDouble(conf),
+          key, "Value has to be less then %s".formatted(conf));
 
-      case "url" -> this.validateUrl();
-      case "jwt" -> this.isJWT();
-
-      case "matches" -> this.validateMatches(conf);
-      case "duration" -> validateDuration();
       default -> throw new IllegalArgumentException("Unknown validator: " + name);
     };
   }
@@ -155,7 +148,7 @@ public class PropertyValidators {
       try {
         java.time.Duration.parse(value); // Parses ISO-8601 duration format
       }
-      catch (Exception ex) {
+      catch (final Exception ex) {
         throw new PropertyValidationFailException(key, "Invalid duration format. "
             + "Expected ISO-8601 duration (e.g., PT1H30M). Error: " + ex.getMessage());
       }

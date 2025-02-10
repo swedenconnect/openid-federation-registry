@@ -168,7 +168,7 @@ public class RegistryConfig {
         this.trustMarkSubjectRepository,
         federationAPIProperties.issuer(),
         mapper,
-        instanceRepository
+        this.instanceRepository
     );
   }
 

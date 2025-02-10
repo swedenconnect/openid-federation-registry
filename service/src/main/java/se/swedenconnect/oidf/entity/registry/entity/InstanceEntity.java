@@ -57,8 +57,14 @@ public class InstanceEntity extends BaseEntity {
   @OneToMany(mappedBy = "instance")
   private List<ModuleEntity> module;
 
-  public List<ModuleEntity> getModuleByFKType(FkKeyType fkKeyType) {
-    return module
+  /**
+   * Filters and retrieves a list of {@link ModuleEntity} objects associated with the given foreign key type.
+   *
+   * @param fkKeyType the foreign key type used to filter {@link ModuleEntity} objects based on their module type
+   * @return a list of {@link ModuleEntity} objects where the module type matches the specified foreign key type
+   */
+  public List<ModuleEntity> getModuleByFKType(final FkKeyType fkKeyType) {
+    return this.module
         .stream()
         .filter(moduleEntity -> moduleEntity.getModuleType().equals(fkKeyType.name()))
         .toList();

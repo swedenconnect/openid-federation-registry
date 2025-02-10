@@ -73,6 +73,14 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, "/registry/v1/policies/**")
             .hasAuthority("SCOPE_policies_write")
 
+            .requestMatchers("/registry/v1/options/**").authenticated()
+            .requestMatchers(HttpMethod.GET, "/registry/v1/options/**")
+            .hasAuthority("SCOPE_options_read")
+            .requestMatchers(HttpMethod.POST, "/registry/v1/options/**")
+            .hasAuthority("SCOPE_options_write")
+            .requestMatchers(HttpMethod.PUT, "/registry/v1/options/**")
+            .hasAuthority("SCOPE_options_write")
+
             .requestMatchers("/api/v1/federationservice/**").permitAll() // Always open
             .requestMatchers("/actuator/**").permitAll()
             .anyRequest().denyAll()
