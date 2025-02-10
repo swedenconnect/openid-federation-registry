@@ -77,6 +77,7 @@ public interface OptionsCRUD {
    *
    * @param fkKeyType the type of foreign key associated with the record to be deleted
    * @param id the unique identifier of the record to delete
+   * @return the deleted options record
    */
-  void delete(FkKeyType fkKeyType, UUID id);
+  OptionsRecord delete(FkKeyType fkKeyType, UUID id);
 }

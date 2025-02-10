@@ -15,10 +15,13 @@
  */
 package se.swedenconnect.oidf.entity.registry.audit;
 
+import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
+
+import java.util.UUID;
 
 /**
  * RegistryAuditService defines an interface for auditing specific read operations within a federation API.
@@ -99,22 +102,38 @@ public interface RegistryAuditService {
   void trustmarkSubjectDelete(String trustMarkSubjectRecordId,TrustMarkSubjectRecord deletedRecord);
 
   /**
-   * Audits a write operation performed on a settings record. This method is used to log or handle
-   * the event when a settings record is created, updated, or modified within the system for purposes
-   * such as monitoring, compliance, or debugging.
+   * Audits the creation of an options record. This method is invoked when a new
+   * options record is created and is used for purposes such as monitoring, compliance,
+   * or debugging. It logs or handles the necessary details to track the creation
+   * of the options record.
    *
-   * @param optionsRecordId the unique identifier of the settings record being written or updated.
-   * @param oldRecord the previous state of the settings record. Can be null if the record is being created.
-   * @param newRecord the new state of the settings record after the write operation.
+   * @param optionsRecordId the unique identifier of the options record being created.
+   * @param fkKeyType the type of foreign key associated with the options record.
+   * @param oldRecord the previous state of the options record. Typically null during creation.
+   * @param newRecord the new state of the options record after it has been created.
    */
-  void settingsWrite(String optionsRecordId, OptionsRecord oldRecord, OptionsRecord newRecord);
+  void optionsCreate(UUID optionsRecordId, FkKeyType fkKeyType, OptionsRecord oldRecord, OptionsRecord newRecord);
 
   /**
-   * Logs or handles the deletion of a settings record. This method is used to audit the removal of a settings record
-   * within the system for purposes such as monitoring, compliance, or debugging.
+   * Audits the update operation performed on an options record. This method is invoked
+   * when an existing options record is modified within the system and is used for purposes
+   * such as monitoring, compliance, or debugging. It logs or handles the necessary details
+   * of the options record's state before and after the update.
    *
-   * @param optionsRecordId the unique identifier of the settings record being deleted.
-   * @param deletedRecord the record containing the details of the deleted settings record.
+   * @param optionsRecordId the unique identifier of the options record being updated.
+   * @param fkKeyType the type of foreign key associated with the options record.
+   * @param oldRecord the previous state of the options record before the update. Can be null if not applicable.
+   * @param newRecord the new state of the options record after the update.
    */
-  void settingsDelete(String optionsRecordId, OptionsRecord deletedRecord);
+  void optionsUpdate(UUID optionsRecordId, FkKeyType fkKeyType, OptionsRecord oldRecord, OptionsRecord newRecord);
+
+  /**
+   * Logs or handles the deletion of an options record. This method is used to audit the removal
+   * of an options record from the system for purposes such as monitoring, compliance, or debugging.
+   *
+   * @param optionsRecordId the unique identifier of the options record being deleted.
+   * @param fkKeyType the type of foreign key associated with the options record.
+   * @param deletedRecord the record containing the details of the deleted options record.
+   */
+  void optionsDelete(UUID optionsRecordId, FkKeyType fkKeyType, OptionsRecord deletedRecord);
 }

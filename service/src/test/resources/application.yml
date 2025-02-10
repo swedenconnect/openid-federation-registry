@@ -42,11 +42,11 @@ spring:
           public-key-location: classpath:public_auth_cert.pem
           audiences: https://registry.local.swedenconnect.se
   jpa:
-    show-sql: true
+    show-sql: false
 
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
 
 
 management:
