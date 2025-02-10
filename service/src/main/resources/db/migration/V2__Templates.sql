@@ -245,17 +245,6 @@ VALUES ('TEMPLATE',
         'Flyway',
         'Flyway');
 
-INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
-                     last_modified_by)
-VALUES ('TEMPLATE',
-        'TRUSTMARK',
-        'delegation',
-        'Delegation JWK according to oidf specification',
-        'TEXT',
-        '',
-        'jwk:delegation',
-        'Flyway',
-        'Flyway');
 
 
 

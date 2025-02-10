@@ -15,7 +15,6 @@
  */
 package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 
-import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.Getter;
@@ -37,7 +36,7 @@ import java.util.Optional;
 public class TrustMarkIssuerModuleResponse {
   private Duration trustMarkTokenValidityDuration;
   private EntityID entityIdentifier;
-  private JWK jwk;
+
   private String alias;
   private Boolean active;
   private List<TrustMarkResponse> trustMarks;
@@ -52,24 +51,21 @@ public class TrustMarkIssuerModuleResponse {
 
     try {
       response.entityIdentifier = EntityID.parse((String) json.get("entity-identifier"));
-      response.jwk = JWK.parse((String) json.get("jwk"));
+
       response.alias = (String) json.get("alias");
       response.active = (Boolean) json.get("active");
       response.trustMarkTokenValidityDuration =
-          Duration.ofMillis((Long) json.get("trust-mark-token-validity-duration"));
+          Duration.parse((String) json.get("trust-mark-token-validity-duration"));
     }
     catch (ParseException e) {
       throw new RuntimeException(e);
     }
-    catch (java.text.ParseException e) {
-      throw new RuntimeException(e);
-    }
+
     return response;
   }
 
   public void validate() {
     Assert.notNull(entityIdentifier, "entityIdentifier");
-    Assert.notNull(jwk, "jwk");
     Assert.notNull(alias, "alias");
     Assert.notNull(active, "active");
     Assert.notNull(trustMarkTokenValidityDuration, "trustMarkTokenValidityDuration");
