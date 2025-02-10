@@ -77,12 +77,12 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.GET, "/registry/v1/options/**")
             .hasAuthority("SCOPE_options_read")
             .requestMatchers(HttpMethod.POST, "/registry/v1/options/**")
-            .hasAuthority("SCOPE_options_write")
+            .hasAuthority("SCOPE_options_create")
             .requestMatchers(HttpMethod.PUT, "/registry/v1/options/**")
-            .hasAuthority("SCOPE_options_write")
+            .hasAuthority("SCOPE_options_update")
 
-            .requestMatchers("/api/v1/federationservice/**").permitAll() // Always open
-            .requestMatchers("/actuator/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/v1/federationservice/**").permitAll() // Always open
+            .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
             .anyRequest().denyAll()
         );
     return http.build();

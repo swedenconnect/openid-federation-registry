@@ -37,8 +37,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * oidf-entity-registry
- *
+ * Abstract implementation of the {@link OptionsCRUD} interface providing common functionality
+ * for managing and manipulating settings, templates, and related data records.
+ * This adapter simplifies CRUD operations by offering reusable utility methods
+ * for transforming, validating, and persisting records.
  * @author Per Fredrik Plars
  */
 public abstract class OptionsCRUDAdapter implements OptionsCRUD {
@@ -71,8 +73,8 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
 
   protected void addOptionsForInstanceID(final List<Values> values) {
     values.stream()
-        .filter(value -> value.getValueType().equals(SettingDataType.OPTIONS.name()))
-        .filter(value -> value.getKey().equals("instance_id"))
+        .filter(value -> Objects.equals(value.getValueType(), SettingDataType.OPTIONS.name()))
+        .filter(value -> Objects.equals(value.getKey(), "instance_id"))
         .findFirst()
         .ifPresent(value -> {
           value.setOptions(this.instanceRepository
@@ -82,7 +84,7 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
                   OptionRecord.builder()
                       .key(instanceEntity.getInstanceId().toString())
                       .value(instanceEntity.getName())
-                      .selected(value.getValue().equals(instanceEntity.getInstanceId()))
+                      .selected(Objects.equals(value.getValue(), instanceEntity.getInstanceId().toString()))
                       .build())
               .toList());
         });
@@ -140,7 +142,7 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
         .stream()
         .map(templateValue ->
             dataValues.stream()
-                .filter(dataValue -> dataValue.getKey().equals(templateValue.getKey()))
+                .filter(dataValue -> Objects.equals(dataValue.getKey(), templateValue.getKey()))
                 .map(dataValue -> {
                   final PropertyValidator validator =
                       this.validatorFactory.resolveValidator(templateValue.getValidation());

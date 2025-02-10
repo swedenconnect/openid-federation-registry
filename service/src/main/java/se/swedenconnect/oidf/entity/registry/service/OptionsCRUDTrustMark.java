@@ -142,7 +142,6 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
 
     final OptionsRecord optionsRecord = toRecord(mergeValues);
     this.addOptionsForInstanceID(optionsRecord.getOption());
-    //this.validateEntityIdentifier(fkKeyType, optionsRecord.getOption());
     return optionsRecord;
 
   }
@@ -179,7 +178,6 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
     deleteInsertSettings(TRUSTMARK, trustMarkEntity.getTrustmarkId().toString(), Collections.emptyList());
-    //this.repository.deleteAllInBatch(moduleEntity.get().getSettingsEntityList());
     this.trustMarkRepository.delete(trustMarkEntity);
     this.trustMarkRepository.flush();
   }

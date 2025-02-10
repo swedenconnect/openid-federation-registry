@@ -22,7 +22,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -39,11 +38,31 @@ import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 @Setter
 @Entity
 @NoArgsConstructor
-@AllArgsConstructor
 @Builder(toBuilder = true)
 @Table(name = "trustmark_subject",
     uniqueConstraints = { @UniqueConstraint(columnNames = { "issuer", "trustmarkId","subject" }) })
 public class TrustMarkSubjectEntity extends BaseEntity {
+  /**
+   * Constructs a new TrustMarkSubjectEntity with the given parameters.
+   *
+   * @param id the unique identifier for the entity
+   * @param externalId a unique, unmodifiable external identifier for the entity
+   * @param issuer the issuer of the trustmark
+   * @param trustmarkId the identifier of the trustmark
+   * @param subject the subject value associated with the trustmark
+   * @param trustmarksubjectJson the JSON representation of the trustmark subject entity
+   */
+  public TrustMarkSubjectEntity(final long id, final String externalId, final String issuer, final String trustmarkId,
+      final String subject,
+      final String trustmarksubjectJson) {
+    this.id = id;
+    this.externalId = externalId;
+    this.issuer = issuer;
+    this.trustmarkId = trustmarkId;
+    this.subject = subject;
+    this.trustmarksubjectJson = trustmarksubjectJson;
+  }
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
