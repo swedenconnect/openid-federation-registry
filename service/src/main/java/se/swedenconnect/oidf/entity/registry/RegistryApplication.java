@@ -24,6 +24,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
  * Main application class for the Entity Registry Application.
  *
  * @author Per Feedrik Plars
+ * @author David Goldring
  */
 @SpringBootApplication
 @ConfigurationPropertiesScan
