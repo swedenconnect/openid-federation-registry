@@ -24,12 +24,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.entity.registry.entity.PolicyEntity;
+import se.swedenconnect.oidf.entity.registry.repository.OrganizationRepository;
 import se.swedenconnect.oidf.entity.registry.repository.PolicyRepository;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
 import java.util.List;
 import java.util.Optional;
-
+import java.util.UUID;
 
 /**
  * JpaPolicyService is an implementation of the {@link PolicyService} interface that uses JPA for managing JSON Policy
@@ -52,6 +53,7 @@ public class JpaPolicyService implements PolicyService {
   private final PolicyRepository policyRepository;
   private final ObjectMapper objectMapper;
   private final RegistryAuditService auditService;
+  private final OrganizationRepository organizationRepository;
   /**
    * Constructs a new instance of {@code JpaPolicyService} which handles policy-related operations
    * using a JPA repository. This class is responsible for interacting with the data layer and
@@ -60,20 +62,23 @@ public class JpaPolicyService implements PolicyService {
    * @param policyRepository the {@link PolicyRepository} used for accessing and modifying policy data
    * @param objectMapper the {@link ObjectMapper} used for JSON serialization and deserialization of policy objects
    * @param auditService the {@link RegistryAuditService} used for logging and auditing operations
+   * @param organizationRepository the {@link OrganizationRepository} used for loading org
    */
   public JpaPolicyService(final PolicyRepository policyRepository,
       final ObjectMapper objectMapper,
-      final RegistryAuditService auditService) {
+      final RegistryAuditService auditService,
+      final OrganizationRepository organizationRepository) {
     this.policyRepository = policyRepository;
     this.objectMapper = objectMapper;
     this.auditService = auditService;
+    this.organizationRepository = organizationRepository;
   }
 
   @Override
   public PolicyRecord create(final PolicyRecord record) {
     try {
 
-      final PolicyRecord result = this.policyRepository.findByExternalId(record.getPolicyRecordId())
+      final PolicyRecord result = this.policyRepository.findById(UUID.fromString(record.getPolicyRecordId()))
           .or(() -> Optional.of(new PolicyEntity()))
           .map(entity -> this.mergeRecordIntoEntity(record, entity))
           .map(this.policyRepository::save)
@@ -89,7 +94,7 @@ public class JpaPolicyService implements PolicyService {
 
   @Override
   public PolicyRecord get(final String policyRecordId) {
-    return this.policyRepository.findByExternalId(policyRecordId)
+    return this.policyRepository.findById(UUID.fromString(policyRecordId))
         .map(this::toRecord)
         .orElse(null);
   }
@@ -112,7 +117,7 @@ public class JpaPolicyService implements PolicyService {
 
   @Override
   public void delete(final String policyRecordId) {
-    this.policyRepository.findByExternalId(policyRecordId)
+    this.policyRepository.findById(UUID.fromString(policyRecordId))
         .map(policyEntity -> {
           this.auditService.policyDelete(policyRecordId, this.toRecord(policyEntity));
           return policyEntity;
@@ -133,10 +138,9 @@ public class JpaPolicyService implements PolicyService {
     try {
       entity.setPolicy(this.objectMapper.writeValueAsString(record));
       entity.setName(record.getName());
-      entity.setExternalId(record.getPolicyRecordId());
-      if (entity.getExternalId() == null) {
-        entity.setExternalId(record.getPolicyRecordId());
-      }
+      Optional.ofNullable(record.getPolicyRecordId()).map(UUID::fromString).ifPresent(entity::setPolicyId);
+      // This is temporary
+      this.organizationRepository.findAll().stream().findFirst().ifPresent(entity::setOrganizationEntity);
       return entity;
     }
     catch (final JsonProcessingException e) {

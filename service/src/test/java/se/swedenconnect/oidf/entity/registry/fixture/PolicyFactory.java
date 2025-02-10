@@ -65,7 +65,7 @@ public final class PolicyFactory {
 
       final PolicyEntity pe = new PolicyEntity();
       pe.setName(record.getName());
-      pe.setExternalId(record.getPolicyRecordId());
+      pe.setPolicyId(UUID.fromString(record.getPolicyRecordId()));
       final String json = new ObjectMapper()
           .writerWithDefaultPrettyPrinter()
           .writeValueAsString(record);

@@ -27,6 +27,7 @@ import se.swedenconnect.oidf.entity.registry.entity.InstanceEntity;
 import se.swedenconnect.oidf.entity.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.entity.registry.repository.ModuleRepository;
+import se.swedenconnect.oidf.entity.registry.repository.OrganizationRepository;
 import se.swedenconnect.oidf.entity.registry.repository.PolicyRepository;
 import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.entity.registry.repository.TrustMarkSubjectRepository;
@@ -109,16 +110,19 @@ public class RegistryConfig {
   }
 
   /**
-   * Provides an instance of JpaPolicyService, which implements the PolicyService interface. This service manages policy
-   * objects using a JPA repository and handles JSON conversion using the provided ObjectMapper.
+   * Provides an instance of the {@link PolicyService} implementation using JPA for managing
+   * JSON Policy objects.
    *
-
-   * @return an instance of JpaPolicyService.
+   * @param organizationRepository the repository used for managing organization-related data,
+   *                                required to associate policies with respective organizations.
+   * @return an instance of {@link JpaPolicyService}, configured with the necessary dependencies
+   *         such as {@code policyRepository}, {@code objectMapper}, and {@code registryAuditService}.
    */
   @Bean
   @Qualifier("jpaPolicyService")
-  public PolicyService jpaPolicyService() {
-    return new JpaPolicyService(this.policyRepository, this.objectMapper,this.registryAuditService);
+  public PolicyService jpaPolicyService(final OrganizationRepository organizationRepository) {
+    return new JpaPolicyService(this.policyRepository, this.objectMapper, this.registryAuditService,
+        organizationRepository);
   }
 
   /**

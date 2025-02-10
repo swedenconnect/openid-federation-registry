@@ -19,6 +19,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import se.swedenconnect.oidf.entity.registry.entity.PolicyEntity;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * PolicyRepository is a JPA repository interface for accessing and performing
@@ -30,7 +31,7 @@ import java.util.Optional;
  * @author David Goldring
  * @author Per Fredrik Plars
  */
-public interface PolicyRepository extends JpaRepository<PolicyEntity, Long>{
+public interface PolicyRepository extends JpaRepository<PolicyEntity, UUID> {
   /**
    * Finds a policy by its name.
    *
@@ -39,10 +40,4 @@ public interface PolicyRepository extends JpaRepository<PolicyEntity, Long>{
    */
   Optional<PolicyEntity> findByName(String name);
 
-  /**
-   * Resolve policy by its externalId
-   * @param externalId UUID
-   * @return an Optional containing the policy if found, or an empty Optional if no policy exist
-   */
-  Optional<PolicyEntity> findByExternalId(String externalId);
 }

@@ -22,7 +22,7 @@ import se.swedenconnect.oidf.entity.registry.fixture.TestContainersConfiguration
  * This class serves as the entry point for running the Entity Registry Application
  * with additional configuration specified by TestContainersConfiguration.
  * <p>
- * Starting this class instead of the main {@link EntityRegistryApplication} class
+ * Starting this class instead of the main {@link RegistryApplication} class
  * invokes testcontainers that are set up in {@link TestContainersConfiguration}.
  * <p>
  * This can be seen as an alternative to running the main {@code EntityRegistryApplication}
@@ -41,7 +41,7 @@ public class TestEntityRegistryApplication {
    * @param args command line arguments passed to the application
    */
   public static void main(String[] args) {
-    SpringApplication.from(EntityRegistryApplication::main)
+    SpringApplication.from(RegistryApplication::main)
         .with(TestContainersConfiguration.class).run(args);
   }
 
