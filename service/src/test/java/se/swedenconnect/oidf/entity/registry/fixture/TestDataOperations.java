@@ -53,6 +53,38 @@ public class TestDataOperations {
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
+  public static String createPolicies(TestRestTemplate restTemplate) throws JsonProcessingException {
+    final ResponseEntity<String> tmi =
+        restTemplate.getForEntity("/registry/v1/options/policies", String.class);
+    if (tmi.getStatusCode().isError()) {
+      log.info(tmi.getBody());
+    }
+    assertThat(tmi.getStatusCode()).isEqualTo(HttpStatus.OK);
+    final JsonNode node = objectMapper.readTree(tmi.getBody());
+    final JsonNode data = node.get("option");
+
+    data.elements().forEachRemaining(jsonNode -> {
+      final ObjectNode valueNode = (ObjectNode) jsonNode;
+      ifThen(valueNode, "name", () -> "Ena-Policy");
+      ifThen(valueNode, "policy", () -> "{\"signature\":\"HS256\"}");
+      ifThen(valueNode, "organization_id", () -> valueNode.get("options").elements().next().get("key").asText());
+    });
+
+    final String newTMI = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
+    final String id = UUID.randomUUID().toString();
+    final HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+
+    final ResponseEntity<String> createdTMI =
+        restTemplate.postForEntity("/registry/v1/options/policies/" + id, new HttpEntity<>(newTMI, headers),
+            String.class);
+    if (createdTMI.getStatusCode().isError()) {
+      log.info(createdTMI.getBody());
+    }
+    assertThat(createdTMI.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    return id;
+  }
+
   public static String createTMI(TestRestTemplate restTemplate) throws JsonProcessingException {
     final ResponseEntity<String> tmi =
         restTemplate.getForEntity("/registry/v1/options/trustmarkissuer", String.class);

@@ -30,6 +30,7 @@ import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * JpaEntityService is an implementation of the EntityService interface that uses a JPA repository to perform CRUD
@@ -121,7 +122,7 @@ public class JpaEntityService implements EntityService {
   private void verifyPolicyRecordId(final EntityRecord record) {
     Assert.notNull(record,"Record can not be null");
     Assert.hasText(record.getPolicyRecordId(),"PolicyRecordId has to be present");
-    if(this.policyRepository.findByExternalId(record.getPolicyRecordId()).isEmpty()){
+    if (this.policyRepository.findById(UUID.fromString(record.getPolicyRecordId())).isEmpty()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PolicyRecordId is not found.");
     }
   }

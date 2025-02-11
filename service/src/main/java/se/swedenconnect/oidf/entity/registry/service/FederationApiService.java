@@ -173,7 +173,7 @@ public class FederationApiService {
    */
   public String policyRecord(final UUID policyRecordId) {
     Assert.notNull(policyRecordId, "policyRecordId is mandatory");
-    final PolicyEntity policyEntity = this.policyRepository.findByExternalId(policyRecordId.toString())
+    final PolicyEntity policyEntity = this.policyRepository.findById(policyRecordId)
         .orElseThrow(() ->
             new ResponseStatusException(HttpStatus.NOT_FOUND,
                 "Unable to find policy for id:'%s'".formatted(policyRecordId.toString())));

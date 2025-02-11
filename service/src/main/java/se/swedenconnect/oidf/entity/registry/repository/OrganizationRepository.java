@@ -13,14 +13,22 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package se.swedenconnect.oidf.entity.registry.repository;
 
-package se.swedenconnect.oidf.entity.registry.entity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
+
+import java.util.UUID;
 
 /**
- * Enumeration representing the types of foreign keys (FkKeyType) used within the system.
+ * OrganizationRepository is a JPA repository interface for performing database operations on {@link OrganizationEntity}
+ * objects.
+ *
+ * This repository provides standard CRUD functionality and enables the use of custom queries to manage and access
+ * organization data in the system. The entity is identified by a {@link UUID}.
  *
  * @author Per Fredrik Plars
  */
-public enum FkKeyType {
-  RESOLVER, INTERMEDIATE, TRUSTANCHOR, TRUSTMARKISSUER, TRUSTMARK, POLICIES, ORGANIZATION
+public interface OrganizationRepository extends JpaRepository<OrganizationEntity, UUID> {
+
 }

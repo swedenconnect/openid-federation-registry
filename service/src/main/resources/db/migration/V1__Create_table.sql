@@ -30,19 +30,7 @@ CREATE TABLE IF NOT EXISTS entities
     CONSTRAINT entities_const UNIQUE (issuer, subject)
 ) ENGINE=InnoDB;
 
--- Policies table
-CREATE TABLE IF NOT EXISTS policies
-(
-    id                 bigint       NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    external_id UUID NOT NULL,
-    name               varchar(255) NOT NULL,
-    policy             TEXT         NOT NULL,
-    created_date       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_modified_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    created_by         VARCHAR(255) NOT NULL,
-    last_modified_by   VARCHAR(255) NOT NULL,
-    CONSTRAINT policies_const UNIQUE (external_id)
-) ENGINE=InnoDB;
+
 
 -- Trustmark subject table
 CREATE TABLE IF NOT EXISTS trustmark_subject
@@ -102,6 +90,24 @@ CREATE TABLE IF NOT EXISTS `organization`
     `created_date`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `last_modified_date` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`organization_id`)
+) ENGINE=InnoDB;
+
+-- Policies table
+CREATE TABLE IF NOT EXISTS policies
+(
+    policy_id          UUID         NOT NULL PRIMARY KEY,
+    organization_id    UUID         NOT NULL,
+    name               varchar(255) NOT NULL,
+    policy             TEXT         NOT NULL,
+    created_date       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_modified_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by         VARCHAR(255) NOT NULL,
+    last_modified_by   VARCHAR(255) NOT NULL,
+
+    FOREIGN KEY (organization_id) REFERENCES organization (organization_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+
 ) ENGINE=InnoDB;
 
 -- Organization instance link table

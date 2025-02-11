@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Sweden Connect
+ * Copyright 2025 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,8 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ *  limitations under the License.
  */
 package se.swedenconnect.oidf.entity.registry;
 
@@ -24,12 +23,13 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 /**
  * Main application class for the Entity Registry Application.
  *
+ * @author Per Feedrik Plars
  * @author David Goldring
  */
 @SpringBootApplication
 @ConfigurationPropertiesScan
 @EnableJpaAuditing
-public class EntityRegistryApplication {
+public class RegistryApplication {
 
 	/**
 	 * The main entry point of the Entity Registry Service Application.
@@ -37,7 +37,7 @@ public class EntityRegistryApplication {
 	 * @param args command line arguments passed to the application
 	 */
 	public static void main(final String[] args) {
-		SpringApplication.run(EntityRegistryApplication.class, args);
+		SpringApplication.run(RegistryApplication.class, args);
 	}
 
 }

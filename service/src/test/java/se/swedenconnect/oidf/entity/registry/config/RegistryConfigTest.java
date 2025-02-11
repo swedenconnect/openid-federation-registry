@@ -28,8 +28,6 @@ import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.entity.registry.repository.TrustMarkSubjectRepository;
 import se.swedenconnect.oidf.entity.registry.service.EntityService;
 import se.swedenconnect.oidf.entity.registry.service.JpaEntityService;
-import se.swedenconnect.oidf.entity.registry.service.JpaPolicyService;
-import se.swedenconnect.oidf.entity.registry.service.PolicyService;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -89,18 +87,4 @@ public class RegistryConfigTest {
     assertSame(entityRepository, ((JpaEntityService) jpaService).getRepository());
   }
 
-  /**
-   * Tests the jpaPolicyService bean provided by the ServiceConfig.
-   * <p>
-   * The test verifies that the jpaPolicyService bean is not null, confirms
-   * that it is an instance of the JpaPolicyService class, and
-   * asserts that the JpaPolicyService is configured with the correct repository.
-   */
-  @Test
-  public void testJpaPolicyServiceBean() {
-    PolicyService policyService = registryConfig.jpaPolicyService();
-    assertThat(policyService).isNotNull();
-    assertThat(policyService).isInstanceOf(JpaPolicyService.class);
-    assertSame(policyRepository, ((JpaPolicyService) policyService).getPolicyRepository());
-  }
 }
