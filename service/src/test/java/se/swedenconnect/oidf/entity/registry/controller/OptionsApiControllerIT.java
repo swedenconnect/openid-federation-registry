@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
@@ -40,6 +41,9 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static se.swedenconnect.oidf.entity.registry.audit.RegistryAuditEventType.OPTIONS_CREATED;
+import static se.swedenconnect.oidf.entity.registry.audit.RegistryAuditEventType.OPTIONS_DELETED;
 
 /**
  * Testing the new optional api
@@ -57,6 +61,9 @@ class OptionsApiControllerIT {
 
   @Autowired
   private TestRestTemplate restTemplate;
+
+  @Autowired
+  private AuditEventRepository auditEventRepository;
 
   final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -111,6 +118,10 @@ class OptionsApiControllerIT {
       log.info(tmiReadNotFound.getBody());
     }
     assertThat(tmiReadNotFound.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
+    assertFalse(auditEventRepository.find(null, null, OPTIONS_CREATED.name()).isEmpty());
+    assertFalse(auditEventRepository.find(null, null, OPTIONS_DELETED.name()).isEmpty());
+
 
   }
 

@@ -11,19 +11,21 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ *  limitations under the License.
  */
 package se.swedenconnect.oidf.entity.registry.audit;
 
 import lombok.Builder;
 import lombok.Getter;
 import org.springframework.boot.actuate.audit.AuditEvent;
+import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+
 /**
  * Represents an audit event specific to federation-related actions, capturing details
  * about the event type, issuer, subject, associated trust mark, old data, and new data.
@@ -41,7 +43,9 @@ public class FederationAuditEvent implements Serializable {
   final String subject;
   final String trustMarkId;
 
+  final FkKeyType fkKeyType;
   final String extId;
+  final UUID optionId;
 
   final String oldData;
   final String newData;
@@ -65,6 +69,8 @@ public class FederationAuditEvent implements Serializable {
         .ifPresent(v -> data.put("oldData",v));
     Optional.ofNullable(this.newData).ifPresent(v -> data.put("newData",v));
     Optional.ofNullable(this.extId).ifPresent(v -> data.put("extId",v));
+    Optional.ofNullable(this.fkKeyType).ifPresent(v -> data.put("optionType", v));
+    Optional.ofNullable(this.optionId).ifPresent(v -> data.put("optionId", v));
     return new AuditEvent(principal,this.event.name(),data);
   }
 }

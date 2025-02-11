@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.entity.registry.service;
 
 import org.springframework.stereotype.Service;
+import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 
@@ -34,16 +35,18 @@ import java.util.UUID;
 public class OptionsCRUDSelector implements OptionsCRUD {
 
   final List<OptionsCRUD> optionsCRUDS;
+  final RegistryAuditService registryAuditService;
 
   /**
-   * Constructs an OptionsCRUDSelector with a list of OptionsCRUD implementations. The provided list is used to delegate
-   * operations to the appropriate implementation based on the corresponding FkKeyType.
+   * Constructs a new OptionsCRUDSelector instance with the provided list of OptionsCRUD implementations
+   * and the registry audit service.
    *
-   * @param optionsCRUDS a list of implementations of the OptionsCRUD interface that this selector will use to
-   *     delegate operations.
+   * @param optionsCRUDS the list of OptionsCRUD implementations to be used for delegating operations
+   * @param registryAuditService the service responsible for auditing registry operations
    */
-  public OptionsCRUDSelector(final List<OptionsCRUD> optionsCRUDS) {
+  public OptionsCRUDSelector(final List<OptionsCRUD> optionsCRUDS, final RegistryAuditService registryAuditService) {
     this.optionsCRUDS = optionsCRUDS;
+    this.registryAuditService = registryAuditService;
   }
 
   private OptionsCRUD getOptionsCRUD(final FkKeyType fkKeyType) {
@@ -60,12 +63,16 @@ public class OptionsCRUDSelector implements OptionsCRUD {
 
   @Override
   public OptionsRecord create(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
-    return this.getOptionsCRUD(fkKeyType).create(fkKeyType, id, record);
+    final OptionsRecord newRecord = this.getOptionsCRUD(fkKeyType).create(fkKeyType, id, record);
+    this.registryAuditService.optionsCreate(id, fkKeyType, record, newRecord);
+    return newRecord;
   }
 
   @Override
   public OptionsRecord update(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
-    return this.getOptionsCRUD(fkKeyType).update(fkKeyType, id, record);
+    final OptionsRecord newRecord = this.getOptionsCRUD(fkKeyType).update(fkKeyType, id, record);
+    this.registryAuditService.optionsUpdate(id, fkKeyType, record, newRecord);
+    return newRecord;
   }
 
   @Override
@@ -79,8 +86,10 @@ public class OptionsCRUDSelector implements OptionsCRUD {
   }
 
   @Override
-  public void delete(final FkKeyType fkKeyType, final UUID id) {
-    this.getOptionsCRUD(fkKeyType).delete(fkKeyType, id);
+  public OptionsRecord delete(final FkKeyType fkKeyType, final UUID id) {
+    final OptionsRecord deletedRecord = this.getOptionsCRUD(fkKeyType).delete(fkKeyType, id);
+    this.registryAuditService.optionsDelete(id, fkKeyType, deletedRecord);
+    return deletedRecord;
   }
 
 }

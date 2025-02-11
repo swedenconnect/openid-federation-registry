@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.entity.ModuleEntity;
 import se.swedenconnect.oidf.entity.registry.entity.SettingsEntity;
@@ -29,6 +28,7 @@ import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -49,16 +49,15 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
    * Constructor for the OptionsCRUDModules class. This initializes the module with the required dependencies for
    * performing CRUD operations.
    *
-   * @param registryAuditService The service responsible for auditing registry actions.
    * @param repository The settings repository used for storing and retrieving settings data.
    * @param moduleRepository The module repository used for managing module entities.
    * @param instanceRepository The instance repository used for handling instance data.
    */
-  public OptionsCRUDModules(final RegistryAuditService registryAuditService,
+  public OptionsCRUDModules(
       final SettingsRepository repository,
       final ModuleRepository moduleRepository,
       final InstanceRepository instanceRepository) {
-    super(registryAuditService, instanceRepository, repository);
+    super(instanceRepository, repository);
     this.moduleRepository = moduleRepository;
   }
 
@@ -93,8 +92,8 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
     this.loadInstanceThrowIfNotExist(validatedInData).ifPresent(newModuleEntity::setInstance);
 
     final ModuleEntity savedModuleEntity = this.moduleRepository.saveAndFlush(newModuleEntity);
-    super.deleteInsertSettings(fkKeyType, savedModuleEntity.getModuleId().toString(), validatedInData);
-
+    super.deleteSettings(fkKeyType, savedModuleEntity.getModuleId().toString());
+    super.insertSettings(fkKeyType, savedModuleEntity.getModuleId().toString(), validatedInData);
     return this.toRecord(validatedInData);
 
   }
@@ -109,9 +108,9 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
     final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
 
     final List<SettingsEntity> validatedInData = this.createAndValidateInputData(template, record.getOption());
-    //this.loadInstanceThrowIfNotExist(validatedInData).ifPresent(moduleEntity::setInstance);
-    super.deleteInsertSettings(fkKeyType, moduleEntity.getModuleId().toString(), validatedInData);
-    final ModuleEntity savedModuleEntity = this.moduleRepository.saveAndFlush(moduleEntity);
+    super.deleteSettings(fkKeyType, moduleEntity.getModuleId().toString());
+    super.insertSettings(fkKeyType, moduleEntity.getModuleId().toString(), validatedInData);
+    this.moduleRepository.saveAndFlush(moduleEntity);
     return this.toRecord(validatedInData);
   }
 
@@ -125,7 +124,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
     final List<SettingsEntity> mergeValues = insertValuesInTemplate(
         fkKeyType, moduleEntity.getSettingsEntityList());
     final OptionsRecord optionsRecord = toRecord(mergeValues);
-    this.addOptionsForInstanceID(optionsRecord.getOption());
+    this.addOptionsForInstanceID(Objects.requireNonNull(optionsRecord.getOption()));
     //this.validateEntityIdentifier(fkKeyType, optionsRecord.getOption());
     return optionsRecord;
 
@@ -134,18 +133,18 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
   @Override
   public OptionsRecord template(final FkKeyType fkKeyType) {
     final OptionsRecord optionsRecord = toRecord(getTemplateSettings(fkKeyType));
-    addOptionsForInstanceID(optionsRecord.getOption());
+    addOptionsForInstanceID(Objects.requireNonNull(optionsRecord.getOption()));
     return optionsRecord;
   }
 
   @Override
-  public void delete(final FkKeyType fkKeyType, final UUID id) {
+  public OptionsRecord delete(final FkKeyType fkKeyType, final UUID id) {
     final ModuleEntity moduleEntity = this.moduleRepository
         .findByModuleIdAndModuleType(id, fkKeyType.name())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
-    //this.repository.deleteAllInBatch(moduleEntity.get().getSettingsEntityList());
     this.moduleRepository.delete(moduleEntity);
+    return this.toRecord(moduleEntity.getSettingsEntityList());
   }
 
 }
