@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.entity.registry.entity.PolicyEntity;
@@ -33,7 +32,6 @@ import se.swedenconnect.oidf.registry.api.model.OptionRecord;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.Values;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -58,16 +56,15 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
   /**
    * Constructor for OptionsCRUDPolices.
    *
-   * @param registryAuditService the service used for registry auditing.
    * @param instanceRepository the repository for managing instances.
    * @param settingsRepository the repository for system settings.
    * @param policyRepository the repository for handling policyRepository.
    * @param organizationRepository the repository for managing modules.
    */
-  public OptionsCRUDPolicy(final RegistryAuditService registryAuditService,
+  public OptionsCRUDPolicy(
       final InstanceRepository instanceRepository, final SettingsRepository settingsRepository,
       final PolicyRepository policyRepository, final OrganizationRepository organizationRepository) {
-    super(registryAuditService, instanceRepository, settingsRepository);
+    super(instanceRepository, settingsRepository);
     this.policyRepository = policyRepository;
     this.organizationRepository = organizationRepository;
   }
@@ -97,10 +94,9 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
     this.loadOrganizationThrowIfNotExist(validatedInData).ifPresent(newPolicyEntity::setOrganizationEntity);
 
     final PolicyEntity savedPolicyEntity = this.policyRepository.saveAndFlush(newPolicyEntity);
-    super.deleteInsertSettings(fkKeyType, savedPolicyEntity.getPolicyId().toString(), validatedInData);
-
+    super.deleteSettings(fkKeyType, savedPolicyEntity.getPolicyId().toString());
+    super.insertSettings(fkKeyType, savedPolicyEntity.getPolicyId().toString(), validatedInData);
     return this.toRecord(validatedInData);
-
   }
 
   protected Optional<OrganizationEntity> loadOrganizationThrowIfNotExist(final List<SettingsEntity> dataValues)
@@ -127,7 +123,8 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
     final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
 
     final List<SettingsEntity> validatedInData = this.createAndValidateInputData(template, record.getOption());
-    super.deleteInsertSettings(fkKeyType, policyEntity.getPolicyId().toString(), validatedInData);
+    super.deleteSettings(fkKeyType, policyEntity.getPolicyId().toString());
+    super.insertSettings(fkKeyType, policyEntity.getPolicyId().toString(), validatedInData);
     this.policyRepository.saveAndFlush(policyEntity);
     return this.toRecord(validatedInData);
   }
@@ -144,7 +141,7 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
         super.getSettingsEntities(POLICIES, policyEntity.getPolicyId().toString()));
 
     final OptionsRecord optionsRecord = toRecord(mergeValues);
-    this.addOptionsForInstanceID(optionsRecord.getOption());
+    this.addOptionsForInstanceID(Objects.requireNonNull(optionsRecord.getOption()));
     return optionsRecord;
 
   }
@@ -161,28 +158,27 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
         .filter(value -> Objects.equals(value.getValueType(), SettingDataType.OPTIONS.name()))
         .filter(value -> Objects.equals(value.getKey(), "organization_id"))
         .findFirst()
-        .ifPresent(value -> {
-          value.setOptions(this.organizationRepository.findAll()
-              .stream()
-              .map(entity ->
-                  OptionRecord.builder()
-                      .key(entity.getOrganizationId().toString())
-                      .value(entity.getOrgName())
-                      .selected(Objects.equals(value.getValue(), entity.getOrganizationId().toString()))
-                      .build())
-              .toList());
-        });
+        .ifPresent(value -> value.setOptions(this.organizationRepository.findAll()
+            .stream()
+            .map(entity ->
+                OptionRecord.builder()
+                    .key(entity.getOrganizationId().toString())
+                    .value(entity.getOrgName())
+                    .selected(Objects.equals(value.getValue(), entity.getOrganizationId().toString()))
+                    .build())
+            .toList()));
   }
 
   @Override
-  public void delete(final FkKeyType fkKeyType, final UUID id) {
+  public OptionsRecord delete(final FkKeyType fkKeyType, final UUID id) {
     final PolicyEntity entity = this.policyRepository
         .findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
-    deleteInsertSettings(POLICIES, entity.getPolicyId().toString(), Collections.emptyList());
+    final List<SettingsEntity> options = deleteSettings(POLICIES, entity.getPolicyId().toString());
     this.policyRepository.delete(entity);
     this.policyRepository.flush();
+    return this.toRecord(options);
   }
 
 }

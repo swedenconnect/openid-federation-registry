@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.entity.registry.entity.SettingsEntity;
@@ -28,7 +27,6 @@ import se.swedenconnect.oidf.entity.registry.repository.OrganizationRepository;
 import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -53,15 +51,14 @@ public class OptionsCRUDOrganization extends OptionsCRUDAdapter {
    * Constructor for the OptionsCRUDOrganization class, which initializes the organization repository and inherits
    * behavior and properties from its superclass.
    *
-   * @param registryAuditService the service used for auditing registry changes
    * @param instanceRepository the repository used for managing instance data
    * @param settingsRepository the repository used for managing application settings
    * @param organizationRepository the repository used for managing organization data
    */
-  public OptionsCRUDOrganization(final RegistryAuditService registryAuditService,
+  public OptionsCRUDOrganization(
       final InstanceRepository instanceRepository, final SettingsRepository settingsRepository,
       final OrganizationRepository organizationRepository) {
-    super(registryAuditService, instanceRepository, settingsRepository);
+    super(instanceRepository, settingsRepository);
     this.organizationRepository = organizationRepository;
   }
 
@@ -102,7 +99,8 @@ public class OptionsCRUDOrganization extends OptionsCRUDAdapter {
         .ifPresent(settingsEntity -> newEntity.setEntityidFilter(settingsEntity.getValue()));
 
     final OrganizationEntity savedEntity = this.organizationRepository.saveAndFlush(newEntity);
-    super.deleteInsertSettings(fkKeyType, savedEntity.getOrganizationId().toString(), validatedInData);
+    super.deleteSettings(fkKeyType, savedEntity.getOrganizationId().toString());
+    super.insertSettings(fkKeyType, savedEntity.getOrganizationId().toString(), validatedInData);
 
     return this.toRecord(validatedInData);
 
@@ -118,7 +116,8 @@ public class OptionsCRUDOrganization extends OptionsCRUDAdapter {
     final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
 
     final List<SettingsEntity> validatedInData = this.createAndValidateInputData(template, record.getOption());
-    super.deleteInsertSettings(fkKeyType, entity.getOrganizationId().toString(), validatedInData);
+    super.deleteSettings(fkKeyType, entity.getOrganizationId().toString());
+    super.insertSettings(fkKeyType, entity.getOrganizationId().toString(), validatedInData);
     this.organizationRepository.saveAndFlush(entity);
     return this.toRecord(validatedInData);
   }
@@ -144,14 +143,15 @@ public class OptionsCRUDOrganization extends OptionsCRUDAdapter {
   }
 
   @Override
-  public void delete(final FkKeyType fkKeyType, final UUID id) {
+  public OptionsRecord delete(final FkKeyType fkKeyType, final UUID id) {
     final OrganizationEntity entity = this.organizationRepository
         .findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
-    deleteInsertSettings(POLICIES, entity.getOrganizationId().toString(), Collections.emptyList());
+    final List<SettingsEntity> optional = deleteSettings(POLICIES, entity.getOrganizationId().toString());
     this.organizationRepository.delete(entity);
     this.organizationRepository.flush();
+    return this.toRecord(optional);
   }
 
 }
