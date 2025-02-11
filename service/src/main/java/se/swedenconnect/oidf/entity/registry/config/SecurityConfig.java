@@ -82,6 +82,7 @@ public class SecurityConfig {
             .hasAuthority("SCOPE_options_update")
 
             .requestMatchers(HttpMethod.GET, "/api/v1/federationservice/**").permitAll() // Always open
+            .requestMatchers(HttpMethod.OPTIONS).permitAll()
             .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
             .anyRequest().denyAll()
         );
