@@ -80,6 +80,8 @@ public class SecurityConfig {
             .hasAuthority("SCOPE_options_create")
             .requestMatchers(HttpMethod.PUT, "/registry/v1/options/**")
             .hasAuthority("SCOPE_options_update")
+            .requestMatchers(HttpMethod.DELETE, "/registry/v1/options/**")
+            .hasAuthority("SCOPE_options_delete")
 
             .requestMatchers(HttpMethod.GET, "/api/v1/federationservice/**").permitAll() // Always open
             .requestMatchers(HttpMethod.OPTIONS).permitAll()

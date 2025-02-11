@@ -18,10 +18,13 @@ package se.swedenconnect.oidf.entity.registry.audit;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
+
+import java.util.UUID;
 
 /**
  * The RegistryAuditServiceAuditEvent class implements the RegistryAuditService interface to provide
@@ -58,7 +61,6 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
    * Constructs an instance of RegistryAuditServiceAuditAdapter with a default {@link ObjectMapper}.
    * This class acts as an adapter for auditing federation registry service events, enabling the
    * logging or processing of such events in a standardized manner.
-   *
    * The adapter can facilitate operations such as event serialization and integration
    * with logging frameworks or monitoring systems. The default constructor initializes
    * the required ObjectMapper for internal operations.
@@ -143,23 +145,38 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void settingsWrite(final String OptionsRecordId, final OptionsRecord oldSettings,
-      final OptionsRecord newSettings) {
+  public void optionsCreate(final UUID optionsRecordId, final FkKeyType fkKeyType, final OptionsRecord oldRecord,
+      final OptionsRecord newRecord) {
     this.emitEvent(
         FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.TRUSTMARK_SUBJECT_CREATE_UPDATE)
-            .extId(OptionsRecordId)
-            .oldData(this.toJson(oldSettings))
-            .newData(this.toJson(newSettings))
+            .event(RegistryAuditEventType.OPTIONS_CREATED)
+            .fkKeyType(fkKeyType)
+            .optionId(optionsRecordId)
+            .oldData(this.toJson(oldRecord))
+            .newData(this.toJson(newRecord))
             .build());
   }
 
   @Override
-  public void settingsDelete(final String OptionsRecordId, final OptionsRecord deleteRecord) {
+  public void optionsUpdate(final UUID optionsRecordId, final FkKeyType fkKeyType, final OptionsRecord oldRecord,
+      final OptionsRecord newRecord) {
     this.emitEvent(
         FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.SETTING_DELETED)
-            .extId(OptionsRecordId)
+            .event(RegistryAuditEventType.OPTIONS_CREATED)
+            .fkKeyType(fkKeyType)
+            .optionId(optionsRecordId)
+            .oldData(this.toJson(oldRecord))
+            .newData(this.toJson(newRecord))
+            .build());
+  }
+
+  @Override
+  public void optionsDelete(final UUID optionsRecordId, final FkKeyType fkKeyType, final OptionsRecord deleteRecord) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(RegistryAuditEventType.OPTIONS_DELETED)
+            .fkKeyType(fkKeyType)
+            .optionId(optionsRecordId)
             .oldData(this.toJson(deleteRecord))
             .build());
   }

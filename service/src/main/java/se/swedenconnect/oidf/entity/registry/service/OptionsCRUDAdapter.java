@@ -18,7 +18,6 @@ package se.swedenconnect.oidf.entity.registry.service;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
-import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.entity.InstanceEntity;
 import se.swedenconnect.oidf.entity.registry.entity.SettingDataType;
@@ -44,15 +43,14 @@ import java.util.UUID;
  * @author Per Fredrik Plars
  */
 public abstract class OptionsCRUDAdapter implements OptionsCRUD {
-  private final RegistryAuditService registryAuditService;
+
   private final InstanceRepository instanceRepository;
   private final SettingsRepository settingsRepository;
   private final PropertyValidators validatorFactory = new PropertyValidators();
 
-  protected OptionsCRUDAdapter(final RegistryAuditService registryAuditService,
+  protected OptionsCRUDAdapter(
       final InstanceRepository instanceRepository,
       final SettingsRepository settingsRepository) {
-    this.registryAuditService = registryAuditService;
     this.instanceRepository = instanceRepository;
     this.settingsRepository = settingsRepository;
   }
@@ -76,18 +74,16 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
         .filter(value -> Objects.equals(value.getValueType(), SettingDataType.OPTIONS.name()))
         .filter(value -> Objects.equals(value.getKey(), "instance_id"))
         .findFirst()
-        .ifPresent(value -> {
-          value.setOptions(this.instanceRepository
-              .findAll()//ToDo: Filter out instance according to your organization regulation
-              .stream()
-              .map(instanceEntity ->
-                  OptionRecord.builder()
-                      .key(instanceEntity.getInstanceId().toString())
-                      .value(instanceEntity.getName())
-                      .selected(Objects.equals(value.getValue(), instanceEntity.getInstanceId().toString()))
-                      .build())
-              .toList());
-        });
+        .ifPresent(value -> value.setOptions(this.instanceRepository
+            .findAll()//ToDo: Filter out instance according to your organization regulation
+            .stream()
+            .map(instanceEntity ->
+                OptionRecord.builder()
+                    .key(instanceEntity.getInstanceId().toString())
+                    .value(instanceEntity.getName())
+                    .selected(Objects.equals(value.getValue(), instanceEntity.getInstanceId().toString()))
+                    .build())
+            .toList()));
   }
 
   protected List<SettingsEntity> getTemplateSettings(final FkKeyType fkkeytype) {
@@ -160,9 +156,14 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
         ).toList();
   }
 
-  protected void deleteInsertSettings(final FkKeyType fkkeytype, final String id,
+  protected List<SettingsEntity> deleteSettings(final FkKeyType fkkeytype, final String id) {
+    final List<SettingsEntity> entities = this.settingsRepository.findByFkTypeAndFkId(fkkeytype.name(), id);
+    this.settingsRepository.deleteAllInBatch(entities);
+    return entities;
+  }
+
+  protected void insertSettings(final FkKeyType fkkeytype, final String id,
       final List<SettingsEntity> settingsEntities) {
-    this.settingsRepository.deleteAllInBatch(this.settingsRepository.findByFkTypeAndFkId(fkkeytype.name(), id));
     settingsEntities.forEach(settingsEntity -> {
       settingsEntity.setFkId(id);
       settingsEntity.setFkType(fkkeytype.name());
