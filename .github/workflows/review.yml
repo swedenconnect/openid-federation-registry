@@ -4,6 +4,6 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  publish-docker:
+  review:
     uses: swedenconnect/openid-federation-commons/.github/workflows/reusable-review.yml@main
     secrets: inherit
