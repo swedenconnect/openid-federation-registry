@@ -67,10 +67,11 @@ public class JwtTestUtils {
           .subject("test-user")
           .audience("https://registry.local.swedenconnect.se")
           .issueTime(new java.util.Date())
-          .expirationTime(Date.from(Instant.now().plus(2, ChronoUnit.DAYS)))
+          .expirationTime(Date.from(Instant.now().plus(30, ChronoUnit.DAYS)))
           .issuer("http://swedenconnect.se/op")
           .claim("scope", "entity_read entity_write policies_read policies_write "
-              + "trustmarksubject_read trustmarksubject_write")
+              + "trustmarksubject_read trustmarksubject_write "
+              + "options_read options_update options_delete options_create")
           .build();
 
       final RSASSASigner signer = new RSASSASigner(getPrivateKeyFromKeyStore());

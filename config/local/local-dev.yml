@@ -52,8 +52,6 @@ logging:
       swedenconnect:
         oidf: debug
 
-
-
 credential:
   bundles:
     keystore:

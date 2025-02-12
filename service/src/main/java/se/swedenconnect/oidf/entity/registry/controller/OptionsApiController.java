@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.service.OptionsCRUDSelector;
@@ -88,6 +89,18 @@ public class OptionsApiController {
   }
 
   /**
+   * Retrieves a list of options based on the specified options group.
+   *
+   * @param optionsgroup the name of the options group used to filter the list; must be provided as a path variable
+   * @return a ResponseEntity containing the list of options for the specified group
+   */
+  @GetMapping("list/{optionsgroup}")
+  public ResponseEntity<?> list(
+      @PathVariable("optionsgroup") final String optionsgroup) {
+    return ResponseEntity.ok(this.optionsCRUDSelector.list(FkKeyType.valueOf(optionsgroup.toUpperCase())));
+  }
+
+  /**
    * Updates the configuration for a specific options group and identifier.
    * Creates or updates an {@link OptionsRecord} based on the provided data.
    *
@@ -139,6 +152,19 @@ public class OptionsApiController {
       @PathVariable(name = "identifier") final UUID identifier) {
     this.optionsCRUDSelector.delete(FkKeyType.valueOf(optionsgroup.toUpperCase()), identifier);
     return ResponseEntity.ok("Configuration deleted successfully.");
+  }
+
+  /**
+   * Handles GET requests to the "/list" endpoint to retrieve a list of options based on the provided query parameter.
+   *
+   * @param query the optional query string to filter the list of options. If not provided, all options will be
+   *     returned.
+   * @return a ResponseEntity containing the filtered or complete list of options.
+   */
+  @GetMapping("/list")
+  public ResponseEntity<?> query(
+      @RequestParam(value = "q", required = false) final String query) {
+    return ResponseEntity.ok(this.optionsCRUDSelector.listAll(query));
   }
 
 }

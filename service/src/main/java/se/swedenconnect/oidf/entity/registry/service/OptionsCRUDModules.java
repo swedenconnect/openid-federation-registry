@@ -28,9 +28,11 @@ import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * OptionsCRUDModules is a service that extends the OptionsCRUDAdapter to perform Create, Read, Update, and Delete
@@ -147,5 +149,25 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
     return this.toRecord(moduleEntity.getSettingsEntityList());
   }
 
+  @Override
+  public List<Map<String, Object>> list(final FkKeyType fkKeyType) {
+
+    return this.moduleRepository.findByModuleType(fkKeyType.name())
+        .stream()
+        .map(entity -> {
+              final Map<String, Object> e = entity.getSettingsEntityList()
+                  .stream()
+                  .collect(Collectors.toMap(
+                      SettingsEntity::getKey,
+                      SettingsEntity::castValue
+                  ));
+              e.put("id", entity.getModuleId().toString());
+              return e;
+            }
+        )
+
+        .toList();
+
+  }
 }
 

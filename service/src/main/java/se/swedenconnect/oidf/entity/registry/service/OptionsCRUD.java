@@ -18,6 +18,8 @@ package se.swedenconnect.oidf.entity.registry.service;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -80,4 +82,12 @@ public interface OptionsCRUD {
    * @return the deleted options record
    */
   OptionsRecord delete(FkKeyType fkKeyType, UUID id);
+
+  /**
+   * Lists the available options records for the specified foreign key type.
+   *
+   * @param fkKeyType the type of foreign key for which options records are to be listed
+   * @return the options record containing the available options
+   */
+  List<Map<String, Object>> list(FkKeyType fkKeyType);
 }

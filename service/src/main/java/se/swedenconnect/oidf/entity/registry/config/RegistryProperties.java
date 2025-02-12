@@ -41,7 +41,14 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi, L
     Assert.notNull(this.federationServiceApi,
         "openid.federation.registry.federatonServiceApi Is needed in configuration");
     this.federationServiceApi.validate();
-    Optional.ofNullable(this.instances)
+
+    Assert.notNull(this.instances, "openid.federation.registry.instances "
+        + "properties has to be defined");
+
+    Assert.isTrue(!this.instances.isEmpty(), "openid.federation.registry.instances "
+        + "properties has to be defined with at least one instance entry");
+
+    Optional.of(this.instances)
         .ifPresent(instances -> instances.forEach(InstanceProperties::validate));
   }
 

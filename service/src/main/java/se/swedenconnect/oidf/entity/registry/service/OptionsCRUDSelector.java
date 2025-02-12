@@ -21,7 +21,9 @@ import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -92,4 +94,28 @@ public class OptionsCRUDSelector implements OptionsCRUD {
     return deletedRecord;
   }
 
+  @Override
+  public List<Map<String, Object>> list(final FkKeyType fkKeyType) {
+    return this.getOptionsCRUD(fkKeyType).list(fkKeyType);
+  }
+
+  /**
+   * Retrieves a map containing lists of mapped objects for each key type. The method iterates through all possible
+   * FkKeyType values, retrieves the corresponding data through the `list` method, and organizes the results into a
+   * map.
+   *
+   * @param query a string value representing the query or filter criteria (currently unused in the method's logic)
+   * @return a map where the keys are the names of each FkKeyType and the values are lists of maps containing related
+   *     objects
+   */
+  public Map<String, List<Map<String, Object>>> listAll(final String query) {
+    final Map<String, List<Map<String, Object>>> result = new HashMap<>();
+    for (FkKeyType value : FkKeyType.values()) {
+      final List<Map<String, Object>> values = this.list(value);
+      if (values.isEmpty())
+        continue;
+      result.put(value.name(), values);
+    }
+    return result;
+  }
 }
