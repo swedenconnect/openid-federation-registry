@@ -4,15 +4,6 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-          cache: 'maven'
-      - run: mvn -U clean verify --no-transfer-progress
-        env:
-          GITHUB_TOKEN: ${{ secrets.SC_ACTION_SECRET }}
+  review:
+    uses: swedenconnect/openid-federation-commons/.github/workflows/reusable-review.yml@main
+    secrets: inherit

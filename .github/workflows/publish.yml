@@ -5,28 +5,9 @@ on:
       - '**'
     branches:
       - main
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      contents: read
-      attestations: write
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: 'Login to GitHub Container Registry'
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{github.actor}}
-          password: ${{secrets.GITHUB_TOKEN}}
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-          cache: 'maven'
-      - run: cd service; DOCKER_REPO=ghcr.io mvn clean package jib:build --no-transfer-progress
 
-        env:
-          GITHUB_TOKEN: ${{ secrets.SC_ACTION_SECRET }}
+jobs:
+  publish-docker:
+    uses: swedenconnect/openid-federation-commons/.github/workflows/reusable-publish.yml@main
+    with:
+      service-path: service
