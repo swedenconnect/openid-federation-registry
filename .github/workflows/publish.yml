@@ -8,6 +8,6 @@ on:
 
 jobs:
   publish-docker:
-    uses: swedenconnect/openid-federation-commons/.github/workflows/reusable-publish.yml@main
+    uses: swedenconnect/openid-federation-commons/.github/workflows/publish.yml@main
     with:
       service-path: service
