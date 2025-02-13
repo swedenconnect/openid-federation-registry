@@ -26,10 +26,8 @@ import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.entity.registry.entity.InstanceEntity;
 import se.swedenconnect.oidf.entity.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.repository.InstanceRepository;
-import se.swedenconnect.oidf.entity.registry.repository.ModuleRepository;
 import se.swedenconnect.oidf.entity.registry.repository.OrganizationRepository;
 import se.swedenconnect.oidf.entity.registry.repository.PolicyRepository;
-import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.entity.registry.repository.TrustMarkSubjectRepository;
 import se.swedenconnect.oidf.entity.registry.service.EntityService;
 import se.swedenconnect.oidf.entity.registry.service.FederationApiService;
@@ -49,17 +47,14 @@ import java.text.ParseException;
  *
  * @author Per Fredrik Plars
  * @author David Goldring
- *
  */
 @Configuration
 public class RegistryConfig {
 
-  private final SettingsRepository settingsRepository;
   private final EntityRepository entityRepository;
   private final PolicyRepository policyRepository;
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
   private final RegistryAuditService registryAuditService;
-  private final ModuleRepository moduleRepository;
   final InstanceRepository instanceRepository;
   private final ObjectMapper objectMapper;
 
@@ -71,24 +66,18 @@ public class RegistryConfig {
    * @param trustMarkSubjectRepository the repository used for managing trustmark subject-related data.
    * @param registryAuditService the service used for auditing actions and events within the registry.
    * @param objectMapper the object mapper used for JSON serialization and deserialization.
-   * @param settingsRepository the repository used for managing application settings.
-   * @param moduleRepository the repository used for managing modules in the registry.
    * @param instanceRepository the repository used for managing instance-related data in the registry.
    */
   public RegistryConfig(final EntityRepository entityRepository, final PolicyRepository policyRepository,
       final TrustMarkSubjectRepository trustMarkSubjectRepository,
       final RegistryAuditService registryAuditService,
       final ObjectMapper objectMapper,
-      final SettingsRepository settingsRepository,
-      final ModuleRepository moduleRepository,
       final InstanceRepository instanceRepository) {
     this.entityRepository = entityRepository;
     this.policyRepository = policyRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
     this.registryAuditService = registryAuditService;
     this.objectMapper = objectMapper;
-    this.settingsRepository = settingsRepository;
-    this.moduleRepository = moduleRepository;
     this.instanceRepository = instanceRepository;
   }
 
@@ -110,13 +99,12 @@ public class RegistryConfig {
   }
 
   /**
-   * Provides an instance of the {@link PolicyService} implementation using JPA for managing
-   * JSON Policy objects.
+   * Provides an instance of the {@link PolicyService} implementation using JPA for managing JSON Policy objects.
    *
-   * @param organizationRepository the repository used for managing organization-related data,
-   *                                required to associate policies with respective organizations.
-   * @return an instance of {@link JpaPolicyService}, configured with the necessary dependencies
-   *         such as {@code policyRepository}, {@code objectMapper}, and {@code registryAuditService}.
+   * @param organizationRepository the repository used for managing organization-related data, required to associate
+   *     policies with respective organizations.
+   * @return an instance of {@link JpaPolicyService}, configured with the necessary dependencies such as
+   *     {@code policyRepository}, {@code objectMapper}, and {@code registryAuditService}.
    */
   @Bean
   @Qualifier("jpaPolicyService")
@@ -133,28 +121,24 @@ public class RegistryConfig {
   @Bean
   @Qualifier("jpaTrustMarkSubjectService")
   public TrustMarkSubjectService jpaTrustMarkSubjectService() {
-    return new JpaTrustMarkSubjectService(this.trustMarkSubjectRepository, this.objectMapper,this.registryAuditService);
+    return new JpaTrustMarkSubjectService(this.trustMarkSubjectRepository, this.objectMapper,
+        this.registryAuditService);
   }
 
   /**
    * Provides an instance of the FederationApiService for managing federation-related operations.
    *
-   * @param registryProperties the registry configuration properties, which include
-   *                            settings for the federation service API such as
-   *                            signing keys and issuer details.
-   * @param mapper the ObjectMapper used for handling JSON serialization
-   *               and deserialization.
+   * @param registryProperties the registry configuration properties, which include settings for the federation
+   *     service API such as signing keys and issuer details.
+   * @param mapper the ObjectMapper used for handling JSON serialization and deserialization.
    * @param credentialBundles Bundle for reading keys
-   * @return an instance of FederationApiService configured with the
-   *         necessary dependencies.
-   * @throws ParseException if there is an error in parsing
-   *                        federation service API configuration properties.
+   * @return an instance of FederationApiService configured with the necessary dependencies.
+   * @throws ParseException if there is an error in parsing federation service API configuration properties.
    */
   @Bean
   public FederationApiService federationServiceApiService(final RegistryProperties registryProperties,
       final CredentialBundles credentialBundles,
-      final ObjectMapper mapper)
-      throws ParseException {
+      final ObjectMapper mapper) {
 
     final RegistryProperties.FederationAPIProperties federationAPIProperties =
         registryProperties.federationServiceApi();
@@ -177,25 +161,25 @@ public class RegistryConfig {
   }
 
   /**
-   * Initializes instances by converting the provided registry properties into entity objects
-   * and persisting them to the database.
+   * Initializes instances by converting the provided registry properties into entity objects and persisting them to the
+   * database.
    *
-   * @param registryProperties the registry configuration properties containing instance information
-   *                            that will be used to populate and store {@code InstanceEntity} objects.
+   * @param registryProperties the registry configuration properties containing instance information that will be
+   *     used to populate and store {@code InstanceEntity} objects.
    */
   @Autowired
   void initInstance(final RegistryProperties registryProperties) {
 
-    registryProperties.instances().forEach(instance -> {
-      final InstanceEntity entity = new InstanceEntity();
-      entity.setInstanceId(instance.instanceId());
-      entity.setName(instance.name());
-      entity.setCreatedBy("Registry-Config");
-      entity.setLastModifiedBy(entity.getCreatedBy());
-      this.instanceRepository.saveAndFlush(entity);
+    registryProperties.instances()
+        .forEach(instance -> {
+          final InstanceEntity entity = new InstanceEntity();
+          entity.setInstanceId(instance.instanceId());
+          entity.setName(instance.name());
+          entity.setCreatedBy("Registry-Config");
+          entity.setLastModifiedBy(entity.getCreatedBy());
+          this.instanceRepository.saveAndFlush(entity);
 
-    });
-
+        });
   }
 
 }

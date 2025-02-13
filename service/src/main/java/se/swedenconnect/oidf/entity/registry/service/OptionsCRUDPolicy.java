@@ -33,9 +33,11 @@ import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.Values;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static se.swedenconnect.oidf.entity.registry.entity.FkKeyType.POLICIES;
 
@@ -179,6 +181,24 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
     this.policyRepository.delete(entity);
     this.policyRepository.flush();
     return this.toRecord(options);
+  }
+
+  @Override
+  public List<Map<String, Object>> list(final FkKeyType fkKeyType) {
+    return this.policyRepository.findAll()
+        .stream()
+        .map(entity -> {
+              final Map<String, Object> e = super.getSettingsEntities(POLICIES, entity.getPolicyId().toString())
+                  .stream()
+                  .collect(Collectors.toMap(
+                      SettingsEntity::getKey,
+                      SettingsEntity::castValue
+                  ));
+              e.put("id", entity.getPolicyId().toString());
+              return e;
+            }
+        )
+        .toList();
   }
 
 }

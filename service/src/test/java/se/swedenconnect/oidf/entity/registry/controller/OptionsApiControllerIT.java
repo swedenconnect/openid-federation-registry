@@ -148,6 +148,38 @@ class OptionsApiControllerIT {
   }
 
   @Test
+  public void testList() throws IOException {
+    TestDataOperations.createPolicies(restTemplate);
+    TestDataOperations.createTMI(restTemplate);
+    TestDataOperations.createRESOLVER(restTemplate);
+    TestDataOperations.createTA(restTemplate);
+
+    final ResponseEntity<String> response = this.restTemplate.getForEntity(
+        "/registry/v1/options/list", String.class);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+    final JsonNode responseBody = objectMapper.readTree(response.getBody());
+    assertThat(responseBody).isNotNull();
+
+    assertThat(responseBody.has("POLICIES")).isTrue();
+    assertThat(responseBody.get("POLICIES").size()).isGreaterThan(0);
+    assertThat(responseBody.get("POLICIES").elements().hasNext()).isTrue();
+
+    assertThat(responseBody.has("RESOLVER")).isTrue();
+    assertThat(responseBody.get("RESOLVER").size()).isGreaterThan(0);
+    assertThat(responseBody.get("RESOLVER").elements().hasNext()).isTrue();
+
+    assertThat(responseBody.has("TRUSTANCHOR")).isTrue();
+    assertThat(responseBody.get("TRUSTANCHOR").size()).isGreaterThan(0);
+    assertThat(responseBody.get("TRUSTANCHOR").elements().hasNext()).isTrue();
+
+    assertThat(responseBody.has("TRUSTMARKISSUER")).isTrue();
+    assertThat(responseBody.get("TRUSTMARKISSUER").size()).isGreaterThan(0);
+    assertThat(responseBody.get("TRUSTMARKISSUER").elements().hasNext()).isTrue();
+
+  }
+  @Test
   public void testCRUDTrustMark() throws IOException {
 
     TestDataOperations.createTMI(restTemplate);

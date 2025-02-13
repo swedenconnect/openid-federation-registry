@@ -22,5 +22,12 @@ package se.swedenconnect.oidf.entity.registry.entity;
  * @author Per Fredrik Plars
  */
 public enum FkKeyType {
-  RESOLVER, INTERMEDIATE, TRUSTANCHOR, TRUSTMARKISSUER, TRUSTMARK, POLICIES, ORGANIZATION
+  RESOLVER,
+  INTERMEDIATE,
+  TRUSTANCHOR,
+  TRUSTMARKISSUER,
+  TRUSTMARK,
+  POLICIES,
+  ORGANIZATION,
+  INSTANCE
 }

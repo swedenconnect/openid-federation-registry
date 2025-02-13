@@ -33,9 +33,11 @@ import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.Values;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static se.swedenconnect.oidf.entity.registry.entity.FkKeyType.TRUSTMARK;
 
@@ -181,6 +183,24 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
     this.trustMarkRepository.delete(trustMarkEntity);
     this.trustMarkRepository.flush();
     return this.toRecord(deletedSettings);
+  }
+
+  @Override
+  public List<Map<String, Object>> list(final FkKeyType fkKeyType) {
+    return this.trustMarkRepository.findAll()
+        .stream()
+        .map(entity -> {
+              final Map<String, Object> e = super.getSettingsEntities(TRUSTMARK, entity.getTrustmarkId().toString())
+                  .stream()
+                  .collect(Collectors.toMap(
+                      SettingsEntity::getKey,
+                      SettingsEntity::castValue
+                  ));
+              e.put("id", entity.getTrustmarkId().toString());
+              return e;
+            }
+        )
+        .toList();
   }
 
 }

@@ -30,7 +30,9 @@ import se.swedenconnect.oidf.registry.api.model.OptionRecord;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.Values;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -175,4 +177,8 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
     return this.settingsRepository.findByFkTypeAndFkId(fkkeytype.name(), id);
   }
 
+  @Override
+  public List<Map<String, Object>> list(final FkKeyType fkKeyType) {
+    return Collections.emptyList();
+  }
 }

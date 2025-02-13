@@ -28,11 +28,12 @@ import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static se.swedenconnect.oidf.entity.registry.entity.FkKeyType.ORGANIZATION;
-import static se.swedenconnect.oidf.entity.registry.entity.FkKeyType.POLICIES;
 
 /**
  * OptionsCRUDPolices is a service that extends the OptionsCRUDAdapter to perform Create, Read, Update, and Delete
@@ -148,11 +149,30 @@ public class OptionsCRUDOrganization extends OptionsCRUDAdapter {
         .findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
-    final List<SettingsEntity> optional = deleteSettings(POLICIES, entity.getOrganizationId().toString());
+    final List<SettingsEntity> optional = deleteSettings(ORGANIZATION, entity.getOrganizationId().toString());
     this.organizationRepository.delete(entity);
     this.organizationRepository.flush();
     return this.toRecord(optional);
   }
 
+  @Override
+  public List<Map<String, Object>> list(final FkKeyType fkKeyType) {
+    return this.organizationRepository.findAll()
+        .stream()
+        .map(entity -> {
+              final Map<String, Object> e =
+                  super.getSettingsEntities(ORGANIZATION, entity.getOrganizationId().toString())
+                      .stream()
+                      .collect(Collectors.toMap(
+                          SettingsEntity::getKey,
+                          SettingsEntity::castValue
+                      ));
+              e.put("id", entity.getOrganizationId().toString());
+              return e;
+            }
+        )
+
+        .toList();
+  }
 }
 

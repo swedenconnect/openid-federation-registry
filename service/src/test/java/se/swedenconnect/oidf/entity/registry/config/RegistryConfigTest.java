@@ -67,8 +67,6 @@ public class RegistryConfigTest {
     registryConfig = new RegistryConfig(entityRepository, policyRepository,trustMarkSubjectRepository,
         new RegistryAuditLogger(),
         new ObjectMapper(),
-        settingsRepository,
-        moduleRepository,
         instanceRepository);
   }
 
