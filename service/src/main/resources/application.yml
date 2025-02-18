@@ -35,4 +35,4 @@ openid:
   federation:
     registry:
       federation_service_api:
-        issuer: "http://oidf-registry.swedenconnect.se"
+        issuer: "https://oidf-registry.swedenconnect.se"

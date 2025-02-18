@@ -33,9 +33,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
- * oidf-entity-registry tests
- *
- * @author Per Fredrik Plars
+ * Unit tests for the FederationApiService class.
+ * The FederationApiServiceTest class is responsible for testing the functionality
+ * of methods within the FederationApiService, particularly focused on the signing
+ * of JSON records and the proper generation and parsing of SignedJWT objects.
  */
 class FederationApiServiceTest {
   final String signKey =
@@ -53,7 +54,7 @@ class FederationApiServiceTest {
             null,
             null,
             "http://issuer",
-            new ObjectMapper(), null);
+            new ObjectMapper(), null, null);
 
     final SignedJWT jwt = federationApiService.signJsonRecords("trust-marks",
         List.of(EntityFactory.createDefaultJsonEntity(),

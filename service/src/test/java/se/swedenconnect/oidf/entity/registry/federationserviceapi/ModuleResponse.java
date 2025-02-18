@@ -19,8 +19,10 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Data response from registry to configure runtime modules from.
@@ -30,10 +32,19 @@ import java.util.Map;
 @Getter
 @Setter
 @ToString
-public class ModuleResponse {
+public class ModuleResponse implements Serializable {
   private List<ResolverModuleResponse> resolvers;
   private List<TrustAnchorModuleResponse> trustAnchors;
   private List<TrustMarkIssuerModuleResponse> trustMarkIssuers;
+
+  /**
+   * Default constructor.
+   */
+  public ModuleResponse() {
+    this.resolvers = List.of();
+    this.trustAnchors = List.of();
+    this.trustMarkIssuers = List.of();
+  }
 
   /**
    * Creates instance from json object {@link java.util.HashMap}
@@ -43,18 +54,27 @@ public class ModuleResponse {
    */
   public static ModuleResponse fromJson(final Map<String, Object> json) {
     final ModuleResponse response = new ModuleResponse();
-    response.resolvers = ((List<Map<String, Object>>) json.get("resolvers"))
-        .stream()
-        .map(ResolverModuleResponse::fromJson)
-        .toList();
-    response.trustAnchors = ((List<Map<String, Object>>) json.get("trust-anchors"))
-        .stream()
-        .map(TrustAnchorModuleResponse::fromJson)
-        .toList();
-    response.trustMarkIssuers = ((List<Map<String, Object>>) json.get("trust-mark-issuers"))
-        .stream()
-        .map(TrustMarkIssuerModuleResponse::fromJson)
-        .toList();
+    response.resolvers = Optional.ofNullable(json.get("resolvers")).map(resolvers -> {
+          return ((List<Map<String, Object>>) resolvers)
+              .stream()
+              .map(ResolverModuleResponse::fromJson)
+              .toList();
+        })
+        .orElse(List.of());
+    response.trustAnchors = Optional.ofNullable(json.get("trust-anchors")).map(ta -> {
+      return ((List<Map<String, Object>>) ta)
+          .stream()
+          .map(TrustAnchorModuleResponse::fromJson)
+          .toList();
+    }).orElse(List.of());
+
+    response.trustMarkIssuers = Optional.ofNullable(json.get("trust-mark-issuers")).map(tmi -> {
+      return ((List<Map<String, Object>>) tmi)
+          .stream()
+          .map(TrustMarkIssuerModuleResponse::fromJson)
+          .toList();
+    }).orElse(List.of());
     return response;
   }
+
 }

@@ -16,6 +16,7 @@
 package se.swedenconnect.oidf.entity.registry.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.stream.Streams;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -202,6 +203,33 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
         )
         .toList();
   }
+
+  /**
+   * Retrieves a list of trustmark details associated with a specific module ID. The method extracts trustmark data,
+   * including related setting entities, and assembles it into a list of maps.
+   *
+   * @param moduleId the UUID of the module whose trustmarks are to be retrieved.
+   * @return a list of maps, where each map contains the trustmark details and its associated settings.
+   */
+  public List<Map<String, Object>> listByModuleId(final UUID moduleId) {
+    return this.moduleRepository.findByModuleIdAndModuleType(moduleId, FkKeyType.TRUSTMARKISSUER.name())
+        .stream()
+        .flatMap(moduleEntity -> Streams.of(moduleEntity.getTrustmarks()))
+        .map(TrustMarkEntity::getTrustmarkId)
+        .map(trustmarkid -> {
+              final Map<String, Object> e = super.getSettingsEntities(TRUSTMARK, trustmarkid.toString())
+                  .stream()
+                  .collect(Collectors.toMap(
+                      SettingsEntity::getKey,
+                      SettingsEntity::castValue
+                  ));
+              e.put("id", trustmarkid.toString());
+              return e;
+            }
+        )
+        .toList();
+  }
+
 
 }
 
