@@ -71,7 +71,7 @@ public class FederationApiService {
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
   private final InstanceRepository instanceRepository;
   private final String jwkIssuer;
-
+  private final OptionsCRUDTrustMark trustMarkService;
   /**
    * Constructs a FederationApiService instance to handle OpenID Connect Federation related operations.
    *
@@ -82,6 +82,7 @@ public class FederationApiService {
    * @param instanceRepository the repository for managing instances
    * @param jwkIssuer the issuer associated with the JSON Web Key (JWK)
    * @param mapper the object mapper for JSON processing
+   * @param trustMarkService OptionsCRUDTrustMark
    */
   public FederationApiService(
       final EntityRepository entityRepository,
@@ -90,7 +91,8 @@ public class FederationApiService {
       final TrustMarkSubjectRepository trustMarkSubjectRepository,
       final String jwkIssuer,
       final ObjectMapper mapper,
-      final InstanceRepository instanceRepository) {
+      final InstanceRepository instanceRepository,
+      final OptionsCRUDTrustMark trustMarkService) {
     this.entityRepository = entityRepository;
     this.policyRepository = policyRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
@@ -98,6 +100,7 @@ public class FederationApiService {
     this.jwkIssuer = jwkIssuer;
     this.mapper = mapper;
     this.instanceRepository = instanceRepository;
+    this.trustMarkService = trustMarkService;
   }
 
   /**
@@ -223,7 +226,7 @@ public class FederationApiService {
 
     final List<Map<String, Object>> tmi = moduleEntities.stream()
         .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(TRUSTMARKISSUER))
-        .map(this::toMap)
+        .map(this::toMapWithTrustMarks)
         .toList();
 
     final List<Map<String, Object>> ta = moduleEntities.stream()
@@ -252,6 +255,18 @@ public class FederationApiService {
             SettingsEntity::getKey,
             SettingsEntity::castValue
         ));
+  }
+
+  private Map<String, Object> toMapWithTrustMarks(final ModuleEntity moduleEntity) {
+    final Map<String, Object> settingsEntity = moduleEntity.getSettingsEntityList()
+        .stream()
+        .collect(Collectors.toMap(
+            SettingsEntity::getKey,
+            SettingsEntity::castValue
+        ));
+
+    settingsEntity.put("trust-marks", this.trustMarkService.listByModuleId(moduleEntity.getModuleId()));
+    return settingsEntity;
   }
 
   /**

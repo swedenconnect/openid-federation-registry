@@ -243,7 +243,8 @@ class FederationServiceApiControllerIT {
 
   @Test
   void submoduleRecordSuccess() throws ParseException, JsonProcessingException {
-    TestDataOperations.createTMI(restTemplate);
+    final String tmiId = TestDataOperations.createTMI(restTemplate);
+    TestDataOperations.createTrustMark(restTemplate, UUID.fromString(tmiId));
     TestDataOperations.createTA(restTemplate);
     TestDataOperations.createRESOLVER(restTemplate);
 

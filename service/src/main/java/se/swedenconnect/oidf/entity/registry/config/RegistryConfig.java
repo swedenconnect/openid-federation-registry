@@ -34,13 +34,12 @@ import se.swedenconnect.oidf.entity.registry.service.FederationApiService;
 import se.swedenconnect.oidf.entity.registry.service.JpaEntityService;
 import se.swedenconnect.oidf.entity.registry.service.JpaPolicyService;
 import se.swedenconnect.oidf.entity.registry.service.JpaTrustMarkSubjectService;
+import se.swedenconnect.oidf.entity.registry.service.OptionsCRUDTrustMark;
 import se.swedenconnect.oidf.entity.registry.service.PolicyService;
 import se.swedenconnect.oidf.entity.registry.service.TrustMarkSubjectService;
 import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.bundle.CredentialBundles;
 import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
-
-import java.text.ParseException;
 
 /**
  * A Spring configuration class that defines beans for different implementations of the EntityService interface.
@@ -132,12 +131,12 @@ public class RegistryConfig {
    *     service API such as signing keys and issuer details.
    * @param mapper the ObjectMapper used for handling JSON serialization and deserialization.
    * @param credentialBundles Bundle for reading keys
+   * @param trustMarkService TrustmarkCRUD service
    * @return an instance of FederationApiService configured with the necessary dependencies.
-   * @throws ParseException if there is an error in parsing federation service API configuration properties.
    */
   @Bean
   public FederationApiService federationServiceApiService(final RegistryProperties registryProperties,
-      final CredentialBundles credentialBundles,
+      final CredentialBundles credentialBundles, final OptionsCRUDTrustMark trustMarkService,
       final ObjectMapper mapper) {
 
     final RegistryProperties.FederationAPIProperties federationAPIProperties =
@@ -156,7 +155,8 @@ public class RegistryConfig {
         this.trustMarkSubjectRepository,
         federationAPIProperties.issuer(),
         mapper,
-        this.instanceRepository
+        this.instanceRepository,
+        trustMarkService
     );
   }
 
