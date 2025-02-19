@@ -19,6 +19,7 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.Assert;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -56,8 +57,9 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi, L
    * Properties for Federation API
    * @param signKeyAlias Alias for the key used to sign outgoing JWT:S
    * @param issuer Issuer that is set on outgoing JWT:s
+   * @param tokenExpiryDuration Issuer that is set on outgoing JWT:s
    */
-  public record FederationAPIProperties(String signKeyAlias,String issuer){
+  public record FederationAPIProperties(String signKeyAlias, String issuer, Duration tokenExpiryDuration) {
 
     /**
      * Validate properties
@@ -65,6 +67,9 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi, L
     public void validate(){
       Assert.hasText(
           this.signKeyAlias,"Expected openid.federation.registry.federatonServiceApi.sign_key_alias");
+      Assert.notNull(
+          this.tokenExpiryDuration,
+          "Expected openid.federation.registry.federatonServiceApi.token-expiry-duration");
       Assert.hasText(this.issuer,"Expected openid.federation.registry.federatonServiceApi.issuer");
 
     }

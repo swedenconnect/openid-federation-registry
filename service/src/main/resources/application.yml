@@ -28,6 +28,7 @@ logging:
         oidf: info
 
 server:
+  port: 8010
   compression:
     enabled: true
 
@@ -36,3 +37,4 @@ openid:
     registry:
       federation_service_api:
         issuer: "https://oidf-registry.swedenconnect.se"
+        token-expiry-duration: PT168H

@@ -43,6 +43,7 @@ import se.swedenconnect.oidf.entity.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.entity.registry.repository.PolicyRepository;
 import se.swedenconnect.oidf.entity.registry.repository.TrustMarkSubjectRepository;
 
+import java.time.Duration;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -71,6 +72,7 @@ public class FederationApiService {
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
   private final InstanceRepository instanceRepository;
   private final String jwkIssuer;
+  private final Duration jwkExpiryDuration;
   private final OptionsCRUDTrustMark trustMarkService;
   /**
    * Constructs a FederationApiService instance to handle OpenID Connect Federation related operations.
@@ -83,6 +85,7 @@ public class FederationApiService {
    * @param jwkIssuer the issuer associated with the JSON Web Key (JWK)
    * @param mapper the object mapper for JSON processing
    * @param trustMarkService OptionsCRUDTrustMark
+   * @param jwkExpiryDuration jwkExpiryDuration
    */
   public FederationApiService(
       final EntityRepository entityRepository,
@@ -92,7 +95,8 @@ public class FederationApiService {
       final String jwkIssuer,
       final ObjectMapper mapper,
       final InstanceRepository instanceRepository,
-      final OptionsCRUDTrustMark trustMarkService) {
+      final OptionsCRUDTrustMark trustMarkService,
+      final Duration jwkExpiryDuration) {
     this.entityRepository = entityRepository;
     this.policyRepository = policyRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
@@ -101,6 +105,7 @@ public class FederationApiService {
     this.mapper = mapper;
     this.instanceRepository = instanceRepository;
     this.trustMarkService = trustMarkService;
+    this.jwkExpiryDuration = jwkExpiryDuration;
   }
 
   /**
@@ -121,6 +126,7 @@ public class FederationApiService {
     try {
       final String jwt = this.signJsonRecords("entity-records",
           recordEntity.stream().map(EntityEntity::getEntity).toList()).serialize();
+      log.debug("Entity Signed JWT: {}", jwt);
       return jwt;
     }
     catch (final JOSEException e) {
@@ -159,8 +165,10 @@ public class FederationApiService {
               .formatted(issuer, trustmarkId, subject));
     }
     try {
-      return this.signJsonRecords("trustmark-records",
+      final String jwt = this.signJsonRecords("trustmark-records",
           trustmarkSubjectEntities.stream().map(TrustMarkSubjectEntity::getTrustmarksubjectJson).toList()).serialize();
+      log.debug("TrustMark JWT: {}", jwt);
+      return jwt;
     }
     catch (final JOSEException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
@@ -187,7 +195,9 @@ public class FederationApiService {
       final String claimName = "policy_record";
       final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
       claimsSet.claim(claimName, policyClaim);
-      return this.signJWT(claimName, claimsSet.build()).serialize();
+      final String jwt = this.signJWT(claimName, claimsSet.build()).serialize();
+      log.debug("Policy Signed JWT: {}", jwt);
+      return jwt;
     }
     catch (final JOSEException | JsonProcessingException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
@@ -209,7 +219,9 @@ public class FederationApiService {
       final String claimName = "module_records";
       final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
       claimsSet.claim(claimName, this.resolveSubmodules(instanceId));
-      return this.signJWT(claimName, claimsSet.build()).serialize();
+      final String jwt = this.signJWT(claimName, claimsSet.build()).serialize();
+      log.debug("Submodule Signed JWT: {}", jwt);
+      return jwt;
     }
     catch (final JOSEException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
@@ -298,6 +310,7 @@ public class FederationApiService {
     return new JWTClaimsSet.Builder()
         .issueTime(new Date())
         .jwtID(UUID.randomUUID().toString())
+        .expirationTime(new Date(System.currentTimeMillis() + this.jwkExpiryDuration.toMillis()))
         .issuer(this.jwkIssuer);
   }
 

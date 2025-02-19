@@ -41,6 +41,8 @@ import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.bundle.CredentialBundles;
 import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
 
+import java.time.Duration;
+
 /**
  * A Spring configuration class that defines beans for different implementations of the EntityService interface.
  *
@@ -143,6 +145,7 @@ public class RegistryConfig {
         registryProperties.federationServiceApi();
 
     final String signKeyAlias = federationAPIProperties.signKeyAlias();
+    final Duration tokenExpiryDuration = federationAPIProperties.tokenExpiryDuration();
 
     final PkiCredential signKey = credentialBundles.getCredential(signKeyAlias);
     final JwkTransformerFunction function = new JwkTransformerFunction();
@@ -156,7 +159,8 @@ public class RegistryConfig {
         federationAPIProperties.issuer(),
         mapper,
         this.instanceRepository,
-        trustMarkService
+        trustMarkService,
+        tokenExpiryDuration
     );
   }
 

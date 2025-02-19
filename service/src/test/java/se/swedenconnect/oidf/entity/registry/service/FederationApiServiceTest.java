@@ -26,6 +26,8 @@ import se.swedenconnect.oidf.entity.registry.fixture.EntityFactory;
 
 import java.nio.charset.Charset;
 import java.text.ParseException;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.List;
 
@@ -54,7 +56,10 @@ class FederationApiServiceTest {
             null,
             null,
             "http://issuer",
-            new ObjectMapper(), null, null);
+            new ObjectMapper(),
+            null,
+            null,
+            Duration.of(1, ChronoUnit.HOURS));
 
     final SignedJWT jwt = federationApiService.signJsonRecords("trust-marks",
         List.of(EntityFactory.createDefaultJsonEntity(),
@@ -65,6 +70,9 @@ class FederationApiServiceTest {
     final SignedJWT signedJWT = SignedJWT.parse(jwtser);
     assertEquals(new JOSEObjectType("trust-marks+jwt"), signedJWT.getHeader().getType());
     assertNotNull(signedJWT.getHeader().getKeyID());
+
+    assertNotNull(signedJWT.getJWTClaimsSet().getIssuer());
+    assertNotNull(signedJWT.getJWTClaimsSet().getExpirationTime());
     final List<Object> claim = signedJWT.getJWTClaimsSet().getListClaim("trust_marks");
     assertNotNull(claim);
     assertEquals(2, claim.size());
