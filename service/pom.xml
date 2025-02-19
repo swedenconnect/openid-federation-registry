@@ -159,7 +159,7 @@
                                 <artifactItem>
                                     <groupId>se.swedenconnect.oidf</groupId>
                                     <artifactId>openid-federation-entity-registry-api</artifactId>
-                                    <version>0.3.4</version>
+                                    <version>0.3.6</version>
                                     <type>jar</type>
                                     <includes>oidf-entity-registry-api.yaml</includes>
                                     <outputDirectory>${project.build.directory}/openapi</outputDirectory>
