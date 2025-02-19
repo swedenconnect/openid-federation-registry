@@ -243,7 +243,8 @@ class FederationServiceApiControllerIT {
 
   @Test
   void submoduleRecordSuccess() throws ParseException, JsonProcessingException {
-    TestDataOperations.createTMI(restTemplate);
+    final String tmiId = TestDataOperations.createTMI(restTemplate);
+    TestDataOperations.createTrustMark(restTemplate, UUID.fromString(tmiId));
     TestDataOperations.createTA(restTemplate);
     TestDataOperations.createRESOLVER(restTemplate);
 
@@ -256,7 +257,7 @@ class FederationServiceApiControllerIT {
     if (response.getStatusCode().isError()) {
       log.error(response.getBody());
     }
-    assertThat(HttpStatus.OK).isEqualTo(response.getStatusCode());
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
     final SignedJWT signedJWT = SignedJWT.parse(Objects.requireNonNull(response.getBody()));
     assertEquals(new JOSEObjectType("module-records+jwt"), signedJWT.getHeader().getType());

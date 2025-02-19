@@ -118,6 +118,40 @@ public class TestDataOperations {
     return id;
   }
 
+  public static String createTrustMark(TestRestTemplate restTemplate, UUID trustMarkIssuerId)
+      throws JsonProcessingException {
+    final ResponseEntity<String> response =
+        restTemplate.getForEntity("/registry/v1/options/trustmark", String.class);
+    if (response.getStatusCode().isError()) {
+      log.info(response.getBody());
+    }
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    final JsonNode node = objectMapper.readTree(response.getBody());
+    final JsonNode data = node.get("option");
+
+    data.elements().forEachRemaining(jsonNode -> {
+      final ObjectNode valueNode = (ObjectNode) jsonNode;
+      ifThen(valueNode, "trust-mark-entity-id", () -> "http://tmi.swedenconnect.se/loa3");
+      ifThen(valueNode, "ref-uri", () -> "http://doc.swedenconnect.se/loa3");
+      ifThen(valueNode, "logo-uri", () -> "http://www.swedenconnect.se/image.png");
+      ifThen(valueNode, "trustmarkissuer_id", () -> trustMarkIssuerId.toString());
+    });
+
+    final String newResponse = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
+    final String id = UUID.randomUUID().toString();
+    final HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+
+    final ResponseEntity<String> createdResponse =
+        restTemplate.postForEntity("/registry/v1/options/trustmark/" + id, new HttpEntity<>(newResponse, headers),
+            String.class);
+    if (createdResponse.getStatusCode().isError()) {
+      log.info(createdResponse.getBody());
+    }
+    assertThat(createdResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    return id;
+  }
+
   public static String createTA(TestRestTemplate restTemplate) throws JsonProcessingException {
     final ResponseEntity<String> ta =
         restTemplate.getForEntity("/registry/v1/options/trustanchor", String.class);

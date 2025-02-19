@@ -15,13 +15,13 @@
  */
 package se.swedenconnect.oidf.entity.registry.federationserviceapi;
 
-import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 import org.springframework.util.Assert;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -33,35 +33,47 @@ import java.util.Optional;
  */
 @Getter
 @ToString
+@Builder
 public class TrustMarkIssuerModuleResponse {
   private Duration trustMarkTokenValidityDuration;
-  private EntityID entityIdentifier;
+  private String entityIdentifier;
 
   private String alias;
   private Boolean active;
   private List<TrustMarkResponse> trustMarks;
-  /**
-   * Converts json object {@link java.util.HashMap} to new instance
-   *
-   * @param json to read
-   * @return new instance
-   */
+
   public static TrustMarkIssuerModuleResponse fromJson(final Map<String, Object> json) {
-    final TrustMarkIssuerModuleResponse response = new TrustMarkIssuerModuleResponse();
+    return TrustMarkIssuerModuleResponse.builder()
+        .trustMarkTokenValidityDuration(Duration.parse((String) json.get("trust-mark-token-validity-duration")))
+        .alias((String) json.get("alias"))
+        .entityIdentifier((String) json.get("entity-identifier"))
+        .trustMarks(Optional.ofNullable((List<Map<String, Object>>) json.get("trust-marks"))
+            .map(strings -> strings.stream().map(TrustMarkResponse::fromJson).toList()).orElse(
+                Collections.emptyList()))
+        .active((Boolean) json.get("active"))
+        .build();
+  }
 
-    try {
-      response.entityIdentifier = EntityID.parse((String) json.get("entity-identifier"));
+  @Builder
+  public record TrustMarkResponse(String trustMarkId, Optional<String> logoUri, Optional<String> refUri,
+      Optional<String> delegation) {
 
-      response.alias = (String) json.get("alias");
-      response.active = (Boolean) json.get("active");
-      response.trustMarkTokenValidityDuration =
-          Duration.parse((String) json.get("trust-mark-token-validity-duration"));
+    public static TrustMarkResponse fromJson(final Map<String, Object> json) {
+      return TrustMarkResponse.builder()
+          .trustMarkId((String) json.get("trust-mark-entity-id"))
+          .logoUri(Optional.ofNullable((String) json.get("logo-uri")))
+          .refUri(Optional.ofNullable((String) json.get("ref-uri")))
+          .delegation(Optional.ofNullable((String) json.get("delegation")))
+          .build();
     }
-    catch (ParseException e) {
-      throw new RuntimeException(e);
+
+    public void validate() {
+      Assert.notNull(trustMarkId, "trustMarkId");
+      Assert.notNull(logoUri, "alias");
+      Assert.notNull(refUri, "refUri");
+      Assert.notNull(delegation, "delegation");
     }
 
-    return response;
   }
 
   public void validate() {
@@ -69,8 +81,8 @@ public class TrustMarkIssuerModuleResponse {
     Assert.notNull(alias, "alias");
     Assert.notNull(active, "active");
     Assert.notNull(trustMarkTokenValidityDuration, "trustMarkTokenValidityDuration");
+    Assert.isTrue(!trustMarks.isEmpty(), "trustMarks must not be empty");
+    trustMarks.forEach(TrustMarkResponse::validate);
   }
 
-  public record TrustMarkResponse(String trustMarkId, Optional<String> logoUri, Optional<String> refUri,
-      Optional<String> delegation) {}
 }

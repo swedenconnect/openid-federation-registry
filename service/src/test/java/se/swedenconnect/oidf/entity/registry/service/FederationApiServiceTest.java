@@ -26,6 +26,8 @@ import se.swedenconnect.oidf.entity.registry.fixture.EntityFactory;
 
 import java.nio.charset.Charset;
 import java.text.ParseException;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.List;
 
@@ -33,9 +35,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
- * oidf-entity-registry tests
- *
- * @author Per Fredrik Plars
+ * Unit tests for the FederationApiService class.
+ * The FederationApiServiceTest class is responsible for testing the functionality
+ * of methods within the FederationApiService, particularly focused on the signing
+ * of JSON records and the proper generation and parsing of SignedJWT objects.
  */
 class FederationApiServiceTest {
   final String signKey =
@@ -53,7 +56,10 @@ class FederationApiServiceTest {
             null,
             null,
             "http://issuer",
-            new ObjectMapper(), null);
+            new ObjectMapper(),
+            null,
+            null,
+            Duration.of(1, ChronoUnit.HOURS));
 
     final SignedJWT jwt = federationApiService.signJsonRecords("trust-marks",
         List.of(EntityFactory.createDefaultJsonEntity(),
@@ -64,6 +70,9 @@ class FederationApiServiceTest {
     final SignedJWT signedJWT = SignedJWT.parse(jwtser);
     assertEquals(new JOSEObjectType("trust-marks+jwt"), signedJWT.getHeader().getType());
     assertNotNull(signedJWT.getHeader().getKeyID());
+
+    assertNotNull(signedJWT.getJWTClaimsSet().getIssuer());
+    assertNotNull(signedJWT.getJWTClaimsSet().getExpirationTime());
     final List<Object> claim = signedJWT.getJWTClaimsSet().getListClaim("trust_marks");
     assertNotNull(claim);
     assertEquals(2, claim.size());
