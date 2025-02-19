@@ -12,6 +12,7 @@ openid:
       federation_service_api:
         issuer: "http://oidf-registry.swedenconnect.se"
         sign-key-alias: federationapi
+        token-expiry-duration: PT1H
       instances:
         - instance_id: "123e4567-e89b-12d3-a456-426614174000"
           name: "Swedenconnect"
