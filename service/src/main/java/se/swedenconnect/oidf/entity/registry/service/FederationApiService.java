@@ -85,6 +85,7 @@ public class FederationApiService {
    * @param jwkIssuer the issuer associated with the JSON Web Key (JWK)
    * @param mapper the object mapper for JSON processing
    * @param trustMarkService OptionsCRUDTrustMark
+   * @param jwkExpiryDuration jwkExpiryDuration
    */
   public FederationApiService(
       final EntityRepository entityRepository,
@@ -309,7 +310,7 @@ public class FederationApiService {
     return new JWTClaimsSet.Builder()
         .issueTime(new Date())
         .jwtID(UUID.randomUUID().toString())
-        .expirationTime(new Date(System.currentTimeMillis() + jwkExpiryDuration.toMillis()))
+        .expirationTime(new Date(System.currentTimeMillis() + this.jwkExpiryDuration.toMillis()))
         .issuer(this.jwkIssuer);
   }
 
