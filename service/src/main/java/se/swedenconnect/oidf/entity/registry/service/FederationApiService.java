@@ -19,12 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
@@ -66,7 +61,6 @@ import static se.swedenconnect.oidf.entity.registry.entity.FkKeyType.TRUSTMARKIS
 public class FederationApiService {
 
   private final ObjectMapper mapper;
-  private final JWK signKey;
   private final EntityRepository entityRepository;
   private final PolicyRepository policyRepository;
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
@@ -74,6 +68,7 @@ public class FederationApiService {
   private final String jwkIssuer;
   private final Duration jwkExpiryDuration;
   private final OptionsCRUDTrustMark trustMarkService;
+  private final JWTSupport jwtSupport;
   /**
    * Constructs a FederationApiService instance to handle OpenID Connect Federation related operations.
    *
@@ -100,12 +95,12 @@ public class FederationApiService {
     this.entityRepository = entityRepository;
     this.policyRepository = policyRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
-    this.signKey = signKey;
     this.jwkIssuer = jwkIssuer;
     this.mapper = mapper;
     this.instanceRepository = instanceRepository;
     this.trustMarkService = trustMarkService;
     this.jwkExpiryDuration = jwkExpiryDuration;
+    this.jwtSupport = new JWTSupport(signKey);
   }
 
   /**
@@ -125,7 +120,10 @@ public class FederationApiService {
     }
     try {
       final String jwt = this.signJsonRecords("entity-records",
-          recordEntity.stream().map(EntityEntity::getEntity).toList()).serialize();
+              recordEntity.stream()
+                  .map(EntityEntity::getEntity)
+                  .toList())
+          .serialize();
       log.debug("Entity Signed JWT: {}", jwt);
       return jwt;
     }
@@ -193,13 +191,16 @@ public class FederationApiService {
           this.mapper.readValue(policyEntity.getPolicy(), new TypeReference<Map<String, Object>>() {});
 
       final String claimName = "policy_record";
-      final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
-      claimsSet.claim(claimName, policyClaim);
-      final String jwt = this.signJWT(claimName, claimsSet.build()).serialize();
+
+      final String jwt = this.jwtSupport.signJWT(claimName, builder -> builder
+              .claim(claimName, policyClaim)
+              .expirationTime(new Date(System.currentTimeMillis() + this.jwkExpiryDuration.toMillis()))
+              .issuer(this.jwkIssuer))
+          .serialize();
       log.debug("Policy Signed JWT: {}", jwt);
       return jwt;
     }
-    catch (final JOSEException | JsonProcessingException e) {
+    catch (final JsonProcessingException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
     }
 
@@ -215,17 +216,15 @@ public class FederationApiService {
    */
   public String submoduleRecord(final UUID instanceId) {
     Assert.notNull(instanceId, "instanceId is mandatory");
-    try {
       final String claimName = "module_records";
-      final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
-      claimsSet.claim(claimName, this.resolveSubmodules(instanceId));
-      final String jwt = this.signJWT(claimName, claimsSet.build()).serialize();
+    final String jwt = this.jwtSupport.signJWT(claimName, builder -> builder
+            .claim(claimName, this.resolveSubmodules(instanceId))
+            .expirationTime(new Date(System.currentTimeMillis() + this.jwkExpiryDuration.toMillis()))
+            .issuer(this.jwkIssuer))
+        .serialize();
       log.debug("Submodule Signed JWT: {}", jwt);
       return jwt;
-    }
-    catch (final JOSEException e) {
-      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
-    }
+
   }
 
   private Map<String, List<Map<String, Object>>> resolveSubmodules(final UUID instanceid) {
@@ -301,29 +300,10 @@ public class FederationApiService {
       }
     }).toList();
 
-    final JWTClaimsSet.Builder claimsSet = this.defaultClaimSet();
-    claimsSet.claim(claimName.replace('-', '_'), jsonClaimsData);
-    return this.signJWT(claimName, claimsSet.build());
-  }
-
-  private JWTClaimsSet.Builder defaultClaimSet() {
-    return new JWTClaimsSet.Builder()
-        .issueTime(new Date())
-        .jwtID(UUID.randomUUID().toString())
+    return this.jwtSupport.signJWT(claimName, builder -> builder
+        .claim(claimName.replace('-', '_'), jsonClaimsData)
         .expirationTime(new Date(System.currentTimeMillis() + this.jwkExpiryDuration.toMillis()))
-        .issuer(this.jwkIssuer);
-  }
-
-  private SignedJWT signJWT(final String jwtTypeName, final JWTClaimsSet jwtClaimsSet) throws JOSEException {
-    final RSASSASigner signer = new RSASSASigner(this.signKey.toRSAKey());
-    final JWSAlgorithm alg = signer.supportedJWSAlgorithms().stream().findFirst().orElseThrow();
-    final JWSHeader header = new JWSHeader.Builder(alg)
-        .type(new JOSEObjectType(jwtTypeName.replace('_', '-') + "+jwt"))
-        .keyID(this.signKey.getKeyID())
-        .build();
-    final SignedJWT jwt = new SignedJWT(header, jwtClaimsSet);
-    jwt.sign(signer);
-    return jwt;
+        .issuer(this.jwkIssuer));
   }
 
 }

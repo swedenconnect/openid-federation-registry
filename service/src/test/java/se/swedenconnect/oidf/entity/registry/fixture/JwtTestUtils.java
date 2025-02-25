@@ -90,15 +90,22 @@ public class JwtTestUtils {
   /**
    * We sign our test JWT's with a private key from a snakeoil keystore.
    */
-  private PrivateKey getPrivateKeyFromKeyStore()
-      throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException, UnrecoverableKeyException {
+  public PrivateKey getPrivateKeyFromKeyStore() {
 
-    final InputStream keyStoreStream = this.getClass().getResourceAsStream("/keystore.jks");
-    final KeyStore keyStore = KeyStore.getInstance("JKS");
-    keyStore.load(keyStoreStream, "changeit".toCharArray());
-    final Key key = keyStore.getKey("auth", "changeit".toCharArray());
+    try {
+      final InputStream keyStoreStream = this.getClass().getResourceAsStream("/keystore.jks");
+      final KeyStore keyStore = KeyStore.getInstance("JKS");
+      keyStore.load(keyStoreStream, "changeit".toCharArray());
+      final Key key = keyStore.getKey("auth", "changeit".toCharArray());
 
-    return (java.security.PrivateKey) key;
+      return (PrivateKey) key;
+    }
+    catch (final KeyStoreException | IOException |
+        NoSuchAlgorithmException | CertificateException |
+        UnrecoverableKeyException e) {
+      throw new RuntimeException(e);
+    }
+
   }
 
   /**

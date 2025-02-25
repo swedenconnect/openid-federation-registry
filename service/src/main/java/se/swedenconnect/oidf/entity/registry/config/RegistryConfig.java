@@ -17,11 +17,19 @@ package se.swedenconnect.oidf.entity.registry.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWK;
+import io.micrometer.observation.ObservationRegistry;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.ssl.SslBundle;
+import org.springframework.boot.ssl.SslBundles;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.util.Assert;
+import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.entity.registry.entity.InstanceEntity;
 import se.swedenconnect.oidf.entity.registry.repository.EntityRepository;
@@ -34,6 +42,7 @@ import se.swedenconnect.oidf.entity.registry.service.FederationApiService;
 import se.swedenconnect.oidf.entity.registry.service.JpaEntityService;
 import se.swedenconnect.oidf.entity.registry.service.JpaPolicyService;
 import se.swedenconnect.oidf.entity.registry.service.JpaTrustMarkSubjectService;
+import se.swedenconnect.oidf.entity.registry.service.NotifyService;
 import se.swedenconnect.oidf.entity.registry.service.OptionsCRUDTrustMark;
 import se.swedenconnect.oidf.entity.registry.service.PolicyService;
 import se.swedenconnect.oidf.entity.registry.service.TrustMarkSubjectService;
@@ -41,6 +50,10 @@ import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.bundle.CredentialBundles;
 import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
 
+import javax.net.ssl.SSLContext;
+import java.net.http.HttpClient;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 
 /**
@@ -49,6 +62,7 @@ import java.time.Duration;
  * @author Per Fredrik Plars
  * @author David Goldring
  */
+@Slf4j
 @Configuration
 public class RegistryConfig {
 
@@ -165,6 +179,41 @@ public class RegistryConfig {
   }
 
   /**
+   * Creates and configures a {@link NotifyService} instance to handle notifications for the Federation API. This method
+   * sets up the notification endpoints and the signing key to secure the communication.
+   *
+   * @param restClient the {@link RestClient} instance used to perform HTTP requests.
+   * @param registryProperties the {@link RegistryProperties} containing configuration details such as notification
+   *     endpoints and signing key alias.
+   * @param credentialBundles the {@link CredentialBundles} providing access to credentials used when signing
+   *     notifications.
+   * @return a configured {@link NotifyService} instance.
+   */
+  @Bean
+  @ConditionalOnProperty(name = "openid.federation.registry.federation_service_api.notification.active",
+      havingValue = "true")
+  public NotifyService notificationService(
+      final RestClient restClient,
+      final RegistryProperties registryProperties,
+      final CredentialBundles credentialBundles) {
+
+    final RegistryProperties.FederationAPIProperties federationAPIProperties =
+        registryProperties.federationServiceApi();
+
+    final String signKeyAlias = federationAPIProperties.signKeyAlias();
+
+    final PkiCredential signKey = credentialBundles.getCredential(signKeyAlias);
+    final JwkTransformerFunction function = new JwkTransformerFunction();
+    final JWK jwk = function.apply(signKey);
+
+    return new NotifyService(restClient,
+        federationAPIProperties.notifications().stream().map(
+            RegistryProperties.FederationAPIProperties.NotificationProperties::endpoint).toList(),
+        jwk
+    );
+  }
+
+  /**
    * Initializes instances by converting the provided registry properties into entity objects and persisting them to the
    * database.
    *
@@ -184,6 +233,36 @@ public class RegistryConfig {
           this.instanceRepository.saveAndFlush(entity);
 
         });
+  }
+
+  @Primary
+  @Bean
+  RestClient restClient(final SslBundles ssl,
+      final ObservationRegistry observationRegistry,
+      final RegistryProperties registryProperties) throws Exception {
+
+    final HttpClient.Builder httpClientBuilder = HttpClient.newBuilder();
+    final String trustBundleAlias = registryProperties.federationServiceApi().notificationTrustKeyAlias();
+    this.settingSSLTrustContext(ssl, httpClientBuilder, trustBundleAlias);
+    return RestClient.builder()
+        .observationRegistry(observationRegistry)
+        .requestFactory(new JdkClientHttpRequestFactory(httpClientBuilder.build()))
+        .build();
+  }
+
+  private void settingSSLTrustContext(final SslBundles ssl, final HttpClient.Builder httpClientBuilder,
+      final String trustBundleAlias) throws NoSuchAlgorithmException, KeyManagementException {
+    if (trustBundleAlias != null && !trustBundleAlias.isBlank()) {
+      final SSLContext sslContext = SSLContext.getInstance("TLS");
+      final SslBundle bundle = ssl.getBundle(trustBundleAlias);
+      Assert.notNull(bundle, "No spring.ssl.bundle found for alias:'%s'".formatted(trustBundleAlias));
+      sslContext.init(null, bundle.getManagers().getTrustManagerFactory().getTrustManagers(),
+          new java.security.SecureRandom());
+      httpClientBuilder.sslContext(sslContext);
+    }
+    else {
+      log.info("No trust bundle alias found, using plain http connector");
+    }
   }
 
 }
