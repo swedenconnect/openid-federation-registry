@@ -16,77 +16,78 @@
 
 package se.swedenconnect.oidf.entity.registry.service;
 
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.entity.registry.audit.FederationAuditEvent;
 import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditEventType;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 
 import java.net.URI;
-import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 
 /**
- * oidf-entity-registry
+ * Testing notify function
  *
  * @author Per Fredrik Plars
  */
+@Slf4j
 class NotifyServiceTest {
+  @RegisterExtension
+  static WireMockExtension wireMockExtension = WireMockExtension.newInstance()
+      .options(options().dynamicPort())
+      .build();
 
   private NotifyService notifyService;
-  final AtomicInteger counter = new AtomicInteger(0);
 
   @BeforeEach
   void setUp() throws JOSEException {
-
     final RSAKey rsaJWK = new RSAKeyGenerator(2048)
-        .keyID("rsa-key-id")
+        .keyID("NotifyId")
         .generate();
 
     notifyService = new NotifyService(
-        null,
-        List.of(URI.create("http://localhost:8080/test1"),
-            URI.create("http://localhost:8080/test2"),
-            URI.create("http://localhost:8080/test3"),
-            URI.create("http://localhost:8080/test4"),
-            URI.create("http://localhost:8080/test5")),
-        rsaJWK) {
+        RestClient.builder().build(),
+        List.of(
+            URI.create(wireMockExtension.baseUrl() + "/test1"),
+            URI.create(wireMockExtension.baseUrl() + "/test2"),
+            URI.create(wireMockExtension.baseUrl() + "/test3"),
+            URI.create(wireMockExtension.baseUrl() + "/test4"),
+            URI.create(wireMockExtension.baseUrl() + "/test5")
+        ),
+        rsaJWK
+    );
 
-      @Override
-      protected void callNotifyEndpoint(final URI endpoint, final String payload) {
-        counter.incrementAndGet();
-        if (ThreadLocalRandom.current().nextBoolean()) {
-          throw new RuntimeException("Failed request");
-        }
-        System.out.println(String.format("Calling notify endpoint: %s JWT:%s", endpoint, payload));
-      }
-    };
-
+    wireMockExtension.stubFor(WireMock.post(WireMock.urlMatching("/test[1-5]"))
+        .willReturn(WireMock.aResponse().withStatus(200))); // Respond with 200 OK
   }
 
   @Test
-  void testOnAuditEvent() throws InterruptedException {
-
+  void testNotifyServiceWithWireMock() throws InterruptedException {
     Stream.generate(() -> FederationAuditEvent.builder()
             .fkKeyType(FkKeyType.TRUSTMARKSUBJECT)
             .event(RegistryAuditEventType.ENTITY_CREATED_UPDATE)
             .optionId(UUID.randomUUID())
             .build())
-        .limit(100)
+        .limit(10)
         .forEach(notifyService::onAuditEvent);
 
-    Thread.sleep(Duration.ofSeconds(1).toMillis());
-    assertEquals(500, counter.get());
+    notifyService.destroy();
+
+    wireMockExtension.verify(50, WireMock.postRequestedFor(WireMock.urlMatching("/test[1-5]")));
+
   }
 
   @AfterEach
