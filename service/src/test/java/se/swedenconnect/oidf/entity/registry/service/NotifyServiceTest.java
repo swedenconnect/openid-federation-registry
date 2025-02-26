@@ -71,6 +71,7 @@ class NotifyServiceTest {
     );
 
     wireMockExtension.stubFor(WireMock.post(WireMock.urlMatching("/test[1-5]"))
+        .withRequestBody(WireMock.matching(".*"))
         .willReturn(WireMock.aResponse().withStatus(200))); // Respond with 200 OK
   }
 
@@ -84,8 +85,7 @@ class NotifyServiceTest {
         .limit(10)
         .forEach(notifyService::onAuditEvent);
 
-    notifyService.destroy();
-
+    Thread.sleep(1000);
     wireMockExtension.verify(50, WireMock.postRequestedFor(WireMock.urlMatching("/test[1-5]")));
 
   }
