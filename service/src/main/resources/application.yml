@@ -1,3 +1,14 @@
+management:
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  server:
+    port: 8011
+  endpoints:
+    web:
+      exposure:
+        include: "*"
 spring:
   application:
     name: EntityRegistryService
