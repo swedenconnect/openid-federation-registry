@@ -1,4 +1,8 @@
 management:
+  metrics:
+   tags:
+     application_version: ${spring.application.version}
+     application_name: ${spring.application.name}
   prometheus:
     metrics:
       export:
@@ -11,7 +15,8 @@ management:
         include: "*"
 spring:
   application:
-    name: EntityRegistryService
+    name: oidf-registry
+    version: '@project.version@'
 
   threads:
     virtual:
