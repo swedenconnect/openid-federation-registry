@@ -190,7 +190,7 @@ public class RegistryConfig {
    * @return a configured {@link NotifyService} instance.
    */
   @Bean
-  @ConditionalOnProperty(name = "openid.federation.registry.federation_service_api.notification.active",
+  @ConditionalOnProperty(prefix = "openid.federation.registry.federation_service_api", name = "notification_active",
       havingValue = "true")
   public NotifyService notificationService(
       final RestClient restClient,
