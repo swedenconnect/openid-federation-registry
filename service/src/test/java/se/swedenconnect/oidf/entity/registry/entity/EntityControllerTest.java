@@ -19,6 +19,7 @@ package se.swedenconnect.oidf.entity.registry.entity;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
@@ -56,6 +57,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Testcontainers
 @AutoConfigureMockMvc
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureObservability(tracing = false)
 public class EntityControllerTest {
 
   @Autowired
@@ -155,7 +157,7 @@ public class EntityControllerTest {
             .content(objectMapper.writeValueAsBytes(record)))
         .andExpect(status().isCreated()).andReturn();
     final EntityRecord createdRecord = objectMapper.readValue(result.getResponse()
-        .getContentAsString(),EntityRecord.class);
+        .getContentAsString(), EntityRecord.class);
 
     this.mockMvc.perform(get("/registry/v1/entities/{entityId}", createdRecord.getEntityRecordId())
             .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUtils.createJwt()))
@@ -196,14 +198,13 @@ public class EntityControllerTest {
     record.setEntityRecordId(UUID.randomUUID().toString());
 
 
-
     final MvcResult result = this.mockMvc.perform(post("/registry/v1/entities")
             .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUtils.createJwt())
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsBytes(record)))
         .andExpect(status().isCreated()).andReturn();
     final EntityRecord createdRecord = objectMapper.readValue(result.getResponse()
-        .getContentAsString(),EntityRecord.class);
+        .getContentAsString(), EntityRecord.class);
     record.setEntityRecordId(createdRecord.getEntityRecordId());
 
     record.setHostedRecord(EntityRecordHostedRecord.builder().authorityHints(List.of("http://hint1")).build());
