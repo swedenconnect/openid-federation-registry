@@ -62,6 +62,7 @@ public class RegistryAuditEventPublisher extends RegistryAuditServiceAdapter {
 
  @Override
   protected void emitEvent(final FederationAuditEvent event) {
+   this.publisher.publishEvent(event);
     this.publisher.publishEvent(new AuditApplicationEvent(
         event.toAuditEvent(this.currentUser.getCurrentAuditor().orElse("<NoActiveUserSet>"))));
   }

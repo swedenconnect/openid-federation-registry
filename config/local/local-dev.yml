@@ -9,10 +9,9 @@ management:
       exposure:
         include: '*'
 
-
 spring:
   application:
-    name: EntityRegistryService
+    name: OIDF-Registry
 
   threads:
     virtual:
@@ -48,9 +47,9 @@ spring:
 
 logging:
   level:
-    se:
-      swedenconnect:
-        oidf: debug
+    org.springframework.context.annotation: info
+    se.swedenconnect.oidf: info
+
 
 credential:
   bundles:
@@ -72,7 +71,14 @@ openid:
     registry:
       federation_service_api:
         issuer: "http://oidf-registry.swedenconnect.se"
-        sign-key-alias: federationapi
+        sign_key_alias: federationapi
+        notification_active: true
+        notifications:
+          - endpoint: http://sc.swedenconnect.se/notify
+            instance_id: 123e4567-e89b-12d3-a456-426614174000
+          - endpoint: http://ena.swedenconnect.se/notify
+            instance_id: 223e4567-e89b-12d3-a456-426614174001
+
       instances:
         - instance_id: "123e4567-e89b-12d3-a456-426614174000"
           name: "Swedenconnect"

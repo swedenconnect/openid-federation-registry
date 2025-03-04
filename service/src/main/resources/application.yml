@@ -54,3 +54,6 @@ openid:
       federation_service_api:
         issuer: "https://oidf-registry.swedenconnect.se"
         token-expiry-duration: PT168H
+        notification-active: false
+        notification-retry-count: 3
+        notification-retry-delay-duration: PT10S
