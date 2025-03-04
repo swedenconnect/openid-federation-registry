@@ -41,9 +41,9 @@ public class JpaTrustMarkSubjectService implements TrustMarkSubjectService {
   private final RegistryAuditService registryAuditService;
 
   /**
-   * JpaTrustMarkSubjectService is an implementation of the TrustMarkSubjectService interface,
-   * responsible for managing TrustMarkSubjectRecord entities in the database.
-   * This service handles CRUD operations and additional queries for TrustMarkSubject entities.
+   * JpaTrustMarkSubjectService is an implementation of the TrustMarkSubjectService interface, responsible for managing
+   * TrustMarkSubjectRecord entities in the database. This service handles CRUD operations and additional queries for
+   * TrustMarkSubject entities.
    *
    * @param repository the repository used for database operations on TrustMarkSubject entities
    * @param objectMapper the object mapper for handling JSON serialization and deserialization
@@ -62,11 +62,11 @@ public class JpaTrustMarkSubjectService implements TrustMarkSubjectService {
     try {
       final TrustMarkSubjectRecord result = this.repository.findByExternalId(record.getTrustMarkSubjectRecordId())
           .or(() -> Optional.of(TrustMarkSubjectEntity.builder().build()))
-          .map(entity -> this.mergeRecordIntoEntity(record,entity))
+          .map(entity -> this.mergeRecordIntoEntity(record, entity))
           .map(this.repository::save)
           .map(this::toRecord)
           .orElseThrow();
-      this.registryAuditService.trustmarkSubjectWrite(result.getTrustMarkSubjectRecordId(),record,result);
+      this.registryAuditService.trustmarkSubjectWrite(result.getTrustMarkSubjectRecordId(), record, result);
       return result;
     }
     catch (final DataIntegrityViolationException e) {
@@ -91,12 +91,13 @@ public class JpaTrustMarkSubjectService implements TrustMarkSubjectService {
 
   /**
    * Getting all TrustMarkSubjectRecord for issuer and trustmarkid
+   *
    * @param issuer Issuer entityid
    * @param trustmarkId TrustmarkId
    * @return List of TrustMarkSubjectRecord
    */
   public List<TrustMarkSubjectRecord> getAll(final String issuer, final String trustmarkId) {
-    return this.repository.findByIssuerAndTrustmarkId(issuer,trustmarkId)
+    return this.repository.findByIssuerAndTrustmarkId(issuer, trustmarkId)
         .stream()
         .map(this::toRecord)
         .toList();
@@ -104,7 +105,7 @@ public class JpaTrustMarkSubjectService implements TrustMarkSubjectService {
 
   @Override
   public TrustMarkSubjectRecord update(final String trustMarkSubjectRecordId, final TrustMarkSubjectRecord record) {
-    if (!trustMarkSubjectRecordId.equals(record.getTrustMarkSubjectRecordId())){
+    if (!trustMarkSubjectRecordId.equals(record.getTrustMarkSubjectRecordId())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
           "TrustMarkSubjectRecordId has to match in json payload.");
     }
@@ -116,24 +117,24 @@ public class JpaTrustMarkSubjectService implements TrustMarkSubjectService {
     this.repository.findByExternalId(trustMarkSubjectRecordId)
         .map(trustMarkSubjectEntity -> {
           this.registryAuditService
-              .trustmarkSubjectDelete(trustMarkSubjectRecordId,this.toRecord(trustMarkSubjectEntity));
+              .trustmarkSubjectDelete(trustMarkSubjectRecordId, this.toRecord(trustMarkSubjectEntity));
           return trustMarkSubjectEntity;
         })
         .ifPresent(this.repository::delete);
   }
 
-  private TrustMarkSubjectRecord toRecord(final TrustMarkSubjectEntity entity){
+  private TrustMarkSubjectRecord toRecord(final TrustMarkSubjectEntity entity) {
     try {
       return this.objectMapper.readValue(entity.getTrustmarksubjectJson(), TrustMarkSubjectRecord.class);
     }
     catch (final JsonProcessingException e) {
-      throw new RuntimeException("Unable to map json entity to record",e);
+      throw new RuntimeException("Unable to map json entity to record", e);
     }
   }
 
   private TrustMarkSubjectEntity mergeRecordIntoEntity(
       final TrustMarkSubjectRecord record,
-      final TrustMarkSubjectEntity entity){
+      final TrustMarkSubjectEntity entity) {
 
     try {
       final TrustMarkSubjectEntity newEntity = entity.toBuilder()
@@ -142,13 +143,13 @@ public class JpaTrustMarkSubjectService implements TrustMarkSubjectService {
           .subject(record.getSubject())
           .trustmarksubjectJson(this.objectMapper.writeValueAsString(record))
           .build();
-      if(entity.getExternalId() == null){
+      if (entity.getExternalId() == null) {
         newEntity.setExternalId(record.getTrustMarkSubjectRecordId());
       }
       return newEntity;
     }
     catch (final JsonProcessingException e) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to map record to TrustMarkSubjectEntity",e);
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to map record to TrustMarkSubjectEntity", e);
     }
   }
 

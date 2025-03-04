@@ -28,8 +28,8 @@ import lombok.ToString;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
 /**
- * EntityDao is a JPA entity representing a database table for storing entities
- * as JSON objects with the objects Subject value as key.
+ * EntityDao is a JPA entity representing a database table for storing entities as JSON objects with the objects Subject
+ * value as key.
  *
  * @author David Goldring
  */
@@ -37,13 +37,13 @@ import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 @Setter
 @Entity
 @ToString(callSuper = true)
-@Table(name = "entities",uniqueConstraints = { @UniqueConstraint(columnNames = { "issuer", "subject" }) })
+@Table(name = "entities", uniqueConstraints = { @UniqueConstraint(columnNames = { "issuer", "subject" }) })
 public class EntityEntity extends BaseEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private long id;
 
-  @Column(name="external_id", unique = true, updatable = false,nullable = false)
+  @Column(name = "external_id", unique = true, updatable = false, nullable = false)
   private String externalId;
 
   @Column(nullable = false)

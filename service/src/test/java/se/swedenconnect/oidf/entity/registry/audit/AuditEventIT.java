@@ -61,7 +61,7 @@ public class AuditEventIT {
         this.restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
-    final List<AuditEvent> events =  auditEventRepository.find(null,null,ENTITY_CREATED_UPDATE.name());
+    final List<AuditEvent> events = auditEventRepository.find(null, null, ENTITY_CREATED_UPDATE.name());
     assertNotNull(events.getFirst().getPrincipal());
     assertNotNull(events.getFirst().getTimestamp());
     assertNotNull(events.getFirst().getData());
@@ -71,8 +71,7 @@ public class AuditEventIT {
     assertNotNull(events.getFirst().getData().get("issuer"));
     assertNotNull(events.getFirst().getData().get("newData"));
 
-
-    final List<AuditEvent> policyEvent =  auditEventRepository.find(null,null,POLICY_CREATE_UPDATED.name());
+    final List<AuditEvent> policyEvent = auditEventRepository.find(null, null, POLICY_CREATE_UPDATED.name());
     assertNotNull(policyEvent.getFirst().getPrincipal());
     assertNotNull(policyEvent.getFirst().getTimestamp());
     assertNotNull(policyEvent.getFirst().getData());
@@ -81,10 +80,10 @@ public class AuditEventIT {
     assertNotNull(policyEvent.getFirst().getData().get("newData"));
   }
 
-  private String createPolicy(){
+  private String createPolicy() {
     final PolicyRecord policy = new PolicyRecord.Builder()
         .name("policy-name")
-        .policy(Map.of("key","value"))
+        .policy(Map.of("key", "value"))
         .policyRecordId(UUID.randomUUID().toString())
         .build();
     // Act

@@ -1,8 +1,8 @@
 management:
   metrics:
-   tags:
-     application_version: ${spring.application.version}
-     application_name: ${spring.application.name}
+    tags:
+      application_version: ${spring.application.version}
+      application_name: ${spring.application.name}
   prometheus:
     metrics:
       export:

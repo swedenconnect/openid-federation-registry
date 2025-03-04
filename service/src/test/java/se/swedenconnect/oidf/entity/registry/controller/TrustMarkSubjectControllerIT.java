@@ -60,11 +60,9 @@ public class TrustMarkSubjectControllerIT {
   @ServiceConnection
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
   @Autowired
-  private TestRestTemplate restTemplate;
-
-  @Autowired
   SettingsRepository settingsRepository;
-
+  @Autowired
+  private TestRestTemplate restTemplate;
 
   /**
    * Doing CRUD operations on TrustMarkSubject
@@ -88,23 +86,22 @@ public class TrustMarkSubjectControllerIT {
     }
     assertThat(create.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
-
     record.setExpires(OffsetDateTime.now(ZoneId.of("UTC")));
     this.restTemplate.put("/registry/v1/trustmarksubjects/" + record.getTrustMarkSubjectRecordId(), record);
 
     final ResponseEntity<TrustMarkSubjectRecord> read =
-        this.restTemplate.getForEntity("/registry/v1/trustmarksubjects/"+record.getTrustMarkSubjectRecordId(),
-                TrustMarkSubjectRecord.class);
+        this.restTemplate.getForEntity("/registry/v1/trustmarksubjects/" + record.getTrustMarkSubjectRecordId(),
+            TrustMarkSubjectRecord.class);
     assertThat(read.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(record).isNotNull().isEqualTo(read.getBody());
 
-    this.restTemplate.delete("/registry/v1/trustmarksubjects/"+record.getTrustMarkSubjectRecordId());
+    this.restTemplate.delete("/registry/v1/trustmarksubjects/" + record.getTrustMarkSubjectRecordId());
 
     final ResponseEntity<TrustMarkSubjectRecord> notFound =
-        this.restTemplate.getForEntity("/registry/v1/trustmarksubjects/"+record.getTrustMarkSubjectRecordId(), TrustMarkSubjectRecord.class);
+        this.restTemplate.getForEntity("/registry/v1/trustmarksubjects/" + record.getTrustMarkSubjectRecordId(),
+            TrustMarkSubjectRecord.class);
     assertThat(notFound.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
   }
-
 
   /**
    * Testing indata validation fail
@@ -186,9 +183,9 @@ public class TrustMarkSubjectControllerIT {
   }
 
   /**
-   * Tests the retrieval of all TrustMarkSubject records from the registry.
-   * The method validates that the API endpoint for retrieving records responds correctly
-   * with a status of HTTP 200 OK and a non-null body containing the expected number of records.
+   * Tests the retrieval of all TrustMarkSubject records from the registry. The method validates that the API endpoint
+   * for retrieving records responds correctly with a status of HTTP 200 OK and a non-null body containing the expected
+   * number of records.
    */
   @Test
   public void testGetAllTrustMarkSubjects() {
@@ -203,11 +200,13 @@ public class TrustMarkSubjectControllerIT {
           .granted(OffsetDateTime.now(ZoneId.of("UTC")))
           .expires(OffsetDateTime.now(ZoneId.of("UTC")).plusDays(i))
           .build();
-      this.restTemplate.postForEntity("/registry/v1/trustmarksubjects", trustMarkSubjectRecord, TrustMarkSubjectRecord.class);
+      this.restTemplate.postForEntity("/registry/v1/trustmarksubjects", trustMarkSubjectRecord,
+          TrustMarkSubjectRecord.class);
     });
 
     // Act
-    final ResponseEntity<TrustMarkSubjectRecord[]> response = this.restTemplate.getForEntity("/registry/v1/trustmarksubjects", TrustMarkSubjectRecord[].class);
+    final ResponseEntity<TrustMarkSubjectRecord[]> response =
+        this.restTemplate.getForEntity("/registry/v1/trustmarksubjects", TrustMarkSubjectRecord[].class);
 
     // Assert
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);

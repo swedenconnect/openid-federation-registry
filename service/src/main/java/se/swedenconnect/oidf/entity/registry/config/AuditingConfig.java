@@ -34,15 +34,15 @@ import java.util.Optional;
 /**
  * Configuration for auditing metadata.
  *
- *  @author Per Fredrik Plars
+ * @author Per Fredrik Plars
  */
 @Configuration
 public class AuditingConfig {
 
   /**
-   * Provides an instance of {@link AuditorAware} that identifies the current auditor for auditing purposes.
-   * This implementation returns a predefined user ("systemUser") as the auditor. The logic for fetching
-   * the actual authenticated user's details should be implemented to replace the placeholder.
+   * Provides an instance of {@link AuditorAware} that identifies the current auditor for auditing purposes. This
+   * implementation returns a predefined user ("systemUser") as the auditor. The logic for fetching the actual
+   * authenticated user's details should be implemented to replace the placeholder.
    *
    * @return an {@link AuditorAware} instance that provides the current auditor's identifier as a string.
    */
@@ -58,9 +58,9 @@ public class AuditingConfig {
   }
 
   /**
-   * Creates a {@link RegistryAuditService} bean that provides audit logging functionality for actions
-   * performed within the Federation API. This method configures and returns an instance of
-   * {@link RegistryAuditEventPublisher}, which implements the {@link RegistryAuditService} interface.
+   * Creates a {@link RegistryAuditService} bean that provides audit logging functionality for actions performed within
+   * the Federation API. This method configures and returns an instance of {@link RegistryAuditEventPublisher}, which
+   * implements the {@link RegistryAuditService} interface.
    *
    * @param publisher the {@link ApplicationEventPublisher} used for publishing audit events.
    * @param currentUser the {@link AuditorAware} implementation to provide information about the current auditor.
@@ -70,30 +70,29 @@ public class AuditingConfig {
   @Bean
   public RegistryAuditService registryAuditService(final ApplicationEventPublisher publisher,
       final AuditorAware<String> currentUser,
-      final ObjectMapper objectMapper){
-    return new RegistryAuditEventPublisher(publisher,currentUser,objectMapper);
+      final ObjectMapper objectMapper) {
+    return new RegistryAuditEventPublisher(publisher, currentUser, objectMapper);
   }
 
   /**
-   * Creates and returns a new instance of {@link AuditEventLogListener},
-   * a listener that processes and logs audit events based on the configured log level.
+   * Creates and returns a new instance of {@link AuditEventLogListener}, a listener that processes and logs audit
+   * events based on the configured log level.
    *
    * @return an instance of {@link AuditEventLogListener}.
    */
   @Bean
-  public AuditEventLogListener auditEventLogListener(){
-      return new AuditEventLogListener();
+  public AuditEventLogListener auditEventLogListener() {
+    return new AuditEventLogListener();
   }
 
   /**
-   * Provides an instance of {@link InMemoryAuditEventRepository} for storing audit events
-   * in-memory. This bean will only be created if no other {@link AuditEventRepository}
-   * bean is defined in the application context.
+   * Provides an instance of {@link InMemoryAuditEventRepository} for storing audit events in-memory. This bean will
+   * only be created if no other {@link AuditEventRepository} bean is defined in the application context.
    *
    * @return an instance of {@link InMemoryAuditEventRepository}.
    */
   @Bean
-  @ConditionalOnMissingBean({ AuditEventRepository.class})
+  @ConditionalOnMissingBean({ AuditEventRepository.class })
   InMemoryAuditEventRepository auditEventRepository() {
     return new InMemoryAuditEventRepository();
   }

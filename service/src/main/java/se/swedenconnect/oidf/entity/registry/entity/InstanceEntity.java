@@ -70,5 +70,4 @@ public class InstanceEntity extends BaseEntity {
         .toList();
   }
 
-
 }

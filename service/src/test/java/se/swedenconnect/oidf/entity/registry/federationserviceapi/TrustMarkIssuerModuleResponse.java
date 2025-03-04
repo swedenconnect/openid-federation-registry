@@ -54,6 +54,15 @@ public class TrustMarkIssuerModuleResponse {
         .build();
   }
 
+  public void validate() {
+    Assert.notNull(entityIdentifier, "entityIdentifier");
+    Assert.notNull(alias, "alias");
+    Assert.notNull(active, "active");
+    Assert.notNull(trustMarkTokenValidityDuration, "trustMarkTokenValidityDuration");
+    Assert.isTrue(!trustMarks.isEmpty(), "trustMarks must not be empty");
+    trustMarks.forEach(TrustMarkResponse::validate);
+  }
+
   @Builder
   public record TrustMarkResponse(String trustMarkId, Optional<String> logoUri, Optional<String> refUri,
       Optional<String> delegation) {
@@ -74,15 +83,6 @@ public class TrustMarkIssuerModuleResponse {
       Assert.notNull(delegation, "delegation");
     }
 
-  }
-
-  public void validate() {
-    Assert.notNull(entityIdentifier, "entityIdentifier");
-    Assert.notNull(alias, "alias");
-    Assert.notNull(active, "active");
-    Assert.notNull(trustMarkTokenValidityDuration, "trustMarkTokenValidityDuration");
-    Assert.isTrue(!trustMarks.isEmpty(), "trustMarks must not be empty");
-    trustMarks.forEach(TrustMarkResponse::validate);
   }
 
 }

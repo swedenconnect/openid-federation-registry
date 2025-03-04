@@ -1,17 +1,17 @@
 /*
- * Copyright 2024 Sweden Connect.
+ * Copyright 2025 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  limitations under the License.
  */
 package se.swedenconnect.oidf.entity.registry.policy;
 
@@ -36,8 +36,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Integration tests for the PolicyController.
  * <p>
- * This class uses Testcontainers to run a MariaDB instance for testing purposes
- * and Spring's TestRestTemplate for executing HTTP requests.
+ * This class uses Testcontainers to run a MariaDB instance for testing purposes and Spring's TestRestTemplate for
+ * executing HTTP requests.
  *
  * @author David Goldring
  */
@@ -46,24 +46,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class PolicyControllerIT {
 
-  @Autowired
-  private TestRestTemplate restTemplate;
-
   /**
-   * MariaDBContainer instance for setting up a MariaDB database in a Docker container.
-   * Utilizes the Testcontainers library to manage the lifecycle of the Docker container.
+   * MariaDBContainer instance for setting up a MariaDB database in a Docker container. Utilizes the Testcontainers
+   * library to manage the lifecycle of the Docker container.
    */
   @Container
   @ServiceConnection
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
+  @Autowired
+  private TestRestTemplate restTemplate;
 
   /**
    * Tests that creating multiple entities with the same policy_record_id returns BAD_REQUEST.
    * <p>
    * This test ensures that the API correctly handles attempts to create policies entities when policy_record_id is set.
-   * Initially, it creates an entity with a default subject and verifies the response status
-   * is `HttpStatus.CREATED`. Then, it tries to create another entity with the created policy_record_id
-   * and verifies that the response status is `HttpStatus.BAD_REQUEST`.
+   * Initially, it creates an entity with a default subject and verifies the response status is `HttpStatus.CREATED`.
+   * Then, it tries to create another entity with the created policy_record_id and verifies that the response status is
+   * `HttpStatus.BAD_REQUEST`.
    */
   @Test
   public void testCreatePolicy() {
@@ -79,8 +78,9 @@ public class PolicyControllerIT {
     policy.setName("UpdatedValue");
     policy.setPolicyRecordId(response.getBody().getPolicyRecordId());
 
-    final ResponseEntity<String> reSave = this.restTemplate.postForEntity("/registry/v1/policies", policy, String.class);
-    if(reSave.getStatusCode().isError()){
+    final ResponseEntity<String> reSave =
+        this.restTemplate.postForEntity("/registry/v1/policies", policy, String.class);
+    if (reSave.getStatusCode().isError()) {
       log.error(String.valueOf(reSave.getBody()));
     }
 
@@ -106,7 +106,8 @@ public class PolicyControllerIT {
             this.restTemplate.postForEntity("/registry/v1/policies", policy, PolicyRecord.class));
 
     // Act
-    final ResponseEntity<PolicyRecord[]> response = this.restTemplate.getForEntity("/registry/v1/policies", PolicyRecord[].class);
+    final ResponseEntity<PolicyRecord[]> response =
+        this.restTemplate.getForEntity("/registry/v1/policies", PolicyRecord[].class);
 
     // Assert
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -134,21 +135,20 @@ public class PolicyControllerIT {
   public void testUpdatePolicy() {
 
     // Arrange
-    final PolicyRecord policy =  PolicyFactory.record();
+    final PolicyRecord policy = PolicyFactory.record();
 
     final ResponseEntity<PolicyRecord> createResponse = this.restTemplate.postForEntity("/registry/v1/policies",
         policy, PolicyRecord.class);
     final PolicyRecord createdPolicy = createResponse.getBody();
     assertThat(createdPolicy).isNotNull();
 
-
-
     final HttpEntity<PolicyRecord> requestUpdate = new HttpEntity<>(PolicyFactory.record());
 
     this.restTemplate.put("/registry/v1/policies/{policy_record_id}", requestUpdate, createdPolicy.getPolicyRecordId());
 
     final ResponseEntity<PolicyRecord> updateResponse = this.restTemplate
-        .getForEntity("/registry/v1/policies/{policy_record_id}", PolicyRecord.class, createdPolicy.getPolicyRecordId());
+        .getForEntity("/registry/v1/policies/{policy_record_id}", PolicyRecord.class,
+            createdPolicy.getPolicyRecordId());
 
     // Assert
     assertThat(updateResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -157,23 +157,21 @@ public class PolicyControllerIT {
 
   }
 
-
-
   /**
    * Tests the deletion of a policy using the REST API.
    *
    * <p>This test method performs the following actions:
    * <lu>
-   *   <li>Creates a new policy using a POST request and verifies that it was created successfully.
-   *   <li>Deletes the created policy using a DELETE request and verifies that the deletion was successful.
-   *   <li>Attempts to retrieve the deleted policy using a GET request to ensure it has been deleted and is not found.
+   * <li>Creates a new policy using a POST request and verifies that it was created successfully.
+   * <li>Deletes the created policy using a DELETE request and verifies that the deletion was successful.
+   * <li>Attempts to retrieve the deleted policy using a GET request to ensure it has been deleted and is not found.
    * </lu>
    *
    * <p>Assertions:
    * <lu>
-   *   <li>Asserts that the status code of the policy creation is {@code HttpStatus.CREATED}.
-   *   <li>Asserts that the status code of the policy deletion is {@code HttpStatus.NO_CONTENT}.
-   *   <li>Asserts that attempting to retrieve the deleted policy returns a status code of {@code HttpStatus.NOT_FOUND}.
+   * <li>Asserts that the status code of the policy creation is {@code HttpStatus.CREATED}.
+   * <li>Asserts that the status code of the policy deletion is {@code HttpStatus.NO_CONTENT}.
+   * <li>Asserts that attempting to retrieve the deleted policy returns a status code of {@code HttpStatus.NOT_FOUND}.
    * </lu>
    */
   @Test
@@ -188,7 +186,8 @@ public class PolicyControllerIT {
 
     // Act
     final ResponseEntity<Void> deletedResponse =
-        this.restTemplate.exchange("/registry/v1/policies/{name}", HttpMethod.DELETE, null, Void.class, policy.getPolicyRecordId());
+        this.restTemplate.exchange("/registry/v1/policies/{name}", HttpMethod.DELETE, null, Void.class,
+            policy.getPolicyRecordId());
 
     // Assert
     assertThat(deletedResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);

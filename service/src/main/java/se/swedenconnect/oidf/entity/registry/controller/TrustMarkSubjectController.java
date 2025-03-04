@@ -122,7 +122,7 @@ public class TrustMarkSubjectController {
   @PutMapping("/{trustMarkSubjectId}")
   public TrustMarkSubjectRecord updateTrustMarkSubject(
       @PathVariable("trustMarkSubjectId") final String trustMarkSubjectId,
-      @RequestBody @Validated  final TrustMarkSubjectRecord trustMark) {
+      @RequestBody @Validated final TrustMarkSubjectRecord trustMark) {
     log.debug("PUT: {}", trustMark);
     if (!trustMarkSubjectId.equals(trustMark.getTrustMarkSubjectRecordId())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "TrustMarkId has to be the same in path and object");

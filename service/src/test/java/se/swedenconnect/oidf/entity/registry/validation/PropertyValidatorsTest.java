@@ -166,8 +166,6 @@ public class PropertyValidatorsTest {
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", jwkPrivate));
   }
 
-
-
   @Test
   public void testResolveValidator_jwksValidator_noKid() {
     String jwkValue =

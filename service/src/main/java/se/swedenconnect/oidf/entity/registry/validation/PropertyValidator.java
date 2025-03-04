@@ -17,11 +17,10 @@
 package se.swedenconnect.oidf.entity.registry.validation;
 
 /**
- * An interface for defining property validation rules. Implementations of this interface
- * are used to apply specific validation logic to key-value pairs, ensuring that the data
- * adheres to specified constraints or requirements.
+ * An interface for defining property validation rules. Implementations of this interface are used to apply specific
+ * validation logic to key-value pairs, ensuring that the data adheres to specified constraints or requirements.
  *
- *  @author Per Fredrik Plars
+ * @author Per Fredrik Plars
  */
 public interface PropertyValidator {
   /**

@@ -55,8 +55,8 @@ public class JpaEntityService implements EntityService {
    * @param repository the {@link EntityRepository} used for CRUD operations on entities.
    * @param policyRepository the {@link PolicyRepository} used for accessing and managing policy entities.
    * @param objectMapper the {@link ObjectMapper} responsible for handling JSON serialization and deserialization.
-   * @param registryAuditService the {@link RegistryAuditService} used for auditing operations related to entities and
-   * policies.
+   * @param registryAuditService the {@link RegistryAuditService} used for auditing operations related to entities
+   *     and policies.
    */
   public JpaEntityService(final EntityRepository repository, final PolicyRepository policyRepository,
       final ObjectMapper objectMapper,
@@ -78,7 +78,7 @@ public class JpaEntityService implements EntityService {
           .map(this.repository::save)
           .map(this::toRecord)
           .orElseThrow();
-      this.registryAuditService.entityWrite(result.getEntityRecordId(),record,result);
+      this.registryAuditService.entityWrite(result.getEntityRecordId(), record, result);
       return result;
     }
     catch (final DataIntegrityViolationException e) {
@@ -114,14 +114,14 @@ public class JpaEntityService implements EntityService {
   public void delete(final String entityRecordId) {
     this.repository.findByExternalId(entityRecordId)
         .map(entityEntity -> {
-          this.registryAuditService.entityDelete(entityRecordId,this.toRecord(entityEntity));
+          this.registryAuditService.entityDelete(entityRecordId, this.toRecord(entityEntity));
           return entityEntity;
         }).ifPresent(this.repository::delete);
   }
 
   private void verifyPolicyRecordId(final EntityRecord record) {
-    Assert.notNull(record,"Record can not be null");
-    Assert.hasText(record.getPolicyRecordId(),"PolicyRecordId has to be present");
+    Assert.notNull(record, "Record can not be null");
+    Assert.hasText(record.getPolicyRecordId(), "PolicyRecordId has to be present");
     if (this.policyRepository.findById(UUID.fromString(record.getPolicyRecordId())).isEmpty()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PolicyRecordId is not found.");
     }

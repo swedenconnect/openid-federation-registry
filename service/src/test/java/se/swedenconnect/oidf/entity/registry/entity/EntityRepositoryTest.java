@@ -29,8 +29,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Test class for the {@link EntityRepository} to ensure proper functionality
- * of CRUD operations on {@link EntityEntity} entities.
+ * Test class for the {@link EntityRepository} to ensure proper functionality of CRUD operations on {@link EntityEntity}
+ * entities.
  *
  * @author David Goldring
  */
@@ -42,9 +42,9 @@ public class EntityRepositoryTest {
   private EntityRepository entityRepository;
 
   /**
-   * Tests the functionality of saving an {@link EntityEntity} entity using the {@link EntityRepository}.
-   * This method ensures that the entity is properly persisted to the database and can be retrieved
-   * with a valid ID, subject, and entity content.
+   * Tests the functionality of saving an {@link EntityEntity} entity using the {@link EntityRepository}. This method
+   * ensures that the entity is properly persisted to the database and can be retrieved with a valid ID, subject, and
+   * entity content.
    */
   @Test
   public void testSaveEntity() {
@@ -63,7 +63,6 @@ public class EntityRepositoryTest {
     assertThat(savedEntity.getEntity()).isEqualTo("{\"name\": \"Example Entity\"}");
   }
 
-
   @Test
   public void testSaveEntityDuplicate() {
     // Given
@@ -76,21 +75,20 @@ public class EntityRepositoryTest {
     // When
     final EntityEntity savedEntity = entityRepository.save(entity);
 
-
     final EntityEntity entityDuplicate = new EntityEntity();
     entityDuplicate.setSubject("https://example.com/subject/1");
     entityDuplicate.setEntity("{\"name\": \"Example Entity\"}");
     entityDuplicate.setIssuer("http://iss");
     entityDuplicate.setExternalId(UUID.randomUUID().toString());
     assertThatThrownBy(() -> this.entityRepository.saveAndFlush(entityDuplicate)).isInstanceOf(
-        DataIntegrityViolationException.class)
+            DataIntegrityViolationException.class)
         .hasMessageStartingWith("could not execute statement [Unique index or primary key violation");
   }
 
   /**
    * Tests the functionality of finding an {@link EntityEntity} entity by its ID using the {@link EntityRepository}.
-   * This method ensures that an entity can be retrieved correctly after being persisted to the database.
-   * The test verifies that the ID, subject, and entity content match the values of the saved entity.
+   * This method ensures that an entity can be retrieved correctly after being persisted to the database. The test
+   * verifies that the ID, subject, and entity content match the values of the saved entity.
    */
   @Test
   public void testFindById() {
@@ -114,9 +112,8 @@ public class EntityRepositoryTest {
   }
 
   /**
-   * Tests the functionality of deleting an {@link EntityEntity} entity using the {@link EntityRepository}.
-   * This method ensures that the entity is properly removed from the database and cannot be retrieved
-   * by its ID after deletion.
+   * Tests the functionality of deleting an {@link EntityEntity} entity using the {@link EntityRepository}. This method
+   * ensures that the entity is properly removed from the database and cannot be retrieved by its ID after deletion.
    */
   @Test
   public void testDeleteEntity() {

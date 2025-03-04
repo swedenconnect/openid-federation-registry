@@ -27,11 +27,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Represents an audit event specific to federation-related actions, capturing details
- * about the event type, issuer, subject, associated trust mark, old data, and new data.
- * Instances of this class encapsulate the details of a specific audit event.
- * It provides a mechanism to convert the event into a standardized {@link AuditEvent}
- * format with additional structured data.
+ * Represents an audit event specific to federation-related actions, capturing details about the event type, issuer,
+ * subject, associated trust mark, old data, and new data. Instances of this class encapsulate the details of a specific
+ * audit event. It provides a mechanism to convert the event into a standardized {@link AuditEvent} format with
+ * additional structured data.
  *
  * @author Per Fredrik Plars
  */
@@ -51,26 +50,25 @@ public class FederationAuditEvent implements Serializable {
   final String newData;
 
   /**
-   * Converts the current instance of {@code FederationAuditEvent} into an {@code AuditEvent}.
-   * This method structures the event data into a standardized format, optionally including details
-   * such as issuer, subject, trust mark ID, old data, new data, and external ID.
+   * Converts the current instance of {@code FederationAuditEvent} into an {@code AuditEvent}. This method structures
+   * the event data into a standardized format, optionally including details such as issuer, subject, trust mark ID, old
+   * data, new data, and external ID.
    *
-   * @param principal the principal responsible for the event. Typically represents the user or
-   *                  entity on whose behalf the action was performed, included in the resulting
-   *                  {@code AuditEvent}.
+   * @param principal the principal responsible for the event. Typically represents the user or entity on whose
+   *     behalf the action was performed, included in the resulting {@code AuditEvent}.
    * @return an {@code AuditEvent} instance containing the structured data of the current audit event.
    */
-  public AuditEvent toAuditEvent(final String principal){
-    final Map<String,Object> data = new HashMap<>();
-    Optional.ofNullable(this.issuer).ifPresent(v -> data.put("issuer",v));
-    Optional.ofNullable(this.subject).ifPresent(v -> data.put("subject",v));
-    Optional.ofNullable(this.trustMarkId).ifPresent(v -> data.put("trustMarkId",v));
+  public AuditEvent toAuditEvent(final String principal) {
+    final Map<String, Object> data = new HashMap<>();
+    Optional.ofNullable(this.issuer).ifPresent(v -> data.put("issuer", v));
+    Optional.ofNullable(this.subject).ifPresent(v -> data.put("subject", v));
+    Optional.ofNullable(this.trustMarkId).ifPresent(v -> data.put("trustMarkId", v));
     Optional.ofNullable(this.oldData).filter(old -> !old.equals(this.newData))
-        .ifPresent(v -> data.put("oldData",v));
-    Optional.ofNullable(this.newData).ifPresent(v -> data.put("newData",v));
-    Optional.ofNullable(this.extId).ifPresent(v -> data.put("extId",v));
+        .ifPresent(v -> data.put("oldData", v));
+    Optional.ofNullable(this.newData).ifPresent(v -> data.put("newData", v));
+    Optional.ofNullable(this.extId).ifPresent(v -> data.put("extId", v));
     Optional.ofNullable(this.fkKeyType).ifPresent(v -> data.put("optionType", v));
     Optional.ofNullable(this.optionId).ifPresent(v -> data.put("optionId", v));
-    return new AuditEvent(principal,this.event.name(),data);
+    return new AuditEvent(principal, this.event.name(), data);
   }
 }

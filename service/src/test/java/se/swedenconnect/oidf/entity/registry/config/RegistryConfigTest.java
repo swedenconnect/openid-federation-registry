@@ -34,9 +34,8 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
 
 /**
- * ServiceConfigTest is a test class for the ServiceConfig Spring configuration class.
- * It uses @AutoConfigureMockMvc to autoconfigure the Spring MVC infrastructure for use
- * in a test environment without starting the full HTTP server.
+ * ServiceConfigTest is a test class for the ServiceConfig Spring configuration class. It uses @AutoConfigureMockMvc to
+ * autoconfigure the Spring MVC infrastructure for use in a test environment without starting the full HTTP server.
  *
  * @author David Goldring
  */
@@ -52,9 +51,8 @@ public class RegistryConfigTest {
   private InstanceRepository instanceRepository;
 
   /**
-   * Sets up the testing environment before each test execution.
-   * This method initializes and mocks dependencies such as EntityRepository and creates
-   * a new instance of ServiceConfig with the mocked repository.
+   * Sets up the testing environment before each test execution. This method initializes and mocks dependencies such as
+   * EntityRepository and creates a new instance of ServiceConfig with the mocked repository.
    */
   @BeforeEach
   public void setUp() {
@@ -64,7 +62,7 @@ public class RegistryConfigTest {
     settingsRepository = mock(SettingsRepository.class);
     moduleRepository = mock(ModuleRepository.class);
     instanceRepository = mock(InstanceRepository.class);
-    registryConfig = new RegistryConfig(entityRepository, policyRepository,trustMarkSubjectRepository,
+    registryConfig = new RegistryConfig(entityRepository, policyRepository, trustMarkSubjectRepository,
         new RegistryAuditLogger(),
         new ObjectMapper(),
         instanceRepository);
@@ -73,9 +71,8 @@ public class RegistryConfigTest {
   /**
    * Tests the jpaEntityService bean provided by the ServiceConfig.
    * <p>
-   * The test verifies that the jpaEntityService bean is not null, confirms
-   * that it is an instance of the JpaEntityService class, and
-   * asserts that the JpaEntityService is configured with the correct repository.
+   * The test verifies that the jpaEntityService bean is not null, confirms that it is an instance of the
+   * JpaEntityService class, and asserts that the JpaEntityService is configured with the correct repository.
    */
   @Test
   public void testJpaEntityServiceBean() {

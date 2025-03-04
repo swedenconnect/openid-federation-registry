@@ -230,6 +230,5 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
         .toList();
   }
 
-
 }
 

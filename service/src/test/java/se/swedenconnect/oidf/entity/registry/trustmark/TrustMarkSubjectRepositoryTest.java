@@ -30,8 +30,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Test class for the {@link TrustMarkSubjectRepository} to ensure proper functionality
- * of CRUD operations on {@link TrustMarkSubjectEntity} entities.
+ * Test class for the {@link TrustMarkSubjectRepository} to ensure proper functionality of CRUD operations on
+ * {@link TrustMarkSubjectEntity} entities.
  *
  * @author David Goldring
  */
@@ -43,19 +43,19 @@ public class TrustMarkSubjectRepositoryTest {
   private TrustMarkSubjectRepository trustMarkSubjectRepository;
 
   /**
-   * Tests the functionality of saving an {@link TrustMarkSubjectEntity} entity using the {@link TrustMarkSubjectRepository}.
-   * This method ensures that the entity is properly persisted to the database and can be retrieved
-   * with a valid ID, subject, and entity content.
+   * Tests the functionality of saving an {@link TrustMarkSubjectEntity} entity using the
+   * {@link TrustMarkSubjectRepository}. This method ensures that the entity is properly persisted to the database and
+   * can be retrieved with a valid ID, subject, and entity content.
    */
   @Test
   public void testSaveEntity() {
     // Given
-    final TrustMarkSubjectEntity tmi =  TrustMarkSubjectEntity.builder()
+    final TrustMarkSubjectEntity tmi = TrustMarkSubjectEntity.builder()
         .issuer("http://iss")
         .subject("http://sub")
         .trustmarkId("http://tmid")
         .trustmarksubjectJson("{\"name\": \"Example Entity\"}")
-            .externalId(UUID.randomUUID().toString())
+        .externalId(UUID.randomUUID().toString())
         .build();
 
     // When
@@ -66,43 +66,42 @@ public class TrustMarkSubjectRepositoryTest {
     assertThat(savedtmi.getTrustmarksubjectJson()).isEqualTo("{\"name\": \"Example Entity\"}");
   }
 
-
   @Test
   public void testSaveEntityDuplicate() {
     // Given
-    final TrustMarkSubjectEntity tmi =  TrustMarkSubjectEntity.builder()
+    final TrustMarkSubjectEntity tmi = TrustMarkSubjectEntity.builder()
         .issuer("http://iss")
         .subject("http://sub")
         .trustmarkId("http://tmid")
         .trustmarksubjectJson("{}")
-            .externalId(UUID.randomUUID().toString())
+        .externalId(UUID.randomUUID().toString())
         .build();
 
     // When
     final TrustMarkSubjectEntity savedtmi = this.trustMarkSubjectRepository.save(tmi);
 
-
     final TrustMarkSubjectEntity tmiDuplicate = tmi.toBuilder().id(0).build();
 
     assertThatThrownBy(() -> this.trustMarkSubjectRepository.saveAndFlush(tmiDuplicate)).isInstanceOf(
-        DataIntegrityViolationException.class)
+            DataIntegrityViolationException.class)
         .hasMessageStartingWith("could not execute statement [Unique index or primary key violation");
   }
 
   /**
-   * Tests the functionality of finding an {@link TrustMarkSubjectEntity} entity by its ID using the {@link TrustMarkSubjectRepository}.
-   * This method ensures that an entity can be retrieved correctly after being persisted to the database.
-   * The test verifies that the ID, subject, and entity content match the values of the saved tmi.
+   * Tests the functionality of finding an {@link TrustMarkSubjectEntity} entity by its ID using the
+   * {@link TrustMarkSubjectRepository}. This method ensures that an entity can be retrieved correctly after being
+   * persisted to the database. The test verifies that the ID, subject, and entity content match the values of the saved
+   * tmi.
    */
   @Test
   public void testFindById() {
     // Given
-    final TrustMarkSubjectEntity tmi =  TrustMarkSubjectEntity.builder()
+    final TrustMarkSubjectEntity tmi = TrustMarkSubjectEntity.builder()
         .issuer("http://iss")
         .subject("http://sub")
         .trustmarkId("http://tmid")
         .trustmarksubjectJson("{}")
-            .externalId(UUID.randomUUID().toString())
+        .externalId(UUID.randomUUID().toString())
         .build();
 
     TrustMarkSubjectEntity savedtmi = this.trustMarkSubjectRepository.save(tmi);
@@ -118,19 +117,19 @@ public class TrustMarkSubjectRepositoryTest {
   }
 
   /**
-   * Tests the functionality of deleting an {@link TrustMarkSubjectEntity} entity using the {@link TrustMarkSubjectRepository}.
-   * This method ensures that the entity is properly removed from the database and cannot be retrieved
-   * by its ID after deletion.
+   * Tests the functionality of deleting an {@link TrustMarkSubjectEntity} entity using the
+   * {@link TrustMarkSubjectRepository}. This method ensures that the entity is properly removed from the database and
+   * cannot be retrieved by its ID after deletion.
    */
   @Test
   public void testDeleteEntity() {
     // Given
-    final TrustMarkSubjectEntity tmi =  TrustMarkSubjectEntity.builder()
+    final TrustMarkSubjectEntity tmi = TrustMarkSubjectEntity.builder()
         .issuer("http://iss")
         .subject("http://sub")
         .trustmarkId("http://tmid")
         .trustmarksubjectJson("{}")
-            .externalId(UUID.randomUUID().toString())
+        .externalId(UUID.randomUUID().toString())
         .build();
 
     TrustMarkSubjectEntity savedtmi = this.trustMarkSubjectRepository.save(tmi);

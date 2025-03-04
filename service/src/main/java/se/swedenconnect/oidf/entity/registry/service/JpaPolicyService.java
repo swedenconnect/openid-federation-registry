@@ -54,10 +54,11 @@ public class JpaPolicyService implements PolicyService {
   private final ObjectMapper objectMapper;
   private final RegistryAuditService auditService;
   private final OrganizationRepository organizationRepository;
+
   /**
-   * Constructs a new instance of {@code JpaPolicyService} which handles policy-related operations
-   * using a JPA repository. This class is responsible for interacting with the data layer and
-   * performing policy CRUD (Create, Read, Update, Delete) operations.
+   * Constructs a new instance of {@code JpaPolicyService} which handles policy-related operations using a JPA
+   * repository. This class is responsible for interacting with the data layer and performing policy CRUD (Create, Read,
+   * Update, Delete) operations.
    *
    * @param policyRepository the {@link PolicyRepository} used for accessing and modifying policy data
    * @param objectMapper the {@link ObjectMapper} used for JSON serialization and deserialization of policy objects
@@ -84,7 +85,7 @@ public class JpaPolicyService implements PolicyService {
           .map(this.policyRepository::save)
           .map(this::toRecord)
           .orElseThrow();
-      this.auditService.policyWrite(result.getPolicyRecordId(),record,result);
+      this.auditService.policyWrite(result.getPolicyRecordId(), record, result);
       return result;
     }
     catch (final DataIntegrityViolationException e) {

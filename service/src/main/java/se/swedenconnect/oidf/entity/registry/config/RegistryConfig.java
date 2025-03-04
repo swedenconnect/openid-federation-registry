@@ -66,11 +66,11 @@ import java.time.Duration;
 @Configuration
 public class RegistryConfig {
 
+  final InstanceRepository instanceRepository;
   private final EntityRepository entityRepository;
   private final PolicyRepository policyRepository;
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
   private final RegistryAuditService registryAuditService;
-  final InstanceRepository instanceRepository;
   private final ObjectMapper objectMapper;
 
   /**

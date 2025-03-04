@@ -29,7 +29,7 @@ import java.util.stream.Stream;
 
 public final class PolicyFactory {
 
-  public static PolicyRecord record(){
+  public static PolicyRecord record() {
     return new PolicyRecord.Builder()
         .name("policy-name-test")
         .policy(Map.of("openid_relying_party",
@@ -42,25 +42,25 @@ public final class PolicyFactory {
         .build();
   }
 
-  public static Stream<PolicyRecord> records(){
+  public static Stream<PolicyRecord> records() {
     final AtomicInteger i = new AtomicInteger(1);
     return Stream.generate(() -> {
-          final PolicyRecord policy = record();
-          policy.setName(policy.getName() + ":" + i.getAndIncrement());
-          return policy;
-        });
+      final PolicyRecord policy = record();
+      policy.setName(policy.getName() + ":" + i.getAndIncrement());
+      return policy;
+    });
 
   }
 
-  public static Stream<PolicyEntity> entities(){
+  public static Stream<PolicyEntity> entities() {
     return records().map(PolicyFactory::recordToEntity);
   }
 
-  public static PolicyEntity entity(){
-   return recordToEntity(record());
+  public static PolicyEntity entity() {
+    return recordToEntity(record());
   }
 
-  private static PolicyEntity recordToEntity(PolicyRecord record){
+  private static PolicyEntity recordToEntity(PolicyRecord record) {
     try {
 
       final PolicyEntity pe = new PolicyEntity();

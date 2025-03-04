@@ -10,7 +10,7 @@ A SpringBoot REST-service implementing the OIDF Entity Registry API
 
 ### Overview
 
-This project is a Spring Boot service designed to store and serve OpenID Connect Federation entity configurations. 
+This project is a Spring Boot service designed to store and serve OpenID Connect Federation entity configurations.
 The service provides RESTful APIs for creating, retrieving, updating, and managing OpenID Connect Federation entities.
 
 ### Features
@@ -62,11 +62,13 @@ docker compose up -d
 ```
 
 Since we are going to work on Registry, we need to stop that container:
+
 ```sh
 docker compose down oidf-registry
 ```
 
 Or locally add "excluded" to oidf-registry in the compose.yml file, before starting docker compose.
+
 ```
 oidf-registry:
     profiles: ["excluded"]
@@ -80,7 +82,9 @@ mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
 ##### Alternative run option:
-The project uses Spring Boot 3 built-in support for Docker Compose, using `../docker-compose.yaml` and handling starting and stopping of the container. If you wish to manage the Docker Compose yourself, unable the Spring Boot handling with:
+
+The project uses Spring Boot 3 built-in support for Docker Compose, using `../docker-compose.yaml` and handling starting
+and stopping of the container. If you wish to manage the Docker Compose yourself, unable the Spring Boot handling with:
 
 ```yaml
 spring:
@@ -98,14 +102,16 @@ mvn spring-boot:run --spring.config.import=config/local/local-dev.yml
 
 #### Viewing API Documentation
 
-This project uses `springdoc-openapi-starter-webmvc-ui` to generate API documentation. Once the application is running, you can view the API documentation in the Swagger and OpenAPI UI at the following URLs:
+This project uses `springdoc-openapi-starter-webmvc-ui` to generate API documentation. Once the application is running,
+you can view the API documentation in the Swagger and OpenAPI UI at the following URLs:
 
 - http://localhost:8080/swagger-ui/index.html
 - http://localhost:8080/v3/api-docs
 
 #### Building and Deploying
 
-For detailed instructions on building and deploying the service, refer to the [developer documentation](../docs/developer.md).
+For detailed instructions on building and deploying the service, refer to
+the [developer documentation](../docs/developer.md).
 
 ## Configuration
 
@@ -119,8 +125,10 @@ For detailed instructions on building and deploying the service, refer to the [d
 
 ## License
 
-The OIDF Entity Registry is Open Source software released under the [Apache License](http://www.apache.org/licenses/LICENSE-2.0).
+The OIDF Entity Registry is Open Source software released under
+the [Apache License](http://www.apache.org/licenses/LICENSE-2.0).
 
 -----
 
-Copyright &copy; 2024, [Swedenconnect](http://www.swedenconnect.se). Licensed under version 2.0 of the [Apache License](http://www.apache.org/licenses/LICENSE-2.0).
+Copyright &copy; 2024, [Swedenconnect](http://www.swedenconnect.se). Licensed under version 2.0 of
+the [Apache License](http://www.apache.org/licenses/LICENSE-2.0).

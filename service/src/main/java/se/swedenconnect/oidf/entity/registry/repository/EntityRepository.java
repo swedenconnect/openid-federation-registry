@@ -22,11 +22,10 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * EntityRepository is a JPA repository interface for accessing and performing
- * CRUD operations on {@link EntityEntity} entities stored in the database.
+ * EntityRepository is a JPA repository interface for accessing and performing CRUD operations on {@link EntityEntity}
+ * entities stored in the database.
  * <p>
- * It extends the {@link JpaRepository} interface which provides JPA related methods
- * for standard data access layers.
+ * It extends the {@link JpaRepository} interface which provides JPA related methods for standard data access layers.
  *
  * @author David Goldring
  * @author Per Fredrik Plars
@@ -34,14 +33,15 @@ import java.util.Optional;
 public interface EntityRepository extends JpaRepository<EntityEntity, Long> {
   /**
    * Resolve EntityEntity by its externalId
+   *
    * @param externalId UUID
-   * @return an Optional containing the EntityEntity if found, or an empty Optional if no
-   * EntityEntity exist
+   * @return an Optional containing the EntityEntity if found, or an empty Optional if no EntityEntity exist
    */
   Optional<EntityEntity> findByExternalId(String externalId);
 
   /**
    * Find by Entity Issuer
+   *
    * @param issuer Issuer
    * @return List of Entity for this issuer
    */

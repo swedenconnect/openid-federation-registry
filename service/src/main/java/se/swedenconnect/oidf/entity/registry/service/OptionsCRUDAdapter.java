@@ -38,10 +38,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Abstract implementation of the {@link OptionsCRUD} interface providing common functionality
- * for managing and manipulating settings, templates, and related data records.
- * This adapter simplifies CRUD operations by offering reusable utility methods
- * for transforming, validating, and persisting records.
+ * Abstract implementation of the {@link OptionsCRUD} interface providing common functionality for managing and
+ * manipulating settings, templates, and related data records. This adapter simplifies CRUD operations by offering
+ * reusable utility methods for transforming, validating, and persisting records.
+ *
  * @author Per Fredrik Plars
  */
 public abstract class OptionsCRUDAdapter implements OptionsCRUD {

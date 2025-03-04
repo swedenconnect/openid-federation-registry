@@ -22,17 +22,16 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * EntityRepository is a JPA repository interface for accessing and performing
- * CRUD operations on {@link TrustMarkSubjectEntity} entities stored in database.
+ * EntityRepository is a JPA repository interface for accessing and performing CRUD operations on
+ * {@link TrustMarkSubjectEntity} entities stored in database.
  * <p>
- * It extends the {@link JpaRepository} interface which provides JPA related methods
- * for standard data access layers.
+ * It extends the {@link JpaRepository} interface which provides JPA related methods for standard data access layers.
  *
  * @author Per Fredrik Plars
  */
 public interface TrustMarkSubjectRepository extends JpaRepository<TrustMarkSubjectEntity, Long> {
   /**
-   *  Find trustmarksubject on issuer and trustmark
+   * Find trustmarksubject on issuer and trustmark
    *
    * @param issuer Issuer of trustmarks
    * @param trustmarkId Trustmarkid
@@ -40,12 +39,12 @@ public interface TrustMarkSubjectRepository extends JpaRepository<TrustMarkSubje
    */
   List<TrustMarkSubjectEntity> findByIssuerAndTrustmarkId(final String issuer, final String trustmarkId);
 
-
   /**
    * Resolve TrustMarkSubjectEntity by its externalId
+   *
    * @param externalId UUID
    * @return an Optional containing the TrustMarkSubjectEntity if found, or an empty Optional if no
-   * TrustMarkSubjectEntity exist
+   *     TrustMarkSubjectEntity exist
    */
   Optional<TrustMarkSubjectEntity> findByExternalId(String externalId);
 }

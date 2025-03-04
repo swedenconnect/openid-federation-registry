@@ -40,8 +40,8 @@ public class OptionsCRUDSelector implements OptionsCRUD {
   final RegistryAuditService registryAuditService;
 
   /**
-   * Constructs a new OptionsCRUDSelector instance with the provided list of OptionsCRUD implementations
-   * and the registry audit service.
+   * Constructs a new OptionsCRUDSelector instance with the provided list of OptionsCRUD implementations and the
+   * registry audit service.
    *
    * @param optionsCRUDS the list of OptionsCRUD implementations to be used for delegating operations
    * @param registryAuditService the service responsible for auditing registry operations

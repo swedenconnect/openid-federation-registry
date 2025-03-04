@@ -65,12 +65,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
-
 class FederationServiceApiControllerIT {
   @Container
   @ServiceConnection
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
-
 
   @Autowired
   private TestRestTemplate restTemplate;
@@ -78,15 +76,12 @@ class FederationServiceApiControllerIT {
   @Autowired
   private RegistryProperties registryProperties;
 
-
-
-
   @Test
   void trustMarkRecordNotFound() {
     final ResponseEntity<String> fedRes = this.restTemplate
         .getForEntity("/api/v1/federationservice/trustmarksubject_record"
             + "?iss=http://tmi.swedenconnect.se&trustmark_id=http://www.swedenconnect.se/loa", String.class);
-    if(fedRes.getStatusCode().isError()){
+    if (fedRes.getStatusCode().isError()) {
       log.error(fedRes.getBody());
     }
     assertThat(HttpStatus.NOT_FOUND).isEqualTo(fedRes.getStatusCode());
@@ -94,6 +89,7 @@ class FederationServiceApiControllerIT {
 
   /**
    * Test method for verifying the successful creation, retrieval, and validation of a TrustMarkSubjectRecord.
+   *
    * @throws ParseException if there is an error in parsing the JWT or its claims.
    */
   @Test
@@ -118,25 +114,24 @@ class FederationServiceApiControllerIT {
 
     final ResponseEntity<String> fedResEmptySub = this.restTemplate
         .getForEntity("/api/v1/federationservice/trustmarksubject_record"
-            + "?iss=%s&trustmark_id=%s&sub=".formatted(record.getIssuer(),record.getTrustMarkId()), String.class);
-    if(fedResEmptySub.getStatusCode().isError()){
+            + "?iss=%s&trustmark_id=%s&sub=".formatted(record.getIssuer(), record.getTrustMarkId()), String.class);
+    if (fedResEmptySub.getStatusCode().isError()) {
       log.error(fedResEmptySub.getBody());
     }
     assertThat(HttpStatus.OK).isEqualTo(fedResEmptySub.getStatusCode());
 
     final ResponseEntity<String> fedResSubjectSearch = this.restTemplate
         .getForEntity("/api/v1/federationservice/trustmarksubject_record"
-            + "?iss=%s&trustmark_id=%s".formatted(record.getIssuer(),record.getTrustMarkId()), String.class);
-    if(fedResSubjectSearch.getStatusCode().isError()){
+            + "?iss=%s&trustmark_id=%s".formatted(record.getIssuer(), record.getTrustMarkId()), String.class);
+    if (fedResSubjectSearch.getStatusCode().isError()) {
       log.error(fedResSubjectSearch.getBody());
     }
     assertThat(HttpStatus.OK).isEqualTo(fedResSubjectSearch.getStatusCode());
 
-
     final ResponseEntity<String> fedRes = this.restTemplate
         .getForEntity("/api/v1/federationservice/trustmarksubject_record"
-            + "?iss=%s&trustmark_id=%s".formatted(record.getIssuer(),record.getTrustMarkId()), String.class);
-    if(fedRes.getStatusCode().isError()){
+            + "?iss=%s&trustmark_id=%s".formatted(record.getIssuer(), record.getTrustMarkId()), String.class);
+    if (fedRes.getStatusCode().isError()) {
       log.error(fedRes.getBody());
     }
     assertThat(HttpStatus.OK).isEqualTo(fedRes.getStatusCode());
@@ -146,7 +141,7 @@ class FederationServiceApiControllerIT {
     final List<Object> records = claimsSet.getListClaim("trustmark_records");
 
     records.stream()
-        .map(o -> (Map<String,Object>)o)
+        .map(o -> (Map<String, Object>) o)
         .forEach(claimMap -> {
           log.info("Record:{} Claim{}", record, claimMap.toString());
           assertEquals(record.getSubject(), claimMap.get("subject"));
@@ -169,22 +164,24 @@ class FederationServiceApiControllerIT {
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
     final ResponseEntity<String> fedRes = this.restTemplate
-        .getForEntity("/api/v1/federationservice/policy_record?policy_record_id="+response.getBody().getPolicyRecordId(), String.class);
-    if(fedRes.getStatusCode().isError()){
+        .getForEntity(
+            "/api/v1/federationservice/policy_record?policy_record_id=" + response.getBody().getPolicyRecordId(),
+            String.class);
+    if (fedRes.getStatusCode().isError()) {
       log.error(fedRes.getBody());
     }
     assertThat(fedRes.getStatusCode()).isEqualTo(HttpStatus.OK);
 
     final SignedJWT signedJWT = SignedJWT.parse(Objects.requireNonNull(fedRes.getBody()));
-    assertEquals(new JOSEObjectType("policy-record+jwt"),signedJWT.getHeader().getType());
+    assertEquals(new JOSEObjectType("policy-record+jwt"), signedJWT.getHeader().getType());
     assertNotNull(signedJWT.getHeader().getKeyID());
 
     final Map<String, Object> claim = signedJWT.getJWTClaimsSet().getJSONObjectClaim("policy_record");
     assertNotNull(claim);
     assertFalse(claim.isEmpty());
-    assertThat( (String)claim.get("policy_record_id")).isNotEmpty();
+    assertThat((String) claim.get("policy_record_id")).isNotEmpty();
     assertNotNull(claim.get("policy"));
-    final Map<String,Object> policyClaim = (Map<String, Object>) claim.get("policy");
+    final Map<String, Object> policyClaim = (Map<String, Object>) claim.get("policy");
     assertNotNull(policyClaim.get("openid_relying_party"));
 
   }
@@ -194,7 +191,7 @@ class FederationServiceApiControllerIT {
 
     final ResponseEntity<String> fedRes = this.restTemplate
         .getForEntity("/api/v1/federationservice/policy_record?policy_record_id=notAnUuid", String.class);
-    if(fedRes.getStatusCode().isError()){
+    if (fedRes.getStatusCode().isError()) {
       log.error(fedRes.getBody());
     }
     assertThat(HttpStatus.BAD_REQUEST).isEqualTo(fedRes.getStatusCode());
@@ -206,33 +203,32 @@ class FederationServiceApiControllerIT {
 
     final ResponseEntity<String> fedRes = this.restTemplate
         .getForEntity("/api/v1/federationservice/policy_record?policy_record_id=" + UUID.randomUUID(), String.class);
-    if(fedRes.getStatusCode().isError()){
+    if (fedRes.getStatusCode().isError()) {
       log.error(fedRes.getBody());
     }
     assertThat(HttpStatus.NOT_FOUND).isEqualTo(fedRes.getStatusCode());
-
 
   }
 
   @Test
   void entityRecordSuccess() throws ParseException {
     final String issuer = "http://tmi.digg.se/" + UUID.randomUUID();
-    final EntityRecord entity = EntityFactory.createDefaultEntity(issuer,"http://sub.digg.se");
+    final EntityRecord entity = EntityFactory.createDefaultEntity(issuer, "http://sub.digg.se");
     entity.setPolicyRecordId(createPolicy());
     final ResponseEntity<EntityRecord> createResponse =
         this.restTemplate.postForEntity("/registry/v1/entities", entity, EntityRecord.class);
     assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
     final ResponseEntity<String> response = this.restTemplate
-        .getForEntity("/api/v1/federationservice/entity_record?iss="+issuer, String.class);
+        .getForEntity("/api/v1/federationservice/entity_record?iss=" + issuer, String.class);
 
-    if(response.getStatusCode().isError()){
+    if (response.getStatusCode().isError()) {
       log.error(response.getBody());
     }
     assertThat(HttpStatus.OK).isEqualTo(response.getStatusCode());
 
     final SignedJWT signedJWT = SignedJWT.parse(Objects.requireNonNull(response.getBody()));
-    assertEquals(new JOSEObjectType("entity-records+jwt"),signedJWT.getHeader().getType());
+    assertEquals(new JOSEObjectType("entity-records+jwt"), signedJWT.getHeader().getType());
     assertNotNull(signedJWT.getHeader().getKeyID());
 
     final List<Object> claim = signedJWT.getJWTClaimsSet().getListClaim("entity_records");
@@ -281,7 +277,6 @@ class FederationServiceApiControllerIT {
     assertFalse(moduleResponse.getTrustMarkIssuers().isEmpty());
     moduleResponse.getTrustMarkIssuers().forEach(TrustMarkIssuerModuleResponse::validate);
 
-
   }
 
   @Test
@@ -289,7 +284,7 @@ class FederationServiceApiControllerIT {
 
     final ResponseEntity<String> response = this.restTemplate
         .getForEntity("/api/v1/federationservice/entity_record?iss=http://notfound.digg.se", String.class);
-    if(response.getStatusCode().isError()){
+    if (response.getStatusCode().isError()) {
       log.error(response.getBody());
     }
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -301,14 +296,14 @@ class FederationServiceApiControllerIT {
 
     final ResponseEntity<String> response = this.restTemplate
         .getForEntity("/api/v1/federationservice/entity_record?iss=f", String.class);
-    if(response.getStatusCode().isError()){
+    if (response.getStatusCode().isError()) {
       log.error(response.getBody());
     }
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
   }
 
-  private String createPolicy(){
+  private String createPolicy() {
     final PolicyRecord policy = PolicyFactory.record();
     // Act
     final ResponseEntity<PolicyRecord> response =

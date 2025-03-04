@@ -19,19 +19,20 @@ import org.springframework.boot.SpringApplication;
 import se.swedenconnect.oidf.entity.registry.fixture.TestContainersConfiguration;
 
 /**
- * This class serves as the entry point for running the Entity Registry Application
- * with additional configuration specified by TestContainersConfiguration.
+ * This class serves as the entry point for running the Entity Registry Application with additional configuration
+ * specified by TestContainersConfiguration.
  * <p>
- * Starting this class instead of the main {@link RegistryApplication} class
- * invokes testcontainers that are set up in {@link TestContainersConfiguration}.
+ * Starting this class instead of the main {@link RegistryApplication} class invokes testcontainers that are set up in
+ * {@link TestContainersConfiguration}.
  * <p>
- * This can be seen as an alternative to running the main {@code EntityRegistryApplication}
- * together with a docker compose set up.
- *
- * @see <a href="https://docs.spring.io/spring-boot/reference/features/dev-services.html#features.dev-services.testcontainers.at-development-time">Testcontainers at development time</a>
+ * This can be seen as an alternative to running the main {@code EntityRegistryApplication} together with a docker
+ * compose set up.
  *
  * @author David Goldring
  * @author Per Fredrik Plars
+ * @see <a
+ *     href="https://docs.spring.io/spring-boot/reference/features/dev-services.html#features.dev-services.testcontainers.at-development-time">Testcontainers
+ *     at development time</a>
  */
 public class TestEntityRegistryApplication {
 
