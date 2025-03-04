@@ -22,11 +22,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * PolicyRepository is a JPA repository interface for accessing and performing
- * CRUD operations on {@link PolicyEntity} entities stored in the database.
+ * PolicyRepository is a JPA repository interface for accessing and performing CRUD operations on {@link PolicyEntity}
+ * entities stored in the database.
  * <p>
- * It extends the {@link JpaRepository} interface which provides JPA related methods
- * for standard data access layers.
+ * It extends the {@link JpaRepository} interface which provides JPA related methods for standard data access layers.
  *
  * @author David Goldring
  * @author Per Fredrik Plars

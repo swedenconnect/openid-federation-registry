@@ -39,14 +39,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  */
 class ErrorHandlerTest {
 
-
-  record TestRecord(String message){
-
-  }
-
   @Test
   void handleMethodArgumentNotValid() throws NoSuchMethodException {
-
 
     final Method method = TestRecord.class.getMethods()[0];
     MethodParameter methodParameter = new MethodParameter(method, 0);
@@ -60,19 +54,22 @@ class ErrorHandlerTest {
     final MethodArgumentNotValidException exception =
         new MethodArgumentNotValidException(methodParameter, bindingResult);
 
-
     final ErrorHandler errorHandler = new ErrorHandler();
 
     final ResponseEntity<Object> responseEntity =
-        errorHandler.handleMethodArgumentNotValid(exception, null, HttpStatusCode.valueOf(400),null);
+        errorHandler.handleMethodArgumentNotValid(exception, null, HttpStatusCode.valueOf(400), null);
 
-    assertEquals(400,responseEntity.getStatusCode().value());
+    assertEquals(400, responseEntity.getStatusCode().value());
     assertNotNull(responseEntity.getBody());
 
     final ProblemDetail error = (ProblemDetail) responseEntity.getBody();
 
     assertNotNull(error.getProperties().get("cause"));
     assertEquals(((List) error.getProperties().get("cause")).size(), 2);
+
+  }
+
+  record TestRecord(String message) {
 
   }
 }

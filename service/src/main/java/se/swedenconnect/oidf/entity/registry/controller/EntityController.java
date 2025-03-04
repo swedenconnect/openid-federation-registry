@@ -38,12 +38,11 @@ import java.util.UUID;
 /**
  * REST Controller for handling entity registry operations.
  * <p>
- * Provides endpoints for creating, retrieving, updating, and deleting entities
- * in the registry. The controller
+ * Provides endpoints for creating, retrieving, updating, and deleting entities in the registry. The controller
  * interacts with the EntityService to perform CRUD operations on entities.
  * <p>
- * The {@link EntityRecord} object is serialized to a JSON structure and saved to some storage with the
- * {@code subject} member of the {@code Entity} object as searchable key.
+ * The {@link EntityRecord} object is serialized to a JSON structure and saved to some storage with the {@code subject}
+ * member of the {@code Entity} object as searchable key.
  *
  * @author David Goldring
  */
@@ -114,7 +113,7 @@ public class EntityController {
   @PutMapping("/{entityRecordId}")
   public EntityRecord updateEntity
   (@PathVariable("entityRecordId") final UUID entityRecordId,
-      final @RequestBody @Validated  EntityRecord entity) {
+      final @RequestBody @Validated EntityRecord entity) {
 
     log.debug("PUT: {}", entity);
     return this.entityService.update(entityRecordId.toString(), entity);

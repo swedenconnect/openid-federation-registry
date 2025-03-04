@@ -19,8 +19,8 @@ import se.swedenconnect.oidf.entity.registry.common.CrudService;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
 /**
- * PolicyService is an interface that extends the CrudService interface and provides
- * CRUD operations specifically for managing JSON Policy objects.
+ * PolicyService is an interface that extends the CrudService interface and provides CRUD operations specifically for
+ * managing JSON Policy objects.
  *
  * @author David Goldring
  */

@@ -115,7 +115,7 @@ public class PolicyController {
   @PutMapping("/{policyRecordId}")
   public PolicyRecord updatePolicy(
       @PathVariable("policyRecordId") final UUID policyRecordId,
-      @RequestBody @Validated  final PolicyRecord policy) {
+      @RequestBody @Validated final PolicyRecord policy) {
     log.debug("PUT: {}", policy);
     if (!policyRecordId.toString().equals(policy.getPolicyRecordId())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PolicyId has to be the same in path and object");

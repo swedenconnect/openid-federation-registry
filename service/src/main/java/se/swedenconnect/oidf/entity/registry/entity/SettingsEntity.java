@@ -97,6 +97,4 @@ public class SettingsEntity extends BaseEntity {
     };
   }
 
-
-
 }

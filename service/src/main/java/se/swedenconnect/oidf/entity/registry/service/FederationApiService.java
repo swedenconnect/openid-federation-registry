@@ -69,6 +69,7 @@ public class FederationApiService {
   private final Duration jwkExpiryDuration;
   private final OptionsCRUDTrustMark trustMarkService;
   private final JWTSupport jwtSupport;
+
   /**
    * Constructs a FederationApiService instance to handle OpenID Connect Federation related operations.
    *
@@ -216,14 +217,14 @@ public class FederationApiService {
    */
   public String submoduleRecord(final UUID instanceId) {
     Assert.notNull(instanceId, "instanceId is mandatory");
-      final String claimName = "module_records";
+    final String claimName = "module_records";
     final String jwt = this.jwtSupport.signJWT(claimName, builder -> builder
             .claim(claimName, this.resolveSubmodules(instanceId))
             .expirationTime(new Date(System.currentTimeMillis() + this.jwkExpiryDuration.toMillis()))
             .issuer(this.jwkIssuer))
         .serialize();
-      log.debug("Submodule Signed JWT: {}", jwt);
-      return jwt;
+    log.debug("Submodule Signed JWT: {}", jwt);
+    return jwt;
 
   }
 

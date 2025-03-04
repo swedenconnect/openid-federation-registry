@@ -19,8 +19,8 @@ import se.swedenconnect.oidf.entity.registry.common.CrudService;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 
 /**
- * EntityService is an interface that extends the CrudService interface and provides
- * CRUD operations specifically for managing {@link EntityRecord} objects identified by a String.
+ * EntityService is an interface that extends the CrudService interface and provides CRUD operations specifically for
+ * managing {@link EntityRecord} objects identified by a String.
  *
  * @author David Goldring
  */

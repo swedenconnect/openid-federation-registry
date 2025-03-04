@@ -58,14 +58,11 @@ class OptionsApiControllerIT {
   @Container
   @ServiceConnection
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
-
+  final ObjectMapper objectMapper = new ObjectMapper();
   @Autowired
   private TestRestTemplate restTemplate;
-
   @Autowired
   private AuditEventRepository auditEventRepository;
-
-  final ObjectMapper objectMapper = new ObjectMapper();
 
   @Test
   public void testOptionsRequest() {
@@ -121,7 +118,6 @@ class OptionsApiControllerIT {
 
     assertFalse(auditEventRepository.find(null, null, OPTIONS_CREATED.name()).isEmpty());
     assertFalse(auditEventRepository.find(null, null, OPTIONS_DELETED.name()).isEmpty());
-
 
   }
 
@@ -179,6 +175,7 @@ class OptionsApiControllerIT {
     assertThat(responseBody.get("TRUSTMARKISSUER").elements().hasNext()).isTrue();
 
   }
+
   @Test
   public void testCRUDTrustMark() throws IOException {
 

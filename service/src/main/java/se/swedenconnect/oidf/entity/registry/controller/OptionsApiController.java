@@ -34,9 +34,8 @@ import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import java.util.UUID;
 
 /**
- * Controller class for managing operations on options-related configurations.
- * Provides endpoints to retrieve, create, update, and delete configurations
- * associated with specific option groups and identifiers.
+ * Controller class for managing operations on options-related configurations. Provides endpoints to retrieve, create,
+ * update, and delete configurations associated with specific option groups and identifiers.
  *
  * @author Per Fredrik Plars
  */
@@ -48,7 +47,7 @@ public class OptionsApiController {
   /**
    * Constructor for the OptionsApiController.
    *
-   * @param optionsCRUDSelector    the selector used for determining CRUD operations-related logic for options.
+   * @param optionsCRUDSelector the selector used for determining CRUD operations-related logic for options.
    */
   public OptionsApiController(final OptionsCRUDSelector optionsCRUDSelector) {
     this.optionsCRUDSelector = optionsCRUDSelector;
@@ -59,8 +58,8 @@ public class OptionsApiController {
    *
    * @param optionsgroup The option group to retrieve the data for.
    * @param identifier The identifier used to fetch the relevant options record.
-   * @return A {@link ResponseEntity} containing the retrieved options record or an
-   * appropriate response in case of an error.
+   * @return A {@link ResponseEntity} containing the retrieved options record or an appropriate response in case of an
+   *     error.
    */
   @GetMapping("/{optionsgroup}/{identifier}")
   public ResponseEntity<?> getOptionalData(
@@ -77,8 +76,8 @@ public class OptionsApiController {
    * Retrieves the configuration template for the specified options group.
    *
    * @param optionsgroup The options group for which the template configuration is to be retrieved.
-   * @return A {@link ResponseEntity} containing the template configuration as an {@link OptionsRecord}
-   *         if found, or a NOT_FOUND status with an error message if the configuration does not exist.
+   * @return A {@link ResponseEntity} containing the template configuration as an {@link OptionsRecord} if found, or a
+   *     NOT_FOUND status with an error message if the configuration does not exist.
    */
   @GetMapping("/{optionsgroup}")
   public ResponseEntity<?> getTemplateConfig(
@@ -101,8 +100,8 @@ public class OptionsApiController {
   }
 
   /**
-   * Updates the configuration for a specific options group and identifier.
-   * Creates or updates an {@link OptionsRecord} based on the provided data.
+   * Updates the configuration for a specific options group and identifier. Creates or updates an {@link OptionsRecord}
+   * based on the provided data.
    *
    * @param optionsgroup The options group to which the configuration belongs.
    * @param identifier The identifier of the specific configuration to update.

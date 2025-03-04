@@ -43,6 +43,16 @@ import java.util.Date;
 public class JwtTestUtils {
 
   /**
+   * If a token is needed for external testing
+   *
+   * @param args No args needed
+   */
+  public static void main(String[] args) {
+    JwtTestUtils jwtTestUtils = new JwtTestUtils();
+    System.out.println(jwtTestUtils.createJwt());
+  }
+
+  /**
    * Generates and signs a JSON Web Token (JWT) with predefined claims and returns it as a serialized string.
    * <p>
    * The JWT is signed using a private key retrieved from the key store. The corresponding public key for checking the
@@ -106,16 +116,6 @@ public class JwtTestUtils {
       throw new RuntimeException(e);
     }
 
-  }
-
-  /**
-   * If a token is needed for external testing
-   *
-   * @param args No args needed
-   */
-  public static void main(String[] args) {
-    JwtTestUtils jwtTestUtils = new JwtTestUtils();
-    System.out.println(jwtTestUtils.createJwt());
   }
 
 }

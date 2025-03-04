@@ -31,13 +31,13 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 @EnableJpaAuditing
 public class RegistryApplication {
 
-	/**
-	 * The main entry point of the Entity Registry Service Application.
-	 *
-	 * @param args command line arguments passed to the application
-	 */
-	public static void main(final String[] args) {
-		SpringApplication.run(RegistryApplication.class, args);
-	}
+  /**
+   * The main entry point of the Entity Registry Service Application.
+   *
+   * @param args command line arguments passed to the application
+   */
+  public static void main(final String[] args) {
+    SpringApplication.run(RegistryApplication.class, args);
+  }
 
 }

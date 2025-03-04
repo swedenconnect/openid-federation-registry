@@ -16,9 +16,8 @@
 package se.swedenconnect.oidf.entity.registry.audit;
 
 /**
- * Enumerates the types of events that can be audited within a registry system.
- * This enumeration supports both write operations (e.g., create, update, delete) and
- * read operations made through the federation API.
+ * Enumerates the types of events that can be audited within a registry system. This enumeration supports both write
+ * operations (e.g., create, update, delete) and read operations made through the federation API.
  *
  * @author Per Fredrik Plars
  */

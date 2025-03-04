@@ -34,9 +34,8 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 /**
- * The PropertyValidators class provides utility methods for creating and resolving
- * property validators based on configuration strings. These validators enforce
- * various constraints and checks on input key-value pairs.
+ * The PropertyValidators class provides utility methods for creating and resolving property validators based on
+ * configuration strings. These validators enforce various constraints and checks on input key-value pairs.
  *
  * @author Per Fredrik Plars
  */
@@ -73,9 +72,9 @@ public class PropertyValidators {
   }
 
   /**
-   * Creates and returns a PropertyValidator based on the provided validator name and configuration.
-   * The validatorNameSetting parameter specifies the type of validator and its configuration,
-   * typically in the format "validatorName:configuration".
+   * Creates and returns a PropertyValidator based on the provided validator name and configuration. The
+   * validatorNameSetting parameter specifies the type of validator and its configuration, typically in the format
+   * "validatorName:configuration".
    *
    * @param validatorNameSetting the type and configuration of the desired validator
    * @return the created PropertyValidator instance for the specified type and configuration
@@ -154,6 +153,7 @@ public class PropertyValidators {
       }
     };
   }
+
   private PropertyValidator validateEndsWith(final String suffix) {
     if (suffix == null || suffix.isBlank()) {
       throw new IllegalArgumentException("ends_with validator requires a suffix");

@@ -1,17 +1,17 @@
 /*
- * Copyright 2024 Sweden Connect.
+ * Copyright 2025 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  limitations under the License.
  */
 package se.swedenconnect.oidf.entity.registry.fixture;
 
@@ -26,14 +26,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The EntityFactoryTest class contains unit tests for the methods in the EntityFactory class.
- * It verifies the behavior of entity creation methods in various scenarios.
+ * The EntityFactoryTest class contains unit tests for the methods in the EntityFactory class. It verifies the behavior
+ * of entity creation methods in various scenarios.
  *
  * @author David Goldring
  */
 public class EntityFactoryTest {
-
-
 
   @Test
   void validateEntityRecordFields() throws Exception {
@@ -41,7 +39,9 @@ public class EntityFactoryTest {
     final EntityRecord entityRecord = EntityFactory.createDefaultEntity();
 
     assertNotNull(entityRecord.getEntityRecordId(), "entityRecordId should not be null");
-    assertTrue(entityRecord.getEntityRecordId().matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"), "entityRecordId should be a valid UUID");
+    assertTrue(entityRecord.getEntityRecordId()
+            .matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"),
+        "entityRecordId should be a valid UUID");
 
     assertNotNull(entityRecord.getIssuer(), "issuer should not be null");
     assertFalse(entityRecord.getIssuer().isEmpty(), "issuer should not be empty");
@@ -50,7 +50,9 @@ public class EntityFactoryTest {
     assertFalse(entityRecord.getSubject().isEmpty(), "subject should not be empty");
 
     assertNotNull(entityRecord.getPolicyRecordId(), "policyRecordId should not be null");
-    assertTrue(entityRecord.getPolicyRecordId().matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"), "policyRecordId should be a valid UUID");
+    assertTrue(entityRecord.getPolicyRecordId()
+            .matches("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"),
+        "policyRecordId should be a valid UUID");
 
     if (entityRecord.getHostedRecord() != null) {
       EntityRecordHostedRecord hostedRecord = entityRecord.getHostedRecord();
@@ -71,7 +73,5 @@ public class EntityFactoryTest {
       assertFalse(jwks.getKeys().isEmpty(), "keys should not be empty");
     }
   }
-
-
 
 }

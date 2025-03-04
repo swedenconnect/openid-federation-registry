@@ -29,8 +29,8 @@ import lombok.Setter;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
 /**
- * TrustMarkSubjectEntity is a JPA entity representing a database table for storing entities
- * as JSON objects with the objects Subject value as key.
+ * TrustMarkSubjectEntity is a JPA entity representing a database table for storing entities as JSON objects with the
+ * objects Subject value as key.
  *
  * @author Per Fredrik Plars
  */
@@ -40,8 +40,22 @@ import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 @NoArgsConstructor
 @Builder(toBuilder = true)
 @Table(name = "trustmark_subject",
-    uniqueConstraints = { @UniqueConstraint(columnNames = { "issuer", "trustmarkId","subject" }) })
+    uniqueConstraints = { @UniqueConstraint(columnNames = { "issuer", "trustmarkId", "subject" }) })
 public class TrustMarkSubjectEntity extends BaseEntity {
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private long id;
+  @Column(name = "external_id", unique = true, updatable = false, nullable = false)
+  private String externalId;
+  @Column(nullable = false)
+  private String issuer;
+  @Column(nullable = false)
+  private String trustmarkId;
+  @Column(nullable = false)
+  private String subject;
+  @Column(columnDefinition = "TEXT", nullable = false)
+  private String trustmarksubjectJson;
+
   /**
    * Constructs a new TrustMarkSubjectEntity with the given parameters.
    *
@@ -62,24 +76,5 @@ public class TrustMarkSubjectEntity extends BaseEntity {
     this.subject = subject;
     this.trustmarksubjectJson = trustmarksubjectJson;
   }
-
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private long id;
-
-  @Column(name="external_id", unique = true, updatable = false,nullable = false)
-  private String externalId;
-
-  @Column(nullable = false)
-  private String issuer;
-
-  @Column(nullable = false)
-  private String trustmarkId;
-
-  @Column(nullable = false)
-  private String subject;
-
-  @Column(columnDefinition = "TEXT", nullable = false)
-  private String trustmarksubjectJson;
 
 }

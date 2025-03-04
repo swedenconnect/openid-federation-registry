@@ -28,8 +28,8 @@ import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 import java.util.UUID;
 
 /**
- * PolicyDao is a JPA entity representing a database table for storing policies
- * as JSON objects with the policy id as key.
+ * PolicyDao is a JPA entity representing a database table for storing policies as JSON objects with the policy id as
+ * key.
  *
  * @author David Goldring
  */

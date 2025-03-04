@@ -35,10 +35,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
- * Unit tests for the FederationApiService class.
- * The FederationApiServiceTest class is responsible for testing the functionality
- * of methods within the FederationApiService, particularly focused on the signing
- * of JSON records and the proper generation and parsing of SignedJWT objects.
+ * Unit tests for the FederationApiService class. The FederationApiServiceTest class is responsible for testing the
+ * functionality of methods within the FederationApiService, particularly focused on the signing of JSON records and the
+ * proper generation and parsing of SignedJWT objects.
  */
 class FederationApiServiceTest {
   final String signKey =

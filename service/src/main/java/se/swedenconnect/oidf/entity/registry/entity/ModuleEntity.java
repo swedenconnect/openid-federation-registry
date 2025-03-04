@@ -59,6 +59,8 @@ public class ModuleEntity extends BaseEntity {
   @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "instance_id", nullable = false)
   private InstanceEntity instance;
+  @OneToMany(mappedBy = "module", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
+  private List<TrustMarkEntity> trustmarks;
 
   /**
    * Retrieves the {@link SettingsEntity} associated with the specified key. The method searches through the list of
@@ -73,7 +75,4 @@ public class ModuleEntity extends BaseEntity {
         .filter(s -> s.getKey().equals(key))
         .findFirst();
   }
-
-  @OneToMany(mappedBy = "module", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
-  private List<TrustMarkEntity> trustmarks;
 }

@@ -26,18 +26,19 @@ import java.util.UUID;
 
 /**
  * Repository interface for managing SettingsEntity.
+ *
  * @author Per Fredrik Plars
  */
 @Repository
 public interface ModuleRepository extends JpaRepository<ModuleEntity, UUID> {
-
 
   /**
    * Retrieves a {@link ModuleEntity} based on the provided external ID and module type.
    *
    * @param moduleId the unique  identifier of the module to search for
    * @param moduleType the type of the module to search for
-   * @return an {@link Optional}*/
+   * @return an {@link Optional}
+   */
   Optional<ModuleEntity> findByModuleIdAndModuleType(UUID moduleId, String moduleType);
 
   /**

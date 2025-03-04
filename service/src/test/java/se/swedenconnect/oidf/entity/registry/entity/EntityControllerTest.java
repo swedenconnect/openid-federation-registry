@@ -49,8 +49,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Test class for the EntityController.
  * <p>
- * This class uses Spring Boot Test framework to load the application context,
- * and Testcontainers for managing an external database container.
+ * This class uses Spring Boot Test framework to load the application context, and Testcontainers for managing an
+ * external database container.
  *
  * @author David Goldring
  */
@@ -60,37 +60,30 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureObservability(tracing = false)
 public class EntityControllerTest {
 
-  @Autowired
-  private MockMvc mockMvc;
-
-  @Autowired
-  private ObjectMapper objectMapper;
-
-  @Autowired
-  private JwtTestUtils jwtTestUtils;
-
   /**
-   * A static instance of MariaDBContainer configured to use the MariaDB 11.2 image.
-   * This container is managed by the test framework and is used to provide
-   * a MariaDB database connection for testing purposes.
-   * Annotated with {@code @Container} to indicate that it is a test container managed
-   * by Testcontainers, and
+   * A static instance of MariaDBContainer configured to use the MariaDB 11.2 image. This container is managed by the
+   * test framework and is used to provide a MariaDB database connection for testing purposes. Annotated with
+   * {@code @Container} to indicate that it is a test container managed by Testcontainers, and
    * <a href="https://docs.spring.io/spring-boot/reference/features/dev-services.html">@ServiceConnection</a>
    * to represent a service connection.
    */
   @Container
   @ServiceConnection
   public static MariaDBContainer<?> mariaDBContainer = new MariaDBContainer<>("mariadb:11.2");
+  @Autowired
+  private MockMvc mockMvc;
+  @Autowired
+  private ObjectMapper objectMapper;
+  @Autowired
+  private JwtTestUtils jwtTestUtils;
 
   /**
    * Tests the creation of an {@code Entity} via HTTP POST request.
    * <p>
-   * This method performs the following steps:
-   * 1. Creates a new {@code Entity} instance.
-   * 2. Sets the subject, location, and policy for the {@code Entity}.
-   * 3. Sends a POST request to the `/registry/v1/entities` endpoint.
-   * 4. Verifies that the response status is HTTP 201 Created.
-   * 5. Validates that the response JSON contains the expected subject value.
+   * This method performs the following steps: 1. Creates a new {@code Entity} instance. 2. Sets the subject, location,
+   * and policy for the {@code Entity}. 3. Sends a POST request to the `/registry/v1/entities` endpoint. 4. Verifies
+   * that the response status is HTTP 201 Created. 5. Validates that the response JSON contains the expected subject
+   * value.
    *
    * @throws Exception if an error occurs during the request or validation
    */
@@ -123,13 +116,11 @@ public class EntityControllerTest {
   /**
    * Tests the retrieval of an {@code Entity} via HTTP GET request.
    * <p>
-   * This method performs the following steps:
-   * 1. Creates a new {@code Entity} instance and sets its subject, location, and policy.
-   * 2. Sends a POST request to the `/registry/v1/entities` endpoint to create the entity.
-   * 3. Verifies that the response status is HTTP 201 Created, indicating the entity was successfully created.
-   * 4. Sends a GET request to the `/registry/v1/entities/{entityId}` endpoint with the subject as an encoded URL parameter.
-   * 5. Verifies that the response status is HTTP 200 OK.
-   * 6. Validates that the JSON response contains the expected subject value.
+   * This method performs the following steps: 1. Creates a new {@code Entity} instance and sets its subject, location,
+   * and policy. 2. Sends a POST request to the `/registry/v1/entities` endpoint to create the entity. 3. Verifies that
+   * the response status is HTTP 201 Created, indicating the entity was successfully created. 4. Sends a GET request to
+   * the `/registry/v1/entities/{entityId}` endpoint with the subject as an encoded URL parameter. 5. Verifies that the
+   * response status is HTTP 200 OK. 6. Validates that the JSON response contains the expected subject value.
    *
    * @throws Exception if an error occurs during the request or validation
    */
@@ -150,7 +141,6 @@ public class EntityControllerTest {
     record.setPolicyRecordId(policyRecord.getPolicyRecordId());
     record.setEntityRecordId(UUID.randomUUID().toString());
 
-
     final MvcResult result = this.mockMvc.perform(post("/registry/v1/entities")
             .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUtils.createJwt())
             .contentType(MediaType.APPLICATION_JSON)
@@ -169,13 +159,11 @@ public class EntityControllerTest {
   /**
    * Tests the update of an {@code Entity} via HTTP PUT request.
    * <p>
-   * This method performs the following steps:
-   * 1. Creates a new {@code Entity} instance and sets its subject, location, and policy.
-   * 2. Sends a POST request to the `/registry/v1/entities` endpoint to create the entity.
-   * 3. Verifies that the response status is HTTP 201 Created, indicating the entity was successfully created.
-   * 4. Updates the location of the {@code Entity}.
-   * 5. Sends a PUT request to the `/registry/v1/entities/{entityId}` endpoint with the updated entity data.
-   * 6. Verifies that the response status is HTTP 200 OK, indicating the entity was successfully updated.
+   * This method performs the following steps: 1. Creates a new {@code Entity} instance and sets its subject, location,
+   * and policy. 2. Sends a POST request to the `/registry/v1/entities` endpoint to create the entity. 3. Verifies that
+   * the response status is HTTP 201 Created, indicating the entity was successfully created. 4. Updates the location of
+   * the {@code Entity}. 5. Sends a PUT request to the `/registry/v1/entities/{entityId}` endpoint with the updated
+   * entity data. 6. Verifies that the response status is HTTP 200 OK, indicating the entity was successfully updated.
    * 7. Validates that the JSON response contains the updated location value.
    *
    * @throws Exception if an error occurs during the request or validation
@@ -196,7 +184,6 @@ public class EntityControllerTest {
     record.setIssuer("http://issuer.swedenconnect.se");
     record.setPolicyRecordId(policyRecord.getPolicyRecordId());
     record.setEntityRecordId(UUID.randomUUID().toString());
-
 
     final MvcResult result = this.mockMvc.perform(post("/registry/v1/entities")
             .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUtils.createJwt())
@@ -219,13 +206,12 @@ public class EntityControllerTest {
   /**
    * Tests the deletion of an {@code Entity} via HTTP DELETE request.
    * <p>
-   * This method performs the following steps:
-   * 1. Generates a random UUID for the entity ID.
-   * 2. Creates a new {@code Entity} instance and sets its subject, location, and policy.
-   * 3. Sends a POST request to the `/registry/v1/entities` endpoint to create the entity.
-   * 4. Verifies that the response status is HTTP 201 Created, indicating the entity was successfully created.
-   * 5. Sends a DELETE request to the `/registry/v1/entities/{entityId}` endpoint with the subject as an encoded URL parameter.
-   * 6. Verifies that the response status is HTTP 204 No Content, indicating the entity was successfully deleted.
+   * This method performs the following steps: 1. Generates a random UUID for the entity ID. 2. Creates a new
+   * {@code Entity} instance and sets its subject, location, and policy. 3. Sends a POST request to the
+   * `/registry/v1/entities` endpoint to create the entity. 4. Verifies that the response status is HTTP 201 Created,
+   * indicating the entity was successfully created. 5. Sends a DELETE request to the `/registry/v1/entities/{entityId}`
+   * endpoint with the subject as an encoded URL parameter. 6. Verifies that the response status is HTTP 204 No Content,
+   * indicating the entity was successfully deleted.
    *
    * @throws Exception if an error occurs during the request or validation
    */
@@ -246,7 +232,6 @@ public class EntityControllerTest {
     record.setPolicyRecordId(policyRecord.getPolicyRecordId());
     record.setEntityRecordId(UUID.randomUUID().toString());
 
-
     this.mockMvc.perform(post("/registry/v1/entities")
             .header(HttpHeaders.AUTHORIZATION, "Bearer " + jwtTestUtils.createJwt())
             .contentType(MediaType.APPLICATION_JSON)
@@ -261,9 +246,8 @@ public class EntityControllerTest {
   /**
    * Tests the retrieval of all {@code Entity} instances via HTTP GET request.
    * <p>
-   * This method performs the following steps:
-   * 1. Sends a GET request to the `/registry/v1/entities` endpoint.
-   * 2. Verifies that the response status is HTTP 200 OK.
+   * This method performs the following steps: 1. Sends a GET request to the `/registry/v1/entities` endpoint. 2.
+   * Verifies that the response status is HTTP 200 OK.
    *
    * @throws Exception if an error occurs during the request or validation
    */
