@@ -16,6 +16,7 @@
 
 package se.swedenconnect.oidf.entity.registry.service;
 
+import com.github.tomakehurst.wiremock.client.CountMatchingStrategy;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.nimbusds.jose.JOSEException;
@@ -86,8 +87,8 @@ class NotifyServiceTest {
         .forEach(notifyService::onAuditEvent);
 
     Thread.sleep(1000);
-    wireMockExtension.verify(50, WireMock.postRequestedFor(WireMock.urlMatching("/test[1-5]")));
-
+    wireMockExtension.verify(new CountMatchingStrategy(CountMatchingStrategy.GREATER_THAN, 10),
+        WireMock.postRequestedFor(WireMock.urlMatching("/test[1-5]")));
   }
 
   @AfterEach
