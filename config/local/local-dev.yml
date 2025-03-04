@@ -47,8 +47,8 @@ spring:
 
 logging:
   level:
-    org.springframework.context.annotation: debug
-    se.swedenconnect.oidf: debug
+    org.springframework.context.annotation: info
+    se.swedenconnect.oidf: info
 
 
 credential:
