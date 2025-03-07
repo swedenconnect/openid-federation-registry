@@ -23,7 +23,6 @@ import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.entity.registry.entity.PolicyEntity;
 import se.swedenconnect.oidf.entity.registry.entity.SettingsEntity;
-import se.swedenconnect.oidf.entity.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.entity.registry.repository.OrganizationRepository;
 import se.swedenconnect.oidf.entity.registry.repository.PolicyRepository;
 import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
@@ -55,14 +54,13 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
   /**
    * Constructs an OptionsCRUDPolicy with the specified repositories and organization supplier.
    *
-   * @param instanceRepository the repository for managing application instances
    * @param settingsRepository the repository for managing settings
    * @param policyRepository the repository for managing policies
    * @param organizationRepository the repository for managing organizations
    * @param userAssignedOrganization a supplier for retrieving the user-assigned organization entity
    */
   public OptionsCRUDPolicy(
-      final InstanceRepository instanceRepository, final SettingsRepository settingsRepository,
+      final SettingsRepository settingsRepository,
       final PolicyRepository policyRepository, final OrganizationRepository organizationRepository,
       final Supplier<OrganizationEntity> userAssignedOrganization) {
     super(settingsRepository, userAssignedOrganization);
@@ -78,8 +76,9 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
   @Override
   public OptionsRecord create(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
     final Optional<PolicyEntity> policyEntity = this.policyRepository.findById(id);
-
     if (policyEntity.isPresent()) {
+      super.throwUnauthorizedIfNotMatch(policyEntity.get().getOrganizationId());
+
       throw new ResponseStatusException(HttpStatus.CONFLICT,
           "POLICIES already exists for:%s %s".formatted(fkKeyType, id));
     }
@@ -109,11 +108,7 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No template found for:%s %s".formatted(fkKeyType, id)));
 
-    if (!policyEntity.getOrganization().getOrganizationId()
-        .equals(getCurrentOrganization().getOrganizationId())) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-          "This policy does not belong to the current organization");
-    }
+    super.throwUnauthorizedIfNotMatch(policyEntity.getOrganizationId());
 
     final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
 
@@ -127,9 +122,10 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
   @Override
   public OptionsRecord get(final FkKeyType fkKeyType, final UUID id) {
     final PolicyEntity policyEntity = this.policyRepository
-        .findById(id)
+        .findByPolicyIdAndOrganizationId(id, getCurrentOrganization().getOrganizationId())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
+    super.throwUnauthorizedIfNotMatch(policyEntity.getOrganizationId());
 
     final List<SettingsEntity> mergeValues = insertValuesInTemplate(
         fkKeyType,
@@ -141,14 +137,9 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
   }
 
   @Override
-  public OptionsRecord template(final FkKeyType fkKeyType) {
-    return toRecord(getTemplateSettings(fkKeyType));
-  }
-
-  @Override
   public OptionsRecord delete(final FkKeyType fkKeyType, final UUID id) {
     final PolicyEntity entity = this.policyRepository
-        .findById(id)
+        .findByPolicyIdAndOrganizationId(id, getCurrentOrganization().getOrganizationId())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
     final List<SettingsEntity> options = deleteSettings(POLICIES, entity.getPolicyId().toString());

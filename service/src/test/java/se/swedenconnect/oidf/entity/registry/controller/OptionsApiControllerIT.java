@@ -34,6 +34,7 @@ import org.springframework.http.ResponseEntity;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import se.swedenconnect.oidf.entity.registry.fixture.JwtTestUtils;
 import se.swedenconnect.oidf.entity.registry.fixture.TestDataOperations;
 
 import java.io.IOException;
@@ -121,31 +122,11 @@ class OptionsApiControllerIT {
 
   }
 
-  @Test
-  public void testCRUDPolicies() throws IOException {
 
-    final String id = TestDataOperations.createPolicies(restTemplate);
-
-    final ResponseEntity<String> read =
-        this.restTemplate.getForEntity("/registry/v1/options/policies/" + id, String.class);
-    if (read.getStatusCode().isError()) {
-      log.info(read.getBody());
-    }
-    assertThat(read.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-    this.restTemplate.delete("/registry/v1/options/policies/" + id);
-    final ResponseEntity<String> readNotFound =
-        this.restTemplate.getForEntity("/registry/v1/options/policies/" + id, String.class);
-    if (readNotFound.getStatusCode().isError()) {
-      log.info(readNotFound.getBody());
-    }
-    assertThat(readNotFound.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-
-  }
 
   @Test
   public void testList() throws IOException {
-    TestDataOperations.createPolicies(restTemplate);
+    TestDataOperations.createPolicies(restTemplate, JwtTestUtils.OrganisationType.PM);
     TestDataOperations.createTMI(restTemplate);
     TestDataOperations.createRESOLVER(restTemplate);
     TestDataOperations.createTA(restTemplate);

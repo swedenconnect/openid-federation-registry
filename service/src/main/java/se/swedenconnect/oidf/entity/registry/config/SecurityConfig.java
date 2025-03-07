@@ -158,7 +158,8 @@ public class SecurityConfig {
   }
 
   /**
-   * The RegistryClaims class extends JwtAuthenticationToken and provides additional information about the authenticated
+   * The RegistryClaims class extends JwtAuthenticationToken and provides additional
+   * information about the authenticated
    * client, including the associated organization and domain prefix.
    */
   @Getter
@@ -167,8 +168,8 @@ public class SecurityConfig {
     private final String domainPrefix;
 
     /**
-     * Constructs a new instance of the RegistryClaims class, which extends JwtAuthenticationToken to include additional
-     * information such as the associated organization and domain prefix.
+     * Constructs a new instance of the RegistryClaims class, which extends JwtAuthenticationToken to
+     * include additional information such as the associated organization and domain prefix.
      *
      * @param jwt the {@link Jwt} object containing the token's claims and headers.
      * @param org the {@link OrganizationEntity} representing the authenticated client's associated organization.

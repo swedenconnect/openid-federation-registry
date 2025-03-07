@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 /**
@@ -56,6 +57,14 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
   protected OrganizationEntity getCurrentOrganization() {
     return Optional.ofNullable(this.userAssignedOrganization.get())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No organization assigned"));
+  }
+
+  protected void throwUnauthorizedIfNotMatch(UUID organizationId) {
+    Optional.ofNullable(this.userAssignedOrganization.get())
+        .map(OrganizationEntity::getOrganizationId)
+        .filter(uuid -> uuid.equals(organizationId))
+        .orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Trying to alter data for other organization"));
   }
 
   protected OptionsRecord toRecord(final List<SettingsEntity> entities) {

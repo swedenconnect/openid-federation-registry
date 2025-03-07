@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +39,7 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPublicKey;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -53,27 +55,28 @@ public class TestDataOperations {
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
-  public static String createPolicies(TestRestTemplate restTemplate) throws JsonProcessingException {
-    final ResponseEntity<String> tmi =
+  public static String createPolicies(TestRestTemplate restTemplate, JwtTestUtils.OrganisationType organisationType)
+      throws JsonProcessingException {
+    final ResponseEntity<String> reply =
         restTemplate.getForEntity("/registry/v1/options/policies", String.class);
-    if (tmi.getStatusCode().isError()) {
-      log.info(tmi.getBody());
+    if (reply.getStatusCode().isError()) {
+      log.info(reply.getBody());
     }
-    assertThat(tmi.getStatusCode()).isEqualTo(HttpStatus.OK);
-    final JsonNode node = objectMapper.readTree(tmi.getBody());
+    assertThat(reply.getStatusCode()).isEqualTo(HttpStatus.OK);
+    final JsonNode node = objectMapper.readTree(reply.getBody());
     final JsonNode data = node.get("option");
 
     data.elements().forEachRemaining(jsonNode -> {
       final ObjectNode valueNode = (ObjectNode) jsonNode;
       ifThen(valueNode, "name", () -> "Ena-Policy");
       ifThen(valueNode, "policy", () -> "{\"signature\":\"HS256\"}");
-      ifThen(valueNode, "organization_id", () -> valueNode.get("options").elements().next().get("key").asText());
     });
 
     final String newTMI = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
     final String id = UUID.randomUUID().toString();
     final HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.set("Authorization", "Bearer " + new JwtTestUtils().createJwt(organisationType));
 
     final ResponseEntity<String> createdTMI =
         restTemplate.postForEntity("/registry/v1/options/policies/" + id, new HttpEntity<>(newTMI, headers),
@@ -83,6 +86,53 @@ public class TestDataOperations {
     }
     assertThat(createdTMI.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     return id;
+  }
+
+  public static String updatePolicies(final TestRestTemplate restTemplate,
+      final JwtTestUtils.OrganisationType organisationType,
+      final String policyId, final Map<String, String> dataToUpdate) throws JsonProcessingException {
+
+    final HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.set("Authorization", "Bearer " + new JwtTestUtils().createJwt(organisationType));
+
+    final HttpEntity<String> entity = new HttpEntity<>(headers);
+
+    final ResponseEntity<String> reply = restTemplate.exchange(
+        "/registry/v1/options/policies/" + policyId,
+        HttpMethod.GET,
+        entity,
+        String.class
+    );
+
+    if (reply.getStatusCode().isError()) {
+      log.info(reply.getBody());
+    }
+    assertThat(reply.getStatusCode()).isEqualTo(HttpStatus.OK);
+    final JsonNode node = objectMapper.readTree(reply.getBody());
+    final JsonNode data = node.get("option");
+
+    data.elements().forEachRemaining(jsonNode -> {
+      final ObjectNode valueNode = (ObjectNode) jsonNode;
+      if (dataToUpdate.containsKey(valueNode.get("key").asText())) {
+        valueNode.put("value", dataToUpdate.get(valueNode.get("key").asText()));
+      }
+    });
+
+    final String newTMI = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
+
+    final ResponseEntity<String> createdTMI =
+        restTemplate.exchange(
+            "/registry/v1/options/policies/" + policyId,
+            HttpMethod.PUT,
+            new HttpEntity<>(newTMI, headers),
+            String.class
+        );
+    if (createdTMI.getStatusCode().isError()) {
+      log.info(createdTMI.getBody());
+    }
+    assertThat(createdTMI.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    return policyId;
   }
 
   public static String createTMI(TestRestTemplate restTemplate) throws JsonProcessingException {
