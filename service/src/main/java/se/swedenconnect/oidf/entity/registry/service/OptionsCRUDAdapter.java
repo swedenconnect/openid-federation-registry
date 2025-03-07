@@ -59,7 +59,7 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No organization assigned"));
   }
 
-  protected void throwUnauthorizedIfNotMatch(UUID organizationId) {
+  protected void throwUnauthorizedIfNotMatch(final UUID organizationId) {
     Optional.ofNullable(this.userAssignedOrganization.get())
         .map(OrganizationEntity::getOrganizationId)
         .filter(uuid -> uuid.equals(organizationId))
@@ -149,7 +149,8 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
     return entities;
   }
 
-  protected void insertSettings(final FkKeyType fkkeytype, final String id,
+  protected void insertSettings(final FkKeyType fkkeytype,
+      final String id,
       final List<SettingsEntity> settingsEntities) {
     settingsEntities.forEach(settingsEntity -> {
       settingsEntity.setFkId(id);

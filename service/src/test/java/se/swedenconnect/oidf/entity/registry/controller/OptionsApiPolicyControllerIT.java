@@ -16,7 +16,6 @@
 
 package se.swedenconnect.oidf.entity.registry.controller;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +35,6 @@ import se.swedenconnect.oidf.entity.registry.fixture.TestDataOperations;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -61,21 +59,40 @@ class OptionsApiPolicyControllerIT {
 
     final String id_skatt = TestDataOperations.createPolicies(restTemplate, JwtTestUtils.OrganisationType.SKATT);
     getPolicy(id_skatt, HttpStatus.OK, JwtTestUtils.OrganisationType.SKATT);
+    delete(id_skatt, HttpStatus.NOT_FOUND, JwtTestUtils.OrganisationType.AF);
+    delete(id_skatt, HttpStatus.OK, JwtTestUtils.OrganisationType.SKATT);
+    getPolicy(id_skatt, HttpStatus.NOT_FOUND, JwtTestUtils.OrganisationType.SKATT);
 
     final String af = TestDataOperations.createPolicies(restTemplate, JwtTestUtils.OrganisationType.AF);
     getPolicy(af, HttpStatus.OK, JwtTestUtils.OrganisationType.AF);
     TestDataOperations.updatePolicies(restTemplate, JwtTestUtils.OrganisationType.AF, af, Map.of("name", "update"));
 
     getPolicy(af, HttpStatus.NOT_FOUND, JwtTestUtils.OrganisationType.PM);
-
-    delete(id_skatt, JwtTestUtils.OrganisationType.SKATT);
-    getPolicy(id_skatt, HttpStatus.NOT_FOUND, JwtTestUtils.OrganisationType.SKATT);
-
   }
 
-  private void delete(final String policy_id, final JwtTestUtils.OrganisationType organisationType) {
+  @Test
+  public void testListPolicies() throws IOException {
+
+    TestDataOperations.createPolicies(restTemplate, JwtTestUtils.OrganisationType.SKATT);
+    TestDataOperations.createPolicies(restTemplate, JwtTestUtils.OrganisationType.SKATT);
+
+    TestDataOperations.createPolicies(restTemplate, JwtTestUtils.OrganisationType.AF);
+    TestDataOperations.createPolicies(restTemplate, JwtTestUtils.OrganisationType.AF);
+
+    String response = getPolicyList(HttpStatus.OK, JwtTestUtils.OrganisationType.SKATT);
+    System.out.println(response);
+
+    String af = getPolicyList(HttpStatus.OK, JwtTestUtils.OrganisationType.AF);
+    System.out.println(af);
+
+    String pm = getPolicyList(HttpStatus.OK, JwtTestUtils.OrganisationType.PM);
+    System.out.println(pm);
+  }
+
+  private void delete(final String policy_id, HttpStatus httpStatus,
+      final JwtTestUtils.OrganisationType organizationType) {
     final HttpHeaders headers = new HttpHeaders();
-    headers.set("Authorization", "Bearer " + new JwtTestUtils().createJwt(organisationType));
+    headers.set("Authorization", "Bearer " + new JwtTestUtils().createJwt(organizationType));
     final HttpEntity<String> entity = new HttpEntity<>(headers);
 
     final ResponseEntity<Void> response = restTemplate.exchange(
@@ -84,7 +101,7 @@ class OptionsApiPolicyControllerIT {
         entity,
         Void.class
     );
-    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(response.getStatusCode()).isEqualTo(httpStatus);
   }
 
   private String getPolicy(String id, HttpStatus httpStatus, JwtTestUtils.OrganisationType organisationType) {
@@ -107,13 +124,13 @@ class OptionsApiPolicyControllerIT {
     return read.getBody();
   }
 
-  private String getPolicyList(String id, HttpStatus httpStatus, JwtTestUtils.OrganisationType organisationType) {
+  private String getPolicyList(HttpStatus httpStatus, JwtTestUtils.OrganisationType organisationType) {
     final HttpHeaders headers = new HttpHeaders();
     headers.set("Authorization", "Bearer " + new JwtTestUtils().createJwt(organisationType));
     final HttpEntity<String> entity = new HttpEntity<>(headers);
 
     final ResponseEntity<String> read = this.restTemplate.exchange(
-        "/registry/v1/options/policies/" + id,
+        "/registry/v1/options/list/policies",
         HttpMethod.GET,
         entity,
         String.class
@@ -125,12 +142,6 @@ class OptionsApiPolicyControllerIT {
 
     assertThat(read.getStatusCode()).isEqualTo(httpStatus);
     return read.getBody();
-  }
-
-  private void ifThen(ObjectNode valueNode, String key, Supplier<String> value) {
-    if (valueNode.get("key").asText().contains(key)) {
-      valueNode.put("value", value.get());
-    }
   }
 
 }
