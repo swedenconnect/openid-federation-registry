@@ -87,7 +87,7 @@ public class SettingsEntity extends BaseEntity {
    */
   public Object castValue() {
     return switch (SettingDataType.valueOf(this.valueDataType)) {
-      case TEXT -> this.value;
+      case TEXT, LARGETEXT -> this.value;
       case OPTIONS -> this.value;
       case BOOLEAN -> Boolean.valueOf(this.value);
       case NUMERIC -> Double.valueOf(this.value);

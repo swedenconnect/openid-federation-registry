@@ -21,17 +21,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.entity.ModuleEntity;
+import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.entity.registry.entity.SettingsEntity;
-import se.swedenconnect.oidf.entity.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.entity.registry.repository.ModuleRepository;
 import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -53,13 +53,13 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
    *
    * @param repository The settings repository used for storing and retrieving settings data.
    * @param moduleRepository The module repository used for managing module entities.
-   * @param instanceRepository The instance repository used for handling instance data.
+   * @param userAssignedOrganization User organization
    */
   public OptionsCRUDModules(
       final SettingsRepository repository,
       final ModuleRepository moduleRepository,
-      final InstanceRepository instanceRepository) {
-    super(instanceRepository, repository);
+      final Supplier<OrganizationEntity> userAssignedOrganization) {
+    super(repository, userAssignedOrganization);
     this.moduleRepository = moduleRepository;
   }
 
@@ -91,7 +91,8 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
     final ModuleEntity newModuleEntity = new ModuleEntity();
     newModuleEntity.setModuleId(id);
     newModuleEntity.setModuleType(fkKeyType.name());
-    this.loadInstanceThrowIfNotExist(validatedInData).ifPresent(newModuleEntity::setInstance);
+    newModuleEntity.setOrganization(super.getCurrentOrganization());
+
 
     final ModuleEntity savedModuleEntity = this.moduleRepository.saveAndFlush(newModuleEntity);
     super.deleteSettings(fkKeyType, savedModuleEntity.getModuleId().toString());
@@ -125,18 +126,14 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
 
     final List<SettingsEntity> mergeValues = insertValuesInTemplate(
         fkKeyType, moduleEntity.getSettingsEntityList());
-    final OptionsRecord optionsRecord = toRecord(mergeValues);
-    this.addOptionsForInstanceID(Objects.requireNonNull(optionsRecord.getOption()));
     //this.validateEntityIdentifier(fkKeyType, optionsRecord.getOption());
-    return optionsRecord;
+    return toRecord(mergeValues);
 
   }
 
   @Override
   public OptionsRecord template(final FkKeyType fkKeyType) {
-    final OptionsRecord optionsRecord = toRecord(getTemplateSettings(fkKeyType));
-    addOptionsForInstanceID(Objects.requireNonNull(optionsRecord.getOption()));
-    return optionsRecord;
+    return toRecord(getTemplateSettings(fkKeyType));
   }
 
   @Override

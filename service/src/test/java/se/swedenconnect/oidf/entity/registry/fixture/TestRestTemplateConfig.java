@@ -39,7 +39,7 @@ public class TestRestTemplateConfig {
   public RestTemplateCustomizer restTemplateCustomizer() {
     return restTemplate -> restTemplate.getInterceptors()
         .add((request, body, execution) -> {
-          final String token = this.jwtTestUtils.createJwt();
+          final String token = this.jwtTestUtils.createJwt("123456789", "Test Organization");
           request.getHeaders().add(HttpHeaders.AUTHORIZATION, "Bearer " + token);
           return execution.execute(request, body);
         });

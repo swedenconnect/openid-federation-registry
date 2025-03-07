@@ -32,11 +32,12 @@ import java.util.UUID;
  */
 public interface PolicyRepository extends JpaRepository<PolicyEntity, UUID> {
   /**
-   * Finds a policy by its name.
+   * Retrieves a {@link PolicyEntity} associated with the specified organization ID.
    *
-   * @param name the unique name of the policy to be found
-   * @return an Optional containing the policy if found, or an empty Optional if no policy with the given name exists
+   * @param organizationId the unique identifier of the organization whose policy is to be retrieved
+   * @return an {@link Optional} containing the {@link PolicyEntity} if found, or an empty {@link Optional}
+   * if no policy exists for the given organization ID
    */
-  Optional<PolicyEntity> findByName(String name);
+  Optional<PolicyEntity> findByOrganizationId(UUID organizationId);
 
 }

@@ -23,6 +23,7 @@ package se.swedenconnect.oidf.entity.registry.entity;
  */
 public enum SettingDataType {
   TEXT,
+  LARGETEXT,
   DATE,
   DATETIME,
   OPTIONS,

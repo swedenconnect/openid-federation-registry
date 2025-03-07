@@ -67,17 +67,7 @@ VALUES ('TEMPLATE',
         'Flyway',
         'Flyway');
 
-INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
-                     last_modified_by)
-VALUES ('TEMPLATE',
-        'TRUSTMARKISSUER',
-        'instance_id',
-        'Instance that this TMS will belong to',
-        'OPTIONS',
-        '',
-        'required',
-        'Flyway',
-        'Flyway');
+
 
 INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
                      last_modified_by)
@@ -104,8 +94,7 @@ select fk_id,
        created_by,
        last_modified_by
 from settings
-where (data_key = 'instance_id'
-    or data_key = 'active'
+where (data_key = 'active'
     or data_key = 'entity-identifier'
     or data_key = 'alias')
   and fk_type = 'TRUSTMARKISSUER';
@@ -123,8 +112,7 @@ select fk_id,
        created_by,
        last_modified_by
 from settings
-where (data_key = 'instance_id'
-    or data_key = 'active'
+where (data_key = 'active'
     or data_key = 'entity-identifier'
     or data_key = 'alias')
   and fk_type = 'TRUSTMARKISSUER';
@@ -142,8 +130,7 @@ select fk_id,
        created_by,
        last_modified_by
 from settings
-where (data_key = 'instance_id'
-    or data_key = 'active'
+where (data_key = 'active'
     or data_key = 'entity-identifier'
     or data_key = 'alias')
   and fk_type = 'TRUSTMARKISSUER';
@@ -202,7 +189,7 @@ VALUES ('TEMPLATE',
 
 
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2025 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -299,78 +286,18 @@ VALUES ('TEMPLATE',
         'POLICIES',
         'policy',
         'Json policy document',
-        'TEXT',
+        'LARGETEXT',
         '',
         'required | json',
         'Flyway',
         'Flyway');
 
 
-INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
-                     last_modified_by)
-VALUES ('TEMPLATE',
-        'POLICIES',
-        'organization_id',
-        'To what organization this policy will belong to',
-        'OPTIONS',
-        '',
-        'required',
-        'Flyway',
-        'Flyway');
-
-INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
-                     last_modified_by)
-VALUES ('TEMPLATE',
-        'ORGANIZATION',
-        'entityid-filter',
-        'Entity filter: https://www.swedenconnect.se/{}',
-        'TEXT',
-        '',
-        'required',
-        'Flyway',
-        'Flyway');
-
-INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
-                     last_modified_by)
-VALUES ('TEMPLATE',
-        'ORGANIZATION',
-        'org-id',
-        'Organization ID',
-        'TEXT',
-        '',
-        'required',
-        'Flyway',
-        'Flyway');
-
-INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
-                     last_modified_by)
-VALUES ('TEMPLATE',
-        'ORGANIZATION',
-        'org-name',
-        'Organization name, ex Swedenconnect',
-        'TEXT',
-        '',
-        'required',
-        'Flyway',
-        'Flyway');
 
 
-INSERT INTO `organization` (`organization_id`,
-                            `entityid_filter`,
-                            `org_id`,
-                            `org_name`,
-                            `created_by`,
-                            `last_modified_by`,
-                            `created_date`,
-                            `last_modified_date`)
-VALUES (UUID(), -- Auto-generate UUID for primary key
-        'https://*.swedenconnect.se/*', -- Sample entityid_filter
-        'ORG12345', -- Test organization ID
-        'DIGG', -- Organization name
-        'test_creator', -- Created by
-        'test_modifier', -- Last modified by
-        CURRENT_TIMESTAMP, -- Created date
-        CURRENT_TIMESTAMP -- Last modified date
-       );
+
+
+
+
 
 

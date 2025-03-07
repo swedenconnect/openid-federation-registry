@@ -141,7 +141,7 @@ public class JpaPolicyService implements PolicyService {
       entity.setName(record.getName());
       Optional.ofNullable(record.getPolicyRecordId()).map(UUID::fromString).ifPresent(entity::setPolicyId);
       // This is temporary
-      this.organizationRepository.findAll().stream().findFirst().ifPresent(entity::setOrganizationEntity);
+      this.organizationRepository.findAll().stream().findFirst().ifPresent(entity::setOrganization);
       return entity;
     }
     catch (final JsonProcessingException e) {

@@ -234,7 +234,9 @@ public class FederationApiService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No instance found for:%s".formatted(instanceid)));
 
-    final List<ModuleEntity> moduleEntities = instanceEntity.getModule();
+    final List<ModuleEntity> moduleEntities = instanceEntity.getOrganizations().stream()
+        .flatMap(organizationEntity -> organizationEntity.getModule().stream())
+        .toList();
 
     final List<Map<String, Object>> tmi = moduleEntities.stream()
         .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(TRUSTMARKISSUER))

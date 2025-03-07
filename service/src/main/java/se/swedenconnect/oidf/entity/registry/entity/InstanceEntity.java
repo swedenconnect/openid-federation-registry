@@ -16,10 +16,11 @@
 
 package se.swedenconnect.oidf.entity.registry.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
@@ -27,7 +28,6 @@ import lombok.Getter;
 import lombok.Setter;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -51,23 +51,20 @@ public class InstanceEntity extends BaseEntity {
   @Column(name = "name")
   private String name;
 
-  @ManyToMany(mappedBy = "instances")
+  @OneToMany(mappedBy = "instance", fetch = FetchType.EAGER, cascade = { CascadeType.ALL })
   private Set<OrganizationEntity> organizations;
 
-  @OneToMany(mappedBy = "instance")
-  private List<ModuleEntity> module;
+  @Column(name = "use_for_default_assignment", nullable = false)
+  private boolean useForDefaultAssignment;
 
   /**
-   * Filters and retrieves a list of {@link ModuleEntity} objects associated with the given foreign key type.
+   * Adds an organization to the set of organizations associated with this instance and sets this instance
+   * as the parent of the provided organization.
    *
-   * @param fkKeyType the foreign key type used to filter {@link ModuleEntity} objects based on their module type
-   * @return a list of {@link ModuleEntity} objects where the module type matches the specified foreign key type
+   * @param organization the {@code OrganizationEntity} to be added to the instance's set of organizations.
    */
-  public List<ModuleEntity> getModuleByFKType(final FkKeyType fkKeyType) {
-    return this.module
-        .stream()
-        .filter(moduleEntity -> moduleEntity.getModuleType().equals(fkKeyType.name()))
-        .toList();
+  public void addOrganization(final OrganizationEntity organization) {
+    this.organizations.add(organization);
+    organization.setInstance(this);
   }
-
 }

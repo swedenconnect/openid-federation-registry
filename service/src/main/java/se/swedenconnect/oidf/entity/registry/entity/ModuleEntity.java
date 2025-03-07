@@ -57,8 +57,9 @@ public class ModuleEntity extends BaseEntity {
   private List<SettingsEntity> settingsEntityList;
 
   @ManyToOne(fetch = FetchType.EAGER)
-  @JoinColumn(name = "instance_id", nullable = false)
-  private InstanceEntity instance;
+  @JoinColumn(name = "organization_id", nullable = false)
+  private OrganizationEntity organization;
+
   @OneToMany(mappedBy = "module", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
   private List<TrustMarkEntity> trustmarks;
 

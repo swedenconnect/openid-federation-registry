@@ -21,10 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.entity.ModuleEntity;
+import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.entity.registry.entity.SettingDataType;
 import se.swedenconnect.oidf.entity.registry.entity.SettingsEntity;
 import se.swedenconnect.oidf.entity.registry.entity.TrustMarkEntity;
-import se.swedenconnect.oidf.entity.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.entity.registry.repository.ModuleRepository;
 import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.entity.registry.repository.TrustMarkRepository;
@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static se.swedenconnect.oidf.entity.registry.entity.FkKeyType.TRUSTMARK;
@@ -63,19 +64,19 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
   /**
    * Constructor for OptionsCRUDTrustMark.
    *
-   * @param instanceRepository the repository for managing instances.
+   * @param userAssignedOrganization Loading current org for this session
    * @param settingsRepository the repository for system settings.
    * @param trustMarkRepository the repository for handling trust marks.
    * @param moduleRepository the repository for managing modules.
    * @param trustMarkSubjectRepository tms repository for managing modules.
    */
   public OptionsCRUDTrustMarkSubject(
-      final InstanceRepository instanceRepository,
+      final Supplier<OrganizationEntity> userAssignedOrganization,
       final SettingsRepository settingsRepository,
       final TrustMarkRepository trustMarkRepository,
       final ModuleRepository moduleRepository,
       final TrustMarkSubjectRepository trustMarkSubjectRepository) {
-    super(instanceRepository, settingsRepository);
+    super(settingsRepository, userAssignedOrganization);
     this.trustMarkRepository = trustMarkRepository;
     this.moduleRepository = moduleRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
@@ -101,7 +102,7 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
     // Create
     final TrustMarkEntity newTrustMarkEntity = new TrustMarkEntity();
     newTrustMarkEntity.setTrustmarkId(id);
-    this.loadModuleThrowIfNotExist(validatedInData).ifPresent(newTrustMarkEntity::setModule);
+    newTrustMarkEntity.setModule(this.loadModuleThrowIfNotExist(validatedInData));
 
     final TrustMarkEntity savedTrustMarkEntity = this.trustMarkRepository.saveAndFlush(newTrustMarkEntity);
     super.deleteSettings(fkKeyType, savedTrustMarkEntity.getTrustmarkId().toString());
@@ -110,9 +111,9 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
     return this.toRecord(validatedInData);
   }
 
-  protected Optional<ModuleEntity> loadModuleThrowIfNotExist(final List<SettingsEntity> dataValues)
+  protected ModuleEntity loadModuleThrowIfNotExist(final List<SettingsEntity> dataValues)
       throws ResponseStatusException {
-    // todo make sure to check for organization
+
     return dataValues.stream()
         .filter(value -> value.getKey().equals("trustmarkissuer_id"))
         .map(SettingsEntity::getValue)
@@ -121,7 +122,11 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
         .map(moduleEntity -> moduleEntity.orElseThrow(() ->
             new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 "Invalid module_id, does not exist")))
-        .findFirst();
+        .filter(moduleEntity -> moduleEntity.getOrganization().getOrganizationId()
+            .equals(getCurrentOrganization().getOrganizationId()))
+        .findFirst()
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            "No trustmarkissuer to assign trustmarks to"));
   }
 
   @Override
@@ -153,7 +158,6 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
         super.getSettingsEntities(TRUSTMARK, trustMarkEntity.getTrustmarkId().toString()));
 
     final OptionsRecord optionsRecord = toRecord(mergeValues);
-    this.addOptionsForInstanceID(Objects.requireNonNull(optionsRecord.getOption()));
     return optionsRecord;
 
   }

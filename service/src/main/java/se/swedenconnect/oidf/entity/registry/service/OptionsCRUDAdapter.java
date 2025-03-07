@@ -19,14 +19,11 @@ package se.swedenconnect.oidf.entity.registry.service;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
-import se.swedenconnect.oidf.entity.registry.entity.InstanceEntity;
-import se.swedenconnect.oidf.entity.registry.entity.SettingDataType;
+import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.entity.registry.entity.SettingsEntity;
-import se.swedenconnect.oidf.entity.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.entity.registry.validation.PropertyValidator;
 import se.swedenconnect.oidf.entity.registry.validation.PropertyValidators;
-import se.swedenconnect.oidf.registry.api.model.OptionRecord;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.Values;
 
@@ -35,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.function.Supplier;
 
 /**
  * Abstract implementation of the {@link OptionsCRUD} interface providing common functionality for managing and
@@ -46,15 +43,19 @@ import java.util.UUID;
  */
 public abstract class OptionsCRUDAdapter implements OptionsCRUD {
 
-  private final InstanceRepository instanceRepository;
   private final SettingsRepository settingsRepository;
   private final PropertyValidators validatorFactory = new PropertyValidators();
-
+  private final Supplier<OrganizationEntity> userAssignedOrganization;
   protected OptionsCRUDAdapter(
-      final InstanceRepository instanceRepository,
-      final SettingsRepository settingsRepository) {
-    this.instanceRepository = instanceRepository;
+      final SettingsRepository settingsRepository,
+      final Supplier<OrganizationEntity> userAssignedOrganization) {
     this.settingsRepository = settingsRepository;
+    this.userAssignedOrganization = userAssignedOrganization;
+  }
+
+  protected OrganizationEntity getCurrentOrganization() {
+    return Optional.ofNullable(this.userAssignedOrganization.get())
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No organization assigned"));
   }
 
   protected OptionsRecord toRecord(final List<SettingsEntity> entities) {
@@ -71,22 +72,6 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
         .build();
   }
 
-  protected void addOptionsForInstanceID(final List<Values> values) {
-    values.stream()
-        .filter(value -> Objects.equals(value.getValueType(), SettingDataType.OPTIONS.name()))
-        .filter(value -> Objects.equals(value.getKey(), "instance_id"))
-        .findFirst()
-        .ifPresent(value -> value.setOptions(this.instanceRepository
-            .findAll()//ToDo: Filter out instance according to your organization regulation
-            .stream()
-            .map(instanceEntity ->
-                OptionRecord.builder()
-                    .key(instanceEntity.getInstanceId().toString())
-                    .value(instanceEntity.getName())
-                    .selected(Objects.equals(value.getValue(), instanceEntity.getInstanceId().toString()))
-                    .build())
-            .toList()));
-  }
 
   protected List<SettingsEntity> getTemplateSettings(final FkKeyType fkkeytype) {
     final List<SettingsEntity> templates = this.settingsRepository.findByFkTypeAndFkId(fkkeytype.name(), "TEMPLATE");
@@ -97,18 +82,9 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
     return templates;
   }
 
-  protected Optional<InstanceEntity> loadInstanceThrowIfNotExist(final List<SettingsEntity> dataValues)
-      throws ResponseStatusException {
-    // todo make sure to check for organization
-    return dataValues.stream()
-        .filter(value -> value.getKey().equals("instance_id"))
-        .map(SettingsEntity::getValue)
-        .map(UUID::fromString)
-        .map(this.instanceRepository::findById)
-        .map(instanceEntity -> instanceEntity.orElseThrow(() ->
-            new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "Invalid instance_id, does not exist in registry")))
-        .findFirst();
+  @Override
+  public OptionsRecord template(final FkKeyType fkKeyType) {
+    return this.toRecord(this.getTemplateSettings(fkKeyType));
   }
 
   protected List<SettingsEntity> insertValuesInTemplate(final FkKeyType fkkeytype,

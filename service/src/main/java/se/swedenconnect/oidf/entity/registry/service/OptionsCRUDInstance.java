@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.entity.InstanceEntity;
+import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.entity.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import static se.swedenconnect.oidf.entity.registry.entity.FkKeyType.INSTANCE;
 
@@ -47,16 +49,19 @@ public class OptionsCRUDInstance extends OptionsCRUDAdapter {
   private final InstanceRepository instanceRepository;
 
   /**
-   * Constructor for the OptionsCRUDInstance class.
+   * Constructs an instance of the OptionsCRUDInstance service, which provides Create, Read, Update, and Delete (CRUD)
+   * functionalities for instances. It also integrates with repositories to manage instance data and user-assigned
+   * organization details.
    *
-   * @param instanceRepository The primary repository for managing instance data.
-   * @param settingsRepository The repository for managing settings data.
-   * @param instanceRepository1 An additional instance repository used for specific operations.
+   * @param instanceRepository the repository used for managing instance-related data
+   * @param settingsRepository the repository used for accessing and managing settings
+   * @param userAssignedOrganization a supplier providing information on the organization assigned to the user
    */
-  public OptionsCRUDInstance(final InstanceRepository instanceRepository, final SettingsRepository settingsRepository,
-      final InstanceRepository instanceRepository1) {
-    super(instanceRepository, settingsRepository);
-    this.instanceRepository = instanceRepository1;
+  public OptionsCRUDInstance(final InstanceRepository instanceRepository,
+      final SettingsRepository settingsRepository,
+      final Supplier<OrganizationEntity> userAssignedOrganization) {
+    super(settingsRepository, userAssignedOrganization);
+    this.instanceRepository = instanceRepository;
   }
 
   @Override

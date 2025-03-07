@@ -49,7 +49,7 @@ public class JwtTestUtils {
    */
   public static void main(String[] args) {
     JwtTestUtils jwtTestUtils = new JwtTestUtils();
-    System.out.println(jwtTestUtils.createJwt());
+    System.out.println(jwtTestUtils.createJwt("123456789", "Test Organization"));
   }
 
   /**
@@ -71,7 +71,7 @@ public class JwtTestUtils {
    * @return A serialized representation of the signed JWT.
    * @throws RuntimeException if an error occurs during the JWT creation or signing process.
    */
-  public String createJwt() {
+  public String createJwt(String orgNumber, String orgName) {
     try {
       final JWTClaimsSet claims = new com.nimbusds.jwt.JWTClaimsSet.Builder()
           .subject("test-user")
@@ -82,6 +82,9 @@ public class JwtTestUtils {
           .claim("scope", "entity_read entity_write policies_read policies_write "
               + "trustmarksubject_read trustmarksubject_write "
               + "options_read options_update options_delete options_create")
+          .claim("orgNumber", orgNumber)
+          .claim("orgName", orgName)
+          .claim("entity_prefix", "http://test.org/entity/")
           .build();
 
       final RSASSASigner signer = new RSASSASigner(getPrivateKeyFromKeyStore());

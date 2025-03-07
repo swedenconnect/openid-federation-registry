@@ -39,8 +39,11 @@ import java.util.UUID;
 @Table(name = "policies")
 public class PolicyEntity extends BaseEntity {
   @Id
-  @Column(name = "policyId", unique = true, updatable = false, nullable = false)
+  @Column(name = "policy_id", unique = true, updatable = false, nullable = false)
   private UUID policyId;
+
+  @Column(name = "organization_id", insertable = false, updatable = false, nullable = false)
+  private UUID organizationId;
 
   @Column
   private String name;
@@ -50,7 +53,7 @@ public class PolicyEntity extends BaseEntity {
 
   @ManyToOne
   @JoinColumn(name = "organization_id")
-  private OrganizationEntity organizationEntity;
+  private OrganizationEntity organization;
 
 }
 

@@ -100,7 +100,6 @@ public class TestDataOperations {
       ifThen(valueNode, "active", () -> "true");
       ifThen(valueNode, "entity-identifier", () -> "http://www.swedenconnect.se/issuer");
       ifThen(valueNode, "alias", () -> "tmi");
-      ifThen(valueNode, "instance_id", () -> valueNode.get("options").elements().next().get("key").asText());
     });
 
     final String newTMI = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);

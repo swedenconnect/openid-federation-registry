@@ -68,33 +68,36 @@ CREATE TABLE IF NOT EXISTS settings
 -- Instance table
 CREATE TABLE IF NOT EXISTS `instance`
 (
-    `instance_id` UUID NOT NULL,
-    `name`               VARCHAR(255) NULL,
-    `created_by`         VARCHAR(255) NOT NULL,
-    `last_modified_by`   VARCHAR(255) NOT NULL,
-    `created_date`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `last_modified_date` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `instance_id`                UUID         NOT NULL,
+    `name`                       VARCHAR(255) NULL,
+    `use_for_default_assignment` VARCHAR(255) NULL,
+    `created_by`                 VARCHAR(255) NOT NULL,
+    `last_modified_by`           VARCHAR(255) NOT NULL,
+    `created_date`               DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `last_modified_date`         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`instance_id`)
 ) ENGINE=InnoDB;
 
 -- Organization table
 CREATE TABLE IF NOT EXISTS `organization`
 (
-    `organization_id` UUID NOT NULL DEFAULT (UUID()),
-    `entityid_filter`    VARCHAR(255) NULL COMMENT 'What type of entityid that can be used. ex https://*.swedenconnect.se/*',
-    `org_id`             VARCHAR(255) NULL COMMENT 'Org id that matches the claim in JWT token.',
-    `org_name`           VARCHAR(255) NULL COMMENT 'Org nam that matches the claim in JWT token. Ex DIGG,KALIXKOMMUN',
-    `created_by`         VARCHAR(255) NOT NULL,
-    `last_modified_by`   VARCHAR(255) NOT NULL,
-    `created_date`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `last_modified_date` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (`organization_id`)
+    `organization_id`    UUID                NOT NULL DEFAULT (UUID()),
+    `instance_id`        UUID                NOT NULL,
+    `org_number`         VARCHAR(255) UNIQUE NOT NULL COMMENT 'Org id that matches the claim in JWT token.',
+    `org_name`           VARCHAR(255)        NULL COMMENT 'Org name that matches the claim in JWT token.',
+    `created_by`         VARCHAR(255)        NOT NULL,
+    `last_modified_by`   VARCHAR(255)        NOT NULL,
+    `created_date`       DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `last_modified_date` DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`organization_id`),
+    FOREIGN KEY (`instance_id`) REFERENCES `instance` (`instance_id`)
+
 ) ENGINE=InnoDB;
 
 -- Policies table
 CREATE TABLE IF NOT EXISTS policies
 (
-    policy_id          UUID         NOT NULL PRIMARY KEY,
+    policy_id UUID NOT NULL DEFAULT (UUID()),
     organization_id    UUID         NOT NULL,
     name               varchar(255) NOT NULL,
     policy             TEXT         NOT NULL,
@@ -103,38 +106,24 @@ CREATE TABLE IF NOT EXISTS policies
     created_by         VARCHAR(255) NOT NULL,
     last_modified_by   VARCHAR(255) NOT NULL,
 
-    FOREIGN KEY (organization_id) REFERENCES organization (organization_id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
+    PRIMARY KEY (`policy_id`),
+    FOREIGN KEY (`organization_id`) REFERENCES `organization` (`organization_id`)
 
 ) ENGINE=InnoDB;
 
--- Organization instance link table
-CREATE TABLE IF NOT EXISTS `organization_instance_link`
-(
-    `organization_id`    UUID     NOT NULL,
-    `instance_id`        UUID     NOT NULL,
-    `created_date`       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `last_modified_date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (`organization_id`, `instance_id`),
-    CONSTRAINT fk_org_instance_organization FOREIGN KEY (`organization_id`)
-        REFERENCES `organization` (`organization_id`) ON DELETE CASCADE,
-    CONSTRAINT fk_org_instance_instance FOREIGN KEY (`instance_id`)
-        REFERENCES `instance` (`instance_id`) ON DELETE CASCADE
-) ENGINE=InnoDB;
 
 -- Module table
 CREATE TABLE IF NOT EXISTS `module`
 (
-    `module_id`   UUID NOT NULL DEFAULT (UUID()),
-    `instance_id` UUID NOT NULL,
+    `module_id`          UUID         NOT NULL DEFAULT (UUID()),
+    `organization_id`    UUID         NOT NULL,
     `module_type`        VARCHAR(255),
     `created_by`         VARCHAR(255) NOT NULL,
     `last_modified_by`   VARCHAR(255) NOT NULL,
     `created_date`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `last_modified_date` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`module_id`),
-    FOREIGN KEY (`instance_id`) REFERENCES `instance` (`instance_id`)
+    FOREIGN KEY (`organization_id`) REFERENCES `organization` (`organization_id`)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS `trustmark`
