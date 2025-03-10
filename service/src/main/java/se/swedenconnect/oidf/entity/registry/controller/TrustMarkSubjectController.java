@@ -46,6 +46,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/registry/v1/trustmarksubjects")
+@Deprecated
 public class TrustMarkSubjectController {
 
   /**

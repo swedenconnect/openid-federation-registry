@@ -80,6 +80,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
         .findByModuleIdAndModuleType(id, fkKeyType.name());
 
     if (moduleEntity.isPresent()) {
+      super.throwUnauthorizedIfNotMatch(moduleEntity.get().getOrganization().getOrganizationId());
       throw new ResponseStatusException(HttpStatus.CONFLICT,
           "Module already exists for:%s %s".formatted(fkKeyType, id));
     }
@@ -105,6 +106,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
   public OptionsRecord update(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
     final ModuleEntity moduleEntity = this.moduleRepository
         .findByModuleIdAndModuleType(id, fkKeyType.name())
+        .filter(super.hasRightOrganizationIdModulePredicate())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No template found for:%s %s".formatted(fkKeyType, id)));
 
@@ -123,17 +125,11 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
         .findByModuleIdAndModuleType(id, fkKeyType.name())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
-
+    super.throwUnauthorizedIfNotMatch(moduleEntity.getOrganization().getOrganizationId());
     final List<SettingsEntity> mergeValues = insertValuesInTemplate(
         fkKeyType, moduleEntity.getSettingsEntityList());
     //this.validateEntityIdentifier(fkKeyType, optionsRecord.getOption());
     return toRecord(mergeValues);
-
-  }
-
-  @Override
-  public OptionsRecord template(final FkKeyType fkKeyType) {
-    return toRecord(getTemplateSettings(fkKeyType));
   }
 
   @Override
@@ -142,6 +138,8 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
         .findByModuleIdAndModuleType(id, fkKeyType.name())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
+    super.throwUnauthorizedIfNotMatch(moduleEntity.getOrganization().getOrganizationId());
+
     this.moduleRepository.delete(moduleEntity);
     return this.toRecord(moduleEntity.getSettingsEntityList());
   }
@@ -151,6 +149,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
 
     return this.moduleRepository.findByModuleType(fkKeyType.name())
         .stream()
+        .filter(super.hasRightOrganizationIdModulePredicate())
         .map(entity -> {
               final Map<String, Object> e = entity.getSettingsEntityList()
                   .stream()
@@ -162,9 +161,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
               return e;
             }
         )
-
         .toList();
-
   }
 }
 

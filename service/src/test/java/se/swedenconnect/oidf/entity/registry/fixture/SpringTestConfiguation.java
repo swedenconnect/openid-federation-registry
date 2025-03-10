@@ -16,7 +16,6 @@
 
 package se.swedenconnect.oidf.entity.registry.fixture;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.client.RestTemplateCustomizer;
 import org.springframework.context.annotation.Bean;
@@ -24,24 +23,26 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 
 /**
- * Test configuration for adding a selfmade and self-signed token to the {@link TestRestTemplate} used for integration
- * tests.
+ * Spring test configurations
  *
- * @author David Goldring
+ * @author Per Fredrik Plars
  */
 @Configuration
-public class TestRestTemplateConfig {
-
-  @Autowired
-  JwtTestUtils jwtTestUtils;
+public class SpringTestConfiguation {
 
   @Bean
-  public RestTemplateCustomizer restTemplateCustomizer() {
+  public RestTemplateCustomizer restTemplateCustomizer(final JwtTestUtils jwtTestUtils) {
     return restTemplate -> restTemplate.getInterceptors()
         .add((request, body, execution) -> {
-          final String token = this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.PM);
+          final String token = jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.PM);
           request.getHeaders().add(HttpHeaders.AUTHORIZATION, "Bearer " + token);
           return execution.execute(request, body);
         });
   }
+
+  @Bean
+  public TestDataOperations testDataOperations(TestRestTemplate restTemplate) {
+    return new TestDataOperations(restTemplate);
+  }
+
 }

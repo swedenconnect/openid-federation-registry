@@ -38,7 +38,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -174,7 +173,7 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
         .ifPresent(value ->
             value.setOptions(this.moduleRepository.findByModuleType(FkKeyType.TRUSTMARKISSUER.name())
                 .stream()
-                .filter(this.hasRightOrganizationIdPredicate())
+                .filter(this.hasRightOrganizationIdModulePredicate())
 
                 .map(entity ->
                     OptionRecord.builder()
@@ -231,7 +230,7 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
   public List<Map<String, Object>> listByModuleId(final UUID moduleId) {
     return this.moduleRepository.findByModuleIdAndModuleType(moduleId, FkKeyType.TRUSTMARKISSUER.name())
         .stream()
-        .filter(this.hasRightOrganizationIdPredicate())
+        .filter(this.hasRightOrganizationIdModulePredicate())
         .flatMap(moduleEntity -> Streams.of(moduleEntity.getTrustmarks()))
         .map(TrustMarkEntity::getTrustmarkId)
         .map(trustmarkid -> {
@@ -246,11 +245,6 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
             }
         )
         .toList();
-  }
-
-  private Predicate<ModuleEntity> hasRightOrganizationIdPredicate() {
-    return entity -> Objects.equals(getCurrentOrganization().getOrganizationId(),
-        entity.getOrganization().getOrganizationId());
   }
 
 }

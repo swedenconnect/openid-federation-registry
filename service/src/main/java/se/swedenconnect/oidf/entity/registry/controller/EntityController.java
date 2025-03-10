@@ -49,6 +49,7 @@ import java.util.UUID;
 @Slf4j
 @RestController
 @RequestMapping("/registry/v1/entities")
+@Deprecated
 public class EntityController {
 
   private final EntityService entityService;

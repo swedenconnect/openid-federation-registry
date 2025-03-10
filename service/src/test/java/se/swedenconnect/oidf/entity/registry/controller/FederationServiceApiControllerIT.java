@@ -37,6 +37,7 @@ import se.swedenconnect.oidf.entity.registry.federationserviceapi.ResolverModule
 import se.swedenconnect.oidf.entity.registry.federationserviceapi.TrustAnchorModuleResponse;
 import se.swedenconnect.oidf.entity.registry.federationserviceapi.TrustMarkIssuerModuleResponse;
 import se.swedenconnect.oidf.entity.registry.fixture.EntityFactory;
+import se.swedenconnect.oidf.entity.registry.fixture.JwtTestUtils;
 import se.swedenconnect.oidf.entity.registry.fixture.PolicyFactory;
 import se.swedenconnect.oidf.entity.registry.fixture.TestDataOperations;
 import se.swedenconnect.oidf.registry.api.model.EntityRecord;
@@ -75,6 +76,9 @@ class FederationServiceApiControllerIT {
 
   @Autowired
   private RegistryProperties registryProperties;
+
+  @Autowired
+  private TestDataOperations testDataOperations;
 
   @Test
   void trustMarkRecordNotFound() {
@@ -239,10 +243,16 @@ class FederationServiceApiControllerIT {
 
   @Test
   void submoduleRecordSuccess() throws ParseException, JsonProcessingException {
-    final String tmiId = TestDataOperations.createTMI(restTemplate);
-    TestDataOperations.createTrustMark(restTemplate, UUID.fromString(tmiId));
-    TestDataOperations.createTA(restTemplate);
-    TestDataOperations.createRESOLVER(restTemplate);
+    final UUID tmiId = testDataOperations.createTMI(JwtTestUtils.OrganisationType.PM);
+
+    testDataOperations.createTrustMark(
+        UUID.randomUUID(),
+        JwtTestUtils.OrganisationType.PM,
+        HttpStatus.CREATED,
+        TestDataOperations.defaultTrustMark(tmiId));
+
+    testDataOperations.createTA();
+    testDataOperations.createRESOLVER();
 
     final String instanceId = registryProperties.instances().stream().findFirst()
         .map(instanceProperties -> instanceProperties.instanceId().toString()).orElseThrow();

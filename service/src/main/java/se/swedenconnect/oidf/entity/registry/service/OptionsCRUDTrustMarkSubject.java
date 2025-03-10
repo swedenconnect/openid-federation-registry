@@ -92,6 +92,7 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
     final Optional<TrustMarkEntity> trustMarkEntity = this.trustMarkRepository.findById(id);
 
     if (trustMarkEntity.isPresent()) {
+      super.throwUnauthorizedIfNotMatch(trustMarkEntity.get().getModule().getOrganization().getOrganizationId());
       throw new ResponseStatusException(HttpStatus.CONFLICT,
           "TrustMark already exists for:%s %s".formatted(fkKeyType, id));
     }
@@ -122,8 +123,7 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
         .map(moduleEntity -> moduleEntity.orElseThrow(() ->
             new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 "Invalid module_id, does not exist")))
-        .filter(moduleEntity -> moduleEntity.getOrganization().getOrganizationId()
-            .equals(getCurrentOrganization().getOrganizationId()))
+        .filter(super.hasRightOrganizationIdModulePredicate())
         .findFirst()
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
             "No trustmarkissuer to assign trustmarks to"));
@@ -135,7 +135,7 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
         .findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No template found for:%s %s".formatted(fkKeyType, id)));
-
+    super.throwUnauthorizedIfNotMatch(trustMarkEntity.getModule().getOrganization().getOrganizationId());
     final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
 
     final List<SettingsEntity> validatedInData = this.createAndValidateInputData(template, record.getOption());
@@ -152,6 +152,7 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
         .findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
+    super.throwUnauthorizedIfNotMatch(trustMarkEntity.getModule().getOrganization().getOrganizationId());
 
     final List<SettingsEntity> mergeValues = insertValuesInTemplate(
         fkKeyType,
@@ -177,6 +178,7 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
         .ifPresent(value ->
             value.setOptions(this.moduleRepository.findByModuleType(FK_KEY_TYPE.name())
                 .stream()
+                .filter(super.hasRightOrganizationIdModulePredicate())
                 .map(entity ->
                     OptionRecord.builder()
                         .key(entity.getModuleId().toString())
@@ -192,6 +194,7 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
         .findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
+    super.throwUnauthorizedIfNotMatch(trustMarkEntity.getModule().getOrganization().getOrganizationId());
     final List<SettingsEntity> deletedSettings =
         super.deleteSettings(fkKeyType, trustMarkEntity.getTrustmarkId().toString());
     this.trustMarkRepository.delete(trustMarkEntity);
@@ -203,6 +206,8 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
   public List<Map<String, Object>> list(final FkKeyType fkKeyType) {
     return this.trustMarkRepository.findAll()
         .stream()
+        .filter(entity -> Objects.equals(entity.getModule().getOrganization().getOrganizationId(),
+            getCurrentOrganization().getOrganizationId()))
         .map(entity -> {
               final Map<String, Object> e = super.getSettingsEntities(fkKeyType, entity.getTrustmarkId().toString())
                   .stream()

@@ -35,6 +35,7 @@ import java.util.Optional;
  * @author Per Fredrik Plars
  */
 @Slf4j
+@Deprecated
 public class JpaTrustMarkSubjectService implements TrustMarkSubjectService {
   private final TrustMarkSubjectRepository repository;
   private final ObjectMapper objectMapper;

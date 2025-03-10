@@ -46,6 +46,7 @@ import java.util.UUID;
 @Slf4j
 @RestController
 @RequestMapping("/registry/v1/policies")
+@Deprecated
 public class PolicyController {
 
   /**
