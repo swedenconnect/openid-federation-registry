@@ -73,7 +73,7 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   public void policyWrite(final String policyId, final PolicyRecord oldRecord, final PolicyRecord newRecord) {
     this.emitEvent(
         FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.POLICY_CREATE_UPDATED)
+            .event(RegistryAuditEventType.OPTIONS_UPDATE)
             .extId(newRecord.getPolicyRecordId())
             .oldData(this.toJson(oldRecord))
             .newData(this.toJson(newRecord))
@@ -84,7 +84,7 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   public void policyDelete(final String policyId, final PolicyRecord deletedRecord) {
     this.emitEvent(
         FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.POLICY_DELETED)
+            .event(RegistryAuditEventType.OPTIONS_DELETED)
             .extId(deletedRecord.getPolicyRecordId())
             .oldData(this.toJson(deletedRecord))
             .build());
@@ -94,7 +94,7 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   public void entityWrite(final String entityId, final EntityRecord oldRecord, final EntityRecord newRecord) {
     this.emitEvent(
         FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.ENTITY_CREATED_UPDATE)
+            .event(RegistryAuditEventType.OPTIONS_UPDATE)
             .issuer(newRecord.getIssuer())
             .subject(newRecord.getSubject())
             .extId(entityId)
@@ -107,7 +107,7 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   public void entityDelete(final String entityId, final EntityRecord deletedRecord) {
     this.emitEvent(
         FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.ENTITY_DELETED)
+            .event(RegistryAuditEventType.OPTIONS_DELETED)
             .extId(entityId)
             .oldData(this.toJson(deletedRecord))
             .build());
@@ -118,7 +118,7 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
       final TrustMarkSubjectRecord newRecord) {
     this.emitEvent(
         FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.TRUSTMARK_SUBJECT_CREATE_UPDATE)
+            .event(RegistryAuditEventType.OPTIONS_CREATED)
             .extId(trustmarkId)
             .oldData(this.toJson(oldRecord))
             .newData(this.toJson(newRecord))
@@ -130,7 +130,7 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   public void trustmarkSubjectDelete(final String trustmarkId, final TrustMarkSubjectRecord deletedRecord) {
     this.emitEvent(
         FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.ENTITY_DELETED)
+            .event(RegistryAuditEventType.OPTIONS_DELETED)
             .trustMarkId(deletedRecord.getTrustMarkId())
             .extId(trustmarkId)
             .oldData(this.toJson(deletedRecord))

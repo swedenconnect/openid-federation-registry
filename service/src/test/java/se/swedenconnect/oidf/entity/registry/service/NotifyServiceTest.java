@@ -80,7 +80,7 @@ class NotifyServiceTest {
   void testNotifyServiceWithWireMock() throws InterruptedException {
     Stream.generate(() -> FederationAuditEvent.builder()
             .fkKeyType(FkKeyType.TRUSTMARKSUBJECT)
-            .event(RegistryAuditEventType.ENTITY_CREATED_UPDATE)
+            .event(RegistryAuditEventType.OPTIONS_UPDATE)
             .optionId(UUID.randomUUID())
             .build())
         .limit(10)

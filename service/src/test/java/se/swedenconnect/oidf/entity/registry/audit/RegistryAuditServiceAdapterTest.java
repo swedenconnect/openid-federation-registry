@@ -50,14 +50,14 @@ class RegistryAuditServiceAdapterTest {
 
     final PolicyRecord record = PolicyFactory.record();
     auditService.policyWrite("pid", record, record);
-    assertEquals(stack.peek().getType(), RegistryAuditEventType.POLICY_CREATE_UPDATED.name());
+    assertEquals(stack.peek().getType(), RegistryAuditEventType.OPTIONS_UPDATE.name());
     assertNull(stack.peek().getData().get("oldData"));
     assertNotNull(stack.peek().getData().get("newData"));
     assertNotNull(stack.peek().getData().get("extId"));
 
     final PolicyRecord newRecord = PolicyFactory.record();
     auditService.policyWrite("pid", record, newRecord);
-    assertEquals(stack.peek().getType(), RegistryAuditEventType.POLICY_CREATE_UPDATED.name());
+    assertEquals(stack.peek().getType(), RegistryAuditEventType.OPTIONS_UPDATE.name());
     assertNotNull(stack.peek().getData().get("oldData"));
     assertNotNull(stack.peek().getData().get("newData"));
     assertNotNull(stack.peek().getData().get("extId"));

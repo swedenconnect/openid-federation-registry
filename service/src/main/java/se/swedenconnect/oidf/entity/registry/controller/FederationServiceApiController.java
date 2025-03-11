@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.entity.registry.service.FederationApiService;
 
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -49,28 +48,23 @@ public class FederationServiceApiController {
   }
 
   /**
-   * Getting a trust_mark sub record
+   * Retrieves trust mark information for a specific instance using the provided instance identifier.
    *
-   * @param issuer Issuer is mandatory
-   * @param trustmarkId Trustmark is mandatory
-   * @param subject Subject is optional
-   * @return SignedJWT with a claim for trust_mark
+   * @param instanceid the unique identifier for the instance in UUID format.
+   * @return a signed JWT containing the trust mark details.
    */
-  @GetMapping(value = "/trustmarksubject_record", produces = "application/jwt")
+  @GetMapping(value = "/trustmarks_record", produces = "application/jwt")
   public String trustMarkRecord(
-      @RequestParam(name = "iss") final String issuer,
-      @RequestParam(name = "trustmark_id") final String trustmarkId,
-      @RequestParam(name = "sub", required = false) final String subject) {
+      @RequestParam(name = "instanceid") final UUID instanceid) {
 
-    return this.federationApiService.trustMarkRecord(new EntityID(issuer), trustmarkId,
-        Optional.ofNullable(subject).filter(s -> !s.isBlank()));
+    return this.federationApiService.trustMarkRecord(instanceid);
   }
 
   /**
-   * Getting policy by there policy_record_id
+   * Retrieves a policy record using the provided policy record identifier.
    *
-   * @param policyRecordId PolicyRecordId for this record
-   * @return SignedJWT with a claim for policy_record
+   * @param policyRecordId the unique identifier for the policy record in UUID format.
+   * @return a signed JWT containing the policy record details.
    */
   @GetMapping(value = "/policy_record", produces = "application/jwt")
   public String policyRecord(@RequestParam(name = "policy_record_id") final UUID policyRecordId) {

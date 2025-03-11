@@ -129,7 +129,7 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
 
     final List<SettingsEntity> mergeValues = insertValuesInTemplate(
         fkKeyType,
-        super.getSettingsEntities(POLICIES, policyEntity.getPolicyId().toString()));
+        super.getSettingsEntities(POLICIES, policyEntity.getPolicyId()));
 
     final OptionsRecord optionsRecord = toRecord(mergeValues);
     return optionsRecord;
@@ -153,7 +153,7 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
     return this.policyRepository.findByOrganizationId(super.getCurrentOrganization().getOrganizationId())
         .stream()
         .map(entity -> {
-              final Map<String, Object> e = super.getSettingsEntities(POLICIES, entity.getPolicyId().toString())
+          final Map<String, Object> e = super.getSettingsEntities(POLICIES, entity.getPolicyId())
                   .stream()
                   .collect(Collectors.toMap(
                       SettingsEntity::getKey,

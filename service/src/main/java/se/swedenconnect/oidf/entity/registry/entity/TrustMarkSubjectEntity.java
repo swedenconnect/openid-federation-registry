@@ -15,11 +15,13 @@
  */
 package se.swedenconnect.oidf.entity.registry.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.Builder;
@@ -27,6 +29,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
+
+import java.util.UUID;
 
 /**
  * TrustMarkSubjectEntity is a JPA entity representing a database table for storing entities as JSON objects with the
@@ -42,39 +46,45 @@ import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 @Table(name = "trustmark_subject",
     uniqueConstraints = { @UniqueConstraint(columnNames = { "issuer", "trustmarkId", "subject" }) })
 public class TrustMarkSubjectEntity extends BaseEntity {
+
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private long id;
-  @Column(name = "external_id", unique = true, updatable = false, nullable = false)
-  private String externalId;
-  @Column(nullable = false)
-  private String issuer;
-  @Column(nullable = false)
-  private String trustmarkId;
-  @Column(nullable = false)
-  private String subject;
-  @Column(columnDefinition = "TEXT", nullable = false)
-  private String trustmarksubjectJson;
+  @Column(name = "trustmarksubject_id", nullable = false, updatable = false)
+  private UUID trustmarksubjectId;
 
   /**
-   * Constructs a new TrustMarkSubjectEntity with the given parameters.
+   * Constructs a new TrustMarkSubjectEntity with the specified trustmarksubjectId and associated TrustMarkEntity.
    *
-   * @param id the unique identifier for the entity
-   * @param externalId a unique, unmodifiable external identifier for the entity
-   * @param issuer the issuer of the trustmark
-   * @param trustmarkId the identifier of the trustmark
-   * @param subject the subject value associated with the trustmark
-   * @param trustmarksubjectJson the JSON representation of the trustmark subject entity
+   * @param trustmarksubjectId the unique identifier for the TrustMarkSubjectEntity
+   * @param trustMark the associated TrustMarkEntity instance
    */
-  public TrustMarkSubjectEntity(final long id, final String externalId, final String issuer, final String trustmarkId,
-      final String subject,
-      final String trustmarksubjectJson) {
-    this.id = id;
-    this.externalId = externalId;
-    this.issuer = issuer;
-    this.trustmarkId = trustmarkId;
-    this.subject = subject;
-    this.trustmarksubjectJson = trustmarksubjectJson;
+  public TrustMarkSubjectEntity(final UUID trustmarksubjectId,
+      final TrustMarkEntity trustMark) {
+    this.trustmarksubjectId = trustmarksubjectId;
+    this.trustMark = trustMark;
+  }
+
+  @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+  @JoinColumn(name = "trustmark_id", referencedColumnName = "trustmark_id")
+  private TrustMarkEntity trustMark;
+
+  /**
+   * Retrieves the unique identifier of the associated TrustMarkEntity.
+   *
+   * @return the UUID representing the ID of the TrustMarkEntity associated with this TrustMarkSubjectEntity
+   */
+  public UUID getTrustmarkId() {
+    return this.trustMark.getTrustmarkId();
+  }
+
+  /**
+   * Sets the TrustMarkEntity instance associated with this TrustMarkSubjectEntity. Links this TrustMarkSubjectEntity to
+   * the specified TrustMarkEntity by adding this entity to the list of subjects within the provided TrustMarkEntity.
+   *
+   * @param trustMark the TrustMarkEntity instance to be associated with this entity
+   */
+  public void setTrustMark(final TrustMarkEntity trustMark) {
+    this.trustMark = trustMark;
+    trustMark.getTrustmarksubjects().add(this);
   }
 
 }

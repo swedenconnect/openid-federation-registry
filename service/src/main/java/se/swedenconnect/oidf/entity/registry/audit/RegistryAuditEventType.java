@@ -22,18 +22,7 @@ package se.swedenconnect.oidf.entity.registry.audit;
  * @author Per Fredrik Plars
  */
 public enum RegistryAuditEventType {
-
-  ENTITY_CREATED_UPDATE,
-  ENTITY_DELETED,
-
   OPTIONS_CREATED,
   OPTIONS_UPDATE,
   OPTIONS_DELETED,
-
-  POLICY_CREATE_UPDATED,
-  POLICY_DELETED,
-
-  TRUSTMARK_SUBJECT_CREATE_UPDATE,
-  TRUSTMARK_SUBJECT_DELETED
-
 }

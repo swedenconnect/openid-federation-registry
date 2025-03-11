@@ -22,6 +22,7 @@ import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.entity.ModuleEntity;
 import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.entity.registry.entity.SettingsEntity;
+import se.swedenconnect.oidf.entity.registry.entity.TrustMarkEntity;
 import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.entity.registry.validation.PropertyValidator;
 import se.swedenconnect.oidf.entity.registry.validation.PropertyValidators;
@@ -64,6 +65,11 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
   protected Predicate<ModuleEntity> hasRightOrganizationIdModulePredicate() {
     return entity -> Objects.equals(this.getCurrentOrganization().getOrganizationId(),
         entity.getOrganization().getOrganizationId());
+  }
+
+  protected Predicate<TrustMarkEntity> hasRightOrganizationIdTrustmarkPredicate() {
+    return entity -> Objects.equals(this.getCurrentOrganization().getOrganizationId(),
+        entity.getModule().getOrganization().getOrganizationId());
   }
   protected void throwUnauthorizedIfNotMatch(final UUID organizationId) {
     Optional.ofNullable(this.userAssignedOrganization.get())
@@ -165,8 +171,8 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
     this.settingsRepository.saveAllAndFlush(settingsEntities);
   }
 
-  protected List<SettingsEntity> getSettingsEntities(final FkKeyType fkkeytype, final String id) {
-    return this.settingsRepository.findByFkTypeAndFkId(fkkeytype.name(), id);
+  protected List<SettingsEntity> getSettingsEntities(final FkKeyType fkkeytype, final UUID id) {
+    return this.settingsRepository.findByFkTypeAndFkId(fkkeytype.name(), id.toString());
   }
 
   @Override

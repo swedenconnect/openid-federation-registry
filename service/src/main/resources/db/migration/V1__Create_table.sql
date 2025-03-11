@@ -29,22 +29,71 @@ CREATE TABLE IF NOT EXISTS entities
     last_modified_by   VARCHAR(255) NOT NULL,
     CONSTRAINT entities_const UNIQUE (issuer, subject)
 ) ENGINE=InnoDB;
+-- Instance table
+CREATE TABLE IF NOT EXISTS `instance`
+(
+    `instance_id`                UUID         NOT NULL,
+    `name`                       VARCHAR(255) NULL,
+    `use_for_default_assignment` VARCHAR(255) NULL,
+    `created_by`                 VARCHAR(255) NOT NULL,
+    `last_modified_by`           VARCHAR(255) NOT NULL,
+    `created_date`               DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `last_modified_date`         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`instance_id`)
+) ENGINE = InnoDB;
 
+-- Organization table
+CREATE TABLE IF NOT EXISTS `organization`
+(
+    `organization_id`    UUID                NOT NULL DEFAULT (UUID()),
+    `instance_id`        UUID                NOT NULL,
+    `org_number`         VARCHAR(255) UNIQUE NOT NULL COMMENT 'Org id that matches the claim in JWT token.',
+    `org_name`           VARCHAR(255)        NULL COMMENT 'Org name that matches the claim in JWT token.',
+    `created_by`         VARCHAR(255)        NOT NULL,
+    `last_modified_by`   VARCHAR(255)        NOT NULL,
+    `created_date`       DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `last_modified_date` DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`organization_id`),
+    FOREIGN KEY (`instance_id`) REFERENCES `instance` (`instance_id`)
+
+) ENGINE = InnoDB;
+-- Module table
+CREATE TABLE IF NOT EXISTS `module`
+(
+    `module_id`          UUID         NOT NULL DEFAULT (UUID()),
+    `organization_id`    UUID         NOT NULL,
+    `module_type`        VARCHAR(255),
+    `created_by`         VARCHAR(255) NOT NULL,
+    `last_modified_by`   VARCHAR(255) NOT NULL,
+    `created_date`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `last_modified_date` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`module_id`),
+    FOREIGN KEY (`organization_id`) REFERENCES `organization` (`organization_id`)
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `trustmark`
+(
+    `trustmark_id`       UUID         NOT NULL DEFAULT (UUID()),
+    `module_id`          UUID         NOT NULL,
+    `created_by`         VARCHAR(255) NOT NULL,
+    `last_modified_by`   VARCHAR(255) NOT NULL,
+    `created_date`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `last_modified_date` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`trustmark_id`),
+    FOREIGN KEY (`module_id`) REFERENCES `module` (`module_id`)
+) ENGINE = InnoDB;
 
 -- Trustmark subject table
 CREATE TABLE IF NOT EXISTS trustmark_subject
 (
-    id                    bigint       NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    external_id UUID NOT NULL,
-    issuer                varchar(255) NOT NULL,
-    subject               varchar(255) NOT NULL,
-    trustmark_id          varchar(255) NOT NULL,
-    trustmarksubject_json TEXT         NOT NULL,
-    created_date          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_modified_date    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    created_by            VARCHAR(255) NOT NULL,
-    last_modified_by      VARCHAR(255) NOT NULL,
-    CONSTRAINT trustmark_subject_const UNIQUE (issuer, trustmark_id, subject)
+    `trustmarksubject_id` UUID         NOT NULL DEFAULT (UUID()),
+    `trustmark_id`        UUID         NOT NULL,
+    `created_date`        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `last_modified_date`  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `created_by`          VARCHAR(255) NOT NULL,
+    `last_modified_by`    VARCHAR(255) NOT NULL,
+    PRIMARY KEY (`trustmarksubject_id`),
+    FOREIGN KEY (`trustmark_id`) REFERENCES `trustmark` (`trustmark_id`)
 ) ENGINE=InnoDB;
 
 -- Settings table
@@ -65,34 +114,7 @@ CREATE TABLE IF NOT EXISTS settings
     PRIMARY KEY (`property_id`)
 ) ENGINE=InnoDB;
 
--- Instance table
-CREATE TABLE IF NOT EXISTS `instance`
-(
-    `instance_id`                UUID         NOT NULL,
-    `name`                       VARCHAR(255) NULL,
-    `use_for_default_assignment` VARCHAR(255) NULL,
-    `created_by`                 VARCHAR(255) NOT NULL,
-    `last_modified_by`           VARCHAR(255) NOT NULL,
-    `created_date`               DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `last_modified_date`         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (`instance_id`)
-) ENGINE=InnoDB;
 
--- Organization table
-CREATE TABLE IF NOT EXISTS `organization`
-(
-    `organization_id`    UUID                NOT NULL DEFAULT (UUID()),
-    `instance_id`        UUID                NOT NULL,
-    `org_number`         VARCHAR(255) UNIQUE NOT NULL COMMENT 'Org id that matches the claim in JWT token.',
-    `org_name`           VARCHAR(255)        NULL COMMENT 'Org name that matches the claim in JWT token.',
-    `created_by`         VARCHAR(255)        NOT NULL,
-    `last_modified_by`   VARCHAR(255)        NOT NULL,
-    `created_date`       DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `last_modified_date` DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (`organization_id`),
-    FOREIGN KEY (`instance_id`) REFERENCES `instance` (`instance_id`)
-
-) ENGINE=InnoDB;
 
 -- Policies table
 CREATE TABLE IF NOT EXISTS policies
@@ -112,28 +134,5 @@ CREATE TABLE IF NOT EXISTS policies
 ) ENGINE=InnoDB;
 
 
--- Module table
-CREATE TABLE IF NOT EXISTS `module`
-(
-    `module_id`          UUID         NOT NULL DEFAULT (UUID()),
-    `organization_id`    UUID         NOT NULL,
-    `module_type`        VARCHAR(255),
-    `created_by`         VARCHAR(255) NOT NULL,
-    `last_modified_by`   VARCHAR(255) NOT NULL,
-    `created_date`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `last_modified_date` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (`module_id`),
-    FOREIGN KEY (`organization_id`) REFERENCES `organization` (`organization_id`)
-) ENGINE=InnoDB;
 
-CREATE TABLE IF NOT EXISTS `trustmark`
-(
-    `trustmark_id`       UUID         NOT NULL DEFAULT (UUID()),
-    `module_id`          UUID         NOT NULL,
-    `created_by`         VARCHAR(255) NOT NULL,
-    `last_modified_by`   VARCHAR(255) NOT NULL,
-    `created_date`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `last_modified_date` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (`trustmark_id`),
-    FOREIGN KEY (`module_id`) REFERENCES `module` (`module_id`)
-) ENGINE=InnoDB;
+

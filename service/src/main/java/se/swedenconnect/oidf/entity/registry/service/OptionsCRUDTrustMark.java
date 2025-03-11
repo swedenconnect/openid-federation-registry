@@ -42,6 +42,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static se.swedenconnect.oidf.entity.registry.entity.FkKeyType.TRUSTMARK;
+import static se.swedenconnect.oidf.entity.registry.entity.FkKeyType.TRUSTMARKSUBJECT;
 
 /**
  * OptionsCRUDTrustMark is a service that extends the OptionsCRUDAdapter to perform Create, Read, Update, and Delete
@@ -152,7 +153,7 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
 
     final List<SettingsEntity> mergeValues = insertValuesInTemplate(
         fkKeyType,
-        super.getSettingsEntities(TRUSTMARK, trustMarkEntity.getTrustmarkId().toString()));
+        super.getSettingsEntities(TRUSTMARK, trustMarkEntity.getTrustmarkId()));
 
     return toRecord(mergeValues);
 
@@ -207,7 +208,7 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
             entity.getModule().getOrganization().getOrganizationId()))
 
         .map(entity -> {
-              final Map<String, Object> e = super.getSettingsEntities(TRUSTMARK, entity.getTrustmarkId().toString())
+          final Map<String, Object> e = super.getSettingsEntities(TRUSTMARK, entity.getTrustmarkId())
                   .stream()
                   .collect(Collectors.toMap(
                       SettingsEntity::getKey,
@@ -221,26 +222,39 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
   }
 
   /**
-   * Retrieves a list of trustmark details associated with a specific module ID. The method extracts trustmark data,
-   * including related setting entities, and assembles it into a list of maps.
+   * Retrieves a list of trustmark entities and their associated settings based on a module ID.
+   * Can optionally include related trustmark subjects.
    *
-   * @param moduleId the UUID of the module whose trustmarks are to be retrieved.
-   * @return a list of maps, where each map contains the trustmark details and its associated settings.
+   * @param moduleId the unique identifier of the module for which trustmark entities are to be retrieved
+   * @param includeSubjects a boolean flag indicating whether associated trustmark subjects should be included
+   * @return a list of maps where each map contains trustmark data and optionally associated subject data
    */
-  public List<Map<String, Object>> listByModuleId(final UUID moduleId) {
+  public List<Map<String, Object>> listByModuleId(final UUID moduleId, final boolean includeSubjects) {
     return this.moduleRepository.findByModuleIdAndModuleType(moduleId, FkKeyType.TRUSTMARKISSUER.name())
         .stream()
         .filter(this.hasRightOrganizationIdModulePredicate())
         .flatMap(moduleEntity -> Streams.of(moduleEntity.getTrustmarks()))
-        .map(TrustMarkEntity::getTrustmarkId)
-        .map(trustmarkid -> {
-              final Map<String, Object> e = super.getSettingsEntities(TRUSTMARK, trustmarkid.toString())
+        .map(trustMarkEntity -> {
+          final UUID trustmarkid = trustMarkEntity.getTrustmarkId();
+          final Map<String, Object> e =
+              super.getSettingsEntities(TRUSTMARK, trustmarkid)
                   .stream()
                   .collect(Collectors.toMap(
                       SettingsEntity::getKey,
                       SettingsEntity::castValue
                   ));
-              e.put("id", trustmarkid.toString());
+          e.put("id", trustmarkid);
+          e.put("trustmarksubjects",
+              trustMarkEntity.getTrustmarksubjects()
+                  .stream()
+                  .map(trustMarkSubjectEntity ->
+                      super.getSettingsEntities(TRUSTMARKSUBJECT, trustMarkSubjectEntity.getTrustmarksubjectId())
+                          .stream()
+                          .collect(Collectors.toMap(
+                              SettingsEntity::getKey,
+                              SettingsEntity::castValue
+                          )))
+                  .toList());
               return e;
             }
         )

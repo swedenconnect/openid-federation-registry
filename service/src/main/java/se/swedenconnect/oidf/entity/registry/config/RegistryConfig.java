@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWK;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;
@@ -36,18 +35,11 @@ import se.swedenconnect.oidf.entity.registry.entity.InstanceEntity;
 import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.entity.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.repository.InstanceRepository;
-import se.swedenconnect.oidf.entity.registry.repository.OrganizationRepository;
 import se.swedenconnect.oidf.entity.registry.repository.PolicyRepository;
 import se.swedenconnect.oidf.entity.registry.repository.TrustMarkSubjectRepository;
-import se.swedenconnect.oidf.entity.registry.service.EntityService;
 import se.swedenconnect.oidf.entity.registry.service.FederationApiService;
-import se.swedenconnect.oidf.entity.registry.service.JpaEntityService;
-import se.swedenconnect.oidf.entity.registry.service.JpaPolicyService;
-import se.swedenconnect.oidf.entity.registry.service.JpaTrustMarkSubjectService;
 import se.swedenconnect.oidf.entity.registry.service.NotifyService;
 import se.swedenconnect.oidf.entity.registry.service.OptionsCRUDTrustMark;
-import se.swedenconnect.oidf.entity.registry.service.PolicyService;
-import se.swedenconnect.oidf.entity.registry.service.TrustMarkSubjectService;
 import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.bundle.CredentialBundles;
 import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
@@ -103,50 +95,6 @@ public class RegistryConfig {
     this.objectMapper = objectMapper;
     this.instanceRepository = instanceRepository;
     this.registryProperties = registryProperties;
-  }
-
-  /**
-   * Provides an instance of JpaEntityService, which implements the EntityService interface. This service manages entity
-   * objects using a JPA repository and handles JSON conversion using the provided ObjectMapper.
-   *
-   * @return an instance of JpaEntityService.
-   */
-  @Bean
-  @Primary
-  @Qualifier("jpaEntityService")
-  public EntityService jpaEntityService() {
-    return new JpaEntityService(
-        this.entityRepository,
-        this.policyRepository,
-        this.objectMapper,
-        this.registryAuditService);
-  }
-
-  /**
-   * Provides an instance of the {@link PolicyService} implementation using JPA for managing JSON Policy objects.
-   *
-   * @param organizationRepository the repository used for managing organization-related data, required to associate
-   *     policies with respective organizations.
-   * @return an instance of {@link JpaPolicyService}, configured with the necessary dependencies such as
-   *     {@code policyRepository}, {@code objectMapper}, and {@code registryAuditService}.
-   */
-  @Bean
-  @Qualifier("jpaPolicyService")
-  public PolicyService jpaPolicyService(final OrganizationRepository organizationRepository) {
-    return new JpaPolicyService(this.policyRepository, this.objectMapper, this.registryAuditService,
-        organizationRepository);
-  }
-
-  /**
-   * TrustMarkSubjectService
-   *
-   * @return an instance of TrustMarkSubjectService.
-   */
-  @Bean
-  @Qualifier("jpaTrustMarkSubjectService")
-  public TrustMarkSubjectService jpaTrustMarkSubjectService() {
-    return new JpaTrustMarkSubjectService(this.trustMarkSubjectRepository, this.objectMapper,
-        this.registryAuditService);
   }
 
   /**

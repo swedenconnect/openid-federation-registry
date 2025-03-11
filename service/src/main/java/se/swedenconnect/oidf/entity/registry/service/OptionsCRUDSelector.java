@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.entity.registry.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
@@ -63,6 +64,7 @@ public class OptionsCRUDSelector implements OptionsCRUD {
     return this.getOptionsCRUD(fkKeyType).supports(fkKeyType);
   }
 
+  @Transactional
   @Override
   public OptionsRecord create(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
     final OptionsRecord newRecord = this.getOptionsCRUD(fkKeyType).create(fkKeyType, id, record);
@@ -70,6 +72,7 @@ public class OptionsCRUDSelector implements OptionsCRUD {
     return newRecord;
   }
 
+  @Transactional
   @Override
   public OptionsRecord update(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
     final OptionsRecord newRecord = this.getOptionsCRUD(fkKeyType).update(fkKeyType, id, record);
@@ -87,6 +90,7 @@ public class OptionsCRUDSelector implements OptionsCRUD {
     return this.getOptionsCRUD(fkKeyType).template(fkKeyType);
   }
 
+  @Transactional
   @Override
   public OptionsRecord delete(final FkKeyType fkKeyType, final UUID id) {
     final OptionsRecord deletedRecord = this.getOptionsCRUD(fkKeyType).delete(fkKeyType, id);

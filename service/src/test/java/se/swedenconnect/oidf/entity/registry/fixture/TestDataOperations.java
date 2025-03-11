@@ -41,6 +41,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPublicKey;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -109,13 +110,20 @@ public class TestDataOperations {
       url = url.substring(0, url.length() - 5);
     }
 
-    final ResponseEntity<OptionsRecord> reply = restTemplate.exchange(url, HttpMethod.GET, entity, OptionsRecord.class);
-
-    if (reply.getStatusCode().isError()) {
-      log.info(String.valueOf(reply.getBody()));
+    final ResponseEntity<String> reply = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+    if (reply.getStatusCode() != httpStatus) {
+      log.info(reply.getBody());
     }
-    assertThat(reply.getStatusCode()).isEqualTo(httpStatus);
-    return reply.getBody();
+    if (reply.getStatusCode() != HttpStatus.CREATED && reply.getStatusCode() != HttpStatus.OK) {
+      return null;
+    }
+
+    try {
+      return objectMapper.readValue(reply.getBody(), OptionsRecord.class);
+    }
+    catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public OptionsRecord post(
@@ -132,13 +140,26 @@ public class TestDataOperations {
 
     final HttpEntity<OptionsRecord> entity = new HttpEntity<>(record, headers);
 
-    final ResponseEntity<OptionsRecord> reply =
+    final ResponseEntity<String> reply =
         restTemplate.exchange("/registry/v1/options/%s/%s".formatted(configGroup, id.toString()), HttpMethod.POST,
             entity,
-            OptionsRecord.class);
+            String.class);
+    if (reply.getStatusCode() != httpStatus) {
+      log.info(reply.getBody());
+    }
 
     assertThat(reply.getStatusCode()).isEqualTo(httpStatus);
-    return reply.getBody();
+
+    if (reply.getStatusCode() != HttpStatus.CREATED || reply.getStatusCode() != HttpStatus.OK) {
+      return null;
+    }
+
+    try {
+      return objectMapper.readValue(reply.getBody(), OptionsRecord.class);
+    }
+    catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void delete(
@@ -222,6 +243,17 @@ public class TestDataOperations {
     };
   }
 
+  public static Function<Values, String> defaultTrustMarkSubject(UUID trustMarkId) {
+    return s -> switch (s.getKey()) {
+      case "trustmark_id" -> trustMarkId.toString();
+      case "subject" -> "http://www.swedenconnect.se/op1";
+      case "revoked" -> "false";
+      case "granted" -> LocalDateTime.now().minusDays(1).toString();
+      case "expires" -> LocalDateTime.now().plusDays(1).toString();
+      default -> null;
+    };
+  }
+
   public static Function<Values, String> defaultTrustAnchor() {
     return s -> switch (s.getKey()) {
       case "active" -> "true";
@@ -237,6 +269,14 @@ public class TestDataOperations {
       final HttpStatus expectedHttpStatus,
       final Function<Values, String> options) throws JsonProcessingException {
     return create(id, FkKeyType.TRUSTMARK, organisationType, expectedHttpStatus, options);
+  }
+
+  public UUID createTrustMarkSubject(
+      final UUID id,
+      final JwtTestUtils.OrganisationType organisationType,
+      final HttpStatus expectedHttpStatus,
+      final Function<Values, String> options) throws JsonProcessingException {
+    return create(id, FkKeyType.TRUSTMARKSUBJECT, organisationType, expectedHttpStatus, options);
   }
 
   protected UUID create(

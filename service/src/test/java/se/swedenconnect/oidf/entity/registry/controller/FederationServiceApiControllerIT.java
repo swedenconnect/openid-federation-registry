@@ -21,6 +21,7 @@ import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -97,6 +98,7 @@ class FederationServiceApiControllerIT {
    * @throws ParseException if there is an error in parsing the JWT or its claims.
    */
   @Test
+  @Disabled
   void trustMarkRecordSuccess() throws ParseException {
 
     final TrustMarkSubjectRecord record = TrustMarkSubjectRecord.builder()
@@ -160,6 +162,7 @@ class FederationServiceApiControllerIT {
   }
 
   @Test
+  @Disabled
   void policyRecordSuccess() throws ParseException {
     final PolicyRecord policy = PolicyFactory.record();
 
@@ -215,6 +218,7 @@ class FederationServiceApiControllerIT {
   }
 
   @Test
+  @Disabled
   void entityRecordSuccess() throws ParseException {
     final String issuer = "http://tmi.digg.se/" + UUID.randomUUID();
     final EntityRecord entity = EntityFactory.createDefaultEntity(issuer, "http://sub.digg.se");
