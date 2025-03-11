@@ -23,7 +23,6 @@ import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.entity.registry.entity.PolicyEntity;
 import se.swedenconnect.oidf.entity.registry.entity.SettingsEntity;
-import se.swedenconnect.oidf.entity.registry.repository.OrganizationRepository;
 import se.swedenconnect.oidf.entity.registry.repository.PolicyRepository;
 import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
@@ -49,23 +48,20 @@ import static se.swedenconnect.oidf.entity.registry.entity.FkKeyType.POLICIES;
 public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
 
   private final PolicyRepository policyRepository;
-  private final OrganizationRepository organizationRepository;
 
   /**
    * Constructs an OptionsCRUDPolicy with the specified repositories and organization supplier.
    *
    * @param settingsRepository the repository for managing settings
    * @param policyRepository the repository for managing policies
-   * @param organizationRepository the repository for managing organizations
    * @param userAssignedOrganization a supplier for retrieving the user-assigned organization entity
    */
   public OptionsCRUDPolicy(
       final SettingsRepository settingsRepository,
-      final PolicyRepository policyRepository, final OrganizationRepository organizationRepository,
+      final PolicyRepository policyRepository,
       final Supplier<OrganizationEntity> userAssignedOrganization) {
     super(settingsRepository, userAssignedOrganization);
     this.policyRepository = policyRepository;
-    this.organizationRepository = organizationRepository;
   }
 
   @Override

@@ -114,6 +114,8 @@ public class TestDataOperations {
     if (reply.getStatusCode() != httpStatus) {
       log.info(reply.getBody());
     }
+    assertThat(reply.getStatusCode()).isEqualTo(httpStatus);
+
     if (reply.getStatusCode() != HttpStatus.CREATED && reply.getStatusCode() != HttpStatus.OK) {
       return null;
     }
