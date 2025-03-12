@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
@@ -105,24 +104,28 @@ public class FederationApiService {
   }
 
   /**
-   * Getting entity records
+   * Generates a signed JWT containing entity records for a specific instance ID.
+   * This method fetches the entity records associated with the issuer from the repository,
+   * signs the resulting records, and returns the signed JWT string.
    *
-   * @param issuer Issuer id
-   * @return SignedJWT with Entitys
+   * @param instanceId the unique identifier of the instance for which the entity records are retrieved
+   * @return a signed JSON Web Token (JWT) string containing the entity records
+   * @throws ResponseStatusException if the issuer is not set, if no entity records are found, or if signing fails
    */
-  public String entityRecord(final EntityID issuer) {
-    Optional.ofNullable(issuer)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Issuer is mandatory"));
+  public String entityRecord(final UUID instanceId) {
+    Optional.ofNullable(instanceId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "instanceId is mandatory"));
 
-    final List<EntityEntity> recordEntity = this.entityRepository.findByIssuer(issuer.getValue());
+    final List<EntityEntity> recordEntity = null; //TODO //this.entityRepository.findByIssuer(issuer.getValue());
     if (recordEntity.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-          "Unable to find entity for issuer:'%s'".formatted(issuer));
+          "Unable to find entity for issuer:'%s'".formatted(instanceId));
     }
+
     try {
       final String jwt = this.signJsonRecords("entity-records",
               recordEntity.stream()
-                  .map(EntityEntity::getEntity)
+                  .map(entityEntity -> "Not implemented yet")
                   .toList())
           .serialize();
       log.debug("Entity Signed JWT: {}", jwt);
@@ -131,6 +134,7 @@ public class FederationApiService {
     catch (final JOSEException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
     }
+
   }
 
   /**
@@ -167,9 +171,9 @@ public class FederationApiService {
         .orElseThrow(() ->
             new ResponseStatusException(HttpStatus.NOT_FOUND,
                 "Unable to find policy for id:'%s'".formatted(policyRecordId.toString())));
-    try {
-      final Map<String, Object> policyClaim =
-          this.mapper.readValue(policyEntity.getPolicy(), new TypeReference<Map<String, Object>>() {});
+
+    final Map<String, Object> policyClaim = Map.of("not", "implemented");
+    //this.mapper.readValue(policyEntity.getPolicy(), new TypeReference<Map<String, Object>>() {});
 
       final String claimName = "policy_record";
 
@@ -180,10 +184,6 @@ public class FederationApiService {
           .serialize();
       log.debug("Policy Signed JWT: {}", jwt);
       return jwt;
-    }
-    catch (final JsonProcessingException e) {
-      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
-    }
 
   }
 

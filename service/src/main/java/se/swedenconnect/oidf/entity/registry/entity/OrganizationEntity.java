@@ -67,6 +67,9 @@ public class OrganizationEntity extends BaseEntity {
   @OneToMany(mappedBy = "organization", cascade = CascadeType.DETACH, orphanRemoval = false)
   private List<PolicyEntity> policies = new ArrayList<>();
 
+  @OneToMany(mappedBy = "organization", cascade = CascadeType.DETACH, orphanRemoval = false)
+  private List<EntityEntity> entities;
+
   /**
    * Filters and retrieves a list of {@link ModuleEntity} objects associated with the given foreign key type.
    *

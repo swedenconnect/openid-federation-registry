@@ -221,18 +221,21 @@ public class TestDataOperations {
   }
 
   public UUID createTMI(
-      final JwtTestUtils.OrganisationType organisationType) throws JsonProcessingException {
+      final UUID id,
+      final JwtTestUtils.OrganisationType organisationType,
+      final HttpStatus expectedHttpStatus,
+      final Function<Values, String> options) throws JsonProcessingException {
+    return create(id, FkKeyType.TRUSTMARKISSUER, organisationType, expectedHttpStatus, options);
+  }
 
-    final FkKeyType groupId = FkKeyType.TRUSTMARKISSUER;
-    final OptionsRecord template = get(groupId, null, HttpStatus.OK, organisationType);
-    template.getOption().forEach(valueNode -> {
-      setIfThen(valueNode, "active", () -> "true");
-      setIfThen(valueNode, "entity-identifier", () -> "http://www.swedenconnect.se/issuer");
-      setIfThen(valueNode, "alias", () -> "tmi");
-    });
-    final UUID id = UUID.randomUUID();
-    post(restTemplate, groupId, id, HttpStatus.CREATED, organisationType, template);
-    return id;
+  public static Function<Values, String> defaultTrustMarkIssuer(UUID entity_id) {
+    return s -> switch (s.getKey()) {
+      case "active" -> "true";
+      case "entity-identifier" -> "http://www.swedenconnect.se/issuer";
+      case "alias" -> "tmi";
+      case "entity_id" -> entity_id.toString();
+      default -> null;
+    };
   }
 
   public static Function<Values, String> defaultTrustMark(UUID trustMarkIssuerId) {
@@ -256,11 +259,34 @@ public class TestDataOperations {
     };
   }
 
-  public static Function<Values, String> defaultTrustAnchor() {
+  public static Function<Values, String> defaultTrustAnchor(final UUID entity_id) {
     return s -> switch (s.getKey()) {
       case "active" -> "true";
       case "entity-identifier" -> "http://www.swedenconnect.se/trustanchor";
       case "alias" -> "trustanchor";
+      case "entity_id" -> entity_id.toString();
+
+      default -> null;
+    };
+  }
+
+  public static Function<Values, String> defaultResolver(final UUID entity_id) {
+    return s -> switch (s.getKey()) {
+      case "active" -> "true";
+      case "entity-identifier" -> "http://www.swedenconnect.se/resolver";
+      case "alias" -> "resolver";
+      case "trust-anchor" -> "http://www.swedenconnect.se/trustanchor";
+      case "trusted-keys" -> new JWKSet(List.of(genKey(), genKey())).toString();
+      case "entity_id" -> entity_id.toString();
+
+      default -> null;
+    };
+  }
+
+  public static Function<Values, String> defaultHostedEntity() {
+    return s -> switch (s.getKey()) {
+      case "subject" -> "http://www.swedenconnect.se/subject";
+      case "issuer" -> "http://www.swedenconnect.se/issuer";
       default -> null;
     };
   }
@@ -271,6 +297,14 @@ public class TestDataOperations {
       final HttpStatus expectedHttpStatus,
       final Function<Values, String> options) throws JsonProcessingException {
     return create(id, FkKeyType.TRUSTMARK, organisationType, expectedHttpStatus, options);
+  }
+
+  public UUID createHostedEntity(
+      final UUID id,
+      final JwtTestUtils.OrganisationType organisationType,
+      final HttpStatus expectedHttpStatus,
+      final Function<Values, String> options) throws JsonProcessingException {
+    return create(id, FkKeyType.HOSTED_ENTITY, organisationType, expectedHttpStatus, options);
   }
 
   public UUID createTrustMarkSubject(
@@ -300,70 +334,20 @@ public class TestDataOperations {
     return id;
   }
 
-  public String createTA() throws JsonProcessingException {
-    final ResponseEntity<String> ta = restTemplate.getForEntity("/registry/v1/options/trustanchor", String.class);
-    if (ta.getStatusCode().isError()) {
-      log.info(ta.getBody());
-    }
-    assertThat(ta.getStatusCode()).isEqualTo(HttpStatus.OK);
-    final JsonNode node = objectMapper.readTree(ta.getBody());
-    final JsonNode data = node.get("option");
-
-    data.elements().forEachRemaining(jsonNode -> {
-      final ObjectNode valueNode = (ObjectNode) jsonNode;
-      ifThen(valueNode, "active", () -> "true");
-      ifThen(valueNode, "entity-identifier", () -> "http://www.swedenconnect.se/trustanchor");
-      ifThen(valueNode, "alias", () -> "ta");
-      ifThen(valueNode, "instance_id", () -> valueNode.get("options").elements().next().get("key").asText());
-    });
-
-    final String newta = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
-    final String id = UUID.randomUUID().toString();
-    final HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-
-    final ResponseEntity<String> createdta =
-        restTemplate.postForEntity("/registry/v1/options/trustanchor/" + id, new HttpEntity<>(newta, headers),
-            String.class);
-    if (createdta.getStatusCode().isError()) {
-      log.info(createdta.getBody());
-    }
-    assertThat(createdta.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-    return id;
+  public UUID createTrustAnchor(
+      final UUID id,
+      final JwtTestUtils.OrganisationType organisationType,
+      final HttpStatus expectedHttpStatus,
+      final Function<Values, String> options) throws JsonProcessingException {
+    return create(id, FkKeyType.TRUSTANCHOR, organisationType, expectedHttpStatus, options);
   }
 
-  public String createRESOLVER() throws JsonProcessingException {
-    final ResponseEntity<String> resolver = restTemplate.getForEntity("/registry/v1/options/resolver", String.class);
-    if (resolver.getStatusCode().isError()) {
-      log.info(resolver.getBody());
-    }
-    assertThat(resolver.getStatusCode()).isEqualTo(HttpStatus.OK);
-    final JsonNode node = objectMapper.readTree(resolver.getBody());
-    final JsonNode data = node.get("option");
-
-    data.elements().forEachRemaining(jsonNode -> {
-      final ObjectNode valueNode = (ObjectNode) jsonNode;
-      ifThen(valueNode, "active", () -> "true");
-      ifThen(valueNode, "entity-identifier", () -> "http://www.swedenconnect.se/resolver");
-      ifThen(valueNode, "alias", () -> "resolver");
-      ifThen(valueNode, "instance_id", () -> valueNode.get("options").elements().next().get("key").asText());
-      ifThen(valueNode, "trust-anchor", () -> "http://www.swedenconnect.se/trustanchor");
-      ifThen(valueNode, "trusted-keys", () -> new JWKSet(List.of(genKey(), genKey())).toString());
-    });
-
-    final String newModule = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
-    final String id = UUID.randomUUID().toString();
-    final HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-
-    final ResponseEntity<String> createdresolver =
-        restTemplate.postForEntity("/registry/v1/options/resolver/" + id, new HttpEntity<>(newModule, headers),
-            String.class);
-    if (createdresolver.getStatusCode().isError()) {
-      log.info(createdresolver.getBody());
-    }
-    assertThat(createdresolver.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-    return id;
+  public UUID createResolver(
+      final UUID id,
+      final JwtTestUtils.OrganisationType organisationType,
+      final HttpStatus expectedHttpStatus,
+      final Function<Values, String> options) throws JsonProcessingException {
+    return create(id, FkKeyType.RESOLVER, organisationType, expectedHttpStatus, options);
   }
 
   private static void ifThen(ObjectNode valueNode, String key, Supplier<String> value) {

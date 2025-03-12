@@ -23,7 +23,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -43,8 +42,7 @@ import java.util.UUID;
 @Entity
 @NoArgsConstructor
 @Builder(toBuilder = true)
-@Table(name = "trustmark_subject",
-    uniqueConstraints = { @UniqueConstraint(columnNames = { "issuer", "trustmarkId", "subject" }) })
+@Table(name = "trustmark_subject")
 public class TrustMarkSubjectEntity extends BaseEntity {
 
   @Id

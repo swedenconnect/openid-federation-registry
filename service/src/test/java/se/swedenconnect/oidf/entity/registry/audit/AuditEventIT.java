@@ -25,6 +25,7 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.http.HttpStatus;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -32,6 +33,7 @@ import se.swedenconnect.oidf.entity.registry.fixture.JwtTestUtils;
 import se.swedenconnect.oidf.entity.registry.fixture.TestDataOperations;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -58,7 +60,16 @@ public class AuditEventIT {
   @Test
   public void testThatAuditEventsExist() throws JsonProcessingException {
 
-    testDataOperations.createTMI(JwtTestUtils.OrganisationType.SKATT);
+    final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
+        JwtTestUtils.OrganisationType.SKATT,
+        HttpStatus.CREATED,
+        TestDataOperations.defaultHostedEntity());
+
+    final UUID tmiId1 = testDataOperations.createTMI(UUID.randomUUID(),
+        JwtTestUtils.OrganisationType.SKATT,
+        HttpStatus.CREATED,
+        TestDataOperations.defaultTrustMarkIssuer(entityId));
+
 
     final List<AuditEvent> events = auditEventRepository.find(null, null, OPTIONS_CREATED.name());
     assertNotNull(events.getFirst().getPrincipal());

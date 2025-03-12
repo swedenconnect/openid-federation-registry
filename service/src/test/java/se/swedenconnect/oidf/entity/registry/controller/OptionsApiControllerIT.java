@@ -34,6 +34,7 @@ import se.swedenconnect.oidf.entity.registry.fixture.TestDataOperations;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -64,10 +65,32 @@ class OptionsApiControllerIT {
 
   @Test
   public void testList() throws IOException {
+
+    final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
+        JwtTestUtils.OrganisationType.PM,
+        HttpStatus.CREATED,
+        TestDataOperations.defaultHostedEntity());
+
+    final UUID tmiId1 = testDataOperations.createTMI(UUID.randomUUID(),
+        JwtTestUtils.OrganisationType.PM,
+        HttpStatus.CREATED,
+        TestDataOperations.defaultTrustMarkIssuer(entityId));
+
+
+
     testDataOperations.createPolicies(JwtTestUtils.OrganisationType.PM);
-    testDataOperations.createTMI(JwtTestUtils.OrganisationType.PM);
-    testDataOperations.createRESOLVER();
-    testDataOperations.createTA();
+
+    testDataOperations.createResolver(UUID.randomUUID(),
+        JwtTestUtils.OrganisationType.PM,
+        HttpStatus.CREATED,
+        TestDataOperations.defaultResolver(entityId));
+
+    testDataOperations.createTrustAnchor(UUID.randomUUID(),
+        JwtTestUtils.OrganisationType.PM,
+        HttpStatus.CREATED,
+        TestDataOperations.defaultTrustAnchor(entityId));
+
+
 
     final JsonNode responseBody = testDataOperations.listAll(JwtTestUtils.OrganisationType.PM);
     assertThat(responseBody).isNotNull();

@@ -1,3 +1,5 @@
+
+
 /*
  * Copyright 2025 Sweden Connect
  *
@@ -14,22 +16,8 @@
  *  limitations under the License.
  */
 
-
--- Entities table
-CREATE TABLE IF NOT EXISTS entities
-(
-    id                 bigint       NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    external_id UUID NOT NULL,
-    entity             TEXT         NOT NULL,
-    issuer             varchar(255) NOT NULL,
-    subject            varchar(255) NOT NULL,
-    created_date       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_modified_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    created_by         VARCHAR(255) NOT NULL,
-    last_modified_by   VARCHAR(255) NOT NULL,
-    CONSTRAINT entities_const UNIQUE (issuer, subject)
-) ENGINE=InnoDB;
 -- Instance table
+
 CREATE TABLE IF NOT EXISTS `instance`
 (
     `instance_id`                UUID         NOT NULL,
@@ -57,12 +45,30 @@ CREATE TABLE IF NOT EXISTS `organization`
     FOREIGN KEY (`instance_id`) REFERENCES `instance` (`instance_id`)
 
 ) ENGINE = InnoDB;
+
+
+-- Entities table
+CREATE TABLE IF NOT EXISTS entities
+(
+    `entity_id`          UUID         NOT NULL DEFAULT (UUID()),
+    `organization_id`    UUID         NOT NULL,
+    `entity_type`        VARCHAR(20)  NOT NULL,
+    `created_by`         VARCHAR(255) NOT NULL,
+    `last_modified_by`   VARCHAR(255) NOT NULL,
+    `created_date`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `last_modified_date` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`entity_id`),
+    FOREIGN KEY (`organization_id`) REFERENCES `organization` (`organization_id`)
+) ENGINE = InnoDB;
+
+
 -- Module table
 CREATE TABLE IF NOT EXISTS `module`
 (
     `module_id`          UUID         NOT NULL DEFAULT (UUID()),
     `organization_id`    UUID         NOT NULL,
-    `module_type`        VARCHAR(255),
+    `entity_id`   UUID NOT NULL,
+    `module_type` VARCHAR(20),
     `created_by`         VARCHAR(255) NOT NULL,
     `last_modified_by`   VARCHAR(255) NOT NULL,
     `created_date`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -114,15 +120,11 @@ CREATE TABLE IF NOT EXISTS settings
     PRIMARY KEY (`property_id`)
 ) ENGINE=InnoDB;
 
-
-
 -- Policies table
 CREATE TABLE IF NOT EXISTS policies
 (
     policy_id UUID NOT NULL DEFAULT (UUID()),
     organization_id    UUID         NOT NULL,
-    name               varchar(255) NOT NULL,
-    policy             TEXT         NOT NULL,
     created_date       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_modified_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     created_by         VARCHAR(255) NOT NULL,

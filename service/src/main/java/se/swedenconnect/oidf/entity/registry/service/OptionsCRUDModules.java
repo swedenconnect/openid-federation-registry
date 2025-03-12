@@ -19,16 +19,23 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import se.swedenconnect.oidf.entity.registry.entity.EntityEntity;
+import se.swedenconnect.oidf.entity.registry.entity.EntityKeyType;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.entity.ModuleEntity;
 import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
+import se.swedenconnect.oidf.entity.registry.entity.SettingDataType;
 import se.swedenconnect.oidf.entity.registry.entity.SettingsEntity;
+import se.swedenconnect.oidf.entity.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.repository.ModuleRepository;
 import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
+import se.swedenconnect.oidf.registry.api.model.OptionRecord;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
+import se.swedenconnect.oidf.registry.api.model.Values;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -46,21 +53,22 @@ import java.util.stream.Collectors;
 public class OptionsCRUDModules extends OptionsCRUDAdapter {
 
   private final ModuleRepository moduleRepository;
+  private final EntityRepository entityRepository;
 
   /**
-   * Constructor for the OptionsCRUDModules class. This initializes the module with the required dependencies for
-   * performing CRUD operations.
+   * Constructor for OptionsCRUDModules, initializes necessary repositories and supplier for operations.
    *
-   * @param repository The settings repository used for storing and retrieving settings data.
-   * @param moduleRepository The module repository used for managing module entities.
-   * @param userAssignedOrganization User organization
+   * @param settingsRepository the repository used for accessing and managing settings.
+   * @param userAssignedOrganization a supplier providing the organization entity assigned to the user.
+   * @param moduleRepository the repository for accessing and managing modules.
+   * @param entityRepository the repository for accessing and managing entities.
    */
-  public OptionsCRUDModules(
-      final SettingsRepository repository,
-      final ModuleRepository moduleRepository,
-      final Supplier<OrganizationEntity> userAssignedOrganization) {
-    super(repository, userAssignedOrganization);
+  public OptionsCRUDModules(final SettingsRepository settingsRepository,
+      final Supplier<OrganizationEntity> userAssignedOrganization, final ModuleRepository moduleRepository,
+      final EntityRepository entityRepository) {
+    super(settingsRepository, userAssignedOrganization);
     this.moduleRepository = moduleRepository;
+    this.entityRepository = entityRepository;
   }
 
   @Override
@@ -72,6 +80,13 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
       case TRUSTMARKISSUER -> true;
       default -> false;
     };
+  }
+
+  @Override
+  public OptionsRecord template(final FkKeyType fkKeyType) {
+    final OptionsRecord record = this.toRecord(this.getTemplateSettings(fkKeyType));
+    this.addOptionsForEntityId(Objects.requireNonNull(record.getOption()));
+    return record;
   }
 
   @Override
@@ -94,6 +109,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
     newModuleEntity.setModuleType(fkKeyType.name());
     newModuleEntity.setOrganization(super.getCurrentOrganization());
 
+    newModuleEntity.setEntity(this.loadEntityThrowIfNotExist(validatedInData));
 
     final ModuleEntity savedModuleEntity = this.moduleRepository.saveAndFlush(newModuleEntity);
     super.deleteSettings(fkKeyType, savedModuleEntity.getModuleId().toString());
@@ -163,5 +179,42 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
         )
         .toList();
   }
+
+  protected void addOptionsForEntityId(final List<Values> values) {
+    final String parameter = "entity_id";
+    values.stream()
+        .filter(value -> Objects.equals(value.getValueType(), SettingDataType.OPTIONS.name()))
+        .filter(value -> Objects.equals(value.getKey(), parameter))
+        .findFirst()
+        .ifPresent(value ->
+            value.setOptions(this.entityRepository.findByEntityType(EntityKeyType.HOSTED_ENTITY)
+                .stream()
+                .filter(this.hasRightOrganizationIdEntityPredicate())
+                .map(entity ->
+                    OptionRecord.builder()
+                        .key(entity.getEntityId().toString())
+                        .value(entity.getSettingsEntity("issuer").orElseThrow().getValue())
+                        .selected(Objects.equals(value.getValue(), entity.getEntityId().toString()))
+                        .build())
+                .toList()));
+  }
+
+  protected EntityEntity loadEntityThrowIfNotExist(final List<SettingsEntity> dataValues)
+      throws ResponseStatusException {
+    final String parameter = "entity_id";
+    return dataValues.stream()
+        .filter(value -> value.getKey().equals(parameter))
+        .map(SettingsEntity::getValue)
+        .map(UUID::fromString)
+        .map(s -> this.entityRepository.findByEntityIdAndEntityType(s, EntityKeyType.HOSTED_ENTITY))
+        .map(moduleEntity -> moduleEntity.orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Invalid %s, does not exist".formatted(parameter))))
+        .filter(this.hasRightOrganizationIdEntityPredicate())
+        .findFirst()
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            "No trustmarkissuer to assign trustmarks to"));
+  }
+
 }
 

@@ -15,17 +15,15 @@
  */
 package se.swedenconnect.oidf.entity.registry.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * EntityDao is a JPA entity representing a database table for storing entities as JSON objects with the objects Subject
@@ -37,21 +35,41 @@ import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 @Setter
 @Entity
 @ToString(callSuper = true)
-@Table(name = "entities", uniqueConstraints = { @UniqueConstraint(columnNames = { "issuer", "subject" }) })
+@Table(name = "entities")
 public class EntityEntity extends BaseEntity {
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private long id;
+  @Column(name = "entity_id", unique = true, updatable = false, nullable = false)
+  private UUID entityId;
 
-  @Column(name = "external_id", unique = true, updatable = false, nullable = false)
-  private String externalId;
+  @Column(name = "entity_type", nullable = false)
+  @Enumerated(EnumType.STRING)
+  private EntityKeyType entityType;
 
-  @Column(nullable = false)
-  private String issuer;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "organization_id", nullable = false)
+  private OrganizationEntity organization;
 
-  @Column(nullable = false)
-  private String subject;
+  @OneToMany(mappedBy = "entity")
+  private List<ModuleEntity> modules;
 
-  @Column(columnDefinition = "TEXT")
-  private String entity;
+  @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  @JoinColumns({
+      @JoinColumn(name = "fk_type", referencedColumnName = "entity_type", insertable = false, updatable = false),
+      @JoinColumn(name = "fk_id", referencedColumnName = "entity_id", insertable = false, updatable = false)
+  })
+  private List<SettingsEntity> settingsEntityList;
+
+  /**
+   * Searches the settingsEntityList for a {@link SettingsEntity} that matches the given key.
+   *
+   * @param key the key of the {@link SettingsEntity} to search for
+   * @return an {@link Optional} containing the matching {@link SettingsEntity} if found, or an empty {@link Optional}
+   *     if no match is found
+   */
+  public Optional<SettingsEntity> getSettingsEntity(final String key) {
+    return this.settingsEntityList.stream()
+        .filter(s -> s.getKey().equals(key))
+        .findFirst();
+  }
+
 }

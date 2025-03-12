@@ -16,13 +16,20 @@
 
 package se.swedenconnect.oidf.entity.registry.service;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+import se.swedenconnect.oidf.entity.registry.entity.EntityEntity;
+import se.swedenconnect.oidf.entity.registry.entity.EntityKeyType;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
+import se.swedenconnect.oidf.entity.registry.entity.SettingsEntity;
 import se.swedenconnect.oidf.entity.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -36,6 +43,8 @@ import java.util.function.Supplier;
 public class OptionsCRUDHostedEntity extends OptionsCRUDAdapter {
 
   final static FkKeyType fkKeyType = FkKeyType.HOSTED_ENTITY;
+  final static EntityKeyType entityKeyType = EntityKeyType.HOSTED_ENTITY;
+
   final EntityRepository entityRepository;
 
   /**
@@ -61,8 +70,35 @@ public class OptionsCRUDHostedEntity extends OptionsCRUDAdapter {
   }
 
   @Override
+  public OptionsRecord template(final FkKeyType fkKeyType) {
+    // Todo add policyoptions
+    return this.toRecord(this.getTemplateSettings(fkKeyType));
+  }
+
+  @Override
   public OptionsRecord create(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
-    return null;
+    final Optional<EntityEntity> entity = this.entityRepository
+        .findByEntityIdAndEntityType(id, EntityKeyType.HOSTED_ENTITY);
+
+    if (entity.isPresent()) {
+      super.throwUnauthorizedIfNotMatch(entity.get().getOrganization().getOrganizationId());
+      throw new ResponseStatusException(HttpStatus.CONFLICT,
+          "Module already exists for:%s %s".formatted(fkKeyType, id));
+    }
+
+    final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
+    final List<SettingsEntity> validatedInData = this.createAndValidateInputData(template, record.getOption());
+
+    // Create
+    final EntityEntity newEntity = new EntityEntity();
+    newEntity.setEntityId(id);
+    newEntity.setEntityType(entityKeyType);
+    newEntity.setOrganization(super.getCurrentOrganization());
+
+    final EntityEntity savedEntity = this.entityRepository.saveAndFlush(newEntity);
+    super.deleteSettings(fkKeyType, savedEntity.getEntityId().toString());
+    super.insertSettings(fkKeyType, savedEntity.getEntityId().toString(), validatedInData);
+    return this.toRecord(validatedInData);
   }
 
   @Override
@@ -77,6 +113,14 @@ public class OptionsCRUDHostedEntity extends OptionsCRUDAdapter {
 
   @Override
   public OptionsRecord delete(final FkKeyType fkKeyType, final UUID id) {
-    return null;
+    final EntityEntity entity = this.entityRepository
+        .findByEntityIdAndEntityType(id, entityKeyType)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "No data found for:%s %s".formatted(fkKeyType, id)));
+    super.throwUnauthorizedIfNotMatch(entity.getOrganization().getOrganizationId());
+
+    this.entityRepository.delete(entity);
+    return this.toRecord(entity.getSettingsEntityList());
   }
+
 }

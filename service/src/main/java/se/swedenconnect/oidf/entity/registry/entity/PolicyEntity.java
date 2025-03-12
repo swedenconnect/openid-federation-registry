@@ -45,12 +45,6 @@ public class PolicyEntity extends BaseEntity {
   @Column(name = "organization_id", insertable = false, updatable = false, nullable = false)
   private UUID organizationId;
 
-  @Column
-  private String name;
-
-  @Column(columnDefinition = "TEXT")
-  private String policy;
-
   @ManyToOne
   @JoinColumn(name = "organization_id")
   private OrganizationEntity organization;

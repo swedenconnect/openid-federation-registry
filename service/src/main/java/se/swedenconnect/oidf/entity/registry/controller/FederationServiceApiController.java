@@ -16,7 +16,6 @@
 
 package se.swedenconnect.oidf.entity.registry.controller;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -61,25 +60,14 @@ public class FederationServiceApiController {
   }
 
   /**
-   * Retrieves a policy record using the provided policy record identifier.
-   *
-   * @param policyRecordId the unique identifier for the policy record in UUID format.
-   * @return a signed JWT containing the policy record details.
-   */
-  @GetMapping(value = "/policy_record", produces = "application/jwt")
-  public String policyRecord(@RequestParam(name = "policy_record_id") final UUID policyRecordId) {
-    return this.federationApiService.policyRecord(policyRecordId);
-  }
-
-  /**
    * Getting entity records
    *
-   * @param issuer Issuer is mandatory
+   * @param instanceId instanceId is mandatory
    * @return SignedJWT with a claim for entity_record
    */
   @GetMapping(value = "/entity_record", produces = "application/jwt")
-  public String entityRecord(@RequestParam(name = "iss") final String issuer) {
-    return this.federationApiService.entityRecord(new EntityID(issuer));
+  public String entityRecord(@RequestParam(name = "instanceid") final UUID instanceId) {
+    return this.federationApiService.entityRecord(instanceId);
   }
 
   /**

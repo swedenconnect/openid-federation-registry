@@ -36,8 +36,7 @@ class PolicyRepositoryTest {
   @Test
   public void testSaveAndFindPolicy() {
     final PolicyEntity policy = new PolicyEntity();
-    policy.setName("Test Policy");
-    policy.setPolicy("{ \"key\": \"value\" }");
+
     policy.setPolicyId(UUID.randomUUID());
     this.policyRepository.save(policy);
 
@@ -45,8 +44,6 @@ class PolicyRepositoryTest {
 
     assertThat(foundPolicy).isNotNull();
     assertThat(foundPolicy.getPolicyId()).isEqualTo(policy.getPolicyId());
-    assertThat(foundPolicy.getName()).isEqualTo(policy.getName());
-    assertThat(foundPolicy.getPolicy()).isEqualTo(policy.getPolicy());
 
     final PolicyEntity foundPolicyByExtID = this.policyRepository.findById(policy.getPolicyId())
         .orElse(null);

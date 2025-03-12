@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.entity.registry.service;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import se.swedenconnect.oidf.entity.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.entity.ModuleEntity;
 import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
@@ -67,10 +68,16 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
         entity.getOrganization().getOrganizationId());
   }
 
+  protected Predicate<EntityEntity> hasRightOrganizationIdEntityPredicate() {
+    return entity -> Objects.equals(this.getCurrentOrganization().getOrganizationId(),
+        entity.getOrganization().getOrganizationId());
+  }
+
   protected Predicate<TrustMarkEntity> hasRightOrganizationIdTrustmarkPredicate() {
     return entity -> Objects.equals(this.getCurrentOrganization().getOrganizationId(),
         entity.getModule().getOrganization().getOrganizationId());
   }
+
   protected void throwUnauthorizedIfNotMatch(final UUID organizationId) {
     Optional.ofNullable(this.userAssignedOrganization.get())
         .map(OrganizationEntity::getOrganizationId)

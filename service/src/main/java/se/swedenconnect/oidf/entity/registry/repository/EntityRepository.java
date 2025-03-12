@@ -17,9 +17,11 @@ package se.swedenconnect.oidf.entity.registry.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import se.swedenconnect.oidf.entity.registry.entity.EntityEntity;
+import se.swedenconnect.oidf.entity.registry.entity.EntityKeyType;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * EntityRepository is a JPA repository interface for accessing and performing CRUD operations on {@link EntityEntity}
@@ -30,20 +32,22 @@ import java.util.Optional;
  * @author David Goldring
  * @author Per Fredrik Plars
  */
-public interface EntityRepository extends JpaRepository<EntityEntity, Long> {
+public interface EntityRepository extends JpaRepository<EntityEntity, UUID> {
   /**
-   * Resolve EntityEntity by its externalId
+   * Retrieves an {@link Optional} containing an {@link EntityEntity} if an entity with the
+   * specified ID and entity type exists.
    *
-   * @param externalId UUID
-   * @return an Optional containing the EntityEntity if found, or an empty Optional if no EntityEntity exist
+   * @param id the unique identifier of the entity
+   * @param entityType the type of the entity, specified as {@link EntityKeyType}
+   * @return an {@link Optional} containing the entity if found, or an empty {@link Optional} if not found
    */
-  Optional<EntityEntity> findByExternalId(String externalId);
+  Optional<EntityEntity> findByEntityIdAndEntityType(UUID id, EntityKeyType entityType);
 
   /**
-   * Find by Entity Issuer
+   * Retrieves an {@link Optional} containing an {@link EntityEntity} based on the specified entity type.
    *
-   * @param issuer Issuer
-   * @return List of Entity for this issuer
+   * @param entityType the type of the entity, specified as {@link EntityKeyType}
+   * @return an {@link Optional} containing the entity if found, or an empty {@link Optional} if no match is found
    */
-  List<EntityEntity> findByIssuer(String issuer);
+  List<EntityEntity> findByEntityType(EntityKeyType entityType);
 }

@@ -85,8 +85,7 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
     // Create
     final PolicyEntity newPolicyEntity = new PolicyEntity();
     newPolicyEntity.setPolicyId(id);
-    newPolicyEntity.setName("<NoUsed>");//TODO: REMOVE
-    newPolicyEntity.setPolicy("{}");//TODO: REMOVE
+
     newPolicyEntity.setOrganization(getCurrentOrganization());
 
     final PolicyEntity savedPolicyEntity = this.policyRepository.saveAndFlush(newPolicyEntity);
@@ -127,8 +126,7 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
         fkKeyType,
         super.getSettingsEntities(POLICIES, policyEntity.getPolicyId()));
 
-    final OptionsRecord optionsRecord = toRecord(mergeValues);
-    return optionsRecord;
+    return toRecord(mergeValues);
 
   }
 
