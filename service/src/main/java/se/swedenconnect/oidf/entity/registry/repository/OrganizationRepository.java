@@ -18,17 +18,25 @@ package se.swedenconnect.oidf.entity.registry.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
  * OrganizationRepository is a JPA repository interface for performing database operations on {@link OrganizationEntity}
  * objects.
- *
  * This repository provides standard CRUD functionality and enables the use of custom queries to manage and access
  * organization data in the system. The entity is identified by a {@link UUID}.
  *
  * @author Per Fredrik Plars
  */
 public interface OrganizationRepository extends JpaRepository<OrganizationEntity, UUID> {
+  /**
+   * Retrieves an organization entity based on its organization number.
+   *
+   * @param orgNumber the organization number used to identify the {@link OrganizationEntity}
+   * @return an {@link Optional} containing the found {@link OrganizationEntity}, or an empty {@link Optional} if no
+   *     organization is found with the given number
+   */
+  Optional<OrganizationEntity> findByOrgNumber(String orgNumber);
 
 }

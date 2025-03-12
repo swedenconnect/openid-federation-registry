@@ -21,9 +21,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.entity.registry.entity.EntityEntity;
@@ -32,7 +32,6 @@ import se.swedenconnect.oidf.entity.registry.entity.InstanceEntity;
 import se.swedenconnect.oidf.entity.registry.entity.ModuleEntity;
 import se.swedenconnect.oidf.entity.registry.entity.PolicyEntity;
 import se.swedenconnect.oidf.entity.registry.entity.SettingsEntity;
-import se.swedenconnect.oidf.entity.registry.entity.TrustMarkSubjectEntity;
 import se.swedenconnect.oidf.entity.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.entity.registry.repository.PolicyRepository;
@@ -105,24 +104,28 @@ public class FederationApiService {
   }
 
   /**
-   * Getting entity records
+   * Generates a signed JWT containing entity records for a specific instance ID.
+   * This method fetches the entity records associated with the issuer from the repository,
+   * signs the resulting records, and returns the signed JWT string.
    *
-   * @param issuer Issuer id
-   * @return SignedJWT with Entitys
+   * @param instanceId the unique identifier of the instance for which the entity records are retrieved
+   * @return a signed JSON Web Token (JWT) string containing the entity records
+   * @throws ResponseStatusException if the issuer is not set, if no entity records are found, or if signing fails
    */
-  public String entityRecord(final EntityID issuer) {
-    Optional.ofNullable(issuer)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Issuer is mandatory"));
+  public String entityRecord(final UUID instanceId) {
+    Optional.ofNullable(instanceId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "instanceId is mandatory"));
 
-    final List<EntityEntity> recordEntity = this.entityRepository.findByIssuer(issuer.getValue());
+    final List<EntityEntity> recordEntity = null; //TODO //this.entityRepository.findByIssuer(issuer.getValue());
     if (recordEntity.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-          "Unable to find entity for issuer:'%s'".formatted(issuer));
+          "Unable to find entity for issuer:'%s'".formatted(instanceId));
     }
+
     try {
       final String jwt = this.signJsonRecords("entity-records",
               recordEntity.stream()
-                  .map(EntityEntity::getEntity)
+                  .map(entityEntity -> "Not implemented yet")
                   .toList())
           .serialize();
       log.debug("Entity Signed JWT: {}", jwt);
@@ -131,47 +134,28 @@ public class FederationApiService {
     catch (final JOSEException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
     }
+
   }
 
   /**
-   * Getting trustmarks
+   * Generates a signed JSON Web Token (JWT) representing the trust mark record for a specific instance.
    *
-   * @param issuer Issuer
-   * @param trustmarkId Trustmarkid
-   * @param subject Subject
-   * @return Signed JWT containing list of trustmarks
+   * @param instanceId a unique identifier of the instance for which the trust mark record is requested
+   * @return a JWT string containing the signed trust mark record data
+   * @throws ResponseStatusException if any required input is missing, no records are found, or an error occurs
+   * during token signing
    */
-  public String trustMarkRecord(
-      final EntityID issuer,
-      final String trustmarkId,
-      final Optional<String> subject) {
-    Optional.ofNullable(issuer)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Issuer is mandatory"));
-    Optional.ofNullable(trustmarkId)
-        .filter(id -> !id.isBlank())
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "trustmarkId is mandatory"));
-
-    final List<TrustMarkSubjectEntity> trustmarkSubjectEntities =
-        this.trustMarkSubjectRepository.findByIssuerAndTrustmarkId(issuer.getValue(), trustmarkId)
-            .stream()
-            .filter(trustMarkSubjectEntity -> subject.isEmpty() ||
-                trustMarkSubjectEntity.getSubject().equals(subject.get()))
-            .toList();
-
-    if (trustmarkSubjectEntities.isEmpty()) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-          "Unable to find trustMarkRecord for issuer:'%s',trustmark:'%s',subject:'%s'"
-              .formatted(issuer, trustmarkId, subject));
-    }
-    try {
-      final String jwt = this.signJsonRecords("trustmark-records",
-          trustmarkSubjectEntities.stream().map(TrustMarkSubjectEntity::getTrustmarksubjectJson).toList()).serialize();
-      log.debug("TrustMark JWT: {}", jwt);
-      return jwt;
-    }
-    catch (final JOSEException e) {
-      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
-    }
+  @Transactional(readOnly = true)
+  public String trustMarkRecord(final UUID instanceId) {
+    Assert.notNull(instanceId, "instanceId is mandatory");
+    final String claimName = "trustmark_records";
+    final String jwt = this.jwtSupport.signJWT(claimName, builder -> builder
+            .claim(claimName, this.resolveTrustmarks(instanceId))
+            .expirationTime(new Date(System.currentTimeMillis() + this.jwkExpiryDuration.toMillis()))
+            .issuer(this.jwkIssuer))
+        .serialize();
+    log.debug("trustMarkRecord Signed JWT: {}", jwt);
+    return jwt;
 
   }
 
@@ -187,9 +171,9 @@ public class FederationApiService {
         .orElseThrow(() ->
             new ResponseStatusException(HttpStatus.NOT_FOUND,
                 "Unable to find policy for id:'%s'".formatted(policyRecordId.toString())));
-    try {
-      final Map<String, Object> policyClaim =
-          this.mapper.readValue(policyEntity.getPolicy(), new TypeReference<Map<String, Object>>() {});
+
+    final Map<String, Object> policyClaim = Map.of("not", "implemented");
+    //this.mapper.readValue(policyEntity.getPolicy(), new TypeReference<Map<String, Object>>() {});
 
       final String claimName = "policy_record";
 
@@ -200,10 +184,6 @@ public class FederationApiService {
           .serialize();
       log.debug("Policy Signed JWT: {}", jwt);
       return jwt;
-    }
-    catch (final JsonProcessingException e) {
-      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to sign response", e);
-    }
 
   }
 
@@ -234,7 +214,9 @@ public class FederationApiService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No instance found for:%s".formatted(instanceid)));
 
-    final List<ModuleEntity> moduleEntities = instanceEntity.getModule();
+    final List<ModuleEntity> moduleEntities = instanceEntity.getOrganizations().stream()
+        .flatMap(organizationEntity -> organizationEntity.getModule().stream())
+        .toList();
 
     final List<Map<String, Object>> tmi = moduleEntities.stream()
         .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(TRUSTMARKISSUER))
@@ -260,6 +242,24 @@ public class FederationApiService {
 
   }
 
+  private Map<String, List<Map<String, Object>>> resolveTrustmarks(final UUID instanceid) {
+
+    final InstanceEntity instanceEntity = this.instanceRepository.findById(instanceid)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "No instance found for:%s".formatted(instanceid)));
+
+    final List<ModuleEntity> trustmarkIssuersModules = instanceEntity.getOrganizations()
+        .stream()
+        .flatMap(organizationEntity -> organizationEntity.getModule().stream())
+        .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(TRUSTMARKISSUER))
+        .toList();
+
+    final Map<String, List<Map<String, Object>>> data = new HashMap<>();
+    data.put("trust-mark", trustmarkIssuersModules.stream().map(this::toMapWithTrustMarks).toList());
+    return data;
+
+  }
+
   private Map<String, Object> toMap(final ModuleEntity moduleEntity) {
     return moduleEntity.getSettingsEntityList()
         .stream()
@@ -277,7 +277,8 @@ public class FederationApiService {
             SettingsEntity::castValue
         ));
 
-    settingsEntity.put("trust-marks", this.trustMarkService.listByModuleId(moduleEntity.getModuleId()));
+    settingsEntity.put("trust-marks",
+        this.trustMarkService.listByModuleId(moduleEntity.getModuleId(), true));
     return settingsEntity;
   }
 

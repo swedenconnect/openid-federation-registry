@@ -42,6 +42,24 @@ import java.util.Date;
 @Component
 public class JwtTestUtils {
 
+  public enum OrganisationType {
+    PM("Pensionsmyndigheten", "55555", "http://www.pm.se/oidf"),
+    AF("Arbetsförmedlingen", "66666", "http://www.af.se/oidf"),
+    SKATT("Skatteverket", "77777", "http://www.skv.se/oidf"),
+    ;
+
+    String name;
+    String orgId;
+    String domainPrefix;
+
+    OrganisationType(String name, String orgId, String domainPrefix) {
+      this.name = name;
+      this.orgId = orgId;
+      this.domainPrefix = domainPrefix;
+    }
+
+  }
+
   /**
    * If a token is needed for external testing
    *
@@ -49,7 +67,7 @@ public class JwtTestUtils {
    */
   public static void main(String[] args) {
     JwtTestUtils jwtTestUtils = new JwtTestUtils();
-    System.out.println(jwtTestUtils.createJwt());
+    System.out.println(jwtTestUtils.createJwt(OrganisationType.PM));
   }
 
   /**
@@ -71,7 +89,7 @@ public class JwtTestUtils {
    * @return A serialized representation of the signed JWT.
    * @throws RuntimeException if an error occurs during the JWT creation or signing process.
    */
-  public String createJwt() {
+  public String createJwt(OrganisationType orgType) {
     try {
       final JWTClaimsSet claims = new com.nimbusds.jwt.JWTClaimsSet.Builder()
           .subject("test-user")
@@ -82,6 +100,9 @@ public class JwtTestUtils {
           .claim("scope", "entity_read entity_write policies_read policies_write "
               + "trustmarksubject_read trustmarksubject_write "
               + "options_read options_update options_delete options_create")
+          .claim("orgNumber", orgType.orgId)
+          .claim("orgName", orgType.name)
+          .claim("entity_prefix", orgType.domainPrefix)
           .build();
 
       final RSASSASigner signer = new RSASSASigner(getPrivateKeyFromKeyStore());

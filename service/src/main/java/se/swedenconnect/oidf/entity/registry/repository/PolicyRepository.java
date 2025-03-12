@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.entity.registry.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import se.swedenconnect.oidf.entity.registry.entity.PolicyEntity;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,11 +33,22 @@ import java.util.UUID;
  */
 public interface PolicyRepository extends JpaRepository<PolicyEntity, UUID> {
   /**
-   * Finds a policy by its name.
+   * Retrieves a {@link PolicyEntity} associated with the specified organization ID.
    *
-   * @param name the unique name of the policy to be found
-   * @return an Optional containing the policy if found, or an empty Optional if no policy with the given name exists
+   * @param organizationId the unique identifier of the organization whose policy is to be retrieved
+   * @return an {@link Optional} containing the {@link PolicyEntity} if found, or an empty {@link Optional}
+   * if no policy exists for the given organization ID
    */
-  Optional<PolicyEntity> findByName(String name);
+  List<PolicyEntity> findByOrganizationId(UUID organizationId);
+
+  /**
+   * Retrieves a {@link PolicyEntity} associated with the specified policy ID and organization ID.
+   *
+   * @param policyId the unique identifier of the policy to be retrieved
+   * @param organizationId the unique identifier of the organization associated with the policy
+   * @return an {@link Optional} containing the {@link PolicyEntity} if found, or an empty {@link Optional} if no
+   *     matching policy exists for the given policy ID and organization ID
+   */
+  Optional<PolicyEntity> findByPolicyIdAndOrganizationId(UUID policyId, UUID organizationId);
 
 }

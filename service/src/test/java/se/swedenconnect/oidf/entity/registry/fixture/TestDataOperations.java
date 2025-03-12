@@ -28,17 +28,24 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
+import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
+import se.swedenconnect.oidf.registry.api.model.Values;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPublicKey;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,29 +58,34 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 public class TestDataOperations {
 
-  private static final ObjectMapper objectMapper = new ObjectMapper();
+  private final TestRestTemplate restTemplate;
+  private final ObjectMapper objectMapper = new ObjectMapper();
 
-  public static String createPolicies(TestRestTemplate restTemplate) throws JsonProcessingException {
-    final ResponseEntity<String> tmi =
-        restTemplate.getForEntity("/registry/v1/options/policies", String.class);
-    if (tmi.getStatusCode().isError()) {
-      log.info(tmi.getBody());
+  public TestDataOperations(final TestRestTemplate restTemplate) {
+    this.restTemplate = restTemplate;
+  }
+
+  public UUID createPolicies(JwtTestUtils.OrganisationType organisationType)
+      throws JsonProcessingException {
+    final ResponseEntity<String> reply = restTemplate.getForEntity("/registry/v1/options/policies", String.class);
+    if (reply.getStatusCode().isError()) {
+      log.info(reply.getBody());
     }
-    assertThat(tmi.getStatusCode()).isEqualTo(HttpStatus.OK);
-    final JsonNode node = objectMapper.readTree(tmi.getBody());
+    assertThat(reply.getStatusCode()).isEqualTo(HttpStatus.OK);
+    final JsonNode node = objectMapper.readTree(reply.getBody());
     final JsonNode data = node.get("option");
 
     data.elements().forEachRemaining(jsonNode -> {
       final ObjectNode valueNode = (ObjectNode) jsonNode;
       ifThen(valueNode, "name", () -> "Ena-Policy");
       ifThen(valueNode, "policy", () -> "{\"signature\":\"HS256\"}");
-      ifThen(valueNode, "organization_id", () -> valueNode.get("options").elements().next().get("key").asText());
     });
 
     final String newTMI = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
-    final String id = UUID.randomUUID().toString();
+    final UUID id = UUID.randomUUID();
     final HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.set("Authorization", "Bearer " + new JwtTestUtils().createJwt(organisationType));
 
     final ResponseEntity<String> createdTMI =
         restTemplate.postForEntity("/registry/v1/options/policies/" + id, new HttpEntity<>(newTMI, headers),
@@ -85,144 +97,268 @@ public class TestDataOperations {
     return id;
   }
 
-  public static String createTMI(TestRestTemplate restTemplate) throws JsonProcessingException {
-    final ResponseEntity<String> tmi =
-        restTemplate.getForEntity("/registry/v1/options/trustmarkissuer", String.class);
-    if (tmi.getStatusCode().isError()) {
-      log.info(tmi.getBody());
+  public OptionsRecord get(final FkKeyType configGroup, final UUID id,
+      final HttpStatus httpStatus, final JwtTestUtils.OrganisationType organizationType) {
+
+    final HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.set("Authorization", "Bearer " + new JwtTestUtils().createJwt(organizationType));
+
+    final HttpEntity<String> entity = new HttpEntity<>(headers);
+    String url = "/registry/v1/options/%s/%s".formatted(configGroup, id);
+    if (url.endsWith("/null")) {
+      url = url.substring(0, url.length() - 5);
     }
-    assertThat(tmi.getStatusCode()).isEqualTo(HttpStatus.OK);
-    final JsonNode node = objectMapper.readTree(tmi.getBody());
+
+    final ResponseEntity<String> reply = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+    if (reply.getStatusCode() != httpStatus) {
+      log.info(reply.getBody());
+    }
+    assertThat(reply.getStatusCode()).isEqualTo(httpStatus);
+
+    if (reply.getStatusCode() != HttpStatus.CREATED && reply.getStatusCode() != HttpStatus.OK) {
+      return null;
+    }
+
+    try {
+      return objectMapper.readValue(reply.getBody(), OptionsRecord.class);
+    }
+    catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public OptionsRecord post(
+      final TestRestTemplate restTemplate,
+      final FkKeyType configGroup,
+      final UUID id,
+      final HttpStatus httpStatus,
+      final JwtTestUtils.OrganisationType organizationType,
+      final OptionsRecord record) {
+
+    final HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.set("Authorization", "Bearer " + new JwtTestUtils().createJwt(organizationType));
+
+    final HttpEntity<OptionsRecord> entity = new HttpEntity<>(record, headers);
+
+    final ResponseEntity<String> reply =
+        restTemplate.exchange("/registry/v1/options/%s/%s".formatted(configGroup, id.toString()), HttpMethod.POST,
+            entity,
+            String.class);
+    if (reply.getStatusCode() != httpStatus) {
+      log.info(reply.getBody());
+    }
+
+    assertThat(reply.getStatusCode()).isEqualTo(httpStatus);
+
+    if (reply.getStatusCode() != HttpStatus.CREATED || reply.getStatusCode() != HttpStatus.OK) {
+      return null;
+    }
+
+    try {
+      return objectMapper.readValue(reply.getBody(), OptionsRecord.class);
+    }
+    catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public void delete(
+      final FkKeyType configGroup,
+      final UUID id,
+      HttpStatus httpStatus,
+      final JwtTestUtils.OrganisationType organizationType) {
+
+    final HttpHeaders headers = new HttpHeaders();
+    headers.set("Authorization", "Bearer " + new JwtTestUtils().createJwt(organizationType));
+    final HttpEntity<String> entity = new HttpEntity<>(headers);
+
+    final ResponseEntity<Void> response =
+        restTemplate.exchange("/registry/v1/options/%s/%s".formatted(configGroup, id), HttpMethod.DELETE, entity,
+            Void.class);
+    assertThat(response.getStatusCode()).isEqualTo(httpStatus);
+  }
+
+  public UUID updatePolicies(
+      final JwtTestUtils.OrganisationType organisationType,
+      final UUID policyId,
+      final Map<String, String> dataToUpdate) throws JsonProcessingException {
+
+    final HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.set("Authorization", "Bearer " + new JwtTestUtils().createJwt(organisationType));
+
+    final HttpEntity<String> entity = new HttpEntity<>(headers);
+
+    final ResponseEntity<String> reply =
+        restTemplate.exchange("/registry/v1/options/policies/" + policyId, HttpMethod.GET, entity, String.class);
+
+    if (reply.getStatusCode().isError()) {
+      log.info(reply.getBody());
+    }
+    assertThat(reply.getStatusCode()).isEqualTo(HttpStatus.OK);
+    final JsonNode node = objectMapper.readTree(reply.getBody());
     final JsonNode data = node.get("option");
 
     data.elements().forEachRemaining(jsonNode -> {
       final ObjectNode valueNode = (ObjectNode) jsonNode;
-      ifThen(valueNode, "active", () -> "true");
-      ifThen(valueNode, "entity-identifier", () -> "http://www.swedenconnect.se/issuer");
-      ifThen(valueNode, "alias", () -> "tmi");
-      ifThen(valueNode, "instance_id", () -> valueNode.get("options").elements().next().get("key").asText());
+      if (dataToUpdate.containsKey(valueNode.get("key").asText())) {
+        valueNode.put("value", dataToUpdate.get(valueNode.get("key").asText()));
+      }
     });
 
     final String newTMI = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
-    final String id = UUID.randomUUID().toString();
-    final HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
 
     final ResponseEntity<String> createdTMI =
-        restTemplate.postForEntity("/registry/v1/options/trustmarkissuer/" + id, new HttpEntity<>(newTMI, headers),
-            String.class);
+        restTemplate.exchange("/registry/v1/options/policies/" + policyId, HttpMethod.PUT,
+            new HttpEntity<>(newTMI, headers), String.class);
     if (createdTMI.getStatusCode().isError()) {
       log.info(createdTMI.getBody());
     }
     assertThat(createdTMI.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    return policyId;
+  }
+
+  public UUID createTMI(
+      final UUID id,
+      final JwtTestUtils.OrganisationType organisationType,
+      final HttpStatus expectedHttpStatus,
+      final Function<Values, String> options) throws JsonProcessingException {
+    return create(id, FkKeyType.TRUSTMARKISSUER, organisationType, expectedHttpStatus, options);
+  }
+
+  public static Function<Values, String> defaultTrustMarkIssuer(UUID entity_id) {
+    return s -> switch (s.getKey()) {
+      case "active" -> "true";
+      case "entity-identifier" -> "http://www.swedenconnect.se/issuer";
+      case "alias" -> "tmi";
+      case "entity_id" -> entity_id.toString();
+      default -> null;
+    };
+  }
+
+  public static Function<Values, String> defaultTrustMark(UUID trustMarkIssuerId) {
+    return s -> switch (s.getKey()) {
+      case "trust-mark-entity-id" -> "http://tmi.swedenconnect.se/loa3";
+      case "ref-uri" -> "http://doc.swedenconnect.se/loa3";
+      case "logo-uri" -> "http://www.swedenconnect.se/image.png";
+      case "trustmarkissuer_id" -> trustMarkIssuerId.toString();
+      default -> null;
+    };
+  }
+
+  public static Function<Values, String> defaultTrustMarkSubject(UUID trustMarkId) {
+    return s -> switch (s.getKey()) {
+      case "trustmark_id" -> trustMarkId.toString();
+      case "subject" -> "http://www.swedenconnect.se/op1";
+      case "revoked" -> "false";
+      case "granted" -> LocalDateTime.now().minusDays(1).toString();
+      case "expires" -> LocalDateTime.now().plusDays(1).toString();
+      default -> null;
+    };
+  }
+
+  public static Function<Values, String> defaultTrustAnchor(final UUID entity_id) {
+    return s -> switch (s.getKey()) {
+      case "active" -> "true";
+      case "entity-identifier" -> "http://www.swedenconnect.se/trustanchor";
+      case "alias" -> "trustanchor";
+      case "entity_id" -> entity_id.toString();
+
+      default -> null;
+    };
+  }
+
+  public static Function<Values, String> defaultResolver(final UUID entity_id) {
+    return s -> switch (s.getKey()) {
+      case "active" -> "true";
+      case "entity-identifier" -> "http://www.swedenconnect.se/resolver";
+      case "alias" -> "resolver";
+      case "trust-anchor" -> "http://www.swedenconnect.se/trustanchor";
+      case "trusted-keys" -> new JWKSet(List.of(genKey(), genKey())).toString();
+      case "entity_id" -> entity_id.toString();
+
+      default -> null;
+    };
+  }
+
+  public static Function<Values, String> defaultHostedEntity() {
+    return s -> switch (s.getKey()) {
+      case "subject" -> "http://www.swedenconnect.se/subject";
+      case "issuer" -> "http://www.swedenconnect.se/issuer";
+      default -> null;
+    };
+  }
+
+  public UUID createTrustMark(
+      final UUID id,
+      final JwtTestUtils.OrganisationType organisationType,
+      final HttpStatus expectedHttpStatus,
+      final Function<Values, String> options) throws JsonProcessingException {
+    return create(id, FkKeyType.TRUSTMARK, organisationType, expectedHttpStatus, options);
+  }
+
+  public UUID createHostedEntity(
+      final UUID id,
+      final JwtTestUtils.OrganisationType organisationType,
+      final HttpStatus expectedHttpStatus,
+      final Function<Values, String> options) throws JsonProcessingException {
+    return create(id, FkKeyType.HOSTED_ENTITY, organisationType, expectedHttpStatus, options);
+  }
+
+  public UUID createTrustMarkSubject(
+      final UUID id,
+      final JwtTestUtils.OrganisationType organisationType,
+      final HttpStatus expectedHttpStatus,
+      final Function<Values, String> options) throws JsonProcessingException {
+    return create(id, FkKeyType.TRUSTMARKSUBJECT, organisationType, expectedHttpStatus, options);
+  }
+
+  protected UUID create(
+      UUID id,
+      final FkKeyType configGroup,
+      final JwtTestUtils.OrganisationType organisationType,
+      final HttpStatus expectedHttpStatus,
+      final Function<Values, String> overrideSettingValues) {
+
+    final OptionsRecord template = get(configGroup, null, HttpStatus.OK, organisationType);
+    template.getOption().forEach(valueNode -> {
+      final String value = overrideSettingValues.apply(valueNode);
+      if (value != null) {
+        valueNode.setValue(value);
+      }
+    });
+
+    post(restTemplate, configGroup, id, expectedHttpStatus, organisationType, template);
     return id;
   }
 
-  public static String createTrustMark(TestRestTemplate restTemplate, UUID trustMarkIssuerId)
-      throws JsonProcessingException {
-    final ResponseEntity<String> response =
-        restTemplate.getForEntity("/registry/v1/options/trustmark", String.class);
-    if (response.getStatusCode().isError()) {
-      log.info(response.getBody());
-    }
-    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    final JsonNode node = objectMapper.readTree(response.getBody());
-    final JsonNode data = node.get("option");
-
-    data.elements().forEachRemaining(jsonNode -> {
-      final ObjectNode valueNode = (ObjectNode) jsonNode;
-      ifThen(valueNode, "trust-mark-entity-id", () -> "http://tmi.swedenconnect.se/loa3");
-      ifThen(valueNode, "ref-uri", () -> "http://doc.swedenconnect.se/loa3");
-      ifThen(valueNode, "logo-uri", () -> "http://www.swedenconnect.se/image.png");
-      ifThen(valueNode, "trustmarkissuer_id", () -> trustMarkIssuerId.toString());
-    });
-
-    final String newResponse = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
-    final String id = UUID.randomUUID().toString();
-    final HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-
-    final ResponseEntity<String> createdResponse =
-        restTemplate.postForEntity("/registry/v1/options/trustmark/" + id, new HttpEntity<>(newResponse, headers),
-            String.class);
-    if (createdResponse.getStatusCode().isError()) {
-      log.info(createdResponse.getBody());
-    }
-    assertThat(createdResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-    return id;
+  public UUID createTrustAnchor(
+      final UUID id,
+      final JwtTestUtils.OrganisationType organisationType,
+      final HttpStatus expectedHttpStatus,
+      final Function<Values, String> options) throws JsonProcessingException {
+    return create(id, FkKeyType.TRUSTANCHOR, organisationType, expectedHttpStatus, options);
   }
 
-  public static String createTA(TestRestTemplate restTemplate) throws JsonProcessingException {
-    final ResponseEntity<String> ta =
-        restTemplate.getForEntity("/registry/v1/options/trustanchor", String.class);
-    if (ta.getStatusCode().isError()) {
-      log.info(ta.getBody());
-    }
-    assertThat(ta.getStatusCode()).isEqualTo(HttpStatus.OK);
-    final JsonNode node = objectMapper.readTree(ta.getBody());
-    final JsonNode data = node.get("option");
-
-    data.elements().forEachRemaining(jsonNode -> {
-      final ObjectNode valueNode = (ObjectNode) jsonNode;
-      ifThen(valueNode, "active", () -> "true");
-      ifThen(valueNode, "entity-identifier", () -> "http://www.swedenconnect.se/trustanchor");
-      ifThen(valueNode, "alias", () -> "ta");
-      ifThen(valueNode, "instance_id", () -> valueNode.get("options").elements().next().get("key").asText());
-    });
-
-    final String newta = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
-    final String id = UUID.randomUUID().toString();
-    final HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-
-    final ResponseEntity<String> createdta =
-        restTemplate.postForEntity("/registry/v1/options/trustanchor/" + id, new HttpEntity<>(newta, headers),
-            String.class);
-    if (createdta.getStatusCode().isError()) {
-      log.info(createdta.getBody());
-    }
-    assertThat(createdta.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-    return id;
-  }
-
-  public static String createRESOLVER(TestRestTemplate restTemplate) throws JsonProcessingException {
-    final ResponseEntity<String> resolver =
-        restTemplate.getForEntity("/registry/v1/options/resolver", String.class);
-    if (resolver.getStatusCode().isError()) {
-      log.info(resolver.getBody());
-    }
-    assertThat(resolver.getStatusCode()).isEqualTo(HttpStatus.OK);
-    final JsonNode node = objectMapper.readTree(resolver.getBody());
-    final JsonNode data = node.get("option");
-
-    data.elements().forEachRemaining(jsonNode -> {
-      final ObjectNode valueNode = (ObjectNode) jsonNode;
-      ifThen(valueNode, "active", () -> "true");
-      ifThen(valueNode, "entity-identifier", () -> "http://www.swedenconnect.se/resolver");
-      ifThen(valueNode, "alias", () -> "resolver");
-      ifThen(valueNode, "instance_id", () -> valueNode.get("options").elements().next().get("key").asText());
-      ifThen(valueNode, "trust-anchor", () -> "http://www.swedenconnect.se/trustanchor");
-      ifThen(valueNode, "trusted-keys", () -> new JWKSet(List.of(genKey(), genKey())).toString());
-    });
-
-    final String newModule = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
-    final String id = UUID.randomUUID().toString();
-    final HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-
-    final ResponseEntity<String> createdresolver =
-        restTemplate.postForEntity("/registry/v1/options/resolver/" + id, new HttpEntity<>(newModule, headers),
-            String.class);
-    if (createdresolver.getStatusCode().isError()) {
-      log.info(createdresolver.getBody());
-    }
-    assertThat(createdresolver.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-    return id;
+  public UUID createResolver(
+      final UUID id,
+      final JwtTestUtils.OrganisationType organisationType,
+      final HttpStatus expectedHttpStatus,
+      final Function<Values, String> options) throws JsonProcessingException {
+    return create(id, FkKeyType.RESOLVER, organisationType, expectedHttpStatus, options);
   }
 
   private static void ifThen(ObjectNode valueNode, String key, Supplier<String> value) {
     if (valueNode.get("key").asText().contains(key)) {
       valueNode.put("value", value.get());
+    }
+  }
+
+  private static void setIfThen(Values valueNode, String key, Supplier<String> value) {
+    if (valueNode.getKey().equals(key)) {
+      valueNode.setValue(value.get());
     }
   }
 
@@ -234,8 +370,7 @@ public class TestDataOperations {
       final KeyPair keyPair = keyGen.generateKeyPair();
 
       // Ange ett unikt kid (Key ID)
-      return new ECKey.Builder(Curve.P_256, (ECPublicKey) keyPair.getPublic())
-          .privateKey(keyPair.getPrivate())
+      return new ECKey.Builder(Curve.P_256, (ECPublicKey) keyPair.getPublic()).privateKey(keyPair.getPrivate())
           .keyID("ec-key-id") // Ange ett unikt kid (Key ID)
           .build();
     }
@@ -243,5 +378,24 @@ public class TestDataOperations {
       throw new RuntimeException(e);
     }
 
+  }
+
+  public JsonNode listAll(final JwtTestUtils.OrganisationType organisationType) throws JsonProcessingException {
+    final ResponseEntity<String> response = this.restTemplate.getForEntity(
+        "/registry/v1/options/list", String.class);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+    return objectMapper.readTree(response.getBody());
+  }
+
+  public JsonNode listForFKType(FkKeyType fkKeyType, final JwtTestUtils.OrganisationType organisationType)
+      throws JsonProcessingException {
+    final ResponseEntity<String> response = this.restTemplate.getForEntity(
+        "/registry/v1/options/list/" + fkKeyType, String.class);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+    return objectMapper.readTree(response.getBody());
   }
 }

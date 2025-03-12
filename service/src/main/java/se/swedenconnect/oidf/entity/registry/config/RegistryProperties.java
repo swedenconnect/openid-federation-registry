@@ -22,7 +22,6 @@ import org.springframework.util.Assert;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -50,8 +49,10 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi, L
     Assert.isTrue(!this.instances.isEmpty(), "openid.federation.registry.instances "
         + "properties has to be defined with at least one instance entry");
 
-    Optional.of(this.instances)
-        .ifPresent(instances -> instances.forEach(InstanceProperties::validate));
+    this.instances.forEach(InstanceProperties::validate);
+
+    Assert.isTrue(this.instances.stream().filter(InstanceProperties::useForDefaultAssignment).count() <= 1,
+        "openid.federation.registry.instances[].useForDefaultAssignment shall only be set for one instance");
   }
 
   /**
@@ -121,12 +122,18 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi, L
   }
 
   /**
-   * Represents the properties of an individual instance managed within the registry.
-   *
-   * @param instanceId the unique identifier of the instance.
-   * @param name the name of the instance.
+   * Represents properties for an instance within the registry. This record holds details such as an instance's
+   * unique identifier, name, a flag indicating if it should be used for default assignment, and a list of
+   * organizational numbers.
+   * @param instanceId               the unique identifier for the instance, must not be null
+   * @param name                     the name of the instance, must not be empty
+   * @param useForDefaultAssignment  flag indicating if this instance should be used for default assignment
+   * @param org_numbers              a list of organizational numbers associated with the instance
    */
-  public record InstanceProperties(UUID instanceId, String name) {
+  public record InstanceProperties(UUID instanceId,
+      String name,
+      boolean useForDefaultAssignment,
+      List<String> org_numbers) {
     /**
      * Validate properties
      */
@@ -134,6 +141,12 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi, L
       Assert.notNull(
           this.instanceId, "Expected openid.federation.registry.instances[].instance_id");
       Assert.hasText(this.name, "Expected openid.federation.registry.instances[].name");
+
+      if (this.org_numbers == null || this.org_numbers.isEmpty()) {
+        Assert.isTrue(this.useForDefaultAssignment, "If openid.federation.registry.instances[].org_numbers is empty, "
+            + "useForDefaultAssignment must be true");
+      }
+
 
     }
   }

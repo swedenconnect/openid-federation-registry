@@ -26,7 +26,25 @@ import lombok.Getter;
 @Getter
 public class PropertyValidationFailException extends RuntimeException {
   final String filedName;
+  final String inputValue;
   final String validationFailMessage;
+
+  /**
+   * Constructs a PropertyValidationFailException with the specified field name, input value, and validation failure
+   * message.
+   *
+   * @param filedName the name of the field that failed validation
+   * @param inputValue the value provided for the field that failed validation
+   * @param validationFailMessage the message describing the reason for validation failure
+   */
+  public PropertyValidationFailException(final String filedName,
+      final String inputValue,
+      final String validationFailMessage) {
+    super("Key:%s:%s - %s".formatted(filedName, inputValue, validationFailMessage));
+    this.validationFailMessage = validationFailMessage;
+    this.filedName = filedName;
+    this.inputValue = inputValue;
+  }
 
   /**
    * Constructs a PropertyValidationFailException with the specified field name and validation failure message.
@@ -34,9 +52,11 @@ public class PropertyValidationFailException extends RuntimeException {
    * @param filedName the name of the field that failed validation
    * @param validationFailMessage the message describing the validation failure
    */
-  public PropertyValidationFailException(final String filedName, final String validationFailMessage) {
+  public PropertyValidationFailException(final String filedName,
+      final String validationFailMessage) {
     super("Key:%s - %s".formatted(filedName, validationFailMessage));
     this.validationFailMessage = validationFailMessage;
     this.filedName = filedName;
+    this.inputValue = null;
   }
 }

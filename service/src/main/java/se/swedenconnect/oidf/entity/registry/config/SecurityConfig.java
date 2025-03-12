@@ -15,15 +15,24 @@
  */
 package se.swedenconnect.oidf.entity.registry.config;
 
+import lombok.Getter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.Customizer;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.util.Assert;
+import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
+import se.swedenconnect.oidf.entity.registry.service.OrganizationService;
 
+import java.util.function.Supplier;
 /**
  * Security configuration class that defines security-related settings for the application. This class integrates OAuth2
  * Resource Server and configures security rules for specific HTTP endpoints. It utilizes Spring Security to define the
@@ -36,22 +45,25 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
   /**
-   * Configures and constructs a {@link SecurityFilterChain} bean to define security policies for the application. This
-   * method sets up OAuth2 Resource Server with JWT authentication, disables CSRF, and configures role-based and
-   * endpoint-specific access control rules.
+   * Configures a {@link SecurityFilterChain} bean for securing the application using OAuth2 Resource
+   * Server capabilities.
+   * This method sets up JWT authentication with a custom JWT authentication converter, disables CSRF, and defines
+   * authorization rules for specific request matchers and HTTP methods.
    *
-   * @param http the {@link HttpSecurity} object that allows configuring web-based security. It provides methods to
-   *     define security configurations such as authentication mechanisms, endpoint permissions, and additional
-   *     filters.
-   * @return the configured {@link SecurityFilterChain} that applies the defined security configurations to incoming
-   *     requests.
-   * @throws Exception if an error occurs while setting up the security configurations.
+   * @param http the {@link HttpSecurity} object allowing configuration of security for HTTP requests.
+   * @param customJwtAuthenticationConverter a custom {@link Converter} that converts a {@link Jwt} into an
+   *        {@link AbstractAuthenticationToken} for authentication purposes.
+   * @return a configured {@link SecurityFilterChain} used to enforce security policies.
+   * @throws Exception if an error occurs during configuration of the security chain.
    */
   @Bean
-  public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
+  public SecurityFilterChain securityFilterChain(final HttpSecurity http,
+      final Converter<Jwt, AbstractAuthenticationToken> customJwtAuthenticationConverter) throws Exception {
     http
         .oauth2ResourceServer(oauth2 -> oauth2
-            .jwt(Customizer.withDefaults()))
+            .jwt(jwtConfigurer ->
+                jwtConfigurer.jwtAuthenticationConverter(customJwtAuthenticationConverter))
+        )
         .csrf(AbstractHttpConfigurer::disable)
 
         .authorizeHttpRequests(auth -> auth
@@ -89,6 +101,84 @@ public class SecurityConfig {
             .anyRequest().denyAll()
         );
     return http.build();
+  }
+
+  /**
+   * Provides a {@link Supplier} that retrieves the organization entity associated with the currently authenticated
+   * user. If the authentication principal is an instance of {@link RegistryClaims}, the corresponding
+   * {@link OrganizationEntity} is returned. If the principal is of another type or null, no organization is returned.
+   *
+   * @return a {@link Supplier} that supplies the {@link OrganizationEntity} associated with the current user, or null
+   *     if the user does not have an associated organization.
+   */
+  @Bean(name = "userAssignedOrganization")
+  public Supplier<OrganizationEntity> userAssignedOrganization() {
+    return () -> {
+      final Object principal = SecurityContextHolder.getContext().getAuthentication();
+      if (principal instanceof RegistryClaims) {
+        return ((RegistryClaims) principal).getOrg();
+      }
+      return null;
+    };
+  }
+
+  /**
+   * Defines a custom JWT authentication converter bean to process JWT claims and generate an authentication token with
+   * additional claims specific to the application, such as organization details and domain prefix.
+   *
+   * @param organizationService the service used to retrieve or create organization entities based on the JWT
+   *     claims
+   * @return a {@link Converter} that converts a {@link Jwt} to an {@link AbstractAuthenticationToken}. The token
+   *     contains additional claims and organization information for authentication purposes.
+   */
+  @Bean
+  public Converter<Jwt, AbstractAuthenticationToken> customJwtAuthenticationConverter(
+      final OrganizationService organizationService) {
+
+    return new Converter<Jwt, AbstractAuthenticationToken>() {
+
+      @Override
+      public AbstractAuthenticationToken convert(final Jwt jwt) {
+        final String orgNumber = jwt.getClaimAsString("orgNumber");
+        final String orgName = jwt.getClaimAsString("orgName");
+        final String entityPrefix = jwt.getClaimAsString("entity_prefix");
+
+        Assert.hasText(orgNumber, "Missing orgNumber claim in JWT");
+        Assert.hasText(orgName, "Missing orgName claim in JWT");
+        Assert.hasText(entityPrefix, "Missing entity_prefix claim in JWT");
+
+        final OrganizationEntity org = organizationService.findCreate(orgNumber, orgName);
+        final RegistryClaims registryClaims = new RegistryClaims(jwt,
+            org, entityPrefix);
+        registryClaims.setAuthenticated(true);
+        return registryClaims;
+      }
+    };
+  }
+
+  /**
+   * The RegistryClaims class extends JwtAuthenticationToken and provides additional
+   * information about the authenticated
+   * client, including the associated organization and domain prefix.
+   */
+  @Getter
+  public static class RegistryClaims extends JwtAuthenticationToken {
+    private final OrganizationEntity org;
+    private final String domainPrefix;
+
+    /**
+     * Constructs a new instance of the RegistryClaims class, which extends JwtAuthenticationToken to
+     * include additional information such as the associated organization and domain prefix.
+     *
+     * @param jwt the {@link Jwt} object containing the token's claims and headers.
+     * @param org the {@link OrganizationEntity} representing the authenticated client's associated organization.
+     * @param domainPrefix a {@link String} representing the domain prefix of the organization.
+     */
+    public RegistryClaims(final Jwt jwt, final OrganizationEntity org, final String domainPrefix) {
+      super(jwt);
+      this.org = org;
+      this.domainPrefix = domainPrefix;
+    }
   }
 
 }

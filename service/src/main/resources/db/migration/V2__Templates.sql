@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2024-2025  Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,6 @@
  *  limitations under the License.
  */
 
-/*
- * Copyright 2024-2025 Sweden Connect
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 
 -- TrustmarkIssuer
 INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
@@ -40,6 +25,18 @@ VALUES ('TEMPLATE',
         'TEXT',
         '',
         'required | url',
+        'Flyway',
+        'Flyway');
+
+INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
+                     last_modified_by)
+VALUES ('TEMPLATE',
+        'TRUSTMARKISSUER',
+        'entity_id',
+        'Entity config',
+        'OPTIONS',
+        '',
+        'required | UUID',
         'Flyway',
         'Flyway');
 
@@ -67,17 +64,7 @@ VALUES ('TEMPLATE',
         'Flyway',
         'Flyway');
 
-INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
-                     last_modified_by)
-VALUES ('TEMPLATE',
-        'TRUSTMARKISSUER',
-        'instance_id',
-        'Instance that this TMS will belong to',
-        'OPTIONS',
-        '',
-        'required',
-        'Flyway',
-        'Flyway');
+
 
 INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
                      last_modified_by)
@@ -104,9 +91,9 @@ select fk_id,
        created_by,
        last_modified_by
 from settings
-where (data_key = 'instance_id'
-    or data_key = 'active'
+where (data_key = 'active'
     or data_key = 'entity-identifier'
+    or data_key = 'entity_id'
     or data_key = 'alias')
   and fk_type = 'TRUSTMARKISSUER';
 
@@ -123,9 +110,9 @@ select fk_id,
        created_by,
        last_modified_by
 from settings
-where (data_key = 'instance_id'
-    or data_key = 'active'
+where (data_key = 'active'
     or data_key = 'entity-identifier'
+    or data_key = 'entity_id'
     or data_key = 'alias')
   and fk_type = 'TRUSTMARKISSUER';
 
@@ -142,9 +129,9 @@ select fk_id,
        created_by,
        last_modified_by
 from settings
-where (data_key = 'instance_id'
-    or data_key = 'active'
+where (data_key = 'active'
     or data_key = 'entity-identifier'
+    or data_key = 'entity_id'
     or data_key = 'alias')
   and fk_type = 'TRUSTMARKISSUER';
 
@@ -198,25 +185,6 @@ VALUES ('TEMPLATE',
         'required | duration',
         'Flyway',
         'Flyway');
-
-
-
-/*
- * Copyright 2024-2025 Sweden Connect
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
 
 -- TrustMarks
 
@@ -299,19 +267,19 @@ VALUES ('TEMPLATE',
         'POLICIES',
         'policy',
         'Json policy document',
-        'TEXT',
+        'LARGETEXT',
         '',
         'required | json',
         'Flyway',
         'Flyway');
 
-
+-- TrustMarkSubject
 INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
                      last_modified_by)
 VALUES ('TEMPLATE',
-        'POLICIES',
-        'organization_id',
-        'To what organization this policy will belong to',
+        'TRUSTMARKSUBJECT',
+        'trustmark_id',
+        'TrustMark',
         'OPTIONS',
         '',
         'required',
@@ -321,56 +289,151 @@ VALUES ('TEMPLATE',
 INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
                      last_modified_by)
 VALUES ('TEMPLATE',
-        'ORGANIZATION',
-        'entityid-filter',
-        'Entity filter: https://www.swedenconnect.se/{}',
+        'TRUSTMARKSUBJECT',
+        'subject',
+        'Subject entity id',
         'TEXT',
         '',
+        'required | url',
+        'Flyway',
+        'Flyway');
+
+
+INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
+                     last_modified_by)
+VALUES ('TEMPLATE',
+        'TRUSTMARKSUBJECT',
+        'revoked',
+        'If it is revoked',
+        'BOOLEAN',
+        'false',
         'required',
+        'Flyway',
+        'Flyway');
+
+
+INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
+                     last_modified_by)
+VALUES ('TEMPLATE',
+        'TRUSTMARKSUBJECT',
+        'granted',
+        'When it should be granted',
+        'DATETIME',
+        '',
+        '',
+        'Flyway',
+        'Flyway');
+
+
+INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
+                     last_modified_by)
+VALUES ('TEMPLATE',
+        'TRUSTMARKSUBJECT',
+        'expires',
+        'When it should be expires',
+        'DATETIME',
+        '',
+        '',
+        'Flyway',
+        'Flyway');
+
+/*
+ * Copyright 2025 Sweden Connect
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+-- Entity-Hosted / Entity-Connected
+INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
+                     last_modified_by)
+VALUES ('TEMPLATE',
+        'HOSTED_ENTITY',
+        'policy_id',
+        'Policy',
+        'OPTIONS',
+        '',
+        '',
         'Flyway',
         'Flyway');
 
 INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
                      last_modified_by)
 VALUES ('TEMPLATE',
-        'ORGANIZATION',
-        'org-id',
-        'Organization ID',
+        'HOSTED_ENTITY',
+        'subject',
+        'Subject',
         'TEXT',
         '',
-        'required',
+        'required | url',
         'Flyway',
         'Flyway');
 
 INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
                      last_modified_by)
 VALUES ('TEMPLATE',
-        'ORGANIZATION',
-        'org-name',
-        'Organization name, ex Swedenconnect',
-        'TEXT',
+        'HOSTED_ENTITY',
+        'metadata',
+        'Metadata',
+        'LARGETEXT',
         '',
-        'required',
+        'json',
         'Flyway',
         'Flyway');
 
 
-INSERT INTO `organization` (`organization_id`,
-                            `entityid_filter`,
-                            `org_id`,
-                            `org_name`,
-                            `created_by`,
-                            `last_modified_by`,
-                            `created_date`,
-                            `last_modified_date`)
-VALUES (UUID(), -- Auto-generate UUID for primary key
-        'https://*.swedenconnect.se/*', -- Sample entityid_filter
-        'ORG12345', -- Test organization ID
-        'DIGG', -- Organization name
-        'test_creator', -- Created by
-        'test_modifier', -- Last modified by
-        CURRENT_TIMESTAMP, -- Created date
-        CURRENT_TIMESTAMP -- Last modified date
-       );
+
+INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
+                     last_modified_by)
+VALUES ('TEMPLATE',
+        'HOSTED_ENTITY',
+        'issuer',
+        'Issuer entityid',
+        'TEXT',
+        '',
+        'required | url',
+        'Flyway',
+        'Flyway');
+
+-- Connected Entity
+
+INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
+                     last_modified_by)
+select fk_id,
+       'SUBORDINATE_ENTITY',
+       data_key,
+       description,
+       data_type,
+       data_value,
+       validation,
+       created_by,
+       last_modified_by
+from settings
+where (data_key = 'issuer'
+    or data_key = 'subject'
+    or data_key = 'policy_id')
+  and fk_type = 'HOSTED_ENTITY';
+
+INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
+                     last_modified_by)
+VALUES ('TEMPLATE',
+        'SUBORDINATE_ENTITY',
+        'jwks',
+        'Issuer entityid',
+        'LARGETEXT',
+        '',
+        'jwks',
+        'Flyway',
+        'Flyway');
+
 
 

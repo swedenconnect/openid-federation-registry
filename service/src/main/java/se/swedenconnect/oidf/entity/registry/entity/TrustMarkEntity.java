@@ -22,6 +22,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,6 +30,7 @@ import lombok.Setter;
 import lombok.ToString;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -54,5 +56,9 @@ public class TrustMarkEntity extends BaseEntity {
   @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.DETACH)
   @JoinColumn(name = "module_id", referencedColumnName = "module_id", insertable = true, updatable = false)
   private ModuleEntity module;
+
+  @OneToMany(mappedBy = "trustMark", cascade = CascadeType.DETACH, orphanRemoval = true, fetch = FetchType.EAGER)
+  private List<TrustMarkSubjectEntity> trustmarksubjects;
+
 
 }

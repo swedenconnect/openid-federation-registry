@@ -19,10 +19,11 @@ package se.swedenconnect.oidf.entity.registry.audit;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.audit.AuditEvent;
-import se.swedenconnect.oidf.entity.registry.fixture.PolicyFactory;
-import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
+import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
+import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 
 import java.util.Stack;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -48,19 +49,19 @@ class RegistryAuditServiceAdapterTest {
       }
     };
 
-    final PolicyRecord record = PolicyFactory.record();
-    auditService.policyWrite("pid", record, record);
-    assertEquals(stack.peek().getType(), RegistryAuditEventType.POLICY_CREATE_UPDATED.name());
+    final OptionsRecord record = new OptionsRecord();
+    auditService.optionsCreate(UUID.randomUUID(), FkKeyType.POLICIES, record, record);
+    assertEquals(stack.peek().getType(), RegistryAuditEventType.OPTIONS_CREATED.name());
     assertNull(stack.peek().getData().get("oldData"));
     assertNotNull(stack.peek().getData().get("newData"));
-    assertNotNull(stack.peek().getData().get("extId"));
-
-    final PolicyRecord newRecord = PolicyFactory.record();
-    auditService.policyWrite("pid", record, newRecord);
-    assertEquals(stack.peek().getType(), RegistryAuditEventType.POLICY_CREATE_UPDATED.name());
-    assertNotNull(stack.peek().getData().get("oldData"));
+    assertNotNull(stack.peek().getData().get("optionId"));
+    stack.clear();
+    final OptionsRecord record2 = new OptionsRecord();
+    auditService.optionsUpdate(UUID.randomUUID(), FkKeyType.POLICIES, record2, record2);
+    assertEquals(stack.peek().getType(), RegistryAuditEventType.OPTIONS_UPDATE.name());
+    assertNull(stack.peek().getData().get("oldData"));
     assertNotNull(stack.peek().getData().get("newData"));
-    assertNotNull(stack.peek().getData().get("extId"));
+    assertNotNull(stack.peek().getData().get("optionId"));
 
   }
 

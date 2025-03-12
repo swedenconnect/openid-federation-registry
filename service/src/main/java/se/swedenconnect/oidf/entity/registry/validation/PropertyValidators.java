@@ -82,7 +82,7 @@ public class PropertyValidators {
    */
   protected PropertyValidator propertyValidatorCreator(final String validatorNameSetting) {
     log.debug("Creating validator: {}", validatorNameSetting);
-    final String[] split = validatorNameSetting.trim().split(":");
+    final String[] split = validatorNameSetting.trim().toLowerCase().split(":");
     final String name = split[0];
     final String conf = split.length > 1 ? split[1] : "";
 
@@ -234,7 +234,7 @@ public class PropertyValidators {
         new URI(value).toURL();
       }
       catch (final Exception e) {
-        throw new PropertyValidationFailException(key, "Invalid URL format");
+        throw new PropertyValidationFailException(key, value, "Invalid URL format");
       }
     };
   }
@@ -247,8 +247,8 @@ public class PropertyValidators {
       try {
         UUID.fromString(value);
       }
-      catch (final Exception e) {
-        throw new PropertyValidationFailException(key, "Invalid UUID format");
+      catch (final IllegalArgumentException e) {
+        throw new PropertyValidationFailException(key, value, "Invalid UUID format");
       }
     };
   }

@@ -19,10 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
-import se.swedenconnect.oidf.registry.api.model.EntityRecord;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
-import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
-import se.swedenconnect.oidf.registry.api.model.TrustMarkSubjectRecord;
 
 import java.util.UUID;
 
@@ -63,79 +60,7 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
     this(new ObjectMapper());
   }
 
-  /**
-   * The RegistryAuditServiceAdapter class handles the audit operations for different entities (policies, entities, and
-   * trustmarks) in the system. This adapter provides a framework for emitting audit events based on operations
-   * performed on these entities. Each method corresponds to a specific event type.
-   */
 
-  @Override
-  public void policyWrite(final String policyId, final PolicyRecord oldRecord, final PolicyRecord newRecord) {
-    this.emitEvent(
-        FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.POLICY_CREATE_UPDATED)
-            .extId(newRecord.getPolicyRecordId())
-            .oldData(this.toJson(oldRecord))
-            .newData(this.toJson(newRecord))
-            .build());
-  }
-
-  @Override
-  public void policyDelete(final String policyId, final PolicyRecord deletedRecord) {
-    this.emitEvent(
-        FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.POLICY_DELETED)
-            .extId(deletedRecord.getPolicyRecordId())
-            .oldData(this.toJson(deletedRecord))
-            .build());
-  }
-
-  @Override
-  public void entityWrite(final String entityId, final EntityRecord oldRecord, final EntityRecord newRecord) {
-    this.emitEvent(
-        FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.ENTITY_CREATED_UPDATE)
-            .issuer(newRecord.getIssuer())
-            .subject(newRecord.getSubject())
-            .extId(entityId)
-            .oldData(this.toJson(oldRecord))
-            .newData(this.toJson(newRecord))
-            .build());
-  }
-
-  @Override
-  public void entityDelete(final String entityId, final EntityRecord deletedRecord) {
-    this.emitEvent(
-        FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.ENTITY_DELETED)
-            .extId(entityId)
-            .oldData(this.toJson(deletedRecord))
-            .build());
-  }
-
-  @Override
-  public void trustmarkSubjectWrite(final String trustmarkId, final TrustMarkSubjectRecord oldRecord,
-      final TrustMarkSubjectRecord newRecord) {
-    this.emitEvent(
-        FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.TRUSTMARK_SUBJECT_CREATE_UPDATE)
-            .extId(trustmarkId)
-            .oldData(this.toJson(oldRecord))
-            .newData(this.toJson(newRecord))
-            .build());
-
-  }
-
-  @Override
-  public void trustmarkSubjectDelete(final String trustmarkId, final TrustMarkSubjectRecord deletedRecord) {
-    this.emitEvent(
-        FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.ENTITY_DELETED)
-            .trustMarkId(deletedRecord.getTrustMarkId())
-            .extId(trustmarkId)
-            .oldData(this.toJson(deletedRecord))
-            .build());
-  }
 
   @Override
   public void optionsCreate(final UUID optionsRecordId, final FkKeyType fkKeyType, final OptionsRecord oldRecord,
@@ -155,7 +80,7 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
       final OptionsRecord newRecord) {
     this.emitEvent(
         FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.OPTIONS_CREATED)
+            .event(RegistryAuditEventType.OPTIONS_UPDATE)
             .fkKeyType(fkKeyType)
             .optionId(optionsRecordId)
             .oldData(this.toJson(oldRecord))

@@ -21,8 +21,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
@@ -32,7 +31,6 @@ import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -52,26 +50,36 @@ public class OrganizationEntity extends BaseEntity {
   private UUID organizationId;
 
   @Size(max = 255)
-  @Column(name = "entityid_filter")
-  private String entityidFilter;
-
-  @Size(max = 255)
-  @Column(name = "org_id")
-  private String orgId;
+  @Column(name = "org_number")
+  private String orgNumber;
 
   @Size(max = 255)
   @Column(name = "org_name")
   private String orgName;
 
-  @ManyToMany
-  @JoinTable(
-      name = "organization_instance_link",
-      joinColumns = @JoinColumn(name = "organization_id"),
-      inverseJoinColumns = @JoinColumn(name = "instance_id")
-  )
-  private Set<InstanceEntity> instances;
+  @ManyToOne
+  @JoinColumn(name = "instance_id", nullable = false)
+  private InstanceEntity instance;
 
-  @OneToMany(mappedBy = "organizationEntity", cascade = CascadeType.DETACH, orphanRemoval = false)
+  @OneToMany(mappedBy = "organization")
+  private List<ModuleEntity> module;
+
+  @OneToMany(mappedBy = "organization", cascade = CascadeType.DETACH, orphanRemoval = false)
   private List<PolicyEntity> policies = new ArrayList<>();
 
+  @OneToMany(mappedBy = "organization", cascade = CascadeType.DETACH, orphanRemoval = false)
+  private List<EntityEntity> entities;
+
+  /**
+   * Filters and retrieves a list of {@link ModuleEntity} objects associated with the given foreign key type.
+   *
+   * @param fkKeyType the foreign key type used to filter {@link ModuleEntity} objects based on their module type
+   * @return a list of {@link ModuleEntity} objects where the module type matches the specified foreign key type
+   */
+  public List<ModuleEntity> getModuleByFKType(final FkKeyType fkKeyType) {
+    return this.module
+        .stream()
+        .filter(moduleEntity -> moduleEntity.getModuleType().equals(fkKeyType.name()))
+        .toList();
+  }
 }

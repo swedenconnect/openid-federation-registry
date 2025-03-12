@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.entity.registry.service;
 
-import se.swedenconnect.oidf.entity.registry.common.CrudService;
-import se.swedenconnect.oidf.registry.api.model.EntityRecord;
+package se.swedenconnect.oidf.entity.registry.entity;
 
 /**
- * EntityService is an interface that extends the CrudService interface and provides CRUD operations specifically for
- * managing {@link EntityRecord} objects identified by a String.
+ * Enumeration representing the types of foreign keys (EntityType) used within the system.
  *
- * @author David Goldring
+ * @author Per Fredrik Plars
  */
-public interface EntityService extends CrudService<EntityRecord, String> {
+public enum EntityKeyType {
+  HOSTED_ENTITY,
+  SUBORDINATE_ENTITY
 }

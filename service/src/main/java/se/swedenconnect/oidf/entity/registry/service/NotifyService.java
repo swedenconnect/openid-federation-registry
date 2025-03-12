@@ -17,7 +17,7 @@
 package se.swedenconnect.oidf.entity.registry.service;
 
 import com.nimbusds.jose.jwk.JWK;
-import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.ResponseEntity;
@@ -125,7 +125,7 @@ public class NotifyService {
    * @throws InterruptedException if the current thread is interrupted while waiting for the ExecutorService to
    *     terminate
    */
-  @PostConstruct
+  @PreDestroy
   public void destroy() throws InterruptedException {
     if (!this.executorService.awaitTermination(1, TimeUnit.SECONDS)) {
       this.executorService.shutdownNow();

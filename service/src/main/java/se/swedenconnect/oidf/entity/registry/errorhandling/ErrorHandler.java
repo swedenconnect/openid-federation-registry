@@ -32,6 +32,7 @@ import se.swedenconnect.oidf.entity.registry.validation.PropertyValidationFailEx
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static se.swedenconnect.oidf.entity.registry.errorhandling.ErrorTypes.INVALID_PARAMETER;
 
@@ -78,7 +79,9 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     final ProblemDetail problemDetail =
         ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), e.getMessage());
     problemDetail.setProperty("cause", List.of(
-        Map.of("field", e.getFiledName(), "detail", e.getValidationFailMessage()))
+        Map.of("field", e.getFiledName(),
+            "detail", e.getValidationFailMessage(),
+            "inputvalue", Optional.ofNullable(e.getInputValue()).orElse("")))
     );
     problemDetail.setType(INVALID_PARAMETER);
 

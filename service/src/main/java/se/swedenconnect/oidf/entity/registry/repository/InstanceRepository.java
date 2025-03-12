@@ -20,6 +20,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import se.swedenconnect.oidf.entity.registry.entity.InstanceEntity;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -30,5 +31,12 @@ import java.util.UUID;
  */
 @Repository
 public interface InstanceRepository extends JpaRepository<InstanceEntity, UUID> {
+  /**
+   * Finds an {@link InstanceEntity} based on the useForDefaultAssignment flag.
+   *
+   * @param useForDefaultAssignment a boolean indicating whether the instance is used for default assignment
+   * @return an {@link Optional} containing the {@link InstanceEntity} if found, or empty if no matching entity exists
+   */
+  Optional<InstanceEntity> findByUseForDefaultAssignment(boolean useForDefaultAssignment);
 
 }

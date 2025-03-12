@@ -49,7 +49,7 @@ public class ModuleEntity extends BaseEntity {
   @Column(name = "module_type", nullable = false)
   private String moduleType;
 
-  @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+  @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   @JoinColumns({
       @JoinColumn(name = "fk_type", referencedColumnName = "module_type", insertable = false, updatable = false),
       @JoinColumn(name = "fk_id", referencedColumnName = "module_id", insertable = false, updatable = false)
@@ -57,10 +57,16 @@ public class ModuleEntity extends BaseEntity {
   private List<SettingsEntity> settingsEntityList;
 
   @ManyToOne(fetch = FetchType.EAGER)
-  @JoinColumn(name = "instance_id", nullable = false)
-  private InstanceEntity instance;
+  @JoinColumn(name = "organization_id", nullable = false)
+  private OrganizationEntity organization;
+
   @OneToMany(mappedBy = "module", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
   private List<TrustMarkEntity> trustmarks;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "entity_id", nullable = false)
+  private EntityEntity entity;
+
 
   /**
    * Retrieves the {@link SettingsEntity} associated with the specified key. The method searches through the list of

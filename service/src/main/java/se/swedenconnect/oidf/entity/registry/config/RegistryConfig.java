@@ -19,33 +19,27 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWK;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.util.Assert;
 import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.entity.registry.entity.InstanceEntity;
+import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.entity.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.repository.InstanceRepository;
-import se.swedenconnect.oidf.entity.registry.repository.OrganizationRepository;
 import se.swedenconnect.oidf.entity.registry.repository.PolicyRepository;
 import se.swedenconnect.oidf.entity.registry.repository.TrustMarkSubjectRepository;
-import se.swedenconnect.oidf.entity.registry.service.EntityService;
 import se.swedenconnect.oidf.entity.registry.service.FederationApiService;
-import se.swedenconnect.oidf.entity.registry.service.JpaEntityService;
-import se.swedenconnect.oidf.entity.registry.service.JpaPolicyService;
-import se.swedenconnect.oidf.entity.registry.service.JpaTrustMarkSubjectService;
 import se.swedenconnect.oidf.entity.registry.service.NotifyService;
 import se.swedenconnect.oidf.entity.registry.service.OptionsCRUDTrustMark;
-import se.swedenconnect.oidf.entity.registry.service.PolicyService;
-import se.swedenconnect.oidf.entity.registry.service.TrustMarkSubjectService;
 import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.bundle.CredentialBundles;
 import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
@@ -55,6 +49,8 @@ import java.net.http.HttpClient;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * A Spring configuration class that defines beans for different implementations of the EntityService interface.
@@ -72,91 +68,50 @@ public class RegistryConfig {
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
   private final RegistryAuditService registryAuditService;
   private final ObjectMapper objectMapper;
+  private final RegistryProperties registryProperties;
 
   /**
-   * Constructs an instance of the RegistryConfig class with the specified dependencies.
+   * Constructs a RegistryConfig object, initializing various repositories and services required
+   * for the registry configuration.
    *
-   * @param entityRepository the repository used for managing entity-related data in the database.
-   * @param policyRepository the repository used for managing policy-related data in the database.
-   * @param trustMarkSubjectRepository the repository used for managing trustmark subject-related data.
-   * @param registryAuditService the service used for auditing actions and events within the registry.
-   * @param objectMapper the object mapper used for JSON serialization and deserialization.
-   * @param instanceRepository the repository used for managing instance-related data in the registry.
+   * @param entityRepository a repository for managing entity data
+   * @param policyRepository a repository for managing policies
+   * @param trustMarkSubjectRepository a repository for handling TrustMark subjects
+   * @param registryAuditService a service for registry audit operations
+   * @param objectMapper a mapper for JSON serialization and deserialization
+   * @param instanceRepository a repository for managing instance data
+   * @param registryProperties the configuration properties for the registry
    */
   public RegistryConfig(final EntityRepository entityRepository, final PolicyRepository policyRepository,
       final TrustMarkSubjectRepository trustMarkSubjectRepository,
       final RegistryAuditService registryAuditService,
       final ObjectMapper objectMapper,
-      final InstanceRepository instanceRepository) {
+      final InstanceRepository instanceRepository,
+      final RegistryProperties registryProperties) {
     this.entityRepository = entityRepository;
     this.policyRepository = policyRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
     this.registryAuditService = registryAuditService;
     this.objectMapper = objectMapper;
     this.instanceRepository = instanceRepository;
-  }
-
-  /**
-   * Provides an instance of JpaEntityService, which implements the EntityService interface. This service manages entity
-   * objects using a JPA repository and handles JSON conversion using the provided ObjectMapper.
-   *
-   * @return an instance of JpaEntityService.
-   */
-  @Bean
-  @Primary
-  @Qualifier("jpaEntityService")
-  public EntityService jpaEntityService() {
-    return new JpaEntityService(
-        this.entityRepository,
-        this.policyRepository,
-        this.objectMapper,
-        this.registryAuditService);
-  }
-
-  /**
-   * Provides an instance of the {@link PolicyService} implementation using JPA for managing JSON Policy objects.
-   *
-   * @param organizationRepository the repository used for managing organization-related data, required to associate
-   *     policies with respective organizations.
-   * @return an instance of {@link JpaPolicyService}, configured with the necessary dependencies such as
-   *     {@code policyRepository}, {@code objectMapper}, and {@code registryAuditService}.
-   */
-  @Bean
-  @Qualifier("jpaPolicyService")
-  public PolicyService jpaPolicyService(final OrganizationRepository organizationRepository) {
-    return new JpaPolicyService(this.policyRepository, this.objectMapper, this.registryAuditService,
-        organizationRepository);
-  }
-
-  /**
-   * TrustMarkSubjectService
-   *
-   * @return an instance of TrustMarkSubjectService.
-   */
-  @Bean
-  @Qualifier("jpaTrustMarkSubjectService")
-  public TrustMarkSubjectService jpaTrustMarkSubjectService() {
-    return new JpaTrustMarkSubjectService(this.trustMarkSubjectRepository, this.objectMapper,
-        this.registryAuditService);
+    this.registryProperties = registryProperties;
   }
 
   /**
    * Provides an instance of the FederationApiService for managing federation-related operations.
    *
-   * @param registryProperties the registry configuration properties, which include settings for the federation
-   *     service API such as signing keys and issuer details.
    * @param mapper the ObjectMapper used for handling JSON serialization and deserialization.
    * @param credentialBundles Bundle for reading keys
    * @param trustMarkService TrustmarkCRUD service
    * @return an instance of FederationApiService configured with the necessary dependencies.
    */
   @Bean
-  public FederationApiService federationServiceApiService(final RegistryProperties registryProperties,
+  public FederationApiService federationServiceApiService(
       final CredentialBundles credentialBundles, final OptionsCRUDTrustMark trustMarkService,
       final ObjectMapper mapper) {
 
     final RegistryProperties.FederationAPIProperties federationAPIProperties =
-        registryProperties.federationServiceApi();
+        this.registryProperties.federationServiceApi();
 
     final String signKeyAlias = federationAPIProperties.signKeyAlias();
     final Duration tokenExpiryDuration = federationAPIProperties.tokenExpiryDuration();
@@ -183,8 +138,6 @@ public class RegistryConfig {
    * sets up the notification endpoints and the signing key to secure the communication.
    *
    * @param restClient the {@link RestClient} instance used to perform HTTP requests.
-   * @param registryProperties the {@link RegistryProperties} containing configuration details such as notification
-   *     endpoints and signing key alias.
    * @param credentialBundles the {@link CredentialBundles} providing access to credentials used when signing
    *     notifications.
    * @return a configured {@link NotifyService} instance.
@@ -194,11 +147,10 @@ public class RegistryConfig {
       havingValue = "true")
   public NotifyService notificationService(
       final RestClient restClient,
-      final RegistryProperties registryProperties,
       final CredentialBundles credentialBundles) {
 
     final RegistryProperties.FederationAPIProperties federationAPIProperties =
-        registryProperties.federationServiceApi();
+        this.registryProperties.federationServiceApi();
 
     final String signKeyAlias = federationAPIProperties.signKeyAlias();
 
@@ -216,33 +168,61 @@ public class RegistryConfig {
   /**
    * Initializes instances by converting the provided registry properties into entity objects and persisting them to the
    * database.
-   *
-   * @param registryProperties the registry configuration properties containing instance information that will be
-   *     used to populate and store {@code InstanceEntity} objects.
    */
-  @Autowired
-  void initInstance(final RegistryProperties registryProperties) {
-
-    registryProperties.instances()
+  @EventListener(ContextRefreshedEvent.class)
+  void initInstance() {
+    log.info("Initializing instances from registry properties");
+    this.registryProperties.instances()
         .forEach(instance -> {
-          final InstanceEntity entity = new InstanceEntity();
-          entity.setInstanceId(instance.instanceId());
-          entity.setName(instance.name());
-          entity.setCreatedBy("Registry-Config");
-          entity.setLastModifiedBy(entity.getCreatedBy());
-          this.instanceRepository.saveAndFlush(entity);
 
+          final InstanceEntity entity = this.instanceRepository.findById(instance.instanceId())
+              .or(() -> {
+                log.debug("Creating new instance entity for instanceId:{}", instance.instanceId());
+                final InstanceEntity newEntity = new InstanceEntity();
+                newEntity.setInstanceId(instance.instanceId());
+                newEntity.setName(instance.name());
+                newEntity.setCreatedBy("Registry-Config");
+                newEntity.setLastModifiedBy(newEntity.getCreatedBy());
+                newEntity.setUseForDefaultAssignment(instance.useForDefaultAssignment());
+                return Optional.of(newEntity);
+              }).orElseThrow();
+
+          if (instance.org_numbers() != null) {
+            instance.org_numbers()
+                .stream()
+                .filter(org_nr -> hasOrg(org_nr, entity))
+                .map(org_nr -> {
+                  log.debug("Adding organization with org_nr:{} to instanceId:{}", org_nr, instance.instanceId());
+                  final OrganizationEntity organizationEntity = new OrganizationEntity();
+                  organizationEntity.setOrganizationId(UUID.randomUUID());
+                  organizationEntity.setOrgNumber(org_nr);
+                  organizationEntity.setInstance(entity);
+                  organizationEntity.setCreatedBy(entity.getCreatedBy());
+                  organizationEntity.setLastModifiedBy(entity.getLastModifiedBy());
+                  return organizationEntity;
+                })
+                .forEach(entity::addOrganization);
+          }
+          this.instanceRepository.saveAndFlush(entity);
         });
+  }
+
+  private static boolean hasOrg(final String org_nr, final InstanceEntity entity) {
+    if (entity.getOrganizations() == null) {
+      return false;
+    }
+    return entity.getOrganizations()
+        .stream()
+        .noneMatch(o -> o.getOrgNumber().equals(org_nr));
   }
 
   @Primary
   @Bean
   RestClient restClient(final SslBundles ssl,
-      final ObservationRegistry observationRegistry,
-      final RegistryProperties registryProperties) throws Exception {
+      final ObservationRegistry observationRegistry) throws Exception {
 
     final HttpClient.Builder httpClientBuilder = HttpClient.newBuilder();
-    final String trustBundleAlias = registryProperties.federationServiceApi().notificationTrustKeyAlias();
+    final String trustBundleAlias = this.registryProperties.federationServiceApi().notificationTrustKeyAlias();
     this.settingSSLTrustContext(ssl, httpClientBuilder, trustBundleAlias);
     return RestClient.builder()
         .observationRegistry(observationRegistry)
