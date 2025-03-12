@@ -61,7 +61,6 @@ public class SecurityConfig {
       final Converter<Jwt, AbstractAuthenticationToken> customJwtAuthenticationConverter) throws Exception {
     http
         .oauth2ResourceServer(oauth2 -> oauth2
-            //.jwt(Customizer.withDefaults())
             .jwt(jwtConfigurer ->
                 jwtConfigurer.jwtAuthenticationConverter(customJwtAuthenticationConverter))
         )
