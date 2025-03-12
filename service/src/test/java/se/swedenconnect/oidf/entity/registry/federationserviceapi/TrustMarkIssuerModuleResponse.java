@@ -21,7 +21,6 @@ import lombok.ToString;
 import org.springframework.util.Assert;
 
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,9 +46,7 @@ public class TrustMarkIssuerModuleResponse {
         .trustMarkTokenValidityDuration(Duration.parse((String) json.get("trust-mark-token-validity-duration")))
         .alias((String) json.get("alias"))
         .entityIdentifier((String) json.get("entity-identifier"))
-        .trustMarks(Optional.ofNullable((List<Map<String, Object>>) json.get("trust-marks"))
-            .map(strings -> strings.stream().map(TrustMarkResponse::fromJson).toList()).orElse(
-                Collections.emptyList()))
+
         .active((Boolean) json.get("active"))
         .build();
   }
@@ -59,8 +56,8 @@ public class TrustMarkIssuerModuleResponse {
     Assert.notNull(alias, "alias");
     Assert.notNull(active, "active");
     Assert.notNull(trustMarkTokenValidityDuration, "trustMarkTokenValidityDuration");
-    Assert.isTrue(!trustMarks.isEmpty(), "trustMarks must not be empty");
-    trustMarks.forEach(TrustMarkResponse::validate);
+    //Assert.isTrue(!trustMarks.isEmpty(), "trustMarks must not be empty");
+    //    trustMarks.forEach(TrustMarkResponse::validate);
   }
 
   @Builder
@@ -69,15 +66,6 @@ public class TrustMarkIssuerModuleResponse {
       Optional<String> refUri,
       Optional<String> delegation,
       List<TrustMarkSubjectRecord> trustMarkSubjectRecords) {
-
-    public static TrustMarkResponse fromJsonOld(final Map<String, Object> json) {
-      return TrustMarkResponse.builder()
-          .trustMarkId((String) json.get("trust-mark-entity-id"))
-          .logoUri(Optional.ofNullable((String) json.get("logo-uri")))
-          .refUri(Optional.ofNullable((String) json.get("ref-uri")))
-          .delegation(Optional.ofNullable((String) json.get("delegation")))
-          .build();
-    }
 
     public static TrustMarkResponse fromJson(final Map<String, Object> json) {
       final List<TrustMarkSubjectRecord> trustMarkSubjects =

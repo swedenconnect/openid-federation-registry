@@ -88,9 +88,6 @@ class FederationServiceApiControllerIT {
 
     final UUID instanceId = setupTestData();
     final SignedJWT tms = federationAPIOperations.callTrustMark(instanceId);
-
-
-
     final JWTClaimsSet claimsSet = tms.getJWTClaimsSet();
     final List<Object> records = claimsSet.getListClaim("trustmark_records");
     records.stream()

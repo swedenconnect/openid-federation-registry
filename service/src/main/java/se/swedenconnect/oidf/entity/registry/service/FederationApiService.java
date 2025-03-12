@@ -220,7 +220,7 @@ public class FederationApiService {
 
     final List<Map<String, Object>> tmi = moduleEntities.stream()
         .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(TRUSTMARKISSUER))
-        .map(this::toMapWithTrustMarks)
+        .map(this::toMap)
         .toList();
 
     final List<Map<String, Object>> ta = moduleEntities.stream()
