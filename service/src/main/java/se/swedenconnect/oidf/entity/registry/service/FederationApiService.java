@@ -242,7 +242,7 @@ public class FederationApiService {
 
   }
 
-  private Map<String, List<Map<String, Object>>> resolveTrustmarks(final UUID instanceid) {
+  private List<Map<String, Object>> resolveTrustmarks(final UUID instanceid) {
 
     final InstanceEntity instanceEntity = this.instanceRepository.findById(instanceid)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -254,10 +254,7 @@ public class FederationApiService {
         .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(TRUSTMARKISSUER))
         .toList();
 
-    final Map<String, List<Map<String, Object>>> data = new HashMap<>();
-    data.put("trust-mark", trustmarkIssuersModules.stream().map(this::toMapWithTrustMarks).toList());
-    return data;
-
+    return trustmarkIssuersModules.stream().map(this::toMapWithTrustMarks).toList();
   }
 
   private Map<String, Object> toMap(final ModuleEntity moduleEntity) {
@@ -272,6 +269,7 @@ public class FederationApiService {
   private Map<String, Object> toMapWithTrustMarks(final ModuleEntity moduleEntity) {
     final Map<String, Object> settingsEntity = moduleEntity.getSettingsEntityList()
         .stream()
+        .filter(settingsEntity1 -> settingsEntity1.getKey().equals("entity-identifier"))
         .collect(Collectors.toMap(
             SettingsEntity::getKey,
             SettingsEntity::castValue

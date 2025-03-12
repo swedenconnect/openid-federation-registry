@@ -64,10 +64,13 @@ public class TrustMarkIssuerModuleResponse {
   }
 
   @Builder
-  public record TrustMarkResponse(String trustMarkId, Optional<String> logoUri, Optional<String> refUri,
-      Optional<String> delegation) {
+  public record TrustMarkResponse(String trustMarkId,
+      Optional<String> logoUri,
+      Optional<String> refUri,
+      Optional<String> delegation,
+      List<TrustMarkSubjectRecord> trustMarkSubjectRecords) {
 
-    public static TrustMarkResponse fromJson(final Map<String, Object> json) {
+    public static TrustMarkResponse fromJsonOld(final Map<String, Object> json) {
       return TrustMarkResponse.builder()
           .trustMarkId((String) json.get("trust-mark-entity-id"))
           .logoUri(Optional.ofNullable((String) json.get("logo-uri")))
@@ -76,11 +79,26 @@ public class TrustMarkIssuerModuleResponse {
           .build();
     }
 
+    public static TrustMarkResponse fromJson(final Map<String, Object> json) {
+      final List<TrustMarkSubjectRecord> trustMarkSubjects =
+          Optional.ofNullable((List<Map<String, Object>>) json.get("trust-mark-subjects"))
+              .map(claim -> claim.stream().map(TrustMarkSubjectRecord::fromJson).toList()).orElse(List.of());
+      return TrustMarkResponse.builder()
+          .trustMarkId(new String((String) json.get("trust-mark-entity-id")))
+          .logoUri(Optional.ofNullable((String) json.get("logo-uri")))
+          .refUri(Optional.ofNullable((String) json.get("ref-uri")))
+          .delegation(Optional.ofNullable((String) json.get("delegation")).map(String::new))
+          .trustMarkSubjectRecords(trustMarkSubjects)
+          .build();
+    }
+
     public void validate() {
       Assert.notNull(trustMarkId, "trustMarkId");
       Assert.notNull(logoUri, "alias");
       Assert.notNull(refUri, "refUri");
       Assert.notNull(delegation, "delegation");
+      Assert.notNull(trustMarkSubjectRecords, "trustMarkSubjectRecords");
+      trustMarkSubjectRecords.forEach(TrustMarkSubjectRecord::validate);
     }
 
   }

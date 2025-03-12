@@ -34,6 +34,8 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 /**
  * Entity class representing the 'Settings' table in the database.
@@ -92,8 +94,11 @@ public class SettingsEntity extends BaseEntity {
       case BOOLEAN -> Boolean.valueOf(this.value);
       case NUMERIC -> Double.valueOf(this.value);
       case DURATION -> Duration.parse(this.value).toString();
-      case DATE -> LocalDate.parse(this.value).toEpochDay();
-      case DATETIME -> LocalDateTime.parse(this.value).toEpochSecond(ZoneOffset.from(ZoneOffset.UTC));
+      case DATE -> LocalDate.parse(this.value).format(DateTimeFormatter.ISO_INSTANT);
+      case DATETIME -> LocalDateTime.parse(this.value)
+          .truncatedTo(ChronoUnit.SECONDS)
+          .atZone(ZoneOffset.UTC)
+          .format(DateTimeFormatter.ISO_INSTANT);
     };
   }
 

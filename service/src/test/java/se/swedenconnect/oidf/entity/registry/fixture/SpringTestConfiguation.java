@@ -45,4 +45,9 @@ public class SpringTestConfiguation {
     return new TestDataOperations(restTemplate);
   }
 
+  @Bean
+  public FederationAPIOperations testFederationAPIOperations(TestRestTemplate restTemplate) {
+    return new FederationAPIOperations(restTemplate);
+  }
+
 }
