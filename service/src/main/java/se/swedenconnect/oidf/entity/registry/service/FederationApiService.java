@@ -15,11 +15,9 @@
  */
 package se.swedenconnect.oidf.entity.registry.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWK;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.entity.registry.entity.EntityEntity;
@@ -52,12 +50,10 @@ import static se.swedenconnect.oidf.entity.registry.entity.FkKeyType.TRUSTMARKIS
 @Slf4j
 public class FederationApiService {
 
-  private final ObjectMapper mapper;
   private final PolicyRepository policyRepository;
   private final InstanceRepository instanceRepository;
   private final String jwkIssuer;
   private final Duration jwkExpiryDuration;
-  private final OptionsCRUDTrustMark trustMarkService;
   private final JWTSupport jwtSupport;
 
   /**
@@ -67,23 +63,17 @@ public class FederationApiService {
    * @param policyRepository the repository for managing policy records
    * @param instanceRepository the repository for managing instances
    * @param jwkIssuer the issuer associated with the JSON Web Key (JWK)
-   * @param mapper the object mapper for JSON processing
-   * @param trustMarkService OptionsCRUDTrustMark
    * @param jwkExpiryDuration jwkExpiryDuration
    */
   public FederationApiService(
       final JWK signKey,
       final PolicyRepository policyRepository,
       final String jwkIssuer,
-      final ObjectMapper mapper,
       final InstanceRepository instanceRepository,
-      final OptionsCRUDTrustMark trustMarkService,
       final Duration jwkExpiryDuration) {
     this.policyRepository = policyRepository;
     this.jwkIssuer = jwkIssuer;
-    this.mapper = mapper;
     this.instanceRepository = instanceRepository;
-    this.trustMarkService = trustMarkService;
     this.jwkExpiryDuration = jwkExpiryDuration;
     this.jwtSupport = new JWTSupport(signKey);
   }
@@ -96,7 +86,6 @@ public class FederationApiService {
    * @return a signed JSON Web Token (JWT) string containing the entity records
    * @throws ResponseStatusException if the issuer is not set, if no entity records are found, or if signing fails
    */
-  @Transactional(readOnly = true)
   public String entityRecord(final UUID instanceId) {
     Assert.notNull(instanceId, "InstanceId is mandatory");
     final String claimName = "entity_records";
@@ -118,7 +107,6 @@ public class FederationApiService {
    * @throws ResponseStatusException if any required input is missing, no records are found, or an error occurs
    *     during token signing
    */
-  @Transactional(readOnly = true)
   public String trustMarkRecord(final UUID instanceId) {
     Assert.notNull(instanceId, "instanceId is mandatory");
     final String claimName = "trustmark_records";
@@ -140,7 +128,6 @@ public class FederationApiService {
    * @throws IllegalArgumentException if the instanceId is null.
    * @throws ResponseStatusException if an error occurs during the signing of the response.
    */
-  @Transactional(readOnly = true)
   public String submoduleRecord(final UUID instanceId) {
     Assert.notNull(instanceId, "instanceId is mandatory");
     final String claimName = "module_records";
@@ -256,19 +243,16 @@ public class FederationApiService {
             SettingsEntity::getKey,
             SettingsEntity::castValue
         ));
-    final List<Map<String, Object>> trustmarks =
-        this.listByModuleId(moduleEntity, true)
-            .stream()
-            .peek(stringObjectMap -> stringObjectMap.putAll(trustmarkissuer))
-            .toList();
-    return trustmarks;
+    return this.listByModuleId(moduleEntity, true)
+        .stream()
+        .peek(stringObjectMap -> stringObjectMap.putAll(trustmarkissuer))
+        .toList();
   }
 
   private List<Map<String, Object>> listByModuleId(final ModuleEntity moduleEntity, final boolean includeSubjects) {
     return moduleEntity.getTrustmarks()
         .stream()
         .map(trustMarkEntity -> {
-              final UUID trustmarkid = trustMarkEntity.getTrustmarkId();
               final Map<String, Object> e =
                   trustMarkEntity.getSettingsEntityList()
                       .stream()

@@ -30,13 +30,10 @@ import org.springframework.context.event.EventListener;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.util.Assert;
 import org.springframework.web.client.RestClient;
-import se.swedenconnect.oidf.entity.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.entity.registry.entity.InstanceEntity;
 import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
-import se.swedenconnect.oidf.entity.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.entity.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.entity.registry.repository.PolicyRepository;
-import se.swedenconnect.oidf.entity.registry.repository.TrustMarkSubjectRepository;
 import se.swedenconnect.oidf.entity.registry.service.FederationApiService;
 import se.swedenconnect.oidf.entity.registry.service.NotifyService;
 import se.swedenconnect.oidf.entity.registry.service.OptionsCRUDTrustMark;
@@ -63,36 +60,23 @@ import java.util.UUID;
 public class RegistryConfig {
 
   final InstanceRepository instanceRepository;
-  private final EntityRepository entityRepository;
   private final PolicyRepository policyRepository;
-  private final TrustMarkSubjectRepository trustMarkSubjectRepository;
-  private final RegistryAuditService registryAuditService;
-  private final ObjectMapper objectMapper;
+
   private final RegistryProperties registryProperties;
 
   /**
    * Constructs a RegistryConfig object, initializing various repositories and services required
    * for the registry configuration.
    *
-   * @param entityRepository a repository for managing entity data
    * @param policyRepository a repository for managing policies
-   * @param trustMarkSubjectRepository a repository for handling TrustMark subjects
-   * @param registryAuditService a service for registry audit operations
-   * @param objectMapper a mapper for JSON serialization and deserialization
    * @param instanceRepository a repository for managing instance data
    * @param registryProperties the configuration properties for the registry
    */
-  public RegistryConfig(final EntityRepository entityRepository, final PolicyRepository policyRepository,
-      final TrustMarkSubjectRepository trustMarkSubjectRepository,
-      final RegistryAuditService registryAuditService,
-      final ObjectMapper objectMapper,
+  public RegistryConfig(final PolicyRepository policyRepository,
       final InstanceRepository instanceRepository,
       final RegistryProperties registryProperties) {
-    this.entityRepository = entityRepository;
     this.policyRepository = policyRepository;
-    this.trustMarkSubjectRepository = trustMarkSubjectRepository;
-    this.registryAuditService = registryAuditService;
-    this.objectMapper = objectMapper;
+
     this.instanceRepository = instanceRepository;
     this.registryProperties = registryProperties;
   }
@@ -124,9 +108,7 @@ public class RegistryConfig {
         jwk,
         this.policyRepository,
         federationAPIProperties.issuer(),
-        mapper,
         this.instanceRepository,
-        trustMarkService,
         tokenExpiryDuration
     );
   }

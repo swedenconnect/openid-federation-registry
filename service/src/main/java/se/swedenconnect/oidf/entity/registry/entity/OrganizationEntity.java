@@ -64,10 +64,10 @@ public class OrganizationEntity extends BaseEntity {
   @OneToMany(mappedBy = "organization")
   private List<ModuleEntity> module;
 
-  @OneToMany(mappedBy = "organization", cascade = CascadeType.DETACH, orphanRemoval = false)
+  @OneToMany(mappedBy = "organization", cascade = CascadeType.DETACH)
   private List<PolicyEntity> policies = new ArrayList<>();
 
-  @OneToMany(mappedBy = "organization", cascade = CascadeType.DETACH, orphanRemoval = false)
+  @OneToMany(mappedBy = "organization", cascade = CascadeType.DETACH)
   private List<EntityEntity> entities;
 
   /**
@@ -81,6 +81,5 @@ public class OrganizationEntity extends BaseEntity {
         .stream()
         .filter(moduleEntity -> moduleEntity.getModuleType().equals(fkKeyType.name()))
         .toList();
-
   }
 }
