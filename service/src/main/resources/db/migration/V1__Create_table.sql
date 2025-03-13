@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS entities
     `entity_id`          UUID         NOT NULL DEFAULT (UUID()),
     `organization_id`    UUID         NOT NULL,
     `entity_type`        VARCHAR(20)  NOT NULL,
+    `policy_id` UUID NULL,
     `created_by`         VARCHAR(255) NOT NULL,
     `last_modified_by`   VARCHAR(255) NOT NULL,
     `created_date`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,

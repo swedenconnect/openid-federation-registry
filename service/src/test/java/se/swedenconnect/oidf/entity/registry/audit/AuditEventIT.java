@@ -63,7 +63,7 @@ public class AuditEventIT {
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.SKATT,
         HttpStatus.CREATED,
-        TestDataOperations.defaultHostedEntity());
+        TestDataOperations.defaultHostedEntity(null));
 
     final UUID tmiId1 = testDataOperations.createTMI(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.SKATT,

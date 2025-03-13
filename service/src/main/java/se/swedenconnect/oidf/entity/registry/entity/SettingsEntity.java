@@ -16,6 +16,9 @@
 
 package se.swedenconnect.oidf.entity.registry.entity;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -34,6 +37,9 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
 
 /**
  * Entity class representing the 'Settings' table in the database.
@@ -87,14 +93,37 @@ public class SettingsEntity extends BaseEntity {
    */
   public Object castValue() {
     return switch (SettingDataType.valueOf(this.valueDataType)) {
-      case TEXT, LARGETEXT -> this.value;
-      case OPTIONS -> this.value;
+      case TEXT, LARGETEXT, OPTIONS -> this.value;
+      case JSON -> this.toJsonObject(this.value);
       case BOOLEAN -> Boolean.valueOf(this.value);
       case NUMERIC -> Double.valueOf(this.value);
       case DURATION -> Duration.parse(this.value).toString();
-      case DATE -> LocalDate.parse(this.value).toEpochDay();
-      case DATETIME -> LocalDateTime.parse(this.value).toEpochSecond(ZoneOffset.from(ZoneOffset.UTC));
+      case DATE -> LocalDate.parse(this.value).format(DateTimeFormatter.ISO_INSTANT);
+      case DATETIME -> LocalDateTime.parse(this.value)
+          .truncatedTo(ChronoUnit.SECONDS)
+          .atZone(ZoneOffset.UTC)
+          .format(DateTimeFormatter.ISO_INSTANT);
     };
   }
 
+  /**
+   * Converts the given string value into a JSON object if the validation criteria include "json" or "jwks". If the
+   * validation does not match these criteria, the original value is returned.
+   *
+   * @param value the string value to be converted to a JSON object.
+   * @return the parsed JSON object if the validation criteria are met; otherwise, the original value as a string.
+   * @throws RuntimeException if the value cannot be parsed into a JSON object.
+   */
+  private Object toJsonObject(final String value) {
+    if (SettingDataType.JSON.name().equalsIgnoreCase(this.valueDataType) && (value != null && !value.isBlank())) {
+      final ObjectMapper mapper = new ObjectMapper();
+      try {
+        return mapper.readValue(value, new TypeReference<Map<String, Object>>() {});
+      }
+      catch (final JsonProcessingException e) {
+        throw new RuntimeException("Unable to parse json data from storage", e);
+      }
+    }
+    return value;
+  }
 }

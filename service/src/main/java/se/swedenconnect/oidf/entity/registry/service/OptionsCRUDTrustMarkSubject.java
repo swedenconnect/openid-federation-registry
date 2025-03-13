@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.entity.registry.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
@@ -86,6 +87,7 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
     return FK_KEY_TYPE == fkKeyType;
   }
 
+  @Transactional
   @Override
   public OptionsRecord create(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
     final Optional<TrustMarkSubjectEntity> trustMarkEntity = this.trustMarkSubjectRepository.findById(id);
@@ -109,8 +111,8 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
     newTrustMarkSubjectEntity.setTrustMark(this.loadTrustMarkIDThrowIfNotExist(validatedInData));
 
     final TrustMarkSubjectEntity saved = this.trustMarkSubjectRepository.saveAndFlush(newTrustMarkSubjectEntity);
-    super.deleteSettings(fkKeyType, saved.getTrustmarkId().toString());
-    super.insertSettings(fkKeyType, saved.getTrustmarkId().toString(), validatedInData);
+    super.deleteSettings(fkKeyType, saved.getTrustmarksubjectId().toString());
+    super.insertSettings(fkKeyType, saved.getTrustmarksubjectId().toString(), validatedInData);
 
     return this.toRecord(validatedInData);
   }
@@ -188,7 +190,10 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
                 .map(entity ->
                     OptionRecord.builder()
                         .key(entity.getTrustmarkId().toString())
-                        .value(entity.getModule().getSettingsEntity("entity-identifier").orElseThrow().getValue())
+                        .value(entity
+                            .getModule()
+                            .getSettingsEntity("issuer-entity-identifier")
+                            .orElseThrow().getValue())
                         .selected(Objects.equals(value.getValue(), entity.getTrustmarkId().toString()))
                         .build())
                 .toList()));

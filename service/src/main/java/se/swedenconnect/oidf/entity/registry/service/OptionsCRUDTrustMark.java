@@ -132,7 +132,6 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
             "No template found for:%s %s".formatted(fkKeyType, id)));
     super.throwUnauthorizedIfNotMatch(trustMarkEntity.getModule().getOrganization().getOrganizationId());
 
-
     final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
 
     final List<SettingsEntity> validatedInData = this.createAndValidateInputData(template, record.getOption());
@@ -153,7 +152,7 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
 
     final List<SettingsEntity> mergeValues = insertValuesInTemplate(
         fkKeyType,
-        super.getSettingsEntities(TRUSTMARK, trustMarkEntity.getTrustmarkId()));
+        super.getSettingsEntities(fkKeyType, trustMarkEntity.getTrustmarkId()));
 
     return toRecord(mergeValues);
 
@@ -179,7 +178,7 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
                 .map(entity ->
                     OptionRecord.builder()
                         .key(entity.getModuleId().toString())
-                        .value(entity.getSettingsEntity("entity-identifier").orElseThrow().getValue())
+                        .value(entity.getSettingsEntity("issuer-entity-identifier").orElseThrow().getValue())
                         .selected(Objects.equals(value.getValue(), entity.getModuleId().toString()))
                         .build())
                 .toList()));
@@ -208,7 +207,7 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
             entity.getModule().getOrganization().getOrganizationId()))
 
         .map(entity -> {
-          final Map<String, Object> e = super.getSettingsEntities(TRUSTMARK, entity.getTrustmarkId())
+          final Map<String, Object> e = super.getSettingsEntities(fkKeyType, entity.getTrustmarkId())
                   .stream()
                   .collect(Collectors.toMap(
                       SettingsEntity::getKey,
@@ -222,8 +221,8 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
   }
 
   /**
-   * Retrieves a list of trustmark entities and their associated settings based on a module ID.
-   * Can optionally include related trustmark subjects.
+   * Retrieves a list of trustmark entities and their associated settings based on a module ID. Can optionally include
+   * related trustmark subjects.
    *
    * @param moduleId the unique identifier of the module for which trustmark entities are to be retrieved
    * @param includeSubjects a boolean flag indicating whether associated trustmark subjects should be included
@@ -244,17 +243,19 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
                       SettingsEntity::castValue
                   ));
           e.put("id", trustmarkid);
-          e.put("trustmarksubjects",
-              trustMarkEntity.getTrustmarksubjects()
-                  .stream()
-                  .map(trustMarkSubjectEntity ->
-                      super.getSettingsEntities(TRUSTMARKSUBJECT, trustMarkSubjectEntity.getTrustmarksubjectId())
-                          .stream()
-                          .collect(Collectors.toMap(
-                              SettingsEntity::getKey,
-                              SettingsEntity::castValue
-                          )))
-                  .toList());
+          if (includeSubjects) {
+            e.put("trust-mark-subjects",
+                trustMarkEntity.getTrustmarksubjects()
+                    .stream()
+                    .map(trustMarkSubjectEntity ->
+                        super.getSettingsEntities(TRUSTMARKSUBJECT, trustMarkSubjectEntity.getTrustmarksubjectId())
+                            .stream()
+                            .collect(Collectors.toMap(
+                                SettingsEntity::getKey,
+                                SettingsEntity::castValue
+                            )))
+                    .toList());
+          }
               return e;
             }
         )

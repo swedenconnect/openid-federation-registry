@@ -55,7 +55,7 @@ class OptionsApiEntityControllerIT {
         UUID.randomUUID(),
         JwtTestUtils.OrganisationType.SKATT,
         HttpStatus.CREATED,
-        TestDataOperations.defaultHostedEntity());
+        TestDataOperations.defaultHostedEntity(null));
 
   }
 }

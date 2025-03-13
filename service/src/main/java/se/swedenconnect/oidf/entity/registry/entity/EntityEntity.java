@@ -49,6 +49,10 @@ public class EntityEntity extends BaseEntity {
   @JoinColumn(name = "organization_id", nullable = false)
   private OrganizationEntity organization;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "policy_id", nullable = true)
+  private PolicyEntity policyEntity;
+
   @OneToMany(mappedBy = "entity")
   private List<ModuleEntity> modules;
 

@@ -22,6 +22,7 @@ import se.swedenconnect.oidf.entity.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.entity.ModuleEntity;
 import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
+import se.swedenconnect.oidf.entity.registry.entity.PolicyEntity;
 import se.swedenconnect.oidf.entity.registry.entity.SettingsEntity;
 import se.swedenconnect.oidf.entity.registry.entity.TrustMarkEntity;
 import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
@@ -63,6 +64,11 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No organization assigned"));
   }
 
+  protected Predicate<PolicyEntity> hasRightOrganizationIdPolicyPredicate() {
+    return entity -> Objects.equals(this.getCurrentOrganization().getOrganizationId(),
+        entity.getOrganization().getOrganizationId());
+  }
+
   protected Predicate<ModuleEntity> hasRightOrganizationIdModulePredicate() {
     return entity -> Objects.equals(this.getCurrentOrganization().getOrganizationId(),
         entity.getOrganization().getOrganizationId());
@@ -96,7 +102,8 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
                 .value(entity.getValue())
                 .valueType(entity.getValueDataType())
                 .options(null)
-                .build()).toList())
+                .build())
+            .toList())
         .build();
   }
 
