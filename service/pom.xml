@@ -27,7 +27,7 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>oidf-entity-registry-service</artifactId>
+    <artifactId>openid-federation-registry</artifactId>
     <packaging>jar</packaging>
     <name>Sweden Connect :: OpenID Federation :: Entity Registry :: REST Service</name>
     <description>REST Service for Sweden Connect OpenID Federation Entity Registry</description>
