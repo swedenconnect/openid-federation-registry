@@ -32,6 +32,7 @@ import org.hibernate.annotations.ParamDef;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -63,6 +64,19 @@ public class PolicyEntity extends BaseEntity {
   @Filter(name = "fkTypeFilter", condition = "fk_type = :fkTypeParam")
   private List<SettingsEntity> settingsEntityList;
 
+  /**
+   * Retrieves the {@link SettingsEntity} associated with the specified key. The method searches through the list of
+   * settings entities and returns an optional containing the first entity matching the given key, if one exists.
+   *
+   * @param key the key to search for in the list of settings entities
+   * @return an {@link Optional} containing the matching {@link SettingsEntity} if found, otherwise an empty
+   *     {@link Optional}
+   */
+  public Optional<SettingsEntity> getSettingsEntity(final String key) {
+    return this.settingsEntityList.stream()
+        .filter(s -> s.getKey().equals(key))
+        .findFirst();
+  }
 
 }
 

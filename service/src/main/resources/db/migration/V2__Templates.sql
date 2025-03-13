@@ -362,7 +362,7 @@ VALUES ('TEMPLATE',
         'Policy',
         'OPTIONS',
         '',
-        '',
+        'UUID',
         'Flyway',
         'Flyway');
 

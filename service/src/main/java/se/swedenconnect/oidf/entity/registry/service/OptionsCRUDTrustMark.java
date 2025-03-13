@@ -152,7 +152,7 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
 
     final List<SettingsEntity> mergeValues = insertValuesInTemplate(
         fkKeyType,
-        super.getSettingsEntities(TRUSTMARK, trustMarkEntity.getTrustmarkId()));
+        super.getSettingsEntities(fkKeyType, trustMarkEntity.getTrustmarkId()));
 
     return toRecord(mergeValues);
 
@@ -207,7 +207,7 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
             entity.getModule().getOrganization().getOrganizationId()))
 
         .map(entity -> {
-          final Map<String, Object> e = super.getSettingsEntities(TRUSTMARK, entity.getTrustmarkId())
+          final Map<String, Object> e = super.getSettingsEntities(fkKeyType, entity.getTrustmarkId())
                   .stream()
                   .collect(Collectors.toMap(
                       SettingsEntity::getKey,
