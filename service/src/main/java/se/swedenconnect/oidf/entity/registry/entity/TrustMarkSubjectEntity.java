@@ -22,13 +22,18 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Filter;
+import org.hibernate.annotations.FilterDef;
+import org.hibernate.annotations.ParamDef;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -43,6 +48,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder(toBuilder = true)
 @Table(name = "trustmark_subject")
+@FilterDef(name = "fkTypeTMSFilter", parameters = @ParamDef(name = "TRUSTMARKSUBJECT", type = String.class))
 public class TrustMarkSubjectEntity extends BaseEntity {
 
   @Id
@@ -50,15 +56,18 @@ public class TrustMarkSubjectEntity extends BaseEntity {
   private UUID trustmarksubjectId;
 
   /**
-   * Constructs a new TrustMarkSubjectEntity with the specified trustmarksubjectId and associated TrustMarkEntity.
+   * Constructs a new TrustMarkSubjectEntity with the specified trustmark subject ID, associated TrustMarkEntity,
+   * and a list of SettingsEntity instances.
    *
    * @param trustmarksubjectId the unique identifier for the TrustMarkSubjectEntity
-   * @param trustMark the associated TrustMarkEntity instance
+   * @param trustMark the TrustMarkEntity instance associated with this TrustMarkSubjectEntity
+   * @param settingsEntityList the list of SettingsEntity instances linked to this TrustMarkSubjectEntity
    */
-  public TrustMarkSubjectEntity(final UUID trustmarksubjectId,
-      final TrustMarkEntity trustMark) {
+  public TrustMarkSubjectEntity(final UUID trustmarksubjectId, final TrustMarkEntity trustMark,
+      final List<SettingsEntity> settingsEntityList) {
     this.trustmarksubjectId = trustmarksubjectId;
     this.trustMark = trustMark;
+    this.settingsEntityList = settingsEntityList;
   }
 
   @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
@@ -84,5 +93,10 @@ public class TrustMarkSubjectEntity extends BaseEntity {
     this.trustMark = trustMark;
     trustMark.getTrustmarksubjects().add(this);
   }
+
+  @OneToMany(cascade = CascadeType.DETACH, fetch = FetchType.LAZY)
+  @JoinColumn(name = "fk_id", referencedColumnName = "trustmarksubject_id", insertable = false, updatable = false)
+  @Filter(name = "fkTypeTMSFilter", condition = "fk_type = :fkTypeParam")
+  private List<SettingsEntity> settingsEntityList;
 
 }

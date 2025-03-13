@@ -190,7 +190,10 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
                 .map(entity ->
                     OptionRecord.builder()
                         .key(entity.getTrustmarkId().toString())
-                        .value(entity.getModule().getSettingsEntity("entity-identifier").orElseThrow().getValue())
+                        .value(entity
+                            .getModule()
+                            .getSettingsEntity("issuer-entity-identifier")
+                            .orElseThrow().getValue())
                         .selected(Objects.equals(value.getValue(), entity.getTrustmarkId().toString()))
                         .build())
                 .toList()));

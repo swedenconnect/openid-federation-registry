@@ -69,7 +69,7 @@ class OptionsApiControllerIT {
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.PM,
         HttpStatus.CREATED,
-        TestDataOperations.defaultHostedEntity());
+        TestDataOperations.defaultHostedEntity(null));
 
     final UUID tmiId1 = testDataOperations.createTMI(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.PM,

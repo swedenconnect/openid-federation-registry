@@ -94,8 +94,6 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
     return this.toRecord(validatedInData);
   }
 
-
-
   @Override
   public OptionsRecord update(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
     final PolicyEntity policyEntity = this.policyRepository

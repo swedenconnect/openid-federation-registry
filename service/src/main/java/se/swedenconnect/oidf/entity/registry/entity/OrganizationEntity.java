@@ -81,5 +81,6 @@ public class OrganizationEntity extends BaseEntity {
         .stream()
         .filter(moduleEntity -> moduleEntity.getModuleType().equals(fkKeyType.name()))
         .toList();
+
   }
 }

@@ -28,6 +28,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.Filter;
+import org.hibernate.annotations.FilterDef;
+import org.hibernate.annotations.ParamDef;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
 import java.util.List;
@@ -47,6 +50,7 @@ import java.util.UUID;
 @Entity
 @ToString(callSuper = true)
 @Table(name = "trustmark")
+@FilterDef(name = "fkTypeTMFilter", parameters = @ParamDef(name = "TRUSTMARKSUBJECT", type = String.class))
 public class TrustMarkEntity extends BaseEntity {
 
   @Id
@@ -59,6 +63,11 @@ public class TrustMarkEntity extends BaseEntity {
 
   @OneToMany(mappedBy = "trustMark", cascade = CascadeType.DETACH, orphanRemoval = true, fetch = FetchType.EAGER)
   private List<TrustMarkSubjectEntity> trustmarksubjects;
+
+  @OneToMany(cascade = CascadeType.DETACH, fetch = FetchType.LAZY)
+  @JoinColumn(name = "fk_id", referencedColumnName = "trustmark_id", insertable = false, updatable = false)
+  @Filter(name = "fkTypeTMFilter", condition = "fk_type = :fkTypeParam")
+  private List<SettingsEntity> settingsEntityList;
 
 
 }

@@ -20,7 +20,7 @@ INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_valu
                      last_modified_by)
 VALUES ('TEMPLATE',
         'TRUSTMARKISSUER',
-        'entity-identifier',
+        'issuer-entity-identifier',
         'The EntityId that this module will have',
         'TEXT',
         '',
@@ -92,7 +92,7 @@ select fk_id,
        last_modified_by
 from settings
 where (data_key = 'active'
-    or data_key = 'entity-identifier'
+    or data_key = 'issuer-entity-identifier'
     or data_key = 'entity_id'
     or data_key = 'alias')
   and fk_type = 'TRUSTMARKISSUER';
@@ -111,7 +111,7 @@ select fk_id,
        last_modified_by
 from settings
 where (data_key = 'active'
-    or data_key = 'entity-identifier'
+    or data_key = 'issuer-entity-identifier'
     or data_key = 'entity_id'
     or data_key = 'alias')
   and fk_type = 'TRUSTMARKISSUER';
@@ -130,7 +130,7 @@ select fk_id,
        last_modified_by
 from settings
 where (data_key = 'active'
-    or data_key = 'entity-identifier'
+    or data_key = 'issuer-entity-identifier'
     or data_key = 'entity_id'
     or data_key = 'alias')
   and fk_type = 'TRUSTMARKISSUER';
@@ -155,7 +155,7 @@ INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_valu
 VALUES ('TEMPLATE',
         'RESOLVER',
         'trust-anchor',
-        'URL to trustanchor that will be used to build trustchanin ',
+        'URL to trustanchor that will be used to build trust chain ',
         'TEXT',
         '',
         'required | url',
@@ -168,7 +168,7 @@ VALUES ('TEMPLATE',
         'RESOLVER',
         'trusted-keys',
         'Trusted keys, JWKS format',
-        'TEXT',
+        'LARGETEXT',
         '',
         'required | jwks',
         'Flyway',
@@ -267,7 +267,7 @@ VALUES ('TEMPLATE',
         'POLICIES',
         'policy',
         'Json policy document',
-        'LARGETEXT',
+        'JSON',
         '',
         'required | json',
         'Flyway',
@@ -384,7 +384,7 @@ VALUES ('TEMPLATE',
         'HOSTED_ENTITY',
         'metadata',
         'Metadata',
-        'LARGETEXT',
+        'JSON',
         '',
         'json',
         'Flyway',

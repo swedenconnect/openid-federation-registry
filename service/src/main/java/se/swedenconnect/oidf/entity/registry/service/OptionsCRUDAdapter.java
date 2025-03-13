@@ -96,7 +96,8 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
                 .value(entity.getValue())
                 .valueType(entity.getValueDataType())
                 .options(null)
-                .build()).toList())
+                .build())
+            .toList())
         .build();
   }
 

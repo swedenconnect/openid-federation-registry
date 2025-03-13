@@ -45,7 +45,7 @@ public class TrustMarkIssuerModuleResponse {
     return TrustMarkIssuerModuleResponse.builder()
         .trustMarkTokenValidityDuration(Duration.parse((String) json.get("trust-mark-token-validity-duration")))
         .alias((String) json.get("alias"))
-        .entityIdentifier((String) json.get("entity-identifier"))
+        .entityIdentifier((String) json.get("issuer-entity-identifier"))
 
         .active((Boolean) json.get("active"))
         .build();

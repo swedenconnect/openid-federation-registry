@@ -121,10 +121,8 @@ public class RegistryConfig {
     final JWK jwk = function.apply(signKey);
 
     return new FederationApiService(
-        this.entityRepository,
         jwk,
         this.policyRepository,
-        this.trustMarkSubjectRepository,
         federationAPIProperties.issuer(),
         mapper,
         this.instanceRepository,

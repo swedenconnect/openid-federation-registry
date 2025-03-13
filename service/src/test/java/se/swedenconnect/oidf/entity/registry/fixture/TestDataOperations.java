@@ -44,6 +44,7 @@ import java.security.interfaces.ECPublicKey;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -231,9 +232,17 @@ public class TestDataOperations {
   public static Function<Values, String> defaultTrustMarkIssuer(UUID entity_id) {
     return s -> switch (s.getKey()) {
       case "active" -> "true";
-      case "entity-identifier" -> "http://www.swedenconnect.se/issuer";
+      case "issuer-entity-identifier" -> "http://www.swedenconnect.se/issuer";
       case "alias" -> "tmi";
       case "entity_id" -> entity_id.toString();
+      default -> null;
+    };
+  }
+
+  public static Function<Values, String> defaultPolicy() {
+    return s -> switch (s.getKey()) {
+      case "name" -> "Default Test Policy";
+      case "policy" -> "{\"signature\":\"HS256\"}";
       default -> null;
     };
   }
@@ -262,7 +271,7 @@ public class TestDataOperations {
   public static Function<Values, String> defaultTrustAnchor(final UUID entity_id) {
     return s -> switch (s.getKey()) {
       case "active" -> "true";
-      case "entity-identifier" -> "http://www.swedenconnect.se/trustanchor";
+      case "issuer-entity-identifier" -> "http://www.swedenconnect.se/trustanchor";
       case "alias" -> "trustanchor";
       case "entity_id" -> entity_id.toString();
 
@@ -273,7 +282,7 @@ public class TestDataOperations {
   public static Function<Values, String> defaultResolver(final UUID entity_id) {
     return s -> switch (s.getKey()) {
       case "active" -> "true";
-      case "entity-identifier" -> "http://www.swedenconnect.se/resolver";
+      case "issuer-entity-identifier" -> "http://www.swedenconnect.se/resolver";
       case "alias" -> "resolver";
       case "trust-anchor" -> "http://www.swedenconnect.se/trustanchor";
       case "trusted-keys" -> new JWKSet(List.of(genKey(), genKey())).toString();
@@ -283,10 +292,11 @@ public class TestDataOperations {
     };
   }
 
-  public static Function<Values, String> defaultHostedEntity() {
+  public static Function<Values, String> defaultHostedEntity(UUID policyId) {
     return s -> switch (s.getKey()) {
       case "subject" -> "http://www.swedenconnect.se/subject";
       case "issuer" -> "http://www.swedenconnect.se/issuer";
+      case "policy_id" -> Optional.ofNullable(policyId).map(UUID::toString).orElse("");
       default -> null;
     };
   }
@@ -297,6 +307,14 @@ public class TestDataOperations {
       final HttpStatus expectedHttpStatus,
       final Function<Values, String> options) throws JsonProcessingException {
     return create(id, FkKeyType.TRUSTMARK, organisationType, expectedHttpStatus, options);
+  }
+
+  public UUID createPolicy(
+      final UUID id,
+      final JwtTestUtils.OrganisationType organisationType,
+      final HttpStatus expectedHttpStatus,
+      final Function<Values, String> options) throws JsonProcessingException {
+    return create(id, FkKeyType.POLICIES, organisationType, expectedHttpStatus, options);
   }
 
   public UUID createHostedEntity(

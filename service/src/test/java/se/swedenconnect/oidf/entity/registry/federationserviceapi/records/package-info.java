@@ -13,22 +13,9 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
-package se.swedenconnect.oidf.entity.registry.entity;
-
 /**
- * Defines the data type used in SettingsEntity
+ * Package class for registry records.
  *
- * @author Per Fredrik Plars
+ * @author Felix Hellman
  */
-public enum SettingDataType {
-  TEXT,
-  LARGETEXT,
-  DATE,
-  DATETIME,
-  OPTIONS,
-  BOOLEAN,
-  DURATION,
-  NUMERIC,
-  JSON
-}
+package se.swedenconnect.oidf.entity.registry.federationserviceapi.records;
