@@ -29,10 +29,10 @@ spring:
     database-platform: org.hibernate.dialect.MariaDBDialect
     hibernate:
       ddl-auto: none
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
 
   docker:
     compose:
@@ -42,8 +42,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          public-key-location: file:config/local/public_auth_cert.pem
-          audiences: https://registry.local.swedenconnect.se
+          public-key-location: file:config/local/dev_swedenconnect_se_auth_pub.key
+          audiences: account
 
 logging:
   level:

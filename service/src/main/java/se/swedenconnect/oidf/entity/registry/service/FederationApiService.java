@@ -213,11 +213,14 @@ public class FederationApiService {
             SettingsEntity::getKey,
             SettingsEntity::castValue
         ));
+    final String policyRecordAttribute = "policy_record";
+    settingsEntity.put(policyRecordAttribute, "");
 
     Optional.ofNullable(settingsEntity.remove("policy_id"))
         .filter(key -> !key.toString().isBlank())
-        .flatMap(policyId -> this.policyRepository.findById(UUID.fromString(policyId.toString()))).ifPresent(policy ->
-            settingsEntity.put("policy_record", policy.getSettingsEntityList()
+        .flatMap(policyId -> this.policyRepository.findById(UUID.fromString(policyId.toString())))
+        .ifPresent(policy ->
+            settingsEntity.put(policyRecordAttribute, policy.getSettingsEntityList()
                 .stream()
                 .collect(Collectors.toMap(
                     SettingsEntity::getKey,
