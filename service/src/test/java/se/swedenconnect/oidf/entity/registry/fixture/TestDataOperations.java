@@ -66,36 +66,8 @@ public class TestDataOperations {
     this.restTemplate = restTemplate;
   }
 
-  public UUID createPolicies(JwtTestUtils.OrganisationType organisationType)
-      throws JsonProcessingException {
-    final ResponseEntity<String> reply = restTemplate.getForEntity("/registry/v1/options/policies", String.class);
-    if (reply.getStatusCode().isError()) {
-      log.info(reply.getBody());
-    }
-    assertThat(reply.getStatusCode()).isEqualTo(HttpStatus.OK);
-    final JsonNode node = objectMapper.readTree(reply.getBody());
-    final JsonNode data = node.get("option");
-
-    data.elements().forEachRemaining(jsonNode -> {
-      final ObjectNode valueNode = (ObjectNode) jsonNode;
-      ifThen(valueNode, "name", () -> "Ena-Policy");
-      ifThen(valueNode, "policy", () -> "{\"signature\":\"HS256\"}");
-    });
-
-    final String newTMI = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
-    final UUID id = UUID.randomUUID();
-    final HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    headers.set("Authorization", "Bearer " + new JwtTestUtils().createJwt(organisationType));
-
-    final ResponseEntity<String> createdTMI =
-        restTemplate.postForEntity("/registry/v1/options/policies/" + id, new HttpEntity<>(newTMI, headers),
-            String.class);
-    if (createdTMI.getStatusCode().isError()) {
-      log.info(createdTMI.getBody());
-    }
-    assertThat(createdTMI.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-    return id;
+  public UUID createPolicies(JwtTestUtils.OrganisationType organisationType) {
+    return create(UUID.randomUUID(), FkKeyType.POLICIES, organisationType, HttpStatus.CREATED, defaultPolicy());
   }
 
   public OptionsRecord get(final FkKeyType configGroup, final UUID id,
@@ -232,8 +204,6 @@ public class TestDataOperations {
   public static Function<Values, String> defaultTrustMarkIssuer(UUID entity_id) {
     return s -> switch (s.getKey()) {
       case "active" -> "true";
-      case "issuer-entity-identifier" -> "http://www.swedenconnect.se/issuer";
-      case "alias" -> "tmi";
       case "entity_id" -> entity_id.toString();
       default -> null;
     };
@@ -271,8 +241,6 @@ public class TestDataOperations {
   public static Function<Values, String> defaultTrustAnchor(final UUID entity_id) {
     return s -> switch (s.getKey()) {
       case "active" -> "true";
-      case "issuer-entity-identifier" -> "http://www.swedenconnect.se/trustanchor";
-      case "alias" -> "trustanchor";
       case "entity_id" -> entity_id.toString();
 
       default -> null;
@@ -282,12 +250,9 @@ public class TestDataOperations {
   public static Function<Values, String> defaultResolver(final UUID entity_id) {
     return s -> switch (s.getKey()) {
       case "active" -> "true";
-      case "issuer-entity-identifier" -> "http://www.swedenconnect.se/resolver";
-      case "alias" -> "resolver";
       case "trust-anchor" -> "http://www.swedenconnect.se/trustanchor";
       case "trusted-keys" -> new JWKSet(List.of(genKey(), genKey())).toString();
       case "entity_id" -> entity_id.toString();
-
       default -> null;
     };
   }
@@ -305,7 +270,7 @@ public class TestDataOperations {
       final UUID id,
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
-      final Function<Values, String> options) throws JsonProcessingException {
+      final Function<Values, String> options) {
     return create(id, FkKeyType.TRUSTMARK, organisationType, expectedHttpStatus, options);
   }
 
@@ -313,7 +278,7 @@ public class TestDataOperations {
       final UUID id,
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
-      final Function<Values, String> options) throws JsonProcessingException {
+      final Function<Values, String> options) {
     return create(id, FkKeyType.POLICIES, organisationType, expectedHttpStatus, options);
   }
 
@@ -321,7 +286,7 @@ public class TestDataOperations {
       final UUID id,
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
-      final Function<Values, String> options) throws JsonProcessingException {
+      final Function<Values, String> options) {
     return create(id, FkKeyType.HOSTED_ENTITY, organisationType, expectedHttpStatus, options);
   }
 
@@ -329,7 +294,7 @@ public class TestDataOperations {
       final UUID id,
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
-      final Function<Values, String> options) throws JsonProcessingException {
+      final Function<Values, String> options) {
     return create(id, FkKeyType.TRUSTMARKSUBJECT, organisationType, expectedHttpStatus, options);
   }
 
@@ -356,7 +321,7 @@ public class TestDataOperations {
       final UUID id,
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
-      final Function<Values, String> options) throws JsonProcessingException {
+      final Function<Values, String> options) {
     return create(id, FkKeyType.TRUSTANCHOR, organisationType, expectedHttpStatus, options);
   }
 
@@ -364,7 +329,7 @@ public class TestDataOperations {
       final UUID id,
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
-      final Function<Values, String> options) throws JsonProcessingException {
+      final Function<Values, String> options) {
     return create(id, FkKeyType.RESOLVER, organisationType, expectedHttpStatus, options);
   }
 

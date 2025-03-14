@@ -44,7 +44,7 @@ spring:
       resourceserver:
         jwt:
           public-key-location: classpath:public_auth_cert.pem
-          audiences: https://registry.local.swedenconnect.se
+          audiences: account
   jpa:
     show-sql: false
 
