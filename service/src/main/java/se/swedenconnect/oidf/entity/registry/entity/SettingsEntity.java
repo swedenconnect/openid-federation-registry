@@ -121,7 +121,8 @@ public class SettingsEntity extends BaseEntity {
         return mapper.readValue(value, new TypeReference<Map<String, Object>>() {});
       }
       catch (final JsonProcessingException e) {
-        throw new RuntimeException("Unable to parse json data from storage", e);
+        throw new RuntimeException(
+            "Unable to parse json data from storage. For key:%s and value:%s".formatted(this.key, this.value), e);
       }
     }
     return value;

@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.entity.registry.validation;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWK;
@@ -27,6 +28,7 @@ import java.net.URI;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -348,7 +350,7 @@ public class PropertyValidators {
         return;
       }
       try {
-        mapper.readTree(value);
+        mapper.readValue(value, new TypeReference<Map<String, Object>>() {});
       }
       catch (final Exception e) {
         throw new PropertyValidationFailException(key, "Value is not a valid JSON: " + e.getMessage());
