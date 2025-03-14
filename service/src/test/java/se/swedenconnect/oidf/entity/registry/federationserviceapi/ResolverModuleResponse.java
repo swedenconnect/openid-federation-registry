@@ -56,7 +56,7 @@ public class ResolverModuleResponse {
         resolver.trustAnchors = (String) json.get("trust-anchor"); // expects trust-anchorS List<String>
         resolver.resolveResponseDuration = Duration.parse((String) json.get("resolve-response-duration"));
         resolver.trustedKeys = JWKSet.parse((String) json.get("trusted-keys"));
-        resolver.entityIdentifier = (String) json.get("issuer-entity-identifier");
+        resolver.entityIdentifier = (String) json.get("entity-identifier");
         resolver.stepRetryTime =
             Duration.parse((String) json.get("step-retry-duration")); // changed from step-retry-time
         resolver.alias = (String) json.get("alias");
@@ -72,7 +72,6 @@ public class ResolverModuleResponse {
 
   public void validate() {
     Assert.notNull(entityIdentifier, "entityIdentifier");
-    Assert.notNull(alias, "alias");
     Assert.notNull(active, "active");
     Assert.notNull(trustAnchors, "trustAnchors");
     Assert.notNull(resolveResponseDuration, "resolveResponseDuration");

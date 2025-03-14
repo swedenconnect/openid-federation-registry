@@ -31,8 +31,7 @@ import java.util.Map;
 @ToString
 @Getter
 public class TrustAnchorModuleResponse {
-  /** Alias for the given module */
-  private String alias;
+
   /** EntityId for the trust anchor */
   private EntityID entityIdentifier;
   /** Is the module qctive */
@@ -47,8 +46,7 @@ public class TrustAnchorModuleResponse {
   public static TrustAnchorModuleResponse fromJson(final Map<String, Object> json) {
     try {
       final TrustAnchorModuleResponse trustAnchorModuleResponse = new TrustAnchorModuleResponse();
-      trustAnchorModuleResponse.alias = (String) json.get("alias");
-      trustAnchorModuleResponse.entityIdentifier = EntityID.parse((String) json.get("issuer-entity-identifier"));
+      trustAnchorModuleResponse.entityIdentifier = EntityID.parse((String) json.get("entity-identifier"));
       trustAnchorModuleResponse.active = (Boolean) json.get("active");
       return trustAnchorModuleResponse;
     }
@@ -59,7 +57,6 @@ public class TrustAnchorModuleResponse {
 
   public void validate() {
     Assert.notNull(entityIdentifier, "entityIdentifier");
-    Assert.notNull(alias, "alias");
     Assert.notNull(active, "active");
   }
 }

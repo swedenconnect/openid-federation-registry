@@ -48,9 +48,9 @@ public class JwtTestUtils {
     SKATT("Skatteverket", "77777", "http://www.skv.se/oidf"),
     ;
 
-    String name;
-    String orgId;
-    String domainPrefix;
+    final String name;
+    final String orgId;
+    final String domainPrefix;
 
     OrganisationType(String name, String orgId, String domainPrefix) {
       this.name = name;
@@ -93,7 +93,7 @@ public class JwtTestUtils {
     try {
       final JWTClaimsSet claims = new com.nimbusds.jwt.JWTClaimsSet.Builder()
           .subject("test-user")
-          .audience("https://registry.local.swedenconnect.se")
+          .audience("account")
           .issueTime(new java.util.Date())
           .expirationTime(Date.from(Instant.now().plus(30, ChronoUnit.DAYS)))
           .issuer("http://swedenconnect.se/op")

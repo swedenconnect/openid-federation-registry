@@ -26,7 +26,6 @@ import se.swedenconnect.oidf.entity.registry.entity.SettingDataType;
 import se.swedenconnect.oidf.entity.registry.entity.SettingsEntity;
 import se.swedenconnect.oidf.entity.registry.entity.TrustMarkEntity;
 import se.swedenconnect.oidf.entity.registry.entity.TrustMarkSubjectEntity;
-import se.swedenconnect.oidf.entity.registry.repository.ModuleRepository;
 import se.swedenconnect.oidf.entity.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.entity.registry.repository.TrustMarkRepository;
 import se.swedenconnect.oidf.entity.registry.repository.TrustMarkSubjectRepository;
@@ -59,7 +58,6 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
 
   private final TrustMarkRepository trustMarkRepository;
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
-  private final ModuleRepository moduleRepository;
 
   /**
    * Constructor for OptionsCRUDTrustMark.
@@ -67,18 +65,15 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
    * @param userAssignedOrganization Loading current org for this session
    * @param settingsRepository the repository for system settings.
    * @param trustMarkRepository the repository for handling trust marks.
-   * @param moduleRepository the repository for managing modules.
    * @param trustMarkSubjectRepository tms repository for managing modules.
    */
   public OptionsCRUDTrustMarkSubject(
       final Supplier<OrganizationEntity> userAssignedOrganization,
       final SettingsRepository settingsRepository,
       final TrustMarkRepository trustMarkRepository,
-      final ModuleRepository moduleRepository,
       final TrustMarkSubjectRepository trustMarkSubjectRepository) {
     super(settingsRepository, userAssignedOrganization);
     this.trustMarkRepository = trustMarkRepository;
-    this.moduleRepository = moduleRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
   }
 
@@ -192,8 +187,8 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
                         .key(entity.getTrustmarkId().toString())
                         .value(entity
                             .getModule()
-                            .getSettingsEntity("issuer-entity-identifier")
-                            .orElseThrow().getValue())
+                            .getEntity()
+                            .getIssuer())
                         .selected(Objects.equals(value.getValue(), entity.getTrustmarkId().toString()))
                         .build())
                 .toList()));

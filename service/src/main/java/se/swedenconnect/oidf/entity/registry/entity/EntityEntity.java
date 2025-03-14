@@ -50,7 +50,7 @@ public class EntityEntity extends BaseEntity {
   private OrganizationEntity organization;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "policy_id", nullable = true)
+  @JoinColumn(name = "policy_id")
   private PolicyEntity policyEntity;
 
   @OneToMany(mappedBy = "entity")
@@ -74,6 +74,26 @@ public class EntityEntity extends BaseEntity {
     return this.settingsEntityList.stream()
         .filter(s -> s.getKey().equals(key))
         .findFirst();
+  }
+
+  /**
+   * Retrieves the value of the "issuer" setting from the associated list of {@link SettingsEntity}. If no setting with
+   * the key "issuer" exists, an exception is thrown.
+   *
+   * @return the value of the "issuer" setting as a {@link String}
+   */
+  public String getIssuer() {
+    return this.getSettingsEntity("issuer").orElseThrow().getValue();
+  }
+
+  /**
+   * Retrieves the value of the "subject" setting from the associated list of {@link SettingsEntity}. If no setting with
+   * the key "subject" exists, an exception is thrown.
+   *
+   * @return the value of the "subject" setting as a {@link String}
+   */
+  public String getSubject() {
+    return this.getSettingsEntity("subject").orElseThrow().getValue();
   }
 
 }

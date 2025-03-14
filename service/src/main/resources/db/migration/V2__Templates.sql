@@ -16,17 +16,6 @@
 
 
 -- TrustmarkIssuer
-INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
-                     last_modified_by)
-VALUES ('TEMPLATE',
-        'TRUSTMARKISSUER',
-        'issuer-entity-identifier',
-        'The EntityId that this module will have',
-        'TEXT',
-        '',
-        'required | url',
-        'Flyway',
-        'Flyway');
 
 INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
                      last_modified_by)
@@ -37,18 +26,6 @@ VALUES ('TEMPLATE',
         'OPTIONS',
         '',
         'required | UUID',
-        'Flyway',
-        'Flyway');
-
-INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
-                     last_modified_by)
-VALUES ('TEMPLATE',
-        'TRUSTMARKISSUER',
-        'alias',
-        'Alias where the module is mounted ex https://www.swedenconnect.se/{alias}',
-        'TEXT',
-        '',
-        'required',
         'Flyway',
         'Flyway');
 
@@ -92,9 +69,7 @@ select fk_id,
        last_modified_by
 from settings
 where (data_key = 'active'
-    or data_key = 'issuer-entity-identifier'
-    or data_key = 'entity_id'
-    or data_key = 'alias')
+    or data_key = 'entity_id')
   and fk_type = 'TRUSTMARKISSUER';
 
 -- INTERMEDIATE
@@ -111,9 +86,7 @@ select fk_id,
        last_modified_by
 from settings
 where (data_key = 'active'
-    or data_key = 'issuer-entity-identifier'
-    or data_key = 'entity_id'
-    or data_key = 'alias')
+    or data_key = 'entity_id')
   and fk_type = 'TRUSTMARKISSUER';
 
 -- Resolver
@@ -130,9 +103,7 @@ select fk_id,
        last_modified_by
 from settings
 where (data_key = 'active'
-    or data_key = 'issuer-entity-identifier'
-    or data_key = 'entity_id'
-    or data_key = 'alias')
+    or data_key = 'entity_id')
   and fk_type = 'TRUSTMARKISSUER';
 
 

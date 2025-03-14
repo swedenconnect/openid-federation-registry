@@ -214,6 +214,7 @@ public class FederationApiService {
             SettingsEntity::getKey,
             SettingsEntity::castValue
         ));
+
     final String policyRecordAttribute = "policy_record";
     settingsEntity.put(policyRecordAttribute, Collections.emptyMap());
 
@@ -231,12 +232,14 @@ public class FederationApiService {
   }
 
   private Map<String, Object> toMap(final ModuleEntity moduleEntity) {
-    return moduleEntity.getSettingsEntityList()
+    final Map<String, Object> module = moduleEntity.getSettingsEntityList()
         .stream()
         .collect(Collectors.toMap(
             SettingsEntity::getKey,
             SettingsEntity::castValue
         ));
+    module.put("entity-identifier", moduleEntity.getEntity().getIssuer());
+    return module;
   }
 
   private List<Map<String, Object>> toMapWithTrustMarks(final ModuleEntity moduleEntity) {
@@ -247,6 +250,9 @@ public class FederationApiService {
             SettingsEntity::getKey,
             SettingsEntity::castValue
         ));
+
+    trustmarkissuer.put("issuer-entity-identifier", moduleEntity.getEntity().getIssuer());
+
     return this.listByModuleId(moduleEntity, true)
         .stream()
         .peek(stringObjectMap -> stringObjectMap.putAll(trustmarkissuer))
@@ -264,7 +270,8 @@ public class FederationApiService {
                           SettingsEntity::getKey,
                           SettingsEntity::castValue
                       ));
-              if (includeSubjects) {
+
+          if (includeSubjects) {
                 e.put("trust-mark-subjects",
                     trustMarkEntity.getTrustmarksubjects()
                         .stream()
