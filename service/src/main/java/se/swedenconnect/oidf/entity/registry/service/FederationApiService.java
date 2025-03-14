@@ -238,7 +238,7 @@ public class FederationApiService {
             SettingsEntity::getKey,
             SettingsEntity::castValue
         ));
-    module.put("entity-identifier", moduleEntity.getEntity().getIssuer());
+    module.put("entity-identifier", moduleEntity.getEntity().getSubject());
     return module;
   }
 
@@ -251,7 +251,7 @@ public class FederationApiService {
             SettingsEntity::castValue
         ));
 
-    trustmarkissuer.put("issuer-entity-identifier", moduleEntity.getEntity().getIssuer());
+    trustmarkissuer.put("issuer-entity-identifier", moduleEntity.getEntity().getSubject());
 
     return this.listByModuleId(moduleEntity, true)
         .stream()
