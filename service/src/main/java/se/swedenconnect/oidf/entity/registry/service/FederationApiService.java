@@ -29,6 +29,7 @@ import se.swedenconnect.oidf.entity.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.entity.registry.repository.PolicyRepository;
 
 import java.time.Duration;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -214,7 +215,7 @@ public class FederationApiService {
             SettingsEntity::castValue
         ));
     final String policyRecordAttribute = "policy_record";
-    settingsEntity.put(policyRecordAttribute, "");
+    settingsEntity.put(policyRecordAttribute, Collections.emptyMap());
 
     Optional.ofNullable(settingsEntity.remove("policy_id"))
         .filter(key -> !key.toString().isBlank())

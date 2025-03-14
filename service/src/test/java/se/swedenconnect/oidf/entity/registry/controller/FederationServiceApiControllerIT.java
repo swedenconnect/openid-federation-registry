@@ -105,6 +105,11 @@ class FederationServiceApiControllerIT {
         HttpStatus.CREATED,
         TestDataOperations.defaultHostedEntity(policyId));
 
+    final UUID entityId2 = testDataOperations.createHostedEntity(UUID.randomUUID(),
+        org,
+        HttpStatus.CREATED,
+        TestDataOperations.defaultHostedEntity(null));
+
     final UUID tmiId1 = testDataOperations.createTMI(UUID.randomUUID(),
         org,
         HttpStatus.CREATED,
@@ -148,9 +153,7 @@ class FederationServiceApiControllerIT {
     final List<Object> claim = signedJWT.getJWTClaimsSet().getListClaim("entity_records");
     assertNotNull(claim);
     assertFalse(claim.isEmpty());
-    claim
-        .stream()
-        .forEach(claimMap -> {
+    claim.stream().forEach(claimMap -> {
           try {
             EntityRecord.fromJson((Map<String, Object>) claimMap);
           }
@@ -158,7 +161,6 @@ class FederationServiceApiControllerIT {
             throw new RuntimeException(e);
           }
         });
-
 
   }
 
