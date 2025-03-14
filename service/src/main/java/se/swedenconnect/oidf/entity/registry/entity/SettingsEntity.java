@@ -122,7 +122,7 @@ public class SettingsEntity extends BaseEntity {
       }
       catch (final JsonProcessingException e) {
         throw new RuntimeException(
-            "Unable to parse json data from storage. For key:%s and value:%s".formatted(key, value), e);
+            "Unable to parse json data from storage. For key:%s and value:%s".formatted(this.key, this.value), e);
       }
     }
     return value;
