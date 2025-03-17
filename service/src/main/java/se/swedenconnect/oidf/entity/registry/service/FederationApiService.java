@@ -72,6 +72,7 @@ public class FederationApiService {
   public static final String HOSTED_RECORD_ATT = "hosted_record";
   public static final String METADATA_ATT = "metadata";
   public static final String FEDERATION_ENTITY_ATT = "federation_entity";
+  public static final String POLICY_ATT = "policy";
 
 
   /**
@@ -171,18 +172,18 @@ public class FederationApiService {
 
     final List<Map<String, Object>> tmi = moduleEntities.stream()
         .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(TRUSTMARKISSUER))
-        .map(this::toMap)
+        .map(this::toMapEntity)
         .toList();
 
     final List<Map<String, Object>> ta = moduleEntities.stream()
         .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(TRUSTANCHOR) ||
             FkKeyType.valueOf(moduleEntity.getModuleType()).equals(INTERMEDIATE))
-        .map(this::toMap)
+        .map(this::toMapEntity)
         .toList();
 
     final List<Map<String, Object>> resolver = moduleEntities.stream()
         .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(RESOLVER))
-        .map(this::toMap)
+        .map(this::toMapEntity)
         .toList();
 
     final Map<String, List<Map<String, Object>>> data = new HashMap<>();
@@ -221,10 +222,10 @@ public class FederationApiService {
         .flatMap(organizationEntity -> organizationEntity.getEntities().stream())
         .toList();
 
-    return trustmarkIssuersModules.stream().map(this::toMap).toList();
+    return trustmarkIssuersModules.stream().map(this::toMapEntity).toList();
   }
 
-  private Map<String, Object> toMap(final EntityEntity entity) {
+  private Map<String, Object> toMapEntity(final EntityEntity entity) {
 
     final Map<String, Object> settingsEntity = new HashMap<>(this.entityResponseFormatter.createEntityResponse(entity));
 
@@ -233,16 +234,12 @@ public class FederationApiService {
         .filter(key -> !key.toString().isBlank())
         .flatMap(policyId -> this.policyRepository.findById(UUID.fromString(policyId.toString())))
         .ifPresent(policy ->
-            settingsEntity.put(POLICY_RECORD, policy.getSettingsEntityList()
-                .stream()
-                .collect(Collectors.toMap(
-                    SettingsEntity::getKey,
-                    SettingsEntity::castValue
-                ))));
+            settingsEntity.put(POLICY_RECORD,
+                policy.getSettingsEntity(POLICY_ATT).map(SettingsEntity::castValue).orElseThrow()));
     return settingsEntity;
   }
 
-  private Map<String, Object> toMap(final ModuleEntity moduleEntity) {
+  private Map<String, Object> toMapEntity(final ModuleEntity moduleEntity) {
     final Map<String, Object> module = moduleEntity.getSettingsEntityList()
         .stream()
         .collect(Collectors.toMap(
