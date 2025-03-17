@@ -153,6 +153,7 @@ public class EntityResponseFormatter {
         .findFirst()
         .ifPresent(moduleEntity -> {
           MetadataType.RESOLVE.set(sub, federationEntity);
+          MetadataType.DISCOVERY.set(sub, federationEntity);
         });
     return federationEntity;
 
