@@ -43,9 +43,9 @@ public class TrustMarkIssuerModuleResponse {
 
   public static TrustMarkIssuerModuleResponse fromJson(final Map<String, Object> json) {
     return TrustMarkIssuerModuleResponse.builder()
-        .trustMarkTokenValidityDuration(Duration.parse((String) json.get("trust-mark-token-validity-duration")))
+        .trustMarkTokenValidityDuration(Duration.parse((String) json.get("trust_mark_token_validity_duration")))
         .alias((String) json.get("alias"))
-        .entityIdentifier((String) json.get("entity-identifier"))
+        .entityIdentifier((String) json.get("entity_identifier"))
 
         .active((Boolean) json.get("active"))
         .build();
@@ -71,9 +71,9 @@ public class TrustMarkIssuerModuleResponse {
           Optional.ofNullable((List<Map<String, Object>>) json.get("trust-mark-subjects"))
               .map(claim -> claim.stream().map(TrustMarkSubjectRecord::fromJson).toList()).orElse(List.of());
       return TrustMarkResponse.builder()
-          .trustMarkId(((String) json.get("trust-mark-entity-id")))
-          .logoUri(Optional.ofNullable((String) json.get("logo-uri")))
-          .refUri(Optional.ofNullable((String) json.get("ref-uri")))
+          .trustMarkId(((String) json.get("trust_mark_entity_id")))
+          .logoUri(Optional.ofNullable((String) json.get("logo_uri")))
+          .refUri(Optional.ofNullable((String) json.get("ref_uri")))
           .delegation(Optional.ofNullable((String) json.get("delegation")).map(String::new))
           .trustMarkSubjectRecords(trustMarkSubjects)
           .build();

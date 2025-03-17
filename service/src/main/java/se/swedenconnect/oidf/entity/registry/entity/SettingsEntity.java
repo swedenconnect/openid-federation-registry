@@ -39,6 +39,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -125,6 +126,6 @@ public class SettingsEntity extends BaseEntity {
             "Unable to parse json data from storage. For key:%s and value:%s".formatted(this.key, this.value), e);
       }
     }
-    return value;
+    return Collections.emptyMap();
   }
 }

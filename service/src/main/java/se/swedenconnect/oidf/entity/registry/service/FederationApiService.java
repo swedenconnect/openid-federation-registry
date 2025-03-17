@@ -57,6 +57,24 @@ public class FederationApiService {
   private final Duration jwkExpiryDuration;
   private final JWTSupport jwtSupport;
 
+  private final EntityResponseFormatter entityResponseFormatter = new EntityResponseFormatter();
+
+  public static final String ISSUER_ENTITY_IDENTIFIER = "issuer_entity_identifier";
+  public static final String ENTITY_IDENTIFIER = "entity_identifier";
+  public static final String POLICY_ID = "policy_id";
+  public static final String POLICY_RECORD = "policy_record";
+
+  public static final String TRUST_MARK_ISSUERS = "trust_mark_issuers";
+  public static final String TRUST_ANCHORS = "trust_anchors";
+
+  public static final String RESOLVERS = "resolvers";
+
+  public static final String HOSTED_RECORD_ATT = "hosted_record";
+  public static final String METADATA_ATT = "metadata";
+  public static final String FEDERATION_ENTITY_ATT = "federation_entity";
+  public static final String POLICY_ATT = "policy";
+
+
   /**
    * Constructs a FederationApiService instance to handle OpenID Connect Federation related operations.
    *
@@ -154,24 +172,24 @@ public class FederationApiService {
 
     final List<Map<String, Object>> tmi = moduleEntities.stream()
         .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(TRUSTMARKISSUER))
-        .map(this::toMap)
+        .map(this::toMapEntity)
         .toList();
 
     final List<Map<String, Object>> ta = moduleEntities.stream()
         .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(TRUSTANCHOR) ||
             FkKeyType.valueOf(moduleEntity.getModuleType()).equals(INTERMEDIATE))
-        .map(this::toMap)
+        .map(this::toMapEntity)
         .toList();
 
     final List<Map<String, Object>> resolver = moduleEntities.stream()
         .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(RESOLVER))
-        .map(this::toMap)
+        .map(this::toMapEntity)
         .toList();
 
     final Map<String, List<Map<String, Object>>> data = new HashMap<>();
-    data.put("trust-mark-issuers", tmi);
-    data.put("trust-anchors", ta);
-    data.put("resolvers", resolver);
+    data.put(TRUST_MARK_ISSUERS, tmi);
+    data.put(TRUST_ANCHORS, ta);
+    data.put(RESOLVERS, resolver);
     return data;
 
   }
@@ -204,54 +222,44 @@ public class FederationApiService {
         .flatMap(organizationEntity -> organizationEntity.getEntities().stream())
         .toList();
 
-    return trustmarkIssuersModules.stream().map(this::toMap).toList();
+    return trustmarkIssuersModules.stream().map(this::toMapEntity).toList();
   }
 
-  private Map<String, Object> toMap(final EntityEntity entity) {
-    final Map<String, Object> settingsEntity = entity.getSettingsEntityList()
-        .stream()
-        .collect(Collectors.toMap(
-            SettingsEntity::getKey,
-            SettingsEntity::castValue
-        ));
+  private Map<String, Object> toMapEntity(final EntityEntity entity) {
 
-    final String policyRecordAttribute = "policy_record";
-    settingsEntity.put(policyRecordAttribute, Collections.emptyMap());
+    final Map<String, Object> settingsEntity = new HashMap<>(this.entityResponseFormatter.createEntityResponse(entity));
 
-    Optional.ofNullable(settingsEntity.remove("policy_id"))
+    settingsEntity.put(POLICY_RECORD, Collections.emptyMap());
+    Optional.ofNullable(settingsEntity.remove(POLICY_ID))
         .filter(key -> !key.toString().isBlank())
         .flatMap(policyId -> this.policyRepository.findById(UUID.fromString(policyId.toString())))
         .ifPresent(policy ->
-            settingsEntity.put(policyRecordAttribute, policy.getSettingsEntityList()
-                .stream()
-                .collect(Collectors.toMap(
-                    SettingsEntity::getKey,
-                    SettingsEntity::castValue
-                ))));
+            settingsEntity.put(POLICY_RECORD,
+                policy.getSettingsEntity(POLICY_ATT).map(SettingsEntity::castValue).orElseThrow()));
     return settingsEntity;
   }
 
-  private Map<String, Object> toMap(final ModuleEntity moduleEntity) {
+  private Map<String, Object> toMapEntity(final ModuleEntity moduleEntity) {
     final Map<String, Object> module = moduleEntity.getSettingsEntityList()
         .stream()
         .collect(Collectors.toMap(
             SettingsEntity::getKey,
             SettingsEntity::castValue
         ));
-    module.put("entity-identifier", moduleEntity.getEntity().getSubject());
+    module.put(ENTITY_IDENTIFIER, moduleEntity.getEntity().getSubject());
     return module;
   }
 
   private List<Map<String, Object>> toMapWithTrustMarks(final ModuleEntity moduleEntity) {
     final Map<String, Object> trustmarkissuer = moduleEntity.getSettingsEntityList()
         .stream()
-        .filter(settingsEntity1 -> settingsEntity1.getKey().equals("issuer-entity-identifier"))
+        .filter(settingsEntity1 -> settingsEntity1.getKey().equals(ISSUER_ENTITY_IDENTIFIER))
         .collect(Collectors.toMap(
             SettingsEntity::getKey,
             SettingsEntity::castValue
         ));
 
-    trustmarkissuer.put("issuer-entity-identifier", moduleEntity.getEntity().getSubject());
+    trustmarkissuer.put(ISSUER_ENTITY_IDENTIFIER, moduleEntity.getEntity().getSubject());
 
     return this.listByModuleId(moduleEntity, true)
         .stream()
