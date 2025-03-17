@@ -23,6 +23,7 @@ import lombok.Getter;
 import lombok.Setter;
 import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -66,6 +67,21 @@ public class ModuleEntity extends BaseEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "entity_id", nullable = false)
   private EntityEntity entity;
+
+  /**
+   * Determines whether the module is of the specified types. Compares the module's type against the provided array of
+   * {@link FkKeyType}.
+   *
+   * @param type an array of {@link FkKeyType} to check against the module's type
+   * @return {@code true} if the module type matches any of the provided types, otherwise {@code false}
+   */
+  public boolean isOfType(final FkKeyType... type) {
+    return Arrays.stream(type)
+        .filter(t -> t.name().equals(this.moduleType))
+        .map(t -> true)
+        .findAny().orElse(false);
+
+  }
 
 
   /**

@@ -63,14 +63,14 @@ public class ModuleRecord implements Serializable {
               .toList();
         })
         .orElse(List.of());
-    response.trustAnchors = Optional.ofNullable(json.get("trust-anchors")).map(ta -> {
+    response.trustAnchors = Optional.ofNullable(json.get("trust_anchors")).map(ta -> {
       return ((List<Map<String, Object>>) ta)
           .stream()
           .map(TrustAnchorModuleResponse::fromJson)
           .toList();
     }).orElse(List.of());
 
-    response.trustMarkIssuers = Optional.ofNullable(json.get("trust-mark-issuers")).map(tmi -> {
+    response.trustMarkIssuers = Optional.ofNullable(json.get("trust_mark_issuers")).map(tmi -> {
       return ((List<Map<String, Object>>) tmi)
           .stream()
           .map(TrustMarkIssuerModuleResponse::fromJson)

@@ -219,9 +219,9 @@ public class TestDataOperations {
 
   public static Function<Values, String> defaultTrustMark(UUID trustMarkIssuerId) {
     return s -> switch (s.getKey()) {
-      case "trust-mark-entity-id" -> "http://tmi.swedenconnect.se/loa3";
-      case "ref-uri" -> "http://doc.swedenconnect.se/loa3";
-      case "logo-uri" -> "http://www.swedenconnect.se/image.png";
+      case "trust_mark_entity_id" -> "http://tmi.swedenconnect.se/loa3";
+      case "ref_uri" -> "http://doc.swedenconnect.se/loa3";
+      case "logo_uri" -> "http://www.swedenconnect.se/image.png";
       case "trustmarkissuer_id" -> trustMarkIssuerId.toString();
       default -> null;
     };
@@ -250,8 +250,8 @@ public class TestDataOperations {
   public static Function<Values, String> defaultResolver(final UUID entity_id) {
     return s -> switch (s.getKey()) {
       case "active" -> "true";
-      case "trust-anchor" -> "http://www.swedenconnect.se/trustanchor";
-      case "trusted-keys" -> new JWKSet(List.of(genKey(), genKey())).toString();
+      case "trust_anchor" -> "http://www.swedenconnect.se/trustanchor";
+      case "trusted_keys" -> new JWKSet(List.of(genKey(), genKey())).toString();
       case "entity_id" -> entity_id.toString();
       default -> null;
     };

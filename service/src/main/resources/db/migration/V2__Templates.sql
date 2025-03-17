@@ -47,7 +47,7 @@ INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_valu
                      last_modified_by)
 VALUES ('TEMPLATE',
         'TRUSTMARKISSUER',
-        'trust-mark-token-validity-duration',
+        'trust_mark_token_validity_duration',
         'Validity for the token representing the trustmark. Expressed in hours.',
         'DURATION',
         'PT1H',
@@ -112,7 +112,7 @@ INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_valu
                      last_modified_by)
 VALUES ('TEMPLATE',
         'RESOLVER',
-        'resolve-response-duration',
+        'resolve_response_duration',
         'Duration of the response. Expressed in hours.',
         'DURATION',
         'PT1H',
@@ -125,7 +125,7 @@ INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_valu
                      last_modified_by)
 VALUES ('TEMPLATE',
         'RESOLVER',
-        'trust-anchor',
+        'trust_anchor',
         'URL to trustanchor that will be used to build trust chain ',
         'TEXT',
         '',
@@ -137,7 +137,7 @@ INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_valu
                      last_modified_by)
 VALUES ('TEMPLATE',
         'RESOLVER',
-        'trusted-keys',
+        'trusted_keys',
         'Trusted keys, JWKS format',
         'LARGETEXT',
         '',
@@ -149,7 +149,7 @@ INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_valu
                      last_modified_by)
 VALUES ('TEMPLATE',
         'RESOLVER',
-        'step-retry-duration',
+        'step_retry_duration',
         'Time between a failed step and retry.',
         'DURATION',
         'PT1M',
@@ -175,7 +175,7 @@ INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_valu
                      last_modified_by)
 VALUES ('TEMPLATE',
         'TRUSTMARK',
-        'trust-mark-entity-id',
+        'trust_mark_entity_id',
         'Trustmark entityid, ex https://sc.swedenconnect.se/loa3',
         'TEXT',
         '',
@@ -187,7 +187,7 @@ INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_valu
                      last_modified_by)
 VALUES ('TEMPLATE',
         'TRUSTMARK',
-        'logo-uri',
+        'logo_uri',
         'Url that points to a logotype image',
         'TEXT',
         '',
@@ -199,7 +199,7 @@ INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_valu
                      last_modified_by)
 VALUES ('TEMPLATE',
         'TRUSTMARK',
-        'ref-uri',
+        'ref_uri',
         'Reference url, usually pointing to a documentation page',
         'TEXT',
         '',

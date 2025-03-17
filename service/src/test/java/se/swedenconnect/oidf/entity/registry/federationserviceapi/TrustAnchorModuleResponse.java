@@ -46,7 +46,7 @@ public class TrustAnchorModuleResponse {
   public static TrustAnchorModuleResponse fromJson(final Map<String, Object> json) {
     try {
       final TrustAnchorModuleResponse trustAnchorModuleResponse = new TrustAnchorModuleResponse();
-      trustAnchorModuleResponse.entityIdentifier = EntityID.parse((String) json.get("entity-identifier"));
+      trustAnchorModuleResponse.entityIdentifier = EntityID.parse((String) json.get("entity_identifier"));
       trustAnchorModuleResponse.active = (Boolean) json.get("active");
       return trustAnchorModuleResponse;
     }
