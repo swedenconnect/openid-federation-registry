@@ -212,7 +212,20 @@ public class TestDataOperations {
   public static Function<Values, String> defaultPolicy() {
     return s -> switch (s.getKey()) {
       case "name" -> "Default Test Policy";
-      case "policy" -> "{\"signature\":\"HS256\"}";
+      case "policy" -> "{\n"
+          + "    \"openid_provider\": {\n"
+          + "      \"id_token_signing_alg_values_supported\":\n"
+          + "        {\"subset_of\": [\"RS256\", \"RS384\", \"RS512\"]},\n"
+          + "      \"op_policy_uri\": {\n"
+          + "        \"regexp\":\n"
+          + "          \"^https:\\/\\/[\\\\w-]+\\\\.example\\\\.com\\/[\\\\w-]+\\\\.html\"}\n"
+          + "    },\n"
+          + "    \"oauth_client\": {\n"
+          + "      \"grant_types\": {\n"
+          + "        \"one_of\": [\"authorization_code\", \"client_credentials\"]\n"
+          + "      }\n"
+          + "    }\n"
+          + "  }";
       default -> null;
     };
   }
