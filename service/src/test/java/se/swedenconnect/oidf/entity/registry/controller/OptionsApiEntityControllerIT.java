@@ -111,4 +111,31 @@ class OptionsApiEntityControllerIT {
         JwtTestUtils.OrganisationType.SKATT);
 
   }
+
+  @Test
+  public void testCRUDSubordinateEntity() throws IOException {
+
+    final UUID id_skatt = testDataOperations.createSubordinateEntity(
+        UUID.randomUUID(),
+        JwtTestUtils.OrganisationType.SKATT,
+        HttpStatus.CREATED,
+        OptionsTestData.SubordinateEntityTestData.builder()
+            .build());
+
+    testDataOperations.updateSubordinateEntity(
+        id_skatt,
+        JwtTestUtils.OrganisationType.SKATT,
+        HttpStatus.CREATED,
+        OptionsTestData.SubordinateEntityTestData.builder()
+            .subject("http://www.swedenconnect.se/op")
+            .build());
+
+    OptionsTestData.SubordinateEntityTestData data = testDataOperations.get(FkKeyType.SUBORDINATE_ENTITY,
+        id_skatt, HttpStatus.OK,
+        JwtTestUtils.OrganisationType.SKATT, OptionsTestData.SubordinateEntityTestData.class);
+
+    assertEquals(data.getSubject(), "http://www.swedenconnect.se/op");
+
+
+  }
 }
