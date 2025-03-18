@@ -25,11 +25,15 @@ import org.springframework.http.HttpStatus;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.fixture.JwtTestUtils;
+import se.swedenconnect.oidf.entity.registry.fixture.OptionsTestData;
 import se.swedenconnect.oidf.entity.registry.fixture.TestDataOperations;
 
 import java.io.IOException;
 import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Testing the new optional api
@@ -56,6 +60,33 @@ class OptionsApiEntityControllerIT {
         JwtTestUtils.OrganisationType.SKATT,
         HttpStatus.CREATED,
         TestDataOperations.defaultHostedEntity(null));
+
+  }
+
+  @Test
+  public void testCRUDSubordinateEntity() throws IOException {
+
+    final UUID id_skatt = testDataOperations.createSubordinateEntity(
+        UUID.randomUUID(),
+        JwtTestUtils.OrganisationType.SKATT,
+        HttpStatus.CREATED,
+        OptionsTestData.SubordinateEntityTestData.builder()
+            .build());
+
+    testDataOperations.updateSubordinateEntity(
+        id_skatt,
+        JwtTestUtils.OrganisationType.SKATT,
+        HttpStatus.CREATED,
+        OptionsTestData.SubordinateEntityTestData.builder()
+            .subject("http://www.swedenconnect.se/op")
+            .build());
+
+    OptionsTestData.SubordinateEntityTestData data = testDataOperations.get(FkKeyType.SUBORDINATE_ENTITY,
+        id_skatt, HttpStatus.OK,
+        JwtTestUtils.OrganisationType.SKATT, OptionsTestData.SubordinateEntityTestData.class);
+
+    assertEquals(data.getSubject(), "http://www.swedenconnect.se/op");
+
 
   }
 }

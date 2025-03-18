@@ -28,11 +28,14 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.fixture.JwtTestUtils;
+import se.swedenconnect.oidf.entity.registry.fixture.OptionsTestData;
 import se.swedenconnect.oidf.entity.registry.fixture.TestDataOperations;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Testing the new optional api
@@ -76,14 +79,25 @@ class OptionsApiPolicyControllerIT {
     testDataOperations.createPolicies(JwtTestUtils.OrganisationType.AF);
     testDataOperations.createPolicies(JwtTestUtils.OrganisationType.AF);
 
-    final JsonNode response = testDataOperations.listForFKType(FkKeyType.POLICIES, JwtTestUtils.OrganisationType.SKATT);
-    System.out.println(response);
+    final JsonNode skv = testDataOperations.listForFKType(FkKeyType.POLICIES, JwtTestUtils.OrganisationType.SKATT);
+    assertTrue(skv.size() >= 2, "Expected two policies");
+
 
     final JsonNode af = testDataOperations.listForFKType(FkKeyType.POLICIES, JwtTestUtils.OrganisationType.AF);
-    System.out.println(af);
+    assertTrue(af.size() >= 2, "Expected two policies");
+
 
     final JsonNode pm = testDataOperations.listForFKType(FkKeyType.POLICIES, JwtTestUtils.OrganisationType.PM);
-    System.out.println(pm);
+    assertTrue(pm.size() == 0, "Expected no policies on PM");
+  }
+
+  @Test
+  public void testNullName() throws IOException {
+
+    testDataOperations.createPolicy(UUID.randomUUID(),
+        JwtTestUtils.OrganisationType.SKATT,
+        HttpStatus.BAD_REQUEST,
+        OptionsTestData.PolicyTestData.builder().policy(null).build());
   }
 
 

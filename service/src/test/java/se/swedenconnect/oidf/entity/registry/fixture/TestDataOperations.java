@@ -45,9 +45,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -67,11 +69,31 @@ public class TestDataOperations {
   }
 
   public UUID createPolicies(JwtTestUtils.OrganisationType organisationType) {
-    return create(UUID.randomUUID(), FkKeyType.POLICIES, organisationType, HttpStatus.CREATED, defaultPolicy());
+    return createUpdate(UUID.randomUUID(), FkKeyType.POLICIES, organisationType, HttpStatus.CREATED,
+        OptionsTestData.PolicyTestData.builder().build().testData(),
+        HttpMethod.POST);
   }
 
-  public OptionsRecord get(final FkKeyType configGroup, final UUID id,
-      final HttpStatus httpStatus, final JwtTestUtils.OrganisationType organizationType) {
+  public <R> R get(final FkKeyType configGroup,
+      final UUID id,
+      final HttpStatus httpStatus,
+      final JwtTestUtils.OrganisationType organizationType,
+      Class<R> reply) {
+
+    final OptionsRecord optionsRecord = get(configGroup, id, httpStatus, organizationType);
+    final Map<String, String> data = optionsRecord.getOption()
+        .stream()
+        .collect(Collectors.toMap(
+            Values::getKey,
+            Values::getValue
+        ));
+    return OptionsTestData.instantiateAndFill(reply, data);
+  }
+
+  public OptionsRecord get(final FkKeyType configGroup,
+      final UUID id,
+      final HttpStatus httpStatus,
+      final JwtTestUtils.OrganisationType organizationType) {
 
     final HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
@@ -101,13 +123,14 @@ public class TestDataOperations {
     }
   }
 
-  public OptionsRecord post(
+  public OptionsRecord postPut(
       final TestRestTemplate restTemplate,
       final FkKeyType configGroup,
       final UUID id,
       final HttpStatus httpStatus,
       final JwtTestUtils.OrganisationType organizationType,
-      final OptionsRecord record) {
+      final OptionsRecord record,
+      final HttpMethod httpMethod) {
 
     final HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
@@ -116,9 +139,11 @@ public class TestDataOperations {
     final HttpEntity<OptionsRecord> entity = new HttpEntity<>(record, headers);
 
     final ResponseEntity<String> reply =
-        restTemplate.exchange("/registry/v1/options/%s/%s".formatted(configGroup, id.toString()), HttpMethod.POST,
+        restTemplate.exchange("/registry/v1/options/%s/%s".formatted(configGroup, id.toString()),
+            httpMethod,
             entity,
             String.class);
+
     if (reply.getStatusCode() != httpStatus) {
       log.info(reply.getBody());
     }
@@ -198,7 +223,7 @@ public class TestDataOperations {
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
       final Function<Values, String> options) throws JsonProcessingException {
-    return create(id, FkKeyType.TRUSTMARKISSUER, organisationType, expectedHttpStatus, options);
+    return createUpdate(id, FkKeyType.TRUSTMARKISSUER, organisationType, expectedHttpStatus, options, HttpMethod.POST);
   }
 
   public static Function<Values, String> defaultTrustMarkIssuer(UUID entity_id) {
@@ -209,26 +234,7 @@ public class TestDataOperations {
     };
   }
 
-  public static Function<Values, String> defaultPolicy() {
-    return s -> switch (s.getKey()) {
-      case "name" -> "Default Test Policy";
-      case "policy" -> "{\n"
-          + "    \"openid_provider\": {\n"
-          + "      \"id_token_signing_alg_values_supported\":\n"
-          + "        {\"subset_of\": [\"RS256\", \"RS384\", \"RS512\"]},\n"
-          + "      \"op_policy_uri\": {\n"
-          + "        \"regexp\":\n"
-          + "          \"^https:\\/\\/[\\\\w-]+\\\\.example\\\\.com\\/[\\\\w-]+\\\\.html\"}\n"
-          + "    },\n"
-          + "    \"oauth_client\": {\n"
-          + "      \"grant_types\": {\n"
-          + "        \"one_of\": [\"authorization_code\", \"client_credentials\"]\n"
-          + "      }\n"
-          + "    }\n"
-          + "  }";
-      default -> null;
-    };
-  }
+
 
   public static Function<Values, String> defaultTrustMark(UUID trustMarkIssuerId) {
     return s -> switch (s.getKey()) {
@@ -284,15 +290,15 @@ public class TestDataOperations {
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
       final Function<Values, String> options) {
-    return create(id, FkKeyType.TRUSTMARK, organisationType, expectedHttpStatus, options);
+    return createUpdate(id, FkKeyType.TRUSTMARK, organisationType, expectedHttpStatus, options, HttpMethod.POST);
   }
 
   public UUID createPolicy(
       final UUID id,
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
-      final Function<Values, String> options) {
-    return create(id, FkKeyType.POLICIES, organisationType, expectedHttpStatus, options);
+      final OptionsTestData.PolicyTestData data) {
+    return createUpdate(id, FkKeyType.POLICIES, organisationType, expectedHttpStatus, data.testData(), HttpMethod.POST);
   }
 
   public UUID createHostedEntity(
@@ -300,7 +306,38 @@ public class TestDataOperations {
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
       final Function<Values, String> options) {
-    return create(id, FkKeyType.HOSTED_ENTITY, organisationType, expectedHttpStatus, options);
+    return createUpdate(id,
+        FkKeyType.HOSTED_ENTITY,
+        organisationType,
+        expectedHttpStatus,
+        options,
+        HttpMethod.POST);
+  }
+
+  public UUID createSubordinateEntity(
+      final UUID id,
+      final JwtTestUtils.OrganisationType organisationType,
+      final HttpStatus expectedHttpStatus,
+      final OptionsTestData.SubordinateEntityTestData data) {
+    return createUpdate(id,
+        FkKeyType.SUBORDINATE_ENTITY,
+        organisationType,
+        expectedHttpStatus,
+        data.testData(),
+        HttpMethod.POST);
+  }
+
+  public UUID updateSubordinateEntity(
+      final UUID id,
+      final JwtTestUtils.OrganisationType organisationType,
+      final HttpStatus expectedHttpStatus,
+      final OptionsTestData.SubordinateEntityTestData data) {
+    return createUpdate(id,
+        FkKeyType.SUBORDINATE_ENTITY,
+        organisationType,
+        expectedHttpStatus,
+        data.testData(),
+        HttpMethod.PUT);
   }
 
   public UUID createTrustMarkSubject(
@@ -308,15 +345,17 @@ public class TestDataOperations {
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
       final Function<Values, String> options) {
-    return create(id, FkKeyType.TRUSTMARKSUBJECT, organisationType, expectedHttpStatus, options);
+    return createUpdate(id, FkKeyType.TRUSTMARKSUBJECT, organisationType, expectedHttpStatus, options, HttpMethod.POST);
   }
 
-  protected UUID create(
+  protected UUID createUpdate(
       UUID id,
       final FkKeyType configGroup,
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
-      final Function<Values, String> overrideSettingValues) {
+      final Function<Values, String> overrideSettingValues,
+      final HttpMethod httpMethod) {
+
 
     final OptionsRecord template = get(configGroup, null, HttpStatus.OK, organisationType);
     template.getOption().forEach(valueNode -> {
@@ -326,7 +365,14 @@ public class TestDataOperations {
       }
     });
 
-    post(restTemplate, configGroup, id, expectedHttpStatus, organisationType, template);
+    postPut(restTemplate,
+        configGroup,
+        id,
+        expectedHttpStatus,
+        organisationType,
+        template,
+        httpMethod);
+
     return id;
   }
 
@@ -335,7 +381,7 @@ public class TestDataOperations {
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
       final Function<Values, String> options) {
-    return create(id, FkKeyType.TRUSTANCHOR, organisationType, expectedHttpStatus, options);
+    return createUpdate(id, FkKeyType.TRUSTANCHOR, organisationType, expectedHttpStatus, options, HttpMethod.POST);
   }
 
   public UUID createResolver(
@@ -343,7 +389,7 @@ public class TestDataOperations {
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
       final Function<Values, String> options) {
-    return create(id, FkKeyType.RESOLVER, organisationType, expectedHttpStatus, options);
+    return createUpdate(id, FkKeyType.RESOLVER, organisationType, expectedHttpStatus, options, HttpMethod.POST);
   }
 
   private static void ifThen(ObjectNode valueNode, String key, Supplier<String> value) {
@@ -358,6 +404,11 @@ public class TestDataOperations {
     }
   }
 
+  public static String genJwks() {
+    final JWKSet jwkSet = new JWKSet(List.of(genKey(), genKey()));
+    return jwkSet.toString();
+  }
+
   public static JWK genKey() {
     try {
       final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
@@ -365,15 +416,13 @@ public class TestDataOperations {
 
       final KeyPair keyPair = keyGen.generateKeyPair();
 
-      // Ange ett unikt kid (Key ID)
       return new ECKey.Builder(Curve.P_256, (ECPublicKey) keyPair.getPublic()).privateKey(keyPair.getPrivate())
-          .keyID("ec-key-id") // Ange ett unikt kid (Key ID)
+          .keyID("ec-key-id" + new Random().nextInt(10))
           .build();
     }
     catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
       throw new RuntimeException(e);
     }
-
   }
 
   public JsonNode listAll(final JwtTestUtils.OrganisationType organisationType) throws JsonProcessingException {
@@ -385,13 +434,34 @@ public class TestDataOperations {
     return objectMapper.readTree(response.getBody());
   }
 
-  public JsonNode listForFKType(FkKeyType fkKeyType, final JwtTestUtils.OrganisationType organisationType)
+  public JsonNode listForFKType(FkKeyType fkKeyType, final JwtTestUtils.OrganisationType organizationType)
       throws JsonProcessingException {
-    final ResponseEntity<String> response = this.restTemplate.getForEntity(
-        "/registry/v1/options/list/" + fkKeyType, String.class);
 
-    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    final HttpStatus httpStatus = HttpStatus.OK;
 
-    return objectMapper.readTree(response.getBody());
+    final HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    headers.set("Authorization", "Bearer " + new JwtTestUtils().createJwt(organizationType));
+
+    final HttpEntity<String> entity = new HttpEntity<>(headers);
+    String url = "/registry/v1/options/list/%s".formatted(fkKeyType);
+
+    final ResponseEntity<String> reply = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
+    if (reply.getStatusCode() != httpStatus) {
+      log.info(reply.getBody());
+    }
+    assertThat(reply.getStatusCode()).isEqualTo(httpStatus);
+
+    if (reply.getStatusCode() != HttpStatus.CREATED && reply.getStatusCode() != HttpStatus.OK) {
+      return null;
+    }
+
+    try {
+      return objectMapper.readTree(reply.getBody());
+    }
+    catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
+
   }
 }

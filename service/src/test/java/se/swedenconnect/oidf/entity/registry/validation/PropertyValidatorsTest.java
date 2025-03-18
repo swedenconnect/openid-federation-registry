@@ -20,8 +20,10 @@ import com.nimbusds.jose.jwk.JWKSet;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static se.swedenconnect.oidf.entity.registry.fixture.TestDataOperations.genKey;
 
 public class PropertyValidatorsTest {
@@ -167,6 +169,13 @@ public class PropertyValidatorsTest {
   }
 
   @Test
+  public void testResolveValidator_emptyvalue() {
+    final PropertyValidator result = propertyValidators.resolveValidator("jwks");
+    assertDoesNotThrow(() -> result.validate("key", ""));
+    assertDoesNotThrow(() -> result.validate("key", null));
+  }
+
+  @Test
   public void testResolveValidator_jwksValidator_noKid() {
     String jwkValue =
         "{\"keys\":[{\"kty\":\"RSA\",\"use\":\"sig\",\"n\":\"valid-modulus\",\"e\":\"AQAB\"}]}";
@@ -180,5 +189,24 @@ public class PropertyValidatorsTest {
     final String invalidJwkValue = genKey().toString();
     final PropertyValidator result = propertyValidators.resolveValidator("jwk");
     assertDoesNotThrow(() -> result.validate("key", invalidJwkValue));
+  }
+
+  @Test
+  void isValidatorSupported() {
+    assertTrue(propertyValidators.isValidatorSupported("uuid"));
+    assertTrue(propertyValidators.isValidatorSupported("length"));
+    assertTrue(propertyValidators.isValidatorSupported("json"));
+    assertTrue(propertyValidators.isValidatorSupported("required"));
+    assertTrue(propertyValidators.isValidatorSupported("email"));
+
+    assertTrue(propertyValidators.isValidatorSupported("length:10,20"));
+    assertTrue(propertyValidators.isValidatorSupported("starts_with:prefix"));
+
+    assertFalse(propertyValidators.isValidatorSupported("nonexistent"));
+    assertFalse(propertyValidators.isValidatorSupported("invalid_validator"));
+    assertFalse(propertyValidators.isValidatorSupported(""));
+
+    assertFalse(propertyValidators.isValidatorSupported(null));
+
   }
 }
