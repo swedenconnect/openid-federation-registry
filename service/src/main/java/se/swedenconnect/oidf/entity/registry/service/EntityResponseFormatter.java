@@ -50,8 +50,8 @@ public class EntityResponseFormatter {
     TRUST_MARK("trust_mark", "%s/trust-mark-issuer/trust_mark"),
     RESOLVE("resolve", "%s/trust-anchor/resolve"),
     DISCOVERY("discovery", "%s/trust-anchor/discovery"),
-    FETCH("fetch", "%s/intermediate/fetch"),
-    SUBORDINATE_LISTING("subordinate_listing", "%s/intermediate/subordinate_listing"),
+    FETCH("fetch", "%s/fetch"),
+    SUBORDINATE_LISTING("subordinate_listing", "%s/subordinate_listing"),
     ORGANIZATION_NAME("organization_name", "%s");
 
     final String name;
