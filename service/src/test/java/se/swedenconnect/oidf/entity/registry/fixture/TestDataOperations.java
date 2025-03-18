@@ -44,7 +44,6 @@ import java.security.interfaces.ECPublicKey;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.function.Function;
@@ -276,15 +275,6 @@ public class TestDataOperations {
     };
   }
 
-  public static Function<Values, String> defaultHostedEntity(UUID policyId) {
-    return s -> switch (s.getKey()) {
-      case "subject" -> "http://www.swedenconnect.se/subject";
-      case "issuer" -> "http://www.swedenconnect.se/issuer";
-      case "policy_id" -> Optional.ofNullable(policyId).map(UUID::toString).orElse("");
-      default -> null;
-    };
-  }
-
   public UUID createTrustMark(
       final UUID id,
       final JwtTestUtils.OrganisationType organisationType,
@@ -305,13 +295,28 @@ public class TestDataOperations {
       final UUID id,
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
-      final Function<Values, String> options) {
+      final OptionsTestData.HostedEntityTestData hostedEntityTestData
+  ) {
     return createUpdate(id,
         FkKeyType.HOSTED_ENTITY,
         organisationType,
         expectedHttpStatus,
-        options,
+        hostedEntityTestData.testData(),
         HttpMethod.POST);
+  }
+
+  public UUID updateHostedEntity(
+      final UUID id,
+      final JwtTestUtils.OrganisationType organisationType,
+      final HttpStatus expectedHttpStatus,
+      final OptionsTestData.HostedEntityTestData hostedEntityTestData
+  ) {
+    return createUpdate(id,
+        FkKeyType.HOSTED_ENTITY,
+        organisationType,
+        expectedHttpStatus,
+        hostedEntityTestData.testData(),
+        HttpMethod.PUT);
   }
 
   public UUID createSubordinateEntity(

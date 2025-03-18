@@ -40,6 +40,7 @@ import se.swedenconnect.oidf.entity.registry.federationserviceapi.TrustMarkIssue
 import se.swedenconnect.oidf.entity.registry.federationserviceapi.records.EntityRecord;
 import se.swedenconnect.oidf.entity.registry.fixture.FederationAPIOperations;
 import se.swedenconnect.oidf.entity.registry.fixture.JwtTestUtils;
+import se.swedenconnect.oidf.entity.registry.fixture.OptionsTestData;
 import se.swedenconnect.oidf.entity.registry.fixture.TestDataOperations;
 
 import java.text.ParseException;
@@ -103,12 +104,14 @@ class FederationServiceApiControllerIT {
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
         org,
         HttpStatus.CREATED,
-        TestDataOperations.defaultHostedEntity(policyId));
+        OptionsTestData.HostedEntityTestData.builder().policyId(policyId)
+            .build());
 
     final UUID entityId2 = testDataOperations.createHostedEntity(UUID.randomUUID(),
         org,
         HttpStatus.CREATED,
-        TestDataOperations.defaultHostedEntity(null));
+        OptionsTestData.HostedEntityTestData.builder()
+            .build());
 
     final UUID tmiId1 = testDataOperations.createTMI(UUID.randomUUID(),
         org,
