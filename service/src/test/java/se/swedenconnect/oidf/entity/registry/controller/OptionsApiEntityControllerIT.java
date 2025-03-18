@@ -85,7 +85,8 @@ class OptionsApiEntityControllerIT {
 
   @Test
   public void testCRUDSubordinateEntity() throws IOException {
-
+    OptionsTestData.SubordinateEntityTestData.builder()
+        .build();
     final UUID id_skatt = testDataOperations.createSubordinateEntity(
         UUID.randomUUID(),
         JwtTestUtils.OrganisationType.SKATT,

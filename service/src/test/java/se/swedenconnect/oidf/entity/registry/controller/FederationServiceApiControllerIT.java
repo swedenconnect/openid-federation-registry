@@ -139,6 +139,13 @@ class FederationServiceApiControllerIT {
         HttpStatus.CREATED,
         TestDataOperations.defaultTrustMarkSubject(trustmarkId));
 
+    testDataOperations.createSubordinateEntity(UUID.randomUUID(),
+        org,
+        HttpStatus.CREATED,
+        OptionsTestData.SubordinateEntityTestData.builder()
+            .build());
+
+
     return registryProperties.instances().stream().findFirst()
         .map(instanceProperties -> instanceProperties.instanceId().toString())
         .map(UUID::fromString).orElseThrow();

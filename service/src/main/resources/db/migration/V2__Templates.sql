@@ -399,10 +399,10 @@ INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_valu
 VALUES ('TEMPLATE',
         'SUBORDINATE_ENTITY',
         'jwks',
-        'Issuer entityid',
-        'LARGETEXT',
+        'Public keys in JWKS format',
+        'JSON',
         '',
-        'jwks',
+        'required | jwks',
         'Flyway',
         'Flyway');
 

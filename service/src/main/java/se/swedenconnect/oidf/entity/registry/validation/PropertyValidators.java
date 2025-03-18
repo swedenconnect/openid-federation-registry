@@ -497,7 +497,7 @@ public class PropertyValidators {
 
           }
           catch (final ParseException e) {
-            throw new PropertyValidationFailException(key,value, "Unable to parse key element");
+            throw new PropertyValidationFailException(key, value, "Unable to parse key element. " + e.getMessage());
           }
 
         });
