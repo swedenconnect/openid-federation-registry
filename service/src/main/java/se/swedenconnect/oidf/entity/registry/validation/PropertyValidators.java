@@ -44,6 +44,46 @@ import java.util.regex.PatternSyntaxException;
 @Slf4j
 public class PropertyValidators {
 
+  /**
+   * This enumeration defines various types of validation rules that can be applied to data properties. Each constant
+   * represents a specific validation method or criteria used to ensure the integrity and correctness of data values.
+   *
+   * The validation types include: - UUID: Ensures the value is a valid UUID. - LENGTH: Validates the length of a value.
+   * - JSON: Validates if the value is a valid JSON structure. - JWKS: Ensures the value corresponds to a JSON Web Key
+   * Set. - JWK: Validates a single JSON Web Key. - ENDS_WITH: Checks if the value ends with a specific string. -
+   * STARTS_WITH: Checks if the value starts with a specific string. - CONTAINS: Checks if the value contains a specific
+   * substring. - DATE: Validates if the value is a valid date. - BETWEEN: Ensures the value is within a specific range.
+   * - URL: Ensures the value is a valid URL. - JWT: Validates if the value is a valid JSON Web Token. - MATCHES:
+   * Validates if the value matches a specified pattern. - DURATION: Ensures the value represents a valid duration. -
+   * REQUIRED: Marks the value as required (non-null or non-empty). - EMAIL: Validates if the value is a valid email
+   * address. - ALPHA: Ensures the value consists of alphabetic characters only. - ALPHANUMERIC: Validates if the value
+   * contains only alphanumeric characters. - NUMBER: Ensures the value is numeric. - MIN: Checks if the value is
+   * greater than or equal to a minimum value. - MAX: Checks if the value is less than or equal to a maximum value.
+   */
+  public enum ValidationType {
+    UUID,
+    LENGTH,
+    JSON,
+    JWKS,
+    JWK,
+    ENDS_WITH,
+    STARTS_WITH,
+    CONTAINS,
+    DATE,
+    BETWEEN,
+    URL,
+    JWT,
+    MATCHES,
+    DURATION,
+    REQUIRED,
+    EMAIL,
+    ALPHA,
+    ALPHANUMERIC,
+    NUMBER,
+    MIN,
+    MAX
+  }
+
   public static final ObjectMapper mapper = new ObjectMapper();
 
   /**
@@ -74,6 +114,29 @@ public class PropertyValidators {
   }
 
   /**
+   * Determines if the specified validator is supported by checking if the provided validator name matches a value
+   * in the {@code ValidationType} enumeration.
+   *
+   * @param validatorNameSetting the name of the validator to check
+   * @return {@code true} if the validator is supported, {@code false} otherwise
+   */
+  public boolean isValidatorSupported(final String validatorNameSetting) {
+    if (validatorNameSetting == null || validatorNameSetting.isBlank()) {
+      return false;
+    }
+
+    try {
+      final String[] split = validatorNameSetting.trim().toLowerCase().split(":");
+      final String name = split[0];
+      ValidationType.valueOf(name.toUpperCase());
+    }
+    catch (final IllegalArgumentException e) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
    * Creates and returns a PropertyValidator based on the provided validator name and configuration. The
    * validatorNameSetting parameter specifies the type of validator and its configuration, typically in the format
    * "validatorName:configuration".
@@ -88,54 +151,62 @@ public class PropertyValidators {
     final String name = split[0];
     final String conf = split.length > 1 ? split[1] : "";
 
-    return switch (name) {
+    final ValidationType validationType;
+    try {
+      validationType = ValidationType.valueOf(name.toUpperCase());
+    }
+    catch (final IllegalArgumentException e) {
+      throw new IllegalArgumentException("Unknown validator: " + name, e);
+    }
 
-      case "uuid" -> this.isUUID();
-      case "length" -> this.hasLength(conf);
-      case "json" -> this.isJson();
-      case "jwks" -> this.jwksValidator(conf);
-      case "jwk" -> this.isJWK();
-      case "ends_with" -> this.validateEndsWith(conf);
-      case "starts_with" -> this.validateStartsWith(conf);
-      case "contains" -> this.validateContains(conf);
-      case "date" -> this.validateDate();
-      case "between" -> this.validateBetween(conf);
-      case "url" -> this.validateUrl();
-      case "jwt" -> this.isJWT();
-      case "matches" -> this.validateMatches(conf);
-      case "duration" -> this.validateDuration();
+    return switch (validationType) {
 
-      case "required" -> (key, value) ->
+      case UUID -> this.isUUID();
+      case LENGTH -> this.hasLength(conf);
+      case JSON -> this.isJson();
+      case JWKS -> this.jwksValidator(conf);
+      case JWK -> this.isJWK();
+      case ENDS_WITH -> this.validateEndsWith(conf);
+      case STARTS_WITH -> this.validateStartsWith(conf);
+      case CONTAINS -> this.validateContains(conf);
+      case DATE -> this.validateDate();
+      case BETWEEN -> this.validateBetween(conf);
+      case URL -> this.validateUrl();
+      case JWT -> this.isJWT();
+      case MATCHES -> this.validateMatches(conf);
+      case DURATION -> this.validateDuration();
+
+      case REQUIRED -> (key, value) ->
           this.throwIf(() -> value == null || value.isBlank(),
               key, "Field is required");
 
-      case "email" -> (key, value) ->
+      case EMAIL -> (key, value) ->
           this.throwIf(() -> !value.isBlank() &&
                   !value.matches("^[A-Za-z0-9+_.-]+@(.+)$"),
               key, "Invalid email format");
 
-      case "alpha" -> (key, value) ->
+      case ALPHA -> (key, value) ->
           this.throwIf(() -> !value.isBlank() &&
                   !value.matches("^[A-Za-z]+$"),
               key, "Must contain only letters");
 
-      case "alphanumeric" -> (key, value) ->
+      case ALPHANUMERIC -> (key, value) ->
           this.throwIf(() -> !value.isBlank() &&
                   !value.matches("^[A-Za-z0-9]+$"),
               key, "Must contain only letters and numbers");
 
-      case "number" -> (key, value) ->
+      case NUMBER -> (key, value) ->
           this.throwIf(() -> !value.isBlank() &&
                   !value.matches("^-?\\d*\\.?\\d+$"),
               key, "Must be a number");
 
-      case "min" -> (String key, String value) -> this.throwIf(() ->
+      case MIN -> (String key, String value) -> this.throwIf(() ->
               !value.isBlank() && Double.parseDouble(value) < Double.parseDouble(conf),
-          key, "Value has to be grater then %s".formatted(conf));
+          key, "Value has to be greater than %s".formatted(conf));
 
-      case "max" -> (String key, String value) -> this.throwIf(() ->
+      case MAX -> (String key, String value) -> this.throwIf(() ->
               !value.isBlank() && Double.parseDouble(value) > Double.parseDouble(conf),
-          key, "Value has to be less then %s".formatted(conf));
+          key, "Value has to be less than %s".formatted(conf));
 
       default -> throw new IllegalArgumentException("Unknown validator: " + name);
     };
@@ -150,7 +221,7 @@ public class PropertyValidators {
         java.time.Duration.parse(value); // Parses ISO-8601 duration format
       }
       catch (final Exception ex) {
-        throw new PropertyValidationFailException(key, "Invalid duration format. "
+        throw new PropertyValidationFailException(key,value, "Invalid duration format. "
             + "Expected ISO-8601 duration (e.g., PT1H30M). Error: " + ex.getMessage());
       }
     };
@@ -195,7 +266,7 @@ public class PropertyValidators {
         java.time.LocalDate.parse(value);
       }
       catch (final Exception e) {
-        throw new PropertyValidationFailException(key, "Invalid date format. Use YYYY-MM-DD");
+        throw new PropertyValidationFailException(key,value, "Invalid date format. Use YYYY-MM-DD");
       }
     };
   }
@@ -283,11 +354,11 @@ public class PropertyValidators {
 
       final int length = value.length();
       if (length < minLength) {
-        throw new PropertyValidationFailException(key,
+        throw new PropertyValidationFailException(key,value,
             "Value has to be at least %d characters long".formatted(minLength));
       }
       if (length > maxLength) {
-        throw new PropertyValidationFailException(key,
+        throw new PropertyValidationFailException(key,value,
             "Value cannot be longer than %d characters".formatted(maxLength));
       }
     };
@@ -339,7 +410,7 @@ public class PropertyValidators {
         new URI(value).toURL();
       }
       catch (final Exception e) {
-        throw new PropertyValidationFailException(key, "Value is not a valid URL: " + e.getMessage());
+        throw new PropertyValidationFailException(key,value, "Value is not a valid URL: " + e.getMessage());
       }
     };
   }
@@ -353,7 +424,7 @@ public class PropertyValidators {
         mapper.readValue(value, new TypeReference<Map<String, Object>>() {});
       }
       catch (final Exception e) {
-        throw new PropertyValidationFailException(key, "Value is not a valid JSON: " + e.getMessage());
+        throw new PropertyValidationFailException(key,value, "Value is not a valid JSON: " + e.getMessage());
       }
     };
   }
@@ -367,7 +438,7 @@ public class PropertyValidators {
         JWK.parse(value);
       }
       catch (final ParseException e) {
-        throw new PropertyValidationFailException(key, "Value is not a valid JWK: " + e.getMessage());
+        throw new PropertyValidationFailException(key,value, "Value is not a valid JWK: " + e.getMessage());
       }
     };
   }
@@ -381,7 +452,7 @@ public class PropertyValidators {
         SignedJWT.parse(value);
       }
       catch (final ParseException e) {
-        throw new PropertyValidationFailException(key, "Value is not a valid JWT: " + e.getMessage());
+        throw new PropertyValidationFailException(key,value, "Value is not a valid JWT: " + e.getMessage());
       }
     };
   }
@@ -394,21 +465,24 @@ public class PropertyValidators {
 
     return (key, value) -> {
       try {
+        if(value == null || value.isBlank()) {
+          return;
+        }
         final JsonNode node = mapper.readTree(value);
-
         final JsonNode keys = node.get("keys");
-        if (!keys.isArray()) {
-          throw new PropertyValidationFailException(key, "keys element is expected to be an array");
+
+        if (hasKeysCheck && (keys==null || !keys.elements().hasNext())) {
+          throw new PropertyValidationFailException(key, value, "keys element is expected");
         }
 
-        if (hasKeysCheck && !keys.elements().hasNext()) {
-          throw new PropertyValidationFailException(key, "keys element is expected");
+        if (!keys.isArray()) {
+          throw new PropertyValidationFailException(key,value, "keys element is expected to be an array");
         }
 
         keys.elements().forEachRemaining(keyNode -> {
 
           if (hasKidCheck && !keyNode.hasNonNull("kid")) {
-            throw new PropertyValidationFailException(key, "No kid defined in key element. This is required.");
+            throw new PropertyValidationFailException(key,value, "No kid defined in key element. This is required.");
           }
 
           if (!isPublicCheck) {
@@ -418,18 +492,18 @@ public class PropertyValidators {
           try {
             final JWK jwk = JWK.parse(keyNode.toString());
             if (jwk.isPrivate()) {
-              throw new PropertyValidationFailException(key, "Keys are expected to be public. But is private. ");
+              throw new PropertyValidationFailException(key, value, "Keys are expected to be public. But is private. ");
             }
 
           }
           catch (final ParseException e) {
-            throw new PropertyValidationFailException(key, "Unable to parse key element");
+            throw new PropertyValidationFailException(key,value, "Unable to parse key element");
           }
 
         });
       }
       catch (final JsonProcessingException e) {
-        throw new PropertyValidationFailException(key, "Value is not a valid JSON. " + e.getMessage());
+        throw new PropertyValidationFailException(key,value, "Value is not a valid JSON. " + e.getMessage());
       }
 
     };

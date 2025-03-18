@@ -93,6 +93,9 @@ public class SettingsEntity extends BaseEntity {
    * @throws IllegalStateException if the `valueDataType` contains an unexpected or unsupported value.
    */
   public Object castValue() {
+    org.springframework.util.Assert.notNull(this.valueDataType,
+        "`valueDataType` cannot be null for setting: %s:%s".formatted(this.fkType, this.key));
+
     return switch (SettingDataType.valueOf(this.valueDataType)) {
       case TEXT, LARGETEXT, OPTIONS -> this.value;
       case JSON -> this.toJsonObject(this.value);

@@ -35,7 +35,6 @@ import java.util.UUID;
 public class OrganizationService {
   final OrganizationRepository organizationRepository;
   final InstanceRepository instanceRepository;
-
   /**
    * Constructs an instance of OrganizationService, initializing the organization and instance repositories required for
    * operations related to organizations and their instances in the registry service.
@@ -64,7 +63,8 @@ public class OrganizationService {
 
       final InstanceEntity instanceEntity = this.instanceRepository.findByUseForDefaultAssignment(true)
           .orElseThrow(() ->
-              new RuntimeException("There is no default assignment instance configured"));
+              new IllegalArgumentException("There is no default assignment instance configured. "
+                  + "Review the configuration"));
 
       final OrganizationEntity org = new OrganizationEntity();
       org.setOrganizationId(UUID.randomUUID());
