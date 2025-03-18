@@ -159,7 +159,7 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
                   return SettingsEntity.builder()
                       .key(dataValue.getKey())
                       .value(dataValue.getValue())
-                      .valueDataType(dataValue.getValueType())
+                      .valueDataType(templateValue.getValueDataType())
                       .build();
                 })
                 .findFirst()

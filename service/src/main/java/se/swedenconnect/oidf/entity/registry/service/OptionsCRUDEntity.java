@@ -141,7 +141,7 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
 
     final OptionsRecord updatedRecord = this.toRecord(validatedInData);
     this.addOptionsForPolicyId(Objects.requireNonNull(updatedRecord.getOption()));
-    return record;
+    return updatedRecord;
   }
 
   @Override
