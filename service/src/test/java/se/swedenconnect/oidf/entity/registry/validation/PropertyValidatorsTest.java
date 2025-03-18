@@ -156,6 +156,15 @@ public class PropertyValidatorsTest {
   }
 
   @Test
+  public void testResolveValidator_jwksValidator() {
+    final String jwks =
+        "{\"keys\": [{\"kty\": \"EC\",\"x5t#S256\": \"Ww-i1TD0345YYbP-kLa7fQW5A-3VuiQBm8z_rl7RbVk\",\"crv\": \"P-256\",\"kid\": \"SKv8j4XjvowMoTsY67ch6GMSL5vPqsGc5Nsk_NL-wTk\",\"x\": \"i8zRvt76etocbhjQLibFHItxgYVC1hwR10fAEzqPVJw\",\"y\": \"_RNoMz5MKfgomuOgOm53-UJkqXaIw8c1ojb1bQBFaFs\"}]}";
+
+    final PropertyValidator result = propertyValidators.resolveValidator("jwks");
+    assertDoesNotThrow(() -> result.validate("key", jwks));
+  }
+
+  @Test
   public void testResolveValidator_jwksValidator_PrivateAndPublicKeys() {
 
     final JWKSet set = new JWKSet(genKey());
