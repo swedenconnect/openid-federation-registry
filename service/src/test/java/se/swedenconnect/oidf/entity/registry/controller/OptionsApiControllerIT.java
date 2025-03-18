@@ -30,6 +30,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.fixture.JwtTestUtils;
+import se.swedenconnect.oidf.entity.registry.fixture.OptionsTestData;
 import se.swedenconnect.oidf.entity.registry.fixture.TestDataOperations;
 
 import java.io.IOException;
@@ -69,7 +70,8 @@ class OptionsApiControllerIT {
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.PM,
         HttpStatus.CREATED,
-        TestDataOperations.defaultHostedEntity(null));
+        OptionsTestData.HostedEntityTestData.builder()
+            .build());
 
     final UUID tmiId1 = testDataOperations.createTMI(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.PM,

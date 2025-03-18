@@ -30,6 +30,7 @@ import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.entity.registry.fixture.JwtTestUtils;
+import se.swedenconnect.oidf.entity.registry.fixture.OptionsTestData;
 import se.swedenconnect.oidf.entity.registry.fixture.TestDataOperations;
 
 import java.util.List;
@@ -63,7 +64,8 @@ public class AuditEventIT {
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.SKATT,
         HttpStatus.CREATED,
-        TestDataOperations.defaultHostedEntity(null));
+        OptionsTestData.HostedEntityTestData.builder()
+            .build());
 
     final UUID tmiId1 = testDataOperations.createTMI(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.SKATT,

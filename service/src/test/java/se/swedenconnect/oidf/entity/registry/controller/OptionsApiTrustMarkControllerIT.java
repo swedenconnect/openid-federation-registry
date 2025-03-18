@@ -27,6 +27,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.fixture.JwtTestUtils;
+import se.swedenconnect.oidf.entity.registry.fixture.OptionsTestData;
 import se.swedenconnect.oidf.entity.registry.fixture.TestDataOperations;
 import se.swedenconnect.oidf.registry.api.model.OptionRecord;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
@@ -60,7 +61,8 @@ class OptionsApiTrustMarkControllerIT {
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.SKATT,
         HttpStatus.CREATED,
-        TestDataOperations.defaultHostedEntity(null));
+        OptionsTestData.HostedEntityTestData.builder()
+            .build());
 
     final UUID tmiId1 = testDataOperations.createTMI(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.SKATT,
@@ -70,7 +72,8 @@ class OptionsApiTrustMarkControllerIT {
     final UUID entityId2 = testDataOperations.createHostedEntity(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.AF,
         HttpStatus.CREATED,
-        TestDataOperations.defaultHostedEntity(null));
+        OptionsTestData.HostedEntityTestData.builder()
+            .build());
 
     final UUID tmiId2 = testDataOperations.createTMI(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.AF,
@@ -100,7 +103,8 @@ class OptionsApiTrustMarkControllerIT {
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.SKATT,
         HttpStatus.CREATED,
-        TestDataOperations.defaultHostedEntity(null));
+        OptionsTestData.HostedEntityTestData.builder()
+            .build());
 
     final UUID tmiId1 = testDataOperations.createTMI(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.SKATT,
@@ -110,7 +114,8 @@ class OptionsApiTrustMarkControllerIT {
     final UUID entityId2 = testDataOperations.createHostedEntity(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.AF,
         HttpStatus.CREATED,
-        TestDataOperations.defaultHostedEntity(null));
+        OptionsTestData.HostedEntityTestData.builder()
+            .build());
 
     final UUID tmiId2 = testDataOperations.createTMI(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.AF,
@@ -172,7 +177,8 @@ class OptionsApiTrustMarkControllerIT {
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.SKATT,
         HttpStatus.CREATED,
-        TestDataOperations.defaultHostedEntity(null));
+        OptionsTestData.HostedEntityTestData.builder()
+            .build());
 
     final UUID tmiId1 = testDataOperations.createTMI(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.SKATT,
@@ -182,7 +188,8 @@ class OptionsApiTrustMarkControllerIT {
     final UUID entityId2 = testDataOperations.createHostedEntity(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.AF,
         HttpStatus.CREATED,
-        TestDataOperations.defaultHostedEntity(null));
+        OptionsTestData.HostedEntityTestData.builder()
+            .build());
 
     final UUID tmiId2 = testDataOperations.createTMI(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.AF,
@@ -232,7 +239,8 @@ class OptionsApiTrustMarkControllerIT {
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.SKATT,
         HttpStatus.CREATED,
-        TestDataOperations.defaultHostedEntity(null));
+        OptionsTestData.HostedEntityTestData.builder()
+            .build());
 
     final UUID tmiId = testDataOperations.createTMI(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.SKATT,

@@ -52,6 +52,19 @@ public class OptionsTestData {
   @NoArgsConstructor
   @AllArgsConstructor
   @Getter
+  public static class HostedEntityTestData extends OptionsTestDataProvider {
+    @Builder.Default
+    UUID policyId = null;
+    @Builder.Default
+    String subject = "http://www.swedenconnect.se/subject";
+    @Builder.Default
+    String issuer = "http://www.swedenconnect.se/issuer";
+  }
+
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @Getter
   public static class SubordinateEntityTestData extends OptionsTestDataProvider {
     @Builder.Default
     UUID policyId = null;

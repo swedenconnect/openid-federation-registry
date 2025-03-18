@@ -59,7 +59,27 @@ class OptionsApiEntityControllerIT {
         UUID.randomUUID(),
         JwtTestUtils.OrganisationType.SKATT,
         HttpStatus.CREATED,
-        TestDataOperations.defaultHostedEntity(null));
+        OptionsTestData.HostedEntityTestData.builder()
+            .build());
+
+    testDataOperations.updateHostedEntity(
+        id_skatt,
+        JwtTestUtils.OrganisationType.SKATT,
+        HttpStatus.CREATED,
+        OptionsTestData.HostedEntityTestData.builder()
+            .subject("http://www.swedenconnect.se/op")
+            .build());
+
+    OptionsTestData.SubordinateEntityTestData data = testDataOperations.get(FkKeyType.HOSTED_ENTITY,
+        id_skatt,
+        HttpStatus.OK,
+        JwtTestUtils.OrganisationType.SKATT,
+        OptionsTestData.SubordinateEntityTestData.class);
+
+    assertEquals(data.getSubject(), "http://www.swedenconnect.se/op");
+
+    testDataOperations.delete(FkKeyType.HOSTED_ENTITY, id_skatt, HttpStatus.OK,
+        JwtTestUtils.OrganisationType.SKATT);
 
   }
 
@@ -87,6 +107,8 @@ class OptionsApiEntityControllerIT {
 
     assertEquals(data.getSubject(), "http://www.swedenconnect.se/op");
 
+    testDataOperations.delete(FkKeyType.SUBORDINATE_ENTITY, id_skatt, HttpStatus.OK,
+        JwtTestUtils.OrganisationType.SKATT);
 
   }
 }
