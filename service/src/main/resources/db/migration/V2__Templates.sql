@@ -72,6 +72,18 @@ where (data_key = 'active'
     or data_key = 'entity_id')
   and fk_type = 'TRUSTMARKISSUER';
 
+INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
+                     last_modified_by)
+VALUES ('TEMPLATE',
+        'TRUSTANCHOR',
+        'trust_mark_issuer',
+        'Trust Mark Issuer',
+        'JSON',
+        '',
+        'json',
+        'Flyway',
+        'Flyway');
+
 -- INTERMEDIATE
 INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
                      last_modified_by)

@@ -134,6 +134,7 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
     final List<SettingsEntity> validatedInData = this.createAndValidateInputData(template, record.getOption());
     this.loadPolicyIfExist(validatedInData).ifPresent(entity::setPolicyEntity);
 
+    this.ruleIfHostedEntityAndModulesTaOrImExistIssuerAndSubjectHasToBeTheSameOrThrow(entity, validatedInData);
     super.deleteSettings(fkKeyType, entity.getEntityId().toString());
     super.insertSettings(fkKeyType, entity.getEntityId().toString(), validatedInData);
 
@@ -161,6 +162,38 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
     final OptionsRecord record = this.toRecord(mergeValues);
     this.addOptionsForPolicyId(Objects.requireNonNull(record.getOption()));
     return record;
+  }
+
+  private void ruleIfHostedEntityAndModulesTaOrImExistIssuerAndSubjectHasToBeTheSameOrThrow(
+      final EntityEntity entityEntity, final List<SettingsEntity> settingsEntityList) {
+
+    if (entityEntity.getEntityType() != EntityKeyType.HOSTED_ENTITY) {
+      return;
+    }
+
+    entityEntity.getModules()
+        .stream()
+        .filter(moduleEntity -> moduleEntity.isOfType(FkKeyType.TRUSTANCHOR, FkKeyType.INTERMEDIATE))
+        .forEach(moduleEntity -> {
+          final String issuer = settingsEntityList.stream()
+              .filter(settingsEntity -> settingsEntity.getKey().equals("issuer"))
+              .findFirst()
+              .orElseThrow()
+              .getValue();
+
+          final String subject = settingsEntityList.stream()
+              .filter(settingsEntity -> settingsEntity.getKey().equals("subject"))
+              .findFirst()
+              .orElseThrow()
+              .getValue();
+
+          if (!issuer.equalsIgnoreCase(subject)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                ("Issuer and subject must be the same on the entity:%s that this module will "
+                    + "be mounted to. Issuer: %s, Subject: %s").formatted(entityEntity.getEntityId(), issuer, subject));
+          }
+
+        });
   }
 
   @Override

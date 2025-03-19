@@ -256,15 +256,6 @@ public class TestDataOperations {
     };
   }
 
-  public static Function<Values, String> defaultTrustAnchor(final UUID entity_id) {
-    return s -> switch (s.getKey()) {
-      case "active" -> "true";
-      case "entity_id" -> entity_id.toString();
-
-      default -> null;
-    };
-  }
-
   public static Function<Values, String> defaultResolver(final UUID entity_id) {
     return s -> switch (s.getKey()) {
       case "active" -> "true";
@@ -385,8 +376,13 @@ public class TestDataOperations {
       final UUID id,
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
-      final Function<Values, String> options) {
-    return createUpdate(id, FkKeyType.TRUSTANCHOR, organisationType, expectedHttpStatus, options, HttpMethod.POST);
+      final OptionsTestData.TrustAnchorTestData trustAnchorTestData) {
+
+    return createUpdate(id, FkKeyType.TRUSTANCHOR,
+        organisationType,
+        expectedHttpStatus,
+        trustAnchorTestData.testData(),
+        HttpMethod.POST);
   }
 
   public UUID createResolver(

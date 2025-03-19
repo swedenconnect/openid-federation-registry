@@ -56,7 +56,7 @@ public class EntityEntity extends BaseEntity {
   @OneToMany(mappedBy = "entity")
   private List<ModuleEntity> modules;
 
-  @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  @OneToMany(cascade = CascadeType.DETACH, fetch = FetchType.LAZY)
   @JoinColumns({
       @JoinColumn(name = "fk_type", referencedColumnName = "entity_type", insertable = false, updatable = false),
       @JoinColumn(name = "fk_id", referencedColumnName = "entity_id", insertable = false, updatable = false)
