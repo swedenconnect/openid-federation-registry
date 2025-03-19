@@ -34,10 +34,12 @@ import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.Values;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * OptionsCRUDHostedEntity is a service class that extends OptionsCRUDAdapter to provide CRUD (Create, Read, Update,
@@ -165,7 +167,8 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
   }
 
   private void ruleIfHostedEntityAndModulesTaOrImExistIssuerAndSubjectHasToBeTheSameOrThrow(
-      final EntityEntity entityEntity, final List<SettingsEntity> settingsEntityList) {
+      final EntityEntity entityEntity,
+      final List<SettingsEntity> settingsEntityList) {
 
     if (entityEntity.getEntityType() != EntityKeyType.HOSTED_ENTITY) {
       return;
@@ -206,6 +209,25 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
 
     this.entityRepository.delete(entity);
     return this.toRecord(entity.getSettingsEntityList());
+  }
+
+  @Override
+  public List<Map<String, Object>> list(final FkKeyType fkKeyType) {
+    return this.entityRepository.findAll()
+        .stream()
+        .filter(super.hasRightOrganizationIdEntityPredicate())
+        .map(entity -> {
+              final Map<String, Object> e = super.getSettingsEntities(fkKeyType, entity.getEntityId())
+                  .stream()
+                  .collect(Collectors.toMap(
+                      SettingsEntity::getKey,
+                      SettingsEntity::castValue
+                  ));
+              e.put("id", entity.getEntityId().toString());
+              return e;
+            }
+        )
+        .toList();
   }
 
   protected Optional<PolicyEntity> loadPolicyIfExist(final List<SettingsEntity> dataValues)

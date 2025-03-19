@@ -16,7 +16,6 @@
 package se.swedenconnect.oidf.entity.registry.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.stream.Streams;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -42,7 +41,6 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static se.swedenconnect.oidf.entity.registry.entity.FkKeyType.TRUSTMARK;
-import static se.swedenconnect.oidf.entity.registry.entity.FkKeyType.TRUSTMARKSUBJECT;
 
 /**
  * OptionsCRUDTrustMark is a service that extends the OptionsCRUDAdapter to perform Create, Read, Update, and Delete
@@ -220,47 +218,6 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
         .toList();
   }
 
-  /**
-   * Retrieves a list of trustmark entities and their associated settings based on a module ID. Can optionally include
-   * related trustmark subjects.
-   *
-   * @param moduleId the unique identifier of the module for which trustmark entities are to be retrieved
-   * @param includeSubjects a boolean flag indicating whether associated trustmark subjects should be included
-   * @return a list of maps where each map contains trustmark data and optionally associated subject data
-   */
-  public List<Map<String, Object>> listByModuleId(final UUID moduleId, final boolean includeSubjects) {
-    return this.moduleRepository.findByModuleIdAndModuleType(moduleId, FkKeyType.TRUSTMARKISSUER.name())
-        .stream()
-        .filter(this.hasRightOrganizationIdModulePredicate())
-        .flatMap(moduleEntity -> Streams.of(moduleEntity.getTrustmarks()))
-        .map(trustMarkEntity -> {
-          final UUID trustmarkid = trustMarkEntity.getTrustmarkId();
-          final Map<String, Object> e =
-              super.getSettingsEntities(TRUSTMARK, trustmarkid)
-                  .stream()
-                  .collect(Collectors.toMap(
-                      SettingsEntity::getKey,
-                      SettingsEntity::castValue
-                  ));
-          e.put("id", trustmarkid);
-          if (includeSubjects) {
-            e.put("trust-mark-subjects",
-                trustMarkEntity.getTrustmarksubjects()
-                    .stream()
-                    .map(trustMarkSubjectEntity ->
-                        super.getSettingsEntities(TRUSTMARKSUBJECT, trustMarkSubjectEntity.getTrustmarksubjectId())
-                            .stream()
-                            .collect(Collectors.toMap(
-                                SettingsEntity::getKey,
-                                SettingsEntity::castValue
-                            )))
-                    .toList());
-          }
-              return e;
-            }
-        )
-        .toList();
-  }
 
 }
 
