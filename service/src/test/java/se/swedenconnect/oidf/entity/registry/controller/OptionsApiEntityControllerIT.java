@@ -31,6 +31,7 @@ import se.swedenconnect.oidf.entity.registry.fixture.OptionsTestData;
 import se.swedenconnect.oidf.entity.registry.fixture.TestDataOperations;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -84,8 +85,43 @@ class OptionsApiEntityControllerIT {
   }
 
   @Test
+  public void testList() throws IOException {
+    final JwtTestUtils.OrganisationType org = JwtTestUtils.OrganisationType.SKATT;
+
+    testDataOperations.createHostedEntity(
+        UUID.randomUUID(),
+        org,
+        HttpStatus.CREATED,
+        OptionsTestData.HostedEntityTestData.builder()
+            .build());
+
+    testDataOperations.createHostedEntity(
+        UUID.randomUUID(),
+        org,
+        HttpStatus.CREATED,
+        OptionsTestData.HostedEntityTestData.builder()
+            .build());
+
+    testDataOperations.createHostedEntity(
+        UUID.randomUUID(),
+        JwtTestUtils.OrganisationType.PM,
+        HttpStatus.CREATED,
+        OptionsTestData.HostedEntityTestData.builder()
+            .build());
+
+    final List<OptionsTestData.HostedEntityTestData> response =
+        testDataOperations.listForFKType(FkKeyType.HOSTED_ENTITY,
+            org,
+            OptionsTestData.HostedEntityTestData.class);
+
+    assertEquals(2, response.size());
+
+
+  }
+
+  @Test
   public void testHostedEntityWithDifferentIssuerAndSubject() throws IOException {
-    JwtTestUtils.OrganisationType org = JwtTestUtils.OrganisationType.SKATT;
+    final JwtTestUtils.OrganisationType org = JwtTestUtils.OrganisationType.SKATT;
     final UUID id_skatt = testDataOperations.createHostedEntity(
         UUID.randomUUID(),
         org,
@@ -128,7 +164,7 @@ class OptionsApiEntityControllerIT {
   }
 
   @Test
-  public void testCRUDSubordinateEntity() throws IOException {
+  public void testCRUDSubordinateEntity() {
     OptionsTestData.SubordinateEntityTestData.builder()
         .build();
     final UUID id_skatt = testDataOperations.createSubordinateEntity(

@@ -24,6 +24,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import se.swedenconnect.oidf.registry.api.model.Values;
 
 import java.lang.reflect.Field;
@@ -52,6 +53,7 @@ public class OptionsTestData {
   @NoArgsConstructor
   @AllArgsConstructor
   @Getter
+  @ToString
   public static class TrustAnchorTestData extends OptionsTestDataProvider {
     UUID entityId;
     @Builder.Default
@@ -62,6 +64,7 @@ public class OptionsTestData {
   @NoArgsConstructor
   @AllArgsConstructor
   @Getter
+  @ToString
   public static class HostedEntityTestData extends OptionsTestDataProvider {
     @Builder.Default
     UUID policyId = null;
@@ -69,12 +72,15 @@ public class OptionsTestData {
     String subject = "http://www.swedenconnect.se/test";
     @Builder.Default
     String issuer = "http://www.swedenconnect.se/test";
+    String metadata;
+    String id;
   }
 
   @Builder
   @NoArgsConstructor
   @AllArgsConstructor
   @Getter
+  @ToString
   public static class SubordinateEntityTestData extends OptionsTestDataProvider {
     @Builder.Default
     UUID policyId = null;
@@ -90,6 +96,7 @@ public class OptionsTestData {
   @NoArgsConstructor
   @AllArgsConstructor
   @Getter
+  @ToString
   public static class PolicyTestData extends OptionsTestDataProvider {
     @Builder.Default
     String name = "Default Policy";
@@ -159,13 +166,13 @@ public class OptionsTestData {
     return Collections.unmodifiableMap(fieldMap);
   }
 
-  public static <T> T instantiateAndFill(Class<T> clazz, Map<String, String> fieldMap) {
+  public static <T> T instantiateAndFill(Class<T> clazz, Map<String, Object> fieldMap) {
     try {
       T instance = clazz.getDeclaredConstructor().newInstance();
 
-      for (Map.Entry<String, String> entry : fieldMap.entrySet()) {
+      for (Map.Entry<String, Object> entry : fieldMap.entrySet()) {
         String fieldName = toCamelCase(entry.getKey());
-        String fieldValue = entry.getValue();
+        String fieldValue = entry.getValue().toString();
         if (fieldValue == null || fieldValue.isBlank()) {
           continue;
         }
