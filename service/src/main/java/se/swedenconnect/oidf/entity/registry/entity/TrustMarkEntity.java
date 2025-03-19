@@ -58,11 +58,11 @@ public class TrustMarkEntity extends BaseEntity {
   @Column(name = "trustmark_id", nullable = false, updatable = false)
   private UUID trustmarkId;
 
-  @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.DETACH)
+  @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.DETACH)
   @JoinColumn(name = "module_id", referencedColumnName = "module_id", insertable = true, updatable = false)
   private ModuleEntity module;
 
-  @OneToMany(mappedBy = "trustMark", cascade = CascadeType.DETACH, orphanRemoval = true, fetch = FetchType.EAGER)
+  @OneToMany(mappedBy = "trustMark", cascade = CascadeType.DETACH, orphanRemoval = true, fetch = FetchType.LAZY)
   private List<TrustMarkSubjectEntity> trustmarksubjects;
 
   @OneToMany(cascade = CascadeType.DETACH, fetch = FetchType.LAZY)

@@ -80,7 +80,7 @@ openid:
             instance_id: 223e4567-e89b-12d3-a456-426614174001
 
       instances:
-        - instance_id: "123e4567-e89b-12d3-a456-426614174000"
+        - instance_id: "C0290CE5-EC80-4536-9E55-3937E5756DDC"
           name: "Swedenconnect"
           useForDefaultAssignment: true
 

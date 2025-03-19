@@ -57,11 +57,11 @@ public class ModuleEntity extends BaseEntity {
   })
   private List<SettingsEntity> settingsEntityList;
 
-  @ManyToOne(fetch = FetchType.EAGER)
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "organization_id", nullable = false)
   private OrganizationEntity organization;
 
-  @OneToMany(mappedBy = "module", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
+  @OneToMany(mappedBy = "module", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
   private List<TrustMarkEntity> trustmarks;
 
   @ManyToOne(fetch = FetchType.LAZY)
