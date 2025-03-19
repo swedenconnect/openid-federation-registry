@@ -57,6 +57,7 @@ public class OrganizationService {
    * @return the existing or newly created {@link OrganizationEntity}
    * @throws RuntimeException if no default assignment instance is configured
    */
+
   public OrganizationEntity findCreate(final String orgNumber, final String orgName) {
 
     return this.organizationRepository.findByOrgNumber(orgNumber).or(() -> {
