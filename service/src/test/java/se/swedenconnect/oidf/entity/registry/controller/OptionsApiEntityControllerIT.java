@@ -31,6 +31,7 @@ import se.swedenconnect.oidf.entity.registry.fixture.OptionsTestData;
 import se.swedenconnect.oidf.entity.registry.fixture.TestDataOperations;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -84,7 +85,86 @@ class OptionsApiEntityControllerIT {
   }
 
   @Test
-  public void testCRUDSubordinateEntity() throws IOException {
+  public void testList() throws IOException {
+    final JwtTestUtils.OrganisationType org = JwtTestUtils.OrganisationType.SKATT;
+
+    testDataOperations.createHostedEntity(
+        UUID.randomUUID(),
+        org,
+        HttpStatus.CREATED,
+        OptionsTestData.HostedEntityTestData.builder()
+            .build());
+
+    testDataOperations.createHostedEntity(
+        UUID.randomUUID(),
+        org,
+        HttpStatus.CREATED,
+        OptionsTestData.HostedEntityTestData.builder()
+            .build());
+
+    testDataOperations.createHostedEntity(
+        UUID.randomUUID(),
+        JwtTestUtils.OrganisationType.PM,
+        HttpStatus.CREATED,
+        OptionsTestData.HostedEntityTestData.builder()
+            .build());
+
+    final List<OptionsTestData.HostedEntityTestData> response =
+        testDataOperations.listForFKType(FkKeyType.HOSTED_ENTITY,
+            org,
+            OptionsTestData.HostedEntityTestData.class);
+
+    assertEquals(2, response.size());
+
+
+  }
+
+  @Test
+  public void testHostedEntityWithDifferentIssuerAndSubject() throws IOException {
+    final JwtTestUtils.OrganisationType org = JwtTestUtils.OrganisationType.SKATT;
+    final UUID id_skatt = testDataOperations.createHostedEntity(
+        UUID.randomUUID(),
+        org,
+        HttpStatus.CREATED,
+        OptionsTestData.HostedEntityTestData.builder()
+            .issuer("http://www.skatt.se/oidf/issuer")
+            .subject("http://www.skatt.se/oidf/subject")
+            .build());
+
+    testDataOperations.createTrustAnchor(UUID.randomUUID(), org, HttpStatus.BAD_REQUEST,
+        OptionsTestData.TrustAnchorTestData.builder().entityId(id_skatt).build());
+
+    testDataOperations.updateHostedEntity(
+        id_skatt,
+        org,
+        HttpStatus.CREATED,
+        OptionsTestData.HostedEntityTestData.builder()
+            .subject("http://www.skatt.se/oidf/ta")
+            .issuer("http://www.skatt.se/oidf/ta")
+            .build());
+
+    final UUID taId = testDataOperations.createTrustAnchor(UUID.randomUUID(), org, HttpStatus.CREATED,
+        OptionsTestData.TrustAnchorTestData.builder().entityId(id_skatt).build());
+
+    testDataOperations.updateHostedEntity(
+        id_skatt,
+        org,
+        HttpStatus.BAD_REQUEST,
+        OptionsTestData.HostedEntityTestData.builder()
+            .subject("http://www.skatt.se/oidf/ta")
+            .issuer("http://www.skatt.se/oidf/im")
+            .build());
+
+    testDataOperations.delete(FkKeyType.TRUSTANCHOR, taId, HttpStatus.OK,
+        JwtTestUtils.OrganisationType.SKATT);
+
+    testDataOperations.delete(FkKeyType.HOSTED_ENTITY, id_skatt, HttpStatus.OK,
+        JwtTestUtils.OrganisationType.SKATT);
+
+  }
+
+  @Test
+  public void testCRUDSubordinateEntity() {
     OptionsTestData.SubordinateEntityTestData.builder()
         .build();
     final UUID id_skatt = testDataOperations.createSubordinateEntity(

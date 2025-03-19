@@ -109,7 +109,9 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
     newModuleEntity.setModuleType(fkKeyType.name());
     newModuleEntity.setOrganization(super.getCurrentOrganization());
 
-    newModuleEntity.setEntity(this.loadEntityThrowIfNotExist(validatedInData));
+    final EntityEntity entityEntity = this.loadEntityThrowIfNotExist(validatedInData);
+    ruleIssuerAndSubjectTheSameOrTrowException(entityEntity);
+    newModuleEntity.setEntity(entityEntity);
 
     final ModuleEntity savedModuleEntity = this.moduleRepository.saveAndFlush(newModuleEntity);
     super.deleteSettings(fkKeyType, savedModuleEntity.getModuleId().toString());
@@ -125,6 +127,9 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
         .filter(super.hasRightOrganizationIdModulePredicate())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No template found for:%s %s".formatted(fkKeyType, id)));
+
+    final EntityEntity entityEntity = moduleEntity.getEntity();
+    ruleIssuerAndSubjectTheSameOrTrowException(entityEntity);
 
     final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
 
@@ -193,7 +198,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
                 .map(entity ->
                     OptionRecord.builder()
                         .key(entity.getEntityId().toString())
-                        .value(entity.getSettingsEntity("issuer").orElseThrow().getValue())
+                        .value(entity.getIssuer())
                         .selected(Objects.equals(value.getValue(), entity.getEntityId().toString()))
                         .build())
                 .toList()));

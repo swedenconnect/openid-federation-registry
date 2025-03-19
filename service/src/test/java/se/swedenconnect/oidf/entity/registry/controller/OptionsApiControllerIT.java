@@ -90,7 +90,7 @@ class OptionsApiControllerIT {
     testDataOperations.createTrustAnchor(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.PM,
         HttpStatus.CREATED,
-        TestDataOperations.defaultTrustAnchor(entityId));
+        OptionsTestData.TrustAnchorTestData.builder().entityId(entityId).build());
 
 
 

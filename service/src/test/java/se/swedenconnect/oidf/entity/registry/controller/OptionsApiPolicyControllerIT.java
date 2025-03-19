@@ -16,7 +16,6 @@
 
 package se.swedenconnect.oidf.entity.registry.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +31,7 @@ import se.swedenconnect.oidf.entity.registry.fixture.OptionsTestData;
 import se.swedenconnect.oidf.entity.registry.fixture.TestDataOperations;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -79,15 +79,20 @@ class OptionsApiPolicyControllerIT {
     testDataOperations.createPolicies(JwtTestUtils.OrganisationType.AF);
     testDataOperations.createPolicies(JwtTestUtils.OrganisationType.AF);
 
-    final JsonNode skv = testDataOperations.listForFKType(FkKeyType.POLICIES, JwtTestUtils.OrganisationType.SKATT);
+    final List<OptionsTestData.PolicyTestData> skv = testDataOperations.listForFKType(FkKeyType.POLICIES,
+        JwtTestUtils.OrganisationType.SKATT,
+        OptionsTestData.PolicyTestData.class);
     assertTrue(skv.size() >= 2, "Expected two policies");
 
-
-    final JsonNode af = testDataOperations.listForFKType(FkKeyType.POLICIES, JwtTestUtils.OrganisationType.AF);
+    final List<OptionsTestData.PolicyTestData> af = testDataOperations.listForFKType(FkKeyType.POLICIES,
+        JwtTestUtils.OrganisationType.AF,
+        OptionsTestData.PolicyTestData.class);
     assertTrue(af.size() >= 2, "Expected two policies");
 
+    final List<OptionsTestData.PolicyTestData> pm = testDataOperations.listForFKType(FkKeyType.POLICIES,
+        JwtTestUtils.OrganisationType.PM,
+        OptionsTestData.PolicyTestData.class);
 
-    final JsonNode pm = testDataOperations.listForFKType(FkKeyType.POLICIES, JwtTestUtils.OrganisationType.PM);
     assertTrue(pm.size() == 0, "Expected no policies on PM");
   }
 

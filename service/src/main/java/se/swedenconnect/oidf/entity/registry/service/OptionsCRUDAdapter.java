@@ -169,20 +169,30 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
         ).toList();
   }
 
+  protected void ruleIssuerAndSubjectTheSameOrTrowException(final EntityEntity entityEntity) {
+    final String issuer = entityEntity.getIssuer();
+    final String subject = entityEntity.getSubject();
+    if (!issuer.equalsIgnoreCase(subject)) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          ("Issuer and subject must be the same on the entity that this module will "
+              + "be mounted to. Issuer: %s, Subject: %s").formatted(issuer, subject));
+    }
+  }
+
   protected List<SettingsEntity> deleteSettings(final FkKeyType fkkeytype, final String id) {
     final List<SettingsEntity> entities = this.settingsRepository.findByFkTypeAndFkId(fkkeytype.name(), id);
     this.settingsRepository.deleteAllInBatch(entities);
     return entities;
   }
 
-  protected void insertSettings(final FkKeyType fkkeytype,
+  protected List<SettingsEntity> insertSettings(final FkKeyType fkkeytype,
       final String id,
       final List<SettingsEntity> settingsEntities) {
     settingsEntities.forEach(settingsEntity -> {
       settingsEntity.setFkId(id);
       settingsEntity.setFkType(fkkeytype.name());
     });
-    this.settingsRepository.saveAllAndFlush(settingsEntities);
+    return this.settingsRepository.saveAllAndFlush(settingsEntities);
   }
 
   protected List<SettingsEntity> getSettingsEntities(final FkKeyType fkkeytype, final UUID id) {

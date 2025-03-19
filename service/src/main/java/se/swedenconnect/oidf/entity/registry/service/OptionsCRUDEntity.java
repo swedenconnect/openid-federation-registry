@@ -34,10 +34,12 @@ import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.Values;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * OptionsCRUDHostedEntity is a service class that extends OptionsCRUDAdapter to provide CRUD (Create, Read, Update,
@@ -134,6 +136,7 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
     final List<SettingsEntity> validatedInData = this.createAndValidateInputData(template, record.getOption());
     this.loadPolicyIfExist(validatedInData).ifPresent(entity::setPolicyEntity);
 
+    this.ruleIfHostedEntityAndModulesTaOrImExistIssuerAndSubjectHasToBeTheSameOrThrow(entity, validatedInData);
     super.deleteSettings(fkKeyType, entity.getEntityId().toString());
     super.insertSettings(fkKeyType, entity.getEntityId().toString(), validatedInData);
 
@@ -163,6 +166,39 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
     return record;
   }
 
+  private void ruleIfHostedEntityAndModulesTaOrImExistIssuerAndSubjectHasToBeTheSameOrThrow(
+      final EntityEntity entityEntity,
+      final List<SettingsEntity> settingsEntityList) {
+
+    if (entityEntity.getEntityType() != EntityKeyType.HOSTED_ENTITY) {
+      return;
+    }
+
+    entityEntity.getModules()
+        .stream()
+        .filter(moduleEntity -> moduleEntity.isOfType(FkKeyType.TRUSTANCHOR, FkKeyType.INTERMEDIATE))
+        .forEach(moduleEntity -> {
+          final String issuer = settingsEntityList.stream()
+              .filter(settingsEntity -> settingsEntity.getKey().equals("issuer"))
+              .findFirst()
+              .orElseThrow()
+              .getValue();
+
+          final String subject = settingsEntityList.stream()
+              .filter(settingsEntity -> settingsEntity.getKey().equals("subject"))
+              .findFirst()
+              .orElseThrow()
+              .getValue();
+
+          if (!issuer.equalsIgnoreCase(subject)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                ("Issuer and subject must be the same on the entity:%s that this module will "
+                    + "be mounted to. Issuer: %s, Subject: %s").formatted(entityEntity.getEntityId(), issuer, subject));
+          }
+
+        });
+  }
+
   @Override
   public OptionsRecord delete(final FkKeyType fkKeyType, final UUID id) {
     final EntityEntity entity = this.entityRepository
@@ -173,6 +209,25 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
 
     this.entityRepository.delete(entity);
     return this.toRecord(entity.getSettingsEntityList());
+  }
+
+  @Override
+  public List<Map<String, Object>> list(final FkKeyType fkKeyType) {
+    return this.entityRepository.findAll()
+        .stream()
+        .filter(super.hasRightOrganizationIdEntityPredicate())
+        .map(entity -> {
+              final Map<String, Object> e = super.getSettingsEntities(fkKeyType, entity.getEntityId())
+                  .stream()
+                  .collect(Collectors.toMap(
+                      SettingsEntity::getKey,
+                      SettingsEntity::castValue
+                  ));
+              e.put("id", entity.getEntityId().toString());
+              return e;
+            }
+        )
+        .toList();
   }
 
   protected Optional<PolicyEntity> loadPolicyIfExist(final List<SettingsEntity> dataValues)

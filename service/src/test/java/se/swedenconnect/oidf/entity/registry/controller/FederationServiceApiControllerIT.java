@@ -126,7 +126,7 @@ class FederationServiceApiControllerIT {
     final UUID trustanchor = testDataOperations.createTrustAnchor(UUID.randomUUID(),
         org,
         HttpStatus.CREATED,
-        TestDataOperations.defaultTrustAnchor(entityId));
+        OptionsTestData.TrustAnchorTestData.builder().entityId(entityId).build());
 
     final UUID trustmarkId = testDataOperations.createTrustMark(
         UUID.randomUUID(),

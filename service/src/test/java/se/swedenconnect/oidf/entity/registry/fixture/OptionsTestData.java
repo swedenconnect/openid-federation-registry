@@ -24,6 +24,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import se.swedenconnect.oidf.registry.api.model.Values;
 
 import java.lang.reflect.Field;
@@ -52,19 +53,34 @@ public class OptionsTestData {
   @NoArgsConstructor
   @AllArgsConstructor
   @Getter
-  public static class HostedEntityTestData extends OptionsTestDataProvider {
+  @ToString
+  public static class TrustAnchorTestData extends OptionsTestDataProvider {
+    UUID entityId;
     @Builder.Default
-    UUID policyId = null;
-    @Builder.Default
-    String subject = "http://www.swedenconnect.se/subject";
-    @Builder.Default
-    String issuer = "http://www.swedenconnect.se/issuer";
+    String active = "true";
   }
 
   @Builder
   @NoArgsConstructor
   @AllArgsConstructor
   @Getter
+  @ToString
+  public static class HostedEntityTestData extends OptionsTestDataProvider {
+    @Builder.Default
+    UUID policyId = null;
+    @Builder.Default
+    String subject = "http://www.swedenconnect.se/test";
+    @Builder.Default
+    String issuer = "http://www.swedenconnect.se/test";
+    String metadata;
+    String id;
+  }
+
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @Getter
+  @ToString
   public static class SubordinateEntityTestData extends OptionsTestDataProvider {
     @Builder.Default
     UUID policyId = null;
@@ -80,6 +96,7 @@ public class OptionsTestData {
   @NoArgsConstructor
   @AllArgsConstructor
   @Getter
+  @ToString
   public static class PolicyTestData extends OptionsTestDataProvider {
     @Builder.Default
     String name = "Default Policy";
@@ -128,7 +145,6 @@ public class OptionsTestData {
   }
 
   private static final Map<String, Map<String, String>> cache = new HashMap<>();
-
   public static Map<String, String> createFieldMap(Object obj) {
     Map<String, String> fieldMap = cache.get(obj.getClass().getName());
     if (fieldMap != null) {
@@ -141,7 +157,7 @@ public class OptionsTestData {
       try {
         final String fieldName = field.getName();
         final Object fieldValue = field.get(obj);
-        fieldMap.put(fieldName, Optional.ofNullable(fieldValue).map(Object::toString).orElse(null));
+        fieldMap.put(toSnakeCase(fieldName), Optional.ofNullable(fieldValue).map(Object::toString).orElse(null));
       }
       catch (IllegalAccessException e) {
         throw new RuntimeException("Reflection error while accessing field: " + field.getName(), e);
@@ -150,13 +166,13 @@ public class OptionsTestData {
     return Collections.unmodifiableMap(fieldMap);
   }
 
-  public static <T> T instantiateAndFill(Class<T> clazz, Map<String, String> fieldMap) {
+  public static <T> T instantiateAndFill(Class<T> clazz, Map<String, Object> fieldMap) {
     try {
       T instance = clazz.getDeclaredConstructor().newInstance();
 
-      for (Map.Entry<String, String> entry : fieldMap.entrySet()) {
+      for (Map.Entry<String, Object> entry : fieldMap.entrySet()) {
         String fieldName = toCamelCase(entry.getKey());
-        String fieldValue = entry.getValue();
+        String fieldValue = entry.getValue().toString();
         if (fieldValue == null || fieldValue.isBlank()) {
           continue;
         }
@@ -204,6 +220,21 @@ public class OptionsTestData {
     }
 
     return camelCase.toString();
+  }
+
+  private static String toSnakeCase(String camelCase) {
+    StringBuilder snakeCase = new StringBuilder();
+
+    for (char c : camelCase.toCharArray()) {
+      if (Character.isUpperCase(c)) {
+        snakeCase.append('_');
+        snakeCase.append(Character.toLowerCase(c));
+      }
+      else {
+        snakeCase.append(c);
+      }
+    }
+    return snakeCase.toString();
   }
 
 }

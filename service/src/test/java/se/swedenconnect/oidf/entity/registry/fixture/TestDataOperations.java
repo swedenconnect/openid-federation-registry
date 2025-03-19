@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.entity.registry.fixture;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -47,7 +48,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -80,7 +80,7 @@ public class TestDataOperations {
       Class<R> reply) {
 
     final OptionsRecord optionsRecord = get(configGroup, id, httpStatus, organizationType);
-    final Map<String, String> data = optionsRecord.getOption()
+    final Map<String, Object> data = optionsRecord.getOption()
         .stream()
         .collect(Collectors.toMap(
             Values::getKey,
@@ -256,15 +256,6 @@ public class TestDataOperations {
     };
   }
 
-  public static Function<Values, String> defaultTrustAnchor(final UUID entity_id) {
-    return s -> switch (s.getKey()) {
-      case "active" -> "true";
-      case "entity_id" -> entity_id.toString();
-
-      default -> null;
-    };
-  }
-
   public static Function<Values, String> defaultResolver(final UUID entity_id) {
     return s -> switch (s.getKey()) {
       case "active" -> "true";
@@ -385,8 +376,13 @@ public class TestDataOperations {
       final UUID id,
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
-      final Function<Values, String> options) {
-    return createUpdate(id, FkKeyType.TRUSTANCHOR, organisationType, expectedHttpStatus, options, HttpMethod.POST);
+      final OptionsTestData.TrustAnchorTestData trustAnchorTestData) {
+
+    return createUpdate(id, FkKeyType.TRUSTANCHOR,
+        organisationType,
+        expectedHttpStatus,
+        trustAnchorTestData.testData(),
+        HttpMethod.POST);
   }
 
   public UUID createResolver(
@@ -397,22 +393,7 @@ public class TestDataOperations {
     return createUpdate(id, FkKeyType.RESOLVER, organisationType, expectedHttpStatus, options, HttpMethod.POST);
   }
 
-  private static void ifThen(ObjectNode valueNode, String key, Supplier<String> value) {
-    if (valueNode.get("key").asText().contains(key)) {
-      valueNode.put("value", value.get());
-    }
-  }
 
-  private static void setIfThen(Values valueNode, String key, Supplier<String> value) {
-    if (valueNode.getKey().equals(key)) {
-      valueNode.setValue(value.get());
-    }
-  }
-
-  public static String genJwks() {
-    final JWKSet jwkSet = new JWKSet(List.of(genKey(), genKey()));
-    return jwkSet.toString();
-  }
 
   public static JWK genKey() {
     try {
@@ -439,8 +420,8 @@ public class TestDataOperations {
     return objectMapper.readTree(response.getBody());
   }
 
-  public JsonNode listForFKType(FkKeyType fkKeyType, final JwtTestUtils.OrganisationType organizationType)
-      throws JsonProcessingException {
+  public <R> List<R> listForFKType(FkKeyType fkKeyType, final JwtTestUtils.OrganisationType organizationType,
+      Class<R> replyClass) {
 
     final HttpStatus httpStatus = HttpStatus.OK;
 
@@ -462,7 +443,13 @@ public class TestDataOperations {
     }
 
     try {
-      return objectMapper.readTree(reply.getBody());
+      final List<Map<String, Object>> g =
+          objectMapper.readValue(reply.getBody(), new TypeReference<List<Map<String, Object>>>() {});
+
+      return g.stream()
+          .map(stringObjectMap -> OptionsTestData.instantiateAndFill(replyClass, stringObjectMap))
+          .toList();
+
     }
     catch (JsonProcessingException e) {
       throw new RuntimeException(e);
