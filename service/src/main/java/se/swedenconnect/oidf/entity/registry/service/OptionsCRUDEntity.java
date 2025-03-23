@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.entity.registry.service;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.entity.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.entity.registry.entity.EntityKeyType;
@@ -200,13 +201,13 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
   }
 
   @Override
+  @Transactional
   public OptionsRecord delete(final FkKeyType fkKeyType, final UUID id) {
     final EntityEntity entity = this.entityRepository
         .findByEntityIdAndEntityType(id, this.getEntityKeyType(fkKeyType))
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
     super.throwUnauthorizedIfNotMatch(entity.getOrganization().getOrganizationId());
-
     this.entityRepository.delete(entity);
     return this.toRecord(entity.getSettingsEntityList());
   }
