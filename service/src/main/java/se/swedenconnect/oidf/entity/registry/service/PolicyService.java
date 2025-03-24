@@ -15,7 +15,6 @@
  */
 package se.swedenconnect.oidf.entity.registry.service;
 
-import se.swedenconnect.oidf.entity.registry.common.CrudService;
 import se.swedenconnect.oidf.registry.api.model.PolicyRecord;
 
 /**

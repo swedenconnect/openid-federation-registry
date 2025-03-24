@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.entity.registry.common;
+package se.swedenconnect.oidf.entity.registry.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
