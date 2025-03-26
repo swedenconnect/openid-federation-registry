@@ -27,7 +27,6 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
-import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
 import java.util.ArrayList;
 import java.util.List;

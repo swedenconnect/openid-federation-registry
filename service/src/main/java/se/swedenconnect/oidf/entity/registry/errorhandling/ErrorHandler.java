@@ -92,6 +92,29 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         request);
   }
 
+  /**
+   * Handles exceptions of type {@link RegistryClientException} by constructing a {@link ProblemDetail} object
+   * containing error information and returning it within a {@link ResponseEntity}.
+   *
+   * @param e the {@link RegistryClientException} that was thrown
+   * @param request the {@link WebRequest} during which the exception occurred
+   * @return a {@link ResponseEntity} containing a {@link ProblemDetail} object with details about the error and the
+   *     appropriate HTTP status code
+   */
+  @ExceptionHandler(RegistryClientException.class)
+  public ResponseEntity<Object> handle(final RegistryClientException e, final WebRequest request) {
+    final ProblemDetail problemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), e.getMessage());
+
+    problemDetail.setType(e.getErrorTypes());
+
+    return this.handleExceptionInternal(e,
+        problemDetail,
+        new HttpHeaders(),
+        HttpStatusCode.valueOf(problemDetail.getStatus()),
+        request);
+  }
+
   @Override
   protected ResponseEntity<Object> handleMethodArgumentNotValid(
       final MethodArgumentNotValidException e,

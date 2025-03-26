@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.entity.registry.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.entity.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.entity.registry.entity.EntityKeyType;
@@ -154,6 +155,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
   }
 
   @Override
+  @Transactional
   public OptionsRecord delete(final FkKeyType fkKeyType, final UUID id) {
     final ModuleEntity moduleEntity = this.moduleRepository
         .findByModuleIdAndModuleType(id, fkKeyType.name())

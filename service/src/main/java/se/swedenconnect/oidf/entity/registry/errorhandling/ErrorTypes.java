@@ -25,4 +25,5 @@ import java.net.URI;
  */
 public final class ErrorTypes {
   public static final URI INVALID_PARAMETER = URI.create("https://oidf.swedenconnect.se/error/invalid_parameter");
+  public static final URI PARENT_HAS_CHILDREN = URI.create("https://oidf.swedenconnect.se/error/parent_has_children");
 }

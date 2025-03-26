@@ -31,7 +31,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
 import java.time.Duration;
 import java.time.LocalDate;

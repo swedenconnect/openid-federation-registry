@@ -15,7 +15,6 @@
  */
 package se.swedenconnect.oidf.entity.registry.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWK;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +35,6 @@ import se.swedenconnect.oidf.entity.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.entity.registry.repository.PolicyRepository;
 import se.swedenconnect.oidf.entity.registry.service.FederationApiService;
 import se.swedenconnect.oidf.entity.registry.service.NotifyService;
-import se.swedenconnect.oidf.entity.registry.service.OptionsCRUDTrustMark;
 import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.bundle.CredentialBundles;
 import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
@@ -84,15 +82,12 @@ public class RegistryConfig {
   /**
    * Provides an instance of the FederationApiService for managing federation-related operations.
    *
-   * @param mapper the ObjectMapper used for handling JSON serialization and deserialization.
    * @param credentialBundles Bundle for reading keys
-   * @param trustMarkService TrustmarkCRUD service
    * @return an instance of FederationApiService configured with the necessary dependencies.
    */
   @Bean
   public FederationApiService federationServiceApiService(
-      final CredentialBundles credentialBundles, final OptionsCRUDTrustMark trustMarkService,
-      final ObjectMapper mapper) {
+      final CredentialBundles credentialBundles) {
 
     final RegistryProperties.FederationAPIProperties federationAPIProperties =
         this.registryProperties.federationServiceApi();

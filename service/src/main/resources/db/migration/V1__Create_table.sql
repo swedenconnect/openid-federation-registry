@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS `organization`
     `created_date`       DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `last_modified_date` DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`organization_id`),
-    FOREIGN KEY (`instance_id`) REFERENCES `instance` (`instance_id`)
+    FOREIGN KEY (`instance_id`) REFERENCES `instance` (`instance_id`) ON DELETE RESTRICT
 
 ) ENGINE = InnoDB;
 
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS entities
     `created_date`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `last_modified_date` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`entity_id`),
-    FOREIGN KEY (`organization_id`) REFERENCES `organization` (`organization_id`)
+    FOREIGN KEY (`organization_id`) REFERENCES `organization` (`organization_id`) ON DELETE RESTRICT
 ) ENGINE = InnoDB;
 
 
@@ -75,7 +75,8 @@ CREATE TABLE IF NOT EXISTS `module`
     `created_date`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `last_modified_date` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`module_id`),
-    FOREIGN KEY (`organization_id`) REFERENCES `organization` (`organization_id`)
+    FOREIGN KEY (`organization_id`) REFERENCES `organization` (`organization_id`) ON DELETE RESTRICT,
+    FOREIGN KEY (`entity_id`) REFERENCES `entities` (`entity_id`) ON DELETE RESTRICT
 ) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS `trustmark`
@@ -87,7 +88,7 @@ CREATE TABLE IF NOT EXISTS `trustmark`
     `created_date`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `last_modified_date` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`trustmark_id`),
-    FOREIGN KEY (`module_id`) REFERENCES `module` (`module_id`)
+    FOREIGN KEY (`module_id`) REFERENCES `module` (`module_id`) ON DELETE RESTRICT
 ) ENGINE = InnoDB;
 
 -- Trustmark subject table
@@ -100,7 +101,7 @@ CREATE TABLE IF NOT EXISTS trustmark_subject
     `created_by`          VARCHAR(255) NOT NULL,
     `last_modified_by`    VARCHAR(255) NOT NULL,
     PRIMARY KEY (`trustmarksubject_id`),
-    FOREIGN KEY (`trustmark_id`) REFERENCES `trustmark` (`trustmark_id`)
+    FOREIGN KEY (`trustmark_id`) REFERENCES `trustmark` (`trustmark_id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
 -- Settings table
@@ -130,9 +131,8 @@ CREATE TABLE IF NOT EXISTS policies
     last_modified_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     created_by         VARCHAR(255) NOT NULL,
     last_modified_by   VARCHAR(255) NOT NULL,
-
     PRIMARY KEY (`policy_id`),
-    FOREIGN KEY (`organization_id`) REFERENCES `organization` (`organization_id`)
+    FOREIGN KEY (`organization_id`) REFERENCES `organization` (`organization_id`) ON DELETE RESTRICT
 
 ) ENGINE=InnoDB;
 

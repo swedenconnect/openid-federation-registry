@@ -71,7 +71,7 @@ class OptionsApiEntityControllerIT {
             .subject("http://www.swedenconnect.se/op")
             .build());
 
-    OptionsTestData.SubordinateEntityTestData data = testDataOperations.get(FkKeyType.HOSTED_ENTITY,
+    final OptionsTestData.SubordinateEntityTestData data = testDataOperations.get(FkKeyType.HOSTED_ENTITY,
         id_skatt,
         HttpStatus.OK,
         JwtTestUtils.OrganisationType.SKATT,
@@ -85,7 +85,7 @@ class OptionsApiEntityControllerIT {
   }
 
   @Test
-  public void testList() throws IOException {
+  public void testList() {
     final JwtTestUtils.OrganisationType org = JwtTestUtils.OrganisationType.SKATT;
 
     testDataOperations.createHostedEntity(
@@ -118,6 +118,33 @@ class OptionsApiEntityControllerIT {
 
 
   }
+
+  @Test
+  public void testHostedEntityDelete() throws IOException {
+    final JwtTestUtils.OrganisationType org = JwtTestUtils.OrganisationType.SKATT;
+    final UUID id_skatt = testDataOperations.createHostedEntity(
+        UUID.randomUUID(),
+        org,
+        HttpStatus.CREATED,
+        OptionsTestData.HostedEntityTestData.builder()
+            .issuer("http://www.skatt.se/oidf/ta")
+            .subject("http://www.skatt.se/oidf/ta")
+            .build());
+
+    final UUID taId = testDataOperations.createTrustAnchor(UUID.randomUUID(), org, HttpStatus.CREATED,
+        OptionsTestData.TrustAnchorTestData.builder().entityId(id_skatt).build());
+
+    testDataOperations.delete(FkKeyType.HOSTED_ENTITY, id_skatt, HttpStatus.BAD_REQUEST,
+        JwtTestUtils.OrganisationType.SKATT);
+
+    testDataOperations.delete(FkKeyType.TRUSTANCHOR, taId, HttpStatus.OK,
+        JwtTestUtils.OrganisationType.SKATT);
+
+    testDataOperations.delete(FkKeyType.HOSTED_ENTITY, id_skatt, HttpStatus.OK,
+        JwtTestUtils.OrganisationType.SKATT);
+
+  }
+
 
   @Test
   public void testHostedEntityWithDifferentIssuerAndSubject() throws IOException {
@@ -165,8 +192,7 @@ class OptionsApiEntityControllerIT {
 
   @Test
   public void testCRUDSubordinateEntity() {
-    OptionsTestData.SubordinateEntityTestData.builder()
-        .build();
+
     final UUID id_skatt = testDataOperations.createSubordinateEntity(
         UUID.randomUUID(),
         JwtTestUtils.OrganisationType.SKATT,

@@ -194,6 +194,7 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
   }
 
   @Override
+  @Transactional
   public OptionsRecord delete(final FkKeyType fkKeyType, final UUID id) {
     final TrustMarkEntity trustMarkEntity = this.trustMarkRepository
         .findById(id)

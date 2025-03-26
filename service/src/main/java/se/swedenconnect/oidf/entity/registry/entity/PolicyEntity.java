@@ -29,7 +29,6 @@ import lombok.Setter;
 import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.FilterDef;
 import org.hibernate.annotations.ParamDef;
-import se.swedenconnect.oidf.entity.registry.common.BaseEntity;
 
 import java.util.List;
 import java.util.Optional;

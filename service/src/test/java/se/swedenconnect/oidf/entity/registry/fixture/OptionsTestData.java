@@ -55,6 +55,9 @@ public class OptionsTestData {
   @Getter
   @ToString
   public static class TrustAnchorTestData extends OptionsTestDataProvider {
+    @Builder.Default
+    UUID id = UUID.randomUUID();
+
     UUID entityId;
     @Builder.Default
     String active = "true";
@@ -67,13 +70,15 @@ public class OptionsTestData {
   @ToString
   public static class HostedEntityTestData extends OptionsTestDataProvider {
     @Builder.Default
+    UUID id = UUID.randomUUID();
+    @Builder.Default
     UUID policyId = null;
     @Builder.Default
     String subject = "http://www.swedenconnect.se/test";
     @Builder.Default
     String issuer = "http://www.swedenconnect.se/test";
     String metadata;
-    String id;
+
   }
 
   @Builder
@@ -82,6 +87,8 @@ public class OptionsTestData {
   @Getter
   @ToString
   public static class SubordinateEntityTestData extends OptionsTestDataProvider {
+    @Builder.Default
+    UUID id = UUID.randomUUID();
     @Builder.Default
     UUID policyId = null;
     @Builder.Default
@@ -98,6 +105,8 @@ public class OptionsTestData {
   @Getter
   @ToString
   public static class PolicyTestData extends OptionsTestDataProvider {
+    @Builder.Default
+    UUID id = UUID.randomUUID();
     @Builder.Default
     String name = "Default Policy";
     @Builder.Default
@@ -117,10 +126,28 @@ public class OptionsTestData {
         + "  }";
   }
 
-  public static class OptionsTestDataProvider {
+  public static abstract class OptionsTestDataProvider {
     public Function<Values, String> testData() {
       return values -> createFieldMap(this).get(values.getKey());
     }
+
+    public void create() {
+
+    }
+
+    public void update() {
+
+    }
+
+    public void delete() {
+
+    }
+
+    public void load() {
+
+    }
+
+    public abstract UUID getId();
   }
 
   public static String genJwks() {
