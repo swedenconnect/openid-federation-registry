@@ -214,7 +214,7 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
 
   @Override
   public List<Map<String, Object>> list(final FkKeyType fkKeyType) {
-    return this.entityRepository.findAll()
+    return this.entityRepository.findByEntityType(this.getEntityKeyType(fkKeyType))
         .stream()
         .filter(super.hasRightOrganizationIdEntityPredicate())
         .map(entity -> {
