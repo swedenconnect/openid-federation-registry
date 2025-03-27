@@ -39,6 +39,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Abstract implementation of the {@link OptionsCRUD} interface providing common functionality for managing and
@@ -147,26 +148,31 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
   protected List<SettingsEntity> createAndValidateInputData(final List<SettingsEntity> templateValues,
       final List<Values> dataValues) {
 
+    final Map<String, Values> dataMap = dataValues.stream().collect(Collectors.toMap(Values::getKey, v -> v));
+
     return templateValues
         .stream()
-        .map(templateValue ->
-            dataValues.stream()
-                .filter(dataValue -> Objects.equals(dataValue.getKey(), templateValue.getKey()))
-                .map(dataValue -> {
-                  final PropertyValidator validator =
-                      this.validatorFactory.resolveValidator(templateValue.getValidation());
-                  validator.validate(templateValue.getKey(), dataValue.getValue());
-                  return SettingsEntity.builder()
-                      .key(dataValue.getKey())
-                      .value(dataValue.getValue())
-                      .valueDataType(templateValue.getValueDataType())
-                      .build();
-                })
-                .findFirst()
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unrecognized key input:%s"
-                    .formatted(dataValues.stream().map(Values::getKey).filter(Objects::nonNull)
-                        .reduce("%s,%s"::formatted).orElse(""))))
-        ).toList();
+        .map(templateValue -> {
+          final Values dataValue = dataMap.get(templateValue.getKey());
+          final String valueToBeValidated = dataValue != null ? dataValue.getValue() : null;
+
+          final PropertyValidator validator =
+              this.validatorFactory.resolveValidator(templateValue.getValidation());
+          validator.validate(templateValue.getKey(), valueToBeValidated);
+
+          if (dataValue == null) {
+            return null;
+          }
+
+          return SettingsEntity.builder()
+              .key(templateValue.getKey())
+              .value(valueToBeValidated)
+              .valueDataType(templateValue.getValueDataType())
+              .build();
+
+        })
+        .filter(Objects::nonNull)
+        .toList();
   }
 
   protected void ruleIssuerAndSubjectTheSameOrTrowException(final EntityEntity entityEntity) {

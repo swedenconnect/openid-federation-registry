@@ -123,7 +123,6 @@ public class TestDataOperations {
   }
 
   public OptionsRecord postPut(
-      final TestRestTemplate restTemplate,
       final FkKeyType configGroup,
       final UUID id,
       final HttpStatus httpStatus,
@@ -361,7 +360,7 @@ public class TestDataOperations {
       }
     });
 
-    postPut(restTemplate,
+    postPut(
         configGroup,
         id,
         expectedHttpStatus,

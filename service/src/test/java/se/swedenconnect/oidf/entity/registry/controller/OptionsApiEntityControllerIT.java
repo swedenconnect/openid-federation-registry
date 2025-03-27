@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -29,6 +30,8 @@ import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.fixture.JwtTestUtils;
 import se.swedenconnect.oidf.entity.registry.fixture.OptionsTestData;
 import se.swedenconnect.oidf.entity.registry.fixture.TestDataOperations;
+import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
+import se.swedenconnect.oidf.registry.api.model.Values;
 
 import java.io.IOException;
 import java.util.List;
@@ -54,7 +57,24 @@ class OptionsApiEntityControllerIT {
   private TestDataOperations testDataOperations;
 
   @Test
-  public void testCRUDHostedEntity() throws IOException {
+  public void testHostedEntity() {
+    final OptionsRecord optionsRecord = new OptionsRecord();
+    optionsRecord.setOption(
+        List.of(
+            Values.builder().key("issuer").value("http://issuer").build(),
+            Values.builder().key("subject").value("http://subject").build()
+        ));
+
+    testDataOperations.postPut(FkKeyType.HOSTED_ENTITY,
+        UUID.randomUUID(),
+        HttpStatus.CREATED,
+        JwtTestUtils.OrganisationType.AF, optionsRecord,
+        HttpMethod.POST);
+  }
+
+
+  @Test
+  public void testCRUDHostedEntity() {
 
     final UUID id_skatt = testDataOperations.createHostedEntity(
         UUID.randomUUID(),

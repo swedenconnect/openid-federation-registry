@@ -19,14 +19,17 @@ package se.swedenconnect.oidf.entity.registry.service;
 import org.junit.jupiter.api.Test;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.entity.registry.entity.SettingsEntity;
+import se.swedenconnect.oidf.entity.registry.validation.PropertyValidationFailException;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.Values;
 
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * oidf-entity-registry
@@ -66,13 +69,20 @@ class OptionsCRUDAdapterTest {
       }
     };
 
-    final SettingsEntity template = new SettingsEntity();
-    template.setKey("id");
-    template.setValidation("uuid");
-    template.setValueDataType("text");
+    final SettingsEntity iss = SettingsEntity.builder().key("issuer")
+        .validation("URL").valueDataType("TEXT").build();
+
+    final SettingsEntity sub = SettingsEntity.builder().key("subject")
+        .validation("URL").valueDataType("TEXT").build();
+
+    final SettingsEntity entityID = SettingsEntity.builder().key("entity_id")
+        .validation("UUID").valueDataType("TEXT").build();
+
+    final SettingsEntity requiredValue = SettingsEntity.builder().key("reg_id")
+        .validation("required").valueDataType("TEXT").build();
 
     final Values existingUserInput = Values.builder()
-        .key("id")
+        .key("subject")
         .validation("NonExisting")
         .valueType("nonExisting")
         .build();
@@ -83,12 +93,28 @@ class OptionsCRUDAdapterTest {
         .valueType("nonExisting")
         .build();
 
+    assertThrows(PropertyValidationFailException.class, () ->
+        adapter.createAndValidateInputData(List.of(sub, iss, entityID, requiredValue), List.of(
+            Values.builder().key("issuer").value("http://issuer").build(),
+            Values.builder().key("subject").value("http://subject").build()
+        )));
+
+    final List<SettingsEntity> resultReq =
+        adapter.createAndValidateInputData(List.of(sub, iss, entityID, requiredValue), List.of(
+            Values.builder().key("issuer").value("http://issuer").build(),
+            Values.builder().key("subject").value("http://subject").build(),
+            Values.builder().key("reg_id").value("http://subject").build(),
+            unknownUserInput
+        ));
+
+    assertThat(resultReq).isNotEmpty().hasSize(3);
+
     final List<SettingsEntity> result =
-        adapter.createAndValidateInputData(List.of(template), List.of(existingUserInput, unknownUserInput));
+        adapter.createAndValidateInputData(List.of(sub, iss, entityID), List.of(existingUserInput, unknownUserInput));
     assertEquals(1, result.size());
-    assertEquals("id", result.get(0).getKey());
+    assertEquals("subject", result.get(0).getKey());
     assertNull(result.get(0).getValidation());
-    assertEquals("text", result.get(0).getValueDataType());
+    assertEquals("TEXT", result.get(0).getValueDataType());
 
   }
 }
