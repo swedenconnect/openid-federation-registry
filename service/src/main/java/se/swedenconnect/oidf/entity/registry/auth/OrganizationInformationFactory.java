@@ -1,0 +1,74 @@
+/*
+ * Copyright 2024-2025 Sweden Connect
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+package se.swedenconnect.oidf.entity.registry.auth;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+
+/**
+ * Factory class for creating {@link OrganizationInformation}
+ *
+ * @author Felix Hellman
+ */
+public class OrganizationInformationFactory {
+  /**
+   * @param claims
+   * @return org info about user
+   */
+  public static OrganizationInformation getInformation(final Map<String, Object> claims) {
+
+    final List<OrganizationRecord> multiOrg =
+        Optional.ofNullable(claims.get("org"))
+            .map(org -> ((List<Map<String, String>>) org)
+                .stream()
+            )
+            .map(s -> s
+                .filter(entry -> entry.containsKey("orgName"))
+                .filter(entry -> entry.containsKey("orgNumber"))
+                .filter(entry -> entry.containsKey("entity_prefix"))
+                .map(entry -> new OrganizationRecord(
+                    entry.get("orgNumber"),
+                    entry.get("orgName"),
+                    entry.get("entity_prefix")
+                )).toList())
+            .orElse(List.of());
+
+    final List<OrganizationRecord> records = new ArrayList<>(multiOrg);
+
+    final String orgNumber = (String) claims.get("orgNumber");
+    final String orgName = (String) claims.get("orgName");
+    final String entityPrefix = (String) claims.get("entity_prefix");
+
+    if (
+        Objects.nonNull(orgNumber) && !orgNumber.isBlank() &&
+            Objects.nonNull(orgName) && !orgName.isBlank() &&
+            Objects.nonNull(entityPrefix) && !entityPrefix.isBlank()
+    ) {
+      records.add(new OrganizationRecord(
+          orgNumber, orgName, entityPrefix
+      ));
+    }
+    if (records.isEmpty()) {
+      throw new IllegalArgumentException("Could not find any organization orgInfo in user claims");
+    }
+    return new OrganizationInformation(records);
+  }
+}
+
