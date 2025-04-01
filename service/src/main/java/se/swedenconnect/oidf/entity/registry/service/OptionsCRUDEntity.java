@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 
 /**
  * OptionsCRUDHostedEntity is a service class that extends OptionsCRUDAdapter to provide CRUD (Create, Read, Update,
- * Delete) operations specifically for entities classified with the FkKeyType.HOSTED_ENTITY type.
+ * Delete) operations specifically for entities classified with the FkKeyType.FEDERATION_ENTITY type.
  *
  * @author Per Fredrik Plars
  */
@@ -75,7 +75,7 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
 
   @Override
   public boolean supports(final FkKeyType fkKeyType) {
-    return FkKeyType.HOSTED_ENTITY == fkKeyType || FkKeyType.SUBORDINATE_ENTITY == fkKeyType;
+    return FkKeyType.FEDERATION_ENTITY == fkKeyType || FkKeyType.SUBORDINATE_ENTITY == fkKeyType;
   }
 
   @Override
@@ -88,7 +88,7 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
   private EntityKeyType getEntityKeyType(final FkKeyType fkKeyType) {
     return switch (fkKeyType) {
       case SUBORDINATE_ENTITY -> EntityKeyType.SUBORDINATE_ENTITY;
-      case HOSTED_ENTITY -> EntityKeyType.HOSTED_ENTITY;
+      case FEDERATION_ENTITY -> EntityKeyType.FEDERATION_ENTITY;
       default -> throw new IllegalArgumentException("Unsupported FkKeyType: %s".formatted(fkKeyType));
     };
   }
@@ -171,7 +171,7 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
       final EntityEntity entityEntity,
       final List<SettingsEntity> settingsEntityList) {
 
-    if (entityEntity.getEntityType() != EntityKeyType.HOSTED_ENTITY) {
+    if (entityEntity.getEntityType() != EntityKeyType.FEDERATION_ENTITY) {
       return;
     }
 

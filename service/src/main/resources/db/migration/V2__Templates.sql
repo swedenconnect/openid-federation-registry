@@ -340,7 +340,7 @@ VALUES ('TEMPLATE',
 INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
                      last_modified_by)
 VALUES ('TEMPLATE',
-        'HOSTED_ENTITY',
+        'FEDERATION_ENTITY',
         'policy_id',
         'Policy',
         'OPTIONS',
@@ -352,7 +352,7 @@ VALUES ('TEMPLATE',
 INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
                      last_modified_by)
 VALUES ('TEMPLATE',
-        'HOSTED_ENTITY',
+        'FEDERATION_ENTITY',
         'subject',
         'Subject',
         'TEXT',
@@ -364,7 +364,7 @@ VALUES ('TEMPLATE',
 INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
                      last_modified_by)
 VALUES ('TEMPLATE',
-        'HOSTED_ENTITY',
+        'FEDERATION_ENTITY',
         'metadata',
         'Metadata',
         'JSON',
@@ -378,7 +378,7 @@ VALUES ('TEMPLATE',
 INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
                      last_modified_by)
 VALUES ('TEMPLATE',
-        'HOSTED_ENTITY',
+        'FEDERATION_ENTITY',
         'issuer',
         'Issuer entityid',
         'TEXT',
@@ -404,7 +404,7 @@ from settings
 where (data_key = 'issuer'
     or data_key = 'subject'
     or data_key = 'policy_id')
-  and fk_type = 'HOSTED_ENTITY';
+  and fk_type = 'FEDERATION_ENTITY';
 
 INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
                      last_modified_by)

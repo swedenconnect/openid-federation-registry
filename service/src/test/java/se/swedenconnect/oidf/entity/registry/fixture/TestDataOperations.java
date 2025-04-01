@@ -288,7 +288,7 @@ public class TestDataOperations {
       final OptionsTestData.HostedEntityTestData hostedEntityTestData
   ) {
     return createUpdate(id,
-        FkKeyType.HOSTED_ENTITY,
+        FkKeyType.FEDERATION_ENTITY,
         organisationType,
         expectedHttpStatus,
         hostedEntityTestData.testData(),
@@ -302,7 +302,7 @@ public class TestDataOperations {
       final OptionsTestData.HostedEntityTestData hostedEntityTestData
   ) {
     return createUpdate(id,
-        FkKeyType.HOSTED_ENTITY,
+        FkKeyType.FEDERATION_ENTITY,
         organisationType,
         expectedHttpStatus,
         hostedEntityTestData.testData(),

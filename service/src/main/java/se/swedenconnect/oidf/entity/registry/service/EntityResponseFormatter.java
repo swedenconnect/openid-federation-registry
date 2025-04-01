@@ -78,7 +78,7 @@ public class EntityResponseFormatter {
   /**
    * Creates a response map based on the provided {@code EntityEntity}. The response includes entity configuration
    * settings mapped by their keys and additional metadata for hosted entities. If the entity type is
-   * {@code HOSTED_ENTITY}, metadata is enriched with federation entity information. Ex: { "iss":
+   * {@code FEDERATION_ENTITY}, metadata is enriched with federation entity information. Ex: { "iss":
    * "http://oidf-registry.swedenconnect.se", "exp": 1742800981, "iat": 1742196181, "entity_records": [ {
    * "policy_record": {}, "hosted_record": { "metadata": { "federation_entity": { "organization_name": "anything",
    * "federation_fetch_endpoint": "https://dev.swedenconnect.se/oidf/im/fetch", "federation_list_endpoint":
@@ -87,7 +87,8 @@ public class EntityResponseFormatter {
    *
    * @param entityEntity an {@code EntityEntity} object containing entity settings and metadata
    * @return a {@code Map<String, Object>} representing the response for the entity. If the entity type is
-   *     {@code HOSTED_ENTITY}, the return value contains metadata specific to hosted entities. Otherwise, it contains
+   *     {@code FEDERATION_ENTITY}, the return value contains metadata specific to hosted entities. Otherwise, it
+   *     contains
    *     the mapped entity settings.
    */
   public Map<String, Object> createEntityResponse(final EntityEntity entityEntity) {
@@ -99,7 +100,7 @@ public class EntityResponseFormatter {
             SettingsEntity::castValue
         ));
 
-    if (entityEntity.getEntityType() == EntityKeyType.HOSTED_ENTITY) {
+    if (entityEntity.getEntityType() == EntityKeyType.FEDERATION_ENTITY) {
       entityData.remove(METADATA_ATT);
       final Map<String, Object> metadata = new HashMap<>();
 
