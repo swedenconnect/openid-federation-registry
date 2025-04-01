@@ -16,6 +16,7 @@
 
 package se.swedenconnect.oidf.entity.registry.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -27,10 +28,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import se.swedenconnect.oidf.entity.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.entity.registry.entity.FkKeyType;
+import se.swedenconnect.oidf.entity.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.entity.registry.service.OptionsCRUDSelector;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -39,6 +43,7 @@ import java.util.UUID;
  *
  * @author Per Fredrik Plars
  */
+@Slf4j
 @RestController
 @RequestMapping("/registry/v1/options")
 public class OptionsApiController {
@@ -113,7 +118,6 @@ public class OptionsApiController {
       @PathVariable("optionsgroup") final String optionsgroup,
       @PathVariable(name = "identifier") final UUID identifier,
       @RequestBody final OptionsRecord record) {
-
     final OptionsRecord optionsRecord = this.optionsCRUDSelector.create(
         FkKeyType.valueOf(optionsgroup.toUpperCase()), identifier, record);
     return ResponseEntity.status(HttpStatus.CREATED).body(optionsRecord);
