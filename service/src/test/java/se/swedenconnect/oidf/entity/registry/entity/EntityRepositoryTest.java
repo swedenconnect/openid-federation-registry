@@ -46,7 +46,7 @@ public class EntityRepositoryTest {
     // Given
     final EntityEntity entity = new EntityEntity();
     entity.setEntityId(UUID.randomUUID());
-    entity.setEntityType(EntityKeyType.HOSTED_ENTITY);
+    entity.setEntityType(EntityKeyType.FEDERATION_ENTITY);
     // When
     EntityEntity savedEntity = entityRepository.save(entity);
 

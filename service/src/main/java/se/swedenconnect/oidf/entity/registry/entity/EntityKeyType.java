@@ -22,6 +22,6 @@ package se.swedenconnect.oidf.entity.registry.entity;
  * @author Per Fredrik Plars
  */
 public enum EntityKeyType {
-  HOSTED_ENTITY,
+  FEDERATION_ENTITY,
   SUBORDINATE_ENTITY
 }

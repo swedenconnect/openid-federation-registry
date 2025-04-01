@@ -194,7 +194,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
         .filter(value -> Objects.equals(value.getKey(), parameter))
         .findFirst()
         .ifPresent(value ->
-            value.setOptions(this.entityRepository.findByEntityType(EntityKeyType.HOSTED_ENTITY)
+            value.setOptions(this.entityRepository.findByEntityType(EntityKeyType.FEDERATION_ENTITY)
                 .stream()
                 .filter(this.hasRightOrganizationIdEntityPredicate())
                 .map(entity ->
@@ -213,7 +213,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
         .filter(value -> value.getKey().equals(parameter))
         .map(SettingsEntity::getValue)
         .map(UUID::fromString)
-        .map(s -> this.entityRepository.findByEntityIdAndEntityType(s, EntityKeyType.HOSTED_ENTITY))
+        .map(s -> this.entityRepository.findByEntityIdAndEntityType(s, EntityKeyType.FEDERATION_ENTITY))
         .map(moduleEntity -> moduleEntity.orElseThrow(() ->
             new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 "Invalid %s, does not exist".formatted(parameter))))
