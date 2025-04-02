@@ -1,43 +1,24 @@
-name: Automated publication of docker image
+name: Versioned publication of docker image
 on:
   push:
     tags:
       - 'v*'
 jobs:
-  build-release:
-    runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      contents: read
-      attestations: write
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: 'Login to GitHub Container Registry'
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{github.actor}}
-          password: ${{secrets.GITHUB_TOKEN}}
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-          cache: 'maven'
-      - run: mvn clean install --no-transfer-progress
-      - run: cd service; DOCKER_REPO=ghcr.io mvn clean package jib:build -Djib.to.tags=$tag --no-transfer-progress
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ github.ref_name }}
+  prepare:
+    uses: swedenconnect/openid-federation-commons/.github/workflows/mvn-artifact-version-prepare.yml@workflow
+    secrets: inherit
+    with:
+      revision-property: service-revision
   release:
-    name: Release pushed tag
-    runs-on: ubuntu-latest
-    steps:
-      - name: Create release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ github.ref_name }}
-        run: |
-          gh release create "$tag" \
-              --repo="$GITHUB_REPOSITORY" \
-              --title="${GITHUB_REPOSITORY#*/} ${tag#v}" \
+    uses: swedenconnect/openid-federation-commons/.github/workflows/docker-ghcr-publish.yml@workflow
+    secrets: inherit
+    with:
+      service-path: service
+    needs: prepare
+  finalize-release:
+    uses: swedenconnect/openid-federation-commons/.github/workflows/finalize.yml@workflow
+    secrets: inherit
+    with:
+      auto-update-revision: false
+      revision-property: service-revision
+    needs: release

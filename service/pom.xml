@@ -24,7 +24,7 @@
     <parent>
         <groupId>se.swedenconnect.oidf</groupId>
         <artifactId>oidf-entity-registry-parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>${service-revision}</version>
     </parent>
 
     <artifactId>openid-federation-registry</artifactId>
