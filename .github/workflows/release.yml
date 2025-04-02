@@ -5,13 +5,13 @@ on:
       - 'v*'
 jobs:
   release:
-    uses: swedenconnect/openid-federation-commons/.github/workflows/docker-ghcr-publish.yml@workflow
+    uses: swedenconnect/openid-federation-commons/.github/workflows/docker-ghcr-publish.yml@main
     secrets: inherit
     with:
       service-path: service
       revision-property: service-revision
   finalize-release:
-    uses: swedenconnect/openid-federation-commons/.github/workflows/finalize.yml@workflow
+    uses: swedenconnect/openid-federation-commons/.github/workflows/finalize.yml@main
     secrets: inherit
     with:
       auto-update-revision: false
