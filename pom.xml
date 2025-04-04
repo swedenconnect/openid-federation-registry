@@ -25,7 +25,7 @@
     </parent>
     <artifactId>oidf-entity-registry-parent</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>${service-revision}</version>
 
     <name>Sweden Connect :: OpenID Federation :: Entity Registry :: Parent POM</name>
     <description>Parent POM for Sweden Connect OpenID Federation Entity Registry</description>
@@ -78,6 +78,8 @@
         <nimbus-oauth2-oidc-sdk.version>11.22</nimbus-oauth2-oidc-sdk.version>
         <spring-boot.version>3.4.1</spring-boot.version>
         <credentials-support.version>2.0.0</credentials-support.version>
+
+        <service-revision>0.5.10-SNAPSHOT</service-revision>
     </properties>
 
     <repositories>
@@ -102,4 +104,34 @@
     <modules>
         <module>service</module>
     </modules>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>1.1.0</version>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>flatten.clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>
