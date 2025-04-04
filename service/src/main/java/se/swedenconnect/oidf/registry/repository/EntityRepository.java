@@ -34,8 +34,8 @@ import java.util.UUID;
  */
 public interface EntityRepository extends JpaRepository<EntityEntity, UUID> {
   /**
-   * Retrieves an {@link Optional} containing an {@link EntityEntity} if an entity with the
-   * specified ID and entity type exists.
+   * Retrieves an {@link Optional} containing an {@link EntityEntity} if an entity with the specified ID and entity type
+   * exists.
    *
    * @param id the unique identifier of the entity
    * @param entityType the type of the entity, specified as {@link EntityKeyType}

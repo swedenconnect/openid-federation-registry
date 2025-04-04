@@ -55,20 +55,6 @@ public class HostedRecord implements Serializable {
   }
 
   /**
-   * @return this instance converted to json (map) structure for nimbus
-   */
-  public Map<String, Object> toJson() {
-    return Map.of(
-        "authority_hints", Optional.ofNullable(this.authorityHints).orElseGet(List::of),
-        "metadata", this.metadata,
-        "trust_mark_sources", Optional.ofNullable(this.trustMarkSources)
-            .map(tms -> tms.stream()
-                .map(TrustMarkSource::toJson)
-                .toList()).orElseGet(List::of)
-    );
-  }
-
-  /**
    * @param json to create instance from
    * @return new instance
    */
@@ -87,6 +73,20 @@ public class HostedRecord implements Serializable {
             .toList()
         ).orElseGet(List::of),
         Optional.ofNullable(authorityHints).orElseGet(List::of)
+    );
+  }
+
+  /**
+   * @return this instance converted to json (map) structure for nimbus
+   */
+  public Map<String, Object> toJson() {
+    return Map.of(
+        "authority_hints", Optional.ofNullable(this.authorityHints).orElseGet(List::of),
+        "metadata", this.metadata,
+        "trust_mark_sources", Optional.ofNullable(this.trustMarkSources)
+            .map(tms -> tms.stream()
+                .map(TrustMarkSource::toJson)
+                .toList()).orElseGet(List::of)
     );
   }
 }

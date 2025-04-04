@@ -53,10 +53,17 @@ public class TrustMarkSubjectEntity extends BaseEntity {
   @Id
   @Column(name = "trustmarksubject_id", nullable = false, updatable = false)
   private UUID trustmarksubjectId;
+  @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+  @JoinColumn(name = "trustmark_id", referencedColumnName = "trustmark_id")
+  private TrustMarkEntity trustMark;
+  @OneToMany(cascade = CascadeType.DETACH, fetch = FetchType.LAZY)
+  @JoinColumn(name = "fk_id", referencedColumnName = "trustmarksubject_id", insertable = false, updatable = false)
+  @Filter(name = "fkTypeTMSFilter", condition = "fk_type = :fkTypeParam")
+  private List<SettingsEntity> settingsEntityList;
 
   /**
-   * Constructs a new TrustMarkSubjectEntity with the specified trustmark subject ID, associated TrustMarkEntity,
-   * and a list of SettingsEntity instances.
+   * Constructs a new TrustMarkSubjectEntity with the specified trustmark subject ID, associated TrustMarkEntity, and a
+   * list of SettingsEntity instances.
    *
    * @param trustmarksubjectId the unique identifier for the TrustMarkSubjectEntity
    * @param trustMark the TrustMarkEntity instance associated with this TrustMarkSubjectEntity
@@ -68,10 +75,6 @@ public class TrustMarkSubjectEntity extends BaseEntity {
     this.trustMark = trustMark;
     this.settingsEntityList = settingsEntityList;
   }
-
-  @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-  @JoinColumn(name = "trustmark_id", referencedColumnName = "trustmark_id")
-  private TrustMarkEntity trustMark;
 
   /**
    * Retrieves the unique identifier of the associated TrustMarkEntity.
@@ -92,10 +95,5 @@ public class TrustMarkSubjectEntity extends BaseEntity {
     this.trustMark = trustMark;
     trustMark.getTrustmarksubjects().add(this);
   }
-
-  @OneToMany(cascade = CascadeType.DETACH, fetch = FetchType.LAZY)
-  @JoinColumn(name = "fk_id", referencedColumnName = "trustmarksubject_id", insertable = false, updatable = false)
-  @Filter(name = "fkTypeTMSFilter", condition = "fk_type = :fkTypeParam")
-  private List<SettingsEntity> settingsEntityList;
 
 }

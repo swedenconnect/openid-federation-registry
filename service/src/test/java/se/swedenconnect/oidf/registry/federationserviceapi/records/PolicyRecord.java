@@ -30,6 +30,9 @@ import java.util.Map;
 @Setter
 public class PolicyRecord implements Serializable {
 
+  private String id;
+  private Map<String, Object> policy;
+
   /**
    * Constructor.
    *
@@ -40,15 +43,11 @@ public class PolicyRecord implements Serializable {
     this.id = id;
     this.policy = policy;
   }
-
   /**
    * Default constructor.
    */
   public PolicyRecord() {
   }
-
-  private String id;
-  private Map<String, Object> policy;
 
   /**
    * @param policyRecord json object

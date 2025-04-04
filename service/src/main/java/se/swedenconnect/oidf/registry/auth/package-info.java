@@ -15,6 +15,7 @@
  */
 /**
  * Package for auth.
+ *
  * @author Felix Hellman
  */
 package se.swedenconnect.oidf.registry.auth;

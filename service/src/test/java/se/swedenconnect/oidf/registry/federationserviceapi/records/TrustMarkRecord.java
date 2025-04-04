@@ -48,17 +48,6 @@ public class TrustMarkRecord implements Serializable {
     this.delegation = delegation;
   }
 
-  public Map<String, Object> toJson() {
-    final Map<String, Object> json = new HashMap<>();
-    json.put("trust_mark_issuer_id", this.trustMarkIssuerId);
-    json.put("trust_mark_id", this.trustMarkId);
-    json.put("delegation", this.delegation);
-    json.put("ref", this.ref);
-    json.put("logo_uri", this.logoUri);
-    json.put("subjects", this.subjects.stream().map(TrustMarkSubjectRecord::toJson).toList());
-    return json;
-  }
-
   public static TrustMarkRecord fromJson(final Map<String, Object> json) {
     final JsonObject jsonObject = new JsonObject(json);
 
@@ -74,5 +63,16 @@ public class TrustMarkRecord implements Serializable {
             .map(TrustMarkSubjectRecord::fromJson)
             .toList())
         .build();
+  }
+
+  public Map<String, Object> toJson() {
+    final Map<String, Object> json = new HashMap<>();
+    json.put("trust_mark_issuer_id", this.trustMarkIssuerId);
+    json.put("trust_mark_id", this.trustMarkId);
+    json.put("delegation", this.delegation);
+    json.put("ref", this.ref);
+    json.put("logo_uri", this.logoUri);
+    json.put("subjects", this.subjects.stream().map(TrustMarkSubjectRecord::toJson).toList());
+    return json;
   }
 }

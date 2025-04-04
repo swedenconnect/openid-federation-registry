@@ -78,8 +78,6 @@ class OptionsApiControllerIT {
         HttpStatus.CREATED,
         TestDataOperations.defaultTrustMarkIssuer(entityId));
 
-
-
     testDataOperations.createPolicies(JwtTestUtils.OrganisationType.PM);
 
     testDataOperations.createResolver(UUID.randomUUID(),
@@ -91,8 +89,6 @@ class OptionsApiControllerIT {
         JwtTestUtils.OrganisationType.PM,
         HttpStatus.CREATED,
         OptionsTestData.TrustAnchorTestData.builder().entityId(entityId).build());
-
-
 
     final JsonNode responseBody = testDataOperations.listAll(JwtTestUtils.OrganisationType.PM);
     assertThat(responseBody).isNotNull();

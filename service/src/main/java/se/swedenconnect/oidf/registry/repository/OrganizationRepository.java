@@ -23,9 +23,8 @@ import java.util.UUID;
 
 /**
  * OrganizationRepository is a JPA repository interface for performing database operations on {@link OrganizationEntity}
- * objects.
- * This repository provides standard CRUD functionality and enables the use of custom queries to manage and access
- * organization data in the system. The entity is identified by a {@link UUID}.
+ * objects. This repository provides standard CRUD functionality and enables the use of custom queries to manage and
+ * access organization data in the system. The entity is identified by a {@link UUID}.
  *
  * @author Per Fredrik Plars
  */

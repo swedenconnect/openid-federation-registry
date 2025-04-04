@@ -42,24 +42,6 @@ import java.util.Date;
 @Component
 public class JwtTestUtils {
 
-  public enum OrganisationType {
-    PM("Pensionsmyndigheten", "55555", "http://www.pm.se/oidf"),
-    AF("Arbetsförmedlingen", "66666", "http://www.af.se/oidf"),
-    SKATT("Skatteverket", "77777", "http://www.skv.se/oidf"),
-    ;
-
-    final String name;
-    final String orgId;
-    final String domainPrefix;
-
-    OrganisationType(String name, String orgId, String domainPrefix) {
-      this.name = name;
-      this.orgId = orgId;
-      this.domainPrefix = domainPrefix;
-    }
-
-  }
-
   /**
    * If a token is needed for external testing
    *
@@ -135,6 +117,24 @@ public class JwtTestUtils {
         NoSuchAlgorithmException | CertificateException |
         UnrecoverableKeyException e) {
       throw new RuntimeException(e);
+    }
+
+  }
+
+  public enum OrganisationType {
+    PM("Pensionsmyndigheten", "55555", "http://www.pm.se/oidf"),
+    AF("Arbetsförmedlingen", "66666", "http://www.af.se/oidf"),
+    SKATT("Skatteverket", "77777", "http://www.skv.se/oidf"),
+    ;
+
+    final String name;
+    final String orgId;
+    final String domainPrefix;
+
+    OrganisationType(String name, String orgId, String domainPrefix) {
+      this.name = name;
+      this.orgId = orgId;
+      this.domainPrefix = domainPrefix;
     }
 
   }

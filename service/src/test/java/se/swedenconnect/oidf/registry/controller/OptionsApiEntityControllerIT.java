@@ -72,7 +72,6 @@ class OptionsApiEntityControllerIT {
         HttpMethod.POST);
   }
 
-
   @Test
   public void testCRUDHostedEntity() {
 
@@ -136,7 +135,6 @@ class OptionsApiEntityControllerIT {
 
     assertEquals(2, response.size());
 
-
   }
 
   @Test
@@ -164,7 +162,6 @@ class OptionsApiEntityControllerIT {
         JwtTestUtils.OrganisationType.SKATT);
 
   }
-
 
   @Test
   public void testHostedEntityWithDifferentIssuerAndSubject() throws IOException {
@@ -238,6 +235,5 @@ class OptionsApiEntityControllerIT {
         JwtTestUtils.OrganisationType.SKATT);
 
   }
-
 
 }

@@ -25,8 +25,8 @@ import java.util.UUID;
 
 /**
  * The RegistryAuditServiceAuditEvent class implements the RegistryAuditService interface to provide audit event logging
- * functionality.  This service utilizes an ApplicationEventPublisher to publish audit events and
- * an AuditorAware to determine the current user performing the actions.
+ * functionality.  This service utilizes an ApplicationEventPublisher to publish audit events and an AuditorAware to
+ * determine the current user performing the actions.
  *
  * @author Per Fredrik Plars
  */
@@ -56,8 +56,6 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   public RegistryAuditServiceAdapter() {
     this(new ObjectMapper());
   }
-
-
 
   @Override
   public void optionsCreate(final UUID optionsRecordId, final FkKeyType fkKeyType, final OptionsRecord oldRecord,

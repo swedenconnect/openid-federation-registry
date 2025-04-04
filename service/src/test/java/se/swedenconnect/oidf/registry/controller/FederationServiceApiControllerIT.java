@@ -145,7 +145,6 @@ class FederationServiceApiControllerIT {
         OptionsTestData.SubordinateEntityTestData.builder()
             .build());
 
-
     return registryProperties.instances().stream().findFirst()
         .map(instanceProperties -> instanceProperties.instanceId().toString())
         .map(UUID::fromString).orElseThrow();
@@ -164,13 +163,13 @@ class FederationServiceApiControllerIT {
     assertNotNull(claim);
     assertFalse(claim.isEmpty());
     claim.stream().forEach(claimMap -> {
-          try {
-            EntityRecord.fromJson((Map<String, Object>) claimMap);
-          }
-          catch (ParseException e) {
-            throw new RuntimeException(e);
-          }
-        });
+      try {
+        EntityRecord.fromJson((Map<String, Object>) claimMap);
+      }
+      catch (ParseException e) {
+        throw new RuntimeException(e);
+      }
+    });
 
   }
 
@@ -226,6 +225,5 @@ class FederationServiceApiControllerIT {
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
   }
-
 
 }

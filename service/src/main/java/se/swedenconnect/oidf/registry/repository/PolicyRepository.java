@@ -36,8 +36,8 @@ public interface PolicyRepository extends JpaRepository<PolicyEntity, UUID> {
    * Retrieves a {@link PolicyEntity} associated with the specified organization ID.
    *
    * @param organizationId the unique identifier of the organization whose policy is to be retrieved
-   * @return an {@link Optional} containing the {@link PolicyEntity} if found, or an empty {@link Optional}
-   * if no policy exists for the given organization ID
+   * @return an {@link Optional} containing the {@link PolicyEntity} if found, or an empty {@link Optional} if no policy
+   *     exists for the given organization ID
    */
   List<PolicyEntity> findByOrganizationId(UUID organizationId);
 

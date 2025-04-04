@@ -53,6 +53,7 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
   private final SettingsRepository settingsRepository;
   private final PropertyValidators validatorFactory = new PropertyValidators();
   private final Supplier<OrganizationEntity> userAssignedOrganization;
+
   protected OptionsCRUDAdapter(
       final SettingsRepository settingsRepository,
       final Supplier<OrganizationEntity> userAssignedOrganization) {
@@ -107,7 +108,6 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
             .toList())
         .build();
   }
-
 
   protected List<SettingsEntity> getTemplateSettings(final FkKeyType fkkeytype) {
     final List<SettingsEntity> templates = this.settingsRepository.findByFkTypeAndFkId(fkkeytype.name(), "TEMPLATE");

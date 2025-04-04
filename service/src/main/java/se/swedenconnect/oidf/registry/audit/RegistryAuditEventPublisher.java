@@ -24,10 +24,10 @@ import org.springframework.data.domain.AuditorAware;
 /**
  * The RegistryAuditServiceAuditEvent class implements the RegistryAuditService interface to provide audit event logging
  * functionality for the Federation API. This service utilizes an ApplicationEventPublisher to publish audit events and
- * an AuditorAware to determine the current user performing the actions. It logs the following types of actions
- * as audit events: - Read operations for federation entities - Read operations for trust marks subject to an entity -
- * Read operations for federation policies Audit events are constructed using FederationAuditEvent builder and are
- * published using the configured ApplicationEventPublisher.
+ * an AuditorAware to determine the current user performing the actions. It logs the following types of actions as audit
+ * events: - Read operations for federation entities - Read operations for trust marks subject to an entity - Read
+ * operations for federation policies Audit events are constructed using FederationAuditEvent builder and are published
+ * using the configured ApplicationEventPublisher.
  *
  * @author Per Fredrik Plars
  */
@@ -42,8 +42,7 @@ public class RegistryAuditEventPublisher extends RegistryAuditServiceAdapter {
    * RegistryAuditServiceAdapter to provide custom event publishing and auditing capabilities for the Federation API.
    *
    * @param publisher the ApplicationEventPublisher used to publish audit events to the application's event system.
-   * @param currentUser the AuditorAware responsible for determining the current user performing the
-   *     actions.
+   * @param currentUser the AuditorAware responsible for determining the current user performing the actions.
    * @param mapper the ObjectMapper responsible for handling JSON conversion or serialization processes.
    */
   public RegistryAuditEventPublisher(

@@ -36,6 +36,7 @@ public class RegistryJwtConverter implements Converter<Jwt, AbstractAuthenticati
 
   /**
    * Constructor
+   *
    * @param organizationService to use for creating/finding org
    */
   public RegistryJwtConverter(final OrganizationService organizationService) {

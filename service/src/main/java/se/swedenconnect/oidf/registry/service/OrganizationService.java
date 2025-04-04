@@ -35,6 +35,7 @@ import java.util.UUID;
 public class OrganizationService {
   final OrganizationRepository organizationRepository;
   final InstanceRepository instanceRepository;
+
   /**
    * Constructs an instance of OrganizationService, initializing the organization and instance repositories required for
    * operations related to organizations and their instances in the registry service.

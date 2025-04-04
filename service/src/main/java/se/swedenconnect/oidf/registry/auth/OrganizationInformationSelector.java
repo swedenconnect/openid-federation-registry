@@ -57,7 +57,8 @@ public class OrganizationInformationSelector implements HandlerMethodArgumentRes
       return Optional.ofNullable(selectedOrgNumber)
           .map(registryClaims::getByOrgNumber)
           .orElseGet(() -> registryClaims.getOrg().getFirst());
-    } else {
+    }
+    else {
       throw new IllegalArgumentException("Wrong authentication class, check supportsParameter method.");
     }
   }

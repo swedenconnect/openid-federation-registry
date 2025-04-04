@@ -63,8 +63,8 @@ public class RegistryConfig {
   private final RegistryProperties registryProperties;
 
   /**
-   * Constructs a RegistryConfig object, initializing various repositories and services required
-   * for the registry configuration.
+   * Constructs a RegistryConfig object, initializing various repositories and services required for the registry
+   * configuration.
    *
    * @param policyRepository a repository for managing policies
    * @param instanceRepository a repository for managing instance data
@@ -77,6 +77,15 @@ public class RegistryConfig {
 
     this.instanceRepository = instanceRepository;
     this.registryProperties = registryProperties;
+  }
+
+  private static boolean hasOrg(final String org_nr, final InstanceEntity entity) {
+    if (entity.getOrganizations() == null) {
+      return false;
+    }
+    return entity.getOrganizations()
+        .stream()
+        .noneMatch(o -> o.getOrgNumber().equals(org_nr));
   }
 
   /**
@@ -180,15 +189,6 @@ public class RegistryConfig {
           }
           this.instanceRepository.saveAndFlush(entity);
         });
-  }
-
-  private static boolean hasOrg(final String org_nr, final InstanceEntity entity) {
-    if (entity.getOrganizations() == null) {
-      return false;
-    }
-    return entity.getOrganizations()
-        .stream()
-        .noneMatch(o -> o.getOrgNumber().equals(org_nr));
   }
 
   @Primary

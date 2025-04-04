@@ -57,8 +57,8 @@ public class InstanceEntity extends BaseEntity {
   private boolean useForDefaultAssignment;
 
   /**
-   * Adds an organization to the set of organizations associated with this instance and sets this instance
-   * as the parent of the provided organization.
+   * Adds an organization to the set of organizations associated with this instance and sets this instance as the parent
+   * of the provided organization.
    *
    * @param organization the {@code OrganizationEntity} to be added to the instance's set of organizations.
    */

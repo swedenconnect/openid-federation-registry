@@ -105,5 +105,4 @@ class OptionsApiPolicyControllerIT {
         OptionsTestData.PolicyTestData.builder().policy(null).build());
   }
 
-
 }

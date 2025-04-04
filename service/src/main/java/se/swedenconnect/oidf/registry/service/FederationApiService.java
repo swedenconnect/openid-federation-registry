@@ -51,29 +51,23 @@ import static se.swedenconnect.oidf.registry.entity.FkKeyType.TRUSTMARKISSUER;
 @Slf4j
 public class FederationApiService {
 
+  public static final String ISSUER_ENTITY_IDENTIFIER = "issuer_entity_identifier";
+  public static final String ENTITY_IDENTIFIER = "entity_identifier";
+  public static final String POLICY_ID = "policy_id";
+  public static final String POLICY_RECORD = "policy_record";
+  public static final String TRUST_MARK_ISSUERS = "trust_mark_issuers";
+  public static final String TRUST_ANCHORS = "trust_anchors";
+  public static final String RESOLVERS = "resolvers";
+  public static final String HOSTED_RECORD_ATT = "hosted_record";
+  public static final String METADATA_ATT = "metadata";
+  public static final String FEDERATION_ENTITY_ATT = "federation_entity";
+  public static final String POLICY_ATT = "policy";
   private final PolicyRepository policyRepository;
   private final InstanceRepository instanceRepository;
   private final String jwkIssuer;
   private final Duration jwkExpiryDuration;
   private final JWTSupport jwtSupport;
-
   private final EntityResponseFormatter entityResponseFormatter = new EntityResponseFormatter();
-
-  public static final String ISSUER_ENTITY_IDENTIFIER = "issuer_entity_identifier";
-  public static final String ENTITY_IDENTIFIER = "entity_identifier";
-  public static final String POLICY_ID = "policy_id";
-  public static final String POLICY_RECORD = "policy_record";
-
-  public static final String TRUST_MARK_ISSUERS = "trust_mark_issuers";
-  public static final String TRUST_ANCHORS = "trust_anchors";
-
-  public static final String RESOLVERS = "resolvers";
-
-  public static final String HOSTED_RECORD_ATT = "hosted_record";
-  public static final String METADATA_ATT = "metadata";
-  public static final String FEDERATION_ENTITY_ATT = "federation_entity";
-  public static final String POLICY_ATT = "policy";
-
 
   /**
    * Constructs a FederationApiService instance to handle OpenID Connect Federation related operations.

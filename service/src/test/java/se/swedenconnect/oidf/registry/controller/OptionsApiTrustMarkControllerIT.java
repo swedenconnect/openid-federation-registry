@@ -37,7 +37,6 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-
 /**
  * Testing the new optional api
  *
@@ -54,6 +53,30 @@ class OptionsApiTrustMarkControllerIT {
 
   @Autowired
   private TestDataOperations testDataOperations;
+
+  private static void assertThatTrustmarkIdOptionExist(final OptionsRecord optionsRecord, final UUID tmiId1) {
+    long count = optionsRecord.getOption()
+        .stream()
+        .filter(values -> values.getKey().equals("trustmark_id"))
+        .flatMap(values -> values.getOptions().stream())
+        .map(OptionRecord::getKey)
+        .filter(key -> key.equals(tmiId1.toString()))
+        .count();
+
+    assertEquals(1, count, "Did not find trustmarkissuer_id: " + tmiId1.toString());
+  }
+
+  private static void assertThatTrustmarkissueridOptionExist(final OptionsRecord optionsRecord, final UUID tmiId1) {
+    long count = optionsRecord.getOption()
+        .stream()
+        .filter(values -> values.getKey().equals("trustmarkissuer_id"))
+        .flatMap(values -> values.getOptions().stream())
+        .map(OptionRecord::getKey)
+        .filter(key -> key.equals(tmiId1.toString()))
+        .count();
+
+    assertEquals(1, count, "Did not find trustmarkissuer_id: " + tmiId1.toString());
+  }
 
   @Test
   public void testOptionsTrustMarkId() throws IOException {
@@ -79,8 +102,6 @@ class OptionsApiTrustMarkControllerIT {
         JwtTestUtils.OrganisationType.AF,
         HttpStatus.CREATED,
         TestDataOperations.defaultTrustMarkIssuer(entityId2));
-
-
 
     final OptionsRecord optionsRecord1 = testDataOperations.get(FkKeyType.TRUSTMARK,
         null,
@@ -147,30 +168,6 @@ class OptionsApiTrustMarkControllerIT {
     assertThatTrustmarkIdOptionExist(optionsRecord2, tm2);
   }
 
-  private static void assertThatTrustmarkIdOptionExist(final OptionsRecord optionsRecord, final UUID tmiId1) {
-    long count = optionsRecord.getOption()
-        .stream()
-        .filter(values -> values.getKey().equals("trustmark_id"))
-        .flatMap(values -> values.getOptions().stream())
-        .map(OptionRecord::getKey)
-        .filter(key -> key.equals(tmiId1.toString()))
-        .count();
-
-    assertEquals(1, count, "Did not find trustmarkissuer_id: " + tmiId1.toString());
-  }
-
-  private static void assertThatTrustmarkissueridOptionExist(final OptionsRecord optionsRecord, final UUID tmiId1) {
-    long count = optionsRecord.getOption()
-        .stream()
-        .filter(values -> values.getKey().equals("trustmarkissuer_id"))
-        .flatMap(values -> values.getOptions().stream())
-        .map(OptionRecord::getKey)
-        .filter(key -> key.equals(tmiId1.toString()))
-        .count();
-
-    assertEquals(1, count, "Did not find trustmarkissuer_id: " + tmiId1.toString());
-  }
-
   @Test
   public void testCRUDTrustMark() throws IOException {
 
@@ -230,7 +227,6 @@ class OptionsApiTrustMarkControllerIT {
     testDataOperations.get(FkKeyType.TRUSTMARK,
         tmId, HttpStatus.NOT_FOUND, JwtTestUtils.OrganisationType.SKATT);
 
-
   }
 
   @Test
@@ -246,7 +242,6 @@ class OptionsApiTrustMarkControllerIT {
         JwtTestUtils.OrganisationType.SKATT,
         HttpStatus.CREATED,
         TestDataOperations.defaultTrustMarkIssuer(entityId));
-
 
     final UUID tmId = UUID.randomUUID();
 

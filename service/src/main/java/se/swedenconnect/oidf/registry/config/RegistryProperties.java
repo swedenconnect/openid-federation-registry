@@ -122,13 +122,14 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi, L
   }
 
   /**
-   * Represents properties for an instance within the registry. This record holds details such as an instance's
-   * unique identifier, name, a flag indicating if it should be used for default assignment, and a list of
-   * organizational numbers.
-   * @param instanceId               the unique identifier for the instance, must not be null
-   * @param name                     the name of the instance, must not be empty
-   * @param useForDefaultAssignment  flag indicating if this instance should be used for default assignment
-   * @param org_numbers              a list of organizational numbers associated with the instance
+   * Represents properties for an instance within the registry. This record holds details such as an instance's unique
+   * identifier, name, a flag indicating if it should be used for default assignment, and a list of organizational
+   * numbers.
+   *
+   * @param instanceId the unique identifier for the instance, must not be null
+   * @param name the name of the instance, must not be empty
+   * @param useForDefaultAssignment flag indicating if this instance should be used for default assignment
+   * @param org_numbers a list of organizational numbers associated with the instance
    */
   public record InstanceProperties(UUID instanceId,
       String name,
@@ -146,7 +147,6 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi, L
         Assert.isTrue(this.useForDefaultAssignment, "If openid.federation.registry.instances[].org_numbers is empty, "
             + "useForDefaultAssignment must be true");
       }
-
 
     }
   }

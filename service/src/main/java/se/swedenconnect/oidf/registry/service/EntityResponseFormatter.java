@@ -41,41 +41,6 @@ import static se.swedenconnect.oidf.registry.service.FederationApiService.METADA
 @Slf4j
 public class EntityResponseFormatter {
   /**
-   * Enum representing various types of metadata used within the system, each associated with a specific metadata key
-   * and a corresponding format string for constructing metadata URLs based on a base URL.
-   */
-  enum MetadataType {
-    TRUST_MARK_STATUS("trust_mark_status", "%s/trust-mark-issuer/trust_mark_status"),
-    TRUST_MARK_LISTING("trust_mark_listing", "%s/trust-mark-issuer/trust_mark_listing"),
-    TRUST_MARK("trust_mark", "%s/trust-mark-issuer/trust_mark"),
-    RESOLVE("resolve", "%s/trust-anchor/resolve"),
-    DISCOVERY("discovery", "%s/trust-anchor/discovery"),
-    FETCH("fetch", "%s/fetch"),
-    SUBORDINATE_LISTING("subordinate_listing", "%s/subordinate_listing"),
-    ORGANIZATION_NAME("organization_name", "%s");
-
-    final String name;
-    final String value;
-
-    MetadataType(final String name, final String value) {
-      this.name = name;
-      this.value = value;
-    }
-
-    /**
-     * Sets a metadata entry for this type by formatting the value with the given base URL.
-     *
-     * @param baseUrl the base URL to be used for formatting the metadata value
-     * @param metadata the map where the metadata entry will be stored; the key is the name of this type, and the
-     *     value is the formatted string
-     */
-    public void set(final String baseUrl, final Map<String, Object> metadata) {
-      metadata.put(this.name, String.format(this.value, baseUrl));
-    }
-
-  }
-
-  /**
    * Creates a response map based on the provided {@code EntityEntity}. The response includes entity configuration
    * settings mapped by their keys and additional metadata for hosted entities. If the entity type is
    * {@code FEDERATION_ENTITY}, metadata is enriched with federation entity information. Ex: { "iss":
@@ -88,8 +53,7 @@ public class EntityResponseFormatter {
    * @param entityEntity an {@code EntityEntity} object containing entity settings and metadata
    * @return a {@code Map<String, Object>} representing the response for the entity. If the entity type is
    *     {@code FEDERATION_ENTITY}, the return value contains metadata specific to hosted entities. Otherwise, it
-   *     contains
-   *     the mapped entity settings.
+   *     contains the mapped entity settings.
    */
   public Map<String, Object> createEntityResponse(final EntityEntity entityEntity) {
 
@@ -157,6 +121,41 @@ public class EntityResponseFormatter {
           MetadataType.DISCOVERY.set(sub, federationEntity);
         });
     return federationEntity;
+
+  }
+
+  /**
+   * Enum representing various types of metadata used within the system, each associated with a specific metadata key
+   * and a corresponding format string for constructing metadata URLs based on a base URL.
+   */
+  enum MetadataType {
+    TRUST_MARK_STATUS("trust_mark_status", "%s/trust-mark-issuer/trust_mark_status"),
+    TRUST_MARK_LISTING("trust_mark_listing", "%s/trust-mark-issuer/trust_mark_listing"),
+    TRUST_MARK("trust_mark", "%s/trust-mark-issuer/trust_mark"),
+    RESOLVE("resolve", "%s/trust-anchor/resolve"),
+    DISCOVERY("discovery", "%s/trust-anchor/discovery"),
+    FETCH("fetch", "%s/fetch"),
+    SUBORDINATE_LISTING("subordinate_listing", "%s/subordinate_listing"),
+    ORGANIZATION_NAME("organization_name", "%s");
+
+    final String name;
+    final String value;
+
+    MetadataType(final String name, final String value) {
+      this.name = name;
+      this.value = value;
+    }
+
+    /**
+     * Sets a metadata entry for this type by formatting the value with the given base URL.
+     *
+     * @param baseUrl the base URL to be used for formatting the metadata value
+     * @param metadata the map where the metadata entry will be stored; the key is the name of this type, and the
+     *     value is the formatted string
+     */
+    public void set(final String baseUrl, final Map<String, Object> metadata) {
+      metadata.put(this.name, String.format(this.value, baseUrl));
+    }
 
   }
 

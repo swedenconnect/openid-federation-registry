@@ -67,6 +67,61 @@ public class TestDataOperations {
     this.restTemplate = restTemplate;
   }
 
+  public static Function<Values, String> defaultTrustMarkIssuer(UUID entity_id) {
+    return s -> switch (s.getKey()) {
+      case "active" -> "true";
+      case "entity_id" -> entity_id.toString();
+      default -> null;
+    };
+  }
+
+  public static Function<Values, String> defaultTrustMark(UUID trustMarkIssuerId) {
+    return s -> switch (s.getKey()) {
+      case "trust_mark_entity_id" -> "http://tmi.swedenconnect.se/loa3";
+      case "ref_uri" -> "http://doc.swedenconnect.se/loa3";
+      case "logo_uri" -> "http://www.swedenconnect.se/image.png";
+      case "trustmarkissuer_id" -> trustMarkIssuerId.toString();
+      default -> null;
+    };
+  }
+
+  public static Function<Values, String> defaultTrustMarkSubject(UUID trustMarkId) {
+    return s -> switch (s.getKey()) {
+      case "trustmark_id" -> trustMarkId.toString();
+      case "subject" -> "http://www.swedenconnect.se/op1";
+      case "revoked" -> "false";
+      case "granted" -> LocalDateTime.now().minusDays(1).toString();
+      case "expires" -> LocalDateTime.now().plusDays(1).toString();
+      default -> null;
+    };
+  }
+
+  public static Function<Values, String> defaultResolver(final UUID entity_id) {
+    return s -> switch (s.getKey()) {
+      case "active" -> "true";
+      case "trust_anchor" -> "http://www.swedenconnect.se/trustanchor";
+      case "trusted_keys" -> new JWKSet(List.of(genKey(), genKey())).toString();
+      case "entity_id" -> entity_id.toString();
+      default -> null;
+    };
+  }
+
+  public static JWK genKey() {
+    try {
+      final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
+      keyGen.initialize(Curve.P_256.toECParameterSpec());
+
+      final KeyPair keyPair = keyGen.generateKeyPair();
+
+      return new ECKey.Builder(Curve.P_256, (ECPublicKey) keyPair.getPublic()).privateKey(keyPair.getPrivate())
+          .keyID("ec-key-id" + new Random().nextInt(10))
+          .build();
+    }
+    catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public UUID createPolicies(JwtTestUtils.OrganisationType organisationType) {
     return createUpdate(UUID.randomUUID(), FkKeyType.POLICIES, organisationType, HttpStatus.CREATED,
         OptionsTestData.PolicyTestData.builder().build().testData(),
@@ -224,47 +279,6 @@ public class TestDataOperations {
     return createUpdate(id, FkKeyType.TRUSTMARKISSUER, organisationType, expectedHttpStatus, options, HttpMethod.POST);
   }
 
-  public static Function<Values, String> defaultTrustMarkIssuer(UUID entity_id) {
-    return s -> switch (s.getKey()) {
-      case "active" -> "true";
-      case "entity_id" -> entity_id.toString();
-      default -> null;
-    };
-  }
-
-
-
-  public static Function<Values, String> defaultTrustMark(UUID trustMarkIssuerId) {
-    return s -> switch (s.getKey()) {
-      case "trust_mark_entity_id" -> "http://tmi.swedenconnect.se/loa3";
-      case "ref_uri" -> "http://doc.swedenconnect.se/loa3";
-      case "logo_uri" -> "http://www.swedenconnect.se/image.png";
-      case "trustmarkissuer_id" -> trustMarkIssuerId.toString();
-      default -> null;
-    };
-  }
-
-  public static Function<Values, String> defaultTrustMarkSubject(UUID trustMarkId) {
-    return s -> switch (s.getKey()) {
-      case "trustmark_id" -> trustMarkId.toString();
-      case "subject" -> "http://www.swedenconnect.se/op1";
-      case "revoked" -> "false";
-      case "granted" -> LocalDateTime.now().minusDays(1).toString();
-      case "expires" -> LocalDateTime.now().plusDays(1).toString();
-      default -> null;
-    };
-  }
-
-  public static Function<Values, String> defaultResolver(final UUID entity_id) {
-    return s -> switch (s.getKey()) {
-      case "active" -> "true";
-      case "trust_anchor" -> "http://www.swedenconnect.se/trustanchor";
-      case "trusted_keys" -> new JWKSet(List.of(genKey(), genKey())).toString();
-      case "entity_id" -> entity_id.toString();
-      default -> null;
-    };
-  }
-
   public UUID createTrustMark(
       final UUID id,
       final JwtTestUtils.OrganisationType organisationType,
@@ -351,7 +365,6 @@ public class TestDataOperations {
       final Function<Values, String> overrideSettingValues,
       final HttpMethod httpMethod) {
 
-
     final OptionsRecord template = get(configGroup, null, HttpStatus.OK, organisationType);
     template.getOption().forEach(valueNode -> {
       final String value = overrideSettingValues.apply(valueNode);
@@ -390,24 +403,6 @@ public class TestDataOperations {
       final HttpStatus expectedHttpStatus,
       final Function<Values, String> options) {
     return createUpdate(id, FkKeyType.RESOLVER, organisationType, expectedHttpStatus, options, HttpMethod.POST);
-  }
-
-
-
-  public static JWK genKey() {
-    try {
-      final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
-      keyGen.initialize(Curve.P_256.toECParameterSpec());
-
-      final KeyPair keyPair = keyGen.generateKeyPair();
-
-      return new ECKey.Builder(Curve.P_256, (ECPublicKey) keyPair.getPublic()).privateKey(keyPair.getPrivate())
-          .keyID("ec-key-id" + new Random().nextInt(10))
-          .build();
-    }
-    catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public JsonNode listAll(final JwtTestUtils.OrganisationType organisationType) throws JsonProcessingException {

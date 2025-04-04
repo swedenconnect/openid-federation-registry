@@ -1,5 +1,3 @@
-
-
 /*
  * Copyright 2025 Sweden Connect
  *
@@ -102,7 +100,7 @@ CREATE TABLE IF NOT EXISTS trustmark_subject
     `last_modified_by`    VARCHAR(255) NOT NULL,
     PRIMARY KEY (`trustmarksubject_id`),
     FOREIGN KEY (`trustmark_id`) REFERENCES `trustmark` (`trustmark_id`) ON DELETE RESTRICT
-) ENGINE=InnoDB;
+) ENGINE = InnoDB;
 
 -- Settings table
 CREATE TABLE IF NOT EXISTS settings
@@ -120,7 +118,7 @@ CREATE TABLE IF NOT EXISTS settings
     `created_date`       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `last_modified_date` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`property_id`)
-) ENGINE=InnoDB;
+) ENGINE = InnoDB;
 
 -- Policies table
 CREATE TABLE IF NOT EXISTS policies
@@ -134,7 +132,7 @@ CREATE TABLE IF NOT EXISTS policies
     PRIMARY KEY (`policy_id`),
     FOREIGN KEY (`organization_id`) REFERENCES `organization` (`organization_id`) ON DELETE RESTRICT
 
-) ENGINE=InnoDB;
+) ENGINE = InnoDB;
 
 
 

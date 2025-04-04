@@ -49,6 +49,121 @@ import java.util.function.Function;
  */
 public class OptionsTestData {
 
+  private static final Map<String, Map<String, String>> cache = new HashMap<>();
+
+  public static String genJwks() {
+    final JWKSet jwkSet = new JWKSet(List.of(genKey(), genKey()));
+    return jwkSet.toString();
+  }
+
+  public static JWK genKey() {
+    try {
+      final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
+      keyGen.initialize(Curve.P_256.toECParameterSpec());
+
+      final KeyPair keyPair = keyGen.generateKeyPair();
+
+      return new ECKey.Builder(Curve.P_256, (ECPublicKey) keyPair.getPublic()).privateKey(keyPair.getPrivate())
+          .keyID("ec-key-id" + new Random().nextInt(10))
+          .build();
+    }
+    catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static Map<String, String> createFieldMap(Object obj) {
+    Map<String, String> fieldMap = cache.get(obj.getClass().getName());
+    if (fieldMap != null) {
+      return fieldMap;
+    }
+    fieldMap = new HashMap<>();
+    final Class<?> clazz = obj.getClass();
+    for (Field field : clazz.getDeclaredFields()) {
+      field.setAccessible(true);
+      try {
+        final String fieldName = field.getName();
+        final Object fieldValue = field.get(obj);
+        fieldMap.put(toSnakeCase(fieldName), Optional.ofNullable(fieldValue).map(Object::toString).orElse(null));
+      }
+      catch (IllegalAccessException e) {
+        throw new RuntimeException("Reflection error while accessing field: " + field.getName(), e);
+      }
+    }
+    return Collections.unmodifiableMap(fieldMap);
+  }
+
+  public static <T> T instantiateAndFill(Class<T> clazz, Map<String, Object> fieldMap) {
+    try {
+      T instance = clazz.getDeclaredConstructor().newInstance();
+
+      for (Map.Entry<String, Object> entry : fieldMap.entrySet()) {
+        String fieldName = toCamelCase(entry.getKey());
+        String fieldValue = entry.getValue().toString();
+        if (fieldValue == null || fieldValue.isBlank()) {
+          continue;
+        }
+        try {
+          Field field = clazz.getDeclaredField(fieldName);
+          field.setAccessible(true);
+          field.set(instance, castValues(field.getType(), fieldValue));
+        }
+        catch (NoSuchFieldException e) {
+          System.out.println("Field '" + fieldName + "' does not exist in class " + clazz.getSimpleName());
+        }
+      }
+
+      return instance;
+    }
+    catch (Exception e) {
+      throw new RuntimeException("Failed to create or populate object", e);
+    }
+  }
+
+  private static Object castValues(Class classType, String value) {
+    return switch (classType.getSimpleName()) {
+      case "UUID" -> UUID.fromString(value);
+      default -> value;
+    };
+  }
+
+  private static String toCamelCase(String snakeCase) {
+    StringBuilder camelCase = new StringBuilder();
+    boolean toUpperCase = false;
+
+    for (char c : snakeCase.toCharArray()) {
+      if (c == '_') {
+        toUpperCase = true;
+      }
+      else {
+        if (toUpperCase) {
+          camelCase.append(Character.toUpperCase(c));
+          toUpperCase = false;
+        }
+        else {
+          camelCase.append(c);
+        }
+      }
+    }
+
+    return camelCase.toString();
+  }
+
+  private static String toSnakeCase(String camelCase) {
+    StringBuilder snakeCase = new StringBuilder();
+
+    for (char c : camelCase.toCharArray()) {
+      if (Character.isUpperCase(c)) {
+        snakeCase.append('_');
+        snakeCase.append(Character.toLowerCase(c));
+      }
+      else {
+        snakeCase.append(c);
+      }
+    }
+    return snakeCase.toString();
+  }
+
   @Builder
   @NoArgsConstructor
   @AllArgsConstructor
@@ -148,120 +263,6 @@ public class OptionsTestData {
     }
 
     public abstract UUID getId();
-  }
-
-  public static String genJwks() {
-    final JWKSet jwkSet = new JWKSet(List.of(genKey(), genKey()));
-    return jwkSet.toString();
-  }
-
-  public static JWK genKey() {
-    try {
-      final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
-      keyGen.initialize(Curve.P_256.toECParameterSpec());
-
-      final KeyPair keyPair = keyGen.generateKeyPair();
-
-      return new ECKey.Builder(Curve.P_256, (ECPublicKey) keyPair.getPublic()).privateKey(keyPair.getPrivate())
-          .keyID("ec-key-id" + new Random().nextInt(10))
-          .build();
-    }
-    catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private static final Map<String, Map<String, String>> cache = new HashMap<>();
-  public static Map<String, String> createFieldMap(Object obj) {
-    Map<String, String> fieldMap = cache.get(obj.getClass().getName());
-    if (fieldMap != null) {
-      return fieldMap;
-    }
-    fieldMap = new HashMap<>();
-    final Class<?> clazz = obj.getClass();
-    for (Field field : clazz.getDeclaredFields()) {
-      field.setAccessible(true);
-      try {
-        final String fieldName = field.getName();
-        final Object fieldValue = field.get(obj);
-        fieldMap.put(toSnakeCase(fieldName), Optional.ofNullable(fieldValue).map(Object::toString).orElse(null));
-      }
-      catch (IllegalAccessException e) {
-        throw new RuntimeException("Reflection error while accessing field: " + field.getName(), e);
-      }
-    }
-    return Collections.unmodifiableMap(fieldMap);
-  }
-
-  public static <T> T instantiateAndFill(Class<T> clazz, Map<String, Object> fieldMap) {
-    try {
-      T instance = clazz.getDeclaredConstructor().newInstance();
-
-      for (Map.Entry<String, Object> entry : fieldMap.entrySet()) {
-        String fieldName = toCamelCase(entry.getKey());
-        String fieldValue = entry.getValue().toString();
-        if (fieldValue == null || fieldValue.isBlank()) {
-          continue;
-        }
-        try {
-          Field field = clazz.getDeclaredField(fieldName);
-          field.setAccessible(true);
-          field.set(instance, castValues(field.getType(), fieldValue));
-        }
-        catch (NoSuchFieldException e) {
-          System.out.println("Field '" + fieldName + "' does not exist in class " + clazz.getSimpleName());
-        }
-      }
-
-      return instance;
-    }
-    catch (Exception e) {
-      throw new RuntimeException("Failed to create or populate object", e);
-    }
-  }
-
-  private static Object castValues(Class classType, String value) {
-    return switch (classType.getSimpleName()) {
-      case "UUID" -> UUID.fromString(value);
-      default -> value;
-    };
-  }
-
-  private static String toCamelCase(String snakeCase) {
-    StringBuilder camelCase = new StringBuilder();
-    boolean toUpperCase = false;
-
-    for (char c : snakeCase.toCharArray()) {
-      if (c == '_') {
-        toUpperCase = true;
-      }
-      else {
-        if (toUpperCase) {
-          camelCase.append(Character.toUpperCase(c));
-          toUpperCase = false;
-        }
-        else {
-          camelCase.append(c);
-        }
-      }
-    }
-
-    return camelCase.toString();
-  }
-
-  private static String toSnakeCase(String camelCase) {
-    StringBuilder snakeCase = new StringBuilder();
-
-    for (char c : camelCase.toCharArray()) {
-      if (Character.isUpperCase(c)) {
-        snakeCase.append('_');
-        snakeCase.append(Character.toLowerCase(c));
-      }
-      else {
-        snakeCase.append(c);
-      }
-    }
-    return snakeCase.toString();
   }
 
 }

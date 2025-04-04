@@ -48,13 +48,10 @@ public class AuditEventIT {
   @Container
   @ServiceConnection
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
-
-  @Autowired
-  private TestRestTemplate restTemplate;
-
   @Autowired
   TestDataOperations testDataOperations;
-
+  @Autowired
+  private TestRestTemplate restTemplate;
   @Autowired
   private AuditEventRepository auditEventRepository;
 
@@ -71,7 +68,6 @@ public class AuditEventIT {
         JwtTestUtils.OrganisationType.SKATT,
         HttpStatus.CREATED,
         TestDataOperations.defaultTrustMarkIssuer(entityId));
-
 
     final List<AuditEvent> events = auditEventRepository.find(null, null, OPTIONS_CREATED.name());
     assertNotNull(events.getFirst().getPrincipal());

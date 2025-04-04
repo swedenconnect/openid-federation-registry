@@ -44,46 +44,6 @@ import java.util.regex.PatternSyntaxException;
 @Slf4j
 public class PropertyValidators {
 
-  /**
-   * This enumeration defines various types of validation rules that can be applied to data properties. Each constant
-   * represents a specific validation method or criteria used to ensure the integrity and correctness of data values.
-   *
-   * The validation types include: - UUID: Ensures the value is a valid UUID. - LENGTH: Validates the length of a value.
-   * - JSON: Validates if the value is a valid JSON structure. - JWKS: Ensures the value corresponds to a JSON Web Key
-   * Set. - JWK: Validates a single JSON Web Key. - ENDS_WITH: Checks if the value ends with a specific string. -
-   * STARTS_WITH: Checks if the value starts with a specific string. - CONTAINS: Checks if the value contains a specific
-   * substring. - DATE: Validates if the value is a valid date. - BETWEEN: Ensures the value is within a specific range.
-   * - URL: Ensures the value is a valid URL. - JWT: Validates if the value is a valid JSON Web Token. - MATCHES:
-   * Validates if the value matches a specified pattern. - DURATION: Ensures the value represents a valid duration. -
-   * REQUIRED: Marks the value as required (non-null or non-empty). - EMAIL: Validates if the value is a valid email
-   * address. - ALPHA: Ensures the value consists of alphabetic characters only. - ALPHANUMERIC: Validates if the value
-   * contains only alphanumeric characters. - NUMBER: Ensures the value is numeric. - MIN: Checks if the value is
-   * greater than or equal to a minimum value. - MAX: Checks if the value is less than or equal to a maximum value.
-   */
-  public enum ValidationType {
-    UUID,
-    LENGTH,
-    JSON,
-    JWKS,
-    JWK,
-    ENDS_WITH,
-    STARTS_WITH,
-    CONTAINS,
-    DATE,
-    BETWEEN,
-    URL,
-    JWT,
-    MATCHES,
-    DURATION,
-    REQUIRED,
-    EMAIL,
-    ALPHA,
-    ALPHANUMERIC,
-    NUMBER,
-    MIN,
-    MAX
-  }
-
   public static final ObjectMapper mapper = new ObjectMapper();
 
   /**
@@ -114,8 +74,8 @@ public class PropertyValidators {
   }
 
   /**
-   * Determines if the specified validator is supported by checking if the provided validator name matches a value
-   * in the {@code ValidationType} enumeration.
+   * Determines if the specified validator is supported by checking if the provided validator name matches a value in
+   * the {@code ValidationType} enumeration.
    *
    * @param validatorNameSetting the name of the validator to check
    * @return {@code true} if the validator is supported, {@code false} otherwise
@@ -221,7 +181,7 @@ public class PropertyValidators {
         java.time.Duration.parse(value); // Parses ISO-8601 duration format
       }
       catch (final Exception ex) {
-        throw new PropertyValidationFailException(key,value, "Invalid duration format. "
+        throw new PropertyValidationFailException(key, value, "Invalid duration format. "
             + "Expected ISO-8601 duration (e.g., PT1H30M). Error: " + ex.getMessage());
       }
     };
@@ -266,7 +226,7 @@ public class PropertyValidators {
         java.time.LocalDate.parse(value);
       }
       catch (final Exception e) {
-        throw new PropertyValidationFailException(key,value, "Invalid date format. Use YYYY-MM-DD");
+        throw new PropertyValidationFailException(key, value, "Invalid date format. Use YYYY-MM-DD");
       }
     };
   }
@@ -354,11 +314,11 @@ public class PropertyValidators {
 
       final int length = value.length();
       if (length < minLength) {
-        throw new PropertyValidationFailException(key,value,
+        throw new PropertyValidationFailException(key, value,
             "Value has to be at least %d characters long".formatted(minLength));
       }
       if (length > maxLength) {
-        throw new PropertyValidationFailException(key,value,
+        throw new PropertyValidationFailException(key, value,
             "Value cannot be longer than %d characters".formatted(maxLength));
       }
     };
@@ -410,7 +370,7 @@ public class PropertyValidators {
         new URI(value).toURL();
       }
       catch (final Exception e) {
-        throw new PropertyValidationFailException(key,value, "Value is not a valid URL: " + e.getMessage());
+        throw new PropertyValidationFailException(key, value, "Value is not a valid URL: " + e.getMessage());
       }
     };
   }
@@ -424,7 +384,7 @@ public class PropertyValidators {
         mapper.readValue(value, new TypeReference<Map<String, Object>>() {});
       }
       catch (final Exception e) {
-        throw new PropertyValidationFailException(key,value, "Value is not a valid JSON: " + e.getMessage());
+        throw new PropertyValidationFailException(key, value, "Value is not a valid JSON: " + e.getMessage());
       }
     };
   }
@@ -438,7 +398,7 @@ public class PropertyValidators {
         JWK.parse(value);
       }
       catch (final ParseException e) {
-        throw new PropertyValidationFailException(key,value, "Value is not a valid JWK: " + e.getMessage());
+        throw new PropertyValidationFailException(key, value, "Value is not a valid JWK: " + e.getMessage());
       }
     };
   }
@@ -452,7 +412,7 @@ public class PropertyValidators {
         SignedJWT.parse(value);
       }
       catch (final ParseException e) {
-        throw new PropertyValidationFailException(key,value, "Value is not a valid JWT: " + e.getMessage());
+        throw new PropertyValidationFailException(key, value, "Value is not a valid JWT: " + e.getMessage());
       }
     };
   }
@@ -465,24 +425,24 @@ public class PropertyValidators {
 
     return (key, value) -> {
       try {
-        if(value == null || value.isBlank()) {
+        if (value == null || value.isBlank()) {
           return;
         }
         final JsonNode node = mapper.readTree(value);
         final JsonNode keys = node.get("keys");
 
-        if (hasKeysCheck && (keys==null || !keys.elements().hasNext())) {
+        if (hasKeysCheck && (keys == null || !keys.elements().hasNext())) {
           throw new PropertyValidationFailException(key, value, "keys element is expected");
         }
 
         if (!keys.isArray()) {
-          throw new PropertyValidationFailException(key,value, "keys element is expected to be an array");
+          throw new PropertyValidationFailException(key, value, "keys element is expected to be an array");
         }
 
         keys.elements().forEachRemaining(keyNode -> {
 
           if (hasKidCheck && !keyNode.hasNonNull("kid")) {
-            throw new PropertyValidationFailException(key,value, "No kid defined in key element. This is required.");
+            throw new PropertyValidationFailException(key, value, "No kid defined in key element. This is required.");
           }
 
           if (!isPublicCheck) {
@@ -503,7 +463,7 @@ public class PropertyValidators {
         });
       }
       catch (final JsonProcessingException e) {
-        throw new PropertyValidationFailException(key,value, "Value is not a valid JSON. " + e.getMessage());
+        throw new PropertyValidationFailException(key, value, "Value is not a valid JSON. " + e.getMessage());
       }
 
     };
@@ -513,6 +473,46 @@ public class PropertyValidators {
     if (predicate.get()) {
       throw new PropertyValidationFailException(keyName, failMessage);
     }
+  }
+
+  /**
+   * This enumeration defines various types of validation rules that can be applied to data properties. Each constant
+   * represents a specific validation method or criteria used to ensure the integrity and correctness of data values.
+   *
+   * The validation types include: - UUID: Ensures the value is a valid UUID. - LENGTH: Validates the length of a value.
+   * - JSON: Validates if the value is a valid JSON structure. - JWKS: Ensures the value corresponds to a JSON Web Key
+   * Set. - JWK: Validates a single JSON Web Key. - ENDS_WITH: Checks if the value ends with a specific string. -
+   * STARTS_WITH: Checks if the value starts with a specific string. - CONTAINS: Checks if the value contains a specific
+   * substring. - DATE: Validates if the value is a valid date. - BETWEEN: Ensures the value is within a specific range.
+   * - URL: Ensures the value is a valid URL. - JWT: Validates if the value is a valid JSON Web Token. - MATCHES:
+   * Validates if the value matches a specified pattern. - DURATION: Ensures the value represents a valid duration. -
+   * REQUIRED: Marks the value as required (non-null or non-empty). - EMAIL: Validates if the value is a valid email
+   * address. - ALPHA: Ensures the value consists of alphabetic characters only. - ALPHANUMERIC: Validates if the value
+   * contains only alphanumeric characters. - NUMBER: Ensures the value is numeric. - MIN: Checks if the value is
+   * greater than or equal to a minimum value. - MAX: Checks if the value is less than or equal to a maximum value.
+   */
+  public enum ValidationType {
+    UUID,
+    LENGTH,
+    JSON,
+    JWKS,
+    JWK,
+    ENDS_WITH,
+    STARTS_WITH,
+    CONTAINS,
+    DATE,
+    BETWEEN,
+    URL,
+    JWT,
+    MATCHES,
+    DURATION,
+    REQUIRED,
+    EMAIL,
+    ALPHA,
+    ALPHANUMERIC,
+    NUMBER,
+    MIN,
+    MAX
   }
 
 }
