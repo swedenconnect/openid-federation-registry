@@ -177,32 +177,7 @@
             </resource>
         </resources>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.5.0</version>
-                <executions>
-                    <execution>
-                        <id>unpack-openapi</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>unpack</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>se.swedenconnect.oidf</groupId>
-                                    <artifactId>openid-federation-entity-registry-api</artifactId>
-                                    <version>0.3.6</version>
-                                    <type>jar</type>
-                                    <includes>oidf-entity-registry-api.yaml</includes>
-                                    <outputDirectory>${project.build.directory}/openapi</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
@@ -216,7 +191,8 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.build.directory}/openapi/oidf-entity-registry-api.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/src/main/resources/schema/oidf-entity-registry-api.yaml
+                            </inputSpec>
                             <generatorName>java</generatorName>
                             <generateApis>false</generateApis>
                             <generateModels>true</generateModels>
@@ -229,10 +205,8 @@
                                 <modelPackage>se.swedenconnect.oidf.registry.api.model</modelPackage>
                                 <serializableModel>true</serializableModel>
                                 <packageName>se.swedenconnect.oidf.registry.api</packageName>
-
                                 <generateBuilders>true</generateBuilders>
                                 <serializationLibrary>jackson</serializationLibrary>
-
                                 <library>apache-httpclient</library>
                                 <sourceFolder>src/main/generated</sourceFolder>
                                 <openApiNullable>false</openApiNullable>
@@ -240,7 +214,6 @@
                                 <useBeanValidation>true</useBeanValidation>
                                 <java8>true</java8>
                                 <dateLibrary>java8</dateLibrary>
-
                             </configOptions>
                         </configuration>
                     </execution>
@@ -271,6 +244,7 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
+
         </plugins>
     </build>
 
