@@ -23,11 +23,11 @@ import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.registry.api.model.OptionRecord;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.Values;
+import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.entity.ModuleEntity;
-import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.entity.SettingDataType;
 import se.swedenconnect.oidf.registry.entity.SettingsEntity;
 import se.swedenconnect.oidf.registry.repository.EntityRepository;
@@ -39,7 +39,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -57,17 +56,18 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
   private final EntityRepository entityRepository;
 
   /**
-   * Constructor for OptionsCRUDModules, initializes necessary repositories and supplier for operations.
+   * Constructs an instance of the OptionsCRUDModules class.
    *
-   * @param settingsRepository the repository used for accessing and managing settings.
-   * @param userAssignedOrganization a supplier providing the organization entity assigned to the user.
-   * @param moduleRepository the repository for accessing and managing modules.
-   * @param entityRepository the repository for accessing and managing entities.
+   * @param settingsRepository the repository instance for managing settings
+   * @param moduleRepository the repository instance for managing modules
+   * @param entityRepository the repository instance for managing entities
+   * @param organizationService the service instance for managing organizations
    */
   public OptionsCRUDModules(final SettingsRepository settingsRepository,
-      final Supplier<OrganizationEntity> userAssignedOrganization, final ModuleRepository moduleRepository,
-      final EntityRepository entityRepository) {
-    super(settingsRepository, userAssignedOrganization);
+      final ModuleRepository moduleRepository,
+      final EntityRepository entityRepository,
+      final OrganizationService organizationService) {
+    super(settingsRepository, organizationService);
     this.moduleRepository = moduleRepository;
     this.entityRepository = entityRepository;
   }
@@ -84,33 +84,36 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
   }
 
   @Override
-  public OptionsRecord template(final FkKeyType fkKeyType) {
+  public OptionsRecord template(final OrganizationRecord organizationRecord,
+      final FkKeyType fkKeyType) {
     final OptionsRecord record = this.toRecord(this.getTemplateSettings(fkKeyType));
-    this.addOptionsForEntityId(Objects.requireNonNull(record.getOption()));
+    this.addOptionsForEntityId(organizationRecord, Objects.requireNonNull(record.getOption()));
     return record;
   }
 
   @Override
-  public OptionsRecord create(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
+  public OptionsRecord create(final OrganizationRecord organizationRecord,
+      final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
     final Optional<ModuleEntity> moduleEntity = this.moduleRepository
         .findByModuleIdAndModuleType(id, fkKeyType.name());
 
     if (moduleEntity.isPresent()) {
-      super.throwUnauthorizedIfNotMatch(moduleEntity.get().getOrganization().getOrganizationId());
+      super.throwNotFoundIfNotMatch(organizationRecord, moduleEntity.get().getOrganization().getOrganizationId());
       throw new ResponseStatusException(HttpStatus.CONFLICT,
           "Module already exists for:%s %s".formatted(fkKeyType, id));
     }
 
     final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
-    final List<SettingsEntity> validatedInData = this.createAndValidateInputData(template, record.getOption());
+    final List<SettingsEntity> validatedInData =
+        this.createAndValidateInputData(organizationRecord, template, record.getOption());
 
     // Create
     final ModuleEntity newModuleEntity = new ModuleEntity();
     newModuleEntity.setModuleId(id);
     newModuleEntity.setModuleType(fkKeyType.name());
-    newModuleEntity.setOrganization(super.getCurrentOrganization());
+    newModuleEntity.setOrganization(super.getCurrentOrganization(organizationRecord));
 
-    final EntityEntity entityEntity = this.loadEntityThrowIfNotExist(validatedInData);
+    final EntityEntity entityEntity = this.loadEntityThrowIfNotExist(organizationRecord, validatedInData);
     ruleIssuerAndSubjectTheSameOrTrowException(entityEntity);
     newModuleEntity.setEntity(entityEntity);
 
@@ -122,10 +125,11 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
   }
 
   @Override
-  public OptionsRecord update(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
+  public OptionsRecord update(final OrganizationRecord organizationRecord,
+      final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
     final ModuleEntity moduleEntity = this.moduleRepository
         .findByModuleIdAndModuleType(id, fkKeyType.name())
-        .filter(super.hasRightOrganizationIdModulePredicate())
+        .filter(super.hasRightOrganizationIdModulePredicate(organizationRecord))
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No template found for:%s %s".formatted(fkKeyType, id)));
 
@@ -134,7 +138,8 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
 
     final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
 
-    final List<SettingsEntity> validatedInData = this.createAndValidateInputData(template, record.getOption());
+    final List<SettingsEntity> validatedInData =
+        this.createAndValidateInputData(organizationRecord, template, record.getOption());
     super.deleteSettings(fkKeyType, moduleEntity.getModuleId().toString());
     super.insertSettings(fkKeyType, moduleEntity.getModuleId().toString(), validatedInData);
     this.moduleRepository.saveAndFlush(moduleEntity);
@@ -142,12 +147,13 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
   }
 
   @Override
-  public OptionsRecord get(final FkKeyType fkKeyType, final UUID id) {
+  public OptionsRecord get(final OrganizationRecord organizationRecord,
+      final FkKeyType fkKeyType, final UUID id) {
     final ModuleEntity moduleEntity = this.moduleRepository
         .findByModuleIdAndModuleType(id, fkKeyType.name())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
-    super.throwUnauthorizedIfNotMatch(moduleEntity.getOrganization().getOrganizationId());
+    super.throwNotFoundIfNotMatch(organizationRecord, moduleEntity.getOrganization().getOrganizationId());
     final List<SettingsEntity> mergeValues = insertValuesInTemplate(
         fkKeyType, moduleEntity.getSettingsEntityList());
     //this.validateEntityIdentifier(fkKeyType, optionsRecord.getOption());
@@ -156,23 +162,25 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
 
   @Override
   @Transactional
-  public OptionsRecord delete(final FkKeyType fkKeyType, final UUID id) {
+  public OptionsRecord delete(final OrganizationRecord organizationRecord,
+      final FkKeyType fkKeyType, final UUID id) {
     final ModuleEntity moduleEntity = this.moduleRepository
         .findByModuleIdAndModuleType(id, fkKeyType.name())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
-    super.throwUnauthorizedIfNotMatch(moduleEntity.getOrganization().getOrganizationId());
+    super.throwNotFoundIfNotMatch(organizationRecord, moduleEntity.getOrganization().getOrganizationId());
 
     this.moduleRepository.delete(moduleEntity);
     return this.toRecord(moduleEntity.getSettingsEntityList());
   }
 
   @Override
-  public List<Map<String, Object>> list(final FkKeyType fkKeyType) {
+  public List<Map<String, Object>> list(final OrganizationRecord organizationRecord,
+      final FkKeyType fkKeyType) {
 
     return this.moduleRepository.findByModuleType(fkKeyType.name())
         .stream()
-        .filter(super.hasRightOrganizationIdModulePredicate())
+        .filter(super.hasRightOrganizationIdModulePredicate(organizationRecord))
         .map(entity -> {
               final Map<String, Object> e = entity.getSettingsEntityList()
                   .stream()
@@ -187,7 +195,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
         .toList();
   }
 
-  protected void addOptionsForEntityId(final List<Values> values) {
+  protected void addOptionsForEntityId(final OrganizationRecord organizationRecord, final List<Values> values) {
     final String parameter = "entity_id";
     values.stream()
         .filter(value -> Objects.equals(value.getValueType(), SettingDataType.OPTIONS.name()))
@@ -196,7 +204,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
         .ifPresent(value ->
             value.setOptions(this.entityRepository.findByEntityType(EntityKeyType.FEDERATION_ENTITY)
                 .stream()
-                .filter(this.hasRightOrganizationIdEntityPredicate())
+                .filter(this.hasRightOrganizationIdEntityPredicate(organizationRecord))
                 .map(entity ->
                     OptionRecord.builder()
                         .key(entity.getEntityId().toString())
@@ -206,7 +214,8 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
                 .toList()));
   }
 
-  protected EntityEntity loadEntityThrowIfNotExist(final List<SettingsEntity> dataValues)
+  protected EntityEntity loadEntityThrowIfNotExist(final OrganizationRecord organizationRecord,
+      final List<SettingsEntity> dataValues)
       throws ResponseStatusException {
     final String parameter = "entity_id";
     return dataValues.stream()
@@ -217,7 +226,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
         .map(moduleEntity -> moduleEntity.orElseThrow(() ->
             new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 "Invalid %s, does not exist".formatted(parameter))))
-        .filter(this.hasRightOrganizationIdEntityPredicate())
+        .filter(this.hasRightOrganizationIdEntityPredicate(organizationRecord))
         .findFirst()
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
             "No trustmarkissuer to assign trustmarks to"));

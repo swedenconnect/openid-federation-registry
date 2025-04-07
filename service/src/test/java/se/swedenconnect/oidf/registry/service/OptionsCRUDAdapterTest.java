@@ -19,8 +19,10 @@ package se.swedenconnect.oidf.registry.service;
 import org.junit.jupiter.api.Test;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.Values;
+import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.entity.SettingsEntity;
+import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
 import se.swedenconnect.oidf.registry.validation.PropertyValidationFailException;
 
 import java.util.List;
@@ -30,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static se.swedenconnect.oidf.registry.fixture.JwtTestUtils.createOrganizationRecord;
 
 /**
  * oidf-entity-registry
@@ -49,22 +52,26 @@ class OptionsCRUDAdapterTest {
       }
 
       @Override
-      public OptionsRecord create(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
+      public OptionsRecord create(final OrganizationRecord organizationRecord,
+          final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
         return null;
       }
 
       @Override
-      public OptionsRecord update(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
+      public OptionsRecord update(final OrganizationRecord organizationRecord,
+          final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
         return null;
       }
 
       @Override
-      public OptionsRecord get(final FkKeyType fkKeyType, final UUID id) {
+      public OptionsRecord get(final OrganizationRecord organizationRecord,
+          final FkKeyType fkKeyType, final UUID id) {
         return null;
       }
 
       @Override
-      public OptionsRecord delete(final FkKeyType fkKeyType, final UUID id) {
+      public OptionsRecord delete(final OrganizationRecord organizationRecord,
+          final FkKeyType fkKeyType, final UUID id) {
         return null;
       }
     };
@@ -94,13 +101,15 @@ class OptionsCRUDAdapterTest {
         .build();
 
     assertThrows(PropertyValidationFailException.class, () ->
-        adapter.createAndValidateInputData(List.of(sub, iss, entityID, requiredValue), List.of(
+        adapter.createAndValidateInputData(createOrganizationRecord(JwtTestUtils.OrganisationType.PM),
+            List.of(sub, iss, entityID, requiredValue), List.of(
             Values.builder().key("issuer").value("http://issuer").build(),
             Values.builder().key("subject").value("http://subject").build()
         )));
 
     final List<SettingsEntity> resultReq =
-        adapter.createAndValidateInputData(List.of(sub, iss, entityID, requiredValue), List.of(
+        adapter.createAndValidateInputData(createOrganizationRecord(JwtTestUtils.OrganisationType.PM),
+            List.of(sub, iss, entityID, requiredValue), List.of(
             Values.builder().key("issuer").value("http://issuer").build(),
             Values.builder().key("subject").value("http://subject").build(),
             Values.builder().key("reg_id").value("http://subject").build(),
@@ -110,7 +119,8 @@ class OptionsCRUDAdapterTest {
     assertThat(resultReq).isNotEmpty().hasSize(3);
 
     final List<SettingsEntity> result =
-        adapter.createAndValidateInputData(List.of(sub, iss, entityID), List.of(existingUserInput, unknownUserInput));
+        adapter.createAndValidateInputData(createOrganizationRecord(JwtTestUtils.OrganisationType.PM),
+            List.of(sub, iss, entityID), List.of(existingUserInput, unknownUserInput));
     assertEquals(1, result.size());
     assertEquals("subject", result.get(0).getKey());
     assertNull(result.get(0).getValidation());

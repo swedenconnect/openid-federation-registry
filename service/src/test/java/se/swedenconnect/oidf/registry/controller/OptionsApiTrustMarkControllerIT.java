@@ -211,12 +211,12 @@ class OptionsApiTrustMarkControllerIT {
     testDataOperations.createTrustMark(
         tmId,
         JwtTestUtils.OrganisationType.AF,
-        HttpStatus.UNAUTHORIZED,
+        HttpStatus.NOT_FOUND,
         TestDataOperations.defaultTrustMark(tmiId1));
 
     testDataOperations.delete(FkKeyType.TRUSTMARK,
         tmId,
-        HttpStatus.UNAUTHORIZED,
+        HttpStatus.NOT_FOUND,
         JwtTestUtils.OrganisationType.AF);
 
     testDataOperations.delete(FkKeyType.TRUSTMARK,

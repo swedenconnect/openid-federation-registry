@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.audit.RegistryAuditService;
+import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.errorhandling.ErrorTypes;
 import se.swedenconnect.oidf.registry.errorhandling.RegistryClientException;
@@ -69,35 +70,40 @@ public class OptionsCRUDSelector implements OptionsCRUD {
 
   @Transactional
   @Override
-  public OptionsRecord create(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
-    final OptionsRecord newRecord = this.getOptionsCRUD(fkKeyType).create(fkKeyType, id, record);
+  public OptionsRecord create(final OrganizationRecord organizationRecord,
+      final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
+    final OptionsRecord newRecord = this.getOptionsCRUD(fkKeyType).create(organizationRecord, fkKeyType, id, record);
     this.registryAuditService.optionsCreate(id, fkKeyType, record, newRecord);
     return newRecord;
   }
 
   @Transactional
   @Override
-  public OptionsRecord update(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
-    final OptionsRecord newRecord = this.getOptionsCRUD(fkKeyType).update(fkKeyType, id, record);
+  public OptionsRecord update(final OrganizationRecord organizationRecord,
+      final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
+    final OptionsRecord newRecord = this.getOptionsCRUD(fkKeyType).update(organizationRecord, fkKeyType, id, record);
     this.registryAuditService.optionsUpdate(id, fkKeyType, record, newRecord);
     return newRecord;
   }
 
   @Override
-  public OptionsRecord get(final FkKeyType fkKeyType, final UUID id) {
-    return this.getOptionsCRUD(fkKeyType).get(fkKeyType, id);
+  public OptionsRecord get(final OrganizationRecord organizationRecord,
+      final FkKeyType fkKeyType, final UUID id) {
+    return this.getOptionsCRUD(fkKeyType).get(organizationRecord, fkKeyType, id);
   }
 
   @Override
-  public OptionsRecord template(final FkKeyType fkKeyType) {
-    return this.getOptionsCRUD(fkKeyType).template(fkKeyType);
+  public OptionsRecord template(final OrganizationRecord organizationRecord,
+      final FkKeyType fkKeyType) {
+    return this.getOptionsCRUD(fkKeyType).template(organizationRecord, fkKeyType);
   }
 
   @Override
-  public OptionsRecord delete(final FkKeyType fkKeyType, final UUID id) {
+  public OptionsRecord delete(final OrganizationRecord organizationRecord,
+      final FkKeyType fkKeyType, final UUID id) {
 
     try {
-      final OptionsRecord deletedRecord = this.getOptionsCRUD(fkKeyType).delete(fkKeyType, id);
+      final OptionsRecord deletedRecord = this.getOptionsCRUD(fkKeyType).delete(organizationRecord, fkKeyType, id);
       this.registryAuditService.optionsDelete(id, fkKeyType, deletedRecord);
       return deletedRecord;
     }
@@ -108,23 +114,25 @@ public class OptionsCRUDSelector implements OptionsCRUD {
   }
 
   @Override
-  public List<Map<String, Object>> list(final FkKeyType fkKeyType) {
-    return this.getOptionsCRUD(fkKeyType).list(fkKeyType);
+  public List<Map<String, Object>> list(final OrganizationRecord organizationRecord,
+      final FkKeyType fkKeyType) {
+    return this.getOptionsCRUD(fkKeyType).list(organizationRecord, fkKeyType);
   }
 
   /**
    * Retrieves a map containing lists of mapped objects for each key type. The method iterates through all possible
    * FkKeyType values, retrieves the corresponding data through the `list` method, and organizes the results into a
    * map.
-   *
+   * @param organizationRecord Current organization
    * @param query a string value representing the query or filter criteria (currently unused in the method's logic)
    * @return a map where the keys are the names of each FkKeyType and the values are lists of maps containing related
    *     objects
    */
-  public Map<String, List<Map<String, Object>>> listAll(final String query) {
+  public Map<String, List<Map<String, Object>>> listAll(final OrganizationRecord organizationRecord,
+      final String query) {
     final Map<String, List<Map<String, Object>>> result = new HashMap<>();
     for (FkKeyType value : FkKeyType.values()) {
-      final List<Map<String, Object>> values = this.list(value);
+      final List<Map<String, Object>> values = this.list(organizationRecord, value);
       if (values.isEmpty())
         continue;
       result.put(value.name(), values);

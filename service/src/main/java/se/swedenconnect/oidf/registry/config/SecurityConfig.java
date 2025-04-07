@@ -25,16 +25,16 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
+import se.swedenconnect.oidf.registry.auth.OrganizationInformation;
+import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.auth.RegistryJwtConverter;
 import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.service.OrganizationService;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * Security configuration class that defines security-related settings for the application. This class integrates OAuth2
@@ -95,17 +95,6 @@ public class SecurityConfig {
     return http.build();
   }
 
-  @Bean(name = "userAssignedOrganization")
-  Supplier<OrganizationEntity> userAssignedOrganization() {
-    return () -> {
-      final Object principal = SecurityContextHolder.getContext().getAuthentication();
-      if (principal instanceof RegistryClaims) {
-        return ((RegistryClaims) principal).getOrg().getFirst();
-      }
-      return null;
-    };
-  }
-
   @Bean
   Converter<Jwt, AbstractAuthenticationToken> customJwtAuthenticationConverter(
       final OrganizationService service) {
@@ -119,17 +108,21 @@ public class SecurityConfig {
   @Getter
   public static class RegistryClaims extends JwtAuthenticationToken {
     private final List<OrganizationEntity> org;
+    private final OrganizationInformation organizationInformation;
 
     /**
-     * Constructs a new instance of the RegistryClaims class, which extends JwtAuthenticationToken to include additional
-     * information such as the associated organization and domain prefix.
+     * Constructs a new instance of the RegistryClaims class.
      *
-     * @param jwt the {@link Jwt} object containing the token's claims and headers.
-     * @param org the {@link OrganizationEntity} representing the authenticated client's associated organization.
+     * @param jwt the JWT object representing the JSON Web Token used for authentication and authorization.
+     * @param org a list of OrganizationEntity objects representing the organizations associated with the authenticated
+     * client.
+     * @param information an instance of OrganizationInformation
      */
-    public RegistryClaims(final Jwt jwt, final List<OrganizationEntity> org) {
+    public RegistryClaims(final Jwt jwt, final List<OrganizationEntity> org,
+        final OrganizationInformation information) {
       super(jwt);
       this.org = org;
+      this.organizationInformation = information;
     }
 
     /**
@@ -138,6 +131,22 @@ public class SecurityConfig {
      */
     public OrganizationEntity getByOrgNumber(@NonNull final String orgNumber) {
       return this.org.stream().filter(e -> e.getOrgNumber().equals(orgNumber))
+          .findFirst()
+          .orElseThrow();
+    }
+
+    /**
+     * Retrieves an {@link OrganizationRecord} that matches the given organization number from the list of available
+     * organizations. If no matching record is found, an exception is thrown.
+     *
+     * @param orgNumber the unique identifier of the organization for which the record is to be retrieved
+     * @return the {@link OrganizationRecord} corresponding to the specified organization number
+     */
+    public OrganizationRecord getOrganizationRecordByOrgNumber(@NonNull final String orgNumber) {
+      return this.organizationInformation
+          .organizations()
+          .stream()
+          .filter(e -> e.orgNumber().equals(orgNumber))
           .findFirst()
           .orElseThrow();
     }

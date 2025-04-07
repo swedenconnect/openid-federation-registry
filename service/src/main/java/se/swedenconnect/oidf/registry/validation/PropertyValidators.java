@@ -47,15 +47,19 @@ public class PropertyValidators {
   public static final ObjectMapper mapper = new ObjectMapper();
 
   /**
-   * Resolves and creates a composite {@link PropertyValidator} from a given configuration string. Each validator is
-   * created based on the provided string and executed sequentially.
+   * Resolves and constructs a composite PropertyValidator based on the provided configuration string and a
+   * variable value resolver. The method parses the given validator configuration string, initializing and
+   * combining multiple individual validators into a single aggregated validator function.
    *
-   * @param validatorNameSetting a string containing validator definitions separated by the pipe ('|') character. If
-   *     the string is null or blank, a no-operation validator is returned.
-   * @return a {@link PropertyValidator} that applies all the resolved validators. If no validators are resolved, a
-   *     no-operation validator is returned.
+   * @param validatorNameSetting the configuration string representing the validators, where individual
+   *                             validators are separated by a pipe ('|') character. If null or blank, a no-op
+   *                             validator is returned.
+   * @param variabelResolver     the resolver used for resolving dynamic variable values in the configuration string.
+   * @return a PropertyValidator that applies all resolved validation rules in sequence. If the configuration string
+   *         is null or blank, a no-op validator is returned.
    */
-  public PropertyValidator resolveValidator(final String validatorNameSetting) {
+  public PropertyValidator resolveValidator(final String validatorNameSetting,
+      final VariabelValueResolver variabelResolver) {
     log.debug("Resolving validators: {}", validatorNameSetting);
 
     if (validatorNameSetting == null || validatorNameSetting.isBlank()) {
@@ -64,7 +68,7 @@ public class PropertyValidators {
     }
 
     final List<PropertyValidator> validatorsList = Arrays.stream(validatorNameSetting.split("\\|"))
-        .map(this::propertyValidatorCreator)
+        .map(s -> this.propertyValidatorCreator(variabelResolver, s))
         .filter(Objects::nonNull)
         .toList();
 
@@ -105,11 +109,12 @@ public class PropertyValidators {
    * @return the created PropertyValidator instance for the specified type and configuration
    * @throws IllegalArgumentException if the validator type specified in validatorNameSetting is unknown
    */
-  protected PropertyValidator propertyValidatorCreator(final String validatorNameSetting) {
+  protected PropertyValidator propertyValidatorCreator(final VariabelValueResolver variabelResolver,
+      final String validatorNameSetting) {
     log.debug("Creating validator: {}", validatorNameSetting);
     final String[] split = validatorNameSetting.trim().toLowerCase().split(":");
     final String name = split[0];
-    final String conf = split.length > 1 ? split[1] : "";
+    final String conf = variabelResolver.insertTemplateValues(split.length > 1 ? split[1] : "");
 
     final ValidationType validationType;
     try {
@@ -291,15 +296,15 @@ public class PropertyValidators {
       throw new IllegalArgumentException("matches validator requires a regex pattern");
     }
     try {
-      Pattern.compile(regex);
+      final Pattern pattern = Pattern.compile(regex);
+      return (key, value) -> this.throwIf(
+          () -> !value.isBlank() && !pattern.matcher(value).matches(),
+          key, "Value does not match required pattern"
+      );
     }
     catch (final PatternSyntaxException e) {
       throw new IllegalArgumentException("Invalid regex pattern: " + e.getMessage());
     }
-    return (key, value) -> this.throwIf(
-        () -> !value.isBlank() && !value.matches(regex),
-        key, "Value does not match required pattern"
-    );
   }
 
   private PropertyValidator hasLength(final String conf) {
@@ -478,18 +483,6 @@ public class PropertyValidators {
   /**
    * This enumeration defines various types of validation rules that can be applied to data properties. Each constant
    * represents a specific validation method or criteria used to ensure the integrity and correctness of data values.
-   *
-   * The validation types include: - UUID: Ensures the value is a valid UUID. - LENGTH: Validates the length of a value.
-   * - JSON: Validates if the value is a valid JSON structure. - JWKS: Ensures the value corresponds to a JSON Web Key
-   * Set. - JWK: Validates a single JSON Web Key. - ENDS_WITH: Checks if the value ends with a specific string. -
-   * STARTS_WITH: Checks if the value starts with a specific string. - CONTAINS: Checks if the value contains a specific
-   * substring. - DATE: Validates if the value is a valid date. - BETWEEN: Ensures the value is within a specific range.
-   * - URL: Ensures the value is a valid URL. - JWT: Validates if the value is a valid JSON Web Token. - MATCHES:
-   * Validates if the value matches a specified pattern. - DURATION: Ensures the value represents a valid duration. -
-   * REQUIRED: Marks the value as required (non-null or non-empty). - EMAIL: Validates if the value is a valid email
-   * address. - ALPHA: Ensures the value consists of alphabetic characters only. - ALPHANUMERIC: Validates if the value
-   * contains only alphanumeric characters. - NUMBER: Ensures the value is numeric. - MIN: Checks if the value is
-   * greater than or equal to a minimum value. - MAX: Checks if the value is less than or equal to a maximum value.
    */
   public enum ValidationType {
     UUID,

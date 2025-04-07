@@ -31,5 +31,6 @@ public class ArgumentResolverConfiguration implements WebMvcConfigurer {
   @Override
   public void addArgumentResolvers(final List<HandlerMethodArgumentResolver> resolvers) {
     resolvers.add(new OrganizationInformationSelector());
+    resolvers.add(new OrganizationRecordClaimSelector());
   }
 }

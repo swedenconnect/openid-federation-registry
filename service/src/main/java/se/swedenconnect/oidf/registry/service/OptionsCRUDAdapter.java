@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.Values;
+import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.entity.ModuleEntity;
@@ -30,6 +31,7 @@ import se.swedenconnect.oidf.registry.entity.TrustMarkEntity;
 import se.swedenconnect.oidf.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.registry.validation.PropertyValidator;
 import se.swedenconnect.oidf.registry.validation.PropertyValidators;
+import se.swedenconnect.oidf.registry.validation.VariabelValueResolver;
 
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +40,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -52,46 +53,52 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
 
   private final SettingsRepository settingsRepository;
   private final PropertyValidators validatorFactory = new PropertyValidators();
-  private final Supplier<OrganizationEntity> userAssignedOrganization;
+  private final OrganizationService organizationService;
 
   protected OptionsCRUDAdapter(
       final SettingsRepository settingsRepository,
-      final Supplier<OrganizationEntity> userAssignedOrganization) {
+      final OrganizationService organizationService) {
     this.settingsRepository = settingsRepository;
-    this.userAssignedOrganization = userAssignedOrganization;
+    this.organizationService = organizationService;
   }
 
-  protected OrganizationEntity getCurrentOrganization() {
-    return Optional.ofNullable(this.userAssignedOrganization.get())
+  protected OrganizationEntity getCurrentOrganization(final OrganizationRecord organizationRecord) {
+    return Optional.ofNullable(this.organizationService.findCreate(organizationRecord.orgNumber(),
+            organizationRecord.orgName()))
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No organization assigned"));
   }
 
-  protected Predicate<PolicyEntity> hasRightOrganizationIdPolicyPredicate() {
-    return entity -> Objects.equals(this.getCurrentOrganization().getOrganizationId(),
+  protected Predicate<PolicyEntity> hasRightOrganizationIdPolicyPredicate(
+      final OrganizationRecord organizationRecord) {
+    return entity -> Objects.equals(this.getCurrentOrganization(organizationRecord).getOrganizationId(),
         entity.getOrganization().getOrganizationId());
   }
 
-  protected Predicate<ModuleEntity> hasRightOrganizationIdModulePredicate() {
-    return entity -> Objects.equals(this.getCurrentOrganization().getOrganizationId(),
+  protected Predicate<ModuleEntity> hasRightOrganizationIdModulePredicate(
+      final OrganizationRecord organizationRecord) {
+    return entity -> Objects.equals(this.getCurrentOrganization(organizationRecord).getOrganizationId(),
         entity.getOrganization().getOrganizationId());
   }
 
-  protected Predicate<EntityEntity> hasRightOrganizationIdEntityPredicate() {
-    return entity -> Objects.equals(this.getCurrentOrganization().getOrganizationId(),
+  protected Predicate<EntityEntity> hasRightOrganizationIdEntityPredicate(
+      final OrganizationRecord organizationRecord) {
+    return entity -> Objects.equals(this.getCurrentOrganization(organizationRecord).getOrganizationId(),
         entity.getOrganization().getOrganizationId());
   }
 
-  protected Predicate<TrustMarkEntity> hasRightOrganizationIdTrustmarkPredicate() {
-    return entity -> Objects.equals(this.getCurrentOrganization().getOrganizationId(),
+  protected Predicate<TrustMarkEntity> hasRightOrganizationIdTrustmarkPredicate(
+      final OrganizationRecord organizationRecord) {
+    return entity -> Objects.equals(this.getCurrentOrganization(organizationRecord).getOrganizationId(),
         entity.getModule().getOrganization().getOrganizationId());
   }
 
-  protected void throwUnauthorizedIfNotMatch(final UUID organizationId) {
-    Optional.ofNullable(this.userAssignedOrganization.get())
-        .map(OrganizationEntity::getOrganizationId)
-        .filter(uuid -> uuid.equals(organizationId))
+  protected void throwNotFoundIfNotMatch(final OrganizationRecord organizationRecord,
+      final UUID organizationId) {
+    Optional.ofNullable(organizationId)
+        .filter(uuid -> uuid.equals(this.getCurrentOrganization(organizationRecord).getOrganizationId()))
         .orElseThrow(() ->
-            new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Trying to alter data for other organization"));
+            new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "No data found for organization:%s".formatted(organizationId)));
   }
 
   protected OptionsRecord toRecord(final List<SettingsEntity> entities) {
@@ -119,7 +126,7 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
   }
 
   @Override
-  public OptionsRecord template(final FkKeyType fkKeyType) {
+  public OptionsRecord template(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType) {
     return this.toRecord(this.getTemplateSettings(fkKeyType));
   }
 
@@ -145,7 +152,8 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
         .toList();
   }
 
-  protected List<SettingsEntity> createAndValidateInputData(final List<SettingsEntity> templateValues,
+  protected List<SettingsEntity> createAndValidateInputData(final OrganizationRecord organizationRecord,
+      final List<SettingsEntity> templateValues,
       final List<Values> dataValues) {
 
     final Map<String, Values> dataMap = dataValues.stream().collect(Collectors.toMap(Values::getKey, v -> v));
@@ -157,7 +165,9 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
           final String valueToBeValidated = dataValue != null ? dataValue.getValue() : null;
 
           final PropertyValidator validator =
-              this.validatorFactory.resolveValidator(templateValue.getValidation());
+              this.validatorFactory.resolveValidator(templateValue.getValidation(),
+                  VariabelValueResolver.orgResolver(organizationRecord));
+
           validator.validate(templateValue.getKey(), valueToBeValidated);
 
           if (dataValue == null) {
@@ -206,7 +216,7 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
   }
 
   @Override
-  public List<Map<String, Object>> list(final FkKeyType fkKeyType) {
+  public List<Map<String, Object>> list(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType) {
     return Collections.emptyList();
   }
 }

@@ -53,7 +53,7 @@ public class RegistryJwtConverter implements Converter<Jwt, AbstractAuthenticati
         .map(orgInfo -> this.organizationService.findCreate(orgInfo.orgNumber(), orgInfo.orgName()))
         .toList();
 
-    final SecurityConfig.RegistryClaims registryClaims = new SecurityConfig.RegistryClaims(jwt, orgs);
+    final SecurityConfig.RegistryClaims registryClaims = new SecurityConfig.RegistryClaims(jwt, orgs, information);
     registryClaims.setAuthenticated(true);
     return registryClaims;
   }

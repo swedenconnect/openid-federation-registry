@@ -21,8 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
+import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
-import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.entity.PolicyEntity;
 import se.swedenconnect.oidf.registry.entity.SettingsEntity;
 import se.swedenconnect.oidf.registry.repository.PolicyRepository;
@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static se.swedenconnect.oidf.registry.entity.FkKeyType.POLICIES;
@@ -51,17 +50,17 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
   private final PolicyRepository policyRepository;
 
   /**
-   * Constructs an OptionsCRUDPolicy with the specified repositories and organization supplier.
+   * Constructs an instance of OptionsCRUDPolicy with the specified dependencies.
    *
-   * @param settingsRepository the repository for managing settings
-   * @param policyRepository the repository for managing policies
-   * @param userAssignedOrganization a supplier for retrieving the user-assigned organization entity
+   * @param settingsRepository the repository for accessing settings data
+   * @param policyRepository the repository for accessing policy data
+   * @param organizationService the service for managing and retrieving organization information
    */
   public OptionsCRUDPolicy(
       final SettingsRepository settingsRepository,
       final PolicyRepository policyRepository,
-      final Supplier<OrganizationEntity> userAssignedOrganization) {
-    super(settingsRepository, userAssignedOrganization);
+      final OrganizationService organizationService) {
+    super(settingsRepository, organizationService);
     this.policyRepository = policyRepository;
   }
 
@@ -71,23 +70,25 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
   }
 
   @Override
-  public OptionsRecord create(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
+  public OptionsRecord create(final OrganizationRecord organizationRecord,
+      final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
     final Optional<PolicyEntity> policyEntity = this.policyRepository.findById(id);
     if (policyEntity.isPresent()) {
-      super.throwUnauthorizedIfNotMatch(policyEntity.get().getOrganizationId());
+      super.throwNotFoundIfNotMatch(organizationRecord, policyEntity.get().getOrganizationId());
 
       throw new ResponseStatusException(HttpStatus.CONFLICT,
           "POLICIES already exists for:%s %s".formatted(fkKeyType, id));
     }
 
     final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
-    final List<SettingsEntity> validatedInData = this.createAndValidateInputData(template, record.getOption());
+    final List<SettingsEntity> validatedInData
+        = this.createAndValidateInputData(organizationRecord, template, record.getOption());
 
     // Create
     final PolicyEntity newPolicyEntity = new PolicyEntity();
     newPolicyEntity.setPolicyId(id);
 
-    newPolicyEntity.setOrganization(getCurrentOrganization());
+    newPolicyEntity.setOrganization(getCurrentOrganization(organizationRecord));
 
     final PolicyEntity savedPolicyEntity = this.policyRepository.saveAndFlush(newPolicyEntity);
     super.deleteSettings(fkKeyType, savedPolicyEntity.getPolicyId().toString());
@@ -96,17 +97,19 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
   }
 
   @Override
-  public OptionsRecord update(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
+  public OptionsRecord update(final OrganizationRecord organizationRecord,
+      final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
     final PolicyEntity policyEntity = this.policyRepository
         .findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No template found for:%s %s".formatted(fkKeyType, id)));
 
-    super.throwUnauthorizedIfNotMatch(policyEntity.getOrganizationId());
+    super.throwNotFoundIfNotMatch(organizationRecord, policyEntity.getOrganizationId());
 
     final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
 
-    final List<SettingsEntity> validatedInData = this.createAndValidateInputData(template, record.getOption());
+    final List<SettingsEntity> validatedInData =
+        this.createAndValidateInputData(organizationRecord, template, record.getOption());
     super.deleteSettings(fkKeyType, policyEntity.getPolicyId().toString());
     super.insertSettings(fkKeyType, policyEntity.getPolicyId().toString(), validatedInData);
     this.policyRepository.saveAndFlush(policyEntity);
@@ -114,12 +117,13 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
   }
 
   @Override
-  public OptionsRecord get(final FkKeyType fkKeyType, final UUID id) {
+  public OptionsRecord get(final OrganizationRecord organizationRecord,
+      final FkKeyType fkKeyType, final UUID id) {
     final PolicyEntity policyEntity = this.policyRepository
-        .findByPolicyIdAndOrganizationId(id, getCurrentOrganization().getOrganizationId())
+        .findByPolicyIdAndOrganizationId(id, getCurrentOrganization(organizationRecord).getOrganizationId())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
-    super.throwUnauthorizedIfNotMatch(policyEntity.getOrganizationId());
+    super.throwNotFoundIfNotMatch(organizationRecord, policyEntity.getOrganizationId());
 
     final List<SettingsEntity> mergeValues = insertValuesInTemplate(
         fkKeyType,
@@ -131,9 +135,10 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
 
   @Override
   @Transactional
-  public OptionsRecord delete(final FkKeyType fkKeyType, final UUID id) {
+  public OptionsRecord delete(final OrganizationRecord organizationRecord,
+      final FkKeyType fkKeyType, final UUID id) {
     final PolicyEntity entity = this.policyRepository
-        .findByPolicyIdAndOrganizationId(id, getCurrentOrganization().getOrganizationId())
+        .findByPolicyIdAndOrganizationId(id, getCurrentOrganization(organizationRecord).getOrganizationId())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
     final List<SettingsEntity> options = deleteSettings(POLICIES, entity.getPolicyId().toString());
@@ -143,8 +148,9 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
   }
 
   @Override
-  public List<Map<String, Object>> list(final FkKeyType fkKeyType) {
-    return this.policyRepository.findByOrganizationId(super.getCurrentOrganization().getOrganizationId())
+  public List<Map<String, Object>> list(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType) {
+    return this.policyRepository.findByOrganizationId(
+            super.getCurrentOrganization(organizationRecord).getOrganizationId())
         .stream()
         .map(entity -> {
           final Map<String, Object> e = super.getSettingsEntities(POLICIES, entity.getPolicyId())
