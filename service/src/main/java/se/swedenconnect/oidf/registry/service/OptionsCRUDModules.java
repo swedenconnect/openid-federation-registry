@@ -86,7 +86,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
   @Override
   public OptionsRecord template(final OrganizationRecord organizationRecord,
       final FkKeyType fkKeyType) {
-    final OptionsRecord record = this.toRecord(this.getTemplateSettings(fkKeyType));
+    final OptionsRecord record = this.toRecord(this.getTemplateSettings(organizationRecord, fkKeyType));
     this.addOptionsForEntityId(organizationRecord, Objects.requireNonNull(record.getOption()));
     return record;
   }
@@ -103,7 +103,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
           "Module already exists for:%s %s".formatted(fkKeyType, id));
     }
 
-    final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
+    final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
     final List<SettingsEntity> validatedInData =
         this.createAndValidateInputData(organizationRecord, template, record.getOption());
 
@@ -136,7 +136,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
     final EntityEntity entityEntity = moduleEntity.getEntity();
     ruleIssuerAndSubjectTheSameOrTrowException(entityEntity);
 
-    final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
+    final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
 
     final List<SettingsEntity> validatedInData =
         this.createAndValidateInputData(organizationRecord, template, record.getOption());
@@ -154,7 +154,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
     super.throwNotFoundIfNotMatch(organizationRecord, moduleEntity.getOrganization().getOrganizationId());
-    final List<SettingsEntity> mergeValues = insertValuesInTemplate(
+    final List<SettingsEntity> mergeValues = insertValuesInTemplate(organizationRecord,
         fkKeyType, moduleEntity.getSettingsEntityList());
     //this.validateEntityIdentifier(fkKeyType, optionsRecord.getOption());
     return toRecord(mergeValues);

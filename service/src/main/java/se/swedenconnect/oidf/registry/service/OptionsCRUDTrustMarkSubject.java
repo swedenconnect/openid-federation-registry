@@ -97,7 +97,7 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
           "TrustMark already exists for:%s %s".formatted(fkKeyType, id));
     }
 
-    final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
+    final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
     final List<SettingsEntity> validatedInData =
         this.createAndValidateInputData(organizationRecord, template, record.getOption());
 
@@ -144,7 +144,7 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
 
     super.throwNotFoundIfNotMatch(organizationRecord,
         entity.getTrustMark().getModule().getOrganization().getOrganizationId());
-    final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
+    final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
 
     final List<SettingsEntity> validatedInData =
         this.createAndValidateInputData(organizationRecord, template, record.getOption());
@@ -165,7 +165,7 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
     super.throwNotFoundIfNotMatch(organizationRecord,
         entity.getTrustMark().getModule().getOrganization().getOrganizationId());
 
-    final List<SettingsEntity> mergeValues = insertValuesInTemplate(
+    final List<SettingsEntity> mergeValues = insertValuesInTemplate(organizationRecord,
         fkKeyType,
         super.getSettingsEntities(FK_KEY_TYPE, entity.getTrustmarkId()));
 
@@ -176,7 +176,7 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
 
   @Override
   public OptionsRecord template(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType) {
-    final OptionsRecord optionsRecord = toRecord(getTemplateSettings(fkKeyType));
+    final OptionsRecord optionsRecord = toRecord(getTemplateSettings(organizationRecord, fkKeyType));
     this.addOptionsForTrustMarkId(organizationRecord, Objects.requireNonNull(optionsRecord.getOption()));
     return optionsRecord;
   }

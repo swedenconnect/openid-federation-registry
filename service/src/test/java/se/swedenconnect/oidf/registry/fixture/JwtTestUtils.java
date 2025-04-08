@@ -147,9 +147,9 @@ public class JwtTestUtils {
     SKATT("Skatteverket", "77777", "http://www.skv.se/oidf"),
     ;
 
-    final String name;
-    final String orgId;
-    final String domainPrefix;
+    public final String name;
+    public final String orgId;
+    public final String domainPrefix;
 
     OrganisationType(String name, String orgId, String domainPrefix) {
       this.name = name;

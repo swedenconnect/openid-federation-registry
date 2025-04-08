@@ -19,8 +19,10 @@ package se.swedenconnect.oidf.registry.service;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
+import se.swedenconnect.oidf.registry.api.model.OptionsRecordMetadata;
 import se.swedenconnect.oidf.registry.api.model.Values;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.entity.BaseEntity;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.entity.ModuleEntity;
@@ -33,7 +35,10 @@ import se.swedenconnect.oidf.registry.validation.PropertyValidator;
 import se.swedenconnect.oidf.registry.validation.PropertyValidators;
 import se.swedenconnect.oidf.registry.validation.VariabelValueResolver;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -54,6 +59,7 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
   private final SettingsRepository settingsRepository;
   private final PropertyValidators validatorFactory = new PropertyValidators();
   private final OrganizationService organizationService;
+  private final ZoneOffset offset = ZoneOffset.UTC;
 
   protected OptionsCRUDAdapter(
       final SettingsRepository settingsRepository,
@@ -102,7 +108,7 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
   }
 
   protected OptionsRecord toRecord(final List<SettingsEntity> entities) {
-    return OptionsRecord.builder()
+    final OptionsRecord.Builder optionsRecord = OptionsRecord.builder()
         .option(entities.stream()
             .map(entity -> Values.builder()
                 .settingDescription(entity.getDescription())
@@ -112,28 +118,46 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
                 .valueType(entity.getValueDataType())
                 .options(null)
                 .build())
-            .toList())
-        .build();
+            .toList());
+
+    entities.stream()
+        .max(Comparator.comparing(BaseEntity::getLastModifiedDate))
+        .ifPresent(baseEntity -> {
+          optionsRecord.metadata(OptionsRecordMetadata.builder()
+              .changeby(baseEntity.getLastModifiedBy())
+              .createdby(baseEntity.getCreatedBy())
+              .changedate(OffsetDateTime.of(baseEntity.getLastModifiedDate(), this.offset))
+              .createddate(OffsetDateTime.of(baseEntity.getCreatedDate(), this.offset))
+              .build());
+        });
+
+    return optionsRecord.build();
   }
 
-  protected List<SettingsEntity> getTemplateSettings(final FkKeyType fkkeytype) {
+  protected List<SettingsEntity> getTemplateSettings(final OrganizationRecord organizationRecord,
+      final FkKeyType fkkeytype) {
     final List<SettingsEntity> templates = this.settingsRepository.findByFkTypeAndFkId(fkkeytype.name(), "TEMPLATE");
     if (templates.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND,
           "No template found for:%s".formatted(fkkeytype));
     }
+    final VariabelValueResolver valueResolver = VariabelValueResolver.orgResolver(organizationRecord);
+    templates.forEach(settingsEntity ->
+        settingsEntity.setValue(valueResolver.insertTemplateValues(settingsEntity.getValue())));
     return templates;
   }
 
   @Override
   public OptionsRecord template(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType) {
-    return this.toRecord(this.getTemplateSettings(fkKeyType));
+
+    return this.toRecord(this.getTemplateSettings(organizationRecord, fkKeyType));
   }
 
-  protected List<SettingsEntity> insertValuesInTemplate(final FkKeyType fkkeytype,
+  protected List<SettingsEntity> insertValuesInTemplate(final OrganizationRecord organizationRecord,
+      final FkKeyType fkkeytype,
       final List<SettingsEntity> dataValues) {
 
-    final List<SettingsEntity> templateValues = this.getTemplateSettings(fkkeytype);
+    final List<SettingsEntity> templateValues = this.getTemplateSettings(organizationRecord, fkkeytype);
 
     return templateValues
         .stream()

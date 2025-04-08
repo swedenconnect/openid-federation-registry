@@ -33,13 +33,13 @@ class VariableValueResolverTest {
   void insertTemplateValues() {
     final VariabelValueResolver r = VariabelValueResolver.defaultResolver(Map.of("orgId", "2345"));
 
-    assertThat(r.insertTemplateValues("https://example.com/entity/${orgId}"))
+    assertThat(r.insertTemplateValues("https://example.com/entity/@{orgId}"))
         .isNotBlank().isEqualTo("https://example.com/entity/2345");
 
-    assertThat(r.insertTemplateValues("https://example.com/entity/${orgId}/${orgId}"))
+    assertThat(r.insertTemplateValues("https://example.com/entity/@{orgId}/@{orgId}"))
         .isNotBlank().isEqualTo("https://example.com/entity/2345/2345");
 
-    assertThat(r.insertTemplateValues("https://example.com/entity/${orgId}/${orgId}/${unknown}"))
+    assertThat(r.insertTemplateValues("https://example.com/entity/@{orgId}/@{orgId}/@{unknown}"))
         .isNotBlank().isEqualTo("https://example.com/entity/2345/2345/");
 
   }

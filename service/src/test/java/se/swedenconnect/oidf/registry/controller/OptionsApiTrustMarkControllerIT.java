@@ -28,7 +28,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.registry.api.model.OptionRecord;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
-import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
 import se.swedenconnect.oidf.registry.fixture.OptionsTestData;
 import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
 
@@ -36,6 +35,8 @@ import java.io.IOException;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static se.swedenconnect.oidf.registry.fixture.JwtTestUtils.OrganisationType.AF;
+import static se.swedenconnect.oidf.registry.fixture.JwtTestUtils.OrganisationType.SKATT;
 
 /**
  * Testing the new optional api
@@ -82,38 +83,38 @@ class OptionsApiTrustMarkControllerIT {
   public void testOptionsTrustMarkId() throws IOException {
 
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.SKATT,
+        SKATT,
         HttpStatus.CREATED,
-        OptionsTestData.HostedEntityTestData.builder()
+        OptionsTestData.HostedEntityTestData.create(SKATT)
             .build());
 
     final UUID tmiId1 = testDataOperations.createTMI(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.SKATT,
+        SKATT,
         HttpStatus.CREATED,
         TestDataOperations.defaultTrustMarkIssuer(entityId));
 
     final UUID entityId2 = testDataOperations.createHostedEntity(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.AF,
+        AF,
         HttpStatus.CREATED,
-        OptionsTestData.HostedEntityTestData.builder()
+        OptionsTestData.HostedEntityTestData.create(AF)
             .build());
 
     final UUID tmiId2 = testDataOperations.createTMI(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.AF,
+        AF,
         HttpStatus.CREATED,
         TestDataOperations.defaultTrustMarkIssuer(entityId2));
 
     final OptionsRecord optionsRecord1 = testDataOperations.get(FkKeyType.TRUSTMARK,
         null,
         HttpStatus.OK,
-        JwtTestUtils.OrganisationType.SKATT);
+        SKATT);
 
     assertThatTrustmarkissueridOptionExist(optionsRecord1, tmiId1);
 
     final OptionsRecord optionsRecord2 = testDataOperations.get(FkKeyType.TRUSTMARK,
         null,
         HttpStatus.OK,
-        JwtTestUtils.OrganisationType.AF);
+        AF);
 
     assertThatTrustmarkissueridOptionExist(optionsRecord2, tmiId2);
   }
@@ -122,48 +123,48 @@ class OptionsApiTrustMarkControllerIT {
   public void testOptionsTrustMarkSubjectId() throws IOException {
 
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.SKATT,
+        SKATT,
         HttpStatus.CREATED,
-        OptionsTestData.HostedEntityTestData.builder()
+        OptionsTestData.HostedEntityTestData.create(SKATT)
             .build());
 
     final UUID tmiId1 = testDataOperations.createTMI(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.SKATT,
+        SKATT,
         HttpStatus.CREATED,
         TestDataOperations.defaultTrustMarkIssuer(entityId));
 
     final UUID entityId2 = testDataOperations.createHostedEntity(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.AF,
+        AF,
         HttpStatus.CREATED,
-        OptionsTestData.HostedEntityTestData.builder()
+        OptionsTestData.HostedEntityTestData.create(AF)
             .build());
 
     final UUID tmiId2 = testDataOperations.createTMI(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.AF,
+        AF,
         HttpStatus.CREATED,
         TestDataOperations.defaultTrustMarkIssuer(entityId2));
 
     final UUID tm1 = testDataOperations.createTrustMark(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.SKATT,
+        SKATT,
         HttpStatus.CREATED,
         TestDataOperations.defaultTrustMark(tmiId1));
 
     final UUID tm2 = testDataOperations.createTrustMark(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.AF,
+        AF,
         HttpStatus.CREATED,
         TestDataOperations.defaultTrustMark(tmiId2));
 
     final OptionsRecord optionsRecord1 = testDataOperations.get(FkKeyType.TRUSTMARKSUBJECT,
         null,
         HttpStatus.OK,
-        JwtTestUtils.OrganisationType.SKATT);
+        SKATT);
 
     assertThatTrustmarkIdOptionExist(optionsRecord1, tm1);
 
     final OptionsRecord optionsRecord2 = testDataOperations.get(FkKeyType.TRUSTMARKSUBJECT,
         null,
         HttpStatus.OK,
-        JwtTestUtils.OrganisationType.AF);
+        AF);
 
     assertThatTrustmarkIdOptionExist(optionsRecord2, tm2);
   }
@@ -172,60 +173,60 @@ class OptionsApiTrustMarkControllerIT {
   public void testCRUDTrustMark() throws IOException {
 
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.SKATT,
+        SKATT,
         HttpStatus.CREATED,
-        OptionsTestData.HostedEntityTestData.builder()
+        OptionsTestData.HostedEntityTestData.create(SKATT)
             .build());
 
     final UUID tmiId1 = testDataOperations.createTMI(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.SKATT,
+        SKATT,
         HttpStatus.CREATED,
         TestDataOperations.defaultTrustMarkIssuer(entityId));
 
     final UUID entityId2 = testDataOperations.createHostedEntity(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.AF,
+        AF,
         HttpStatus.CREATED,
-        OptionsTestData.HostedEntityTestData.builder()
+        OptionsTestData.HostedEntityTestData.create(AF)
             .build());
 
     final UUID tmiId2 = testDataOperations.createTMI(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.AF,
+        AF,
         HttpStatus.CREATED,
         TestDataOperations.defaultTrustMarkIssuer(entityId2));
     final UUID tmId = UUID.randomUUID();
 
-    testDataOperations.get(FkKeyType.TRUSTMARK, null, HttpStatus.OK, JwtTestUtils.OrganisationType.SKATT);
+    testDataOperations.get(FkKeyType.TRUSTMARK, null, HttpStatus.OK, SKATT);
 
     testDataOperations.createTrustMark(
         tmId,
-        JwtTestUtils.OrganisationType.SKATT,
+        SKATT,
         HttpStatus.CREATED,
         TestDataOperations.defaultTrustMark(tmiId1));
 
     testDataOperations.createTrustMark(
         tmId,
-        JwtTestUtils.OrganisationType.SKATT,
+        SKATT,
         HttpStatus.CONFLICT,
         TestDataOperations.defaultTrustMark(tmiId1));
 
     testDataOperations.createTrustMark(
         tmId,
-        JwtTestUtils.OrganisationType.AF,
+        AF,
         HttpStatus.NOT_FOUND,
         TestDataOperations.defaultTrustMark(tmiId1));
 
     testDataOperations.delete(FkKeyType.TRUSTMARK,
         tmId,
         HttpStatus.NOT_FOUND,
-        JwtTestUtils.OrganisationType.AF);
+        AF);
 
     testDataOperations.delete(FkKeyType.TRUSTMARK,
         tmId,
         HttpStatus.OK,
-        JwtTestUtils.OrganisationType.SKATT);
+        SKATT);
 
     testDataOperations.get(FkKeyType.TRUSTMARK,
-        tmId, HttpStatus.NOT_FOUND, JwtTestUtils.OrganisationType.SKATT);
+        tmId, HttpStatus.NOT_FOUND, SKATT);
 
   }
 
@@ -233,13 +234,13 @@ class OptionsApiTrustMarkControllerIT {
   public void testCRUDTrustMarkSubject() throws IOException {
 
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.SKATT,
+        SKATT,
         HttpStatus.CREATED,
-        OptionsTestData.HostedEntityTestData.builder()
+        OptionsTestData.HostedEntityTestData.create(SKATT)
             .build());
 
     final UUID tmiId = testDataOperations.createTMI(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.SKATT,
+        SKATT,
         HttpStatus.CREATED,
         TestDataOperations.defaultTrustMarkIssuer(entityId));
 
@@ -247,20 +248,19 @@ class OptionsApiTrustMarkControllerIT {
 
     final UUID tmID = testDataOperations.createTrustMark(
         tmId,
-        JwtTestUtils.OrganisationType.SKATT,
+        SKATT,
         HttpStatus.CREATED,
         TestDataOperations.defaultTrustMark(tmiId));
 
     final UUID trustmarksubjectid =
         testDataOperations.createTrustMarkSubject(UUID.randomUUID(),
-            JwtTestUtils.OrganisationType.SKATT,
+            SKATT,
             HttpStatus.CREATED,
             TestDataOperations.defaultTrustMarkSubject(tmID));
 
     final OptionsRecord optionsRecord = testDataOperations.get(FkKeyType.TRUSTMARKSUBJECT, trustmarksubjectid,
-        HttpStatus.OK, JwtTestUtils.OrganisationType.SKATT);
+        HttpStatus.OK, SKATT);
 
-    System.out.println(optionsRecord);
 
   }
 

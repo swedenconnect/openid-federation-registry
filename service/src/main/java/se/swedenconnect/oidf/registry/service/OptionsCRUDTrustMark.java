@@ -91,7 +91,7 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
           "TrustMark already exists for:%s %s".formatted(fkKeyType, id));
     }
 
-    final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
+    final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
     final List<SettingsEntity> validatedInData =
         this.createAndValidateInputData(organizationRecord, template, record.getOption());
 
@@ -135,7 +135,7 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
     super.throwNotFoundIfNotMatch(organizationRecord,
         trustMarkEntity.getModule().getOrganization().getOrganizationId());
 
-    final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
+    final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
 
     final List<SettingsEntity> validatedInData =
         this.createAndValidateInputData(organizationRecord, template, record.getOption());
@@ -155,7 +155,7 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
     super.throwNotFoundIfNotMatch(organizationRecord,
         trustMarkEntity.getModule().getOrganization().getOrganizationId());
 
-    final List<SettingsEntity> mergeValues = insertValuesInTemplate(
+    final List<SettingsEntity> mergeValues = insertValuesInTemplate(organizationRecord,
         fkKeyType,
         super.getSettingsEntities(fkKeyType, trustMarkEntity.getTrustmarkId()));
 

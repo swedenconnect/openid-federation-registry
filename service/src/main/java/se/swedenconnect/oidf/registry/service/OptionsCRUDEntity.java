@@ -78,7 +78,7 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
 
   @Override
   public OptionsRecord template(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType) {
-    final OptionsRecord record = this.toRecord(this.getTemplateSettings(fkKeyType));
+    final OptionsRecord record = this.toRecord(this.getTemplateSettings(organizationRecord, fkKeyType));
     this.addOptionsForPolicyId(organizationRecord, Objects.requireNonNull(record.getOption()));
     return record;
   }
@@ -106,7 +106,7 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
           "Module already exists for:%s %s".formatted(fkKeyType, id));
     }
 
-    final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
+    final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
     final List<SettingsEntity> validatedInData =
         this.createAndValidateInputData(organizationRecord, template, record.getOption());
 
@@ -134,7 +134,7 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
 
     super.throwNotFoundIfNotMatch(organizationRecord, entity.getOrganization().getOrganizationId());
 
-    final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
+    final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
 
     final List<SettingsEntity> validatedInData =
         this.createAndValidateInputData(organizationRecord, template, record.getOption());
@@ -161,7 +161,7 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
 
     super.throwNotFoundIfNotMatch(organizationRecord, entity.getOrganization().getOrganizationId());
 
-    final List<SettingsEntity> mergeValues = insertValuesInTemplate(
+    final List<SettingsEntity> mergeValues = insertValuesInTemplate(organizationRecord,
         fkKeyType,
         super.getSettingsEntities(fkKeyType, entity.getEntityId()));
 

@@ -25,18 +25,23 @@ components:
     options-record:
       type: object
       properties:
-        links:
+        metadata:
           type: object
           properties:
-            save:
+            changeby:
               type: string
-              description: "Path to save data"
-            update:
+              description: "Changed by user"
+            createdby:
               type: string
-              description: "Path to update data"
-            delete:
+              description: "Created by user"
+            changedate:
               type: string
-              description: "Path to delete data"
+              format: date-time
+              description: "Change date"
+            createddate:
+              type: string
+              format: date-time
+              description: "Create date"
 
         option:
           type: array

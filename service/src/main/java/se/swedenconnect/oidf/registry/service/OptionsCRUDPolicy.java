@@ -80,7 +80,7 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
           "POLICIES already exists for:%s %s".formatted(fkKeyType, id));
     }
 
-    final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
+    final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
     final List<SettingsEntity> validatedInData
         = this.createAndValidateInputData(organizationRecord, template, record.getOption());
 
@@ -106,7 +106,7 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
 
     super.throwNotFoundIfNotMatch(organizationRecord, policyEntity.getOrganizationId());
 
-    final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
+    final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
 
     final List<SettingsEntity> validatedInData =
         this.createAndValidateInputData(organizationRecord, template, record.getOption());
@@ -125,7 +125,7 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
             "No data found for:%s %s".formatted(fkKeyType, id)));
     super.throwNotFoundIfNotMatch(organizationRecord, policyEntity.getOrganizationId());
 
-    final List<SettingsEntity> mergeValues = insertValuesInTemplate(
+    final List<SettingsEntity> mergeValues = insertValuesInTemplate(organizationRecord,
         fkKeyType,
         super.getSettingsEntities(POLICIES, policyEntity.getPolicyId()));
 

@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 public class VariabelValueResolver {
 
   final Function<String, String> valueResolver;
-  final String patternString = "\\$\\{([^}]*)\\}";
+  final String patternString = "@\\{([^}]*)}";
   final Pattern pattern = Pattern.compile(this.patternString);
 
   /**

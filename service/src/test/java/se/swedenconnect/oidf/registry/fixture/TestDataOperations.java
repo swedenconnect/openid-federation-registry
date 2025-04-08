@@ -61,10 +61,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestDataOperations {
 
   private final TestRestTemplate restTemplate;
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper;
   final JwtTestUtils jwtTestUtils = new JwtTestUtils();
-  public TestDataOperations(final TestRestTemplate restTemplate) {
+
+  public TestDataOperations(final TestRestTemplate restTemplate, final ObjectMapper objectMapper) {
     this.restTemplate = restTemplate;
+    this.objectMapper = objectMapper;
   }
 
   public static Function<Values, String> defaultTrustMarkIssuer(UUID entity_id) {
@@ -278,7 +280,11 @@ public class TestDataOperations {
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
       final Function<Values, String> options) throws JsonProcessingException {
-    return createUpdate(id, FkKeyType.TRUSTMARKISSUER, organisationType, expectedHttpStatus, options, HttpMethod.POST);
+    return createUpdate(id, FkKeyType.TRUSTMARKISSUER,
+        organisationType,
+        expectedHttpStatus,
+        options,
+        HttpMethod.POST);
   }
 
   public UUID createTrustMark(
@@ -286,7 +292,11 @@ public class TestDataOperations {
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
       final Function<Values, String> options) {
-    return createUpdate(id, FkKeyType.TRUSTMARK, organisationType, expectedHttpStatus, options, HttpMethod.POST);
+    return createUpdate(id, FkKeyType.TRUSTMARK,
+        organisationType,
+        expectedHttpStatus,
+        options,
+        HttpMethod.POST);
   }
 
   public UUID createPolicy(
@@ -294,7 +304,11 @@ public class TestDataOperations {
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
       final OptionsTestData.PolicyTestData data) {
-    return createUpdate(id, FkKeyType.POLICIES, organisationType, expectedHttpStatus, data.testData(), HttpMethod.POST);
+    return createUpdate(id, FkKeyType.POLICIES,
+        organisationType,
+        expectedHttpStatus,
+        data.testData(),
+        HttpMethod.POST);
   }
 
   public UUID createHostedEntity(
@@ -356,7 +370,12 @@ public class TestDataOperations {
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
       final Function<Values, String> options) {
-    return createUpdate(id, FkKeyType.TRUSTMARKSUBJECT, organisationType, expectedHttpStatus, options, HttpMethod.POST);
+    return createUpdate(id,
+        FkKeyType.TRUSTMARKSUBJECT,
+        organisationType,
+        expectedHttpStatus,
+        options,
+        HttpMethod.POST);
   }
 
   protected UUID createUpdate(

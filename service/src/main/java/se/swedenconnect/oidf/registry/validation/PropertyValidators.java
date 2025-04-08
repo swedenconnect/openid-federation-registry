@@ -208,7 +208,7 @@ public class PropertyValidators {
     }
     return (key, value) -> this.throwIf(
         () -> !value.isBlank() && !value.startsWith(prefix),
-        key, "Must start with: " + prefix
+        key, "Must start with: " + prefix, value
     );
   }
 
@@ -218,7 +218,7 @@ public class PropertyValidators {
     }
     return (key, value) -> this.throwIf(
         () -> !value.isBlank() && !value.contains(substring),
-        key, "Must contain: " + substring
+        key, "Must contain: " + substring, value
     );
   }
 
@@ -477,6 +477,13 @@ public class PropertyValidators {
   private void throwIf(final Supplier<Boolean> predicate, final String keyName, final String failMessage) {
     if (predicate.get()) {
       throw new PropertyValidationFailException(keyName, failMessage);
+    }
+  }
+
+  private void throwIf(final Supplier<Boolean> predicate, final String keyName, final String failMessage,
+      final String orgValue) {
+    if (predicate.get()) {
+      throw new PropertyValidationFailException(keyName, failMessage, orgValue);
     }
   }
 
