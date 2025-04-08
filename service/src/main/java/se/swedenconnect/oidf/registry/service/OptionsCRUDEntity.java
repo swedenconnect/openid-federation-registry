@@ -99,10 +99,9 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
 
     final EntityKeyType entityKeyType = this.getEntityKeyType(fkKeyType);
     final Optional<EntityEntity> entity = this.entityRepository
-        .findByEntityIdAndEntityType(id, entityKeyType);
+        .findByOrgNumberAndEntityIdAndEntityKeyType(organizationRecord.orgNumber(), id, entityKeyType);
 
     if (entity.isPresent()) {
-      super.throwNotFoundIfNotMatch(organizationRecord, entity.get().getOrganization().getOrganizationId());
       throw new ResponseStatusException(HttpStatus.CONFLICT,
           "Module already exists for:%s %s".formatted(fkKeyType, id));
     }
@@ -128,12 +127,10 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
   public OptionsRecord update(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType, final UUID id,
       final OptionsRecord record) {
     final EntityKeyType entityKeyType = this.getEntityKeyType(fkKeyType);
-    final EntityEntity entity = this.entityRepository
-        .findByEntityIdAndEntityType(id, entityKeyType)
+    final EntityEntity entity = this.entityRepository.findByOrgNumberAndEntityIdAndEntityKeyType(
+            organizationRecord.orgNumber(), id, entityKeyType)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No entity found for:%s %s".formatted(fkKeyType, id)));
-
-    super.throwNotFoundIfNotMatch(organizationRecord, entity.getOrganization().getOrganizationId());
 
     final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
 
@@ -155,12 +152,11 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
   @Override
   public OptionsRecord get(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType, final UUID id) {
     final EntityKeyType entityKeyType = this.getEntityKeyType(fkKeyType);
-    final EntityEntity entity = this.entityRepository
-        .findByEntityIdAndEntityType(id, entityKeyType)
+
+    final EntityEntity entity = this.entityRepository.findByOrgNumberAndEntityIdAndEntityKeyType(
+            organizationRecord.orgNumber(), id, entityKeyType)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No entity found for:%s %s".formatted(fkKeyType, id)));
-
-    super.throwNotFoundIfNotMatch(organizationRecord, entity.getOrganization().getOrganizationId());
 
     final List<SettingsEntity> mergeValues = insertValuesInTemplate(organizationRecord,
         fkKeyType,
@@ -214,20 +210,19 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
   @Override
   @Transactional
   public OptionsRecord delete(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType, final UUID id) {
-    final EntityEntity entity = this.entityRepository
-        .findByEntityIdAndEntityType(id, this.getEntityKeyType(fkKeyType))
+    final EntityEntity entity = this.entityRepository.findByOrgNumberAndEntityIdAndEntityKeyType(
+            organizationRecord.orgNumber(), id, this.getEntityKeyType(fkKeyType))
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
-    super.throwNotFoundIfNotMatch(organizationRecord, entity.getOrganization().getOrganizationId());
     this.entityRepository.delete(entity);
     return this.toRecord(entity.getSettingsEntityList());
   }
 
   @Override
   public List<Map<String, Object>> list(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType) {
-    return this.entityRepository.findByEntityType(this.getEntityKeyType(fkKeyType))
+    return this.entityRepository.findByOrgNumberAndEntityKeyType(
+            organizationRecord.orgNumber(), this.getEntityKeyType(fkKeyType))
         .stream()
-        .filter(super.hasRightOrganizationIdEntityPredicate(organizationRecord))
         .map(entity -> {
               final Map<String, Object> e = super.getSettingsEntities(fkKeyType, entity.getEntityId())
                   .stream()
@@ -257,11 +252,11 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
         .filter(Objects::nonNull)
         .filter(value -> !value.isBlank())
         .map(UUID::fromString)
-        .map(this.policyRepository::findById)
+        .map(policyid ->
+            this.policyRepository.findByOrgNumberAndPolicyId(organizationRecord.orgNumber(), policyid))
         .map(moduleEntity -> moduleEntity.orElseThrow(() ->
             new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 "Invalid policy_id, does not exist")))
-        .filter(super.hasRightOrganizationIdPolicyPredicate(organizationRecord))
         .findFirst();
   }
 
@@ -275,7 +270,6 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
         .ifPresent(value ->
             value.setOptions(this.policyRepository.findByOrgNumber(organizationRecord.orgNumber())
                 .stream()
-                .filter(this.hasRightOrganizationIdPolicyPredicate(organizationRecord))
                 .map(entity ->
                     OptionRecord.builder()
                         .key(entity.getPolicyId().toString())

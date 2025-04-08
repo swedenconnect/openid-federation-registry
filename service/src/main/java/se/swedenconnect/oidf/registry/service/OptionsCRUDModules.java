@@ -202,9 +202,9 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
         .filter(value -> Objects.equals(value.getKey(), parameter))
         .findFirst()
         .ifPresent(value ->
-            value.setOptions(this.entityRepository.findByEntityType(EntityKeyType.FEDERATION_ENTITY)
+            value.setOptions(this.entityRepository.findByOrgNumberAndEntityKeyType(
+                    organizationRecord.orgNumber(), EntityKeyType.FEDERATION_ENTITY)
                 .stream()
-                .filter(this.hasRightOrganizationIdEntityPredicate(organizationRecord))
                 .map(entity ->
                     OptionRecord.builder()
                         .key(entity.getEntityId().toString())
@@ -222,11 +222,12 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
         .filter(value -> value.getKey().equals(parameter))
         .map(SettingsEntity::getValue)
         .map(UUID::fromString)
-        .map(s -> this.entityRepository.findByEntityIdAndEntityType(s, EntityKeyType.FEDERATION_ENTITY))
+        .map(s -> this.entityRepository
+            .findByOrgNumberAndEntityIdAndEntityKeyType(organizationRecord.orgNumber(), s,
+                EntityKeyType.FEDERATION_ENTITY))
         .map(moduleEntity -> moduleEntity.orElseThrow(() ->
             new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 "Invalid %s, does not exist".formatted(parameter))))
-        .filter(this.hasRightOrganizationIdEntityPredicate(organizationRecord))
         .findFirst()
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
             "No trustmarkissuer to assign trustmarks to"));
