@@ -273,8 +273,7 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
         .filter(value -> Objects.equals(value.getKey(), parameterName))
         .findFirst()
         .ifPresent(value ->
-            value.setOptions(this.policyRepository.findByOrganizationId(super.getCurrentOrganization(organizationRecord)
-                    .getOrganizationId())
+            value.setOptions(this.policyRepository.findByOrgNumber(organizationRecord.orgNumber())
                 .stream()
                 .filter(this.hasRightOrganizationIdPolicyPredicate(organizationRecord))
                 .map(entity ->
