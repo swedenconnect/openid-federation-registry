@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import se.swedenconnect.oidf.registry.api.model.OptionChildren;
 import se.swedenconnect.oidf.registry.api.model.OptionRecord;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.Values;
@@ -167,6 +168,13 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
 
     final OptionsRecord record = this.toRecord(mergeValues);
     this.addOptionsForPolicyId(organizationRecord, Objects.requireNonNull(record.getOption()));
+    record.setOptionChildren(entity.getModules().stream()
+        .map(moduleEntity ->
+            OptionChildren.builder()
+                .optionGroup(moduleEntity.getModuleType())
+                .idGroup(moduleEntity.getModuleId().toString())
+                .build()
+        ).toList());
     return record;
   }
 
@@ -228,6 +236,11 @@ public class OptionsCRUDEntity extends OptionsCRUDAdapter {
                       SettingsEntity::castValue
                   ));
               e.put("id", entity.getEntityId().toString());
+          e.put("option-children", entity.getModules().stream()
+              .map(moduleEntity ->
+                  Map.of("option-group", moduleEntity.getModuleType(),
+                      "id-group", moduleEntity.getModuleId().toString())
+              ).toList());
               return e;
             }
         )

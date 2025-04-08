@@ -42,7 +42,6 @@ components:
               type: string
               format: date-time
               description: "Create date"
-
         option:
           type: array
           items:
@@ -89,8 +88,18 @@ components:
                   - value
                   - value_type
                   - description
-
-
+        option-children:
+          type: array
+          items:
+            title: OptionChildren
+            type: object
+            properties:
+              option-group:
+                type: string
+                description: "Name of the option group"
+              id-group:
+                type: string
+                description: "Id group"
 
 paths:
   /registry/v1:

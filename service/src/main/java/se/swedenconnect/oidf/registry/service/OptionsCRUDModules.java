@@ -154,9 +154,9 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
     super.throwNotFoundIfNotMatch(organizationRecord, moduleEntity.getOrganization().getOrganizationId());
+
     final List<SettingsEntity> mergeValues = insertValuesInTemplate(organizationRecord,
         fkKeyType, moduleEntity.getSettingsEntityList());
-    //this.validateEntityIdentifier(fkKeyType, optionsRecord.getOption());
     return toRecord(mergeValues);
   }
 

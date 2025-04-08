@@ -158,7 +158,6 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
       final List<SettingsEntity> dataValues) {
 
     final List<SettingsEntity> templateValues = this.getTemplateSettings(organizationRecord, fkkeytype);
-
     return templateValues
         .stream()
         .map(templateValue ->
