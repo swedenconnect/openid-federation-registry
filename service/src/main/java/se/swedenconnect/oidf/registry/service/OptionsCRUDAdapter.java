@@ -54,10 +54,10 @@ import java.util.stream.Collectors;
  * @author Per Fredrik Plars
  */
 public abstract class OptionsCRUDAdapter implements OptionsCRUD {
-
+//TODO rename class, it is not an adapter pattern, maybe BaseOptionsCRUD is more fitting?
   private final SettingsRepository settingsRepository;
   private final PropertyValidators validatorFactory = new PropertyValidators();
-  private final OrganizationService organizationService;
+  private final OrganizationService organizationService; //TODO remove this from class
   private final ZoneOffset offset = ZoneOffset.UTC;
 
   protected OptionsCRUDAdapter(
@@ -71,18 +71,22 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
     return Optional.ofNullable(this.organizationService.findCreate(organizationRecord.orgNumber(),
             organizationRecord.orgName()))
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No organization assigned"));
+    //TODO THIS NEEDS TO BE CHECKED IN THE CONTROLLER
+    //TODO REMOVE THIS METHOD
   }
 
   protected Predicate<ModuleEntity> hasRightOrganizationIdModulePredicate(
       final OrganizationRecord organizationRecord) {
     return entity -> Objects.equals(this.getCurrentOrganization(organizationRecord).getOrganizationId(),
         entity.getOrganization().getOrganizationId());
+    //TODO DELETE THIS METHOD
   }
 
   protected Predicate<TrustMarkEntity> hasRightOrganizationIdTrustmarkPredicate(
       final OrganizationRecord organizationRecord) {
     return entity -> Objects.equals(this.getCurrentOrganization(organizationRecord).getOrganizationId(),
         entity.getModule().getOrganization().getOrganizationId());
+    //TODO DELETE THIS METHOD
   }
 
   protected void throwNotFoundIfNotMatch(final OrganizationRecord organizationRecord,
@@ -92,6 +96,7 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
         .orElseThrow(() ->
             new ResponseStatusException(HttpStatus.NOT_FOUND,
                 "No data found for organization:%s".formatted(organizationId)));
+    //TODO DELETE THIS METHOD
   }
 
   protected OptionsRecord toRecord(final List<SettingsEntity> entities) {
@@ -125,7 +130,7 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
       final FkKeyType fkkeytype) {
     final List<SettingsEntity> templates = this.settingsRepository.findByFkTypeAndFkId(fkkeytype.name(), "TEMPLATE");
     if (templates.isEmpty()) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, //TODO do not expose http status errors in service
           "No template found for:%s".formatted(fkkeytype));
     }
     final VariabelValueResolver valueResolver = VariabelValueResolver.orgResolver(organizationRecord);
@@ -199,7 +204,7 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
     final String issuer = entityEntity.getIssuer();
     final String subject = entityEntity.getSubject();
     if (!issuer.equalsIgnoreCase(subject)) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, //TODO do not expose http status errors in service
           ("Issuer and subject must be the same on the entity that this module will "
               + "be mounted to. Issuer: %s, Subject: %s").formatted(issuer, subject));
     }

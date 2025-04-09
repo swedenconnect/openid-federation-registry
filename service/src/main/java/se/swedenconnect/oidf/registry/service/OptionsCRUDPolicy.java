@@ -103,7 +103,7 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
       final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
     final PolicyEntity policyEntity = this.policyRepository
         .findByOrgNumberAndPolicyId(organizationRecord.orgNumber(), id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, //TODO do not expose http status errors in service
             "No template found for:%s %s".formatted(fkKeyType, id)));
 
     final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
@@ -121,7 +121,7 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
       final FkKeyType fkKeyType, final UUID id) {
     final PolicyEntity policyEntity = this.policyRepository
         .findByOrgNumberAndPolicyId(organizationRecord.orgNumber(), id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, //TODO do not expose http status errors in service
             "No data found for:%s %s".formatted(fkKeyType, id)));
     super.throwNotFoundIfNotMatch(organizationRecord, policyEntity.getOrganizationId());
 
@@ -139,7 +139,7 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
       final FkKeyType fkKeyType, final UUID id) {
     final PolicyEntity entity = this.policyRepository
         .findByOrgNumberAndPolicyId(organizationRecord.orgNumber(), id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, //TODO do not expose http status errors in service
             "No data found for:%s %s".formatted(fkKeyType, id)));
     final List<SettingsEntity> options = deleteSettings(POLICIES, entity.getPolicyId().toString());
     this.policyRepository.delete(entity);

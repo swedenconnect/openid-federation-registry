@@ -130,7 +130,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
     final ModuleEntity moduleEntity = this.moduleRepository
         .findByModuleIdAndModuleType(id, fkKeyType.name())
         .filter(super.hasRightOrganizationIdModulePredicate(organizationRecord))
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, //TODO do not expose http status errors in service
             "No template found for:%s %s".formatted(fkKeyType, id)));
 
     final EntityEntity entityEntity = moduleEntity.getEntity();
@@ -151,7 +151,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
       final FkKeyType fkKeyType, final UUID id) {
     final ModuleEntity moduleEntity = this.moduleRepository
         .findByModuleIdAndModuleType(id, fkKeyType.name())
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, //TODO do not expose http status errors in service
             "No data found for:%s %s".formatted(fkKeyType, id)));
     super.throwNotFoundIfNotMatch(organizationRecord, moduleEntity.getOrganization().getOrganizationId());
 
@@ -166,7 +166,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
       final FkKeyType fkKeyType, final UUID id) {
     final ModuleEntity moduleEntity = this.moduleRepository
         .findByModuleIdAndModuleType(id, fkKeyType.name())
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, //TODO do not expose http status errors in service
             "No data found for:%s %s".formatted(fkKeyType, id)));
     super.throwNotFoundIfNotMatch(organizationRecord, moduleEntity.getOrganization().getOrganizationId());
 
@@ -226,7 +226,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
             .findByOrgNumberAndEntityIdAndEntityKeyType(organizationRecord.orgNumber(), s,
                 EntityKeyType.FEDERATION_ENTITY))
         .map(moduleEntity -> moduleEntity.orElseThrow(() ->
-            new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            new ResponseStatusException(HttpStatus.BAD_REQUEST, //TODO do not expose http status errors in service
                 "Invalid %s, does not exist".formatted(parameter))))
         .findFirst()
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,

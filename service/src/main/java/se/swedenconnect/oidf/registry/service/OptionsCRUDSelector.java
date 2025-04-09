@@ -41,7 +41,7 @@ import java.util.UUID;
 @Service
 public class OptionsCRUDSelector implements OptionsCRUD {
 
-  final List<OptionsCRUD> optionsCRUDS;
+  final List<OptionsCRUD> optionsCRUDS; //TODO why is this not a map?
   final RegistryAuditService registryAuditService;
 
   /**

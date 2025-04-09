@@ -32,6 +32,8 @@ import java.util.Optional;
  *
  * @author Felix Hellman
  */
+//TODO I do not remember writing this...
+//TODO Do we really need this? If yes, maybe delete OrganizationInformationSelector ...
 @Slf4j
 public class OrganizationRecordClaimSelector implements HandlerMethodArgumentResolver {
   public final static String SELECTED_ORG_NUMBER_HEADER_NAME = "selected-org-number";

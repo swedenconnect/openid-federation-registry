@@ -182,6 +182,7 @@ public class OptionsApiController {
   public ResponseEntity<?> query(
       final OrganizationRecord organizationRecord,
       @RequestParam(value = "q", required = false) final String query) {
+    //TODO Q looks like a receipie for sql injection, what is it's purpose? Currently unused.
     return ResponseEntity.ok(this.optionsCRUDSelector.listAll(organizationRecord, query));
   }
 
