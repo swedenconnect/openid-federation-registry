@@ -35,14 +35,13 @@ The service provides RESTful APIs for creating, retrieving, updating, and managi
 #### Clone the Repository
 
 ```sh
-git clone https://github.com/swedenconnect/oidf-entity-registry
-cd oidf-entity-registry/service
+git clone https://github.com/swedenconnect/openid-federation-registry
+cd openid-federation-registry
 ```
 
 #### Build the Project
 
 ```sh
-cd ../service
 mvn clean install
 ```
 
@@ -56,6 +55,7 @@ The easiest way to handle all those dependencies is to run the Docker
 compose [local-environment](https://github.com/swedenconnect/local-environment) for OpenID Federation.
 
 ```sh
+cd ../
 git clone git@github.com:swedenconnect/local-environment.git
 cd local-environment/openidfederation
 docker compose up -d
@@ -78,26 +78,8 @@ oidf-registry:
 Then start the Registry application by:
 
 ```sh
-mvn spring-boot:run -Dspring-boot.run.profiles=local
-```
-
-##### Alternative run option:
-
-The project uses Spring Boot 3 built-in support for Docker Compose, using `../docker-compose.yaml` and handling starting
-and stopping of the container. If you wish to manage the Docker Compose yourself, unable the Spring Boot handling with:
-
-```yaml
-spring:
-  docker:
-  compose:
-    enabled: false
-```
-
-and then:
-
-```sh
-docker-compose -f ../docker-compose.yaml up -d
-mvn spring-boot:run --spring.config.import=config/local/local-dev.yml
+cd ../openid-federation-registry/service
+mvn spring-boot:run -Dspring-boot.run.arguments="--spring.config.import=../config/local/application-local.yml"
 ```
 
 #### Viewing API Documentation
@@ -105,8 +87,8 @@ mvn spring-boot:run --spring.config.import=config/local/local-dev.yml
 This project uses `springdoc-openapi-starter-webmvc-ui` to generate API documentation. Once the application is running,
 you can view the API documentation in the Swagger and OpenAPI UI at the following URLs:
 
-- http://localhost:8080/swagger-ui/index.html
-- http://localhost:8080/v3/api-docs
+- http://localhost:8010/swagger-ui/index.html
+- http://localhost:8010/v3/api-docs
 
 #### Building and Deploying
 
@@ -130,5 +112,5 @@ the [Apache License](http://www.apache.org/licenses/LICENSE-2.0).
 
 -----
 
-Copyright &copy; 2024, [Swedenconnect](http://www.swedenconnect.se). Licensed under version 2.0 of
+Copyright &copy; 2025, [Swedenconnect](http://www.swedenconnect.se). Licensed under version 2.0 of
 the [Apache License](http://www.apache.org/licenses/LICENSE-2.0).

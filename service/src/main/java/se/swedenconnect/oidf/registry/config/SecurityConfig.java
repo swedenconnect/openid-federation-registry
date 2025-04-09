@@ -90,6 +90,7 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.GET, "/api/v1/federationservice/**").permitAll() // Always open
             .requestMatchers(HttpMethod.OPTIONS).permitAll()
             .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/swagger-ui/**", "/v3/api-docs/**").permitAll()
             .anyRequest().denyAll()
         );
     return http.build();
