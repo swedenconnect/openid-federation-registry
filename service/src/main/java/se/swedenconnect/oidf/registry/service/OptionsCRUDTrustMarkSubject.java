@@ -16,7 +16,6 @@
 package se.swedenconnect.oidf.registry.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,7 +28,7 @@ import se.swedenconnect.oidf.registry.entity.SettingDataType;
 import se.swedenconnect.oidf.registry.entity.SettingsEntity;
 import se.swedenconnect.oidf.registry.entity.TrustMarkEntity;
 import se.swedenconnect.oidf.registry.entity.TrustMarkSubjectEntity;
-import se.swedenconnect.oidf.registry.errorhandling.RegistryClientException;
+import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.registry.repository.TrustMarkRepository;
 import se.swedenconnect.oidf.registry.repository.TrustMarkSubjectRepository;
@@ -39,7 +38,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static se.swedenconnect.oidf.registry.entity.FkKeyType.TRUSTMARKSUBJECT;
 import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.BAD_REQUEST;
@@ -89,15 +87,11 @@ public class OptionsCRUDTrustMarkSubject extends BaseOptionsCRUD {
   @Override
   public OptionsRecord create(final OrganizationRecord organizationRecord,
       final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
-    final Optional<TrustMarkSubjectEntity> trustMarkEntity = this.trustMarkSubjectRepository.findById(id);
+    final Optional<TrustMarkSubjectEntity> trustMarkEntity =
+        this.trustMarkSubjectRepository.findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), id);
 
     if (trustMarkEntity.isPresent()) {
-      super.throwNotFoundIfNotMatch(organizationRecord, trustMarkEntity.get()
-          .getTrustMark()
-          .getModule()
-          .getOrganization()
-          .getOrganizationId());
-      throw new RegistryClientException(CONFLICT,
+      throw new RegistryServerException(CONFLICT,
           "TrustMark already exists for:%s %s".formatted(fkKeyType, id));
     }
 
@@ -118,22 +112,18 @@ public class OptionsCRUDTrustMarkSubject extends BaseOptionsCRUD {
   }
 
   protected TrustMarkEntity loadTrustMarkIDThrowIfNotExist(final OrganizationRecord organizationRecord,
-      final List<SettingsEntity> dataValues)
-      throws ResponseStatusException {
+      final List<SettingsEntity> dataValues) throws ResponseStatusException {
 
     return dataValues.stream()
         .filter(value -> value.getKey().equals("trustmark_id"))
         .map(SettingsEntity::getValue)
         .map(UUID::fromString)
-        .map(this.trustMarkRepository::findById)
+        .map(uuid -> this.trustMarkRepository.findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), uuid))
         .map(moduleEntity -> moduleEntity.orElseThrow(() ->
-            new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            new RegistryServerException(BAD_REQUEST,
                 "Invalid trustmark_id, does not exist")))
-        .peek(trustMarkEntity ->
-            super.throwNotFoundIfNotMatch(organizationRecord,
-                trustMarkEntity.getModule().getOrganization().getOrganizationId()))
         .findFirst()
-        .orElseThrow(() -> new RegistryClientException(BAD_REQUEST,
+        .orElseThrow(() -> new RegistryServerException(BAD_REQUEST,
             "No trustmark to assign trustmarkssubjects to"));
   }
 
@@ -142,12 +132,10 @@ public class OptionsCRUDTrustMarkSubject extends BaseOptionsCRUD {
       final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
 
     final TrustMarkSubjectEntity entity = this.trustMarkSubjectRepository
-        .findById(id)
-        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
+        .findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), id)
+        .orElseThrow(() -> new RegistryServerException(NOT_FOUND,
             "No template found for:%s %s".formatted(fkKeyType, id)));
 
-    super.throwNotFoundIfNotMatch(organizationRecord,
-        entity.getTrustMark().getModule().getOrganization().getOrganizationId());
     final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
 
     final List<SettingsEntity> validatedInData =
@@ -163,18 +151,15 @@ public class OptionsCRUDTrustMarkSubject extends BaseOptionsCRUD {
   public OptionsRecord get(final OrganizationRecord organizationRecord,
       final FkKeyType fkKeyType, final UUID id) {
     final TrustMarkSubjectEntity entity = this.trustMarkSubjectRepository
-        .findById(id)
-        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
+        .findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), id)
+        .orElseThrow(() -> new RegistryServerException(NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
-    super.throwNotFoundIfNotMatch(organizationRecord,
-        entity.getTrustMark().getModule().getOrganization().getOrganizationId());
 
     final List<SettingsEntity> mergeValues = insertValuesInTemplate(organizationRecord,
         fkKeyType,
         super.getSettingsEntities(FK_KEY_TYPE, entity.getTrustmarkId()));
 
-    final OptionsRecord optionsRecord = toRecord(mergeValues);
-    return optionsRecord;
+    return toRecord(mergeValues);
 
   }
 
@@ -191,9 +176,8 @@ public class OptionsCRUDTrustMarkSubject extends BaseOptionsCRUD {
         .filter(value -> Objects.equals(value.getKey(), "trustmark_id"))
         .findFirst()
         .ifPresent(value ->
-            value.setOptions(this.trustMarkRepository.findAll()
+            value.setOptions(this.trustMarkRepository.findByOrgNumber(organizationRecord.orgNumber())
                 .stream()
-                .filter(super.hasRightOrganizationIdTrustmarkPredicate(organizationRecord))
                 .map(entity ->
                     OptionRecord.builder()
                         .key(entity.getTrustmarkId().toString())
@@ -208,36 +192,22 @@ public class OptionsCRUDTrustMarkSubject extends BaseOptionsCRUD {
   @Override
   @Transactional
   public OptionsRecord delete(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType, final UUID id) {
-    final TrustMarkEntity trustMarkEntity = this.trustMarkRepository
-        .findById(id)
-        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
+    final TrustMarkSubjectEntity trustMarkEntity = this.trustMarkSubjectRepository
+        .findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), id)
+        .orElseThrow(() -> new RegistryServerException(NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
-    super.throwNotFoundIfNotMatch(organizationRecord,
-        trustMarkEntity.getModule().getOrganization().getOrganizationId());
     final List<SettingsEntity> deletedSettings =
         super.deleteSettings(fkKeyType, trustMarkEntity.getTrustmarkId().toString());
-    this.trustMarkRepository.delete(trustMarkEntity);
-    this.trustMarkRepository.flush();
+    this.trustMarkSubjectRepository.delete(trustMarkEntity);
+    this.trustMarkSubjectRepository.flush();
     return this.toRecord(deletedSettings);
   }
 
   @Override
   public List<Map<String, Object>> list(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType) {
-    return this.trustMarkRepository.findAll()
+    return this.trustMarkRepository.findByOrgNumber(organizationRecord.orgNumber())
         .stream()
-        .filter(entity -> Objects.equals(entity.getModule().getOrganization().getOrganizationId(),
-            getCurrentOrganization(organizationRecord).getOrganizationId()))
-        .map(entity -> {
-          final Map<String, Object> e = super.getSettingsEntities(fkKeyType, entity.getTrustmarkId())
-                  .stream()
-                  .collect(Collectors.toMap(
-                      SettingsEntity::getKey,
-                      SettingsEntity::castValue
-                  ));
-              e.put("id", entity.getTrustmarkId().toString());
-              return e;
-            }
-        )
+        .map(entity -> super.getStringObjectMap(fkKeyType, entity.getTrustmarkId()))
         .toList();
   }
 

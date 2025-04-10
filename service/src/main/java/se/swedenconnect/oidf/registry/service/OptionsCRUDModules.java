@@ -30,7 +30,7 @@ import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.entity.ModuleEntity;
 import se.swedenconnect.oidf.registry.entity.SettingDataType;
 import se.swedenconnect.oidf.registry.entity.SettingsEntity;
-import se.swedenconnect.oidf.registry.errorhandling.RegistryClientException;
+import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.repository.ModuleRepository;
 import se.swedenconnect.oidf.registry.repository.SettingsRepository;
@@ -40,7 +40,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.BAD_REQUEST;
 import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.NOT_FOUND;
@@ -99,10 +98,9 @@ public class OptionsCRUDModules extends BaseOptionsCRUD {
   public OptionsRecord create(final OrganizationRecord organizationRecord,
       final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
     final Optional<ModuleEntity> moduleEntity = this.moduleRepository
-        .findByModuleIdAndModuleType(id, fkKeyType.name());
+        .findByOrgNumberAndModuleIdAndModuleType(organizationRecord.orgNumber(), id, fkKeyType.name());
 
     if (moduleEntity.isPresent()) {
-      super.throwNotFoundIfNotMatch(organizationRecord, moduleEntity.get().getOrganization().getOrganizationId());
       throw new ResponseStatusException(HttpStatus.CONFLICT,
           "Module already exists for:%s %s".formatted(fkKeyType, id));
     }
@@ -132,9 +130,8 @@ public class OptionsCRUDModules extends BaseOptionsCRUD {
   public OptionsRecord update(final OrganizationRecord organizationRecord,
       final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
     final ModuleEntity moduleEntity = this.moduleRepository
-        .findByModuleIdAndModuleType(id, fkKeyType.name())
-        .filter(super.hasRightOrganizationIdModulePredicate(organizationRecord))
-        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
+        .findByOrgNumberAndModuleIdAndModuleType(organizationRecord.orgNumber(), id, fkKeyType.name())
+        .orElseThrow(() -> new RegistryServerException(NOT_FOUND,
             "No template found for:%s %s".formatted(fkKeyType, id)));
 
     final EntityEntity entityEntity = moduleEntity.getEntity();
@@ -154,10 +151,9 @@ public class OptionsCRUDModules extends BaseOptionsCRUD {
   public OptionsRecord get(final OrganizationRecord organizationRecord,
       final FkKeyType fkKeyType, final UUID id) {
     final ModuleEntity moduleEntity = this.moduleRepository
-        .findByModuleIdAndModuleType(id, fkKeyType.name())
-        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
+        .findByOrgNumberAndModuleIdAndModuleType(organizationRecord.orgNumber(), id, fkKeyType.name())
+        .orElseThrow(() -> new RegistryServerException(NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
-    super.throwNotFoundIfNotMatch(organizationRecord, moduleEntity.getOrganization().getOrganizationId());
 
     final List<SettingsEntity> mergeValues = insertValuesInTemplate(organizationRecord,
         fkKeyType, moduleEntity.getSettingsEntityList());
@@ -169,10 +165,9 @@ public class OptionsCRUDModules extends BaseOptionsCRUD {
   public OptionsRecord delete(final OrganizationRecord organizationRecord,
       final FkKeyType fkKeyType, final UUID id) {
     final ModuleEntity moduleEntity = this.moduleRepository
-        .findByModuleIdAndModuleType(id, fkKeyType.name())
-        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
+        .findByOrgNumberAndModuleIdAndModuleType(organizationRecord.orgNumber(), id, fkKeyType.name())
+        .orElseThrow(() -> new RegistryServerException(NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
-    super.throwNotFoundIfNotMatch(organizationRecord, moduleEntity.getOrganization().getOrganizationId());
 
     this.moduleRepository.delete(moduleEntity);
     return this.toRecord(moduleEntity.getSettingsEntityList());
@@ -182,20 +177,9 @@ public class OptionsCRUDModules extends BaseOptionsCRUD {
   public List<Map<String, Object>> list(final OrganizationRecord organizationRecord,
       final FkKeyType fkKeyType) {
 
-    return this.moduleRepository.findByModuleType(fkKeyType.name())
+    return this.moduleRepository.findByOrgNumberAndModuleType(organizationRecord.orgNumber(), fkKeyType.name())
         .stream()
-        .filter(super.hasRightOrganizationIdModulePredicate(organizationRecord))
-        .map(entity -> {
-              final Map<String, Object> e = entity.getSettingsEntityList()
-                  .stream()
-                  .collect(Collectors.toMap(
-                      SettingsEntity::getKey,
-                      SettingsEntity::castValue
-                  ));
-              e.put("id", entity.getModuleId().toString());
-              return e;
-            }
-        )
+        .map(entity -> super.getStringObjectMap(fkKeyType, entity.getModuleId()))
         .toList();
   }
 
@@ -230,7 +214,7 @@ public class OptionsCRUDModules extends BaseOptionsCRUD {
             .findByOrgNumberAndEntityIdAndEntityKeyType(organizationRecord.orgNumber(), s,
                 EntityKeyType.FEDERATION_ENTITY))
         .map(moduleEntity -> moduleEntity.orElseThrow(() ->
-            new RegistryClientException(BAD_REQUEST,
+            new RegistryServerException(BAD_REQUEST,
                 "Invalid %s, does not exist".formatted(parameter))))
         .findFirst()
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,

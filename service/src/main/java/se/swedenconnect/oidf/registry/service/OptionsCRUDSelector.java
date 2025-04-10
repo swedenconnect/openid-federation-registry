@@ -24,7 +24,7 @@ import se.swedenconnect.oidf.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.errorhandling.ErrorTypes;
-import se.swedenconnect.oidf.registry.errorhandling.RegistryClientException;
+import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -108,7 +108,7 @@ public class OptionsCRUDSelector implements OptionsCRUD {
       return deletedRecord;
     }
     catch (final DataIntegrityViolationException e) {
-      throw new RegistryClientException(ErrorTypes.PARENT_HAS_CHILDREN,
+      throw new RegistryServerException(ErrorTypes.PARENT_HAS_CHILDREN,
           "Unable to delete entity, remove children first", e);
     }
   }

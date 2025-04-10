@@ -25,11 +25,9 @@ import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.entity.BaseEntity;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
-import se.swedenconnect.oidf.registry.entity.ModuleEntity;
 import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.entity.SettingsEntity;
-import se.swedenconnect.oidf.registry.entity.TrustMarkEntity;
-import se.swedenconnect.oidf.registry.errorhandling.RegistryClientException;
+import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.registry.validation.PropertyValidator;
 import se.swedenconnect.oidf.registry.validation.PropertyValidators;
@@ -44,7 +42,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.BAD_REQUEST;
@@ -74,32 +71,6 @@ public abstract class BaseOptionsCRUD implements OptionsCRUD {
     return Optional.ofNullable(this.organizationService.findCreate(organizationRecord.orgNumber(),
             organizationRecord.orgName()))
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No organization assigned"));
-    //TODO THIS NEEDS TO BE CHECKED IN THE CONTROLLER
-    //TODO REMOVE THIS METHOD
-  }
-
-  protected Predicate<ModuleEntity> hasRightOrganizationIdModulePredicate(
-      final OrganizationRecord organizationRecord) {
-    return entity -> Objects.equals(this.getCurrentOrganization(organizationRecord).getOrganizationId(),
-        entity.getOrganization().getOrganizationId());
-    //TODO DELETE THIS METHOD
-  }
-
-  protected Predicate<TrustMarkEntity> hasRightOrganizationIdTrustmarkPredicate(
-      final OrganizationRecord organizationRecord) {
-    return entity -> Objects.equals(this.getCurrentOrganization(organizationRecord).getOrganizationId(),
-        entity.getModule().getOrganization().getOrganizationId());
-    //TODO DELETE THIS METHOD
-  }
-
-  protected void throwNotFoundIfNotMatch(final OrganizationRecord organizationRecord,
-      final UUID organizationId) {
-    Optional.ofNullable(organizationId)
-        .filter(uuid -> uuid.equals(this.getCurrentOrganization(organizationRecord).getOrganizationId()))
-        .orElseThrow(() ->
-            new ResponseStatusException(HttpStatus.NOT_FOUND,
-                "No data found for organization:%s".formatted(organizationId)));
-    //TODO DELETE THIS METHOD
   }
 
   protected OptionsRecord toRecord(final List<SettingsEntity> entities) {
@@ -133,13 +104,24 @@ public abstract class BaseOptionsCRUD implements OptionsCRUD {
       final FkKeyType fkkeytype) {
     final List<SettingsEntity> templates = this.settingsRepository.findByFkTypeAndFkId(fkkeytype.name(), "TEMPLATE");
     if (templates.isEmpty()) {
-      throw new RegistryClientException(NOT_FOUND,
+      throw new RegistryServerException(NOT_FOUND,
           "No template found for:%s".formatted(fkkeytype));
     }
     final VariabelValueResolver valueResolver = VariabelValueResolver.orgResolver(organizationRecord);
     templates.forEach(settingsEntity ->
         settingsEntity.setValue(valueResolver.insertTemplateValues(settingsEntity.getValue())));
     return templates;
+  }
+
+  protected Map<String, Object> getStringObjectMap(final FkKeyType fkKeyType, final UUID id) {
+    final Map<String, Object> e = this.getSettingsEntities(fkKeyType, id)
+        .stream()
+        .collect(Collectors.toMap(
+            SettingsEntity::getKey,
+            SettingsEntity::castValue
+        ));
+    e.put("id", id.toString());
+    return e;
   }
 
   @Override
@@ -207,7 +189,7 @@ public abstract class BaseOptionsCRUD implements OptionsCRUD {
     final String issuer = entityEntity.getIssuer();
     final String subject = entityEntity.getSubject();
     if (!issuer.equalsIgnoreCase(subject)) {
-      throw new RegistryClientException(BAD_REQUEST,
+      throw new RegistryServerException(BAD_REQUEST,
           ("Issuer and subject must be the same on the entity that this module will "
               + "be mounted to. Issuer: %s, Subject: %s").formatted(issuer, subject));
     }

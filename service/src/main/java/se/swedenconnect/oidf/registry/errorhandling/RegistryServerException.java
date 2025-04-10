@@ -25,7 +25,7 @@ import lombok.Getter;
  * @author Per Fredrik Plars
  */
 @Getter
-public class RegistryClientException extends RuntimeException {
+public class RegistryServerException extends RuntimeException {
   final ErrorTypes errorTypes;
 
   /**
@@ -34,7 +34,7 @@ public class RegistryClientException extends RuntimeException {
    * @param errorTypes the URI representing specific error types associated with this exception
    * @param message the detailed message explaining the reason for this exception
    */
-  public RegistryClientException(final ErrorTypes errorTypes, final String message) {
+  public RegistryServerException(final ErrorTypes errorTypes, final String message) {
     super(message);
     this.errorTypes = errorTypes;
   }
@@ -46,7 +46,7 @@ public class RegistryClientException extends RuntimeException {
    * @param message the detailed message explaining the reason for this exception
    * @param cause the underlying cause of this exception
    */
-  public RegistryClientException(final ErrorTypes errorTypes, final String message, final Throwable cause) {
+  public RegistryServerException(final ErrorTypes errorTypes, final String message, final Throwable cause) {
     super(message, cause);
     this.errorTypes = errorTypes;
   }

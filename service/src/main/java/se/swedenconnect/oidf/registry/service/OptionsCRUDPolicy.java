@@ -25,7 +25,7 @@ import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.entity.PolicyEntity;
 import se.swedenconnect.oidf.registry.entity.SettingsEntity;
-import se.swedenconnect.oidf.registry.errorhandling.RegistryClientException;
+import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.PolicyRepository;
 import se.swedenconnect.oidf.registry.repository.SettingsRepository;
 
@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static se.swedenconnect.oidf.registry.entity.FkKeyType.POLICIES;
 import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.NOT_FOUND;
@@ -105,7 +104,7 @@ public class OptionsCRUDPolicy extends BaseOptionsCRUD {
       final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
     final PolicyEntity policyEntity = this.policyRepository
         .findByOrgNumberAndPolicyId(organizationRecord.orgNumber(), id)
-        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
+        .orElseThrow(() -> new RegistryServerException(NOT_FOUND,
             "No template found for:%s %s".formatted(fkKeyType, id)));
 
     final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
@@ -123,9 +122,8 @@ public class OptionsCRUDPolicy extends BaseOptionsCRUD {
       final FkKeyType fkKeyType, final UUID id) {
     final PolicyEntity policyEntity = this.policyRepository
         .findByOrgNumberAndPolicyId(organizationRecord.orgNumber(), id)
-        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
+        .orElseThrow(() -> new RegistryServerException(NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
-    super.throwNotFoundIfNotMatch(organizationRecord, policyEntity.getOrganizationId());
 
     final List<SettingsEntity> mergeValues = insertValuesInTemplate(organizationRecord,
         fkKeyType,
@@ -141,7 +139,7 @@ public class OptionsCRUDPolicy extends BaseOptionsCRUD {
       final FkKeyType fkKeyType, final UUID id) {
     final PolicyEntity entity = this.policyRepository
         .findByOrgNumberAndPolicyId(organizationRecord.orgNumber(), id)
-        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
+        .orElseThrow(() -> new RegistryServerException(NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
     final List<SettingsEntity> options = deleteSettings(POLICIES, entity.getPolicyId().toString());
     this.policyRepository.delete(entity);
@@ -153,17 +151,7 @@ public class OptionsCRUDPolicy extends BaseOptionsCRUD {
   public List<Map<String, Object>> list(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType) {
     return this.policyRepository.findByOrgNumber(organizationRecord.orgNumber())
         .stream()
-        .map(entity -> {
-          final Map<String, Object> e = super.getSettingsEntities(POLICIES, entity.getPolicyId())
-                  .stream()
-                  .collect(Collectors.toMap(
-                      SettingsEntity::getKey,
-                      SettingsEntity::castValue
-                  ));
-              e.put("id", entity.getPolicyId().toString());
-              return e;
-            }
-        )
+        .map(entity -> super.getStringObjectMap(fkKeyType, entity.getOrganizationId()))
         .toList();
   }
 

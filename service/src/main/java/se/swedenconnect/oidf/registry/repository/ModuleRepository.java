@@ -17,6 +17,8 @@
 package se.swedenconnect.oidf.registry.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import se.swedenconnect.oidf.registry.entity.ModuleEntity;
 
@@ -25,7 +27,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Repository interface for managing SettingsEntity.
+ * Repository interface for managing ModuleRepository.
  *
  * @author Per Fredrik Plars
  */
@@ -33,20 +35,28 @@ import java.util.UUID;
 public interface ModuleRepository extends JpaRepository<ModuleEntity, UUID> {
 
   /**
-   * Retrieves a {@link ModuleEntity} based on the provided external ID and module type.
+   * Retrieves a module entity based on the given organization number, module ID, and module type.
    *
-   * @param moduleId the unique  identifier of the module to search for
-   * @param moduleType the type of the module to search for
-   * @return an {@link Optional}
+   * @param orgNumber the organization number associated with the module
+   * @param moduleId the unique identifier of the module
+   * @param moduleType the type of the module
+   * @return an Optional containing the ModuleEntity if found, otherwise an empty Optional
    */
-  Optional<ModuleEntity> findByModuleIdAndModuleType(UUID moduleId, String moduleType);
+  @Query("SELECT m FROM ModuleEntity m JOIN m.organization o "
+      + "WHERE o.orgNumber = :orgNumber AND m.moduleType = :moduleType AND m.moduleId=:moduleId")
+  Optional<ModuleEntity> findByOrgNumberAndModuleIdAndModuleType(
+      @Param("orgNumber") String orgNumber, @Param("moduleId") UUID moduleId, @Param("moduleType") String moduleType);
 
   /**
-   * Retrieves a list of {@link ModuleEntity} objects that match the specified module type.
+   * Retrieves a list of ModuleEntity objects associated with the specified organization number
+   * and module type.
    *
-   * @param moduleType the type of modules to search for
-   * @return a list of {@link ModuleEntity} objects matching the specified module type
+   * @param orgNumber the organization number to filter by.
+   * @param moduleType the type of module to filter by.
+   * @return a list of ModuleEntity objects matching the specified organization number and module type.
    */
-  List<ModuleEntity> findByModuleType(String moduleType);
-
+  @Query("SELECT m FROM ModuleEntity m JOIN m.organization o "
+      + "WHERE o.orgNumber = :orgNumber AND m.moduleType = :moduleType")
+  List<ModuleEntity> findByOrgNumberAndModuleType(
+      @Param("orgNumber") String orgNumber, @Param("moduleType") String moduleType);
 }
