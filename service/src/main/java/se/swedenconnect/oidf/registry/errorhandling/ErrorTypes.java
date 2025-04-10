@@ -23,7 +23,18 @@ import java.net.URI;
  *
  * @author Per Fredrik Plars
  */
-public final class ErrorTypes {
-  public static final URI INVALID_PARAMETER = URI.create("https://oidf.swedenconnect.se/error/invalid_parameter");
-  public static final URI PARENT_HAS_CHILDREN = URI.create("https://oidf.swedenconnect.se/error/parent_has_children");
+public enum ErrorTypes {
+  INVALID_PARAMETER("https://oidf.swedenconnect.se/error/invalid_parameter"),
+  PARENT_HAS_CHILDREN("https://oidf.swedenconnect.se/error/parent_has_children"),
+  NOT_FOUND("about:blank"),
+  BAD_REQUEST("about:blank"),
+  CONFLICT("about:blank"),
+  BLANK("about:blank");
+
+  public final URI errorURI;
+
+  ErrorTypes(final String errorURI) {
+    this.errorURI = URI.create(errorURI);
+  }
+
 }

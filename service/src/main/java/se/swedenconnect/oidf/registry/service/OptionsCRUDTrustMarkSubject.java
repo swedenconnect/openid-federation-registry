@@ -29,6 +29,7 @@ import se.swedenconnect.oidf.registry.entity.SettingDataType;
 import se.swedenconnect.oidf.registry.entity.SettingsEntity;
 import se.swedenconnect.oidf.registry.entity.TrustMarkEntity;
 import se.swedenconnect.oidf.registry.entity.TrustMarkSubjectEntity;
+import se.swedenconnect.oidf.registry.errorhandling.RegistryClientException;
 import se.swedenconnect.oidf.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.registry.repository.TrustMarkRepository;
 import se.swedenconnect.oidf.registry.repository.TrustMarkSubjectRepository;
@@ -41,6 +42,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static se.swedenconnect.oidf.registry.entity.FkKeyType.TRUSTMARKSUBJECT;
+import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.BAD_REQUEST;
+import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.CONFLICT;
+import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.NOT_FOUND;
 
 /**
  * OptionsCRUDTrustMark is a service that extends the OptionsCRUDAdapter to perform Create, Read, Update, and Delete
@@ -51,7 +55,7 @@ import static se.swedenconnect.oidf.registry.entity.FkKeyType.TRUSTMARKSUBJECT;
  */
 @Slf4j
 @Service
-public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
+public class OptionsCRUDTrustMarkSubject extends BaseOptionsCRUD {
 
   private static final FkKeyType FK_KEY_TYPE = TRUSTMARKSUBJECT;
 
@@ -93,8 +97,8 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
           .getModule()
           .getOrganization()
           .getOrganizationId());
-      throw new ResponseStatusException(HttpStatus.CONFLICT,
-          "TrustMark already exists for:%s %s".formatted(fkKeyType, id)); //TODO do not expose http status errors in service
+      throw new RegistryClientException(CONFLICT,
+          "TrustMark already exists for:%s %s".formatted(fkKeyType, id));
     }
 
     final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
@@ -129,7 +133,7 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
             super.throwNotFoundIfNotMatch(organizationRecord,
                 trustMarkEntity.getModule().getOrganization().getOrganizationId()))
         .findFirst()
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, //TODO do not expose http status errors in service
+        .orElseThrow(() -> new RegistryClientException(BAD_REQUEST,
             "No trustmark to assign trustmarkssubjects to"));
   }
 
@@ -139,7 +143,7 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
 
     final TrustMarkSubjectEntity entity = this.trustMarkSubjectRepository
         .findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, //TODO do not expose http status errors in service
+        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
             "No template found for:%s %s".formatted(fkKeyType, id)));
 
     super.throwNotFoundIfNotMatch(organizationRecord,
@@ -160,7 +164,7 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
       final FkKeyType fkKeyType, final UUID id) {
     final TrustMarkSubjectEntity entity = this.trustMarkSubjectRepository
         .findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, //TODO do not expose http status errors in service
+        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
     super.throwNotFoundIfNotMatch(organizationRecord,
         entity.getTrustMark().getModule().getOrganization().getOrganizationId());
@@ -206,7 +210,7 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
   public OptionsRecord delete(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType, final UUID id) {
     final TrustMarkEntity trustMarkEntity = this.trustMarkRepository
         .findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, //TODO do not expose http status errors in service
+        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
     super.throwNotFoundIfNotMatch(organizationRecord,
         trustMarkEntity.getModule().getOrganization().getOrganizationId());

@@ -83,7 +83,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             "detail", e.getValidationFailMessage(),
             "inputvalue", Optional.ofNullable(e.getInputValue()).orElse("")))
     );
-    problemDetail.setType(INVALID_PARAMETER);
+    problemDetail.setType(INVALID_PARAMETER.errorURI);
 
     return this.handleExceptionInternal(e,
         problemDetail,
@@ -103,10 +103,11 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
    */
   @ExceptionHandler(RegistryClientException.class)
   public ResponseEntity<Object> handle(final RegistryClientException e, final WebRequest request) {
-    final ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), e.getMessage());
 
-    problemDetail.setType(e.getErrorTypes());
+    final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(e.getHttpCode()),
+        e.getMessage());
+
+    problemDetail.setType(e.getErrorTypes().errorURI);
 
     return this.handleExceptionInternal(e,
         problemDetail,
@@ -124,7 +125,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400),
         "MethodArgumentNotValidException");
-    problemDetail.setType(INVALID_PARAMETER);
+    problemDetail.setType(INVALID_PARAMETER.errorURI);
 
     final List<Map<String, String>> detailProblem =
         e.getBindingResult().getFieldErrors().stream().map((FieldError error) -> {

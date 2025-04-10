@@ -39,13 +39,13 @@ import static se.swedenconnect.oidf.registry.fixture.JwtTestUtils.createOrganiza
  *
  * @author Per Fredrik Plars
  */
-class OptionsCRUDAdapterTest {
+class BaseOptionsCRUDTest {
 
   @Test
   void createAndValidateInputData() {
 
     // Arrange
-    OptionsCRUDAdapter adapter = new OptionsCRUDAdapter(null, null) {
+    BaseOptionsCRUD adapter = new BaseOptionsCRUD(null, null) {
       @Override
       public boolean supports(final FkKeyType fkKeyType) {
         return false;

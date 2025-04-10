@@ -30,6 +30,7 @@ import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.entity.ModuleEntity;
 import se.swedenconnect.oidf.registry.entity.SettingDataType;
 import se.swedenconnect.oidf.registry.entity.SettingsEntity;
+import se.swedenconnect.oidf.registry.errorhandling.RegistryClientException;
 import se.swedenconnect.oidf.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.repository.ModuleRepository;
 import se.swedenconnect.oidf.registry.repository.SettingsRepository;
@@ -41,6 +42,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.BAD_REQUEST;
+import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.NOT_FOUND;
+
 /**
  * OptionsCRUDModules is a service that extends the OptionsCRUDAdapter to perform Create, Read, Update, and Delete
  * (CRUD) functionalities specifically for modules. It operates on various types of modules utilizing FkKeyType and
@@ -50,7 +54,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class OptionsCRUDModules extends OptionsCRUDAdapter {
+public class OptionsCRUDModules extends BaseOptionsCRUD {
 
   private final ModuleRepository moduleRepository;
   private final EntityRepository entityRepository;
@@ -130,7 +134,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
     final ModuleEntity moduleEntity = this.moduleRepository
         .findByModuleIdAndModuleType(id, fkKeyType.name())
         .filter(super.hasRightOrganizationIdModulePredicate(organizationRecord))
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, //TODO do not expose http status errors in service
+        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
             "No template found for:%s %s".formatted(fkKeyType, id)));
 
     final EntityEntity entityEntity = moduleEntity.getEntity();
@@ -151,7 +155,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
       final FkKeyType fkKeyType, final UUID id) {
     final ModuleEntity moduleEntity = this.moduleRepository
         .findByModuleIdAndModuleType(id, fkKeyType.name())
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, //TODO do not expose http status errors in service
+        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
     super.throwNotFoundIfNotMatch(organizationRecord, moduleEntity.getOrganization().getOrganizationId());
 
@@ -166,7 +170,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
       final FkKeyType fkKeyType, final UUID id) {
     final ModuleEntity moduleEntity = this.moduleRepository
         .findByModuleIdAndModuleType(id, fkKeyType.name())
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, //TODO do not expose http status errors in service
+        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
     super.throwNotFoundIfNotMatch(organizationRecord, moduleEntity.getOrganization().getOrganizationId());
 
@@ -226,7 +230,7 @@ public class OptionsCRUDModules extends OptionsCRUDAdapter {
             .findByOrgNumberAndEntityIdAndEntityKeyType(organizationRecord.orgNumber(), s,
                 EntityKeyType.FEDERATION_ENTITY))
         .map(moduleEntity -> moduleEntity.orElseThrow(() ->
-            new ResponseStatusException(HttpStatus.BAD_REQUEST, //TODO do not expose http status errors in service
+            new RegistryClientException(BAD_REQUEST,
                 "Invalid %s, does not exist".formatted(parameter))))
         .findFirst()
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,

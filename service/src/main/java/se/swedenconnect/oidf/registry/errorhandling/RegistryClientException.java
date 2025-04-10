@@ -18,8 +18,6 @@ package se.swedenconnect.oidf.registry.errorhandling;
 
 import lombok.Getter;
 
-import java.net.URI;
-
 /**
  * Represents a custom exception for registry client errors. This exception is used to encapsulate error information
  * related to operations in the registry client and includes specific error types as a URI.
@@ -28,7 +26,7 @@ import java.net.URI;
  */
 @Getter
 public class RegistryClientException extends RuntimeException {
-  final URI errorTypes;
+  final ErrorTypes errorTypes;
 
   /**
    * Constructs a new {@code RegistryClientException} with the specified error type URI and message.
@@ -36,7 +34,7 @@ public class RegistryClientException extends RuntimeException {
    * @param errorTypes the URI representing specific error types associated with this exception
    * @param message the detailed message explaining the reason for this exception
    */
-  public RegistryClientException(final URI errorTypes, final String message) {
+  public RegistryClientException(final ErrorTypes errorTypes, final String message) {
     super(message);
     this.errorTypes = errorTypes;
   }
@@ -48,8 +46,22 @@ public class RegistryClientException extends RuntimeException {
    * @param message the detailed message explaining the reason for this exception
    * @param cause the underlying cause of this exception
    */
-  public RegistryClientException(final URI errorTypes, final String message, final Throwable cause) {
+  public RegistryClientException(final ErrorTypes errorTypes, final String message, final Throwable cause) {
     super(message, cause);
     this.errorTypes = errorTypes;
+  }
+
+  /**
+   * Mapping of HTTP StatusCode
+   *
+   * @return an integer representing the HTTP status code mapped to the error type
+   */
+  public int getHttpCode() {
+    return switch (this.errorTypes) {
+      case INVALID_PARAMETER, PARENT_HAS_CHILDREN, BAD_REQUEST -> 400;
+      case NOT_FOUND -> 404;
+      case CONFLICT -> 409;
+      case BLANK -> 500;
+    };
   }
 }

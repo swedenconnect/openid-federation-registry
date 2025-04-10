@@ -25,6 +25,7 @@ import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.entity.PolicyEntity;
 import se.swedenconnect.oidf.registry.entity.SettingsEntity;
+import se.swedenconnect.oidf.registry.errorhandling.RegistryClientException;
 import se.swedenconnect.oidf.registry.repository.PolicyRepository;
 import se.swedenconnect.oidf.registry.repository.SettingsRepository;
 
@@ -35,6 +36,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static se.swedenconnect.oidf.registry.entity.FkKeyType.POLICIES;
+import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.NOT_FOUND;
 
 /**
  * OptionsCRUDPolices is a service that extends the OptionsCRUDAdapter to perform Create, Read, Update, and Delete
@@ -45,7 +47,7 @@ import static se.swedenconnect.oidf.registry.entity.FkKeyType.POLICIES;
  */
 @Slf4j
 @Service
-public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
+public class OptionsCRUDPolicy extends BaseOptionsCRUD {
 
   private final PolicyRepository policyRepository;
 
@@ -103,7 +105,7 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
       final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
     final PolicyEntity policyEntity = this.policyRepository
         .findByOrgNumberAndPolicyId(organizationRecord.orgNumber(), id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, //TODO do not expose http status errors in service
+        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
             "No template found for:%s %s".formatted(fkKeyType, id)));
 
     final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
@@ -121,7 +123,7 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
       final FkKeyType fkKeyType, final UUID id) {
     final PolicyEntity policyEntity = this.policyRepository
         .findByOrgNumberAndPolicyId(organizationRecord.orgNumber(), id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, //TODO do not expose http status errors in service
+        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
     super.throwNotFoundIfNotMatch(organizationRecord, policyEntity.getOrganizationId());
 
@@ -139,7 +141,7 @@ public class OptionsCRUDPolicy extends OptionsCRUDAdapter {
       final FkKeyType fkKeyType, final UUID id) {
     final PolicyEntity entity = this.policyRepository
         .findByOrgNumberAndPolicyId(organizationRecord.orgNumber(), id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, //TODO do not expose http status errors in service
+        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
     final List<SettingsEntity> options = deleteSettings(POLICIES, entity.getPolicyId().toString());
     this.policyRepository.delete(entity);

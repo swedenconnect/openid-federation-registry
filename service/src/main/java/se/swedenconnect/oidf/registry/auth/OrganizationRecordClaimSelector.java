@@ -30,10 +30,8 @@ import java.util.Optional;
 /**
  * Implements argument resolver for picking org based on header, if present, or else first.
  *
- * @author Felix Hellman
+ * @author Per Fredrik Plars
  */
-//TODO I do not remember writing this...
-//TODO Do we really need this? If yes, maybe delete OrganizationInformationSelector ...
 @Slf4j
 public class OrganizationRecordClaimSelector implements HandlerMethodArgumentResolver {
   public final static String SELECTED_ORG_NUMBER_HEADER_NAME = "selected-org-number";

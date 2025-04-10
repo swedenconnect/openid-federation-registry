@@ -29,6 +29,7 @@ import se.swedenconnect.oidf.registry.entity.ModuleEntity;
 import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.entity.SettingsEntity;
 import se.swedenconnect.oidf.registry.entity.TrustMarkEntity;
+import se.swedenconnect.oidf.registry.errorhandling.RegistryClientException;
 import se.swedenconnect.oidf.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.registry.validation.PropertyValidator;
 import se.swedenconnect.oidf.registry.validation.PropertyValidators;
@@ -46,6 +47,9 @@ import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.BAD_REQUEST;
+import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.NOT_FOUND;
+
 /**
  * Abstract implementation of the {@link OptionsCRUD} interface providing common functionality for managing and
  * manipulating settings, templates, and related data records. This adapter simplifies CRUD operations by offering
@@ -53,14 +57,13 @@ import java.util.stream.Collectors;
  *
  * @author Per Fredrik Plars
  */
-public abstract class OptionsCRUDAdapter implements OptionsCRUD {
-//TODO rename class, it is not an adapter pattern, maybe BaseOptionsCRUD is more fitting?
+public abstract class BaseOptionsCRUD implements OptionsCRUD {
   private final SettingsRepository settingsRepository;
   private final PropertyValidators validatorFactory = new PropertyValidators();
   private final OrganizationService organizationService; //TODO remove this from class
   private final ZoneOffset offset = ZoneOffset.UTC;
 
-  protected OptionsCRUDAdapter(
+  protected BaseOptionsCRUD(
       final SettingsRepository settingsRepository,
       final OrganizationService organizationService) {
     this.settingsRepository = settingsRepository;
@@ -130,7 +133,7 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
       final FkKeyType fkkeytype) {
     final List<SettingsEntity> templates = this.settingsRepository.findByFkTypeAndFkId(fkkeytype.name(), "TEMPLATE");
     if (templates.isEmpty()) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, //TODO do not expose http status errors in service
+      throw new RegistryClientException(NOT_FOUND,
           "No template found for:%s".formatted(fkkeytype));
     }
     final VariabelValueResolver valueResolver = VariabelValueResolver.orgResolver(organizationRecord);
@@ -204,7 +207,7 @@ public abstract class OptionsCRUDAdapter implements OptionsCRUD {
     final String issuer = entityEntity.getIssuer();
     final String subject = entityEntity.getSubject();
     if (!issuer.equalsIgnoreCase(subject)) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, //TODO do not expose http status errors in service
+      throw new RegistryClientException(BAD_REQUEST,
           ("Issuer and subject must be the same on the entity that this module will "
               + "be mounted to. Issuer: %s, Subject: %s").formatted(issuer, subject));
     }

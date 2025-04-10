@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
  * @author Per Fredrik Plars
  */
 @Service
-public class OptionsCRUDEntity extends OptionsCRUDAdapter {
+public class OptionsCRUDEntity extends BaseOptionsCRUD {
 
   final EntityRepository entityRepository;
   final PolicyRepository policyRepository;

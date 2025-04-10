@@ -16,7 +16,6 @@
 package se.swedenconnect.oidf.registry.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,6 +28,7 @@ import se.swedenconnect.oidf.registry.entity.ModuleEntity;
 import se.swedenconnect.oidf.registry.entity.SettingDataType;
 import se.swedenconnect.oidf.registry.entity.SettingsEntity;
 import se.swedenconnect.oidf.registry.entity.TrustMarkEntity;
+import se.swedenconnect.oidf.registry.errorhandling.RegistryClientException;
 import se.swedenconnect.oidf.registry.repository.ModuleRepository;
 import se.swedenconnect.oidf.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.registry.repository.TrustMarkRepository;
@@ -41,6 +41,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static se.swedenconnect.oidf.registry.entity.FkKeyType.TRUSTMARK;
+import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.BAD_REQUEST;
+import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.CONFLICT;
+import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.NOT_FOUND;
 
 /**
  * OptionsCRUDTrustMark is a service that extends the OptionsCRUDAdapter to perform Create, Read, Update, and Delete
@@ -51,7 +54,7 @@ import static se.swedenconnect.oidf.registry.entity.FkKeyType.TRUSTMARK;
  */
 @Slf4j
 @Service
-public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
+public class OptionsCRUDTrustMark extends BaseOptionsCRUD {
 
   private final TrustMarkRepository trustMarkRepository;
   private final ModuleRepository moduleRepository;
@@ -87,8 +90,8 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
     if (trustMarkEntity.isPresent()) {
       super.throwNotFoundIfNotMatch(organizationRecord,
           trustMarkEntity.get().getModule().getOrganization().getOrganizationId());
-      throw new ResponseStatusException(HttpStatus.CONFLICT,
-          "TrustMark already exists for:%s %s".formatted(fkKeyType, id));//TODO do not expose http status errors in service
+      throw new RegistryClientException(CONFLICT,
+          "TrustMark already exists for:%s %s".formatted(fkKeyType, id));
     }
 
     final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
@@ -116,12 +119,12 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
         .map(UUID::fromString)
         .map(s -> this.moduleRepository.findByModuleIdAndModuleType(s, FkKeyType.TRUSTMARKISSUER.name()))
         .map(moduleEntity -> moduleEntity.orElseThrow(() ->
-            new ResponseStatusException(HttpStatus.BAD_REQUEST, //TODO do not expose http status errors in service
+            new RegistryClientException(BAD_REQUEST,
                 "Invalid module_id, does not exist")))
         .filter(moduleEntity -> moduleEntity.getOrganization().getOrganizationId()
             .equals(getCurrentOrganization(organizationRecord).getOrganizationId()))
         .findFirst()
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, //TODO do not expose http status errors in service
+        .orElseThrow(() -> new RegistryClientException(BAD_REQUEST,
             "No trustmarkissuer to assign trustmarks to"));
   }
 
@@ -130,7 +133,7 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
       final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
     final TrustMarkEntity trustMarkEntity = this.trustMarkRepository
         .findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,//TODO do not expose http status errors in service
+        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
             "No template found for:%s %s".formatted(fkKeyType, id)));
     super.throwNotFoundIfNotMatch(organizationRecord,
         trustMarkEntity.getModule().getOrganization().getOrganizationId());
@@ -150,7 +153,7 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
   public OptionsRecord get(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType, final UUID id) {
     final TrustMarkEntity trustMarkEntity = this.trustMarkRepository
         .findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,//TODO do not expose http status errors in service
+        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
     super.throwNotFoundIfNotMatch(organizationRecord,
         trustMarkEntity.getModule().getOrganization().getOrganizationId());
@@ -195,7 +198,7 @@ public class OptionsCRUDTrustMark extends OptionsCRUDAdapter {
   public OptionsRecord delete(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType, final UUID id) {
     final TrustMarkEntity trustMarkEntity = this.trustMarkRepository
         .findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,//TODO do not expose http status errors in service
+        .orElseThrow(() -> new RegistryClientException(NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
     super.throwNotFoundIfNotMatch(organizationRecord,
         trustMarkEntity.getModule().getOrganization().getOrganizationId());

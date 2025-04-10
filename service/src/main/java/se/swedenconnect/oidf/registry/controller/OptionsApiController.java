@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
@@ -173,18 +172,13 @@ public class OptionsApiController {
   /**
    * Handles GET requests to the "/list" endpoint to retrieve a list of options based on the provided query parameter.
    *
-   * @param query the optional query string to filter the list of options. If not provided, all options will be
-   *     returned.
    * @param organizationRecord Current organization
    * @return a ResponseEntity containing the filtered or complete list of options.
    */
   @GetMapping("/list")
   public ResponseEntity<?> query(
-      final OrganizationRecord organizationRecord,
-      @RequestParam(value = "q", required = false) final String query) {
-    //TODO Q looks like a receipie for sql injection, what is it's purpose? Currently unused.
-    return ResponseEntity.ok(this.optionsCRUDSelector.listAll(organizationRecord, query));
+      final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(this.optionsCRUDSelector.listAll(organizationRecord));
   }
-
 }
 

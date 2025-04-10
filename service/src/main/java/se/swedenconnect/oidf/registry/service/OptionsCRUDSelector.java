@@ -41,7 +41,7 @@ import java.util.UUID;
 @Service
 public class OptionsCRUDSelector implements OptionsCRUD {
 
-  final List<OptionsCRUD> optionsCRUDS; //TODO why is this not a map?
+  final List<OptionsCRUD> optionsCRUDS;
   final RegistryAuditService registryAuditService;
 
   /**
@@ -124,12 +124,10 @@ public class OptionsCRUDSelector implements OptionsCRUD {
    * FkKeyType values, retrieves the corresponding data through the `list` method, and organizes the results into a
    * map.
    * @param organizationRecord Current organization
-   * @param query a string value representing the query or filter criteria (currently unused in the method's logic)
    * @return a map where the keys are the names of each FkKeyType and the values are lists of maps containing related
    *     objects
    */
-  public Map<String, List<Map<String, Object>>> listAll(final OrganizationRecord organizationRecord,
-      final String query) {
+  public Map<String, List<Map<String, Object>>> listAll(final OrganizationRecord organizationRecord) {
     final Map<String, List<Map<String, Object>>> result = new HashMap<>();
     for (FkKeyType value : FkKeyType.values()) {
       final List<Map<String, Object>> values = this.list(organizationRecord, value);
