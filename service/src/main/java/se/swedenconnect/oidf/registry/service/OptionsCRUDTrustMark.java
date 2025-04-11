@@ -40,7 +40,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static se.swedenconnect.oidf.registry.entity.FkKeyType.TRUSTMARK;
-import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.BAD_REQUEST;
 import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.CONFLICT;
 import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.NOT_FOUND;
 
@@ -121,7 +120,7 @@ public class OptionsCRUDTrustMark extends BaseOptionsCRUD {
             new RegistryServerException(NOT_FOUND,
                 "module_id, does not exist")))
         .findFirst()
-        .orElseThrow(() -> new RegistryServerException(BAD_REQUEST,
+        .orElseThrow(() -> new RegistryServerException(NOT_FOUND,
             "No trustmarkissuer to assign trustmarks to"));
   }
 

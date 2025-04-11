@@ -40,9 +40,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static se.swedenconnect.oidf.registry.entity.FkKeyType.TRUSTMARKSUBJECT;
-import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.BAD_REQUEST;
 import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.CONFLICT;
 import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.NOT_FOUND;
+import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.RELATION_NOT_FOUND;
 
 /**
  * OptionsCRUDTrustMark is a service that extends the OptionsCRUDAdapter to perform Create, Read, Update, and Delete
@@ -120,10 +120,10 @@ public class OptionsCRUDTrustMarkSubject extends BaseOptionsCRUD {
         .map(UUID::fromString)
         .map(uuid -> this.trustMarkRepository.findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), uuid))
         .map(moduleEntity -> moduleEntity.orElseThrow(() ->
-            new RegistryServerException(BAD_REQUEST,
+            new RegistryServerException(RELATION_NOT_FOUND,
                 "Invalid trustmark_id, does not exist")))
         .findFirst()
-        .orElseThrow(() -> new RegistryServerException(BAD_REQUEST,
+        .orElseThrow(() -> new RegistryServerException(RELATION_NOT_FOUND,
             "No trustmark to assign trustmarkssubjects to"));
   }
 

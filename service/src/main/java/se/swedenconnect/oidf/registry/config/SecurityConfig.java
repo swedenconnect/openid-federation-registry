@@ -31,10 +31,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import se.swedenconnect.oidf.registry.auth.OrganizationInformation;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.auth.RegistryJwtConverter;
-import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.service.OrganizationService;
-
-import java.util.List;
 
 /**
  * Security configuration class that defines security-related settings for the application. This class integrates OAuth2
@@ -107,33 +104,20 @@ public class SecurityConfig {
    */
   @Getter
   public static class RegistryClaims extends JwtAuthenticationToken {
-    private final List<OrganizationEntity> org;
     private final OrganizationInformation organizationInformation;
 
     /**
      * Constructs a new instance of the RegistryClaims class.
      *
      * @param jwt the JWT object representing the JSON Web Token used for authentication and authorization.
-     * @param org a list of OrganizationEntity objects representing the organizations associated with the authenticated
-     * client.
      * @param information an instance of OrganizationInformation
      */
-    public RegistryClaims(final Jwt jwt, final List<OrganizationEntity> org,
+    public RegistryClaims(final Jwt jwt,
         final OrganizationInformation information) {
       super(jwt);
-      this.org = org;
       this.organizationInformation = information;
     }
 
-    /**
-     * @param orgNumber to find
-     * @return entity or throws
-     */
-    public OrganizationEntity getByOrgNumber(@NonNull final String orgNumber) {
-      return this.org.stream().filter(e -> e.getOrgNumber().equals(orgNumber))
-          .findFirst()
-          .orElseThrow();
-    }
 
     /**
      * Retrieves an {@link OrganizationRecord} that matches the given organization number from the list of available

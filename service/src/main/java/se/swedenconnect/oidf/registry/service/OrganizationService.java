@@ -59,7 +59,7 @@ public class OrganizationService {
    * @throws RuntimeException if no default assignment instance is configured
    */
 
-  public OrganizationEntity findCreate(final String orgNumber, final String orgName) {
+  public synchronized OrganizationEntity findCreate(final String orgNumber, final String orgName) {
 
     return this.organizationRepository.findByOrgNumber(orgNumber).or(() -> {
 
@@ -74,7 +74,8 @@ public class OrganizationService {
       org.setOrgName(orgName);
       org.setCreatedBy("Registry Service");
       org.setLastModifiedBy(org.getCreatedBy());
-      instanceEntity.addOrganization(org);
+      //instanceEntity.addOrganization(org);
+      org.setInstance(instanceEntity);
       this.organizationRepository.saveAndFlush(org);
       return Optional.of(org);
 

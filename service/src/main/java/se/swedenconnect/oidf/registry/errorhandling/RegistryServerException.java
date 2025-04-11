@@ -58,8 +58,8 @@ public class RegistryServerException extends RuntimeException {
    */
   public int getHttpCode() {
     return switch (this.errorTypes) {
-      case INVALID_PARAMETER, PARENT_HAS_CHILDREN, BAD_REQUEST -> 400;
-      case NOT_FOUND -> 404;
+      case INVALID_PARAMETER, PARENT_HAS_CHILDREN -> 400;
+      case NOT_FOUND, RELATION_NOT_FOUND -> 404;
       case CONFLICT -> 409;
       case BLANK -> 500;
     };

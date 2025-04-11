@@ -44,8 +44,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.BAD_REQUEST;
 import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.NOT_FOUND;
+import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.RELATION_NOT_FOUND;
 
 /**
  * Abstract implementation of the {@link OptionsCRUD} interface providing common functionality for managing and
@@ -189,7 +189,7 @@ public abstract class BaseOptionsCRUD implements OptionsCRUD {
     final String issuer = entityEntity.getIssuer();
     final String subject = entityEntity.getSubject();
     if (!issuer.equalsIgnoreCase(subject)) {
-      throw new RegistryServerException(BAD_REQUEST,
+      throw new RegistryServerException(RELATION_NOT_FOUND,
           ("Issuer and subject must be the same on the entity that this module will "
               + "be mounted to. Issuer: %s, Subject: %s").formatted(issuer, subject));
     }

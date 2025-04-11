@@ -41,8 +41,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.BAD_REQUEST;
 import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.NOT_FOUND;
+import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.RELATION_NOT_FOUND;
 
 /**
  * OptionsCRUDModules is a service that extends the OptionsCRUDAdapter to perform Create, Read, Update, and Delete
@@ -214,7 +214,7 @@ public class OptionsCRUDModules extends BaseOptionsCRUD {
             .findByOrgNumberAndEntityIdAndEntityKeyType(organizationRecord.orgNumber(), s,
                 EntityKeyType.FEDERATION_ENTITY))
         .map(moduleEntity -> moduleEntity.orElseThrow(() ->
-            new RegistryServerException(BAD_REQUEST,
+            new RegistryServerException(RELATION_NOT_FOUND,
                 "Invalid %s, does not exist".formatted(parameter))))
         .findFirst()
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,

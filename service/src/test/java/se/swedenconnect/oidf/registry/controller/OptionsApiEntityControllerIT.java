@@ -178,7 +178,7 @@ class OptionsApiEntityControllerIT {
             .subject(org.domainPrefix + "/different")
             .build());
 
-    testDataOperations.createTrustAnchor(UUID.randomUUID(), org, HttpStatus.BAD_REQUEST,
+    testDataOperations.createTrustAnchor(UUID.randomUUID(), org, HttpStatus.NOT_FOUND,
         OptionsTestData.TrustAnchorTestData.builder().entityId(id_skatt).build());
 
     testDataOperations.updateHostedEntity(
