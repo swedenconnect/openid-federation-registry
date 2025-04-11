@@ -104,13 +104,18 @@ class FederationServiceApiControllerIT {
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
         org,
         HttpStatus.CREATED,
-        OptionsTestData.HostedEntityTestData.builder().policyId(policyId)
+        OptionsTestData.HostedEntityTestData.create(org)
+            .policyId(policyId)
+            .issuer(org.domainPrefix)
+            .subject(org.domainPrefix)
             .build());
 
     final UUID entityId2 = testDataOperations.createHostedEntity(UUID.randomUUID(),
         org,
         HttpStatus.CREATED,
-        OptionsTestData.HostedEntityTestData.builder()
+        OptionsTestData.HostedEntityTestData.create(org)
+            .issuer(org.domainPrefix)
+            .subject(org.domainPrefix)
             .build());
 
     final UUID tmiId1 = testDataOperations.createTMI(UUID.randomUUID(),

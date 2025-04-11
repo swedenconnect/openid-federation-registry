@@ -1,4 +1,20 @@
 /*
+ * Copyright 2025 Sweden Connect
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+/*
  * Copyright 2024-2025  Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -356,8 +372,8 @@ VALUES ('TEMPLATE',
         'subject',
         'Subject',
         'TEXT',
-        '',
-        'required | url',
+        '@{entityprefix}',
+        'required | url | STARTS_WITH:@{entityprefix}',
         'Flyway',
         'Flyway');
 
@@ -382,8 +398,8 @@ VALUES ('TEMPLATE',
         'issuer',
         'Issuer entityid',
         'TEXT',
-        '',
-        'required | url',
+        '@{entityprefix}',
+        'required | url | STARTS_WITH:@{entityprefix}',
         'Flyway',
         'Flyway');
 
@@ -401,10 +417,33 @@ select fk_id,
        created_by,
        last_modified_by
 from settings
-where (data_key = 'issuer'
-    or data_key = 'subject'
-    or data_key = 'policy_id')
+where (
+    data_key = 'policy_id')
   and fk_type = 'FEDERATION_ENTITY';
+INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
+                     last_modified_by)
+VALUES ('TEMPLATE',
+        'SUBORDINATE_ENTITY',
+        'subject',
+        'Subject',
+        'TEXT',
+        '',
+        'required | url',
+        'Flyway',
+        'Flyway');
+
+INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
+                     last_modified_by)
+VALUES ('TEMPLATE',
+        'SUBORDINATE_ENTITY',
+        'issuer',
+        'Issuer entityid',
+        'TEXT',
+        '',
+        'required | url ',
+        'Flyway',
+        'Flyway');
+
 
 INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
                      last_modified_by)

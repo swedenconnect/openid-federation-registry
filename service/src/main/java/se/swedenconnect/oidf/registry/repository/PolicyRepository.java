@@ -16,6 +16,8 @@
 package se.swedenconnect.oidf.registry.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import se.swedenconnect.oidf.registry.entity.PolicyEntity;
 
 import java.util.List;
@@ -32,23 +34,30 @@ import java.util.UUID;
  * @author Per Fredrik Plars
  */
 public interface PolicyRepository extends JpaRepository<PolicyEntity, UUID> {
-  /**
-   * Retrieves a {@link PolicyEntity} associated with the specified organization ID.
-   *
-   * @param organizationId the unique identifier of the organization whose policy is to be retrieved
-   * @return an {@link Optional} containing the {@link PolicyEntity} if found, or an empty {@link Optional} if no policy
-   *     exists for the given organization ID
-   */
-  List<PolicyEntity> findByOrganizationId(UUID organizationId);
 
   /**
-   * Retrieves a {@link PolicyEntity} associated with the specified policy ID and organization ID.
+   * Finds and retrieves a list of {@link PolicyEntity} instances associated with the specified organization number.
+   * The query performs a join fetch to retrieve the related organization entity.
    *
-   * @param policyId the unique identifier of the policy to be retrieved
-   * @param organizationId the unique identifier of the organization associated with the policy
-   * @return an {@link Optional} containing the {@link PolicyEntity} if found, or an empty {@link Optional} if no
-   *     matching policy exists for the given policy ID and organization ID
+   * @param orgNumber the organization number used to filter the policies
+   * @return a list of {@link PolicyEntity} associated with the given organization number
    */
-  Optional<PolicyEntity> findByPolicyIdAndOrganizationId(UUID policyId, UUID organizationId);
+  @Query("SELECT p FROM PolicyEntity p JOIN fetch p.organization o "
+      + "WHERE o.orgNumber = :orgNumber")
+  List<PolicyEntity> findByOrgNumber(@Param("orgNumber") String orgNumber);
+
+  /**
+   * Retrieves a {@link PolicyEntity} that belongs to the organization with the specified organization number and has
+   * the specified policy ID.
+   *
+   * @param orgNumber the unique number identifying the organization
+   * @param policyid the unique identifier of the policy
+   * @return an {@link Optional} containing the matching {@link PolicyEntity} if one exists, otherwise an empty
+   *     {@link Optional}
+   */
+  @Query("SELECT p FROM PolicyEntity p JOIN fetch p.organization o "
+      + "WHERE o.orgNumber = :orgNumber AND p.policyId = :policyid")
+  Optional<PolicyEntity> findByOrgNumberAndPolicyId(@Param("orgNumber") String orgNumber,
+      @Param("policyid") UUID policyid);
 
 }

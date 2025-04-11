@@ -16,6 +16,8 @@
 package se.swedenconnect.oidf.registry.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
 
@@ -29,25 +31,40 @@ import java.util.UUID;
  * <p>
  * It extends the {@link JpaRepository} interface which provides JPA related methods for standard data access layers.
  *
- * @author David Goldring
  * @author Per Fredrik Plars
  */
 public interface EntityRepository extends JpaRepository<EntityEntity, UUID> {
-  /**
-   * Retrieves an {@link Optional} containing an {@link EntityEntity} if an entity with the specified ID and entity type
-   * exists.
-   *
-   * @param id the unique identifier of the entity
-   * @param entityType the type of the entity, specified as {@link EntityKeyType}
-   * @return an {@link Optional} containing the entity if found, or an empty {@link Optional} if not found
-   */
-  Optional<EntityEntity> findByEntityIdAndEntityType(UUID id, EntityKeyType entityType);
 
   /**
-   * Retrieves an {@link Optional} containing an {@link EntityEntity} based on the specified entity type.
+   * Queries the database to retrieve an optional {@link EntityEntity} based on the provided
+   * organization number, entity ID, and entity key type.
    *
-   * @param entityType the type of the entity, specified as {@link EntityKeyType}
-   * @return an {@link Optional} containing the entity if found, or an empty {@link Optional} if no match is found
+   * @param orgNumber the organization number to filter the results
+   * @param entityId the unique identifier of the entity to filter the results
+   * @param entityType the type of the entity to filter the results
+   * @return an {@link Optional} containing the matching {@link EntityEntity} if found, or an empty {@link Optional}
+   * if no match is found
    */
-  List<EntityEntity> findByEntityType(EntityKeyType entityType);
+  @Query("SELECT e FROM EntityEntity e JOIN fetch e.organization o "
+      + "WHERE o.orgNumber = :orgNumber "
+      + "AND e.entityId = :entityId "
+      + "AND e.entityType = :entityType")
+  Optional<EntityEntity> findByOrgNumberAndEntityIdAndEntityKeyType(
+      @Param("orgNumber") String orgNumber,
+      @Param("entityId") UUID entityId,
+      @Param("entityType") EntityKeyType entityType);
+
+  /**
+   * Finds a list of {@link EntityEntity} objects based on the given organization number and entity type.
+   *
+   * @param orgNumber the organization number used to filter the query
+   * @param entityType the type of entity used to filter the query
+   * @return a list of {@link EntityEntity} matching the specified organization number and entity type
+   */
+  @Query("SELECT e FROM EntityEntity e JOIN fetch e.organization o "
+      + "WHERE o.orgNumber = :orgNumber "
+      + "AND e.entityType = :entityType")
+  List<EntityEntity> findByOrgNumberAndEntityKeyType(
+      @Param("orgNumber") String orgNumber,
+      @Param("entityType") EntityKeyType entityType);
 }

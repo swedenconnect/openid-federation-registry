@@ -16,6 +16,7 @@
 package se.swedenconnect.oidf.registry.service;
 
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
+import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 
 import java.util.List;
@@ -43,9 +44,10 @@ public interface OptionsCRUD {
    * @param fkKeyType the type of foreign key
    * @param id the unique identifier
    * @param record the data record to create
+   * @param organizationRecord Current organization
    * @return the created options record
    */
-  OptionsRecord create(FkKeyType fkKeyType, UUID id, OptionsRecord record);
+  OptionsRecord create(OrganizationRecord organizationRecord, FkKeyType fkKeyType, UUID id, OptionsRecord record);
 
   /**
    * Updates an existing entity record.
@@ -53,41 +55,46 @@ public interface OptionsCRUD {
    * @param fkKeyType the type of foreign key
    * @param id the unique identifier
    * @param record the data record with updates
+   * @param organizationRecord Current organization
    * @return the updated options record
    */
-  OptionsRecord update(FkKeyType fkKeyType, UUID id, OptionsRecord record);
+  OptionsRecord update(OrganizationRecord organizationRecord, FkKeyType fkKeyType, UUID id, OptionsRecord record);
 
   /**
    * Loads an entity record.
    *
    * @param fkKeyType the type of foreign key
    * @param id the unique identifier
+   * @param organizationRecord Current organization
    * @return the loaded options record
    */
-  OptionsRecord get(FkKeyType fkKeyType, UUID id);
+  OptionsRecord get(OrganizationRecord organizationRecord, FkKeyType fkKeyType, UUID id);
 
   /**
    * Retrieves the template for a specific entity type.
    *
    * @param fkKeyType the type of foreign key
+   * @param organizationRecord Current organization
    * @return the template options record
    */
-  OptionsRecord template(FkKeyType fkKeyType);
+  OptionsRecord template(OrganizationRecord organizationRecord, FkKeyType fkKeyType);
 
   /**
    * Deletes an entity record identified by a foreign key type and unique identifier.
    *
    * @param fkKeyType the type of foreign key associated with the record to be deleted
    * @param id the unique identifier of the record to delete
+   * @param organizationRecord Current organization
    * @return the deleted options record
    */
-  OptionsRecord delete(FkKeyType fkKeyType, UUID id);
+  OptionsRecord delete(OrganizationRecord organizationRecord, FkKeyType fkKeyType, UUID id);
 
   /**
    * Lists the available options records for the specified foreign key type.
    *
    * @param fkKeyType the type of foreign key for which options records are to be listed
+   * @param organizationRecord Current organization
    * @return the options record containing the available options
    */
-  List<Map<String, Object>> list(FkKeyType fkKeyType);
+  List<Map<String, Object>> list(OrganizationRecord organizationRecord, FkKeyType fkKeyType);
 }

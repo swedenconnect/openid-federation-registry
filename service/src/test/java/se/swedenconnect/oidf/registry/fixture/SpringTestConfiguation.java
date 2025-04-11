@@ -16,6 +16,7 @@
 
 package se.swedenconnect.oidf.registry.fixture;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.client.RestTemplateCustomizer;
 import org.springframework.context.annotation.Bean;
@@ -31,7 +32,7 @@ import org.springframework.http.HttpHeaders;
 public class SpringTestConfiguation {
 
   @Bean
-  public RestTemplateCustomizer restTemplateCustomizer(final JwtTestUtils jwtTestUtils) {
+  RestTemplateCustomizer restTemplateCustomizer(final JwtTestUtils jwtTestUtils) {
     return restTemplate -> restTemplate.getInterceptors()
         .add((request, body, execution) -> {
           final String token = jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.PM);
@@ -41,12 +42,12 @@ public class SpringTestConfiguation {
   }
 
   @Bean
-  public TestDataOperations testDataOperations(TestRestTemplate restTemplate) {
-    return new TestDataOperations(restTemplate);
+  TestDataOperations testDataOperations(final TestRestTemplate restTemplate, final ObjectMapper objectMapper) {
+    return new TestDataOperations(restTemplate, objectMapper);
   }
 
   @Bean
-  public FederationAPIOperations testFederationAPIOperations(TestRestTemplate restTemplate) {
+  FederationAPIOperations testFederationAPIOperations(TestRestTemplate restTemplate) {
     return new FederationAPIOperations(restTemplate);
   }
 

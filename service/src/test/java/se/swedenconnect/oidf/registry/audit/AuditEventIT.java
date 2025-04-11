@@ -29,7 +29,6 @@ import org.springframework.http.HttpStatus;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
 import se.swedenconnect.oidf.registry.fixture.OptionsTestData;
 import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
 
@@ -39,6 +38,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static se.swedenconnect.oidf.registry.audit.RegistryAuditEventType.OPTIONS_CREATED;
+import static se.swedenconnect.oidf.registry.fixture.JwtTestUtils.OrganisationType.SKATT;
 
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -59,13 +59,15 @@ public class AuditEventIT {
   public void testThatAuditEventsExist() throws JsonProcessingException {
 
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.SKATT,
+        SKATT,
         HttpStatus.CREATED,
-        OptionsTestData.HostedEntityTestData.builder()
+        OptionsTestData.HostedEntityTestData.create(SKATT)
+            .issuer(SKATT.domainPrefix)
+            .subject(SKATT.domainPrefix)
             .build());
 
     final UUID tmiId1 = testDataOperations.createTMI(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.SKATT,
+        SKATT,
         HttpStatus.CREATED,
         TestDataOperations.defaultTrustMarkIssuer(entityId));
 

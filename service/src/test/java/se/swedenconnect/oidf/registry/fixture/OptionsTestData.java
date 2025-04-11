@@ -194,6 +194,14 @@ public class OptionsTestData {
     String issuer = "http://www.swedenconnect.se/test";
     String metadata;
 
+    public static HostedEntityTestDataBuilder create(JwtTestUtils.OrganisationType organisationType) {
+      return HostedEntityTestData.builder()
+          .issuer(organisationType.domainPrefix + "/" + organisationType.name)
+          .subject(organisationType.domainPrefix + "/" + organisationType.name);
+    }
+
+
+
   }
 
   @Builder

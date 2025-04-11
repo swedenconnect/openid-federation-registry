@@ -20,10 +20,7 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.util.Assert;
 import se.swedenconnect.oidf.registry.config.SecurityConfig;
-import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.service.OrganizationService;
-
-import java.util.List;
 
 /**
  * Jwt converter for extracting relevant claims.
@@ -48,12 +45,7 @@ public class RegistryJwtConverter implements Converter<Jwt, AbstractAuthenticati
     final OrganizationInformation information = OrganizationInformationFactory.getInformation(jwt.getClaims());
     Assert.isTrue(!information.organizations().isEmpty(), "Organizations can not be empty");
 
-    final List<OrganizationEntity> orgs = information.organizations()
-        .stream()
-        .map(orgInfo -> this.organizationService.findCreate(orgInfo.orgNumber(), orgInfo.orgName()))
-        .toList();
-
-    final SecurityConfig.RegistryClaims registryClaims = new SecurityConfig.RegistryClaims(jwt, orgs);
+    final SecurityConfig.RegistryClaims registryClaims = new SecurityConfig.RegistryClaims(jwt, information);
     registryClaims.setAuthenticated(true);
     return registryClaims;
   }

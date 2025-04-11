@@ -19,7 +19,9 @@ package se.swedenconnect.oidf.registry.fixture;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
+import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,7 +34,11 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Map;
+
+import static se.swedenconnect.oidf.registry.auth.OrganizationRecordClaimSelector.SELECTED_ORG_NUMBER_HEADER_NAME;
 
 /**
  * Utility class for generating and signing JSON Web Tokens (JWTs) for testing purposes.
@@ -51,6 +57,12 @@ public class JwtTestUtils {
     JwtTestUtils jwtTestUtils = new JwtTestUtils();
     System.out.println(jwtTestUtils.createJwt(OrganisationType.PM));
   }
+
+  public void setAuthHeaders(OrganisationType organizationType, HttpHeaders headers) {
+    headers.set("Authorization", "Bearer " + this.createJwt(organizationType));
+    headers.set(SELECTED_ORG_NUMBER_HEADER_NAME, organizationType.orgId);
+  }
+
 
   /**
    * Generates and signs a JSON Web Token (JWT) with predefined claims and returns it as a serialized string.
@@ -82,9 +94,13 @@ public class JwtTestUtils {
           .claim("scope", "entity_read entity_write policies_read policies_write "
               + "trustmarksubject_read trustmarksubject_write "
               + "options_read options_update options_delete options_create")
-          .claim("orgNumber", orgType.orgId)
-          .claim("orgName", orgType.name)
-          .claim("entity_prefix", orgType.domainPrefix)
+
+          .claim("org", Arrays.stream(OrganisationType.values())
+              .map(o ->
+                  Map.of("orgName", o.name,
+                      "orgNumber", o.orgId,
+                      "entity_prefix", o.domainPrefix))
+              .toList())
           .build();
 
       final RSASSASigner signer = new RSASSASigner(getPrivateKeyFromKeyStore());
@@ -121,15 +137,19 @@ public class JwtTestUtils {
 
   }
 
+  public static OrganizationRecord createOrganizationRecord(OrganisationType orgType) {
+    return new OrganizationRecord(orgType.orgId, orgType.name, orgType.domainPrefix);
+  }
+
   public enum OrganisationType {
     PM("Pensionsmyndigheten", "55555", "http://www.pm.se/oidf"),
     AF("Arbetsförmedlingen", "66666", "http://www.af.se/oidf"),
     SKATT("Skatteverket", "77777", "http://www.skv.se/oidf"),
     ;
 
-    final String name;
-    final String orgId;
-    final String domainPrefix;
+    public final String name;
+    public final String orgId;
+    public final String domainPrefix;
 
     OrganisationType(String name, String orgId, String domainPrefix) {
       this.name = name;

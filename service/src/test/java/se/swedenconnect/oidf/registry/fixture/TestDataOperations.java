@@ -61,10 +61,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestDataOperations {
 
   private final TestRestTemplate restTemplate;
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private final ObjectMapper objectMapper;
+  final JwtTestUtils jwtTestUtils = new JwtTestUtils();
 
-  public TestDataOperations(final TestRestTemplate restTemplate) {
+  public TestDataOperations(final TestRestTemplate restTemplate, final ObjectMapper objectMapper) {
     this.restTemplate = restTemplate;
+    this.objectMapper = objectMapper;
   }
 
   public static Function<Values, String> defaultTrustMarkIssuer(UUID entity_id) {
@@ -151,7 +153,7 @@ public class TestDataOperations {
 
     final HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
-    headers.set("Authorization", "Bearer " + new JwtTestUtils().createJwt(organizationType));
+    this.jwtTestUtils.setAuthHeaders(organizationType, headers);
 
     final HttpEntity<String> entity = new HttpEntity<>(headers);
     String url = "/registry/v1/options/%s/%s".formatted(configGroup, id);
@@ -161,7 +163,8 @@ public class TestDataOperations {
 
     final ResponseEntity<String> reply = restTemplate.exchange(url, HttpMethod.GET, entity, String.class);
     if (reply.getStatusCode() != httpStatus) {
-      log.info(reply.getBody());
+      log.debug(reply.getBody());
+      System.out.println("skoj::" + reply.getBody());
     }
     assertThat(reply.getStatusCode()).isEqualTo(httpStatus);
 
@@ -187,7 +190,7 @@ public class TestDataOperations {
 
     final HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
-    headers.set("Authorization", "Bearer " + new JwtTestUtils().createJwt(organizationType));
+    this.jwtTestUtils.setAuthHeaders(organizationType, headers);
 
     final HttpEntity<OptionsRecord> entity = new HttpEntity<>(record, headers);
 
@@ -222,7 +225,8 @@ public class TestDataOperations {
       final JwtTestUtils.OrganisationType organizationType) {
 
     final HttpHeaders headers = new HttpHeaders();
-    headers.set("Authorization", "Bearer " + new JwtTestUtils().createJwt(organizationType));
+    this.jwtTestUtils.setAuthHeaders(organizationType, headers);
+
     final HttpEntity<String> entity = new HttpEntity<>(headers);
 
     final ResponseEntity<Void> response =
@@ -232,13 +236,13 @@ public class TestDataOperations {
   }
 
   public UUID updatePolicies(
-      final JwtTestUtils.OrganisationType organisationType,
+      final JwtTestUtils.OrganisationType organizationType,
       final UUID policyId,
       final Map<String, String> dataToUpdate) throws JsonProcessingException {
 
     final HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
-    headers.set("Authorization", "Bearer " + new JwtTestUtils().createJwt(organisationType));
+    this.jwtTestUtils.setAuthHeaders(organizationType, headers);
 
     final HttpEntity<String> entity = new HttpEntity<>(headers);
 
@@ -276,7 +280,11 @@ public class TestDataOperations {
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
       final Function<Values, String> options) throws JsonProcessingException {
-    return createUpdate(id, FkKeyType.TRUSTMARKISSUER, organisationType, expectedHttpStatus, options, HttpMethod.POST);
+    return createUpdate(id, FkKeyType.TRUSTMARKISSUER,
+        organisationType,
+        expectedHttpStatus,
+        options,
+        HttpMethod.POST);
   }
 
   public UUID createTrustMark(
@@ -284,7 +292,11 @@ public class TestDataOperations {
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
       final Function<Values, String> options) {
-    return createUpdate(id, FkKeyType.TRUSTMARK, organisationType, expectedHttpStatus, options, HttpMethod.POST);
+    return createUpdate(id, FkKeyType.TRUSTMARK,
+        organisationType,
+        expectedHttpStatus,
+        options,
+        HttpMethod.POST);
   }
 
   public UUID createPolicy(
@@ -292,7 +304,11 @@ public class TestDataOperations {
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
       final OptionsTestData.PolicyTestData data) {
-    return createUpdate(id, FkKeyType.POLICIES, organisationType, expectedHttpStatus, data.testData(), HttpMethod.POST);
+    return createUpdate(id, FkKeyType.POLICIES,
+        organisationType,
+        expectedHttpStatus,
+        data.testData(),
+        HttpMethod.POST);
   }
 
   public UUID createHostedEntity(
@@ -354,7 +370,12 @@ public class TestDataOperations {
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
       final Function<Values, String> options) {
-    return createUpdate(id, FkKeyType.TRUSTMARKSUBJECT, organisationType, expectedHttpStatus, options, HttpMethod.POST);
+    return createUpdate(id,
+        FkKeyType.TRUSTMARKSUBJECT,
+        organisationType,
+        expectedHttpStatus,
+        options,
+        HttpMethod.POST);
   }
 
   protected UUID createUpdate(
@@ -405,9 +426,18 @@ public class TestDataOperations {
     return createUpdate(id, FkKeyType.RESOLVER, organisationType, expectedHttpStatus, options, HttpMethod.POST);
   }
 
-  public JsonNode listAll(final JwtTestUtils.OrganisationType organisationType) throws JsonProcessingException {
-    final ResponseEntity<String> response = this.restTemplate.getForEntity(
-        "/registry/v1/options/list", String.class);
+  public JsonNode listAll(final JwtTestUtils.OrganisationType organizationType) throws JsonProcessingException {
+    final HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    this.jwtTestUtils.setAuthHeaders(organizationType, headers);
+
+    final HttpEntity<OptionsRecord> entity = new HttpEntity<>(headers);
+
+    final ResponseEntity<String> response = restTemplate.exchange("/registry/v1/options/list",
+        HttpMethod.GET, entity, String.class);
+    if (response.getStatusCode() != HttpStatus.OK) {
+      log.info(response.getBody());
+    }
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 
@@ -421,7 +451,7 @@ public class TestDataOperations {
 
     final HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_JSON);
-    headers.set("Authorization", "Bearer " + new JwtTestUtils().createJwt(organizationType));
+    this.jwtTestUtils.setAuthHeaders(organizationType, headers);
 
     final HttpEntity<String> entity = new HttpEntity<>(headers);
     String url = "/registry/v1/options/list/%s".formatted(fkKeyType);

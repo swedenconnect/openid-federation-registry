@@ -40,7 +40,7 @@ public class PropertyValidationFailException extends RuntimeException {
   public PropertyValidationFailException(final String filedName,
       final String inputValue,
       final String validationFailMessage) {
-    super("Key:%s:%s - %s".formatted(filedName, inputValue, validationFailMessage));
+    super("Key:'%s' - '%s' Original value: '%s'".formatted(filedName, validationFailMessage, inputValue));
     this.validationFailMessage = validationFailMessage;
     this.filedName = filedName;
     this.inputValue = inputValue;
@@ -54,7 +54,7 @@ public class PropertyValidationFailException extends RuntimeException {
    */
   public PropertyValidationFailException(final String filedName,
       final String validationFailMessage) {
-    super("Key:%s - %s".formatted(filedName, validationFailMessage));
+    super("Key:'%s' - %s".formatted(filedName, validationFailMessage));
     this.validationFailMessage = validationFailMessage;
     this.filedName = filedName;
     this.inputValue = null;

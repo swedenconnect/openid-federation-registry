@@ -83,7 +83,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             "detail", e.getValidationFailMessage(),
             "inputvalue", Optional.ofNullable(e.getInputValue()).orElse("")))
     );
-    problemDetail.setType(INVALID_PARAMETER);
+    problemDetail.setType(INVALID_PARAMETER.errorURI);
 
     return this.handleExceptionInternal(e,
         problemDetail,
@@ -93,20 +93,21 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
   }
 
   /**
-   * Handles exceptions of type {@link RegistryClientException} by constructing a {@link ProblemDetail} object
+   * Handles exceptions of type {@link RegistryServerException} by constructing a {@link ProblemDetail} object
    * containing error information and returning it within a {@link ResponseEntity}.
    *
-   * @param e the {@link RegistryClientException} that was thrown
+   * @param e the {@link RegistryServerException} that was thrown
    * @param request the {@link WebRequest} during which the exception occurred
    * @return a {@link ResponseEntity} containing a {@link ProblemDetail} object with details about the error and the
    *     appropriate HTTP status code
    */
-  @ExceptionHandler(RegistryClientException.class)
-  public ResponseEntity<Object> handle(final RegistryClientException e, final WebRequest request) {
-    final ProblemDetail problemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), e.getMessage());
+  @ExceptionHandler(RegistryServerException.class)
+  public ResponseEntity<Object> handle(final RegistryServerException e, final WebRequest request) {
 
-    problemDetail.setType(e.getErrorTypes());
+    final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(e.getHttpCode()),
+        e.getMessage());
+
+    problemDetail.setType(e.getErrorTypes().errorURI);
 
     return this.handleExceptionInternal(e,
         problemDetail,
@@ -124,7 +125,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400),
         "MethodArgumentNotValidException");
-    problemDetail.setType(INVALID_PARAMETER);
+    problemDetail.setType(INVALID_PARAMETER.errorURI);
 
     final List<Map<String, String>> detailProblem =
         e.getBindingResult().getFieldErrors().stream().map((FieldError error) -> {

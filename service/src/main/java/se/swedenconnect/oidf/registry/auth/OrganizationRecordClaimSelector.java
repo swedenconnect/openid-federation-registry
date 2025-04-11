@@ -24,21 +24,21 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 import se.swedenconnect.oidf.registry.config.SecurityConfig;
-import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 
 import java.util.Optional;
 
 /**
  * Implements argument resolver for picking org based on header, if present, or else first.
  *
- * @author Felix Hellman
+ * @author Per Fredrik Plars
  */
 @Slf4j
-public class OrganizationInformationSelector implements HandlerMethodArgumentResolver {
+public class OrganizationRecordClaimSelector implements HandlerMethodArgumentResolver {
+  public final static String SELECTED_ORG_NUMBER_HEADER_NAME = "selected-org-number";
 
   @Override
   public boolean supportsParameter(final MethodParameter parameter) {
-    return parameter.getParameterType().equals(OrganizationEntity.class) &&
+    return parameter.getParameterType().equals(OrganizationRecord.class) &&
         SecurityContextHolder.getContext().getAuthentication() instanceof
             SecurityConfig.RegistryClaims;
   }
@@ -51,12 +51,14 @@ public class OrganizationInformationSelector implements HandlerMethodArgumentRes
       final WebDataBinderFactory binderFactory) throws Exception {
 
     final HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
-    final String selectedOrgNumber = request.getHeader("selected-org-number");
+    final String selectedOrgNumber = request.getHeader(SELECTED_ORG_NUMBER_HEADER_NAME);
     final Object authentication = SecurityContextHolder.getContext().getAuthentication();
     if (authentication instanceof SecurityConfig.RegistryClaims registryClaims) {
       return Optional.ofNullable(selectedOrgNumber)
-          .map(registryClaims::getByOrgNumber)
-          .orElseGet(() -> registryClaims.getOrg().getFirst());
+          .map(registryClaims::getOrganizationRecordByOrgNumber)
+          .orElseThrow(
+              () -> new IllegalArgumentException("Header:  " + SELECTED_ORG_NUMBER_HEADER_NAME +
+                  " missing or have a value that does not match claim in jwt"));
     }
     else {
       throw new IllegalArgumentException("Wrong authentication class, check supportsParameter method.");

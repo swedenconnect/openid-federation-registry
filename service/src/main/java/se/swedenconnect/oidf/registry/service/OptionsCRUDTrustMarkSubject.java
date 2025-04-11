@@ -16,19 +16,19 @@
 package se.swedenconnect.oidf.registry.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.registry.api.model.OptionRecord;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.Values;
+import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
-import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.entity.SettingDataType;
 import se.swedenconnect.oidf.registry.entity.SettingsEntity;
 import se.swedenconnect.oidf.registry.entity.TrustMarkEntity;
 import se.swedenconnect.oidf.registry.entity.TrustMarkSubjectEntity;
+import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.registry.repository.TrustMarkRepository;
 import se.swedenconnect.oidf.registry.repository.TrustMarkSubjectRepository;
@@ -38,10 +38,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static se.swedenconnect.oidf.registry.entity.FkKeyType.TRUSTMARKSUBJECT;
+import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.CONFLICT;
+import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.NOT_FOUND;
+import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.RELATION_NOT_FOUND;
 
 /**
  * OptionsCRUDTrustMark is a service that extends the OptionsCRUDAdapter to perform Create, Read, Update, and Delete
@@ -52,7 +53,7 @@ import static se.swedenconnect.oidf.registry.entity.FkKeyType.TRUSTMARKSUBJECT;
  */
 @Slf4j
 @Service
-public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
+public class OptionsCRUDTrustMarkSubject extends BaseOptionsCRUD {
 
   private static final FkKeyType FK_KEY_TYPE = TRUSTMARKSUBJECT;
 
@@ -60,19 +61,19 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
 
   /**
-   * Constructor for OptionsCRUDTrustMark.
+   * Constructs an instance of OptionsCRUDTrustMarkSubject.
    *
-   * @param userAssignedOrganization Loading current org for this session
-   * @param settingsRepository the repository for system settings.
-   * @param trustMarkRepository the repository for handling trust marks.
-   * @param trustMarkSubjectRepository tms repository for managing modules.
+   * @param organizationService the service responsible for handling organization-related operations
+   * @param settingsRepository the repository for accessing and managing settings data
+   * @param trustMarkRepository the repository for accessing and managing trust mark data
+   * @param trustMarkSubjectRepository the repository for accessing and managing trust mark subject data
    */
   public OptionsCRUDTrustMarkSubject(
-      final Supplier<OrganizationEntity> userAssignedOrganization,
+      final OrganizationService organizationService,
       final SettingsRepository settingsRepository,
       final TrustMarkRepository trustMarkRepository,
       final TrustMarkSubjectRepository trustMarkSubjectRepository) {
-    super(settingsRepository, userAssignedOrganization);
+    super(settingsRepository, organizationService);
     this.trustMarkRepository = trustMarkRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
   }
@@ -84,26 +85,24 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
 
   @Transactional
   @Override
-  public OptionsRecord create(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
-    final Optional<TrustMarkSubjectEntity> trustMarkEntity = this.trustMarkSubjectRepository.findById(id);
+  public OptionsRecord create(final OrganizationRecord organizationRecord,
+      final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
+    final Optional<TrustMarkSubjectEntity> trustMarkEntity =
+        this.trustMarkSubjectRepository.findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), id);
 
     if (trustMarkEntity.isPresent()) {
-      super.throwUnauthorizedIfNotMatch(trustMarkEntity.get()
-          .getTrustMark()
-          .getModule()
-          .getOrganization()
-          .getOrganizationId());
-      throw new ResponseStatusException(HttpStatus.CONFLICT,
+      throw new RegistryServerException(CONFLICT,
           "TrustMark already exists for:%s %s".formatted(fkKeyType, id));
     }
 
-    final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
-    final List<SettingsEntity> validatedInData = this.createAndValidateInputData(template, record.getOption());
+    final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
+    final List<SettingsEntity> validatedInData =
+        this.createAndValidateInputData(organizationRecord, template, record.getOption());
 
     // Create
     final TrustMarkSubjectEntity newTrustMarkSubjectEntity = new TrustMarkSubjectEntity();
     newTrustMarkSubjectEntity.setTrustmarksubjectId(id);
-    newTrustMarkSubjectEntity.setTrustMark(this.loadTrustMarkIDThrowIfNotExist(validatedInData));
+    newTrustMarkSubjectEntity.setTrustMark(this.loadTrustMarkIDThrowIfNotExist(organizationRecord, validatedInData));
 
     final TrustMarkSubjectEntity saved = this.trustMarkSubjectRepository.saveAndFlush(newTrustMarkSubjectEntity);
     super.deleteSettings(fkKeyType, saved.getTrustmarksubjectId().toString());
@@ -112,36 +111,35 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
     return this.toRecord(validatedInData);
   }
 
-  protected TrustMarkEntity loadTrustMarkIDThrowIfNotExist(final List<SettingsEntity> dataValues)
-      throws ResponseStatusException {
+  protected TrustMarkEntity loadTrustMarkIDThrowIfNotExist(final OrganizationRecord organizationRecord,
+      final List<SettingsEntity> dataValues) throws ResponseStatusException {
 
     return dataValues.stream()
         .filter(value -> value.getKey().equals("trustmark_id"))
         .map(SettingsEntity::getValue)
         .map(UUID::fromString)
-        .map(this.trustMarkRepository::findById)
+        .map(uuid -> this.trustMarkRepository.findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), uuid))
         .map(moduleEntity -> moduleEntity.orElseThrow(() ->
-            new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            new RegistryServerException(RELATION_NOT_FOUND,
                 "Invalid trustmark_id, does not exist")))
-        .peek(trustMarkEntity ->
-            super.throwUnauthorizedIfNotMatch(trustMarkEntity.getModule().getOrganization().getOrganizationId()))
         .findFirst()
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+        .orElseThrow(() -> new RegistryServerException(RELATION_NOT_FOUND,
             "No trustmark to assign trustmarkssubjects to"));
   }
 
   @Override
-  public OptionsRecord update(final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
+  public OptionsRecord update(final OrganizationRecord organizationRecord,
+      final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
 
     final TrustMarkSubjectEntity entity = this.trustMarkSubjectRepository
-        .findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+        .findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), id)
+        .orElseThrow(() -> new RegistryServerException(NOT_FOUND,
             "No template found for:%s %s".formatted(fkKeyType, id)));
 
-    super.throwUnauthorizedIfNotMatch(entity.getTrustMark().getModule().getOrganization().getOrganizationId());
-    final List<SettingsEntity> template = this.getTemplateSettings(fkKeyType);
+    final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
 
-    final List<SettingsEntity> validatedInData = this.createAndValidateInputData(template, record.getOption());
+    final List<SettingsEntity> validatedInData =
+        this.createAndValidateInputData(organizationRecord, template, record.getOption());
     super.deleteSettings(fkKeyType, entity.getTrustmarkId().toString());
     super.insertSettings(fkKeyType, entity.getTrustmarkId().toString(), validatedInData);
 
@@ -150,38 +148,36 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
   }
 
   @Override
-  public OptionsRecord get(final FkKeyType fkKeyType, final UUID id) {
+  public OptionsRecord get(final OrganizationRecord organizationRecord,
+      final FkKeyType fkKeyType, final UUID id) {
     final TrustMarkSubjectEntity entity = this.trustMarkSubjectRepository
-        .findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+        .findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), id)
+        .orElseThrow(() -> new RegistryServerException(NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
-    super.throwUnauthorizedIfNotMatch(entity.getTrustMark().getModule().getOrganization().getOrganizationId());
 
-    final List<SettingsEntity> mergeValues = insertValuesInTemplate(
+    final List<SettingsEntity> mergeValues = insertValuesInTemplate(organizationRecord,
         fkKeyType,
         super.getSettingsEntities(FK_KEY_TYPE, entity.getTrustmarkId()));
 
-    final OptionsRecord optionsRecord = toRecord(mergeValues);
-    return optionsRecord;
+    return toRecord(mergeValues);
 
   }
 
   @Override
-  public OptionsRecord template(final FkKeyType fkKeyType) {
-    final OptionsRecord optionsRecord = toRecord(getTemplateSettings(fkKeyType));
-    this.addOptionsForTrustMarkId(Objects.requireNonNull(optionsRecord.getOption()));
+  public OptionsRecord template(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType) {
+    final OptionsRecord optionsRecord = toRecord(getTemplateSettings(organizationRecord, fkKeyType));
+    this.addOptionsForTrustMarkId(organizationRecord, Objects.requireNonNull(optionsRecord.getOption()));
     return optionsRecord;
   }
 
-  protected void addOptionsForTrustMarkId(final List<Values> values) {
+  protected void addOptionsForTrustMarkId(final OrganizationRecord organizationRecord, final List<Values> values) {
     values.stream()
         .filter(value -> Objects.equals(value.getValueType(), SettingDataType.OPTIONS.name()))
         .filter(value -> Objects.equals(value.getKey(), "trustmark_id"))
         .findFirst()
         .ifPresent(value ->
-            value.setOptions(this.trustMarkRepository.findAll()
+            value.setOptions(this.trustMarkRepository.findByOrgNumber(organizationRecord.orgNumber())
                 .stream()
-                .filter(super.hasRightOrganizationIdTrustmarkPredicate())
                 .map(entity ->
                     OptionRecord.builder()
                         .key(entity.getTrustmarkId().toString())
@@ -195,36 +191,23 @@ public class OptionsCRUDTrustMarkSubject extends OptionsCRUDAdapter {
 
   @Override
   @Transactional
-  public OptionsRecord delete(final FkKeyType fkKeyType, final UUID id) {
-    final TrustMarkEntity trustMarkEntity = this.trustMarkRepository
-        .findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+  public OptionsRecord delete(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType, final UUID id) {
+    final TrustMarkSubjectEntity trustMarkEntity = this.trustMarkSubjectRepository
+        .findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), id)
+        .orElseThrow(() -> new RegistryServerException(NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
-    super.throwUnauthorizedIfNotMatch(trustMarkEntity.getModule().getOrganization().getOrganizationId());
     final List<SettingsEntity> deletedSettings =
         super.deleteSettings(fkKeyType, trustMarkEntity.getTrustmarkId().toString());
-    this.trustMarkRepository.delete(trustMarkEntity);
-    this.trustMarkRepository.flush();
+    this.trustMarkSubjectRepository.delete(trustMarkEntity);
+    this.trustMarkSubjectRepository.flush();
     return this.toRecord(deletedSettings);
   }
 
   @Override
-  public List<Map<String, Object>> list(final FkKeyType fkKeyType) {
-    return this.trustMarkRepository.findAll()
+  public List<Map<String, Object>> list(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType) {
+    return this.trustMarkRepository.findByOrgNumber(organizationRecord.orgNumber())
         .stream()
-        .filter(entity -> Objects.equals(entity.getModule().getOrganization().getOrganizationId(),
-            getCurrentOrganization().getOrganizationId()))
-        .map(entity -> {
-          final Map<String, Object> e = super.getSettingsEntities(fkKeyType, entity.getTrustmarkId())
-                  .stream()
-                  .collect(Collectors.toMap(
-                      SettingsEntity::getKey,
-                      SettingsEntity::castValue
-                  ));
-              e.put("id", entity.getTrustmarkId().toString());
-              return e;
-            }
-        )
+        .map(entity -> super.getStringObjectMap(fkKeyType, entity.getTrustmarkId()))
         .toList();
   }
 

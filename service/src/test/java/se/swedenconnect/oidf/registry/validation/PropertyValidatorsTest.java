@@ -31,14 +31,14 @@ public class PropertyValidatorsTest {
 
   @Test
   public void testResolveValidator_noValidators() {
-    final PropertyValidator result = propertyValidators.resolveValidator("");
+    final PropertyValidator result = resolveValidator("");
     assertNotNull(result);
     assertDoesNotThrow(() -> result.validate("key", "value"));
   }
 
   @Test
   public void testResolveValidator_lengthValidator() {
-    final PropertyValidator result = propertyValidators.resolveValidator("length:5,10");
+    final PropertyValidator result = resolveValidator("length:5,10");
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "abcd"));
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "abcdefghijk"));
     assertDoesNotThrow(() -> result.validate("key", "abcde"));
@@ -46,70 +46,70 @@ public class PropertyValidatorsTest {
 
   @Test
   public void testResolveValidator_requiredValidator() {
-    final PropertyValidator result = propertyValidators.resolveValidator("required");
+    final PropertyValidator result = resolveValidator("required");
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", ""));
     assertDoesNotThrow(() -> result.validate("key", "non-empty"));
   }
 
   @Test
   public void testResolveValidator_emailValidator() {
-    final PropertyValidator result = propertyValidators.resolveValidator("email");
+    final PropertyValidator result = resolveValidator("email");
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "invalid"));
     assertDoesNotThrow(() -> result.validate("key", "test@example.com"));
   }
 
   @Test
   public void testResolveValidator_endsWithValidator() {
-    final PropertyValidator result = propertyValidators.resolveValidator("ends_with:xyz");
+    final PropertyValidator result = resolveValidator("ends_with:xyz");
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "abc"));
     assertDoesNotThrow(() -> result.validate("key", "abcxyz"));
   }
 
   @Test
   public void testResolveValidator_startsWithValidator() {
-    final PropertyValidator result = propertyValidators.resolveValidator("starts_with:abc");
+    final PropertyValidator result = resolveValidator("starts_with:abc");
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "xyz"));
     assertDoesNotThrow(() -> result.validate("key", "abcxyz"));
   }
 
   @Test
   public void testResolveValidator_containsValidator() {
-    final PropertyValidator result = propertyValidators.resolveValidator("contains:abc");
+    final PropertyValidator result = resolveValidator("contains:abc");
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "xyz"));
     assertDoesNotThrow(() -> result.validate("key", "xyzabcxyz"));
   }
 
   @Test
   public void testResolveValidator_alphaValidator() {
-    final PropertyValidator result = propertyValidators.resolveValidator("alpha");
+    final PropertyValidator result = resolveValidator("alpha");
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "abc123"));
     assertDoesNotThrow(() -> result.validate("key", "abcdef"));
   }
 
   @Test
   public void testResolveValidator_alphanumericValidator() {
-    final PropertyValidator result = propertyValidators.resolveValidator("alphanumeric");
+    final PropertyValidator result = resolveValidator("alphanumeric");
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "abc$%"));
     assertDoesNotThrow(() -> result.validate("key", "abc123"));
   }
 
   @Test
   public void testResolveValidator_numberValidator() {
-    final PropertyValidator result = propertyValidators.resolveValidator("number");
+    final PropertyValidator result = resolveValidator("number");
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "abc"));
     assertDoesNotThrow(() -> result.validate("key", "123.45"));
   }
 
   @Test
   public void testResolveValidator_dateValidator() {
-    final PropertyValidator result = propertyValidators.resolveValidator("date");
+    final PropertyValidator result = resolveValidator("date");
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "invalid-date"));
     assertDoesNotThrow(() -> result.validate("key", "2023-01-01"));
   }
 
   @Test
   public void testResolveValidator_betweenValidator() {
-    final PropertyValidator result = propertyValidators.resolveValidator("between:1,10");
+    final PropertyValidator result = resolveValidator("between:1,10");
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "0"));
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "11"));
     assertDoesNotThrow(() -> result.validate("key", "5"));
@@ -117,41 +117,41 @@ public class PropertyValidatorsTest {
 
   @Test
   public void testResolveValidator_urlValidator() {
-    final PropertyValidator result = propertyValidators.resolveValidator("url");
+    final PropertyValidator result = resolveValidator("url");
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "invalid-url"));
     assertDoesNotThrow(() -> result.validate("key", "https://example.com"));
   }
 
   @Test
   public void testResolveValidator_matchesValidator() {
-    final PropertyValidator result = propertyValidators.resolveValidator("matches:^\\d{3}-\\d{2}-\\d{4}$");
+    final PropertyValidator result = resolveValidator("matches:^\\d{3}-\\d{2}-\\d{4}$");
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "1234"));
     assertDoesNotThrow(() -> result.validate("key", "123-45-6789"));
   }
 
   @Test
   public void testResolveValidator_minValidator() {
-    final PropertyValidator result = propertyValidators.resolveValidator("min:5");
+    final PropertyValidator result = resolveValidator("min:5");
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "3"));
     assertDoesNotThrow(() -> result.validate("key", "10"));
   }
 
   @Test
   public void testResolveValidator_maxValidator() {
-    final PropertyValidator result = propertyValidators.resolveValidator("max:10.1");
+    final PropertyValidator result = resolveValidator("max:10.1");
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "40"));
     assertDoesNotThrow(() -> result.validate("key", "10"));
   }
 
   @Test
   public void testResolveValidator_jsonValidator_validJson() {
-    final PropertyValidator result = propertyValidators.resolveValidator("json:");
+    final PropertyValidator result = resolveValidator("json:");
     assertDoesNotThrow(() -> result.validate("key", "{\"name\":\"value\"}"));
   }
 
   @Test
   public void testResolveValidator_jsonValidator_invalidJson() {
-    final PropertyValidator result = propertyValidators.resolveValidator("json:");
+    final PropertyValidator result = resolveValidator("json:");
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "invalid-json"));
   }
 
@@ -160,7 +160,7 @@ public class PropertyValidatorsTest {
     final String jwks =
         "{\"keys\": [{\"kty\": \"EC\",\"x5t#S256\": \"Ww-i1TD0345YYbP-kLa7fQW5A-3VuiQBm8z_rl7RbVk\",\"crv\": \"P-256\",\"kid\": \"SKv8j4XjvowMoTsY67ch6GMSL5vPqsGc5Nsk_NL-wTk\",\"x\": \"i8zRvt76etocbhjQLibFHItxgYVC1hwR10fAEzqPVJw\",\"y\": \"_RNoMz5MKfgomuOgOm53-UJkqXaIw8c1ojb1bQBFaFs\"}]}";
 
-    final PropertyValidator result = propertyValidators.resolveValidator("jwks");
+    final PropertyValidator result = resolveValidator("jwks");
     assertDoesNotThrow(() -> result.validate("key", jwks));
   }
 
@@ -172,14 +172,14 @@ public class PropertyValidatorsTest {
     final String jwkPrivate = set.toString(false);
     final String jwkPublic = set.toString(true);
 
-    final PropertyValidator result = propertyValidators.resolveValidator("jwks:public | jwks:kid");
+    final PropertyValidator result = resolveValidator("jwks:public | jwks:kid");
     assertDoesNotThrow(() -> result.validate("key", jwkPublic));
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", jwkPrivate));
   }
 
   @Test
   public void testResolveValidator_emptyvalue() {
-    final PropertyValidator result = propertyValidators.resolveValidator("jwks");
+    final PropertyValidator result = resolveValidator("jwks");
     assertDoesNotThrow(() -> result.validate("key", ""));
     assertDoesNotThrow(() -> result.validate("key", null));
   }
@@ -189,33 +189,37 @@ public class PropertyValidatorsTest {
     String jwkValue =
         "{\"keys\":[{\"kty\":\"RSA\",\"use\":\"sig\",\"n\":\"valid-modulus\",\"e\":\"AQAB\"}]}";
 
-    final PropertyValidator result = propertyValidators.resolveValidator("jwks");
+    final PropertyValidator result = resolveValidator("jwks");
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", jwkValue));
   }
 
   @Test
   public void testResolveValidator_jwksValidator_invalidJwk() {
     final String invalidJwkValue = genKey().toString();
-    final PropertyValidator result = propertyValidators.resolveValidator("jwk");
+    final PropertyValidator result = resolveValidator("jwk");
     assertDoesNotThrow(() -> result.validate("key", invalidJwkValue));
   }
 
   @Test
   void isValidatorSupported() {
-    assertTrue(propertyValidators.isValidatorSupported("uuid"));
-    assertTrue(propertyValidators.isValidatorSupported("length"));
-    assertTrue(propertyValidators.isValidatorSupported("json"));
-    assertTrue(propertyValidators.isValidatorSupported("required"));
-    assertTrue(propertyValidators.isValidatorSupported("email"));
+    assertTrue(this.propertyValidators.isValidatorSupported("uuid"));
+    assertTrue(this.propertyValidators.isValidatorSupported("length"));
+    assertTrue(this.propertyValidators.isValidatorSupported("json"));
+    assertTrue(this.propertyValidators.isValidatorSupported("required"));
+    assertTrue(this.propertyValidators.isValidatorSupported("email"));
 
-    assertTrue(propertyValidators.isValidatorSupported("length:10,20"));
-    assertTrue(propertyValidators.isValidatorSupported("starts_with:prefix"));
+    assertTrue(this.propertyValidators.isValidatorSupported("length:10,20"));
+    assertTrue(this.propertyValidators.isValidatorSupported("starts_with:prefix"));
 
-    assertFalse(propertyValidators.isValidatorSupported("nonexistent"));
-    assertFalse(propertyValidators.isValidatorSupported("invalid_validator"));
-    assertFalse(propertyValidators.isValidatorSupported(""));
+    assertFalse(this.propertyValidators.isValidatorSupported("nonexistent"));
+    assertFalse(this.propertyValidators.isValidatorSupported("invalid_validator"));
+    assertFalse(this.propertyValidators.isValidatorSupported(""));
 
-    assertFalse(propertyValidators.isValidatorSupported(null));
+    assertFalse(this.propertyValidators.isValidatorSupported(null));
 
+  }
+
+  public PropertyValidator resolveValidator(final String validatorString) {
+    return this.propertyValidators.resolveValidator(validatorString, VariabelValueResolver.defaultResolver());
   }
 }

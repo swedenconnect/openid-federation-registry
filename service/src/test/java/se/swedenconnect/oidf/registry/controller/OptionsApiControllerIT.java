@@ -17,7 +17,6 @@
 package se.swedenconnect.oidf.registry.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +37,7 @@ import java.util.Arrays;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static se.swedenconnect.oidf.registry.fixture.JwtTestUtils.OrganisationType.PM;
 
 /**
  * Testing the new optional api
@@ -52,7 +52,6 @@ class OptionsApiControllerIT {
   @Container
   @ServiceConnection
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
-  final ObjectMapper objectMapper = new ObjectMapper();
   @Autowired
   private TestDataOperations testDataOperations;
   @Autowired
@@ -68,29 +67,31 @@ class OptionsApiControllerIT {
   public void testList() throws IOException {
 
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.PM,
+        PM,
         HttpStatus.CREATED,
-        OptionsTestData.HostedEntityTestData.builder()
+        OptionsTestData.HostedEntityTestData.create(PM)
+            .issuer(PM.domainPrefix)
+            .subject(PM.domainPrefix)
             .build());
 
     final UUID tmiId1 = testDataOperations.createTMI(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.PM,
+        PM,
         HttpStatus.CREATED,
         TestDataOperations.defaultTrustMarkIssuer(entityId));
 
-    testDataOperations.createPolicies(JwtTestUtils.OrganisationType.PM);
+    testDataOperations.createPolicies(PM);
 
     testDataOperations.createResolver(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.PM,
+        PM,
         HttpStatus.CREATED,
         TestDataOperations.defaultResolver(entityId));
 
     testDataOperations.createTrustAnchor(UUID.randomUUID(),
-        JwtTestUtils.OrganisationType.PM,
+        PM,
         HttpStatus.CREATED,
         OptionsTestData.TrustAnchorTestData.builder().entityId(entityId).build());
 
-    final JsonNode responseBody = testDataOperations.listAll(JwtTestUtils.OrganisationType.PM);
+    final JsonNode responseBody = testDataOperations.listAll(PM);
     assertThat(responseBody).isNotNull();
 
     assertThat(responseBody.has("POLICIES")).isTrue();
