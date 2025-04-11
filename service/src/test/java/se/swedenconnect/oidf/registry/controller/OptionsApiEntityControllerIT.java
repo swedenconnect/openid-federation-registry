@@ -38,6 +38,8 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static se.swedenconnect.oidf.registry.entity.FkKeyType.FEDERATION_ENTITY;
 import static se.swedenconnect.oidf.registry.fixture.JwtTestUtils.OrganisationType.AF;
 import static se.swedenconnect.oidf.registry.fixture.JwtTestUtils.OrganisationType.PM;
 import static se.swedenconnect.oidf.registry.fixture.JwtTestUtils.OrganisationType.SKATT;
@@ -68,11 +70,23 @@ class OptionsApiEntityControllerIT {
             Values.builder().key("subject").value(AF.domainPrefix).build()
         ));
 
-    testDataOperations.postPut(FkKeyType.FEDERATION_ENTITY,
+    testDataOperations.postPut(FEDERATION_ENTITY,
         UUID.randomUUID(),
         HttpStatus.CREATED,
         AF, optionsRecord,
         HttpMethod.POST);
+  }
+
+  @Test
+  public void testHostedEntityTemplateIsFilteredForVariables() {
+    final OptionsRecord template = testDataOperations.get(FEDERATION_ENTITY, null, HttpStatus.OK, SKATT);
+    template.getOption().forEach(values -> {
+      assertTrue(!values.getValue().contains("@{"),
+          "The value should not contain @{ but is: " + values.getValue() + " ");
+      assertTrue(!values.getValidation().contains("@{"),
+          "The value should not contain @{ but is: " + values.getValidation() + " ");
+    });
+
   }
 
   @Test
@@ -93,7 +107,7 @@ class OptionsApiEntityControllerIT {
             .subject("http://www.skv.se/oidf/op")
             .build());
 
-    final OptionsTestData.SubordinateEntityTestData data = testDataOperations.get(FkKeyType.FEDERATION_ENTITY,
+    final OptionsTestData.SubordinateEntityTestData data = testDataOperations.get(FEDERATION_ENTITY,
         id_skatt,
         HttpStatus.OK,
         SKATT,
@@ -101,7 +115,7 @@ class OptionsApiEntityControllerIT {
 
     assertEquals(data.getSubject(), SKATT.domainPrefix + "/op");
 
-    testDataOperations.delete(FkKeyType.FEDERATION_ENTITY, id_skatt, HttpStatus.OK,
+    testDataOperations.delete(FEDERATION_ENTITY, id_skatt, HttpStatus.OK,
         SKATT);
 
   }
@@ -132,7 +146,7 @@ class OptionsApiEntityControllerIT {
             .build());
 
     final List<OptionsTestData.HostedEntityTestData> response =
-        testDataOperations.listForFKType(FkKeyType.FEDERATION_ENTITY,
+        testDataOperations.listForFKType(FEDERATION_ENTITY,
             org,
             OptionsTestData.HostedEntityTestData.class);
 
@@ -155,13 +169,13 @@ class OptionsApiEntityControllerIT {
     final UUID taId = testDataOperations.createTrustAnchor(UUID.randomUUID(), org, HttpStatus.CREATED,
         OptionsTestData.TrustAnchorTestData.builder().entityId(id_skatt).build());
 
-    testDataOperations.delete(FkKeyType.FEDERATION_ENTITY, id_skatt, HttpStatus.BAD_REQUEST,
+    testDataOperations.delete(FEDERATION_ENTITY, id_skatt, HttpStatus.BAD_REQUEST,
         SKATT);
 
     testDataOperations.delete(FkKeyType.TRUSTANCHOR, taId, HttpStatus.OK,
         SKATT);
 
-    testDataOperations.delete(FkKeyType.FEDERATION_ENTITY, id_skatt, HttpStatus.OK,
+    testDataOperations.delete(FEDERATION_ENTITY, id_skatt, HttpStatus.OK,
         SKATT);
 
   }
@@ -203,7 +217,7 @@ class OptionsApiEntityControllerIT {
     testDataOperations.delete(FkKeyType.TRUSTANCHOR, taId, HttpStatus.OK,
         SKATT);
 
-    testDataOperations.delete(FkKeyType.FEDERATION_ENTITY, id_skatt, HttpStatus.OK,
+    testDataOperations.delete(FEDERATION_ENTITY, id_skatt, HttpStatus.OK,
         SKATT);
 
   }
