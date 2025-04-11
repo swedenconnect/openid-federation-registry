@@ -67,9 +67,9 @@ public class PropertyValidatorsTest {
 
   @Test
   public void testResolveValidator_startsWithValidator() {
-    final PropertyValidator result = resolveValidator("starts_with:abc");
-    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "xyz"));
-    assertDoesNotThrow(() -> result.validate("key", "abcxyz"));
+    final PropertyValidator result = resolveValidator("starts_with:http://www.digg.se");
+    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "http://www.novalidate.se"));
+    assertDoesNotThrow(() -> result.validate("key", "http://www.digg.se"));
   }
 
   @Test

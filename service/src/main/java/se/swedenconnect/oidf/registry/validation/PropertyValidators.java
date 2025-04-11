@@ -112,7 +112,7 @@ public class PropertyValidators {
   protected PropertyValidator propertyValidatorCreator(final VariabelValueResolver variabelResolver,
       final String validatorNameSetting) {
     log.debug("Creating validator: {}", validatorNameSetting);
-    final String[] split = validatorNameSetting.trim().toLowerCase().split(":");
+    final String[] split = validatorNameSetting.trim().toLowerCase().split(":", 2);
     final String name = split[0];
     final String conf = variabelResolver.insertTemplateValues(split.length > 1 ? split[1] : "");
 

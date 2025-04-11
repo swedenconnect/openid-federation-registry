@@ -109,11 +109,20 @@ public abstract class BaseOptionsCRUD implements OptionsCRUD {
           "No template found for:%s".formatted(fkkeytype));
     }
     final VariabelValueResolver valueResolver = VariabelValueResolver.orgResolver(organizationRecord);
-    templates.forEach(settingsEntity -> {
-      settingsEntity.setValue(valueResolver.insertTemplateValues(settingsEntity.getValue()));
-      settingsEntity.setValidation(valueResolver.insertTemplateValues(settingsEntity.getValidation()));
-    });
-    return templates;
+    return templates.stream().map(settingsEntity -> {
+      final SettingsEntity detatchedEntity = new SettingsEntity();
+      detatchedEntity.setKey(settingsEntity.getKey());
+      detatchedEntity.setValue(valueResolver.insertTemplateValues(settingsEntity.getValue()));
+      detatchedEntity.setValidation(valueResolver.insertTemplateValues(settingsEntity.getValidation()));
+      detatchedEntity.setDescription(settingsEntity.getDescription());
+      detatchedEntity.setValueDataType(settingsEntity.getValueDataType());
+      detatchedEntity.setCreatedBy(settingsEntity.getCreatedBy());
+      detatchedEntity.setCreatedDate(settingsEntity.getCreatedDate());
+      detatchedEntity.setLastModifiedBy(settingsEntity.getLastModifiedBy());
+      detatchedEntity.setLastModifiedDate(settingsEntity.getLastModifiedDate());
+      return detatchedEntity;
+    }).toList();
+
   }
 
   protected Map<String, Object> getStringObjectMap(final FkKeyType fkKeyType, final UUID id) {

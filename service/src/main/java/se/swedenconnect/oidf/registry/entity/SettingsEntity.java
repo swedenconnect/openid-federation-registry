@@ -31,6 +31,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -53,6 +54,7 @@ import java.util.Map;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 @Entity
+@ToString
 @Table(name = "Settings")
 public class SettingsEntity extends BaseEntity {
 
