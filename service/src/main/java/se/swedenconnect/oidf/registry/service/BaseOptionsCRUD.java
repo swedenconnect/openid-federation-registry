@@ -102,14 +102,17 @@ public abstract class BaseOptionsCRUD implements OptionsCRUD {
 
   protected List<SettingsEntity> getTemplateSettings(final OrganizationRecord organizationRecord,
       final FkKeyType fkkeytype) {
-    final List<SettingsEntity> templates = this.settingsRepository.findByFkTypeAndFkId(fkkeytype.name(), "TEMPLATE");
+    final List<SettingsEntity> templates =
+        this.settingsRepository.findByFkTypeAndFkId(fkkeytype.name(), "TEMPLATE");
     if (templates.isEmpty()) {
       throw new RegistryServerException(NOT_FOUND,
           "No template found for:%s".formatted(fkkeytype));
     }
     final VariabelValueResolver valueResolver = VariabelValueResolver.orgResolver(organizationRecord);
-    templates.forEach(settingsEntity ->
-        settingsEntity.setValue(valueResolver.insertTemplateValues(settingsEntity.getValue())));
+    templates.forEach(settingsEntity -> {
+      settingsEntity.setValue(valueResolver.insertTemplateValues(settingsEntity.getValue()));
+      settingsEntity.setValidation(valueResolver.insertTemplateValues(settingsEntity.getValidation()));
+    });
     return templates;
   }
 
