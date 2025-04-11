@@ -105,6 +105,5 @@ the [GitHub documentation](https://docs.github.com/en/packages/working-with-a-gi
 For any further assistance, refer to the project's documentation or seek support from the development team.
 
 ---
-Copyright &copy;
-2024, [Myndigheten för digital förvaltning - Swedish Agency for Digital Government (DIGG)](http://www.digg.se). Licensed
-under version 2.0 of the [Apache License](http://www.apache.org/licenses/LICENSE-2.0).
+Copyright &copy; 2025, [SwedenConnect](http://www.swedenconnect.se). Licensed under version 2.0 of
+the [Apache License](http://www.apache.org/licenses/LICENSE-2.0).
