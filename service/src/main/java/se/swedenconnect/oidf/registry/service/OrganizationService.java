@@ -76,7 +76,7 @@ public class OrganizationService {
       org.setLastModifiedBy(org.getCreatedBy());
       //instanceEntity.addOrganization(org);
       org.setInstance(instanceEntity);
-      this.organizationRepository.saveAndFlush(org);
+      this.organizationRepository.save(org);
       return Optional.of(org);
 
     }).orElseThrow();

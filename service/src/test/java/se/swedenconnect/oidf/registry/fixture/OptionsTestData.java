@@ -49,7 +49,6 @@ import java.util.function.Function;
  */
 public class OptionsTestData {
 
-  private static final Map<String, Map<String, String>> cache = new HashMap<>();
 
   public static String genJwks() {
     final JWKSet jwkSet = new JWKSet(List.of(genKey(), genKey()));
@@ -73,11 +72,7 @@ public class OptionsTestData {
   }
 
   public static Map<String, String> createFieldMap(Object obj) {
-    Map<String, String> fieldMap = cache.get(obj.getClass().getName());
-    if (fieldMap != null) {
-      return fieldMap;
-    }
-    fieldMap = new HashMap<>();
+    Map<String, String> fieldMap = new HashMap<>();
     final Class<?> clazz = obj.getClass();
     for (Field field : clazz.getDeclaredFields()) {
       field.setAccessible(true);
