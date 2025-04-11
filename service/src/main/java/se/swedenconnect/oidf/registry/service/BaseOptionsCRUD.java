@@ -110,6 +110,7 @@ public abstract class BaseOptionsCRUD implements OptionsCRUD {
     }
     final VariabelValueResolver valueResolver = VariabelValueResolver.orgResolver(organizationRecord);
     templates.forEach(settingsEntity -> {
+      settingsEntity.setValidation(settingsEntity.getValidation().toLowerCase());
       settingsEntity.setValue(valueResolver.insertTemplateValues(settingsEntity.getValue()));
       settingsEntity.setValidation(valueResolver.insertTemplateValues(settingsEntity.getValidation()));
     });
