@@ -151,7 +151,7 @@ public class OptionsCRUDPolicy extends BaseOptionsCRUD {
   public List<Map<String, Object>> list(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType) {
     return this.policyRepository.findByOrgNumber(organizationRecord.orgNumber())
         .stream()
-        .map(entity -> super.getStringObjectMap(fkKeyType, entity.getOrganizationId()))
+        .map(entity -> super.getStringObjectMap(fkKeyType, entity.getPolicyId()))
         .toList();
   }
 
