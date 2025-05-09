@@ -129,13 +129,13 @@ public class EntityResponseFormatter {
    * and a corresponding format string for constructing metadata URLs based on a base URL.
    */
   enum MetadataType {
-    TRUST_MARK_STATUS("trust_mark_status", "%s/trust-mark-issuer/trust_mark_status"),
-    TRUST_MARK_LISTING("trust_mark_listing", "%s/trust-mark-issuer/trust_mark_listing"),
-    TRUST_MARK("trust_mark", "%s/trust-mark-issuer/trust_mark"),
-    RESOLVE("resolve", "%s/trust-anchor/resolve"),
-    DISCOVERY("discovery", "%s/trust-anchor/discovery"),
-    FETCH("fetch", "%s/fetch"),
-    SUBORDINATE_LISTING("subordinate_listing", "%s/subordinate_listing"),
+    TRUST_MARK_STATUS("federation_trust_mark_status_endpoint", "%s/trust-mark-issuer/trust_mark_status"),
+    TRUST_MARK_LISTING("federation_trust_mark_list_endpoint", "%s/trust-mark-issuer/trust_mark_listing"),
+    TRUST_MARK("federation_trust_mark_endpoint", "%s/trust-mark-issuer/trust_mark"),
+    RESOLVE("federation_resolve_endpoint", "%s/trust-anchor/resolve"),
+    DISCOVERY("federation_discovery_endpoint ", "%s/trust-anchor/discovery"),
+    FETCH("federation_fetch_endpoint", "%s/fetch"),
+    SUBORDINATE_LISTING("federation_list_endpoint", "%s/subordinate_listing"),
     ORGANIZATION_NAME("organization_name", "%s");
 
     final String name;
