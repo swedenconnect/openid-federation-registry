@@ -51,17 +51,19 @@ import static se.swedenconnect.oidf.registry.entity.FkKeyType.TRUSTMARKISSUER;
 @Slf4j
 public class FederationApiService {
 
-  public static final String ISSUER_ENTITY_IDENTIFIER = "issuer_entity_identifier";
   public static final String ENTITY_IDENTIFIER = "entity_identifier";
   public static final String POLICY_ID = "policy_id";
   public static final String POLICY_RECORD = "policy_record";
+  public static final String TRUST_MARKS = "trust_marks";
   public static final String TRUST_MARK_ISSUERS = "trust_mark_issuers";
+  public static final String TRUST_MARK_SUBJECTS = "trust_mark_subjects";
   public static final String TRUST_ANCHORS = "trust_anchors";
   public static final String RESOLVERS = "resolvers";
   public static final String HOSTED_RECORD_ATT = "hosted_record";
   public static final String METADATA_ATT = "metadata";
   public static final String FEDERATION_ENTITY_ATT = "federation_entity";
   public static final String POLICY_ATT = "policy";
+
   private final PolicyRepository policyRepository;
   private final InstanceRepository instanceRepository;
   private final String jwkIssuer;
@@ -166,7 +168,8 @@ public class FederationApiService {
 
     final List<Map<String, Object>> tmi = moduleEntities.stream()
         .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(TRUSTMARKISSUER))
-        .map(this::toMapEntity)
+        //.map(this::toMapEntity)
+        .map(this::toMapWithTrustMarks)
         .toList();
 
     final List<Map<String, Object>> ta = moduleEntities.stream()
@@ -201,7 +204,8 @@ public class FederationApiService {
         .toList();
 
     return trustmarkIssuersModules.stream()
-        .flatMap(moduleEntity -> this.toMapWithTrustMarks(moduleEntity).stream())
+        .map(moduleEntity -> this.listTrustMarksByModuleId(moduleEntity, true))
+        .flatMap(List::stream)
         .toList();
   }
 
@@ -244,24 +248,17 @@ public class FederationApiService {
     return module;
   }
 
-  private List<Map<String, Object>> toMapWithTrustMarks(final ModuleEntity moduleEntity) {
-    final Map<String, Object> trustmarkissuer = moduleEntity.getSettingsEntityList()
+  private Map<String, Object> toMapWithTrustMarks(final ModuleEntity moduleEntity) {
+    final Map<String, Object> trustmarkissuer = this.toMapEntity(moduleEntity);
+    trustmarkissuer.put(TRUST_MARKS, this.listTrustMarksByModuleId(moduleEntity, true)
         .stream()
-        .filter(settingsEntity1 -> settingsEntity1.getKey().equals(ISSUER_ENTITY_IDENTIFIER))
-        .collect(Collectors.toMap(
-            SettingsEntity::getKey,
-            SettingsEntity::castValue
-        ));
+        .toList());
 
-    trustmarkissuer.put(ISSUER_ENTITY_IDENTIFIER, moduleEntity.getEntity().getSubject());
-
-    return this.listByModuleId(moduleEntity, true)
-        .stream()
-        .peek(stringObjectMap -> stringObjectMap.putAll(trustmarkissuer))
-        .toList();
+    return trustmarkissuer;
   }
 
-  private List<Map<String, Object>> listByModuleId(final ModuleEntity moduleEntity, final boolean includeSubjects) {
+  private List<Map<String, Object>> listTrustMarksByModuleId(final ModuleEntity moduleEntity,
+      final boolean includeSubjects) {
     return moduleEntity.getTrustmarks()
         .stream()
         .map(trustMarkEntity -> {
@@ -274,7 +271,7 @@ public class FederationApiService {
                       ));
 
           if (includeSubjects) {
-                e.put("trust-mark-subjects",
+            e.put(TRUST_MARK_SUBJECTS,
                     trustMarkEntity.getTrustmarksubjects()
                         .stream()
                         .map(trustMarkSubjectEntity ->
