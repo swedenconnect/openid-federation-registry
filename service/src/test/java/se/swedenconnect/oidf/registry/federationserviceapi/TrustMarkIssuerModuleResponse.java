@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static se.swedenconnect.oidf.registry.service.FederationApiService.TRUST_MARK_SUBJECTS;
+
 /**
  * TrustMarkIssuer module from registry.
  *
@@ -68,7 +70,7 @@ public class TrustMarkIssuerModuleResponse {
 
     public static TrustMarkResponse fromJson(final Map<String, Object> json) {
       final List<TrustMarkSubjectRecord> trustMarkSubjects =
-          Optional.ofNullable((List<Map<String, Object>>) json.get("trust-mark-subjects"))
+          Optional.ofNullable((List<Map<String, Object>>) json.get(TRUST_MARK_SUBJECTS))
               .map(claim -> claim.stream().map(TrustMarkSubjectRecord::fromJson).toList()).orElse(List.of());
       return TrustMarkResponse.builder()
           .trustMarkId(((String) json.get("trust_mark_entity_id")))
