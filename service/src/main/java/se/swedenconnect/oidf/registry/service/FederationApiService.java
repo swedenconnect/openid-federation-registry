@@ -204,7 +204,8 @@ public class FederationApiService {
         .toList();
 
     return trustmarkIssuersModules.stream()
-        .map(this::toMapWithTrustMarks)
+        .map(moduleEntity -> listTrustMarksByModuleId(moduleEntity, true))
+        .flatMap(List::stream)
         .toList();
   }
 
@@ -251,7 +252,6 @@ public class FederationApiService {
     final Map<String, Object> trustmarkissuer = this.toMapEntity(moduleEntity);
     trustmarkissuer.put(TRUST_MARKS, this.listTrustMarksByModuleId(moduleEntity, true)
         .stream()
-        .peek(stringObjectMap -> stringObjectMap.putAll(trustmarkissuer))
         .toList());
 
     return trustmarkissuer;
