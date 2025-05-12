@@ -204,7 +204,7 @@ public class FederationApiService {
         .toList();
 
     return trustmarkIssuersModules.stream()
-        .map(moduleEntity -> listTrustMarksByModuleId(moduleEntity, true))
+        .map(moduleEntity -> this.listTrustMarksByModuleId(moduleEntity, true))
         .flatMap(List::stream)
         .toList();
   }
