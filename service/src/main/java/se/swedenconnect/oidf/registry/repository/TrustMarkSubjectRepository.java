@@ -21,6 +21,7 @@ import org.springframework.data.repository.query.Param;
 import se.swedenconnect.oidf.registry.entity.TrustMarkEntity;
 import se.swedenconnect.oidf.registry.entity.TrustMarkSubjectEntity;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,6 +36,19 @@ import java.util.UUID;
 public interface TrustMarkSubjectRepository extends JpaRepository<TrustMarkSubjectEntity, UUID> {
 
   /**
+   * Executes the SQL query to retrieve trust mark subjects based on the organization number.
+   *
+   * @param orgNumber the organization number
+   * @return a list of TrustMarkSubjectEntity
+   */
+  @Query("SELECT t FROM TrustMarkSubjectEntity t "
+        + "JOIN t.trustMark tm "
+        + "JOIN tm.module m "
+        + "JOIN m.organization o "
+        + "WHERE o.orgNumber = :orgNumber")
+  List<TrustMarkSubjectEntity> findByOrgNumber(@Param("orgNumber") String orgNumber);
+
+  /**
    * Retrieves a {@link TrustMarkEntity} based on the organization's unique number and the trust mark subject's unique
    * identifier.
    *
@@ -42,7 +56,6 @@ public interface TrustMarkSubjectRepository extends JpaRepository<TrustMarkSubje
    * @param trustmarksubjectId the unique identifier for the trust mark subject
    * @return an {@link Optional} containing the {@link TrustMarkEntity} if found, otherwise empty
    */
-
   @Query("SELECT ts FROM TrustMarkSubjectEntity ts "
       + "JOIN ts.trustMark t "
       + "JOIN t.module m "

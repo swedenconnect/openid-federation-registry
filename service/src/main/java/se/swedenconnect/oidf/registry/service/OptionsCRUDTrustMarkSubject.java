@@ -205,9 +205,9 @@ public class OptionsCRUDTrustMarkSubject extends BaseOptionsCRUD {
 
   @Override
   public List<Map<String, Object>> list(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType) {
-    return this.trustMarkRepository.findByOrgNumber(organizationRecord.orgNumber())
+    return this.trustMarkSubjectRepository.findByOrgNumber(organizationRecord.orgNumber())
         .stream()
-        .map(entity -> super.getStringObjectMap(fkKeyType, entity.getTrustmarkId()))
+        .map(entity -> super.getStringObjectMap(fkKeyType, entity.getTrustmarksubjectId()))
         .toList();
   }
 
