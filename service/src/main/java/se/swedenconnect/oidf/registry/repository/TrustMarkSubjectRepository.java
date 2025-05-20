@@ -41,7 +41,11 @@ public interface TrustMarkSubjectRepository extends JpaRepository<TrustMarkSubje
    * @param orgNumber the organization number
    * @return a list of TrustMarkSubjectEntity
    */
-  @Query("SELECT t FROM TrustMarkSubjectEntity t JOIN t.trustMark tm JOIN tm.module m JOIN m.organization o WHERE o.orgNumber = :orgNumber")
+  @Query("SELECT t FROM TrustMarkSubjectEntity t "
+        + "JOIN t.trustMark tm "
+        + "JOIN tm.module m "
+        + "JOIN m.organization o "
+        + "WHERE o.orgNumber = :orgNumber")
   List<TrustMarkSubjectEntity> findByOrgNumber(@Param("orgNumber") String orgNumber);
 
   /**
