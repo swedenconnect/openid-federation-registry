@@ -157,7 +157,7 @@ public class OptionsCRUDTrustMarkSubject extends BaseOptionsCRUD {
 
     final List<SettingsEntity> mergeValues = insertValuesInTemplate(organizationRecord,
         fkKeyType,
-        super.getSettingsEntities(FK_KEY_TYPE, entity.getTrustmarkId()));
+        super.getSettingsEntities(FK_KEY_TYPE, entity.getTrustmarksubjectId()));
 
     return toRecord(mergeValues);
 
