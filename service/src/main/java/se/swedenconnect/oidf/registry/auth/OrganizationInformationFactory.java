@@ -18,7 +18,6 @@ package se.swedenconnect.oidf.registry.auth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -35,7 +34,7 @@ public class OrganizationInformationFactory {
 
     final List<OrganizationRecord> multiOrg =
         Optional.ofNullable(claims.get("org"))
-            .map(org -> ((List<Map<String, String>>) org)
+            .map(org -> ((List<Map<String, Object>>) org)
                 .stream()
             )
             .map(s -> s
@@ -43,27 +42,14 @@ public class OrganizationInformationFactory {
                 .filter(entry -> entry.containsKey("orgNumber"))
                 .filter(entry -> entry.containsKey("entity_prefix"))
                 .map(entry -> new OrganizationRecord(
-                    entry.get("orgNumber"),
-                    entry.get("orgName"),
-                    entry.get("entity_prefix")
+                    entry.get("orgNumber").toString(),
+                    entry.get("orgName").toString(),
+                    entry.get("entity_prefix").toString()
                 )).toList())
             .orElse(List.of());
 
     final List<OrganizationRecord> records = new ArrayList<>(multiOrg);
 
-    final String orgNumber = (String) claims.get("orgNumber");
-    final String orgName = (String) claims.get("orgName");
-    final String entityPrefix = (String) claims.get("entity_prefix");
-
-    if (
-        Objects.nonNull(orgNumber) && !orgNumber.isBlank() &&
-            Objects.nonNull(orgName) && !orgName.isBlank() &&
-            Objects.nonNull(entityPrefix) && !entityPrefix.isBlank()
-    ) {
-      records.add(new OrganizationRecord(
-          orgNumber, orgName, entityPrefix
-      ));
-    }
     if (records.isEmpty()) {
       throw new IllegalArgumentException("Could not find any organization orgInfo in user claims");
     }
