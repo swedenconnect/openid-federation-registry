@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import se.swedenconnect.oidf.registry.service.FederationApiService;
+import se.swedenconnect.oidf.registry.service.OidfApiService;
 
 import java.util.UUID;
 
@@ -33,16 +33,16 @@ import java.util.UUID;
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/federationservice")
-public class FederationServiceApiController {
+public class OidfServiceApiController {
 
-  private final FederationApiService federationApiService;
+  private final OidfApiService federationApiService;
 
   /**
    * FederationService API
    *
    * @param federationApiService FederationService
    */
-  public FederationServiceApiController(final FederationApiService federationApiService) {
+  public OidfServiceApiController(final OidfApiService federationApiService) {
     this.federationApiService = federationApiService;
   }
 

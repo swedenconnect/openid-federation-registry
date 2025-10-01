@@ -27,9 +27,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static se.swedenconnect.oidf.registry.service.FederationApiService.FEDERATION_ENTITY_ATT;
-import static se.swedenconnect.oidf.registry.service.FederationApiService.HOSTED_RECORD_ATT;
-import static se.swedenconnect.oidf.registry.service.FederationApiService.METADATA_ATT;
+import static se.swedenconnect.oidf.registry.service.OidfApiService.FEDERATION_ENTITY_ATT;
+import static se.swedenconnect.oidf.registry.service.OidfApiService.HOSTED_RECORD_ATT;
+import static se.swedenconnect.oidf.registry.service.OidfApiService.METADATA_ATT;
 
 /**
  * The EntityResponseFormatter class provides functionality for formatting responses related to entities. It includes

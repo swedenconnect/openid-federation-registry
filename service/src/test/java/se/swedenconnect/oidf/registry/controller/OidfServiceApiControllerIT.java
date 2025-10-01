@@ -61,7 +61,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
-class FederationServiceApiControllerIT {
+class OidfServiceApiControllerIT {
   @Container
   @ServiceConnection
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");

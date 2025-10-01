@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static se.swedenconnect.oidf.registry.service.FederationApiService.TRUST_MARK_SUBJECTS;
+import static se.swedenconnect.oidf.registry.service.OidfApiService.TRUST_MARK_SUBJECTS;
 
 /**
  * TrustMarkIssuer module from registry.
@@ -40,7 +40,6 @@ public class TrustMarkIssuerModuleResponse {
   private String entityIdentifier;
 
   private String alias;
-  private Boolean active;
   private List<TrustMarkResponse> trustMarks;
 
   public static TrustMarkIssuerModuleResponse fromJson(final Map<String, Object> json) {
@@ -48,14 +47,11 @@ public class TrustMarkIssuerModuleResponse {
         .trustMarkTokenValidityDuration(Duration.parse((String) json.get("trust_mark_token_validity_duration")))
         .alias((String) json.get("alias"))
         .entityIdentifier((String) json.get("entity_identifier"))
-
-        .active((Boolean) json.get("active"))
         .build();
   }
 
   public void validate() {
     Assert.notNull(entityIdentifier, "entityIdentifier");
-    Assert.notNull(active, "active");
     Assert.notNull(trustMarkTokenValidityDuration, "trustMarkTokenValidityDuration");
     //Assert.isTrue(!trustMarks.isEmpty(), "trustMarks must not be empty");
     //    trustMarks.forEach(TrustMarkResponse::validate);

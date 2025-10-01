@@ -51,7 +51,7 @@ import static se.swedenconnect.oidf.registry.entity.FkKeyType.TRUSTMARKISSUER;
  * @author Per Fredrik Plars
  */
 @Slf4j
-public class FederationApiService {
+public class OidfApiService {
 
   public static final String ENTITY_IDENTIFIER = "entity_identifier";
   public static final String POLICY_ID = "policy_id";
@@ -82,7 +82,7 @@ public class FederationApiService {
    * @param jwkIssuer the issuer associated with the JSON Web Key (JWK)
    * @param jwkExpiryDuration jwkExpiryDuration
    */
-  public FederationApiService(
+  public OidfApiService(
       final JWK signKey,
       final PolicyRepository policyRepository,
       final String jwkIssuer,
@@ -149,21 +149,17 @@ public class FederationApiService {
     Assert.notNull(instanceId, "instanceId is mandatory");
     final String claimName = "module_records";
     final String jwt = this.jwtSupport.signJWT(claimName, builder -> builder
-            .claim(claimName, this.resolveSubmodules(instanceId))
-            .claim("module_records_v2", this.resolveSubmodulesV2(instanceId))
-
+            .claim(claimName, this.resolveSubmodulesV2(instanceId))
             .expirationTime(new Date(System.currentTimeMillis() + this.jwkExpiryDuration.toMillis()))
             .issuer(this.jwkIssuer))
         .serialize();
     log.debug("Submodule Signed JWT: {}", jwt);
     return jwt;
-
   }
 
   private OidfServiceSubModules resolveSubmodulesV2(final UUID instanceid) {
 
     final OidfServiceSubModules.OidfServiceSubModulesBuilder subModules = OidfServiceSubModules.builder();
-
 
     final InstanceEntity instanceEntity = this.instanceRepository.findById(instanceid)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -175,63 +171,24 @@ public class FederationApiService {
 
     final List<OidfServiceSubModules.TrustMarkIssuer> tmi = moduleEntities.stream()
         .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(TRUSTMARKISSUER))
-        //.map(this::toMapEntity)
         .map(this::toTrustMarkIssuer)
         .toList();
     subModules.trustMarkIssuers(tmi);
 
-
-    final List<Map<String, Object>> ta = moduleEntities.stream()
+    final List<OidfServiceSubModules.TrustAnchor> taIm = moduleEntities.stream()
         .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(TRUSTANCHOR) ||
             FkKeyType.valueOf(moduleEntity.getModuleType()).equals(INTERMEDIATE))
-        .map(this::toMapEntity)
+        .map(this::toTaIm)
         .toList();
+    subModules.trustAnchors(taIm);
 
-    final List<Map<String, Object>> resolver = moduleEntities.stream()
+    final List<OidfServiceSubModules.Resolver> res = moduleEntities.stream()
         .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(RESOLVER))
-        .map(this::toMapEntity)
+        .map(this::toResolver)
         .toList();
-/**
-    final Map<String, List<Map<String, Object>>> data = new HashMap<>();
-    data.put(TRUST_MARK_ISSUERS, tmi);
-    data.put(TRUST_ANCHORS, ta);
-    data.put(RESOLVERS, resolver);
-*/
+    subModules.resolvers(res);
+
     return subModules.build();
-
-  }
- private Map<String, List<Map<String, Object>>> resolveSubmodules(final UUID instanceid) {
-
-    final InstanceEntity instanceEntity = this.instanceRepository.findById(instanceid)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-            "No instance found for:%s".formatted(instanceid)));
-
-    final List<ModuleEntity> moduleEntities = instanceEntity.getOrganizations().stream()
-        .flatMap(organizationEntity -> organizationEntity.getModule().stream())
-        .toList();
-
-    final List<Map<String, Object>> tmi = moduleEntities.stream()
-        .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(TRUSTMARKISSUER))
-        //.map(this::toMapEntity)
-        .map(this::toMapWithTrustMarks)
-        .toList();
-
-    final List<Map<String, Object>> ta = moduleEntities.stream()
-        .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(TRUSTANCHOR) ||
-            FkKeyType.valueOf(moduleEntity.getModuleType()).equals(INTERMEDIATE))
-        .map(this::toMapEntity)
-        .toList();
-
-    final List<Map<String, Object>> resolver = moduleEntities.stream()
-        .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(RESOLVER))
-        .map(this::toMapEntity)
-        .toList();
-
-    final Map<String, List<Map<String, Object>>> data = new HashMap<>();
-    data.put(TRUST_MARK_ISSUERS, tmi);
-    data.put(TRUST_ANCHORS, ta);
-    data.put(RESOLVERS, resolver);
-    return data;
 
   }
 
@@ -292,26 +249,90 @@ public class FederationApiService {
     return module;
   }
 
-  private OidfServiceSubModules.TrustMarkIssuer toTrustMarkIssuer(final ModuleEntity tmiModuleEntity) {
+  private OidfServiceSubModules.TrustAnchor toTaIm(final ModuleEntity taImModuleEntity) {
+    if (!taImModuleEntity.getSettingsEntity("active")
+        .map(settingsEntity -> (Boolean) settingsEntity.castValue()).orElse(true)) {
+      return OidfServiceSubModules.TrustAnchor.builder().build();
+    }
 
+    return OidfServiceSubModules.TrustAnchor.builder()
+        .entityIdentifier(taImModuleEntity.getEntity().getSubject())
+        .trustMarkIssuer(taImModuleEntity.getSettingsEntity("trust_mark_issuer")
+            .map(SettingsEntity::getValue)
+            .orElse(null))
+        .build();
+  }
+
+  private OidfServiceSubModules.Resolver toResolver(final ModuleEntity resolverModuleEntity) {
+    if (!resolverModuleEntity.getSettingsEntity("active")
+        .map(settingsEntity -> (Boolean) settingsEntity.castValue()).orElse(true)) {
+      return OidfServiceSubModules.Resolver.builder().build();
+    }
+
+    return OidfServiceSubModules.Resolver.builder()
+        .entityIdentifier(resolverModuleEntity.getEntity().getSubject())
+        .resolveResponseDuration(resolverModuleEntity.getSettingsEntity("resolve_response_duration")
+            .map(SettingsEntity::getValue)
+            .orElse(null))
+        .trustAnchors(resolverModuleEntity.getSettingsEntity("trust_anchor")
+            .map(SettingsEntity::getValue)
+            .orElseThrow())
+        .trustedKeys(resolverModuleEntity.getSettingsEntity("trusted_keys")
+            .map(SettingsEntity::getValue)
+            .orElseThrow())
+        .stepRetryTime(resolverModuleEntity.getSettingsEntity("step_retry_duration")
+            .map(SettingsEntity::getValue)
+            .orElse(null))
+        .build();
+  }
+
+  private OidfServiceSubModules.TrustMarkIssuer toTrustMarkIssuer(final ModuleEntity tmiModuleEntity) {
+    if (!tmiModuleEntity.getSettingsEntity("active")
+        .map(settingsEntity -> (Boolean) settingsEntity.castValue()).orElse(true)) {
+      return OidfServiceSubModules.TrustMarkIssuer.builder().build();
+    }
     final List<OidfServiceSubModules.TrustMarkIssuer.TrustMark> trustMarks = tmiModuleEntity.getTrustmarks()
         .stream()
         .map(trustMarkEntity ->
-           OidfServiceSubModules.TrustMarkIssuer.TrustMark.builder()
-              .trustMarkIssuerId(trustMarkEntity.getSettingsEntity("trustmarkissuer_id").orElseThrow().getValue())
-               .trustMarkSubjects(
-                   trustMarkEntity.getTrustmarksubjects()
-                       .stream()
-                       .map(tmSubject -> OidfServiceSubModules
-                           .TrustMarkIssuer.TrustMark.TrustMarkSubject.builder()
-                           .subject(tmSubject.getSettingsEntity("subject").orElseThrow().getValue())
-                           .revoked((Boolean) tmSubject.getSettingsEntity("subject").orElseThrow().castValue())
-                           .expires((Instant) tmSubject.getSettingsEntity("expires").orElseThrow().castValue())
-                           .granted((Instant) tmSubject.getSettingsEntity("granted").orElseThrow().castValue())
-                           .build())
-                       .toList()
-               )
-              .build()
+            OidfServiceSubModules.TrustMarkIssuer.TrustMark.builder()
+                .trustMarkEntityId(trustMarkEntity.getSettingsEntity("trust_mark_entity_id")
+                    .orElseThrow().getValue())
+                .ref(trustMarkEntity.getSettingsEntity("ref")
+                    .map(SettingsEntity::getValue)
+                    .orElse(null))
+                .logoUri(trustMarkEntity.getSettingsEntity("logoUri")
+                    .map(SettingsEntity::getValue)
+                    .orElse(null))
+                .delegation(trustMarkEntity.getSettingsEntity("delegation")
+                    .map(SettingsEntity::getValue)
+                    .orElse(null))
+                .trustMarkSubjects(
+                    trustMarkEntity.getTrustmarksubjects()
+                        .stream()
+                        .filter(tmSubject -> tmSubject.getSettingsEntity("revoked").isPresent())
+                        .map(tmSubject -> OidfServiceSubModules
+                            .TrustMarkIssuer.TrustMark.TrustMarkSubject.builder()
+                            .revoked(tmSubject.getSettingsEntity("revoked")
+                                .map(SettingsEntity::getValue)
+                                .map(Boolean::valueOf)
+                                .orElse(false))
+                            .subject(tmSubject.getSettingsEntity("subject")
+                                .map(SettingsEntity::getValue)
+                                .orElseThrow())
+                            .expires(tmSubject.getSettingsEntity("expires")
+                                .map(SettingsEntity::getValue)
+                                .map(Instant::parse)
+                                .map(Instant::toString)
+                                .orElse(null))
+                            .granted(tmSubject.getSettingsEntity("granted")
+                                .map(SettingsEntity::getValue)
+                                .map(Instant::parse)
+                                .map(Instant::toString)
+                                .orElse(null))
+                            .build())
+                        .toList()
+                )
+                .build()
         ).toList();
 
     return OidfServiceSubModules.TrustMarkIssuer.builder()
@@ -323,13 +344,11 @@ public class FederationApiService {
         .build();
   }
 
-
   private Map<String, Object> toMapWithTrustMarks(final ModuleEntity moduleEntity) {
     final Map<String, Object> trustmarkissuer = this.toMapEntity(moduleEntity);
     trustmarkissuer.put(TRUST_MARKS, this.listTrustMarksByModuleId(moduleEntity, true)
         .stream()
         .toList());
-
     return trustmarkissuer;
   }
 

@@ -22,7 +22,7 @@ import org.springframework.util.Assert;
 
 import java.text.ParseException;
 import java.time.Duration;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,46 +33,33 @@ import java.util.Map;
 @Getter
 @ToString
 public class ResolverModuleResponse {
-  private String trustAnchors;
+  private List<String> trustAnchors;
   private Duration resolveResponseDuration;
   private JWKSet trustedKeys;
   private String entityIdentifier;
   private Duration stepRetryTime;
-  private String alias;
-  private Boolean active;
 
-  /**
-   * Creates new instance from a json object {@link HashMap}
-   *
-   * @param json to read
-   * @return new instance
-   */
   public static ResolverModuleResponse fromJson(final Map<String, Object> json) {
+    final ResolverModuleResponse resolver = new ResolverModuleResponse();
+    resolver.trustAnchors = List.of((String) json.get(RecordFields.ResolverModule.TRUST_ANCHORS));
+    resolver.resolveResponseDuration =
+        Duration.parse((String) json.get(RecordFields.ResolverModule.RESOLVE_RESPONSE_DURATION));
+
+    resolver.entityIdentifier = (String) json.get(RecordFields.ResolverModule.ENTITY_IDENTIFIER);
+    resolver.stepRetryTime = Duration.parse((String) json.get(RecordFields.ResolverModule.STEP_RETRY_TIME));
+
     try {
-      final ResolverModuleResponse resolver = new ResolverModuleResponse();
-      final Boolean isModuleActive = (Boolean) json.get("active");
-      resolver.active = isModuleActive;
-      if (isModuleActive) {
-        resolver.trustAnchors = (String) json.get("trust_anchor"); // expects trust-anchorS List<String>
-        resolver.resolveResponseDuration = Duration.parse((String) json.get("resolve_response_duration"));
-        resolver.trustedKeys = JWKSet.parse((String) json.get("trusted_keys"));
-        resolver.entityIdentifier = (String) json.get("entity_identifier");
-        resolver.stepRetryTime =
-            Duration.parse((String) json.get("step_retry_duration")); // changed from step-retry-time
-        resolver.alias = (String) json.get("alias");
-
-      }
-      return resolver;
+      resolver.trustedKeys = JWKSet.parse((String) json.get(RecordFields.ResolverModule.TRUSTED_KEYS));
     }
-    catch (ParseException e) {
-      throw new RuntimeException(e);
+    catch (final ParseException e) {
+      throw new IllegalArgumentException("Unable to parse trusted-keys in to a JWKSet.", e);
     }
-
+    return resolver;
   }
+
 
   public void validate() {
     Assert.notNull(entityIdentifier, "entityIdentifier");
-    Assert.notNull(active, "active");
     Assert.notNull(trustAnchors, "trustAnchors");
     Assert.notNull(resolveResponseDuration, "resolveResponseDuration");
     Assert.notNull(trustedKeys, "trustedKeys");
