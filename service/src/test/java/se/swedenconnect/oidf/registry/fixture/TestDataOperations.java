@@ -42,7 +42,10 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPublicKey;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -92,8 +95,8 @@ public class TestDataOperations {
       case "trustmark_id" -> trustMarkId.toString();
       case "subject" -> "http://www.swedenconnect.se/op1";
       case "revoked" -> "false";
-      case "granted" -> LocalDateTime.now().minusDays(1).toString();
-      case "expires" -> LocalDateTime.now().plusDays(1).toString();
+      case "granted" -> Instant.now().minus(1, ChronoUnit.DAYS).toString();
+      case "expires" -> Instant.now().plus(1, ChronoUnit.DAYS).toString();
       default -> null;
     };
   }
