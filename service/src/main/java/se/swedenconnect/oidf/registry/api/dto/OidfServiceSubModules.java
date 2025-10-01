@@ -23,9 +23,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -39,129 +36,146 @@ import java.util.List;
 @Builder
 public class OidfServiceSubModules {
 
+  @JsonProperty("trust_anchors")
+  @SerializedName("trust_anchors")
+  private List<TrustAnchor> trustAnchors;
+
+  @JsonProperty("resolvers")
+  private List<Resolver> resolvers;
+
+  @JsonProperty("trust_mark_issuers")
+  @SerializedName("trust_mark_issuers")
+  private List<TrustMarkIssuer> trustMarkIssuers;
+
+  /**
+   * Represents a trust anchor entity definition. This class includes annotations to support serialization and JSON
+   * handling, allowing seamless integration with APIs using libraries like Jackson and Gson.
+   */
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @Builder
+  public static class TrustAnchor {
+
+    @JsonProperty("entity_identifier")
+    @SerializedName("entity_identifier")
+    private String entityIdentifier;
+
+    @JsonProperty("trust_mark_issuer")
+    @SerializedName("trust_mark_issuer")
+    private String trustMarkIssuer;
+
+    @JsonProperty("active")
+    private Boolean active;
+
+  }
+
+  /**
+   * Represents a Resolver configuration used in the OIDC Federation implementation.
+   */
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @Builder
+  public static class Resolver {
+
+    @JsonProperty("resolve_response_duration")
+    @SerializedName("resolve_response_duration")
+    private String resolveResponseDuration;
+
+    @JsonProperty("entity_identifier")
+    @SerializedName("entity_identifier")
+    private String entityIdentifier;
+
+    @JsonProperty("trusted_keys")
+    @SerializedName("trusted_keys")
+    private String trustedKeys;
+
+    // This will later change to List<String>
     @JsonProperty("trust_anchors")
     @SerializedName("trust_anchors")
-    private List<TrustAnchor> trustAnchors;
+    private String trustAnchors;
 
-    @JsonProperty("resolvers")
-    private List<Resolver> resolvers;
+    @JsonProperty("step_retry_time")
+    @SerializedName("step_retry_time")
+    private String stepRetryTime;
+  }
 
-    @JsonProperty("trust_mark_issuers")
-    @SerializedName("trust_mark_issuers")
-    private List<TrustMarkIssuer> trustMarkIssuers;
+  /**
+   * Representation of a TrustMarkIssuer which includes details about the entity issuing trust marks, validity duration,
+   * and the list of trust marks issued by the entity.
+   */
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @Builder
+  public static class TrustMarkIssuer {
 
+    @JsonProperty("entity_identifier")
+    @SerializedName("entity_identifier")
+    private String entityIdentifier;
+
+    @JsonProperty("trust_mark_token_validity_duration")
+    @SerializedName("trust_mark_token_validity_duration")
+    private String trustMarkTokenValidityDuration;
+
+    @JsonProperty("trust_marks")
+    @SerializedName("trust_marks")
+    private List<TrustMark> trustMarks;
+
+    /**
+     * Represents a TrustMark issued by an entity.
+     */
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class TrustAnchor {
+    public static class TrustMark {
 
-      @JsonProperty("entity_identifier")
-      @SerializedName("entity_identifier")
-      private String entityIdentifier;
+      @JsonProperty("delegation")
+      @SerializedName("delegation")
+      private String delegation;
 
-      @JsonProperty("trust_mark_issuer")
-      @SerializedName("trust_mark_issuer")
-      private String trustMarkIssuer;
+      @JsonProperty("ref")
+      @SerializedName("ref")
+      private String ref;
 
-      @JsonProperty("active")
-      private Boolean active;
+      @JsonProperty("logo_uri")
+      @SerializedName("logo_uri")
+      private String logoUri;
 
-    }
+      @JsonProperty("trust_mark_entity_id")
+      @SerializedName("trust_mark_entity_id")
+      private String trustMarkEntityId;
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class Resolver {
+      @JsonProperty("trust_mark_subjects")
+      @SerializedName("trust_mark_subjects")
+      private List<TrustMarkSubject> trustMarkSubjects;
 
-      @JsonProperty("resolve_response_duration")
-      @SerializedName("resolve_response_duration")
-      private String resolveResponseDuration;
-
-      @JsonProperty("entity_identifier")
-      @SerializedName("entity_identifier")
-      private String entityIdentifier;
-
-      @JsonProperty("trusted_keys")
-      @SerializedName("trusted_keys")
-      private String trustedKeys;
-
-      // This will later change to List<String>
-      @JsonProperty("trust_anchors")
-      @SerializedName("trust_anchors")
-      private String trustAnchors;
-
-      @JsonProperty("step_retry_time")
-      @SerializedName("step_retry_time")
-      private String stepRetryTime;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class TrustMarkIssuer {
-
-      @JsonProperty("entity_identifier")
-      @SerializedName("entity_identifier")
-      private String entityIdentifier;
-
-      @JsonProperty("trust_mark_token_validity_duration")
-      @SerializedName("trust_mark_token_validity_duration")
-      private String trustMarkTokenValidityDuration;
-
-      @JsonProperty("trust_marks")
-      @SerializedName("trust_marks")
-      private List<TrustMark> trustMarks;
-
+      /**
+       * Represents a subject associated with a trust mark, including details about its status and validity period.
+       *
+       * The fields "expires" and "granted" should be serialized and exported in ISO_INSTANT format.
+       */
       @Data
       @NoArgsConstructor
       @AllArgsConstructor
       @Builder
-      public static class TrustMark {
+      public static class TrustMarkSubject {
+        @JsonProperty("subject")
+        private String subject;
 
-        @JsonProperty("delegation")
-        @SerializedName("delegation")
-        private String delegation;
-
-        @JsonProperty("ref")
-        @SerializedName("ref")
-        private String ref;
-
-        @JsonProperty("logo_uri")
-        @SerializedName("logo_uri")
-        private String logoUri;
-
-        @JsonProperty("trust_mark_entity_id")
-        @SerializedName("trust_mark_entity_id")
-        private String trustMarkEntityId;
-
-        @JsonProperty("trust_mark_subjects")
-        @SerializedName("trust_mark_subjects")
-        private List<TrustMarkSubject> trustMarkSubjects;
-
-
-        @Data
-        @NoArgsConstructor
-        @AllArgsConstructor
-        @Builder
-        public static class TrustMarkSubject {
-          @JsonProperty("subject")
-          private String subject;
-
-          @JsonProperty("revoked")
-          private Boolean revoked;
-          // This data should be exported as ISO_INSTANT format
-          @JsonProperty("expires")
-          private String expires;
-          // This data should be exported as ISO_INSTANT format
-          @JsonProperty("granted")
-          private String granted;
-        }
-
+        @JsonProperty("revoked")
+        private Boolean revoked;
+        // This data should be exported as ISO_INSTANT format
+        @JsonProperty("expires")
+        private String expires;
+        // This data should be exported as ISO_INSTANT format
+        @JsonProperty("granted")
+        private String granted;
       }
-    }
 
+    }
+  }
 
 }
