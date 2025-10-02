@@ -66,13 +66,15 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi, L
    * @param notifications The endpoint to which notifications should be sent, if enabled.
    * @param notificationActive Flag indicating whether notifications are enabled.
    * @param notificationTrustKeyAlias Alias to spring trustbundle for outgoing requests
+   * @param kidAlgorithm serial will create a kid with the serial
    */
   public record FederationAPIProperties(String signKeyAlias,
       String issuer,
       Duration tokenExpiryDuration,
       List<NotificationProperties> notifications,
       boolean notificationActive,
-      String notificationTrustKeyAlias
+      String notificationTrustKeyAlias,
+      String kidAlgorithm
   ) {
 
     /**
