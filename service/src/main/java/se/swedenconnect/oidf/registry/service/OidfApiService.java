@@ -283,6 +283,10 @@ public class OidfApiService {
         .stepRetryTime(resolverModuleEntity.getSettingsEntity("step_retry_duration")
             .map(SettingsEntity::getValue)
             .orElse(null))
+        .stepCachedValueThreshold(resolverModuleEntity.getSettingsEntity("step_cached_value_threshold")
+            .map(SettingsEntity::getValue)
+            .map(Integer::valueOf)
+            .orElse(null))
         .build();
   }
 

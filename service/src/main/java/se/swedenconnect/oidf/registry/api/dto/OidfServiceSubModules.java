@@ -99,6 +99,10 @@ public class OidfServiceSubModules {
     @JsonProperty("step_retry_time")
     @SerializedName("step_retry_time")
     private String stepRetryTime;
+
+    @JsonProperty("step_cached_value_threshold")
+    @SerializedName("step_cached_value_threshold")
+    private Integer stepCachedValueThreshold;
   }
 
   /**
