@@ -33,7 +33,7 @@ import se.swedenconnect.oidf.registry.entity.InstanceEntity;
 import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.registry.repository.PolicyRepository;
-import se.swedenconnect.oidf.registry.service.FederationApiService;
+import se.swedenconnect.oidf.registry.service.OidfApiService;
 import se.swedenconnect.oidf.registry.service.NotifyService;
 import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.bundle.CredentialBundles;
@@ -95,7 +95,7 @@ public class RegistryConfig {
    * @return an instance of FederationApiService configured with the necessary dependencies.
    */
   @Bean
-  public FederationApiService federationServiceApiService(
+  public OidfApiService federationServiceApiService(
       final CredentialBundles credentialBundles) {
 
     final RegistryProperties.FederationAPIProperties federationAPIProperties =
@@ -108,7 +108,7 @@ public class RegistryConfig {
     final JwkTransformerFunction function = new JwkTransformerFunction();
     final JWK jwk = function.apply(signKey);
 
-    return new FederationApiService(
+    return new OidfApiService(
         jwk,
         this.policyRepository,
         federationAPIProperties.issuer(),

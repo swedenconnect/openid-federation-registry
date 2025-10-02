@@ -47,7 +47,6 @@ public class TrustAnchorModuleResponse {
     try {
       final TrustAnchorModuleResponse trustAnchorModuleResponse = new TrustAnchorModuleResponse();
       trustAnchorModuleResponse.entityIdentifier = EntityID.parse((String) json.get("entity_identifier"));
-      trustAnchorModuleResponse.active = (Boolean) json.get("active");
       return trustAnchorModuleResponse;
     }
     catch (ParseException e) {
@@ -57,6 +56,5 @@ public class TrustAnchorModuleResponse {
 
   public void validate() {
     Assert.notNull(entityIdentifier, "entityIdentifier");
-    Assert.notNull(active, "active");
   }
 }

@@ -34,8 +34,8 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -104,7 +104,7 @@ public class SettingsEntity extends BaseEntity {
       case NUMERIC -> Double.valueOf(this.value);
       case DURATION -> Duration.parse(this.value).toString();
       case DATE -> LocalDate.parse(this.value).format(DateTimeFormatter.ISO_INSTANT);
-      case DATETIME -> LocalDateTime.parse(this.value)
+      case DATETIME -> Instant.parse(this.value)
           .truncatedTo(ChronoUnit.SECONDS)
           .atZone(ZoneOffset.UTC)
           .format(DateTimeFormatter.ISO_INSTANT);

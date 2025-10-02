@@ -21,7 +21,7 @@
     <parent>
         <groupId>se.swedenconnect.oidf</groupId>
         <artifactId>openid-federation-parent</artifactId>
-        <version>0.3.7</version>
+        <version>0.5.6</version>
     </parent>
     <artifactId>oidf-entity-registry-parent</artifactId>
     <packaging>pom</packaging>
@@ -72,12 +72,6 @@
         <java.version>21</java.version>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
-
-        <!-- Dependency Versions -->
-        <nimbus-jose-jwt.version>10.0.1</nimbus-jose-jwt.version>
-        <nimbus-oauth2-oidc-sdk.version>11.22</nimbus-oauth2-oidc-sdk.version>
-        <spring-boot.version>3.4.1</spring-boot.version>
-        <credentials-support.version>2.0.0</credentials-support.version>
 
         <service-revision>0.5.10-SNAPSHOT</service-revision>
     </properties>
