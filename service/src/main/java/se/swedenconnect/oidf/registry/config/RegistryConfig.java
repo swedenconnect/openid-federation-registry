@@ -33,8 +33,8 @@ import se.swedenconnect.oidf.registry.entity.InstanceEntity;
 import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.registry.repository.PolicyRepository;
-import se.swedenconnect.oidf.registry.service.OidfApiService;
 import se.swedenconnect.oidf.registry.service.NotifyService;
+import se.swedenconnect.oidf.registry.service.OidfApiService;
 import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.bundle.CredentialBundles;
 import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
@@ -44,6 +44,7 @@ import java.net.http.HttpClient;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -106,6 +107,12 @@ public class RegistryConfig {
 
     final PkiCredential signKey = credentialBundles.getCredential(signKeyAlias);
     final JwkTransformerFunction function = new JwkTransformerFunction();
+    if ("serial".equalsIgnoreCase(federationAPIProperties.kidAlgorithm())) {
+      function.setKeyIdFunction(pkiCredential ->
+          Objects.requireNonNull(pkiCredential.getCertificate())
+              .getSerialNumber().toString(10));
+    }
+
     final JWK jwk = function.apply(signKey);
 
     return new OidfApiService(
