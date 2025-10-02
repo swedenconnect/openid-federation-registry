@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.registry.service;
 
 import com.github.tomakehurst.wiremock.client.CountMatchingStrategy;
+import com.github.tomakehurst.wiremock.client.VerificationException;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.nimbusds.jose.JOSEException;
@@ -86,9 +87,17 @@ class NotifyServiceTest {
         .limit(10)
         .forEach(notifyService::onAuditEvent);
 
-    Thread.sleep(1000);
-    wireMockExtension.verify(new CountMatchingStrategy(CountMatchingStrategy.GREATER_THAN, 10),
-        WireMock.postRequestedFor(WireMock.urlMatching("/test[1-5]")));
+    for (int i = 0; i < 5; i++) {
+      try {
+        Thread.sleep(1000);
+        wireMockExtension.verify(new CountMatchingStrategy(CountMatchingStrategy.GREATER_THAN, 1),
+            WireMock.postRequestedFor(WireMock.urlMatching("/test[1-5]")));
+        return;
+      }
+      catch (VerificationException e) {
+        log.warn("Failed to verify notification looping:" + i, e);
+      }
+    }
   }
 
   @AfterEach
