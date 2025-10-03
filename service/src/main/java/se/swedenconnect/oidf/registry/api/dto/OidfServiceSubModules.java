@@ -132,6 +132,10 @@ public class OidfServiceSubModules {
     @Builder
     public static class TrustMark {
 
+      @JsonProperty("trust_mark_issuer_id")
+      @SerializedName("trust_mark_issuer_id")
+      private String trustMarkIssuerId;
+
       @JsonProperty("delegation")
       @SerializedName("delegation")
       private String delegation;
@@ -144,9 +148,9 @@ public class OidfServiceSubModules {
       @SerializedName("logo_uri")
       private String logoUri;
 
-      @JsonProperty("trust_mark_entity_id")
-      @SerializedName("trust_mark_entity_id")
-      private String trustMarkEntityId;
+      @JsonProperty("trust_mark_id")
+      @SerializedName("trust_mark_id")
+      private String trustMarkId;
 
       @JsonProperty("trust_mark_subjects")
       @SerializedName("trust_mark_subjects")
