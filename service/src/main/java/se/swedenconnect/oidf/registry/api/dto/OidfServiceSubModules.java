@@ -152,8 +152,8 @@ public class OidfServiceSubModules {
       @SerializedName("trust_mark_id")
       private String trustMarkId;
 
-      @JsonProperty("trust_mark_subjects")
-      @SerializedName("trust_mark_subjects")
+      @JsonProperty("subjects")
+      @SerializedName("subjects")
       private List<TrustMarkSubject> trustMarkSubjects;
 
       /**
