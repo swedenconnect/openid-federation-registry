@@ -113,28 +113,6 @@ public class OidfApiService {
         .serialize();
     log.debug("trustMarkRecord Signed JWT: {}", jwt);
     return jwt;
-
-  }
-
-  /**
-   * Generates a signed JSON Web Token (JWT) representing the trust mark record for a specific instance.
-   *
-   * @param instanceId a unique identifier of the instance for which the trust mark record is requested
-   * @return a JWT string containing the signed trust mark record data
-   * @throws ResponseStatusException if any required input is missing, no records are found, or an error occurs
-   *     during token signing
-   */
-  public String trustMarkRecord(final UUID instanceId) {
-    Assert.notNull(instanceId, "instanceId is mandatory");
-    final String claimName = "trustmark_records";
-    final String jwt = this.jwtSupport.signJWT(claimName, builder -> builder
-            .claim(claimName, this.resolveTrustmarks(instanceId))
-            .expirationTime(new Date(System.currentTimeMillis() + this.jwkExpiryDuration.toMillis()))
-            .issuer(this.jwkIssuer))
-        .serialize();
-    log.debug("trustMarkRecord Signed JWT: {}", jwt);
-    return jwt;
-
   }
 
   /**
@@ -190,24 +168,6 @@ public class OidfApiService {
 
     return subModules.build();
 
-  }
-
-  private List<Map<String, Object>> resolveTrustmarks(final UUID instanceid) {
-
-    final InstanceEntity instanceEntity = this.instanceRepository.findById(instanceid)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-            "No instance found for:%s".formatted(instanceid)));
-
-    final List<ModuleEntity> trustmarkIssuersModules = instanceEntity.getOrganizations()
-        .stream()
-        .flatMap(organizationEntity -> organizationEntity.getModule().stream())
-        .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(TRUSTMARKISSUER))
-        .toList();
-
-    return trustmarkIssuersModules.stream()
-        .map(moduleEntity -> this.listTrustMarksByModuleId(moduleEntity, true))
-        .flatMap(List::stream)
-        .toList();
   }
 
   private List<Map<String, Object>> resolveEntity(final UUID instanceid) {
@@ -295,7 +255,8 @@ public class OidfApiService {
         .stream()
         .map(trustMarkEntity ->
             OidfServiceSubModules.TrustMarkIssuer.TrustMark.builder()
-                .trustMarkEntityId(trustMarkEntity.getSettingsEntity("trust_mark_entity_id")
+                .trustMarkIssuerId(tmiModuleEntity.getEntity().getSubject())
+                .trustMarkId(trustMarkEntity.getSettingsEntity("trust_mark_entity_id")
                     .orElseThrow().getValue())
                 .ref(trustMarkEntity.getSettingsEntity("ref")
                     .map(SettingsEntity::getValue)
@@ -342,46 +303,6 @@ public class OidfApiService {
                 .orElseThrow().getValue())
         .trustMarks(trustMarks)
         .build();
-  }
-
-  private Map<String, Object> toMapWithTrustMarks(final ModuleEntity moduleEntity) {
-    final Map<String, Object> trustmarkissuer = this.toMapEntity(moduleEntity);
-    trustmarkissuer.put(TRUST_MARKS, this.listTrustMarksByModuleId(moduleEntity, true)
-        .stream()
-        .toList());
-    return trustmarkissuer;
-  }
-
-  private List<Map<String, Object>> listTrustMarksByModuleId(final ModuleEntity moduleEntity,
-      final boolean includeSubjects) {
-    return moduleEntity.getTrustmarks()
-        .stream()
-        .map(trustMarkEntity -> {
-              final Map<String, Object> e =
-                  trustMarkEntity.getSettingsEntityList()
-                      .stream()
-                      .collect(Collectors.toMap(
-                          SettingsEntity::getKey,
-                          SettingsEntity::castValue
-                      ));
-
-          if (includeSubjects) {
-            e.put(TRUST_MARK_SUBJECTS,
-                    trustMarkEntity.getTrustmarksubjects()
-                        .stream()
-                        .map(trustMarkSubjectEntity ->
-                            trustMarkSubjectEntity.getSettingsEntityList()
-                                .stream()
-                                .collect(Collectors.toMap(
-                                    SettingsEntity::getKey,
-                                    SettingsEntity::castValue
-                                )))
-                        .toList());
-              }
-              return e;
-            }
-        )
-        .toList();
   }
 
 }

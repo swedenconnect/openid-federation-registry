@@ -47,19 +47,6 @@ public class OidfServiceApiController {
   }
 
   /**
-   * Retrieves trust mark information for a specific instance using the provided instance identifier.
-   *
-   * @param instanceid the unique identifier for the instance in UUID format.
-   * @return a signed JWT containing the trust mark details.
-   */
-  @GetMapping(value = "/trustmarks_record", produces = "application/jwt")
-  public String trustMarkRecord(
-      @RequestParam(name = "instanceid") final UUID instanceid) {
-
-    return this.federationApiService.trustMarkRecord(instanceid);
-  }
-
-  /**
    * Getting entity records
    *
    * @param instanceId instanceId is mandatory

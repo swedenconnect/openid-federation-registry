@@ -18,7 +18,6 @@ package se.swedenconnect.oidf.registry.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -77,24 +76,6 @@ class OidfServiceApiControllerIT {
 
   @Autowired
   private FederationAPIOperations federationAPIOperations;
-
-  /**
-   * Test method for verifying the successful creation, retrieval, and validation of a TrustMarkSubjectRecord.
-   *
-   * @throws ParseException if there is an error in parsing the JWT or its claims.
-   */
-  @Test
-  void trustMarkRecordSuccess() throws ParseException, JsonProcessingException {
-
-    final UUID instanceId = setupTestData();
-    final SignedJWT tms = federationAPIOperations.callTrustMark(instanceId);
-    final JWTClaimsSet claimsSet = tms.getJWTClaimsSet();
-    final List<Object> records = claimsSet.getListClaim("trustmark_records");
-    records.stream().forEach(claimMap -> {
-      TrustMarkIssuerModuleResponse.TrustMarkResponse.fromJson((Map<String, Object>) claimMap).validate();
-    });
-
-  }
 
   private @NotNull UUID setupTestData() throws JsonProcessingException {
     final JwtTestUtils.OrganisationType org = JwtTestUtils.OrganisationType.PM;
