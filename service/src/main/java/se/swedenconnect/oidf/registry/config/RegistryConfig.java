@@ -147,6 +147,11 @@ public class RegistryConfig {
 
     final PkiCredential signKey = credentialBundles.getCredential(signKeyAlias);
     final JwkTransformerFunction function = new JwkTransformerFunction();
+    if ("serial".equalsIgnoreCase(federationAPIProperties.kidAlgorithm())) {
+      function.setKeyIdFunction(pkiCredential ->
+          Objects.requireNonNull(pkiCredential.getCertificate())
+              .getSerialNumber().toString(10));
+    }
     final JWK jwk = function.apply(signKey);
 
     return new NotifyService(restClient,
