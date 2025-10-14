@@ -132,8 +132,8 @@ public class EntityResponseFormatter {
     TRUST_MARK_STATUS("federation_trust_mark_status_endpoint", "%s/trust_mark_status"),
     TRUST_MARK_LISTING("federation_trust_mark_list_endpoint", "%s/trust_mark_listing"),
     TRUST_MARK("federation_trust_mark_endpoint", "%s/trust_mark"),
-    RESOLVE("federation_resolve_endpoint", "%s/resolver"),
-    DISCOVERY("federation_discovery_endpoint ", "%s/resolver/discovery"),
+    RESOLVE("federation_resolve_endpoint", "%s/resolve"),
+    DISCOVERY("federation_discovery_endpoint ", "%s/discovery"),
     FETCH("federation_fetch_endpoint", "%s/fetch"),
     SUBORDINATE_LISTING("federation_list_endpoint", "%s/subordinate_listing"),
     ORGANIZATION_NAME("organization_name", "%s");
