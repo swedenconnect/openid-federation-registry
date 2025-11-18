@@ -8,7 +8,7 @@ on:
 
 jobs:
   publish-docker:
-    uses: swedenconnect/openid-federation-commons/.github/workflows/docker-ghcr-publish.yml@main
+    uses: swedenconnect/openid-federation-commons/.github/workflows/docker-ghcr-publish.yml@v0.5.10
     secrets: inherit
     with:
       service-path: service

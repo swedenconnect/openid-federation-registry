@@ -5,5 +5,5 @@ on:
 
 jobs:
   review:
-    uses: swedenconnect/openid-federation-commons/.github/workflows/reusable-review.yml@main
+    uses: swedenconnect/openid-federation-commons/.github/workflows/reusable-review.yml@v0.5.10
     secrets: inherit
