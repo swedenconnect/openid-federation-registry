@@ -28,6 +28,10 @@ spring:
   flyway:
     enabled: true
 
+  docker:
+    compose:
+      enabled: false
+
   jpa:
     database-platform: org.hibernate.dialect.MariaDBDialect
     hibernate:
