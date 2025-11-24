@@ -27,7 +27,7 @@ import java.util.UUID;
 /**
  * Properties for RegistryService
  *
- * @param federationServiceApi federationapi settings.
+ * @param federationServiceApi federation API settings.
  * @param instances InstanceProperties that is managed by this registry
  * @author Per Fredrik Plars
  */
@@ -40,7 +40,7 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi, L
   @PostConstruct
   public void validate() {
     Assert.notNull(this.federationServiceApi,
-        "openid.federation.registry.federatonServiceApi Is needed in configuration");
+        "openid.federation.registry.federationServiceApi Is needed in configuration");
     this.federationServiceApi.validate();
 
     Assert.notNull(this.instances, "openid.federation.registry.instances "
@@ -82,11 +82,11 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi, L
      */
     public void validate() {
       Assert.hasText(
-          this.signKeyAlias, "Expected openid.federation.registry.federatonServiceApi.sign_key_alias");
+          this.signKeyAlias, "Expected openid.federation.registry.federationServiceApi.sign_key_alias");
       Assert.notNull(
           this.tokenExpiryDuration,
-          "Expected openid.federation.registry.federatonServiceApi.token-expiry-duration");
-      Assert.hasText(this.issuer, "Expected openid.federation.registry.federatonServiceApi.issuer");
+          "Expected openid.federation.registry.federationServiceApi.token-expiry-duration");
+      Assert.hasText(this.issuer, "Expected openid.federation.registry.federationServiceApi.issuer");
 
       if (this.notificationActive) {
         Assert.notNull(this.notifications, "Notification endpoints is required");
@@ -115,22 +115,22 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi, L
        */
       public void validate() {
         Assert.notNull(
-            this.endpoint, "Expected openid.federation.registry.federatonServiceApi.notifications[].endpoint");
+            this.endpoint, "Expected openid.federation.registry.federationServiceApi.notifications[].endpoint");
         Assert.notNull(
             this.instanceId,
-            "Expected openid.federation.registry.federatonServiceApi.notifications[].instance_id");
+            "Expected openid.federation.registry.federationServiceApi.notifications[].instance_id");
       }
     }
   }
 
   /**
-   * Represents properties for an instance within the registry. This record holds details such as an instance's unique
+   * Represents properties for the instance within the registry. This record holds details such as an instance's unique
    * identifier, name, a flag indicating if it should be used for default assignment, and a list of organizational
    * numbers.
    *
-   * @param instanceId the unique identifier for the instance, must not be null
-   * @param name the name of the instance, must not be empty
-   * @param useForDefaultAssignment flag indicating if this instance should be used for default assignment
+   * @param instanceId the unique identifier for the instance must not be null
+   * @param name the name of the instance must not be empty
+   * @param useForDefaultAssignment flag indicating if this instance should be used for the default assignment
    * @param org_numbers a list of organizational numbers associated with the instance
    */
   public record InstanceProperties(UUID instanceId,
