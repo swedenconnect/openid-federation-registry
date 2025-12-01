@@ -24,22 +24,13 @@ import se.swedenconnect.oidf.registry.api.model.OptionRecord;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.Values;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
-import se.swedenconnect.oidf.registry.entity.EntityEntity;
-import se.swedenconnect.oidf.registry.entity.EntityKeyType;
-import se.swedenconnect.oidf.registry.entity.FkKeyType;
-import se.swedenconnect.oidf.registry.entity.ModuleEntity;
-import se.swedenconnect.oidf.registry.entity.SettingDataType;
-import se.swedenconnect.oidf.registry.entity.SettingsEntity;
+import se.swedenconnect.oidf.registry.entity.*;
 import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.repository.ModuleRepository;
 import se.swedenconnect.oidf.registry.repository.SettingsRepository;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.NOT_FOUND;
 import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.RELATION_NOT_FOUND;
@@ -78,10 +69,7 @@ public class OptionsCRUDModules extends BaseOptionsCRUD {
   @Override
   public boolean supports(final FkKeyType fkKeyType) {
     return switch (fkKeyType) {
-      case RESOLVER -> true;
-      case TRUSTANCHOR -> true;
-      case INTERMEDIATE -> true;
-      case TRUSTMARKISSUER -> true;
+      case RESOLVER, TRUSTMARKISSUER, TRUSTANCHOR, INTERMEDIATE -> true;
       default -> false;
     };
   }
@@ -107,7 +95,7 @@ public class OptionsCRUDModules extends BaseOptionsCRUD {
 
     final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
     final List<SettingsEntity> validatedInData =
-        this.createAndValidateInputData(organizationRecord, template, record.getOption());
+        this.createAndValidateInputData(organizationRecord, template, Objects.requireNonNull(record.getOption()));
 
     // Create
     final ModuleEntity newModuleEntity = new ModuleEntity();
@@ -140,7 +128,7 @@ public class OptionsCRUDModules extends BaseOptionsCRUD {
     final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
 
     final List<SettingsEntity> validatedInData =
-        this.createAndValidateInputData(organizationRecord, template, record.getOption());
+        this.createAndValidateInputData(organizationRecord, template, Objects.requireNonNull(record.getOption()));
     super.deleteSettings(fkKeyType, moduleEntity.getModuleId().toString());
     super.insertSettings(fkKeyType, moduleEntity.getModuleId().toString(), validatedInData);
     this.moduleRepository.saveAndFlush(moduleEntity);

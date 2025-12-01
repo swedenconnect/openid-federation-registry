@@ -84,7 +84,7 @@ public class ModuleEntity extends BaseEntity {
 
   /**
    * Retrieves the {@link SettingsEntity} associated with the specified key. The method searches through the list of
-   * settings entities and returns an optional containing the first entity matching the given key, if one exists.
+   * settings entities and returns an optional containing the first entity matching the given key if one exists.
    *
    * @param key the key to search for in the list of settings entities
    * @return an {@link Optional} containing the matching {@link SettingsEntity} if found, otherwise an empty

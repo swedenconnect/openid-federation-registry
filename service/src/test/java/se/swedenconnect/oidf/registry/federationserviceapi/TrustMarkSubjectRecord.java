@@ -31,11 +31,11 @@ import static org.hibernate.validator.internal.util.Contracts.assertNotEmpty;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Subject of an TrustMark
+ * Subject of a TrustMark
  *
  * @param sub EntityId Subject
- * @param granted When subject is granted can be in the future
- * @param expires When subject expires, if left empty no expiredate will be used
+ * @param granted When the subject is granted can be in the future
+ * @param expires When the subject expires, if left empty, no expiry date will be used
  * @param revoked If this trust mark is revoked, no new trustmarks for this subject will be issued
  * @author Per Fredrik Plars
  * @author Felix Hellman
@@ -49,9 +49,9 @@ public record TrustMarkSubjectRecord(
     boolean revoked) implements Serializable {
 
   /**
-   * Converting json structure to TrustMarkIssuerSubject object Subject is mandatory and will be checked.
+   * Converting JSON structure to TrustMarkIssuerSubject object Subject is mandatory and will be checked.
    *
-   * @param record Reading subject,expires,granted,revoked values.
+   * @param record Reading subject, expires, granted, revoked values.
    * @return TrustMarkIssuerSubject filled with data
    */
   public static TrustMarkSubjectRecord fromJson(final Map<String, Object> record) {
@@ -94,7 +94,7 @@ public record TrustMarkSubjectRecord(
   }
 
   /**
-   * @return this instance to json
+   * @return this instance to JSON
    */
   public Map<String, Object> toJson() {
     final Map<String, Object> subject = Map.of(

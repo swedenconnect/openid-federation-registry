@@ -14,6 +14,6 @@
  *  limitations under the License.
  */
 /**
- * Package for errorhandling
+ * Package for error handling
  */
 package se.swedenconnect.oidf.registry.errorhandling;

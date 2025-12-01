@@ -34,11 +34,12 @@ public class TrustAnchorModuleResponse {
 
   /** EntityId for the trust anchor */
   private EntityID entityIdentifier;
-  /** Is the module qctive */
+
+  /** Whether the module is active or not */
   private Boolean active;
 
   /**
-   * Converts json object to new instance.
+   * Converts JSON object to new instance.
    *
    * @param json to read
    * @return new instance

@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.registry.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -31,37 +32,35 @@ import se.swedenconnect.oidf.registry.api.model.Values;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
 import se.swedenconnect.oidf.registry.fixture.OptionsTestData;
+import se.swedenconnect.oidf.registry.fixture.TestContainersConfiguration;
 import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static se.swedenconnect.oidf.registry.entity.FkKeyType.FEDERATION_ENTITY;
-import static se.swedenconnect.oidf.registry.fixture.JwtTestUtils.OrganisationType.AF;
-import static se.swedenconnect.oidf.registry.fixture.JwtTestUtils.OrganisationType.PM;
-import static se.swedenconnect.oidf.registry.fixture.JwtTestUtils.OrganisationType.SKATT;
+import static se.swedenconnect.oidf.registry.fixture.JwtTestUtils.OrganisationType.*;
 
 /**
- * Testing the new optional api
+ * Integration tests for the {@link OptionsApiController} class.
  *
  * @author Per Fredrik Plars
  */
 @Slf4j
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class OptionsApiEntityControllerIT {
 
   @Container
   @ServiceConnection
-  public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
+  public static MariaDBContainer<?> database = new MariaDBContainer<>(TestContainersConfiguration.MARIADB_VERSION);
 
   @Autowired
   private TestDataOperations testDataOperations;
 
   @Test
+  @DisplayName( "Create hosted entity - should succeed")
   public void testHostedEntity() {
     final OptionsRecord optionsRecord = new OptionsRecord();
     optionsRecord.setOption(
@@ -70,26 +69,38 @@ class OptionsApiEntityControllerIT {
             Values.builder().key("subject").value(AF.domainPrefix).build()
         ));
 
-    testDataOperations.postPut(FEDERATION_ENTITY,
+    OptionsRecord result = testDataOperations.postPut(FEDERATION_ENTITY,
         UUID.randomUUID(),
         HttpStatus.CREATED,
         AF, optionsRecord,
         HttpMethod.POST);
+
+    assertThat(result).isNotNull();
   }
 
   @Test
+  @DisplayName("Get hosted entity template - should succeed")
   public void testHostedEntityTemplateIsFilteredForVariables() {
     final OptionsRecord template = testDataOperations.get(FEDERATION_ENTITY, null, HttpStatus.OK, SKATT);
+    assertThat(template).isNotNull();
+    assertThat(template.getOption()).isNotEmpty();
+
     template.getOption().forEach(values -> {
-      assertTrue(!values.getValue().contains("@{"),
-          "The value should not contain @{ but is: " + values.getValue() + " ");
-      assertTrue(!values.getValidation().contains("@{"),
-          "The value should not contain @{ but is: " + values.getValidation() + " ");
+      assertThat(values.getKey()).isNotNull();
+      assertThat(values.getValue().contains("@{"))
+          .withFailMessage("The value should not contain @{ but is: \" + values.getValue() + \" ")
+          .isFalse();
+
+      assertThat(values.getValidation()).isNotNull();
+      assertThat(values.getValidation().contains("@{"))
+          .withFailMessage("The value should not contain @{ but is: " + values.getValidation() + " ")
+          .isFalse();
     });
 
   }
 
   @Test
+  @DisplayName("CRUD hosted entity - should succeed")
   public void testCRUDHostedEntity() {
 
     final UUID id_skatt = testDataOperations.createHostedEntity(
@@ -113,7 +124,7 @@ class OptionsApiEntityControllerIT {
         SKATT,
         OptionsTestData.SubordinateEntityTestData.class);
 
-    assertEquals(data.getSubject(), SKATT.domainPrefix + "/op");
+    assertThat(data.getSubject()).isEqualTo(SKATT.domainPrefix + "/op");
 
     testDataOperations.delete(FEDERATION_ENTITY, id_skatt, HttpStatus.OK,
         SKATT);
@@ -121,6 +132,7 @@ class OptionsApiEntityControllerIT {
   }
 
   @Test
+  @DisplayName("List hosted entities - should succeed")
   public void testList() {
     final JwtTestUtils.OrganisationType org = SKATT;
 
@@ -150,12 +162,13 @@ class OptionsApiEntityControllerIT {
             org,
             OptionsTestData.HostedEntityTestData.class);
 
-    assertEquals(2, response.size());
+    assertThat(response.size()).isEqualTo(2);
 
   }
 
   @Test
-  public void testHostedEntityDelete() throws IOException {
+  @DisplayName("Delete hosted entity - should succeed")
+  public void testHostedEntityDelete() {
     final JwtTestUtils.OrganisationType org = SKATT;
     final UUID id_skatt = testDataOperations.createHostedEntity(
         UUID.randomUUID(),
@@ -181,7 +194,8 @@ class OptionsApiEntityControllerIT {
   }
 
   @Test
-  public void testHostedEntityWithDifferentIssuerAndSubject() throws IOException {
+  @DisplayName("Update hosted entity - should succeed")
+  public void testHostedEntityWithDifferentIssuerAndSubject() {
     final JwtTestUtils.OrganisationType org = SKATT;
     final UUID id_skatt = testDataOperations.createHostedEntity(
         UUID.randomUUID(),
@@ -223,6 +237,7 @@ class OptionsApiEntityControllerIT {
   }
 
   @Test
+  @DisplayName("CRUD subordinate entity - should succeed")
   public void testCRUDSubordinateEntity() {
 
     final UUID id_skatt = testDataOperations.createSubordinateEntity(
@@ -244,7 +259,7 @@ class OptionsApiEntityControllerIT {
         id_skatt, HttpStatus.OK,
         SKATT, OptionsTestData.SubordinateEntityTestData.class);
 
-    assertEquals(data.getSubject(), "http://www.swedenconnect.se/op");
+    assertThat(data.getSubject()).isEqualTo("http://www.swedenconnect.se/op");
 
     testDataOperations.delete(FkKeyType.SUBORDINATE_ENTITY, id_skatt, HttpStatus.OK,
         SKATT);

@@ -15,15 +15,7 @@
  */
 package se.swedenconnect.oidf.registry.entity;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -71,7 +63,7 @@ public class TrustMarkEntity extends BaseEntity {
 
   /**
    * Retrieves the {@link SettingsEntity} associated with the specified key. The method searches through the list of
-   * settings entities and returns an optional containing the first entity matching the given key, if one exists.
+   * settings entities and returns an optional containing the first entity matching the given key if one exists.
    *
    * @param key the key to search for in the list of settings entities
    * @return an {@link Optional} containing the matching {@link SettingsEntity} if found, otherwise an empty

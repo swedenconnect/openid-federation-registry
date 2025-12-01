@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Data class for resolver modules from registry.
+ * Data class for resolver modules from Registry.
  *
  * @author Felix Hellman
  */

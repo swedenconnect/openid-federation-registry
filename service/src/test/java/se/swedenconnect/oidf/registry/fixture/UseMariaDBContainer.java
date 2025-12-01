@@ -22,11 +22,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to be used on test classes to initialize and start a MariaDB testcontainer instance for the duration of
+ * Annotation to be used on test classes to initialize and start a MariaDB test container instance for the duration of
  * the tests. This annotation ensures that a MariaDB container is available before any tests are executed.
  * <p>
  * This annotation uses the {@link MariaDBInitializer} class to manage the lifecycle of the MariaDB container, ensuring
- * it is started once before all tests and providing necessary configurations for test execution. Testcontainer will
+ * it is started once before all tests and providing necessary configurations for test execution. Test container will
  * manage the stopping of the container after all tests are run.
  * <br>
  * Usage: - Annotate your test class with @UseMariaDBContainer to activate this extension.
@@ -47,5 +47,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
 @ExtendWith(MariaDBInitializer.class)
-public @interface UseMariaDBContiainer {
+public @interface UseMariaDBContainer {
 }

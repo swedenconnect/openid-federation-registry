@@ -28,18 +28,8 @@ spring:
   flyway:
     enabled: true
 
-  docker:
-    compose:
-      enabled: false
-
   jpa:
-    database-platform: org.hibernate.dialect.MariaDBDialect
-    hibernate:
-      ddl-auto: none
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+    open-in-view: false
 
 logging:
   level:
@@ -59,5 +49,3 @@ openid:
         issuer: "https://oidf-registry.swedenconnect.se"
         token-expiry-duration: PT168H
         notification-active: false
-        notification-retry-count: 3
-        notification-retry-delay-duration: PT10S

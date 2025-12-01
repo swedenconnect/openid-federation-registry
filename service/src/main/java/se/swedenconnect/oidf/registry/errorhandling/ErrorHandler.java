@@ -16,12 +16,13 @@
 
 package se.swedenconnect.oidf.registry.errorhandling;
 
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.Nullable;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -38,8 +39,8 @@ import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.INVALID_PA
 
 /**
  * Error Handler ControllerAdvice.
- *
- * All error response are transformed according to: { "error":"server_error", "error_description":"Human understandable
+ * <p>
+ * All error responses are transformed according to: { "error":"server_error", "error_description":"Human understandable
  * description of the problem" }
  *
  * @author Per Fredrik Plars
@@ -65,7 +66,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
   }
 
   /**
-   * Handles exceptions of the type {@code PropertyValidationFailException} and maps them to a response with an HTTP 400
+   * Handles {@code PropertyValidationFailException} types of exceptions and maps them to a response with an HTTP 400
    * Bad Request status. The response includes a problem detail structure with specific error information about the
    * validation failure.
    *
@@ -81,7 +82,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     problemDetail.setProperty("cause", List.of(
         Map.of("field", e.getFiledName(),
             "detail", e.getValidationFailMessage(),
-            "inputvalue", Optional.ofNullable(e.getInputValue()).orElse("")))
+            "inputValue", Optional.ofNullable(e.getInputValue()).orElse("")))
     );
     problemDetail.setType(INVALID_PARAMETER.errorURI);
 
@@ -119,9 +120,9 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
   @Override
   protected ResponseEntity<Object> handleMethodArgumentNotValid(
       final MethodArgumentNotValidException e,
-      final HttpHeaders headers,
-      final HttpStatusCode status,
-      final WebRequest request) {
+      @Nonnull final HttpHeaders headers,
+      @Nonnull final HttpStatusCode status,
+      @Nonnull final WebRequest request) {
 
     final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400),
         "MethodArgumentNotValidException");
@@ -131,7 +132,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         e.getBindingResult().getFieldErrors().stream().map((FieldError error) -> {
           final String fieldName = error.getObjectName() + "." + error.getField();
           final String rejectedValue = error.getRejectedValue() == null ? "null" : error.getRejectedValue().toString();
-          final String message = error.getDefaultMessage();
+          final String message = error.getDefaultMessage() == null ? "" : error.getDefaultMessage();
           return Map.of("field", fieldName, "detail", message, "rejectedValue", rejectedValue);
         }).toList();
     problemDetail.setProperty("cause", detailProblem);
@@ -145,23 +146,16 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
   @Override
   protected ResponseEntity<Object> handleExceptionInternal(
-      final Exception ex,
-      final Object body,
-      final HttpHeaders headers,
-      final HttpStatusCode statusCode,
-      final WebRequest request) {
+      @Nonnull final Exception ex,
+      @Nullable final Object body,
+      @Nonnull final HttpHeaders headers,
+      @Nonnull final HttpStatusCode statusCode,
+      @Nonnull final WebRequest request) {
 
     if (statusCode.is5xxServerError()) {
       log.error("Error serving request:'%s'".formatted(ex.getMessage()), ex);
     }
     return super.handleExceptionInternal(ex, body, headers, statusCode, request);
-  }
-
-  @Override
-  protected ResponseEntity<Object> createResponseEntity(@Nullable final Object body, final HttpHeaders headers,
-      final HttpStatusCode statusCode, final WebRequest request) {
-    return new ResponseEntity<>(body, headers, statusCode);
-
   }
 
 }

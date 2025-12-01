@@ -54,7 +54,7 @@ public class FederationAuditEvent implements Serializable {
    * the event data into a standardized format, optionally including details such as issuer, subject, trust mark ID, old
    * data, new data, and external ID.
    *
-   * @param principal the principal responsible for the event. Typically represents the user or entity on whose
+   * @param principal the principal responsible for the event. Typically, represents the user or entity on whose
    *     behalf the action was performed, included in the resulting {@code AuditEvent}.
    * @return an {@code AuditEvent} instance containing the structured data of the current audit event.
    */

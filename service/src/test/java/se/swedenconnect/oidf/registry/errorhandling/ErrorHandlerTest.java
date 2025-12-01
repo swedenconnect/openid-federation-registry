@@ -16,8 +16,10 @@
 
 package se.swedenconnect.oidf.registry.errorhandling;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.MethodParameter;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -25,25 +27,27 @@ import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.context.request.WebRequest;
 
 import java.lang.reflect.Method;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 /**
- * Testing Error handler
+ * Unit test for the {@link ErrorHandler} class.
  *
  * @author Per Fredrik Plars
  */
 class ErrorHandlerTest {
 
   @Test
-  void handleMethodArgumentNotValid() throws NoSuchMethodException {
+  @DisplayName("Tests handling of MethodArgumentNotValidException")
+  void handleMethodArgumentNotValid() {
 
     final Method method = TestRecord.class.getMethods()[0];
-    MethodParameter methodParameter = new MethodParameter(method, 0);
+    final MethodParameter methodParameter = new MethodParameter(method, 0);
 
     final BindingResult bindingResult = new BeanPropertyBindingResult(new TestRecord("TEST"), "exampleDTO");
     bindingResult.addError(new FieldError("exampleDTO", "field1", null, false,
@@ -56,20 +60,20 @@ class ErrorHandlerTest {
 
     final ErrorHandler errorHandler = new ErrorHandler();
 
-    final ResponseEntity<Object> responseEntity =
-        errorHandler.handleMethodArgumentNotValid(exception, null, HttpStatusCode.valueOf(400), null);
+    final ResponseEntity<Object> responseEntity = errorHandler.handleMethodArgumentNotValid(
+        exception, new HttpHeaders(), HttpStatusCode.valueOf(400), mock(WebRequest.class));
 
-    assertEquals(400, responseEntity.getStatusCode().value());
-    assertNotNull(responseEntity.getBody());
+    assertThat(responseEntity).isNotNull();
+    assertThat(responseEntity.getStatusCode().value()).isEqualTo(400);
+    assertThat(responseEntity.getBody()).isNotNull();
 
     final ProblemDetail error = (ProblemDetail) responseEntity.getBody();
 
-    assertNotNull(error.getProperties().get("cause"));
-    assertEquals(((List) error.getProperties().get("cause")).size(), 2);
-
+    assertThat(error.getProperties()).isNotEmpty();
+    assertThat(error.getProperties().get("cause")).isInstanceOf(List.class);
+    assertThat(((List<?>)error.getProperties().get("cause")).size()).isEqualTo(2);
   }
 
   record TestRecord(String message) {
-
   }
 }

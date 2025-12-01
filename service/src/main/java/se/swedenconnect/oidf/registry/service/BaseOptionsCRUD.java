@@ -22,26 +22,16 @@ import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecordMetadata;
 import se.swedenconnect.oidf.registry.api.model.Values;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
-import se.swedenconnect.oidf.registry.entity.BaseEntity;
-import se.swedenconnect.oidf.registry.entity.EntityEntity;
-import se.swedenconnect.oidf.registry.entity.FkKeyType;
-import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
-import se.swedenconnect.oidf.registry.entity.SettingsEntity;
+import se.swedenconnect.oidf.registry.entity.*;
 import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.registry.validation.PropertyValidator;
 import se.swedenconnect.oidf.registry.validation.PropertyValidators;
-import se.swedenconnect.oidf.registry.validation.VariabelValueResolver;
+import se.swedenconnect.oidf.registry.validation.VariableValueResolver;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.NOT_FOUND;
@@ -108,19 +98,19 @@ public abstract class BaseOptionsCRUD implements OptionsCRUD {
       throw new RegistryServerException(NOT_FOUND,
           "No template found for:%s".formatted(fkkeytype));
     }
-    final VariabelValueResolver valueResolver = VariabelValueResolver.orgResolver(organizationRecord);
+    final VariableValueResolver valueResolver = VariableValueResolver.orgResolver(organizationRecord);
     return templates.stream().map(settingsEntity -> {
-      final SettingsEntity detatchedEntity = new SettingsEntity();
-      detatchedEntity.setKey(settingsEntity.getKey());
-      detatchedEntity.setValue(valueResolver.insertTemplateValues(settingsEntity.getValue()));
-      detatchedEntity.setValidation(valueResolver.insertTemplateValues(settingsEntity.getValidation()));
-      detatchedEntity.setDescription(settingsEntity.getDescription());
-      detatchedEntity.setValueDataType(settingsEntity.getValueDataType());
-      detatchedEntity.setCreatedBy(settingsEntity.getCreatedBy());
-      detatchedEntity.setCreatedDate(settingsEntity.getCreatedDate());
-      detatchedEntity.setLastModifiedBy(settingsEntity.getLastModifiedBy());
-      detatchedEntity.setLastModifiedDate(settingsEntity.getLastModifiedDate());
-      return detatchedEntity;
+      final SettingsEntity detachedEntity = new SettingsEntity();
+      detachedEntity.setKey(settingsEntity.getKey());
+      detachedEntity.setValue(valueResolver.insertTemplateValues(settingsEntity.getValue()));
+      detachedEntity.setValidation(valueResolver.insertTemplateValues(settingsEntity.getValidation()));
+      detachedEntity.setDescription(settingsEntity.getDescription());
+      detachedEntity.setValueDataType(settingsEntity.getValueDataType());
+      detachedEntity.setCreatedBy(settingsEntity.getCreatedBy());
+      detachedEntity.setCreatedDate(settingsEntity.getCreatedDate());
+      detachedEntity.setLastModifiedBy(settingsEntity.getLastModifiedBy());
+      detachedEntity.setLastModifiedDate(settingsEntity.getLastModifiedDate());
+      return detachedEntity;
     }).toList();
 
   }
@@ -178,7 +168,7 @@ public abstract class BaseOptionsCRUD implements OptionsCRUD {
 
           final PropertyValidator validator =
               this.validatorFactory.resolveValidator(templateValue.getValidation(),
-                  VariabelValueResolver.orgResolver(organizationRecord));
+                  VariableValueResolver.orgResolver(organizationRecord));
 
           validator.validate(templateValue.getKey(), valueToBeValidated);
 

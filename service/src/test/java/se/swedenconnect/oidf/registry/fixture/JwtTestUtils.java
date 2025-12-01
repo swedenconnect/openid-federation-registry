@@ -25,12 +25,7 @@ import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.Key;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.UnrecoverableKeyException;
+import java.security.*;
 import java.security.cert.CertificateException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -117,7 +112,7 @@ public class JwtTestUtils {
   }
 
   /**
-   * We sign our test JWT's with a private key from a snakeoil keystore.
+   * We sign our test JWT's with a private key from a snake oil keystore.
    */
   public PrivateKey getPrivateKeyFromKeyStore() {
 

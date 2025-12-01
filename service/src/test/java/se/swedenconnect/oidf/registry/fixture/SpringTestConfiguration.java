@@ -24,12 +24,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 
 /**
- * Spring test configurations
+ * Configuration class for Spring beans used in testing scenarios.
  *
  * @author Per Fredrik Plars
  */
 @Configuration
-public class SpringTestConfiguation {
+public class SpringTestConfiguration {
 
   @Bean
   RestTemplateCustomizer restTemplateCustomizer(final JwtTestUtils jwtTestUtils) {

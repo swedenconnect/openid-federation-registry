@@ -22,7 +22,7 @@ import java.io.Serializable;
 import java.util.Map;
 
 /**
- * Data class for trust mark source.
+ * Data class for a trust mark source.
  *
  * @author Felix Hellman
  */
@@ -43,9 +43,9 @@ public class TrustMarkSource implements Serializable {
   }
 
   /**
-   * Creates a new instance from json object.
+   * Creates a new instance from JSON object.
    *
-   * @param tmsJson to create instance from
+   * @param tmsJson to create an instance from
    * @return new instance
    */
   public static TrustMarkSource fromJson(final Map<String, Object> tmsJson) {
@@ -56,9 +56,9 @@ public class TrustMarkSource implements Serializable {
   }
 
   /**
-   * Convert current instance to json structure for nimbus.
+   * Convert current instance to JSON structure for nimbus.
    *
-   * @return json of this instance
+   * @return JSON of this instance
    */
   public Map<String, Object> toJson() {
     return Map.of(

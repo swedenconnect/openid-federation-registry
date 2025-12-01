@@ -16,6 +16,7 @@
 
 package se.swedenconnect.oidf.registry.validation;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -23,15 +24,16 @@ import java.util.Map;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 /**
- * Testing simple template engine
+ * Unit tests for the {@link VariableValueResolver} class.
  *
  * @author Per Fredrik Plars
  */
 class VariableValueResolverTest {
 
   @Test
+  @DisplayName("Insert template values - should succeed")
   void insertTemplateValues() {
-    final VariabelValueResolver r = VariabelValueResolver.defaultResolver(Map.of("orgId", "2345"));
+    final VariableValueResolver r = VariableValueResolver.defaultResolver(Map.of("orgId", "2345"));
 
     assertThat(r.insertTemplateValues("https://example.com/entity/@{orgId}"))
         .isNotBlank().isEqualTo("https://example.com/entity/2345");

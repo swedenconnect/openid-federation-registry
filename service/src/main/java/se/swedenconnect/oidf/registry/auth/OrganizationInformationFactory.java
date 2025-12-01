@@ -27,7 +27,7 @@ import java.util.Optional;
  */
 public class OrganizationInformationFactory {
   /**
-   * @param claims
+   * @param claims claims from a user
    * @return org info about user
    */
   public static OrganizationInformation getInformation(final Map<String, Object> claims) {

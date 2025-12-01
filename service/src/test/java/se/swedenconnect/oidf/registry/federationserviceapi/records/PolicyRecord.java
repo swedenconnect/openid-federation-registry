@@ -34,7 +34,7 @@ public class PolicyRecord implements Serializable {
   private Map<String, Object> policy;
 
   /**
-   * Constructor.
+   * Constructs a new instance of {@code PolicyRecord}
    *
    * @param id of the policy
    * @param policy object of the policy
@@ -43,13 +43,15 @@ public class PolicyRecord implements Serializable {
     this.id = id;
     this.policy = policy;
   }
+
   /**
-   * Default constructor.
+   * Constructs a new instance of {@code PolicyRecord}
    */
   public PolicyRecord() {
   }
 
   /**
+   * Creates a new instance from a JSON object.
    * @param policyRecord json object
    * @return new instance
    */
@@ -61,7 +63,8 @@ public class PolicyRecord implements Serializable {
   }
 
   /**
-   * @return current record as json object
+   * Converts the current record to a JSON object.
+   * @return current record as JSON object
    */
   public Map<String, Object> toJson() {
     return Map.of("policy_record_id", this.id, "policy", this.policy);

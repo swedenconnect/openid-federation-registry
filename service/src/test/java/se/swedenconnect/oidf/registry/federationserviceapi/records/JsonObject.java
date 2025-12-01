@@ -19,6 +19,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Helper class for testing.
+ *
+ * @author Per Fredrik Plars
+ */
 public class JsonObject {
   private final Map<String, Object> json;
 

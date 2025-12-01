@@ -25,21 +25,12 @@ import se.swedenconnect.oidf.registry.api.model.OptionRecord;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.Values;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
-import se.swedenconnect.oidf.registry.entity.EntityEntity;
-import se.swedenconnect.oidf.registry.entity.EntityKeyType;
-import se.swedenconnect.oidf.registry.entity.FkKeyType;
-import se.swedenconnect.oidf.registry.entity.PolicyEntity;
-import se.swedenconnect.oidf.registry.entity.SettingDataType;
-import se.swedenconnect.oidf.registry.entity.SettingsEntity;
+import se.swedenconnect.oidf.registry.entity.*;
 import se.swedenconnect.oidf.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.repository.PolicyRepository;
 import se.swedenconnect.oidf.registry.repository.SettingsRepository;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -108,7 +99,7 @@ public class OptionsCRUDEntity extends BaseOptionsCRUD {
 
     final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
     final List<SettingsEntity> validatedInData =
-        this.createAndValidateInputData(organizationRecord, template, record.getOption());
+        this.createAndValidateInputData(organizationRecord, template, Objects.requireNonNull(record.getOption()));
 
     // Create
     final EntityEntity newEntity = new EntityEntity();
@@ -135,7 +126,7 @@ public class OptionsCRUDEntity extends BaseOptionsCRUD {
     final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
 
     final List<SettingsEntity> validatedInData =
-        this.createAndValidateInputData(organizationRecord, template, record.getOption());
+        this.createAndValidateInputData(organizationRecord, template, Objects.requireNonNull(record.getOption()));
     this.loadPolicyIfExist(organizationRecord, validatedInData).ifPresent(entity::setPolicyEntity);
 
     this.ruleIfHostedEntityAndModulesTaOrImExistIssuerAndSubjectHasToBeTheSameOrThrow(entity, validatedInData);

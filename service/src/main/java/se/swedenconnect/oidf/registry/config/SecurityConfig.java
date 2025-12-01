@@ -17,6 +17,7 @@ package se.swedenconnect.oidf.registry.config;
 
 import lombok.Getter;
 import lombok.NonNull;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -26,6 +27,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
 import se.swedenconnect.oidf.registry.auth.OrganizationInformation;
@@ -33,9 +36,11 @@ import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.auth.RegistryJwtConverter;
 import se.swedenconnect.oidf.registry.service.OrganizationService;
 
+import javax.crypto.spec.SecretKeySpec;
+
 /**
  * Security configuration class that defines security-related settings for the application. This class integrates OAuth2
- * Resource Server and configures security rules for specific HTTP endpoints. It utilizes Spring Security to define the
+ * Resource Server and configures security rules for specific HTTP endpoints. It uses Spring Security to define the
  * security rules, such as enabling JWT token-based authentication, disabling CSRF for stateless APIs, and specifying
  * role-based access controls for various endpoints.
  *
@@ -135,6 +140,26 @@ public class SecurityConfig {
           .findFirst()
           .orElseThrow();
     }
+  }
+
+  /**
+   * Provides a fallback JwtDecoder for Docker/Dev environments where no public key or IDP is available.
+   * This allows the application to start without crashing due to missing configuration. Only works in dev mode.
+   * I.e., {@code openid.federation.registry.dev-mode=true}
+   *
+   * @return a JwtDecoder instance
+   */
+  @Bean
+  @ConditionalOnExpression(
+      "T(org.springframework.util.StringUtils).isEmpty(" +
+          "'${spring.security.oauth2.resourceserver.jwt.public-key-location:}'" +
+          ") && ${openid.federation.registry.dev-mode:true}")
+  public JwtDecoder devJwtDecoder() {
+    // A dummy secret key (must be at least 32 bytes for HmacSHA256)
+    final String secret = "dev_secret_key_for_docker_compose_startup_only_12345";
+    return NimbusJwtDecoder.withSecretKey(
+        new SecretKeySpec(secret.getBytes(), "HmacSHA256")
+    ).build();
   }
 
 }

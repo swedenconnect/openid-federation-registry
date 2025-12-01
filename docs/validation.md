@@ -1,3 +1,5 @@
+![Logo](../docs/images/sweden-connect.png)
+
 # Validation
 
 Properties can have validation rules applied and combined using pipe ('|') syntax. For example:
@@ -36,3 +38,8 @@ Syntax for validator configuration: {rule}:{config}
 "required|url|starts_with:https" - Required HTTPS URL
 "required|json|jwks:public" - Required JWKS with public keys only
 ```
+
+---
+
+Copyright &copy; 2025, [SwedenConnect](https://www.swedenconnect.se). Licensed under version 2.0 of
+the [Apache License](https://www.apache.org/licenses/LICENSE-2.0).

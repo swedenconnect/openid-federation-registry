@@ -30,7 +30,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * oidf-entity-registry
+ * Helper class for calling the Federation API.
  *
  * @author Per Fredrik Plars
  */

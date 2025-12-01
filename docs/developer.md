@@ -1,109 +1,122 @@
+![Logo](../docs/images/sweden-connect.png)
 # Developer Guide: Entity Registry for OpenID Federation
 
-## Building and Pushing a Docker Image
+This document provides instructions on how to set up a development environment for the OpenID Federation Entity Registry application.
 
-This section provides a step-by-step guide to build and push a Docker image for the project. The relevant scripts are
-located under `<project root>/scripts`.
+## Prerequisites
 
-### Prerequisites
+Before you begin, ensure you have the following installed:
 
-Ensure you have installed the necessary tools:
+*   **Java SDK 21**
+*   **Maven** (3.6.3 or later)
+*   **Docker** (with Docker Compose)
+*   **Git**
 
-- Docker
-- Maven
-- Bash
+## Project Structure
 
-### Build and Push Docker Image Script
+The project is organized as follows:
 
-To automate the building and pushing of the Docker image, a bash script (`build-and-push.sh`) is used. Below is a
-description of the available options and their usage.
+*   `service`: Contains the Spring Boot application source code.
+*   `config/local`: Contains Docker Compose configuration for setting up local dependencies.
+*   `docs`: Project documentation.
 
-### Usage
+## Building the Project
 
-```bash
-./scripts/build-and-push.sh [options...]
+To build the project and run the unit tests, run the following command from the project root:
+```shell
+mvn clean install
 ```
 
-#### Options
 
-- `-i, --image`: Name of the Docker image to create (required).
-- `-x, --skipTests`: Skip running tests during the `mvn clean install` phase.
-- `-d, --builddir`: Directory where `Dockerfile` (and Maven POM) is placed (required).
-- `-s, --buildsource`: Build Java source. If a `build-source.sh` script is available in the same directory as
-  `build-and-push.sh`, it will be used to build the source. Otherwise, the POM file under `builddir` will be used.
-- `-t, --tag`: Optional Docker tag for the image (default is `latest`).
-- `-p, --push`: To push the image to the registry (registry details will be derived from the image name).
-- `-a, --platform`: Optional platform/architecture parameter value to use when building the Docker image. The default is
-  `linux/amd64,linux/arm64`.
-- `-h, --help`: Prints usage information.
+## Running Locally
 
-### Example Commands
+To run the application locally, you need to start the supporting dependencies and then launch the Spring Boot application
+with the `docker` profile.
 
-1. **Build and push the Docker image using default multistage build and tag as `latest`:**
+### 1. Start the Local Database
 
-    ```bash
-    ./scripts/build-and-push.sh -i example-repo/example-image -d /path/to/builddir -p
+The application requires a MariaDB database. A minimal environment setup is provided in the `config/local` directory.
+
+1.  Navigate to the local configuration directory:
+    ```shell
+    cd config/local
     ```
 
-2. **Build without pushing, skipping tests, and specify a custom tag:**
-
-    ```bash
-    ./scripts/build-and-push.sh -i example-repo/example-image -d /path/to/builddir -x -t custom-tag
+2.  Start the docker compose environment:
+    ```shell
+    docker compose up -d
     ```
 
-### Script Structure
+    This will start a MariaDB instance.
 
-The script performs the following main tasks:
-
-1. **Parse and validate input arguments.**
-2. **Determine the platform/architecture settings.**
-3. **Ensure the Docker multi-host builder is configured (if doing a multi-platform build).**
-4. **Build Java source if required.**
-5. **Build the Docker image and optionally push it.**
-
-### Multi-Platform Build
-
-The script checks for the presence of the multi-host Docker builder. If it is not installed, it will prompt to run an
-external script `create-multi-builder.sh` from the `swedenconnect/local-environment` repository.
-
-For more details on configuring Docker builders, you can
-check [Docker's official documentation](https://docs.docker.com/buildx/working-with-buildx/).
-
----
-
-## Pushing to GitHub Container Registry
-
-In addition to the above script, there is another bash script specifically designed for logging in to the GitHub
-Container Registry and pushing the Docker image to it.
-
-### Usage
-
-The script requires two environment variables to be set:
-
-- `GITHUB_USER`: The GitHub username.
-- `GITHUB_ACCESS_TOKEN`: A GitHub personal access token with appropriate permissions.
-
-### Example Command
-
-```bash
-./scripts/build-and-push-github.sh
+To stop the docker compose environment:
+```shell
+docker compose down
 ```
 
-### Script Structure
+### 2. Start the Application
 
-The script performs the following tasks:
+You can run the application using Maven or your IDE. 
 
-1. **Check for required environment variables.**
-2. **Log in to the GitHub Container Registry using the provided credentials.**
-3. **Build and push the Docker image using the `build-and-push.sh` script.**
+**Using Maven:**
 
-For detailed information on configuring and using the GitHub Container Registry, refer to
-the [GitHub documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
+From the project root (or `service` directory), run:
+```shell
+mvn spring-boot:run -pl service \
+-Dspring-boot.run.arguments="--spring.profiles.active=docker --spring.config.import=../config/local/application-docker.yml"
+```
+
+
+**Using IntelliJ IDEA:**
+
+1.  Create a generic "Application" or "Spring Boot" run configuration.
+2.  Set the **Main Class** to `se.swedenconnect.oidf.registry.RegistryApplication` 
+3.  In **Program Arguments** add:```--spring.profiles.active=docker --spring.config.import=config/local/application-docker.yml```
+4.  Run the configuration.
+
+### 3. Verify Setup
+
+Once the application is running, you can access the following endpoints:
+
+*   **Health Check:** [localhost:8011/actuator/health](http://localhost:8011/actuator/health)
+*   **API Documentation:** [localhost:8010/swagger-ui/index.html](http://localhost:8010/swagger-ui/index.html)
+*   **OpenAPI Specification:** [localhost:8010/v3/api-docs](http://localhost:8010/v3/api-docs)
+
+> **WARNING:** This Docker Compose setup is intended **strictly for local development**. It uses HTTP, self-signed certificates (where applicable), and default passwords. A production setup mandates HTTPS, valid certificates, and hardened security configurations.
 
 ---
+## Configuration
 
-For any further assistance, refer to the project's documentation or seek support from the development team.
+The local environment configuration is primarily handled in:
+
+*   `config/local/application-docker.yml`: Overrides for the local profile (server port, database connection, logging).
+*   `config/local/docker-compose.yml`: Container definitions for local dependencies.
 
 ---
-Copyright &copy; 2025, [SwedenConnect](http://www.swedenconnect.se). Licensed under version 2.0 of
-the [Apache License](http://www.apache.org/licenses/LICENSE-2.0).
+## Coding Style and Contribution
+
+When contributing to this project:
+
+1. Follow the existing code style and conventions
+2. Write tests for new features
+3. Update documentation as needed
+4. Ensure all tests pass before submitting a pull request
+
+Read more in the [Contributing Guide](../CONTRIBUTING.md).
+
+> **Note:** Don't forget to run mvn verify (or mvn install) to activate the style checks. These will be run automatically
+> by GitHub Actions, and if the checks fail, the pull request will not be merged.
+
+The Maven-driven code style rules can be viewed at the
+[openid-federation-commons](https://github.com/swedenconnect/openid-federation-commons/blob/main/pom.xml#L156) repository.
+*   This project uses **Lombok**. Ensure your IDE has the Lombok plugin installed and annotation processing enabled.
+
+---
+## Additional Resources
+- [Configuration guide](configuration.md)
+- [Audit Event documentation](audit.md)
+- [Validation documentation](validation.md)
+---
+
+Copyright &copy; 2025, [SwedenConnect](https://www.swedenconnect.se). Licensed under version 2.0 of
+the [Apache License](https://www.apache.org/licenses/LICENSE-2.0).

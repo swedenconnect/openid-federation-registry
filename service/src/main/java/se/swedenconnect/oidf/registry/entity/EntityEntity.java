@@ -26,7 +26,7 @@ import java.util.UUID;
 
 /**
  * EntityDao is a JPA entity representing a database table for storing entities as JSON objects with the objects Subject
- * value as key.
+ * value as a key.
  *
  * @author David Goldring
  */
