@@ -22,14 +22,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import se.swedenconnect.oidf.registry.api.dto.input.FederationEntityInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.HostedEntityInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.PolicyInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.ResolverInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.SubordinateEntityInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.TrustAnchorInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.TrustmarkInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.TrustmarkSubjectInputDto;
+import se.swedenconnect.oidf.registry.api.dto.FederationEntityDto;
+import se.swedenconnect.oidf.registry.api.dto.HostedEntityDto;
+import se.swedenconnect.oidf.registry.api.dto.PolicyDto;
+import se.swedenconnect.oidf.registry.api.dto.ResolverDto;
+import se.swedenconnect.oidf.registry.api.dto.SubordinateEntityDto;
+import se.swedenconnect.oidf.registry.api.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.api.dto.TrustmarkDto;
+import se.swedenconnect.oidf.registry.api.dto.TrustmarkSubjectDto;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
@@ -314,7 +314,7 @@ public final class EntityToDomain {
   // DTO -> Domain mapping
   // -------------------------------------------------------------------------
 
-  public static FederationEntity toDomain(final FederationEntityInputDto dto) {
+  public static FederationEntity toDomain(final FederationEntityDto dto) {
     return FederationEntity.builder()
         .subject(toEntityID(dto.getSubject()))
         .issuer(toEntityID(dto.getIssuer()))
@@ -322,7 +322,7 @@ public final class EntityToDomain {
         .build();
   }
 
-  public static HostedEntity toDomain(final HostedEntityInputDto dto) {
+  public static HostedEntity toDomain(final HostedEntityDto dto) {
     return HostedEntity.builder()
         .subject(toEntityID(dto.getSubject()))
         .issuer(toEntityID(dto.getIssuer()))
@@ -330,7 +330,7 @@ public final class EntityToDomain {
         .build();
   }
 
-  public static SubordinateEntity toDomain(final SubordinateEntityInputDto dto) {
+  public static SubordinateEntity toDomain(final SubordinateEntityDto dto) {
     final SubordinateEntity.SubordinateEntityBuilder<?, ?> builder = SubordinateEntity.builder()
         .subject(toEntityID(dto.getSubject()))
         .issuer(toEntityID(dto.getIssuer()));
@@ -341,14 +341,14 @@ public final class EntityToDomain {
     return builder.build();
   }
 
-  public static Policies toDomain(final PolicyInputDto dto) {
+  public static Policies toDomain(final PolicyDto dto) {
     return Policies.builder()
         .name(dto.getName())
         .policy(dto.getPolicy())
         .build();
   }
 
-  public static TrustAnchor toDomain(final TrustAnchorInputDto dto) {
+  public static TrustAnchor toDomain(final TrustAnchorDto dto) {
     return TrustAnchor.builder()
         .entityId(toEntityID(dto.getEntityId()))
         .active(Boolean.TRUE.equals(dto.getActive()))
@@ -359,7 +359,7 @@ public final class EntityToDomain {
         .build();
   }
 
-  public static Resolver toDomain(final ResolverInputDto dto) {
+  public static Resolver toDomain(final ResolverDto dto) {
     final Resolver.ResolverBuilder builder = Resolver.builder()
         .entityId(toEntityID(dto.getEntityId()))
         .active(Boolean.TRUE.equals(dto.getActive()));
@@ -379,7 +379,7 @@ public final class EntityToDomain {
     return builder.build();
   }
 
-  public static Trustmark toDomain(final TrustmarkInputDto dto) {
+  public static Trustmark toDomain(final TrustmarkDto dto) {
     return Trustmark.builder()
         .trustmarkissuerId(dto.getTrustmarkissuerId())
         .trustMarkEntityId(dto.getTrustMarkEntityId())
@@ -389,17 +389,17 @@ public final class EntityToDomain {
         .build();
   }
 
-  public static TrustmarkSubject toDomain(final TrustmarkSubjectInputDto dto) {
+  public static TrustmarkSubject toDomain(final TrustmarkSubjectDto dto) {
     final TrustmarkSubject.TrustmarkSubjectBuilder builder = TrustmarkSubject.builder()
         .trustmarkId(toEntityID(dto.getTrustmarkId()))
         .subject(toEntityID(dto.getSubject()))
         .revoked(Boolean.TRUE.equals(dto.getRevoked()));
 
-    if (dto.getGranted() != null && !dto.getGranted().isBlank()) {
-      builder.granted(java.time.LocalDateTime.parse(dto.getGranted()));
+    if (dto.getGranted() != null) {
+      builder.granted(dto.getGranted());
     }
-    if (dto.getExpires() != null && !dto.getExpires().isBlank()) {
-      builder.expires(java.time.LocalDateTime.parse(dto.getExpires()));
+    if (dto.getExpires() != null) {
+      builder.expires(dto.getExpires());
     }
     return builder.build();
   }

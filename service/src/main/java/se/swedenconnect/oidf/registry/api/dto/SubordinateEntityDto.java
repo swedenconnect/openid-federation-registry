@@ -15,13 +15,15 @@
  */
 package se.swedenconnect.oidf.registry.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.util.UUID;
 
 /**
- * Output DTO for Subordinate Entity.
+ * DTO for Subordinate Entity. Used for both input (create/update) and output (get).
+ * The entityId field is read-only and will be ignored when deserializing from JSON input.
  *
  * @author Per Fredrik Plars
  */
@@ -29,7 +31,8 @@ import java.util.UUID;
 @Schema(name = "SubordinateEntity")
 public class SubordinateEntityDto {
 
-  @Schema(description = "Entity ID")
+  @Schema(description = "Entity ID", accessMode = Schema.AccessMode.READ_ONLY)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private UUID entityId;
 
   @Schema(description = "Subject (entity identifier)")

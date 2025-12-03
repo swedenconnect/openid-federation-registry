@@ -19,9 +19,6 @@ package se.swedenconnect.oidf.registry.service;
 import se.swedenconnect.oidf.registry.api.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.api.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.api.dto.SubordinateEntityDto;
-import se.swedenconnect.oidf.registry.api.dto.input.FederationEntityInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.HostedEntityInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.SubordinateEntityInputDto;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 
 import java.util.UUID;
@@ -34,30 +31,30 @@ import java.util.UUID;
 public interface EntityConfigService {
 
   FederationEntityDto createFederationEntity(OrganizationRecord organizationRecord,
-      UUID id, FederationEntityInputDto input);
+      UUID id, FederationEntityDto input);
 
   FederationEntityDto updateFederationEntity(OrganizationRecord organizationRecord,
-      UUID id, FederationEntityInputDto input);
+      UUID id, FederationEntityDto input);
 
   FederationEntityDto getFederationEntity(OrganizationRecord organizationRecord, UUID id);
 
   void deleteFederationEntity(OrganizationRecord organizationRecord, UUID id);
 
   HostedEntityDto createHostedEntity(OrganizationRecord organizationRecord,
-      UUID id, HostedEntityInputDto input);
+      UUID id, HostedEntityDto input);
 
   HostedEntityDto updateHostedEntity(OrganizationRecord organizationRecord,
-      UUID id, HostedEntityInputDto input);
+      UUID id, HostedEntityDto input);
 
   HostedEntityDto getHostedEntity(OrganizationRecord organizationRecord, UUID id);
 
   void deleteHostedEntity(OrganizationRecord organizationRecord, UUID id);
 
   SubordinateEntityDto createSubordinateEntity(OrganizationRecord organizationRecord,
-      UUID id, SubordinateEntityInputDto input);
+      UUID id, SubordinateEntityDto input);
 
   SubordinateEntityDto updateSubordinateEntity(OrganizationRecord organizationRecord,
-      UUID id, SubordinateEntityInputDto input);
+      UUID id, SubordinateEntityDto input);
 
   SubordinateEntityDto getSubordinateEntity(OrganizationRecord organizationRecord, UUID id);
 

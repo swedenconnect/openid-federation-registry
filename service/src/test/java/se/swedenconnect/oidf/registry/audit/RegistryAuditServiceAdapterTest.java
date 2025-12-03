@@ -16,33 +16,27 @@
 
 package se.swedenconnect.oidf.registry.audit;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.audit.AuditEvent;
-import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
-import se.swedenconnect.oidf.registry.entity.FkKeyType;
+import se.swedenconnect.oidf.registry.api.dto.PolicyDto;
 
 import java.util.Stack;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-
-/**
- * This class tests the `policyWrite` method in the {@link RegistryAuditServiceAdapter} class.
- * The `policyWrite` method is responsible for emitting an event indicating the creation or update of a policy record,
- * including JSON representations of the old and new policy records.
- *
- * @author Per Fredrik Plars
- */
 class RegistryAuditServiceAdapterTest {
 
+  /**
+   * This class tests the audit event methods in the `RegistryAuditServiceAdapter` class. The methods are
+   * responsible for emitting events indicating the creation, update, or deletion of various registry entities,
+   * including JSON representations of the old and new data.
+   */
 
   @Test
-  @DisplayName("Policy Write - should emit event with correct attributes")
-  void policyWrite_shouldEmitEventWithCorrectAttributes() throws JsonProcessingException {
-
+  void policyCreated_shouldEmitEventWithCorrectAttributes() {
     final Stack<AuditEvent> stack = new Stack<>();
     final RegistryAuditService auditService = new RegistryAuditLogger() {
       @Override
@@ -52,20 +46,65 @@ class RegistryAuditServiceAdapterTest {
       }
     };
 
-    final OptionsRecord record = new OptionsRecord();
-    auditService.optionsCreate(UUID.randomUUID(), FkKeyType.POLICIES, record, record);
-    assertEquals(stack.peek().getType(), RegistryAuditEventType.OPTIONS_CREATED.name());
+    final UUID policyId = UUID.randomUUID();
+    final PolicyDto newData = new PolicyDto();
+    newData.setPolicyId(policyId);
+    newData.setName("Test Policy");
+    auditService.policyCreated(policyId, null, newData);
+    assertEquals(stack.peek().getType(), RegistryAuditEventType.POLICY_CREATED.name());
     assertNull(stack.peek().getData().get("oldData"));
     assertNotNull(stack.peek().getData().get("newData"));
-    assertNotNull(stack.peek().getData().get("optionId"));
-    stack.clear();
-    final OptionsRecord record2 = new OptionsRecord();
-    auditService.optionsUpdate(UUID.randomUUID(), FkKeyType.POLICIES, record2, record2);
-    assertEquals(stack.peek().getType(), RegistryAuditEventType.OPTIONS_UPDATE.name());
-    assertNull(stack.peek().getData().get("oldData"));
-    assertNotNull(stack.peek().getData().get("newData"));
-    assertNotNull(stack.peek().getData().get("optionId"));
+    assertNotNull(stack.peek().getData().get("extId"));
+    assertEquals(policyId.toString(), stack.peek().getData().get("extId"));
+  }
 
+  @Test
+  void policyUpdated_shouldEmitEventWithCorrectAttributes() {
+    final Stack<AuditEvent> stack = new Stack<>();
+    final RegistryAuditService auditService = new RegistryAuditLogger() {
+      @Override
+      protected void emitEvent(final FederationAuditEvent event) {
+        super.emitEvent(event);
+        stack.push(event.toAuditEvent("<NoPrincipal>"));
+      }
+    };
+
+    final UUID policyId = UUID.randomUUID();
+    final PolicyDto oldData = new PolicyDto();
+    oldData.setPolicyId(policyId);
+    oldData.setName("Old Policy");
+    final PolicyDto newData = new PolicyDto();
+    newData.setPolicyId(policyId);
+    newData.setName("New Policy");
+    auditService.policyUpdated(policyId, oldData, newData);
+    assertEquals(stack.peek().getType(), RegistryAuditEventType.POLICY_UPDATED.name());
+    assertNotNull(stack.peek().getData().get("oldData"));
+    assertNotNull(stack.peek().getData().get("newData"));
+    assertNotNull(stack.peek().getData().get("extId"));
+    assertEquals(policyId.toString(), stack.peek().getData().get("extId"));
+  }
+
+  @Test
+  void policyDeleted_shouldEmitEventWithCorrectAttributes() {
+    final Stack<AuditEvent> stack = new Stack<>();
+    final RegistryAuditService auditService = new RegistryAuditLogger() {
+      @Override
+      protected void emitEvent(final FederationAuditEvent event) {
+        super.emitEvent(event);
+        stack.push(event.toAuditEvent("<NoPrincipal>"));
+      }
+    };
+
+    final UUID policyId = UUID.randomUUID();
+    final PolicyDto deletedData = new PolicyDto();
+    deletedData.setPolicyId(policyId);
+    deletedData.setName("Deleted Policy");
+    auditService.policyDeleted(policyId, deletedData);
+    assertEquals(stack.peek().getType(), RegistryAuditEventType.POLICY_DELETED.name());
+    assertNotNull(stack.peek().getData().get("oldData"));
+    assertNull(stack.peek().getData().get("newData"));
+    assertNotNull(stack.peek().getData().get("extId"));
+    assertEquals(policyId.toString(), stack.peek().getData().get("extId"));
   }
 
 }

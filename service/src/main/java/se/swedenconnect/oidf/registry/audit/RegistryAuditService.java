@@ -15,53 +15,245 @@
  */
 package se.swedenconnect.oidf.registry.audit;
 
-import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
-import se.swedenconnect.oidf.registry.entity.FkKeyType;
+import se.swedenconnect.oidf.registry.api.dto.FederationEntityDto;
+import se.swedenconnect.oidf.registry.api.dto.HostedEntityDto;
+import se.swedenconnect.oidf.registry.api.dto.PolicyDto;
+import se.swedenconnect.oidf.registry.api.dto.ResolverDto;
+import se.swedenconnect.oidf.registry.api.dto.SubordinateEntityDto;
+import se.swedenconnect.oidf.registry.api.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.api.dto.TrustmarkDto;
+import se.swedenconnect.oidf.registry.api.dto.TrustmarkSubjectDto;
 
 import java.util.UUID;
 
 /**
- * RegistryAuditService defines an interface for auditing specific read operations within a federation API.
- * Implementations of this interface are responsible for logging or handling details related to these read actions,
- * often for monitoring or compliance purposes. The interface provides methods to audit the following types of
- * operations: - Reading information about a federation entity. - Reading details about a trust mark associated with a
- * federation entity. - Reading a federation policy by its unique identifier.
+ * RegistryAuditService defines an interface for auditing write operations within a federation API.
+ * Implementations of this interface are responsible for logging or handling details related to write actions,
+ * often for monitoring or compliance purposes. The interface provides methods to audit create, update, and delete
+ * operations for policies, entities, modules, and trustmark subjects.
  *
  * @author Per Fredrik Plars
  */
 public interface RegistryAuditService {
 
   /**
-   * Audits the creation of an options record. This method is invoked when a new options record is created and is used
-   * for purposes such as monitoring, compliance, or debugging. It logs or handles the necessary details to track the
-   * creation of the options record.
+   * Audits the creation of a policy.
    *
-   * @param optionsRecordId the unique identifier of the options record being created.
-   * @param fkKeyType the type of foreign key associated with the options record.
-   * @param oldRecord the previous state of the options record. Typically null during creation.
-   * @param newRecord the new state of the options record after it has been created.
+   * @param policyId the unique identifier of the policy being created.
+   * @param oldData the previous state of the policy. Typically null during creation.
+   * @param newData the new state of the policy after it has been created.
    */
-  void optionsCreate(UUID optionsRecordId, FkKeyType fkKeyType, OptionsRecord oldRecord, OptionsRecord newRecord);
+  void policyCreated(UUID policyId, PolicyDto oldData, PolicyDto newData);
 
   /**
-   * Audits the update operation performed on an options record. This method is invoked when an existing options record
-   * is modified within the system and is used for purposes such as monitoring, compliance, or debugging. It logs or
-   * handles the necessary details of the options record's state before and after the update.
+   * Audits the update operation performed on a policy.
    *
-   * @param optionsRecordId the unique identifier of the options record being updated.
-   * @param fkKeyType the type of foreign key associated with the options record.
-   * @param oldRecord the previous state of the options record before the update. Can be null if not applicable.
-   * @param newRecord the new state of the options record after the update.
+   * @param policyId the unique identifier of the policy being updated.
+   * @param oldData the previous state of the policy before the update.
+   * @param newData the new state of the policy after the update.
    */
-  void optionsUpdate(UUID optionsRecordId, FkKeyType fkKeyType, OptionsRecord oldRecord, OptionsRecord newRecord);
+  void policyUpdated(UUID policyId, PolicyDto oldData, PolicyDto newData);
 
   /**
-   * Logs or handles the deletion of an options record. This method is used to audit the removal of an options record
-   * from the system for purposes such as monitoring, compliance, or debugging.
+   * Audits the deletion of a policy.
    *
-   * @param optionsRecordId the unique identifier of the options record being deleted.
-   * @param fkKeyType the type of foreign key associated with the options record.
-   * @param deletedRecord the record containing the details of the deleted options record.
+   * @param policyId the unique identifier of the policy being deleted.
+   * @param deletedData the data of the deleted policy.
    */
-  void optionsDelete(UUID optionsRecordId, FkKeyType fkKeyType, OptionsRecord deletedRecord);
+  void policyDeleted(UUID policyId, PolicyDto deletedData);
+
+  /**
+   * Audits the creation of a federation entity.
+   *
+   * @param entityId the unique identifier of the entity being created.
+   * @param issuer the issuer of the entity.
+   * @param subject the subject of the entity.
+   * @param oldData the previous state of the entity. Typically null during creation.
+   * @param newData the new state of the entity after it has been created.
+   */
+  void federationEntityCreated(UUID entityId, String issuer, String subject, FederationEntityDto oldData,
+      FederationEntityDto newData);
+
+  /**
+   * Audits the update operation performed on a federation entity.
+   *
+   * @param entityId the unique identifier of the entity being updated.
+   * @param issuer the issuer of the entity.
+   * @param subject the subject of the entity.
+   * @param oldData the previous state of the entity before the update.
+   * @param newData the new state of the entity after the update.
+   */
+  void federationEntityUpdated(UUID entityId, String issuer, String subject, FederationEntityDto oldData,
+      FederationEntityDto newData);
+
+  /**
+   * Audits the deletion of a federation entity.
+   *
+   * @param entityId the unique identifier of the entity being deleted.
+   * @param issuer the issuer of the entity.
+   * @param subject the subject of the entity.
+   * @param deletedData the data of the deleted entity.
+   */
+  void federationEntityDeleted(UUID entityId, String issuer, String subject, FederationEntityDto deletedData);
+
+  /**
+   * Audits the creation of a hosted entity.
+   *
+   * @param entityId the unique identifier of the entity being created.
+   * @param oldData the previous state of the entity. Typically null during creation.
+   * @param newData the new state of the entity after it has been created.
+   */
+  void hostedEntityCreated(UUID entityId, HostedEntityDto oldData, HostedEntityDto newData);
+
+  /**
+   * Audits the update operation performed on a hosted entity.
+   *
+   * @param entityId the unique identifier of the entity being updated.
+   * @param oldData the previous state of the entity before the update.
+   * @param newData the new state of the entity after the update.
+   */
+  void hostedEntityUpdated(UUID entityId, HostedEntityDto oldData, HostedEntityDto newData);
+
+  /**
+   * Audits the deletion of a hosted entity.
+   *
+   * @param entityId the unique identifier of the entity being deleted.
+   * @param deletedData the data of the deleted entity.
+   */
+  void hostedEntityDeleted(UUID entityId, HostedEntityDto deletedData);
+
+  /**
+   * Audits the creation of a subordinate entity.
+   *
+   * @param entityId the unique identifier of the entity being created.
+   * @param oldData the previous state of the entity. Typically null during creation.
+   * @param newData the new state of the entity after it has been created.
+   */
+  void subordinateEntityCreated(UUID entityId, SubordinateEntityDto oldData, SubordinateEntityDto newData);
+
+  /**
+   * Audits the update operation performed on a subordinate entity.
+   *
+   * @param entityId the unique identifier of the entity being updated.
+   * @param oldData the previous state of the entity before the update.
+   * @param newData the new state of the entity after the update.
+   */
+  void subordinateEntityUpdated(UUID entityId, SubordinateEntityDto oldData, SubordinateEntityDto newData);
+
+  /**
+   * Audits the deletion of a subordinate entity.
+   *
+   * @param entityId the unique identifier of the entity being deleted.
+   * @param deletedData the data of the deleted entity.
+   */
+  void subordinateEntityDeleted(UUID entityId, SubordinateEntityDto deletedData);
+
+  /**
+   * Audits the creation of a trust anchor module.
+   *
+   * @param moduleId the unique identifier of the module being created.
+   * @param oldData the previous state of the module. Typically null during creation.
+   * @param newData the new state of the module after it has been created.
+   */
+  void trustAnchorCreated(UUID moduleId, TrustAnchorDto oldData, TrustAnchorDto newData);
+
+  /**
+   * Audits the update operation performed on a trust anchor module.
+   *
+   * @param moduleId the unique identifier of the module being updated.
+   * @param oldData the previous state of the module before the update.
+   * @param newData the new state of the module after the update.
+   */
+  void trustAnchorUpdated(UUID moduleId, TrustAnchorDto oldData, TrustAnchorDto newData);
+
+  /**
+   * Audits the deletion of a trust anchor module.
+   *
+   * @param moduleId the unique identifier of the module being deleted.
+   * @param deletedData the data of the deleted module.
+   */
+  void trustAnchorDeleted(UUID moduleId, TrustAnchorDto deletedData);
+
+  /**
+   * Audits the creation of a resolver module.
+   *
+   * @param moduleId the unique identifier of the module being created.
+   * @param oldData the previous state of the module. Typically null during creation.
+   * @param newData the new state of the module after it has been created.
+   */
+  void resolverCreated(UUID moduleId, ResolverDto oldData, ResolverDto newData);
+
+  /**
+   * Audits the update operation performed on a resolver module.
+   *
+   * @param moduleId the unique identifier of the module being updated.
+   * @param oldData the previous state of the module before the update.
+   * @param newData the new state of the module after the update.
+   */
+  void resolverUpdated(UUID moduleId, ResolverDto oldData, ResolverDto newData);
+
+  /**
+   * Audits the deletion of a resolver module.
+   *
+   * @param moduleId the unique identifier of the module being deleted.
+   * @param deletedData the data of the deleted module.
+   */
+  void resolverDeleted(UUID moduleId, ResolverDto deletedData);
+
+  /**
+   * Audits the creation of a trustmark.
+   *
+   * @param trustmarkId the unique identifier of the trustmark being created.
+   * @param oldData the previous state of the trustmark. Typically null during creation.
+   * @param newData the new state of the trustmark after it has been created.
+   */
+  void trustmarkCreated(UUID trustmarkId, TrustmarkDto oldData, TrustmarkDto newData);
+
+  /**
+   * Audits the update operation performed on a trustmark.
+   *
+   * @param trustmarkId the unique identifier of the trustmark being updated.
+   * @param oldData the previous state of the trustmark before the update.
+   * @param newData the new state of the trustmark after the update.
+   */
+  void trustmarkUpdated(UUID trustmarkId, TrustmarkDto oldData, TrustmarkDto newData);
+
+  /**
+   * Audits the deletion of a trustmark.
+   *
+   * @param trustmarkId the unique identifier of the trustmark being deleted.
+   * @param deletedData the data of the deleted trustmark.
+   */
+  void trustmarkDeleted(UUID trustmarkId, TrustmarkDto deletedData);
+
+  /**
+   * Audits the creation of a trustmark subject.
+   *
+   * @param trustmarkSubjectId the unique identifier of the trustmark subject being created.
+   * @param trustmarkId the unique identifier of the associated trustmark.
+   * @param oldData the previous state of the trustmark subject. Typically null during creation.
+   * @param newData the new state of the trustmark subject after it has been created.
+   */
+  void trustmarkSubjectCreated(UUID trustmarkSubjectId, UUID trustmarkId, TrustmarkSubjectDto oldData,
+      TrustmarkSubjectDto newData);
+
+  /**
+   * Audits the update operation performed on a trustmark subject.
+   *
+   * @param trustmarkSubjectId the unique identifier of the trustmark subject being updated.
+   * @param trustmarkId the unique identifier of the associated trustmark.
+   * @param oldData the previous state of the trustmark subject before the update.
+   * @param newData the new state of the trustmark subject after the update.
+   */
+  void trustmarkSubjectUpdated(UUID trustmarkSubjectId, UUID trustmarkId, TrustmarkSubjectDto oldData,
+      TrustmarkSubjectDto newData);
+
+  /**
+   * Audits the deletion of a trustmark subject.
+   *
+   * @param trustmarkSubjectId the unique identifier of the trustmark subject being deleted.
+   * @param trustmarkId the unique identifier of the associated trustmark.
+   * @param deletedData the data of the deleted trustmark subject.
+   */
+  void trustmarkSubjectDeleted(UUID trustmarkSubjectId, UUID trustmarkId, TrustmarkSubjectDto deletedData);
 }

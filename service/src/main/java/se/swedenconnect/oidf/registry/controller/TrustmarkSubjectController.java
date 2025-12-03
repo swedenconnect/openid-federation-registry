@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.registry.api.dto.TrustmarkSubjectDto;
-import se.swedenconnect.oidf.registry.api.dto.input.TrustmarkSubjectInputDto;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.service.TrustmarkSubjectService;
 import se.swedenconnect.oidf.registry.validation.ValidateDto;
@@ -53,7 +52,7 @@ public class TrustmarkSubjectController {
   @PostMapping
   @Operation(summary = "Create trust mark subject with auto-generated ID")
   public ResponseEntity<TrustmarkSubjectDto> createTrustmarkSubject(
-      @RequestBody final TrustmarkSubjectInputDto body,
+      @RequestBody final TrustmarkSubjectDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     final UUID id = UUID.randomUUID();
@@ -64,7 +63,7 @@ public class TrustmarkSubjectController {
   @Operation(summary = "Create trust mark subject with specified ID")
   public ResponseEntity<TrustmarkSubjectDto> createTrustmarkSubjectWithId(
       @PathVariable("id") final UUID id,
-      @RequestBody final TrustmarkSubjectInputDto body,
+      @RequestBody final TrustmarkSubjectDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.trustmarkSubjectService.createTrustmarkSubject(organizationRecord, id, body));
@@ -74,7 +73,7 @@ public class TrustmarkSubjectController {
   @Operation(summary = "Update trust mark subject")
   public ResponseEntity<TrustmarkSubjectDto> updateTrustmarkSubject(
       @PathVariable("id") final UUID id,
-      @RequestBody final TrustmarkSubjectInputDto body,
+      @RequestBody final TrustmarkSubjectDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.trustmarkSubjectService.updateTrustmarkSubject(organizationRecord, id, body));

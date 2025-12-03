@@ -32,9 +32,6 @@ import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.registry.api.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.api.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.api.dto.SubordinateEntityDto;
-import se.swedenconnect.oidf.registry.api.dto.input.FederationEntityInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.HostedEntityInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.SubordinateEntityInputDto;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.service.EntityConfigService;
 import se.swedenconnect.oidf.registry.validation.ValidateDto;
@@ -57,7 +54,7 @@ public class EntityConfigController {
   @PostMapping("/federation")
   @Operation(summary = "Create federation entity with auto-generated ID")
   public ResponseEntity<FederationEntityDto> createFederationEntity(
-      @RequestBody final FederationEntityInputDto body,
+      @RequestBody final FederationEntityDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     final UUID id = UUID.randomUUID();
@@ -68,7 +65,7 @@ public class EntityConfigController {
   @Operation(summary = "Create federation entity with specified ID")
   public ResponseEntity<FederationEntityDto> createFederationEntityWithId(
       @PathVariable("id") final UUID id,
-      @RequestBody final FederationEntityInputDto body,
+      @RequestBody final FederationEntityDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.entityConfigService.createFederationEntity(organizationRecord, id, body));
@@ -78,7 +75,7 @@ public class EntityConfigController {
   @Operation(summary = "Update federation entity")
   public ResponseEntity<FederationEntityDto> updateFederationEntity(
       @PathVariable("id") final UUID id,
-      @RequestBody final FederationEntityInputDto body,
+      @RequestBody final FederationEntityDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.entityConfigService.updateFederationEntity(organizationRecord, id, body));
@@ -104,7 +101,7 @@ public class EntityConfigController {
   @PostMapping("/hosted")
   @Operation(summary = "Create hosted entity with auto-generated ID")
   public ResponseEntity<HostedEntityDto> createHostedEntity(
-      @RequestBody final HostedEntityInputDto body,
+      @RequestBody final HostedEntityDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     final UUID id = UUID.randomUUID();
@@ -115,7 +112,7 @@ public class EntityConfigController {
   @Operation(summary = "Create hosted entity with specified ID")
   public ResponseEntity<HostedEntityDto> createHostedEntityWithId(
       @PathVariable("id") final UUID id,
-      @RequestBody final HostedEntityInputDto body,
+      @RequestBody final HostedEntityDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.entityConfigService.createHostedEntity(organizationRecord, id, body));
@@ -125,7 +122,7 @@ public class EntityConfigController {
   @Operation(summary = "Update hosted entity")
   public ResponseEntity<HostedEntityDto> updateHostedEntity(
       @PathVariable("id") final UUID id,
-      @RequestBody final HostedEntityInputDto body,
+      @RequestBody final HostedEntityDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.entityConfigService.updateHostedEntity(organizationRecord, id, body));
@@ -151,7 +148,7 @@ public class EntityConfigController {
   @PostMapping("/subordinate")
   @Operation(summary = "Create subordinate entity with auto-generated ID")
   public ResponseEntity<SubordinateEntityDto> createSubordinateEntity(
-      @RequestBody final SubordinateEntityInputDto body,
+      @RequestBody final SubordinateEntityDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     final UUID id = UUID.randomUUID();
@@ -162,7 +159,7 @@ public class EntityConfigController {
   @Operation(summary = "Create subordinate entity with specified ID")
   public ResponseEntity<SubordinateEntityDto> createSubordinateEntityWithId(
       @PathVariable("id") final UUID id,
-      @RequestBody final SubordinateEntityInputDto body,
+      @RequestBody final SubordinateEntityDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.entityConfigService.createSubordinateEntity(organizationRecord, id, body));
@@ -172,7 +169,7 @@ public class EntityConfigController {
   @Operation(summary = "Update subordinate entity")
   public ResponseEntity<SubordinateEntityDto> updateSubordinateEntity(
       @PathVariable("id") final UUID id,
-      @RequestBody final SubordinateEntityInputDto body,
+      @RequestBody final SubordinateEntityDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.entityConfigService.updateSubordinateEntity(organizationRecord, id, body));

@@ -15,24 +15,31 @@
  */
 package se.swedenconnect.oidf.registry.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * PolicyDao is a JPA entity representing a database table for storing policies as JSON objects with the policy id as
- * key.
+ * DTO for policy configuration. Used for both input (create/update) and output (get).
+ * The policyId field is read-only and will be ignored when deserializing from JSON input.
  *
  * @author Per Fredrik Plars
  */
 @Data
+@Schema(name = "Policy")
 public class PolicyDto {
 
+  @Schema(description = "Policy ID", accessMode = Schema.AccessMode.READ_ONLY)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private UUID policyId;
 
+  @Schema(description = "Policy name", example = "Default OIDC RP policy")
   private String name;
 
+  @Schema(description = "JSON policy document")
   private Map<String, Object> policy;
 
 }

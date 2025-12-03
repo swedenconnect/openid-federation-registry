@@ -22,9 +22,7 @@ import se.swedenconnect.oidf.registry.api.dto.EntityToDto;
 import se.swedenconnect.oidf.registry.api.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.api.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.api.dto.SubordinateEntityDto;
-import se.swedenconnect.oidf.registry.api.dto.input.FederationEntityInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.HostedEntityInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.SubordinateEntityInputDto;
+import se.swedenconnect.oidf.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
@@ -46,11 +44,14 @@ public class EntityConfigServiceImpl implements EntityConfigService {
 
   private final EntityRepository entityRepository;
   private final OrganizationService organizationService;
+  private final RegistryAuditService auditService;
 
   public EntityConfigServiceImpl(final EntityRepository entityRepository,
-      final OrganizationService organizationService) {
+      final OrganizationService organizationService,
+      final RegistryAuditService auditService) {
     this.entityRepository = entityRepository;
     this.organizationService = organizationService;
+    this.auditService = auditService;
   }
 
   private OrganizationEntity resolveOrganization(final OrganizationRecord organizationRecord) {
@@ -73,7 +74,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   @Override
   @Transactional
   public FederationEntityDto createFederationEntity(final OrganizationRecord organizationRecord,
-      final UUID id, final FederationEntityInputDto input) {
+      final UUID id, final FederationEntityDto input) {
 
     final OrganizationEntity org = this.resolveOrganization(organizationRecord);
     final PolicyEntity policy = null; // policy relation can be handled later if needed
@@ -82,21 +83,26 @@ public class EntityConfigServiceImpl implements EntityConfigService {
         id, input, EntityKeyType.FEDERATION_ENTITY, org, policy);
 
     this.entityRepository.save(entity);
-    return EntityToDto.toDto(entity);
+    final FederationEntityDto dto = EntityToDto.toDto(entity);
+    this.auditService.federationEntityCreated(id, dto.getIssuer(), dto.getSubject(), null, dto);
+    return dto;
   }
 
   @Override
   @Transactional
   public FederationEntityDto updateFederationEntity(final OrganizationRecord organizationRecord,
-      final UUID id, final FederationEntityInputDto input) {
+      final UUID id, final FederationEntityDto input) {
 
     final EntityEntity existing = this.findEntityOrThrow(
         organizationRecord, id, EntityKeyType.FEDERATION_ENTITY);
+    final FederationEntityDto oldDto = EntityToDto.toDto(existing);
 
     EntityToDto.updateEntity(existing, input);
 
     this.entityRepository.save(existing);
-    return EntityToDto.toDto(existing);
+    final FederationEntityDto newDto = EntityToDto.toDto(existing);
+    this.auditService.federationEntityUpdated(id, newDto.getIssuer(), newDto.getSubject(), oldDto, newDto);
+    return newDto;
   }
 
   @Override
@@ -113,7 +119,9 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   public void deleteFederationEntity(final OrganizationRecord organizationRecord, final UUID id) {
     final EntityEntity entity = this.findEntityOrThrow(
         organizationRecord, id, EntityKeyType.FEDERATION_ENTITY);
+    final FederationEntityDto dto = EntityToDto.toDto(entity);
     this.entityRepository.delete(entity);
+    this.auditService.federationEntityDeleted(id, dto.getIssuer(), dto.getSubject(), dto);
   }
 
   // ---------------------------------------------------------------------------
@@ -123,7 +131,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   @Override
   @Transactional
   public HostedEntityDto createHostedEntity(final OrganizationRecord organizationRecord,
-      final UUID id, final HostedEntityInputDto input) {
+      final UUID id, final HostedEntityDto input) {
 
     final OrganizationEntity org = this.resolveOrganization(organizationRecord);
     final PolicyEntity policy = null;
@@ -132,21 +140,26 @@ public class EntityConfigServiceImpl implements EntityConfigService {
         id, input, EntityKeyType.HOSTED_ENTITY, org, policy);
 
     this.entityRepository.save(entity);
-    return EntityToDto.toDtoHosted(entity);
+    final HostedEntityDto dto = EntityToDto.toDtoHosted(entity);
+    this.auditService.hostedEntityCreated(id, null, dto);
+    return dto;
   }
 
   @Override
   @Transactional
   public HostedEntityDto updateHostedEntity(final OrganizationRecord organizationRecord,
-      final UUID id, final HostedEntityInputDto input) {
+      final UUID id, final HostedEntityDto input) {
 
     final EntityEntity existing = this.findEntityOrThrow(
         organizationRecord, id, EntityKeyType.HOSTED_ENTITY);
+    final HostedEntityDto oldDto = EntityToDto.toDtoHosted(existing);
 
     EntityToDto.updateEntity(existing, input);
 
     this.entityRepository.save(existing);
-    return EntityToDto.toDtoHosted(existing);
+    final HostedEntityDto newDto = EntityToDto.toDtoHosted(existing);
+    this.auditService.hostedEntityUpdated(id, oldDto, newDto);
+    return newDto;
   }
 
   @Override
@@ -163,7 +176,9 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   public void deleteHostedEntity(final OrganizationRecord organizationRecord, final UUID id) {
     final EntityEntity entity = this.findEntityOrThrow(
         organizationRecord, id, EntityKeyType.HOSTED_ENTITY);
+    final HostedEntityDto dto = EntityToDto.toDtoHosted(entity);
     this.entityRepository.delete(entity);
+    this.auditService.hostedEntityDeleted(id, dto);
   }
 
   // ---------------------------------------------------------------------------
@@ -173,7 +188,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   @Override
   @Transactional
   public SubordinateEntityDto createSubordinateEntity(final OrganizationRecord organizationRecord,
-      final UUID id, final SubordinateEntityInputDto input) {
+      final UUID id, final SubordinateEntityDto input) {
 
     final OrganizationEntity org = this.resolveOrganization(organizationRecord);
     final PolicyEntity policy = null;
@@ -182,21 +197,26 @@ public class EntityConfigServiceImpl implements EntityConfigService {
         id, input, EntityKeyType.SUBORDINATE_ENTITY, org, policy);
 
     this.entityRepository.save(entity);
-    return EntityToDto.toDtoSubordinate(entity);
+    final SubordinateEntityDto dto = EntityToDto.toDtoSubordinate(entity);
+    this.auditService.subordinateEntityCreated(id, null, dto);
+    return dto;
   }
 
   @Override
   @Transactional
   public SubordinateEntityDto updateSubordinateEntity(final OrganizationRecord organizationRecord,
-      final UUID id, final SubordinateEntityInputDto input) {
+      final UUID id, final SubordinateEntityDto input) {
 
     final EntityEntity existing = this.findEntityOrThrow(
         organizationRecord, id, EntityKeyType.SUBORDINATE_ENTITY);
+    final SubordinateEntityDto oldDto = EntityToDto.toDtoSubordinate(existing);
 
     EntityToDto.updateEntity(existing, input);
 
     this.entityRepository.save(existing);
-    return EntityToDto.toDtoSubordinate(existing);
+    final SubordinateEntityDto newDto = EntityToDto.toDtoSubordinate(existing);
+    this.auditService.subordinateEntityUpdated(id, oldDto, newDto);
+    return newDto;
   }
 
   @Override
@@ -213,7 +233,9 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   public void deleteSubordinateEntity(final OrganizationRecord organizationRecord, final UUID id) {
     final EntityEntity entity = this.findEntityOrThrow(
         organizationRecord, id, EntityKeyType.SUBORDINATE_ENTITY);
+    final SubordinateEntityDto dto = EntityToDto.toDtoSubordinate(entity);
     this.entityRepository.delete(entity);
+    this.auditService.subordinateEntityDeleted(id, dto);
   }
 }
 

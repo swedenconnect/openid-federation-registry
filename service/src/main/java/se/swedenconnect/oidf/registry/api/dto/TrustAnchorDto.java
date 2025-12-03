@@ -15,6 +15,7 @@
  */
 package se.swedenconnect.oidf.registry.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -22,7 +23,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Output DTO for Trust Anchor module.
+ * DTO for Trust Anchor module. Used for both input (create/update) and output (get).
+ * The moduleId field is read-only and will be ignored when deserializing from JSON input.
  *
  * @author Per Fredrik Plars
  */
@@ -30,7 +32,8 @@ import java.util.UUID;
 @Schema(name = "TrustAnchor")
 public class TrustAnchorDto {
 
-  @Schema(description = "Module ID")
+  @Schema(description = "Module ID", accessMode = Schema.AccessMode.READ_ONLY)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private UUID moduleId;
 
   @Schema(description = "Entity identifier for this trust anchor")
