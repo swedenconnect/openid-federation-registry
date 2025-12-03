@@ -14,15 +14,12 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.entity;
+package se.swedenconnect.oidf.registry.domain;
 
 /**
- * Enumeration representing the types of foreign keys (EntityType) used within the system.
+ * Marks federation modules
  *
  * @author Per Fredrik Plars
  */
-public enum EntityKeyType {
-  FEDERATION_ENTITY,
-  SUBORDINATE_ENTITY,
-  HOSTED_ENTITY,
+public interface FederationModule extends ToJson {
 }

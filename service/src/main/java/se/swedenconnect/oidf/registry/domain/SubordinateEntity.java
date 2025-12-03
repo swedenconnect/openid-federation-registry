@@ -14,15 +14,24 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.entity;
+package se.swedenconnect.oidf.registry.domain;
+
+import com.nimbusds.jose.jwk.JWKSet;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.experimental.SuperBuilder;
 
 /**
- * Enumeration representing the types of foreign keys (EntityType) used within the system.
+ * oidf-entity-registry
  *
  * @author Per Fredrik Plars
  */
-public enum EntityKeyType {
-  FEDERATION_ENTITY,
-  SUBORDINATE_ENTITY,
-  HOSTED_ENTITY,
+@EqualsAndHashCode(callSuper = true)
+@Getter
+@SuperBuilder
+
+public class SubordinateEntity extends Entity {
+
+  private JWKSet jwks;
+
 }

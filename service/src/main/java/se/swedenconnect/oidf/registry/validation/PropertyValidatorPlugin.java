@@ -14,15 +14,18 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.entity;
+package se.swedenconnect.oidf.registry.validation;
 
 /**
- * Enumeration representing the types of foreign keys (EntityType) used within the system.
+ * Interface for custom validators
  *
  * @author Per Fredrik Plars
  */
-public enum EntityKeyType {
-  FEDERATION_ENTITY,
-  SUBORDINATE_ENTITY,
-  HOSTED_ENTITY,
+public interface PropertyValidatorPlugin extends PropertyValidator {
+  /**
+   * Name of validator
+   *
+   * @return name of the validator
+   */
+  String name();
 }

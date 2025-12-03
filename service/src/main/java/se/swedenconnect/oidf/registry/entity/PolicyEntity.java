@@ -50,6 +50,13 @@ public class PolicyEntity extends BaseEntity {
   @JoinColumn(name = "organization_id")
   private OrganizationEntity organization;
 
+  @Column(name = "name", nullable = false)
+  private String name;
+
+  @Column(name = "policy", nullable = false)
+  private String policy;
+
+
   @OneToMany(cascade = CascadeType.DETACH, fetch = FetchType.LAZY)
   @JoinColumn(name = "fk_id", referencedColumnName = "policy_id", insertable = false, updatable = false)
   @Filter(name = "fkTypeFilter", condition = "fk_type = :fkTypeParam")

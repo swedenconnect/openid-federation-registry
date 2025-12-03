@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
-package se.swedenconnect.oidf.registry.entity;
+package se.swedenconnect.oidf.registry.validation;
 
 /**
- * Enumeration representing the types of foreign keys (EntityType) used within the system.
+ * Interface used to register custom builder methods.
  *
  * @author Per Fredrik Plars
  */
-public enum EntityKeyType {
-  FEDERATION_ENTITY,
-  SUBORDINATE_ENTITY,
-  HOSTED_ENTITY,
+public interface BuilderExtension {
 }

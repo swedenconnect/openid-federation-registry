@@ -25,7 +25,6 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Representation of the HostedEntities in OidcService controller
@@ -60,12 +59,24 @@ public class OidfServiceHostedEntities {
 
     @JsonProperty("policy_record")
     @SerializedName("policy_record")
-    private PolicyRecord policyRecord;
+    private Map<String, Object> policyRecord;
+
+    @JsonProperty("override_configuration_location")
+    @SerializedName("override_configuration_location")
+    private String overrideConfigurationLocation;
+
+    @JsonProperty("metadata_policy_crit")
+    @SerializedName("metadata_policy_crit")
+    private List<String> metadataPolicyCrit;
+
+    @JsonProperty("crit")
+    @SerializedName("crit")
+    private List<String> crit;
 
     private String subject;
     private String issuer;
 
-    private JWKS jwks;
+    private Map<String, Object> jwks;
   }
 
   /**
@@ -76,7 +87,46 @@ public class OidfServiceHostedEntities {
   @AllArgsConstructor
   @NoArgsConstructor
   public static class HostedRecord {
-    private Metadata metadata;
+    private Map<String, Object> metadata;
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class FederationEntity {
+      @JsonProperty("federation_trust_mark_endpoint")
+      @SerializedName("federation_trust_mark_endpoint")
+      private String federationTrustMarkEndpoint;
+
+      @JsonProperty("federation_trust_mark_list_endpoint")
+      @SerializedName("federation_trust_mark_list_endpoint")
+      private String federationTrustMarkListEndpoint;
+
+      @JsonProperty("organization_name")
+      @SerializedName("organization_name")
+      private String organizationName;
+
+      @JsonProperty("federation_trust_mark_status_endpoint")
+      @SerializedName("federation_trust_mark_status_endpoint")
+      private String federationTrustMarkStatusEndpoint;
+
+      @JsonProperty("federation_discovery_endpoint")
+      @SerializedName("federation_discovery_endpoint")
+      private String federationDiscoveryEndpoint;
+
+      @JsonProperty("federation_resolve_endpoint")
+      @SerializedName("federation_resolve_endpoint")
+      private String federationResolveEndpoint;
+
+      @JsonProperty("federation_list_endpoint")
+      @SerializedName("federation_list_endpoint")
+      private String federationListEndpoint;
+
+      @JsonProperty("federation_fetch_endpoint")
+      @SerializedName("federation_fetch_endpoint")
+      private String federationFetchEndpoint;
+
+    }
   }
 
   /**
@@ -93,58 +143,53 @@ public class OidfServiceHostedEntities {
   @AllArgsConstructor
   @NoArgsConstructor
   public static class Metadata {
-    @JsonProperty("federation_entity")
-    @SerializedName("federation_entity")
+    // @JsonProperty("federation_entity")
+    // @SerializedName("federation_entity")
     private FederationEntity federationEntity;
-  }
 
-  /**
-   * Represents a Federation Entity Metadata
-   */
-  @Data
-  @Builder
-  @AllArgsConstructor
-  @NoArgsConstructor
-  public static class FederationEntity {
-    @JsonProperty("federation_trust_mark_endpoint")
-    @SerializedName("federation_trust_mark_endpoint")
-    private String federationTrustMarkEndpoint;
+    // How to handle the other metadatatypes ?
 
-    @JsonProperty("federation_trust_mark_list_endpoint")
-    @SerializedName("federation_trust_mark_list_endpoint")
-    private String federationTrustMarkListEndpoint;
+    /**
+     * Represents a Federation Entity Metadata
+     */
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class FederationEntity {
+      @JsonProperty("federation_trust_mark_endpoint")
+      @SerializedName("federation_trust_mark_endpoint")
+      private String federationTrustMarkEndpoint;
 
-    @JsonProperty("organization_name")
-    @SerializedName("organization_name")
-    private String organizationName;
+      @JsonProperty("federation_trust_mark_list_endpoint")
+      @SerializedName("federation_trust_mark_list_endpoint")
+      private String federationTrustMarkListEndpoint;
 
-    @JsonProperty("federation_trust_mark_status_endpoint")
-    @SerializedName("federation_trust_mark_status_endpoint")
-    private String federationTrustMarkStatusEndpoint;
+      @JsonProperty("organization_name")
+      @SerializedName("organization_name")
+      private String organizationName;
 
-  }
+      @JsonProperty("federation_trust_mark_status_endpoint")
+      @SerializedName("federation_trust_mark_status_endpoint")
+      private String federationTrustMarkStatusEndpoint;
 
-  /**
-   * Represents a record containing policy details for a hosted entity.
-   */
-  @Data
-  @Builder
-  @AllArgsConstructor
-  @NoArgsConstructor
-  public static class PolicyRecord {
-    private Map<String, Objects> policy;
-  }
+      @JsonProperty("federation_discovery_endpoint")
+      @SerializedName("federation_discovery_endpoint")
+      private String federationDiscoveryEndpoint;
 
-  /**
-   * Represents a JSON Web Key Set (JWKS), which is a JSON data structure that represents a set of public keys.
-   */
-  @Data
-  @Builder
-  @AllArgsConstructor
-  @NoArgsConstructor
-  public static class JWKS {
-    private List<Map<String, Objects>> keys;
+      @JsonProperty("federation_resolve_endpoint")
+      @SerializedName("federation_resolve_endpoint")
+      private String federationResolveEndpoint;
+
+      @JsonProperty("federation_list_endpoint")
+      @SerializedName("federation_list_endpoint")
+      private String federationListEndpoint;
+
+      @JsonProperty("federation_fetch_endpoint")
+      @SerializedName("federation_fetch_endpoint")
+      private String federationFetchEndpoint;
+
+    }
   }
 
 }
-

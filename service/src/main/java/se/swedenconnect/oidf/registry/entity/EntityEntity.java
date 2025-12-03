@@ -19,6 +19,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import se.swedenconnect.oidf.registry.domain.EntityToDomain;
 
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +44,9 @@ public class EntityEntity extends BaseEntity {
   @Column(name = "entity_type", nullable = false)
   @Enumerated(EnumType.STRING)
   private EntityKeyType entityType;
+
+  @Column(name = "jsondata")
+  private String jsondata;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "organization_id", nullable = false)
@@ -95,4 +99,21 @@ public class EntityEntity extends BaseEntity {
     return this.getSettingsEntity("subject").orElseThrow().getValue();
   }
 
+  /**
+   * Retrieves a {@link ModuleEntity} from the list of modules that matches the given module type.
+   *
+   * @param fkKeyType the type of the module to search for
+   * @return an {@link Optional} containing the matching {@link ModuleEntity} if found, or an empty {@link Optional} if
+   *     no match is found
+   */
+  public Optional<ModuleEntity> getModuleByType(FkKeyType fkKeyType) {
+    return this.getModules().stream()
+        .filter(moduleEntity -> moduleEntity.getModuleType().equals(fkKeyType.name()))
+        .findFirst();
+  }
+
+  @PostLoad
+  public void migrate() {
+    this.jsondata = EntityToDomain.map(this).toJson();
+  }
 }

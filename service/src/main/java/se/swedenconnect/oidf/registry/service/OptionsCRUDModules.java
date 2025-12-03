@@ -25,12 +25,23 @@ import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.Values;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.entity.*;
+import se.swedenconnect.oidf.registry.entity.EntityEntity;
+import se.swedenconnect.oidf.registry.entity.EntityKeyType;
+import se.swedenconnect.oidf.registry.entity.FkKeyType;
+import se.swedenconnect.oidf.registry.entity.ModuleEntity;
+import se.swedenconnect.oidf.registry.entity.SettingDataType;
+import se.swedenconnect.oidf.registry.entity.SettingsEntity;
+import se.swedenconnect.oidf.registry.errorhandling.ErrorTypes;
 import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.repository.ModuleRepository;
 import se.swedenconnect.oidf.registry.repository.SettingsRepository;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
 import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.NOT_FOUND;
 import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.RELATION_NOT_FOUND;
@@ -105,6 +116,11 @@ public class OptionsCRUDModules extends BaseOptionsCRUD {
 
     final EntityEntity entityEntity = this.loadEntityThrowIfNotExist(organizationRecord, validatedInData);
     ruleIssuerAndSubjectTheSameOrTrowException(entityEntity);
+    if (entityEntity.getModuleByType(fkKeyType).isPresent()) {
+      throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
+          "A module of type %s already exists for entity %s".formatted(fkKeyType, entityEntity.getEntityId()));
+    }
+
     newModuleEntity.setEntity(entityEntity);
 
     final ModuleEntity savedModuleEntity = this.moduleRepository.saveAndFlush(newModuleEntity);

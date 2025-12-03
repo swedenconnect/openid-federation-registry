@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
-package se.swedenconnect.oidf.registry.entity;
+package se.swedenconnect.oidf.registry.validation;
 
 /**
- * Enumeration representing the types of foreign keys (EntityType) used within the system.
+ * Validates specific parts of a metadata section
  *
  * @author Per Fredrik Plars
  */
-public enum EntityKeyType {
-  FEDERATION_ENTITY,
-  SUBORDINATE_ENTITY,
-  HOSTED_ENTITY,
+public interface MetadataValidator {
+  /**
+   * Tests if this validator supports this specific node.
+   *
+   * @param metadataNodeName nodename ex openid_relyingparty
+   * @return true if supported
+   */
+  boolean supports(final String metadataNodeName);
+
 }

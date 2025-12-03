@@ -14,15 +14,31 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.entity;
+package se.swedenconnect.oidf.registry.domain;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.Map;
+import java.util.UUID;
 
 /**
- * Enumeration representing the types of foreign keys (EntityType) used within the system.
+ * oidf-entity-registry
  *
  * @author Per Fredrik Plars
  */
-public enum EntityKeyType {
-  FEDERATION_ENTITY,
-  SUBORDINATE_ENTITY,
-  HOSTED_ENTITY,
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Policies {
+  private UUID policyId;
+  /** Name */
+  private String name;
+
+  /** Json policy document */
+  private Map<String, Object> policy;
+
 }

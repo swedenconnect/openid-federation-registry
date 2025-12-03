@@ -28,7 +28,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
  *
  * @author Per Fredrik Plars
  */
-class VariableValueResolverTest {
+class VariabelValueResolverTest {
 
   @Test
   @DisplayName("Insert template values - should succeed")
