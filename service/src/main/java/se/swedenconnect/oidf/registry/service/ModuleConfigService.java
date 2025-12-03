@@ -19,9 +19,6 @@ package se.swedenconnect.oidf.registry.service;
 import se.swedenconnect.oidf.registry.api.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.api.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.api.dto.TrustmarkDto;
-import se.swedenconnect.oidf.registry.api.dto.input.ResolverInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.TrustAnchorInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.TrustmarkInputDto;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 
 import java.util.UUID;
@@ -34,30 +31,30 @@ import java.util.UUID;
 public interface ModuleConfigService {
 
   TrustAnchorDto createTrustAnchor(OrganizationRecord organizationRecord,
-      UUID id, TrustAnchorInputDto input);
+      UUID id, TrustAnchorDto input);
 
   TrustAnchorDto updateTrustAnchor(OrganizationRecord organizationRecord,
-      UUID id, TrustAnchorInputDto input);
+      UUID id, TrustAnchorDto input);
 
   TrustAnchorDto getTrustAnchor(OrganizationRecord organizationRecord, UUID id);
 
   void deleteTrustAnchor(OrganizationRecord organizationRecord, UUID id);
 
   ResolverDto createResolver(OrganizationRecord organizationRecord,
-      UUID id, ResolverInputDto input);
+      UUID id, ResolverDto input);
 
   ResolverDto updateResolver(OrganizationRecord organizationRecord,
-      UUID id, ResolverInputDto input);
+      UUID id, ResolverDto input);
 
   ResolverDto getResolver(OrganizationRecord organizationRecord, UUID id);
 
   void deleteResolver(OrganizationRecord organizationRecord, UUID id);
 
   TrustmarkDto createTrustmark(OrganizationRecord organizationRecord,
-      UUID id, TrustmarkInputDto input);
+      UUID id, TrustmarkDto input);
 
   TrustmarkDto updateTrustmark(OrganizationRecord organizationRecord,
-      UUID id, TrustmarkInputDto input);
+      UUID id, TrustmarkDto input);
 
   TrustmarkDto getTrustmark(OrganizationRecord organizationRecord, UUID id);
 

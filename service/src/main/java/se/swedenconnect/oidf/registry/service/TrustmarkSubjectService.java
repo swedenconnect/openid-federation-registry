@@ -17,7 +17,6 @@
 package se.swedenconnect.oidf.registry.service;
 
 import se.swedenconnect.oidf.registry.api.dto.TrustmarkSubjectDto;
-import se.swedenconnect.oidf.registry.api.dto.input.TrustmarkSubjectInputDto;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 
 import java.util.UUID;
@@ -30,10 +29,10 @@ import java.util.UUID;
 public interface TrustmarkSubjectService {
 
   TrustmarkSubjectDto createTrustmarkSubject(OrganizationRecord organizationRecord,
-      UUID id, TrustmarkSubjectInputDto input);
+      UUID id, TrustmarkSubjectDto input);
 
   TrustmarkSubjectDto updateTrustmarkSubject(OrganizationRecord organizationRecord,
-      UUID id, TrustmarkSubjectInputDto input);
+      UUID id, TrustmarkSubjectDto input);
 
   TrustmarkSubjectDto getTrustmarkSubject(OrganizationRecord organizationRecord, UUID id);
 

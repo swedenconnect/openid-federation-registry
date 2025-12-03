@@ -17,7 +17,6 @@
 package se.swedenconnect.oidf.registry.service;
 
 import se.swedenconnect.oidf.registry.api.dto.PolicyDto;
-import se.swedenconnect.oidf.registry.api.dto.input.PolicyInputDto;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.domain.Policies;
 
@@ -35,9 +34,9 @@ public interface PolicyService {
 
   PolicyDto getPolicy(OrganizationRecord organizationRecord, UUID id);
 
-  PolicyDto createPolicy(OrganizationRecord organizationRecord, UUID id, PolicyInputDto input);
+  PolicyDto createPolicy(OrganizationRecord organizationRecord, UUID id, PolicyDto input);
 
-  PolicyDto updatePolicy(OrganizationRecord organizationRecord, UUID id, PolicyInputDto input);
+  PolicyDto updatePolicy(OrganizationRecord organizationRecord, UUID id, PolicyDto input);
 
   void deletePolicy(OrganizationRecord organizationRecord, UUID id);
 

@@ -17,14 +17,14 @@
 package se.swedenconnect.oidf.registry.validation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import se.swedenconnect.oidf.registry.api.dto.input.FederationEntityInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.HostedEntityInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.PolicyInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.ResolverInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.SubordinateEntityInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.TrustAnchorInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.TrustmarkInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.TrustmarkSubjectInputDto;
+import se.swedenconnect.oidf.registry.api.dto.FederationEntityDto;
+import se.swedenconnect.oidf.registry.api.dto.HostedEntityDto;
+import se.swedenconnect.oidf.registry.api.dto.PolicyDto;
+import se.swedenconnect.oidf.registry.api.dto.ResolverDto;
+import se.swedenconnect.oidf.registry.api.dto.SubordinateEntityDto;
+import se.swedenconnect.oidf.registry.api.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.api.dto.TrustmarkDto;
+import se.swedenconnect.oidf.registry.api.dto.TrustmarkSubjectDto;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 
 /**
@@ -41,7 +41,7 @@ public class ValidateDto {
     this.v = propertyValidators.builder(VariabelValueResolver.orgResolver(organizationRecord));
   }
 
-  public void validate(final FederationEntityInputDto dto) {
+  public void validate(final FederationEntityDto dto) {
     this.v.required().startsWith("@{entityprefix}").entityid().build()
         .validate("subject", dto.getSubject());
 
@@ -61,7 +61,7 @@ public class ValidateDto {
     }
   }
 
-  public void validate(final HostedEntityInputDto dto) {
+  public void validate(final HostedEntityDto dto) {
     this.v.required().entityid().build()
         .validate("subject", dto.getSubject());
 
@@ -81,14 +81,14 @@ public class ValidateDto {
     }
   }
 
-  public void validate(final SubordinateEntityInputDto dto) {
+  public void validate(final SubordinateEntityDto dto) {
     this.v.required().entityid().build().validate("subject", dto.getSubject());
     this.v.required().entityid().build().validate("issuer", dto.getIssuer());
     // jwks: required | jwks
     this.v.required().jwks().build().validate("jwks", dto.getJwks());
   }
 
-  public void validate(final ResolverInputDto dto) {
+  public void validate(final ResolverDto dto) {
     // entityId: required | uuid (actually entityid, not uuid)
     this.v.required().entityid().build().validate("entityId", dto.getEntityId());
 
@@ -108,7 +108,7 @@ public class ValidateDto {
     this.v.required().duration().build().validate("stepRetryDuration", dto.getStepRetryDuration());
   }
 
-  public void validate(final TrustAnchorInputDto dto) {
+  public void validate(final TrustAnchorDto dto) {
     // entityId: required | uuid (actually entityid, not uuid)
     this.v.required().entityid().build().validate("entityId", dto.getEntityId());
 
@@ -128,7 +128,7 @@ public class ValidateDto {
     }
   }
 
-  public void validate(final TrustmarkInputDto dto) {
+  public void validate(final TrustmarkDto dto) {
     // trustmarkissuerId: required | uuid
     this.v.required().uuid().build().validate("trustmarkissuerId", dto.getTrustmarkissuerId());
 
@@ -145,7 +145,7 @@ public class ValidateDto {
     this.v.jwt().build().validate("delegation", dto.getDelegation());
   }
 
-  public void validate(final PolicyInputDto dto) {
+  public void validate(final PolicyDto dto) {
     // name: required
     this.v.required().build().validate("name", dto.getName());
 
@@ -162,34 +162,13 @@ public class ValidateDto {
     }
   }
 
-  public void validate(final TrustmarkSubjectInputDto dto) {
+  public void validate(final TrustmarkSubjectDto dto) {
     this.v.required().entityid().build().validate("trustmarkId", dto.getTrustmarkId());
     this.v.required().entityid().build().validate("subject", dto.getSubject());
     this.v.required().build().validate("revoked", dto.getRevoked() != null ? dto.getRevoked().toString() : null);
 
-    // granted: optional datetime
-    if (dto.getGranted() != null && !dto.getGranted().isBlank()) {
-      // Validate ISO-8601 datetime format
-      try {
-        java.time.LocalDateTime.parse(dto.getGranted());
-      }
-      catch (final Exception e) {
-        throw new PropertyValidationFailException("granted", dto.getGranted(),
-            "Invalid datetime format. Expected ISO-8601 (e.g., 2025-01-01T00:00:00Z): " + e.getMessage());
-      }
-    }
-
-    // expires: optional datetime
-    if (dto.getExpires() != null && !dto.getExpires().isBlank()) {
-      // Validate ISO-8601 datetime format
-      try {
-        java.time.LocalDateTime.parse(dto.getExpires());
-      }
-      catch (final Exception e) {
-        throw new PropertyValidationFailException("expires", dto.getExpires(),
-            "Invalid datetime format. Expected ISO-8601 (e.g., 2025-01-01T00:00:00Z): " + e.getMessage());
-      }
-    }
+    // granted and expires are LocalDateTime and will be validated by Jackson during deserialization
+    // No additional validation needed here
   }
 }
 

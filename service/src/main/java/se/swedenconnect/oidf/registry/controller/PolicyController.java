@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.registry.api.dto.PolicyDto;
-import se.swedenconnect.oidf.registry.api.dto.input.PolicyInputDto;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.service.PolicyService;
 import se.swedenconnect.oidf.registry.validation.ValidateDto;
@@ -69,7 +68,7 @@ public class PolicyController {
   @PostMapping
   @Operation(summary = "Create policy with auto-generated ID")
   public ResponseEntity<PolicyDto> createPolicy(
-      @RequestBody final PolicyInputDto body,
+      @RequestBody final PolicyDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     final UUID id = UUID.randomUUID();
@@ -80,7 +79,7 @@ public class PolicyController {
   @Operation(summary = "Create policy with specified ID")
   public ResponseEntity<PolicyDto> createPolicyWithId(
       @PathVariable("id") final UUID id,
-      @RequestBody final PolicyInputDto body,
+      @RequestBody final PolicyDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.policyService.createPolicy(organizationRecord, id, body));
@@ -90,7 +89,7 @@ public class PolicyController {
   @Operation(summary = "Update policy")
   public ResponseEntity<PolicyDto> updatePolicy(
       @PathVariable("id") final UUID id,
-      @RequestBody final PolicyInputDto body,
+      @RequestBody final PolicyDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.policyService.updatePolicy(organizationRecord, id, body));

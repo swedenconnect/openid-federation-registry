@@ -166,34 +166,52 @@
                 <executions>
                     <execution>
                         <id>gen-openapi</id>
-                        <phase>process-resources</phase>
+                        <phase>generate-test-sources</phase>
                         <goals>
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/schema/oidf-entity-registry-api.yaml
-                            </inputSpec>
+                            <inputSpec>${project.basedir}/src/test/resources/openapi.json</inputSpec>
                             <generatorName>java</generatorName>
-                            <generateApis>false</generateApis>
+                            <generateApis>true</generateApis>
                             <generateModels>true</generateModels>
                             <generateApiTests>false</generateApiTests>
                             <generateModelTests>false</generateModelTests>
-                            <generateSupportingFiles>false</generateSupportingFiles>
+                            <generateSupportingFiles>true</generateSupportingFiles>
                             <configOptions>
+                                <outputDir>${project.build.directory}/generated-test-sources/openapi</outputDir>
+                                <skipOverwrite>true</skipOverwrite>
                                 <useJakartaEe>true</useJakartaEe>
                                 <modelPackage>se.swedenconnect.oidf.registry.api.model</modelPackage>
                                 <serializableModel>true</serializableModel>
                                 <packageName>se.swedenconnect.oidf.registry.api</packageName>
                                 <generateBuilders>true</generateBuilders>
                                 <serializationLibrary>jackson</serializationLibrary>
-                                <library>apache-httpclient</library>
-                                <sourceFolder>src/main/generated</sourceFolder>
+                                <library>native</library>
                                 <openApiNullable>false</openApiNullable>
                                 <performBeanValidation>true</performBeanValidation>
                                 <useBeanValidation>true</useBeanValidation>
-                                <java8>true</java8>
                                 <dateLibrary>java8</dateLibrary>
                             </configOptions>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>add-test-source</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-test-sources/openapi/src/main/java</source>
+                            </sources>
                         </configuration>
                     </execution>
                 </executions>

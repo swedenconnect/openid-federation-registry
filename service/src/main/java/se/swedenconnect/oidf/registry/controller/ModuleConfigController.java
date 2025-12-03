@@ -32,9 +32,6 @@ import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.registry.api.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.api.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.api.dto.TrustmarkDto;
-import se.swedenconnect.oidf.registry.api.dto.input.ResolverInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.TrustAnchorInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.TrustmarkInputDto;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.service.ModuleConfigService;
 import se.swedenconnect.oidf.registry.validation.ValidateDto;
@@ -59,7 +56,7 @@ public class ModuleConfigController {
   @PostMapping("/trust-anchor")
   @Operation(summary = "Create trust anchor with auto-generated ID")
   public ResponseEntity<TrustAnchorDto> createTrustAnchor(
-      @RequestBody final TrustAnchorInputDto body,
+      @RequestBody final TrustAnchorDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     final UUID id = UUID.randomUUID();
@@ -70,7 +67,7 @@ public class ModuleConfigController {
   @Operation(summary = "Create trust anchor with specified ID")
   public ResponseEntity<TrustAnchorDto> createTrustAnchorWithId(
       @PathVariable("id") final UUID id,
-      @RequestBody final TrustAnchorInputDto body,
+      @RequestBody final TrustAnchorDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.moduleConfigService.createTrustAnchor(organizationRecord, id, body));
@@ -80,7 +77,7 @@ public class ModuleConfigController {
   @Operation(summary = "Update trust anchor")
   public ResponseEntity<TrustAnchorDto> updateTrustAnchor(
       @PathVariable("id") final UUID id,
-      @RequestBody final TrustAnchorInputDto body,
+      @RequestBody final TrustAnchorDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.moduleConfigService.updateTrustAnchor(organizationRecord, id, body));
@@ -108,7 +105,7 @@ public class ModuleConfigController {
   @PostMapping("/resolver")
   @Operation(summary = "Create resolver with auto-generated ID")
   public ResponseEntity<ResolverDto> createResolver(
-      @RequestBody final ResolverInputDto body,
+      @RequestBody final ResolverDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     final UUID id = UUID.randomUUID();
@@ -119,7 +116,7 @@ public class ModuleConfigController {
   @Operation(summary = "Create resolver with specified ID")
   public ResponseEntity<ResolverDto> createResolverWithId(
       @PathVariable("id") final UUID id,
-      @RequestBody final ResolverInputDto body,
+      @RequestBody final ResolverDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.moduleConfigService.createResolver(organizationRecord, id, body));
@@ -129,7 +126,7 @@ public class ModuleConfigController {
   @Operation(summary = "Update resolver")
   public ResponseEntity<ResolverDto> updateResolver(
       @PathVariable("id") final UUID id,
-      @RequestBody final ResolverInputDto body,
+      @RequestBody final ResolverDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.moduleConfigService.updateResolver(organizationRecord, id, body));
@@ -157,7 +154,7 @@ public class ModuleConfigController {
   @PostMapping("/trustmark")
   @Operation(summary = "Create trust mark with auto-generated ID")
   public ResponseEntity<TrustmarkDto> createTrustmark(
-      @RequestBody final TrustmarkInputDto body,
+      @RequestBody final TrustmarkDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     final UUID id = UUID.randomUUID();
@@ -168,7 +165,7 @@ public class ModuleConfigController {
   @Operation(summary = "Create trust mark with specified ID")
   public ResponseEntity<TrustmarkDto> createTrustmarkWithId(
       @PathVariable("id") final UUID id,
-      @RequestBody final TrustmarkInputDto body,
+      @RequestBody final TrustmarkDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.moduleConfigService.createTrustmark(organizationRecord, id, body));
@@ -178,7 +175,7 @@ public class ModuleConfigController {
   @Operation(summary = "Update trust mark")
   public ResponseEntity<TrustmarkDto> updateTrustmark(
       @PathVariable("id") final UUID id,
-      @RequestBody final TrustmarkInputDto body,
+      @RequestBody final TrustmarkDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.moduleConfigService.updateTrustmark(organizationRecord, id, body));

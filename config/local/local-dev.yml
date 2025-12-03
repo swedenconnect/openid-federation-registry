@@ -41,7 +41,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          public-key-location: file:config/local/dev_swedenconnect_se_auth_pub.key
+          ##public-key-location: file:config/local/dev_swedenconnect_se_auth_pub.key
+          public-key-location: file:/Users/pepl/src/oidf-entity-registry/service/src/test/resources/public_auth_cert.pem
           audiences: account
 
 logging:

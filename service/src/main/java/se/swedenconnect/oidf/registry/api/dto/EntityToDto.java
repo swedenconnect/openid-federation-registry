@@ -19,14 +19,6 @@ package se.swedenconnect.oidf.registry.api.dto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import se.swedenconnect.oidf.registry.api.dto.input.FederationEntityInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.HostedEntityInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.PolicyInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.ResolverInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.SubordinateEntityInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.TrustAnchorInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.TrustmarkInputDto;
-import se.swedenconnect.oidf.registry.api.dto.input.TrustmarkSubjectInputDto;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
@@ -198,7 +190,7 @@ public final class EntityToDto {
   // -------------------------------------------------------------------------
 
   public static EntityEntity toEntity(final java.util.UUID id,
-      final FederationEntityInputDto dto,
+      final FederationEntityDto dto,
       final EntityKeyType entityKeyType,
       final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization,
       final PolicyEntity policyEntity) {
@@ -223,7 +215,7 @@ public final class EntityToDto {
   }
 
   public static EntityEntity toEntity(final java.util.UUID id,
-      final HostedEntityInputDto dto,
+      final HostedEntityDto dto,
       final EntityKeyType entityKeyType,
       final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization,
       final PolicyEntity policyEntity) {
@@ -248,7 +240,7 @@ public final class EntityToDto {
   }
 
   public static EntityEntity toEntity(final java.util.UUID id,
-      final SubordinateEntityInputDto dto,
+      final SubordinateEntityDto dto,
       final EntityKeyType entityKeyType,
       final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization,
       final PolicyEntity policyEntity) {
@@ -265,7 +257,7 @@ public final class EntityToDto {
   }
 
   public static PolicyEntity toEntity(final java.util.UUID id,
-      final PolicyInputDto dto,
+      final PolicyDto dto,
       final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization) {
     final PolicyEntity entity = new PolicyEntity();
     entity.setPolicyId(id);
@@ -281,7 +273,7 @@ public final class EntityToDto {
     return entity;
   }
 
-  public static void updateEntity(final EntityEntity entity, final FederationEntityInputDto dto) {
+  public static void updateEntity(final EntityEntity entity, final FederationEntityDto dto) {
     entity.setSubject(dto.getSubject());
     entity.setIssuer(dto.getIssuer());
     if (dto.getMetadata() != null) {
@@ -294,7 +286,7 @@ public final class EntityToDto {
     }
   }
 
-  public static void updateEntity(final EntityEntity entity, final HostedEntityInputDto dto) {
+  public static void updateEntity(final EntityEntity entity, final HostedEntityDto dto) {
     entity.setSubject(dto.getSubject());
     entity.setIssuer(dto.getIssuer());
     if (dto.getMetadata() != null) {
@@ -307,13 +299,13 @@ public final class EntityToDto {
     }
   }
 
-  public static void updateEntity(final EntityEntity entity, final SubordinateEntityInputDto dto) {
+  public static void updateEntity(final EntityEntity entity, final SubordinateEntityDto dto) {
     entity.setSubject(dto.getSubject());
     entity.setIssuer(dto.getIssuer());
     entity.setJwks(dto.getJwks());
   }
 
-  public static void updateEntity(final PolicyEntity entity, final PolicyInputDto dto) {
+  public static void updateEntity(final PolicyEntity entity, final PolicyDto dto) {
     entity.setName(dto.getName());
     try {
       entity.setPolicy(mapper.writeValueAsString(
@@ -324,7 +316,7 @@ public final class EntityToDto {
     }
   }
 
-  public static void updateModuleEntity(final ModuleEntity module, final TrustAnchorInputDto dto) {
+  public static void updateModuleEntity(final ModuleEntity module, final TrustAnchorDto dto) {
     module.setEntityIdValue(dto.getEntityId());
     module.setActive(dto.getActive());
 
@@ -342,7 +334,7 @@ public final class EntityToDto {
     }
   }
 
-  public static void updateModuleEntity(final ModuleEntity module, final ResolverInputDto dto) {
+  public static void updateModuleEntity(final ModuleEntity module, final ResolverDto dto) {
     module.setEntityIdValue(dto.getEntityId());
     module.setActive(dto.getActive());
     module.setResolveResponseDuration(dto.getResolveResponseDuration());
@@ -352,7 +344,7 @@ public final class EntityToDto {
   }
 
   public static TrustMarkEntity toEntity(final java.util.UUID id,
-      final TrustmarkInputDto dto,
+      final TrustmarkDto dto,
       final ModuleEntity moduleEntity) {
     final TrustMarkEntity entity = TrustMarkEntity.builder()
         .trustmarkId(id)
@@ -366,7 +358,7 @@ public final class EntityToDto {
     return entity;
   }
 
-  public static void updateEntity(final TrustMarkEntity entity, final TrustmarkInputDto dto) {
+  public static void updateEntity(final TrustMarkEntity entity, final TrustmarkDto dto) {
     entity.setTrustmarkissuerId(dto.getTrustmarkissuerId());
     entity.setTrustMarkEntityId(dto.getTrustMarkEntityId());
     entity.setLogoUri(dto.getLogoUri());
@@ -375,7 +367,7 @@ public final class EntityToDto {
   }
 
   public static TrustMarkSubjectEntity toEntity(final java.util.UUID id,
-      final TrustmarkSubjectInputDto dto,
+      final TrustmarkSubjectDto dto,
       final TrustMarkEntity trustMarkEntity) {
     final TrustMarkSubjectEntity entity = TrustMarkSubjectEntity.builder()
         .trustmarksubjectId(id)
@@ -383,30 +375,22 @@ public final class EntityToDto {
         .trustmarkIdRef(dto.getTrustmarkId())
         .subject(dto.getSubject())
         .revoked(dto.getRevoked())
-        .granted(dto.getGranted() != null && !dto.getGranted().isBlank()
-            ? java.time.LocalDateTime.parse(dto.getGranted())
-            : null)
-        .expires(dto.getExpires() != null && !dto.getExpires().isBlank()
-            ? java.time.LocalDateTime.parse(dto.getExpires())
-            : null)
+        .granted(dto.getGranted())
+        .expires(dto.getExpires())
         .build();
     return entity;
   }
 
-  public static void updateEntity(final TrustMarkSubjectEntity entity, final TrustmarkSubjectInputDto dto) {
+  public static void updateEntity(final TrustMarkSubjectEntity entity, final TrustmarkSubjectDto dto) {
     entity.setTrustmarkIdRef(dto.getTrustmarkId());
     entity.setSubject(dto.getSubject());
     entity.setRevoked(dto.getRevoked());
-    entity.setGranted(dto.getGranted() != null && !dto.getGranted().isBlank()
-        ? java.time.LocalDateTime.parse(dto.getGranted())
-        : null);
-    entity.setExpires(dto.getExpires() != null && !dto.getExpires().isBlank()
-        ? java.time.LocalDateTime.parse(dto.getExpires())
-        : null);
+    entity.setGranted(dto.getGranted());
+    entity.setExpires(dto.getExpires());
   }
 
   public static ModuleEntity toEntity(final java.util.UUID id,
-      final TrustAnchorInputDto dto,
+      final TrustAnchorDto dto,
       final EntityEntity entityEntity,
       final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization) {
     final ModuleEntity module = new ModuleEntity();
@@ -430,7 +414,7 @@ public final class EntityToDto {
   }
 
   public static ModuleEntity toEntity(final java.util.UUID id,
-      final ResolverInputDto dto,
+      final ResolverDto dto,
       final EntityEntity entityEntity,
       final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization) {
     final ModuleEntity module = new ModuleEntity();
