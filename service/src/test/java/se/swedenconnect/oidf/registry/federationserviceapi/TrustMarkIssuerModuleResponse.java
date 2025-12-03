@@ -53,8 +53,6 @@ public class TrustMarkIssuerModuleResponse {
   public void validate() {
     Assert.notNull(entityIdentifier, "entityIdentifier");
     Assert.notNull(trustMarkTokenValidityDuration, "trustMarkTokenValidityDuration");
-    //Assert.isTrue(!trustMarks.isEmpty(), "trustMarks must not be empty");
-    //    trustMarks.forEach(TrustMarkResponse::validate);
   }
 
   @Builder

@@ -27,12 +27,7 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.Values;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
@@ -43,20 +38,17 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPublicKey;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * oidf-entity-registry
+ * TestDataOperations is a helper class providing methods for managing test data
+ * operations related to policies, entities, trust marks, resolvers, and
+ * other organizational configurations.
  *
  * @author Per Fredrik Plars
  */
@@ -73,7 +65,7 @@ public class TestDataOperations {
   }
 
   public static Function<Values, String> defaultTrustMarkIssuer(UUID entity_id) {
-    return s -> switch (s.getKey()) {
+    return s -> switch (Objects.requireNonNull(s.getKey())) {
       case "active" -> "true";
       case "entity_id" -> entity_id.toString();
       default -> null;
@@ -81,7 +73,7 @@ public class TestDataOperations {
   }
 
   public static Function<Values, String> defaultTrustMark(UUID trustMarkIssuerId) {
-    return s -> switch (s.getKey()) {
+    return s -> switch (Objects.requireNonNull(s.getKey())) {
       case "trust_mark_entity_id" -> "http://tmi.swedenconnect.se/loa3";
       case "ref_uri" -> "http://doc.swedenconnect.se/loa3";
       case "logo_uri" -> "http://www.swedenconnect.se/image.png";
@@ -91,7 +83,7 @@ public class TestDataOperations {
   }
 
   public static Function<Values, String> defaultTrustMarkSubject(UUID trustMarkId) {
-    return s -> switch (s.getKey()) {
+    return s -> switch (Objects.requireNonNull(s.getKey())) {
       case "trustmark_id" -> trustMarkId.toString();
       case "subject" -> "http://www.swedenconnect.se/op1";
       case "revoked" -> "false";
@@ -102,7 +94,7 @@ public class TestDataOperations {
   }
 
   public static Function<Values, String> defaultResolver(final UUID entity_id) {
-    return s -> switch (s.getKey()) {
+    return s -> switch (Objects.requireNonNull(s.getKey())) {
       case "active" -> "true";
       case "trust_anchor" -> "http://www.swedenconnect.se/trustanchor";
       case "trusted_keys" -> new JWKSet(List.of(genKey(), genKey())).toString();
@@ -140,6 +132,7 @@ public class TestDataOperations {
       Class<R> reply) {
 
     final OptionsRecord optionsRecord = get(configGroup, id, httpStatus, organizationType);
+    assert optionsRecord.getOption() != null;
     final Map<String, Object> data = optionsRecord.getOption()
         .stream()
         .collect(Collectors.toMap(
@@ -209,7 +202,7 @@ public class TestDataOperations {
 
     assertThat(reply.getStatusCode()).isEqualTo(httpStatus);
 
-    if (reply.getStatusCode() != HttpStatus.CREATED || reply.getStatusCode() != HttpStatus.OK) {
+    if (reply.getStatusCode() != HttpStatus.CREATED && reply.getStatusCode() != HttpStatus.OK) {
       return null;
     }
 
@@ -282,7 +275,7 @@ public class TestDataOperations {
       final UUID id,
       final JwtTestUtils.OrganisationType organisationType,
       final HttpStatus expectedHttpStatus,
-      final Function<Values, String> options) throws JsonProcessingException {
+      final Function<Values, String> options) {
     return createUpdate(id, FkKeyType.TRUSTMARKISSUER,
         organisationType,
         expectedHttpStatus,
@@ -471,7 +464,8 @@ public class TestDataOperations {
 
     try {
       final List<Map<String, Object>> g =
-          objectMapper.readValue(reply.getBody(), new TypeReference<List<Map<String, Object>>>() {});
+          objectMapper.readValue(reply.getBody(), new TypeReference<>() {
+          });
 
       return g.stream()
           .map(stringObjectMap -> OptionsTestData.instantiateAndFill(replyClass, stringObjectMap))

@@ -47,7 +47,7 @@ public class ModuleResponse implements Serializable {
   }
 
   /**
-   * Creates instance from json object {@link java.util.HashMap}
+   * Creates instance from JSON object {@link java.util.HashMap}
    *
    * @param json to read
    * @return new instance

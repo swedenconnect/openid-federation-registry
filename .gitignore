@@ -24,6 +24,8 @@ logs
 generated
 MANIFEST.MF
 test-output
+.flattened-pom.xml
+service/.flattened-pom.xml
 
 # Intelij
 *.iml

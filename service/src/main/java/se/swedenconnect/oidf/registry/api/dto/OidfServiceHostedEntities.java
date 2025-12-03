@@ -36,15 +36,15 @@ import java.util.Objects;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class OidfServiceHostedEntitys {
+public class OidfServiceHostedEntities {
 
   @JsonProperty("entity_records")
   @SerializedName("entity_records")
   private List<Record> entityRecords;
 
   /**
-   * Represents a Record containing details of a hosted record,
-   *
+   * Represents a Record containing details of a hosted record.
+   * <p>
    * Fields: - `hostedRecord`: Information about the hosted entity's metadata. - `policyRecord`: Details regarding the
    * policy configuration for the entity. - `subject`: The subject associated with the entity. - `issuer`: The entity
    * acting as the issuer. - `jwks`: The JSON Web Key Set containing public keys.
@@ -81,10 +81,10 @@ public class OidfServiceHostedEntitys {
 
   /**
    * Represents metadata associated with a federation entity.
-   *
+   * <p>
    * This metadata includes detailed information about the federation entity, making it possible to manage and retrieve
    * entity-specific data for OpenID Connect Federation services.
-   *
+   * <p>
    * Serialization and deserialization annotations are included to support the integration with frameworks like Jackson
    * and Gson, ensuring compatibility with JSON-based APIs.
    */

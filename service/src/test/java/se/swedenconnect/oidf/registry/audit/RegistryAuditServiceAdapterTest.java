@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.registry.audit;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
@@ -25,19 +26,21 @@ import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import java.util.Stack;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
+
+/**
+ * This class tests the `policyWrite` method in the {@link RegistryAuditServiceAdapter} class.
+ * The `policyWrite` method is responsible for emitting an event indicating the creation or update of a policy record,
+ * including JSON representations of the old and new policy records.
+ *
+ * @author Per Fredrik Plars
+ */
 class RegistryAuditServiceAdapterTest {
 
-  /**
-   * This class tests the `policyWrite` method in the `RegistryAuditServiceAdapter` class. The `policyWrite` method is
-   * responsible for emitting an event indicating the creation or update of a policy record, including JSON
-   * representations of the old and new policy records.
-   */
 
   @Test
+  @DisplayName("Policy Write - should emit event with correct attributes")
   void policyWrite_shouldEmitEventWithCorrectAttributes() throws JsonProcessingException {
 
     final Stack<AuditEvent> stack = new Stack<>();

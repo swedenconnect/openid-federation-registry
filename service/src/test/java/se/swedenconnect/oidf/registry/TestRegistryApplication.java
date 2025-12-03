@@ -26,7 +26,7 @@ import se.swedenconnect.oidf.registry.fixture.TestContainersConfiguration;
  * {@link TestContainersConfiguration}.
  * <p>
  * This can be seen as an alternative to running the main {@code EntityRegistryApplication} together with a docker
- * compose set up.
+ * compose setup.
  *
  * @author David Goldring
  * @author Per Fredrik Plars
@@ -34,7 +34,7 @@ import se.swedenconnect.oidf.registry.fixture.TestContainersConfiguration;
  *     href="https://docs.spring.io/spring-boot/reference/features/dev-services.html#features.dev-services.testcontainers.at-development-time">Testcontainers
  *     at development time</a>
  */
-public class TestEntityRegistryApplication {
+public class TestRegistryApplication {
 
   /**
    * The main entry point of the TestEntityRegistryApplication.

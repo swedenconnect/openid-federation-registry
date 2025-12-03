@@ -15,6 +15,7 @@
  */
 package se.swedenconnect.oidf.registry.auth;
 
+import jakarta.annotation.Nonnull;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
@@ -25,6 +26,7 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 import se.swedenconnect.oidf.registry.config.SecurityConfig;
 
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -45,13 +47,13 @@ public class OrganizationRecordClaimSelector implements HandlerMethodArgumentRes
 
   @Override
   public Object resolveArgument(
-      final MethodParameter parameter,
+      @Nonnull final MethodParameter parameter,
       final ModelAndViewContainer mavContainer,
       final NativeWebRequest webRequest,
-      final WebDataBinderFactory binderFactory) throws Exception {
+      final WebDataBinderFactory binderFactory) {
 
     final HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
-    final String selectedOrgNumber = request.getHeader(SELECTED_ORG_NUMBER_HEADER_NAME);
+    final String selectedOrgNumber = Objects.requireNonNull(request).getHeader(SELECTED_ORG_NUMBER_HEADER_NAME);
     final Object authentication = SecurityContextHolder.getContext().getAuthentication();
     if (authentication instanceof SecurityConfig.RegistryClaims registryClaims) {
       return Optional.ofNullable(selectedOrgNumber)

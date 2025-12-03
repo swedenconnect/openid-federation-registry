@@ -18,19 +18,17 @@ package se.swedenconnect.oidf.registry.audit;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpStatus;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.registry.fixture.OptionsTestData;
 import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
+import se.swedenconnect.oidf.registry.fixture.UseMariaDBContainer;
 
 import java.util.List;
 import java.util.UUID;
@@ -40,14 +38,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static se.swedenconnect.oidf.registry.audit.RegistryAuditEventType.OPTIONS_CREATED;
 import static se.swedenconnect.oidf.registry.fixture.JwtTestUtils.OrganisationType.SKATT;
 
+/**
+ * Testing audit events
+ *
+ * @author Per Fredrik Plars
+ */
 @Slf4j
+@UseMariaDBContainer
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
 public class AuditEventIT {
 
-  @Container
-  @ServiceConnection
-  public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
   @Autowired
   TestDataOperations testDataOperations;
   @Autowired
@@ -56,6 +56,7 @@ public class AuditEventIT {
   private AuditEventRepository auditEventRepository;
 
   @Test
+  @DisplayName( "Create TMI should generate Audit events")
   public void testThatAuditEventsExist() throws JsonProcessingException {
 
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),

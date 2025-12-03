@@ -26,11 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
 import java.text.ParseException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -54,12 +50,12 @@ public class PropertyValidators {
    * @param validatorNameSetting the configuration string representing the validators, where individual
    *                             validators are separated by a pipe ('|') character. If null or blank, a no-op
    *                             validator is returned.
-   * @param variabelResolver     the resolver used for resolving dynamic variable values in the configuration string.
+   * @param variableResolver     the resolver used for resolving dynamic variable values in the configuration string.
    * @return a PropertyValidator that applies all resolved validation rules in sequence. If the configuration string
    *         is null or blank, a no-op validator is returned.
    */
   public PropertyValidator resolveValidator(final String validatorNameSetting,
-      final VariabelValueResolver variabelResolver) {
+      final VariableValueResolver variableResolver) {
     log.debug("Resolving validators: {}", validatorNameSetting);
 
     if (validatorNameSetting == null || validatorNameSetting.isBlank()) {
@@ -68,7 +64,7 @@ public class PropertyValidators {
     }
 
     final List<PropertyValidator> validatorsList = Arrays.stream(validatorNameSetting.split("\\|"))
-        .map(s -> this.propertyValidatorCreator(variabelResolver, s))
+        .map(s -> this.propertyValidatorCreator(variableResolver, s))
         .filter(Objects::nonNull)
         .toList();
 
@@ -105,16 +101,17 @@ public class PropertyValidators {
    * validatorNameSetting parameter specifies the type of validator and its configuration, typically in the format
    * "validatorName:configuration".
    *
+   * @param variableResolver     the resolver used for resolving dynamic variable values in the configuration string.
    * @param validatorNameSetting the type and configuration of the desired validator
    * @return the created PropertyValidator instance for the specified type and configuration
    * @throws IllegalArgumentException if the validator type specified in validatorNameSetting is unknown
    */
-  protected PropertyValidator propertyValidatorCreator(final VariabelValueResolver variabelResolver,
+  protected PropertyValidator propertyValidatorCreator(final VariableValueResolver variableResolver,
       final String validatorNameSetting) {
     log.debug("Creating validator: {}", validatorNameSetting);
     final String[] split = validatorNameSetting.trim().toLowerCase().split(":", 2);
     final String name = split[0];
-    final String conf = variabelResolver.insertTemplateValues(split.length > 1 ? split[1] : "");
+    final String conf = variableResolver.insertTemplateValues(split.length > 1 ? split[1] : "");
 
     final ValidationType validationType;
     try {

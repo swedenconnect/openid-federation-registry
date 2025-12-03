@@ -23,21 +23,13 @@ import se.swedenconnect.oidf.registry.api.model.OptionRecord;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.Values;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
-import se.swedenconnect.oidf.registry.entity.FkKeyType;
-import se.swedenconnect.oidf.registry.entity.ModuleEntity;
-import se.swedenconnect.oidf.registry.entity.SettingDataType;
-import se.swedenconnect.oidf.registry.entity.SettingsEntity;
-import se.swedenconnect.oidf.registry.entity.TrustMarkEntity;
+import se.swedenconnect.oidf.registry.entity.*;
 import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.ModuleRepository;
 import se.swedenconnect.oidf.registry.repository.SettingsRepository;
 import se.swedenconnect.oidf.registry.repository.TrustMarkRepository;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static se.swedenconnect.oidf.registry.entity.FkKeyType.TRUSTMARK;
 import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.CONFLICT;
@@ -93,7 +85,7 @@ public class OptionsCRUDTrustMark extends BaseOptionsCRUD {
 
     final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
     final List<SettingsEntity> validatedInData =
-        this.createAndValidateInputData(organizationRecord, template, record.getOption());
+        this.createAndValidateInputData(organizationRecord, template, Objects.requireNonNull(record.getOption()));
 
     // Create
     final TrustMarkEntity newTrustMarkEntity = new TrustMarkEntity();
@@ -135,7 +127,7 @@ public class OptionsCRUDTrustMark extends BaseOptionsCRUD {
     final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
 
     final List<SettingsEntity> validatedInData =
-        this.createAndValidateInputData(organizationRecord, template, record.getOption());
+        this.createAndValidateInputData(organizationRecord, template, Objects.requireNonNull(record.getOption()));
     super.deleteSettings(fkKeyType, trustMarkEntity.getTrustmarkId().toString());
     super.insertSettings(fkKeyType, trustMarkEntity.getTrustmarkId().toString(), validatedInData);
 

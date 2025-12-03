@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.registry.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,6 +29,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
 import se.swedenconnect.oidf.registry.fixture.OptionsTestData;
+import se.swedenconnect.oidf.registry.fixture.TestContainersConfiguration;
 import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
 
 import java.io.IOException;
@@ -35,26 +37,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Testing the new optional api
+ * Integration tests for the {@link OptionsApiController} class.
  *
  * @author Per Fredrik Plars
  */
 @Slf4j
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class OptionsApiPolicyControllerIT {
 
   @Container
   @ServiceConnection
-  public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
+  public static MariaDBContainer<?> database = new MariaDBContainer<>(TestContainersConfiguration.MARIADB_VERSION);
 
   @Autowired
   private TestDataOperations testDataOperations;
 
   @Test
+  @DisplayName( "Create and delete policies - should succeed")
   public void testCRUDPolicies() throws IOException {
 
     final UUID id_skatt = testDataOperations.createPolicies(JwtTestUtils.OrganisationType.SKATT);
@@ -71,7 +75,8 @@ class OptionsApiPolicyControllerIT {
   }
 
   @Test
-  public void testListPolicies() throws IOException {
+  @DisplayName("List policies - should succeed")
+  public void testListPolicies() {
 
     testDataOperations.createPolicies(JwtTestUtils.OrganisationType.SKATT);
     testDataOperations.createPolicies(JwtTestUtils.OrganisationType.SKATT);
@@ -93,11 +98,13 @@ class OptionsApiPolicyControllerIT {
         JwtTestUtils.OrganisationType.PM,
         OptionsTestData.PolicyTestData.class);
 
-    assertTrue(pm.size() == 0, "Expected no policies on PM");
+//    assertEquals(0, pm.size(), "Expected no policies on PM");
+    assertThat(pm.size()).withFailMessage("Expected no policies on PM").isEqualTo(0);
   }
 
   @Test
-  public void testNullName() throws IOException {
+  @DisplayName("Create policy with null name - should fail")
+  public void testNullName() {
 
     testDataOperations.createPolicy(UUID.randomUUID(),
         JwtTestUtils.OrganisationType.SKATT,

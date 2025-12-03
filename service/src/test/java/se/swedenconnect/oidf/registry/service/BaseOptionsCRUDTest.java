@@ -16,6 +16,7 @@
 
 package se.swedenconnect.oidf.registry.service;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.api.model.Values;
@@ -29,19 +30,18 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static se.swedenconnect.oidf.registry.fixture.JwtTestUtils.createOrganizationRecord;
 
 /**
- * oidf-entity-registry
+ * Unit tests for {@link BaseOptionsCRUD}
  *
  * @author Per Fredrik Plars
  */
 class BaseOptionsCRUDTest {
 
   @Test
+  @DisplayName("Base Options Create And Validate InputData - should succeed")
   void createAndValidateInputData() {
 
     // Arrange
@@ -100,12 +100,13 @@ class BaseOptionsCRUDTest {
         .valueType("nonExisting")
         .build();
 
-    assertThrows(PropertyValidationFailException.class, () ->
+    assertThatThrownBy(() ->
         adapter.createAndValidateInputData(createOrganizationRecord(JwtTestUtils.OrganisationType.PM),
             List.of(sub, iss, entityID, requiredValue), List.of(
-            Values.builder().key("issuer").value("http://issuer").build(),
-            Values.builder().key("subject").value("http://subject").build()
-        )));
+                Values.builder().key("issuer").value("http://issuer").build(),
+                Values.builder().key("subject").value("http://subject").build()
+            )))
+        .isInstanceOf(PropertyValidationFailException.class);
 
     final List<SettingsEntity> resultReq =
         adapter.createAndValidateInputData(createOrganizationRecord(JwtTestUtils.OrganisationType.PM),
@@ -121,10 +122,12 @@ class BaseOptionsCRUDTest {
     final List<SettingsEntity> result =
         adapter.createAndValidateInputData(createOrganizationRecord(JwtTestUtils.OrganisationType.PM),
             List.of(sub, iss, entityID), List.of(existingUserInput, unknownUserInput));
-    assertEquals(1, result.size());
-    assertEquals("subject", result.get(0).getKey());
-    assertNull(result.get(0).getValidation());
-    assertEquals("TEXT", result.get(0).getValueDataType());
+
+    assertThat(result.size()).isEqualTo(1);
+    assertThat(result.getFirst().getKey()).isEqualTo("subject");
+
+    assertThat(result.getFirst().getValidation()).isNull();
+    assertThat(result.getFirst().getValueDataType()).isEqualTo("TEXT");
 
   }
 }

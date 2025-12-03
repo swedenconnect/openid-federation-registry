@@ -15,15 +15,7 @@
  */
 package se.swedenconnect.oidf.registry.entity;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,7 +30,7 @@ import java.util.UUID;
 
 /**
  * TrustMarkSubjectEntity is a JPA entity representing a database table for storing entities as JSON objects with the
- * objects Subject value as key.
+ * objects Subject value as a key.
  *
  * @author Per Fredrik Plars
  */
@@ -99,7 +91,7 @@ public class TrustMarkSubjectEntity extends BaseEntity {
 
   /**
    * Retrieves the {@link SettingsEntity} associated with the specified key. The method searches through the list of
-   * settings entities and returns an optional containing the first entity matching the given key, if one exists.
+   * settings entities and returns an optional containing the first entity matching the given key if one exists.
    *
    * @param key the key to search for in the list of settings entities
    * @return an {@link Optional} containing the matching {@link SettingsEntity} if found, otherwise an empty

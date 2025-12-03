@@ -55,7 +55,7 @@ public class HostedRecord implements Serializable {
   }
 
   /**
-   * @param json to create instance from
+   * @param json to create an instance from
    * @return new instance
    */
   public static HostedRecord fromJson(final Map<String, Object> json) {
@@ -77,7 +77,7 @@ public class HostedRecord implements Serializable {
   }
 
   /**
-   * @return this instance converted to json (map) structure for nimbus
+   * @return this instance converted to JSON (map) structure for nimbus
    */
   public Map<String, Object> toJson() {
     return Map.of(

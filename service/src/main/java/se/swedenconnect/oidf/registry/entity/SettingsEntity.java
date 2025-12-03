@@ -19,19 +19,8 @@ package se.swedenconnect.oidf.registry.entity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -88,7 +77,7 @@ public class SettingsEntity extends BaseEntity {
    * Casts the value stored in the `value` field to the corresponding data type based on the `valueDataType` field,
    * which specifies the type as "text", "boolean", or "number".
    *
-   * @return The casted value as an Object. If the `valueDataType` is "text", the value is returned as a String. If the
+   * @return The cast value as an Object. If the `valueDataType` is "text", the value is returned as a String. If the
    *     `valueDataType` is "boolean", the value is returned as a Boolean. If the `valueDataType` is "number", the value
    *     is returned as a Double.
    * @throws IllegalStateException if the `valueDataType` contains an unexpected or unsupported value.

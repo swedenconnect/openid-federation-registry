@@ -162,7 +162,7 @@ public class OidfServiceSubModules {
 
       /**
        * Represents a subject associated with a trust mark, including details about its status and validity period.
-       *
+       * <p>
        * The fields "expires" and "granted" should be serialized and exported in ISO_INSTANT format.
        */
       @Data

@@ -1,0 +1,42 @@
+server:
+  port: 8010
+
+spring:
+  application:
+    name: OIDF-Registry
+  datasource:
+    url: jdbc:mariadb://localhost:3306/registry
+    username: registry
+    password: 45743523-DE8C-45FE-BD3D-36A5E17922AC
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          audiences: account
+
+openid:
+  federation:
+    registry:
+      dev-mode: true
+      federation_service_api:
+        issuer: "http://oidf-registry.example.org"
+        sign_key_alias: federationapi # should match the keystore alias in a production setup
+        notification_active: true
+        notifications:
+          - endpoint: http://www.swedenconnect.se/sc/notify
+            instance_id: 123e4567-e89b-12d3-a456-426614174000
+          - endpoint: http://www.swedenconnect.se/ena/notify
+            instance_id: 223e4567-e89b-12d3-a456-426614174001
+      instances:
+        - instance_id: "20A0AAF5-6E2A-4612-AAEE-A489B86B7C25"
+          name: "Example Organization"
+          useForDefaultAssignment: true
+        - instance_id: "34A03B18-C2EA-4659-9236-B983CD173C6F"
+          name: "Example Organization 2"
+          org_numbers:
+            - "275571-7937"
+            - "952610-6464"
+
+logging:
+  level:
+    se.swedenconnect.oidf: debug

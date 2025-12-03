@@ -18,19 +18,17 @@ package se.swedenconnect.oidf.registry.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpStatus;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
 import se.swedenconnect.oidf.registry.fixture.OptionsTestData;
 import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
+import se.swedenconnect.oidf.registry.fixture.UseMariaDBContainer;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -40,18 +38,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static se.swedenconnect.oidf.registry.fixture.JwtTestUtils.OrganisationType.PM;
 
 /**
- * Testing the new optional api
+ * Integration tests for the {@link OptionsApiController} class.
  *
  * @author Per Fredrik Plars
  */
 @Slf4j
+@UseMariaDBContainer
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
 class OptionsApiControllerIT {
 
-  @Container
-  @ServiceConnection
-  public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
   @Autowired
   private TestDataOperations testDataOperations;
   @Autowired
@@ -64,6 +59,7 @@ class OptionsApiControllerIT {
   }
 
   @Test
+  @DisplayName("List All after creation - should include all created elements")
   public void testList() throws IOException {
 
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),

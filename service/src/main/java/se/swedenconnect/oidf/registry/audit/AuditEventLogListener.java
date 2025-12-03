@@ -31,7 +31,7 @@ import org.springframework.context.event.EventListener;
 @Slf4j
 public class AuditEventLogListener {
 
-  @Value("${auditlogging.loglevel:INFO}")
+  @Value("${audit-logging.loglevel:INFO}")
   String loglevel;
 
   /**

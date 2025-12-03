@@ -29,6 +29,7 @@ import org.testcontainers.containers.MariaDBContainer;
 @TestConfiguration(proxyBeanMethods = false)
 public class TestContainersConfiguration {
 
+  public static final String MARIADB_VERSION = "mariadb:11.7";
   /**
    * Creates a MariaDBContainer bean.
    *
@@ -36,7 +37,7 @@ public class TestContainersConfiguration {
    */
   @Bean
   @ServiceConnection
-  public MariaDBContainer<?> mariaDBContainer() {
-    return new MariaDBContainer<>("mariadb:11.2");
+    public MariaDBContainer<?> mariaDBContainer() {
+    return new MariaDBContainer<>(MARIADB_VERSION);
   }
 }

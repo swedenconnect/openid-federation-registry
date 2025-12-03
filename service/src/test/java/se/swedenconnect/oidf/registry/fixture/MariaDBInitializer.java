@@ -18,15 +18,14 @@ package se.swedenconnect.oidf.registry.fixture;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.utility.DockerImageName;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Fixture class for setting up and starting a MariaDB testcontainer instance.
+ * Fixture class for setting up and starting a MariaDB test container instance.
  * <br>
  * Usage:<br> - Can be used directly by annotating your test class with {@code @ExtendWith(MariaDBInitializer.class)}.
- * But for a more declarative approach use the custom marker annotation {@link UseMariaDBContiainer}
+ * But for a more declarative approach use the custom marker annotation {@link UseMariaDBContainer}
  *
  * @author David Goldring
  */
@@ -34,8 +33,7 @@ public class MariaDBInitializer implements BeforeAllCallback {
 
   private static final AtomicBoolean started = new AtomicBoolean(false);
 
-  private final DockerImageName imageName = DockerImageName.parse("mariadb:10.10.2");
-  private final MariaDBContainer<?> mariaDB = new MariaDBContainer<>(imageName);
+  private final MariaDBContainer<?> mariaDB = new TestContainersConfiguration().mariaDBContainer();
 
   @Override
   public void beforeAll(final ExtensionContext extensionContext) {

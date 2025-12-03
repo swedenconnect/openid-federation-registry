@@ -17,70 +17,85 @@
 package se.swedenconnect.oidf.registry.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpStatus;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.registry.api.model.OptionRecord;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.fixture.OptionsTestData;
 import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
+import se.swedenconnect.oidf.registry.fixture.UseMariaDBContainer;
 
-import java.io.IOException;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static se.swedenconnect.oidf.registry.fixture.JwtTestUtils.OrganisationType.AF;
 import static se.swedenconnect.oidf.registry.fixture.JwtTestUtils.OrganisationType.SKATT;
 
 /**
- * Testing the new optional api
+ * Integration tests for the {@link OptionsApiController} class.
  *
  * @author Per Fredrik Plars
  */
 @Slf4j
+@UseMariaDBContainer
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
 class OptionsApiTrustMarkControllerIT {
-
-  @Container
-  @ServiceConnection
-  public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
 
   @Autowired
   private TestDataOperations testDataOperations;
 
   private static void assertThatTrustmarkIdOptionExist(final OptionsRecord optionsRecord, final UUID tmiId1) {
+    assertThat(optionsRecord.getOption()).isNotEmpty();
+
     long count = optionsRecord.getOption()
         .stream()
-        .filter(values -> values.getKey().equals("trustmark_id"))
-        .flatMap(values -> values.getOptions().stream())
+        .filter(values -> {
+          assertThat(values.getKey()).isNotBlank();
+          return values.getKey().equals("trustmark_id");
+        })
+        .flatMap(values -> {
+          assertNotNull(values.getOptions());
+          assertThat(values.getOptions()).isNotEmpty();
+          return values.getOptions().stream();
+        })
         .map(OptionRecord::getKey)
         .filter(key -> key.equals(tmiId1.toString()))
         .count();
 
-    assertEquals(1, count, "Did not find trustmarkissuer_id: " + tmiId1.toString());
+    assertThat(count)
+        .withFailMessage("Did not find trustmark_id: " + tmiId1.toString())
+        .isEqualTo(1);
   }
 
   private static void assertThatTrustmarkissueridOptionExist(final OptionsRecord optionsRecord, final UUID tmiId1) {
+    assertThat(optionsRecord.getOption()).isNotEmpty();
     long count = optionsRecord.getOption()
         .stream()
-        .filter(values -> values.getKey().equals("trustmarkissuer_id"))
-        .flatMap(values -> values.getOptions().stream())
+        .filter(values -> {
+          assertThat(values.getKey()).isNotBlank();
+          return values.getKey().equals("trustmarkissuer_id");
+        })
+        .flatMap(values -> {
+          assertThat(values.getOptions()).isNotEmpty();
+          return values.getOptions().stream();
+        })
         .map(OptionRecord::getKey)
         .filter(key -> key.equals(tmiId1.toString()))
         .count();
 
-    assertEquals(1, count, "Did not find trustmarkissuer_id: " + tmiId1.toString());
+    assertThat(count)
+        .withFailMessage("Did not find trustmarkissuer_id: " + tmiId1.toString())
+        .isEqualTo(1);
   }
 
   @Test
-  public void testOptionsTrustMarkId() throws IOException {
+  @DisplayName("Entity creation - should generate trust mark issuer id")
+  public void testOptionsTrustMarkId() {
 
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
         SKATT,
@@ -104,6 +119,7 @@ class OptionsApiTrustMarkControllerIT {
         HttpStatus.CREATED,
         TestDataOperations.defaultTrustMarkIssuer(entityId2));
 
+    // Assert
     final OptionsRecord optionsRecord1 = testDataOperations.get(FkKeyType.TRUSTMARK,
         null,
         HttpStatus.OK,
@@ -120,7 +136,8 @@ class OptionsApiTrustMarkControllerIT {
   }
 
   @Test
-  public void testOptionsTrustMarkSubjectId() throws IOException {
+  @DisplayName("Entity creation - should generate trust mark id")
+  public void testOptionsTrustMarkSubjectId() {
 
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
         SKATT,
@@ -154,6 +171,7 @@ class OptionsApiTrustMarkControllerIT {
         HttpStatus.CREATED,
         TestDataOperations.defaultTrustMark(tmiId2));
 
+    // Assert
     final OptionsRecord optionsRecord1 = testDataOperations.get(FkKeyType.TRUSTMARKSUBJECT,
         null,
         HttpStatus.OK,
@@ -170,7 +188,8 @@ class OptionsApiTrustMarkControllerIT {
   }
 
   @Test
-  public void testCRUDTrustMark() throws IOException {
+  @DisplayName("CRUD TrustMark - should succeed")
+  public void testCRUDTrustMark() {
 
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
         SKATT,
@@ -231,7 +250,8 @@ class OptionsApiTrustMarkControllerIT {
   }
 
   @Test
-  public void testCRUDTrustMarkSubject() throws IOException {
+  @DisplayName("CRUD TrustMarkSubject - should succeed")
+  public void testCRUDTrustMarkSubject() {
 
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
         SKATT,
@@ -261,7 +281,6 @@ class OptionsApiTrustMarkControllerIT {
     final OptionsRecord optionsRecord = testDataOperations.get(FkKeyType.TRUSTMARKSUBJECT, trustmarksubjectid,
         HttpStatus.OK, SKATT);
 
-
+    assertThat(optionsRecord.getOption()).isNotEmpty();
   }
-
 }

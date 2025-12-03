@@ -26,6 +26,7 @@ import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.web.client.RestClient;
@@ -41,14 +42,14 @@ import java.util.stream.Stream;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
 
 /**
- * Testing notify function
+ * Unit tests for the {@link NotifyService} class
  *
  * @author Per Fredrik Plars
  */
 @Slf4j
 class NotifyServiceTest {
   @RegisterExtension
-  static WireMockExtension wireMockExtension = WireMockExtension.newInstance()
+  static final WireMockExtension wireMockExtension = WireMockExtension.newInstance()
       .options(options().dynamicPort())
       .build();
 
@@ -78,6 +79,7 @@ class NotifyServiceTest {
   }
 
   @Test
+  @DisplayName( "Notify service - should reply")
   void testNotifyServiceWithWireMock() throws InterruptedException {
     Stream.generate(() -> FederationAuditEvent.builder()
             .fkKeyType(FkKeyType.TRUSTMARKSUBJECT)
@@ -95,9 +97,12 @@ class NotifyServiceTest {
         return;
       }
       catch (VerificationException e) {
-        log.warn("Failed to verify notification looping:" + i, e);
+        log.warn("Failed to verify notification looping:{}", i, e);
       }
     }
+
+    // We should never get here
+    throw new AssertionError("Did not receive any notifications on the wiremock endpoints");
   }
 
   @AfterEach

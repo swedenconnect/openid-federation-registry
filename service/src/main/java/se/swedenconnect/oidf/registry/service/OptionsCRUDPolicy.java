@@ -29,10 +29,7 @@ import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.PolicyRepository;
 import se.swedenconnect.oidf.registry.repository.SettingsRepository;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static se.swedenconnect.oidf.registry.entity.FkKeyType.POLICIES;
 import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.NOT_FOUND;
@@ -86,7 +83,7 @@ public class OptionsCRUDPolicy extends BaseOptionsCRUD {
 
     final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
     final List<SettingsEntity> validatedInData
-        = this.createAndValidateInputData(organizationRecord, template, record.getOption());
+        = this.createAndValidateInputData(organizationRecord, template, Objects.requireNonNull(record.getOption()));
 
     // Create
     final PolicyEntity newPolicyEntity = new PolicyEntity();
@@ -110,7 +107,7 @@ public class OptionsCRUDPolicy extends BaseOptionsCRUD {
     final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
 
     final List<SettingsEntity> validatedInData =
-        this.createAndValidateInputData(organizationRecord, template, record.getOption());
+        this.createAndValidateInputData(organizationRecord, template, Objects.requireNonNull(record.getOption()));
     super.deleteSettings(fkKeyType, policyEntity.getPolicyId().toString());
     super.insertSettings(fkKeyType, policyEntity.getPolicyId().toString(), validatedInData);
     this.policyRepository.saveAndFlush(policyEntity);

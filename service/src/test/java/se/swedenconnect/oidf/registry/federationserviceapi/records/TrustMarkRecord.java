@@ -24,6 +24,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Data class for trust mark record.
+ *
+ * @author Per Fredrik Plars
+ */
 @Builder
 @Getter
 public class TrustMarkRecord implements Serializable {

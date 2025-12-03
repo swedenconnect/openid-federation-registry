@@ -20,11 +20,7 @@ import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import se.swedenconnect.oidf.registry.api.model.Values;
 
 import java.lang.reflect.Field;
@@ -33,13 +29,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPublicKey;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -182,10 +172,13 @@ public class OptionsTestData {
     @Builder.Default
     UUID id = UUID.randomUUID();
     @Builder.Default
+    final
     UUID policyId = null;
     @Builder.Default
+    final
     String subject = "http://www.swedenconnect.se/test";
     @Builder.Default
+    final
     String issuer = "http://www.swedenconnect.se/test";
     String metadata;
 
@@ -194,9 +187,6 @@ public class OptionsTestData {
           .issuer(organisationType.domainPrefix + "/" + organisationType.name)
           .subject(organisationType.domainPrefix + "/" + organisationType.name);
     }
-
-
-
   }
 
   @Builder
@@ -212,6 +202,7 @@ public class OptionsTestData {
     @Builder.Default
     String jwks = genJwks();
     @Builder.Default
+    final
     String subject = "http://www.swedenconnect.se/subject";
     @Builder.Default
     String issuer = "http://www.swedenconnect.se/issuer";
@@ -228,6 +219,7 @@ public class OptionsTestData {
     @Builder.Default
     String name = "Default Policy";
     @Builder.Default
+    final
     String policy = "{\n"
         + "    \"openid_provider\": {\n"
         + "      \"id_token_signing_alg_values_supported\":\n"

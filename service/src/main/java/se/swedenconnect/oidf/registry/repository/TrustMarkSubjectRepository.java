@@ -27,7 +27,7 @@ import java.util.UUID;
 
 /**
  * EntityRepository is a JPA repository interface for accessing and performing CRUD operations on
- * {@link TrustMarkSubjectEntity} entities stored in database.
+ * {@link TrustMarkSubjectEntity} entities stored in a database.
  * <p>
  * It extends the {@link JpaRepository} interface which provides JPA related methods for standard data access layers.
  *
@@ -63,7 +63,5 @@ public interface TrustMarkSubjectRepository extends JpaRepository<TrustMarkSubje
       + "WHERE o.orgNumber = :orgNumber AND ts.trustmarksubjectId = :id")
   Optional<TrustMarkSubjectEntity> findByOrgNumberAndTrustmarkId(@Param("orgNumber") String orgNumber,
       @Param("id") UUID trustmarksubjectId);
-
-
 
 }

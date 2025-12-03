@@ -27,9 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static se.swedenconnect.oidf.registry.service.OidfApiService.FEDERATION_ENTITY_ATT;
-import static se.swedenconnect.oidf.registry.service.OidfApiService.HOSTED_RECORD_ATT;
-import static se.swedenconnect.oidf.registry.service.OidfApiService.METADATA_ATT;
+import static se.swedenconnect.oidf.registry.service.OidfApiService.*;
 
 /**
  * The EntityResponseFormatter class provides functionality for formatting responses related to entities. It includes
@@ -43,12 +41,33 @@ public class EntityResponseFormatter {
   /**
    * Creates a response map based on the provided {@code EntityEntity}. The response includes entity configuration
    * settings mapped by their keys and additional metadata for hosted entities. If the entity type is
-   * {@code FEDERATION_ENTITY}, metadata is enriched with federation entity information. Ex: { "iss":
-   * "http://oidf-registry.swedenconnect.se", "exp": 1742800981, "iat": 1742196181, "entity_records": [ {
-   * "policy_record": {}, "hosted_record": { "metadata": { "federation_entity": { "organization_name": "anything",
-   * "federation_fetch_endpoint": "https://dev.swedenconnect.se/oidf/im/fetch", "federation_list_endpoint":
-   * "https://dev.swedenconnect.se/oidf/im/subordinate_listing" } } }, "subject": "http://dev.swedenconnect.se/oidf/im",
-   * "issuer": "http://dev.swedenconnect.se/oidf/ta" } ], "jti": "d4f50aa3-5565-495f-9adf-0f3c330f6e19" }
+   * {@code FEDERATION_ENTITY}, metadata is enriched with federation entity information.
+   * <p>
+   * Example:
+   * <pre>{@code
+   * {
+   *   "iss": "http://oidf-registry.swedenconnect.se",
+   *   "exp": 1742800981,
+   *   "iat": 1742196181,
+   *   "entity_records": [
+   *     {
+   *       "policy_record": {},
+   *       "hosted_record": {
+   *         "metadata": {
+   *           "federation_entity": {
+   *             "organization_name": "anything",
+   *             "federation_fetch_endpoint": "https://dev.swedenconnect.se/oidf/im/fetch",
+   *             "federation_list_endpoint": "https://dev.swedenconnect.se/oidf/im/subordinate_listing"
+   *           }
+   *         }
+   *       },
+   *       "subject": "http://dev.swedenconnect.se/oidf/im",
+   *       "issuer": "http://dev.swedenconnect.se/oidf/ta"
+   *     }
+   *   ],
+   *   "jti": "d4f50aa3-5565-495f-9adf-0f3c330f6e19"
+   * }
+   * }</pre>
    *
    * @param entityEntity an {@code EntityEntity} object containing entity settings and metadata
    * @return a {@code Map<String, Object>} representing the response for the entity. If the entity type is

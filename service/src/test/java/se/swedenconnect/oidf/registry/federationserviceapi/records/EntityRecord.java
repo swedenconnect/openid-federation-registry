@@ -86,7 +86,7 @@ public class EntityRecord implements Serializable {
   }
 
   /**
-   * @param entityRecord json to create instance from
+   * @param entityRecord JSON to create an instance from
    * @return instance of EntityRecord
    * @throws ParseException if parse failed
    */
@@ -104,12 +104,12 @@ public class EntityRecord implements Serializable {
             throw new IllegalArgumentException("JWKS claim is not json claim", e);
           }
         }).orElse(null),
-        Optional.ofNullable((String) entityRecord.get("override_configuration_location")).orElse(null),
+        (String) entityRecord.get("override_configuration_location"),
         hostedRecord.map(hr -> HostedRecord.fromJson((Map<String, Object>) hr)).orElse(null));
   }
 
   /**
-   * @return true if hosted record is not null
+   * @return true if the hosted record is not null
    */
   public boolean isHosted() {
     return Objects.nonNull(this.getHostedRecord());

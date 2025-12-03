@@ -21,26 +21,20 @@ import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.registry.config.RegistryProperties;
 import se.swedenconnect.oidf.registry.federationserviceapi.ModuleResponse;
 import se.swedenconnect.oidf.registry.federationserviceapi.ResolverModuleResponse;
 import se.swedenconnect.oidf.registry.federationserviceapi.TrustAnchorModuleResponse;
 import se.swedenconnect.oidf.registry.federationserviceapi.TrustMarkIssuerModuleResponse;
 import se.swedenconnect.oidf.registry.federationserviceapi.records.EntityRecord;
-import se.swedenconnect.oidf.registry.fixture.FederationAPIOperations;
-import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
-import se.swedenconnect.oidf.registry.fixture.OptionsTestData;
-import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
+import se.swedenconnect.oidf.registry.fixture.*;
 
 import java.text.ParseException;
 import java.util.List;
@@ -48,22 +42,17 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Testing federation api
+ * Integration test for the OIDF Federation Service API
  *
  * @author Per Fredrik Plars
  */
 @Slf4j
+@UseMariaDBContainer
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
 class OidfServiceApiControllerIT {
-  @Container
-  @ServiceConnection
-  public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
 
   @Autowired
   private TestRestTemplate restTemplate;
@@ -137,6 +126,7 @@ class OidfServiceApiControllerIT {
   }
 
   @Test
+  @DisplayName( "Entity record endpoint - should return a JWT with the expected structure")
   void entityRecordSuccess() throws ParseException, JsonProcessingException {
     final UUID instanceId = setupTestData();
 
@@ -160,6 +150,7 @@ class OidfServiceApiControllerIT {
   }
 
   @Test
+  @DisplayName( "Submodule record endpoint - should return a JWT with the expected structure")
   void submoduleRecordSuccess() throws ParseException, JsonProcessingException {
 
     final UUID instanceId = setupTestData();
@@ -189,6 +180,7 @@ class OidfServiceApiControllerIT {
   }
 
   @Test
+  @DisplayName( "Entity record endpoint without missing instanceId - should return 404")
   void entityRecordNotFound() {
 
     final ResponseEntity<String> response = this.restTemplate
@@ -201,6 +193,7 @@ class OidfServiceApiControllerIT {
   }
 
   @Test
+  @DisplayName( "Entity record endpoint with missing iss parameter - should return 400")
   void entityRecordBadRequest() {
 
     final ResponseEntity<String> response = this.restTemplate

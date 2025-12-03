@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
  * The NotifyService class is responsible for sending asynchronous notifications to specified endpoints based on events
  * related to federation auditing. It utilizes a pool of virtual threads for submitting and managing notification
  * tasks.
- *
+ * <p>
  * This service primarily listens for {@link FederationAuditEvent} events and processes them by invoking a set of
  * pre-configured notification endpoints with structured payload data.
  *
