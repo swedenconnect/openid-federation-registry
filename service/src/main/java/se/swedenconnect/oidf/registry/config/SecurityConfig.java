@@ -63,15 +63,15 @@ public class SecurityConfig {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/registry/v1/entities/**").authenticated()
             .requestMatchers(HttpMethod.GET, "/registry/v1/entities/**")
-            .hasAuthority("SCOPE_entities_read")
+            .hasAuthority("SCOPE_entity_read")
             .requestMatchers(HttpMethod.POST, "/registry/v1/entities/**")
-            .hasAuthority("SCOPE_entities_write")
+            .hasAuthority("SCOPE_entity_write")
 
             .requestMatchers("/registry/v1/trustmarksubjects/**").authenticated()
             .requestMatchers(HttpMethod.GET, "/registry/v1/trustmarksubjects/**")
-            .hasAuthority("SCOPE_trustmarksubjects_read")
+            .hasAuthority("SCOPE_trustmarksubject_read")
             .requestMatchers(HttpMethod.POST, "/registry/v1/trustmarksubjects/**")
-            .hasAuthority("SCOPE_trustmarksubjects_write")
+            .hasAuthority("SCOPE_trustmarksubject_write")
 
             .requestMatchers("/registry/v1/policies/**").authenticated()
             .requestMatchers(HttpMethod.GET, "/registry/v1/policies/**")
@@ -92,7 +92,8 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.GET, "/api/v1/federationservice/**").permitAll() // Always open
             .requestMatchers(HttpMethod.OPTIONS).permitAll()
             .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
-            .requestMatchers(HttpMethod.GET, "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/swagger-ui.html",
+                "/swagger-ui/**", "/v3/api-docs/**", "/*").permitAll()
             .anyRequest().denyAll()
         );
     return http.build();

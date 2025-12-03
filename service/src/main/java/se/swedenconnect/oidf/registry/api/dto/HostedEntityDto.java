@@ -13,26 +13,33 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package se.swedenconnect.oidf.registry.api.dto;
 
-package se.swedenconnect.oidf.registry.domain;
-
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.experimental.SuperBuilder;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
 import java.util.Map;
+import java.util.UUID;
 
 /**
- * Entity that is hosted with ec_location override
+ * Output DTO for Hosted Entity.
  *
  * @author Per Fredrik Plars
  */
-@EqualsAndHashCode(callSuper = true)
-@Getter
-@SuperBuilder
-public class HostedEntity extends Entity {
+@Data
+@Schema(name = "HostedEntity")
+public class HostedEntityDto {
 
-  /** Metadata */
+  @Schema(description = "Entity ID")
+  private UUID entityId;
+
+  @Schema(description = "Subject (entity identifier)")
+  private String subject;
+
+  @Schema(description = "Issuer (entity identifier)")
+  private String issuer;
+
+  @Schema(description = "Metadata for hosted entity")
   private Map<String, Object> metadata;
-
 }
+

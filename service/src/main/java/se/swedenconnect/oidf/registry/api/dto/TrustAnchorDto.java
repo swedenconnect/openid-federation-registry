@@ -13,26 +13,33 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package se.swedenconnect.oidf.registry.api.dto;
 
-package se.swedenconnect.oidf.registry.domain;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.experimental.SuperBuilder;
-
-import java.util.Map;
+import java.util.List;
+import java.util.UUID;
 
 /**
- * Entity that is hosted with ec_location override
+ * Output DTO for Trust Anchor module.
  *
  * @author Per Fredrik Plars
  */
-@EqualsAndHashCode(callSuper = true)
-@Getter
-@SuperBuilder
-public class HostedEntity extends Entity {
+@Data
+@Schema(name = "TrustAnchor")
+public class TrustAnchorDto {
 
-  /** Metadata */
-  private Map<String, Object> metadata;
+  @Schema(description = "Module ID")
+  private UUID moduleId;
 
+  @Schema(description = "Entity identifier for this trust anchor")
+  private String entityId;
+
+  @Schema(description = "If this trust anchor is active")
+  private Boolean active;
+
+  @Schema(description = "Entity identifiers for trust mark issuers")
+  private List<String> trustMarkIssuers;
 }
+

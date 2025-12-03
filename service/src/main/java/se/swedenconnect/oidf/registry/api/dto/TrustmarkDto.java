@@ -13,42 +13,38 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package se.swedenconnect.oidf.registry.api.dto;
 
-package se.swedenconnect.oidf.registry.domain;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import java.util.UUID;
 
 /**
- * oidf-entity-registry
+ * Output DTO for trust mark configuration.
  *
  * @author Per Fredrik Plars
  */
-@Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class Trustmark implements ToJson {
+@Data
+@Schema(name = "Trustmark")
+public class TrustmarkDto {
 
-  /** Trustmark ID */
-  private java.util.UUID trustmarkId;
+  @Schema(description = "Trustmark ID")
+  private UUID trustmarkId;
 
-  /** To what trustmarkissuer should this trustmark belong to */
+  @Schema(description = "Trust mark issuer entity identifier")
   private String trustmarkissuerId;
 
-  /** Trustmark entityid */
+  @Schema(description = "Trust mark entity identifier")
   private String trustMarkEntityId;
 
-  /** Url that points to a logotype image */
+  @Schema(description = "Logo URI")
   private String logoUri;
 
-  /** Reference url */
+  @Schema(description = "Reference URI")
   private String refUri;
 
-  /** Delegation JWT according to oidf specification */
+  @Schema(description = "Delegation JWT")
   private String delegation;
 }
+

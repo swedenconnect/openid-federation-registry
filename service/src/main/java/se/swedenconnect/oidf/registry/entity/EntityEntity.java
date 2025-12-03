@@ -19,7 +19,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import se.swedenconnect.oidf.registry.domain.EntityToDomain;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,8 +44,17 @@ public class EntityEntity extends BaseEntity {
   @Enumerated(EnumType.STRING)
   private EntityKeyType entityType;
 
-  @Column(name = "jsondata")
-  private String jsondata;
+  @Column(name = "metadata", columnDefinition = "JSON")
+  private String metadata;
+
+  @Column(name = "jwks", columnDefinition = "TEXT")
+  private String jwks;
+
+  @Column(name = "issuer", columnDefinition = "TEXT")
+  private String issuer;
+
+  @Column(name = "subject", columnDefinition = "TEXT")
+  private String subject;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "organization_id", nullable = false)
@@ -59,46 +67,6 @@ public class EntityEntity extends BaseEntity {
   @OneToMany(mappedBy = "entity")
   private List<ModuleEntity> modules;
 
-  @OneToMany(cascade = CascadeType.DETACH, fetch = FetchType.LAZY)
-  @JoinColumns({
-      @JoinColumn(name = "fk_type", referencedColumnName = "entity_type", insertable = false, updatable = false),
-      @JoinColumn(name = "fk_id", referencedColumnName = "entity_id", insertable = false, updatable = false)
-  })
-  private List<SettingsEntity> settingsEntityList;
-
-  /**
-   * Searches the settingsEntityList for a {@link SettingsEntity} that matches the given key.
-   *
-   * @param key the key of the {@link SettingsEntity} to search for
-   * @return an {@link Optional} containing the matching {@link SettingsEntity} if found, or an empty {@link Optional}
-   *     if no match is found
-   */
-  public Optional<SettingsEntity> getSettingsEntity(final String key) {
-    return this.settingsEntityList.stream()
-        .filter(s -> s.getKey().equals(key))
-        .findFirst();
-  }
-
-  /**
-   * Retrieves the value of the "issuer" setting from the associated list of {@link SettingsEntity}. If no setting with
-   * the key "issuer" exists, an exception is thrown.
-   *
-   * @return the value of the "issuer" setting as a {@link String}
-   */
-  public String getIssuer() {
-    return this.getSettingsEntity("issuer").orElseThrow().getValue();
-  }
-
-  /**
-   * Retrieves the value of the "subject" setting from the associated list of {@link SettingsEntity}. If no setting with
-   * the key "subject" exists, an exception is thrown.
-   *
-   * @return the value of the "subject" setting as a {@link String}
-   */
-  public String getSubject() {
-    return this.getSettingsEntity("subject").orElseThrow().getValue();
-  }
-
   /**
    * Retrieves a {@link ModuleEntity} from the list of modules that matches the given module type.
    *
@@ -110,10 +78,5 @@ public class EntityEntity extends BaseEntity {
     return this.getModules().stream()
         .filter(moduleEntity -> moduleEntity.getModuleType().equals(fkKeyType.name()))
         .findFirst();
-  }
-
-  @PostLoad
-  public void migrate() {
-    this.jsondata = EntityToDomain.map(this).toJson();
   }
 }

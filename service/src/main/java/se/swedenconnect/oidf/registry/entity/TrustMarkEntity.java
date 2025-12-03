@@ -63,8 +63,20 @@ public class TrustMarkEntity extends BaseEntity {
   @Filter(name = "fkTypeTMFilter", condition = "fk_type = :fkTypeParam")
   private List<SettingsEntity> settingsEntityList;
 
-  @Column(name = "jsondata")
-  private String jsondata;
+  @Column(name = "trustmarkissuer_id")
+  private String trustmarkissuerId;
+
+  @Column(name = "trustmark_entity_id")
+  private String trustMarkEntityId;
+
+  @Column(name = "logo_uri", length = 512)
+  private String logoUri;
+
+  @Column(name = "ref_uri", length = 512)
+  private String refUri;
+
+  @Column(name = "delegation", columnDefinition = "TEXT")
+  private String delegation;
 
 
   /**

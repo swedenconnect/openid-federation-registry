@@ -14,25 +14,27 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.domain;
+package se.swedenconnect.oidf.registry.api.dto.input;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.experimental.SuperBuilder;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
 import java.util.Map;
 
 /**
- * Entity that is hosted with ec_location override
+ * Incoming DTO for policy configuration.
  *
  * @author Per Fredrik Plars
  */
-@EqualsAndHashCode(callSuper = true)
-@Getter
-@SuperBuilder
-public class HostedEntity extends Entity {
+@Data
+@Schema(name = "PolicyInput")
+public class PolicyInputDto {
 
-  /** Metadata */
-  private Map<String, Object> metadata;
+  @Schema(description = "Policy name", example = "Default OIDC RP policy")
+  private String name;
 
+  @Schema(description = "JSON policy document")
+  private Map<String, Object> policy;
 }
+
+

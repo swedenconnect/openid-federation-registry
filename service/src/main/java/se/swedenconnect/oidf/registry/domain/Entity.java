@@ -20,6 +20,7 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 /**
@@ -28,10 +29,14 @@ import lombok.experimental.SuperBuilder;
  * @author Per Fredrik Plars
  */
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
 public abstract class Entity implements ToJson {
+
+  /** Entity ID */
+  private java.util.UUID entityId;
 
   /** Subject */
   private EntityID subject;
