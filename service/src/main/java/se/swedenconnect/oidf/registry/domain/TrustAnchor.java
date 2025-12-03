@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.util.List;
@@ -31,10 +32,14 @@ import java.util.List;
  * @author Per Fredrik Plars
  */
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TrustAnchor implements FederationModule, Serializable, ToJson {
+
+  /** Module ID */
+  private java.util.UUID moduleId;
 
   /** Entity config */
   private EntityID entityId;

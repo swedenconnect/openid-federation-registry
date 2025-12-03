@@ -61,3 +61,16 @@ openid:
         notification-active: false
         notification-retry-count: 3
         notification-retry-delay-duration: PT10S
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operationsSorter: method
+    tagsSorter: alpha
+    tryItOutEnabled: true
+    filter: true
+    persistAuthorization: true

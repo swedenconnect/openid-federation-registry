@@ -14,25 +14,30 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.domain;
+package se.swedenconnect.oidf.registry.api.dto.input;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.experimental.SuperBuilder;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
 import java.util.Map;
 
 /**
- * Entity that is hosted with ec_location override
+ * Incoming DTO for creating or updating a Federation Entity.
  *
  * @author Per Fredrik Plars
  */
-@EqualsAndHashCode(callSuper = true)
-@Getter
-@SuperBuilder
-public class HostedEntity extends Entity {
+@Data
+@Schema(name = "FederationEntityInput")
+public class FederationEntityInputDto {
 
-  /** Metadata */
+  @Schema(description = "Subject (entity identifier)", example = "https://rp.example.se")
+  private String subject;
+
+  @Schema(description = "Issuer (entity identifier)", example = "https://ta.example.se")
+  private String issuer;
+
+  @Schema(description = "Federation entity metadata", example = "{\"federation_entity\":{}}")
   private Map<String, Object> metadata;
-
 }
+
+

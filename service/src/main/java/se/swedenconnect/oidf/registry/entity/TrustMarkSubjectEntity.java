@@ -64,8 +64,20 @@ public class TrustMarkSubjectEntity extends BaseEntity {
   @Filter(name = "fkTypeTMSFilter", condition = "fk_type = :fkTypeParam")
   private List<SettingsEntity> settingsEntityList;
 
-  @Column(name = "jsondata")
-  private String jsondata;
+  @Column(name = "trustmark_id_ref")
+  private String trustmarkIdRef;
+
+  @Column(name = "subject")
+  private String subject;
+
+  @Column(name = "revoked")
+  private Boolean revoked;
+
+  @Column(name = "granted")
+  private java.time.LocalDateTime granted;
+
+  @Column(name = "expires")
+  private java.time.LocalDateTime expires;
 
 
 

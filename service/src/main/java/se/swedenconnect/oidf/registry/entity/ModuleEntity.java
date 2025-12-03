@@ -21,11 +21,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
-import se.swedenconnect.oidf.registry.domain.EntityToDomain;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -68,8 +66,30 @@ public class ModuleEntity extends BaseEntity {
   @JoinColumn(name = "entity_id", nullable = false)
   private EntityEntity entity;
 
-  @Column(name = "jsondata")
-  private String jsondata;
+  // Columns for module data (used by TrustAnchor, Resolver, TrustmarkIssuer)
+  @Column(name = "entity_id_value")
+  private String entityIdValue;
+
+  @Column(name = "active")
+  private Boolean active;
+
+  @Column(name = "resolve_response_duration")
+  private String resolveResponseDuration;
+
+  @Column(name = "trust_anchor")
+  private String trustAnchor;
+
+  @Column(name = "trusted_keys", columnDefinition = "TEXT")
+  private String trustedKeys;
+
+  @Column(name = "step_retry_duration")
+  private String stepRetryDuration;
+
+  @Column(name = "trust_mark_issuers", columnDefinition = "JSON")
+  private String trustMarkIssuers;
+
+  @Column(name = "trust_mark_token_validity_duration")
+  private String trustMarkTokenValidityDuration;
 
   /**
    * Determines whether the module is of the specified types. Compares the module's type against the provided array of
@@ -86,22 +106,4 @@ public class ModuleEntity extends BaseEntity {
 
   }
 
-  /**
-   * Retrieves the {@link SettingsEntity} associated with the specified key. The method searches through the list of
-   * settings entities and returns an optional containing the first entity matching the given key, if one exists.
-   *
-   * @param key the key to search for in the list of settings entities
-   * @return an {@link Optional} containing the matching {@link SettingsEntity} if found, otherwise an empty
-   *     {@link Optional}
-   */
-  public Optional<SettingsEntity> getSettingsEntity(final String key) {
-    return this.settingsEntityList.stream()
-        .filter(s -> s.getKey().equals(key))
-        .findFirst();
-  }
-
-  @PostLoad
-  public void migrate() {
-    this.jsondata = EntityToDomain.map(this).toJson();
-  }
 }

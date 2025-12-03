@@ -1,0 +1,451 @@
+/*
+ * Copyright 2025 Sweden Connect
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package se.swedenconnect.oidf.registry.api.dto;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import se.swedenconnect.oidf.registry.api.dto.input.FederationEntityInputDto;
+import se.swedenconnect.oidf.registry.api.dto.input.HostedEntityInputDto;
+import se.swedenconnect.oidf.registry.api.dto.input.PolicyInputDto;
+import se.swedenconnect.oidf.registry.api.dto.input.ResolverInputDto;
+import se.swedenconnect.oidf.registry.api.dto.input.SubordinateEntityInputDto;
+import se.swedenconnect.oidf.registry.api.dto.input.TrustAnchorInputDto;
+import se.swedenconnect.oidf.registry.api.dto.input.TrustmarkInputDto;
+import se.swedenconnect.oidf.registry.api.dto.input.TrustmarkSubjectInputDto;
+import se.swedenconnect.oidf.registry.entity.EntityEntity;
+import se.swedenconnect.oidf.registry.entity.EntityKeyType;
+import se.swedenconnect.oidf.registry.entity.FkKeyType;
+import se.swedenconnect.oidf.registry.entity.ModuleEntity;
+import se.swedenconnect.oidf.registry.entity.PolicyEntity;
+import se.swedenconnect.oidf.registry.entity.TrustMarkEntity;
+import se.swedenconnect.oidf.registry.entity.TrustMarkSubjectEntity;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Utility class for converting between Entity and DTO objects.
+ *
+ * @author Per Fredrik Plars
+ */
+public final class EntityToDto {
+  private static final ObjectMapper mapper = new ObjectMapper();
+
+  // -------------------------------------------------------------------------
+  // Entity -> DTO mapping
+  // -------------------------------------------------------------------------
+
+  public static FederationEntityDto toDto(final EntityEntity entityEntity) {
+    if (entityEntity.getEntityType() != EntityKeyType.FEDERATION_ENTITY) {
+      throw new IllegalArgumentException("Entity is not a FederationEntity");
+    }
+
+    final FederationEntityDto dto = new FederationEntityDto();
+    dto.setEntityId(entityEntity.getEntityId());
+    dto.setSubject(entityEntity.getSubject());
+    dto.setIssuer(entityEntity.getIssuer());
+
+    if (entityEntity.getMetadata() != null && !entityEntity.getMetadata().isBlank()) {
+      try {
+        dto.setMetadata(mapper.readValue(entityEntity.getMetadata(), new TypeReference<Map<String, Object>>() {}));
+      }
+      catch (JsonProcessingException e) {
+        throw new IllegalArgumentException("Failed to parse metadata JSON", e);
+      }
+    }
+
+    return dto;
+  }
+
+  public static HostedEntityDto toDtoHosted(final EntityEntity entityEntity) {
+    if (entityEntity.getEntityType() != EntityKeyType.HOSTED_ENTITY) {
+      throw new IllegalArgumentException("Entity is not a HostedEntity");
+    }
+
+    final HostedEntityDto dto = new HostedEntityDto();
+    dto.setEntityId(entityEntity.getEntityId());
+    dto.setSubject(entityEntity.getSubject());
+    dto.setIssuer(entityEntity.getIssuer());
+
+    if (entityEntity.getMetadata() != null && !entityEntity.getMetadata().isBlank()) {
+      try {
+        dto.setMetadata(mapper.readValue(entityEntity.getMetadata(), new TypeReference<Map<String, Object>>() {}));
+      }
+      catch (JsonProcessingException e) {
+        throw new IllegalArgumentException("Failed to parse metadata JSON", e);
+      }
+    }
+
+    return dto;
+  }
+
+  public static SubordinateEntityDto toDtoSubordinate(final EntityEntity entityEntity) {
+    if (entityEntity.getEntityType() != EntityKeyType.SUBORDINATE_ENTITY) {
+      throw new IllegalArgumentException("Entity is not a SubordinateEntity");
+    }
+
+    final SubordinateEntityDto dto = new SubordinateEntityDto();
+    dto.setEntityId(entityEntity.getEntityId());
+    dto.setSubject(entityEntity.getSubject());
+    dto.setIssuer(entityEntity.getIssuer());
+    dto.setJwks(entityEntity.getJwks());
+
+    return dto;
+  }
+
+  public static PolicyDto toDto(final PolicyEntity policyEntity) {
+    final PolicyDto dto = new PolicyDto();
+    dto.setPolicyId(policyEntity.getPolicyId());
+    dto.setName(policyEntity.getName());
+
+    if (policyEntity.getPolicy() != null && !policyEntity.getPolicy().isBlank()) {
+      try {
+        dto.setPolicy(mapper.readValue(policyEntity.getPolicy(), new TypeReference<Map<String, Object>>() {}));
+      }
+      catch (JsonProcessingException e) {
+        throw new IllegalArgumentException("Failed to parse policy JSON", e);
+      }
+    }
+    else {
+      dto.setPolicy(Collections.emptyMap());
+    }
+
+    return dto;
+  }
+
+  public static TrustAnchorDto toDto(final ModuleEntity moduleEntity) {
+    if (!moduleEntity.getModuleType().equals(FkKeyType.TRUSTANCHOR.name())) {
+      throw new IllegalArgumentException("Module is not a TrustAnchor");
+    }
+
+    final TrustAnchorDto dto = new TrustAnchorDto();
+    dto.setModuleId(moduleEntity.getModuleId());
+    dto.setEntityId(moduleEntity.getEntityIdValue());
+    dto.setActive(moduleEntity.getActive());
+
+    // Read trust mark issuers from JSON column
+    if (moduleEntity.getTrustMarkIssuers() != null && !moduleEntity.getTrustMarkIssuers().isBlank()) {
+      try {
+        final List<String> trustMarkIssuers = mapper.readValue(
+            moduleEntity.getTrustMarkIssuers(), new TypeReference<List<String>>() {});
+        dto.setTrustMarkIssuers(trustMarkIssuers);
+      }
+      catch (JsonProcessingException e) {
+        throw new IllegalArgumentException("Failed to parse trustMarkIssuers JSON", e);
+      }
+    }
+
+    return dto;
+  }
+
+  public static ResolverDto toDtoResolver(final ModuleEntity moduleEntity) {
+    if (!moduleEntity.getModuleType().equals(FkKeyType.RESOLVER.name())) {
+      throw new IllegalArgumentException("Module is not a Resolver");
+    }
+
+    final ResolverDto dto = new ResolverDto();
+    dto.setModuleId(moduleEntity.getModuleId());
+    dto.setEntityId(moduleEntity.getEntityIdValue());
+    dto.setActive(moduleEntity.getActive());
+    dto.setResolveResponseDuration(moduleEntity.getResolveResponseDuration());
+    dto.setTrustAnchor(moduleEntity.getTrustAnchor());
+    dto.setTrustedKeys(moduleEntity.getTrustedKeys());
+    dto.setStepRetryDuration(moduleEntity.getStepRetryDuration());
+
+    return dto;
+  }
+
+  public static TrustmarkDto toDto(final TrustMarkEntity trustMarkEntity) {
+    final TrustmarkDto dto = new TrustmarkDto();
+    dto.setTrustmarkId(trustMarkEntity.getTrustmarkId());
+    dto.setTrustmarkissuerId(trustMarkEntity.getTrustmarkissuerId());
+    dto.setTrustMarkEntityId(trustMarkEntity.getTrustMarkEntityId());
+    dto.setLogoUri(trustMarkEntity.getLogoUri());
+    dto.setRefUri(trustMarkEntity.getRefUri());
+    dto.setDelegation(trustMarkEntity.getDelegation());
+    return dto;
+  }
+
+  public static TrustmarkSubjectDto toDto(final TrustMarkSubjectEntity trustMarkSubjectEntity) {
+    final TrustmarkSubjectDto dto = new TrustmarkSubjectDto();
+    dto.setTrustmarksubjectId(trustMarkSubjectEntity.getTrustmarksubjectId());
+    dto.setTrustmarkId(trustMarkSubjectEntity.getTrustmarkIdRef());
+    dto.setSubject(trustMarkSubjectEntity.getSubject());
+    dto.setRevoked(trustMarkSubjectEntity.getRevoked());
+    dto.setGranted(trustMarkSubjectEntity.getGranted());
+    dto.setExpires(trustMarkSubjectEntity.getExpires());
+    return dto;
+  }
+
+  // -------------------------------------------------------------------------
+  // DTO -> Entity mapping
+  // -------------------------------------------------------------------------
+
+  public static EntityEntity toEntity(final java.util.UUID id,
+      final FederationEntityInputDto dto,
+      final EntityKeyType entityKeyType,
+      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization,
+      final PolicyEntity policyEntity) {
+    final EntityEntity entity = new EntityEntity();
+    entity.setEntityId(id);
+    entity.setEntityType(entityKeyType);
+    entity.setOrganization(organization);
+    entity.setPolicyEntity(policyEntity);
+    entity.setSubject(dto.getSubject());
+    entity.setIssuer(dto.getIssuer());
+
+    if (dto.getMetadata() != null) {
+      try {
+        entity.setMetadata(mapper.writeValueAsString(dto.getMetadata()));
+      }
+      catch (JsonProcessingException e) {
+        throw new IllegalArgumentException("Failed to serialize metadata to JSON", e);
+      }
+    }
+
+    return entity;
+  }
+
+  public static EntityEntity toEntity(final java.util.UUID id,
+      final HostedEntityInputDto dto,
+      final EntityKeyType entityKeyType,
+      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization,
+      final PolicyEntity policyEntity) {
+    final EntityEntity entity = new EntityEntity();
+    entity.setEntityId(id);
+    entity.setEntityType(entityKeyType);
+    entity.setOrganization(organization);
+    entity.setPolicyEntity(policyEntity);
+    entity.setSubject(dto.getSubject());
+    entity.setIssuer(dto.getIssuer());
+
+    if (dto.getMetadata() != null) {
+      try {
+        entity.setMetadata(mapper.writeValueAsString(dto.getMetadata()));
+      }
+      catch (JsonProcessingException e) {
+        throw new IllegalArgumentException("Failed to serialize metadata to JSON", e);
+      }
+    }
+
+    return entity;
+  }
+
+  public static EntityEntity toEntity(final java.util.UUID id,
+      final SubordinateEntityInputDto dto,
+      final EntityKeyType entityKeyType,
+      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization,
+      final PolicyEntity policyEntity) {
+    final EntityEntity entity = new EntityEntity();
+    entity.setEntityId(id);
+    entity.setEntityType(entityKeyType);
+    entity.setOrganization(organization);
+    entity.setPolicyEntity(policyEntity);
+    entity.setSubject(dto.getSubject());
+    entity.setIssuer(dto.getIssuer());
+    entity.setJwks(dto.getJwks());
+
+    return entity;
+  }
+
+  public static PolicyEntity toEntity(final java.util.UUID id,
+      final PolicyInputDto dto,
+      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization) {
+    final PolicyEntity entity = new PolicyEntity();
+    entity.setPolicyId(id);
+    entity.setOrganization(organization);
+    entity.setName(dto.getName());
+    try {
+      entity.setPolicy(mapper.writeValueAsString(
+          dto.getPolicy() != null ? dto.getPolicy() : Collections.emptyMap()));
+    }
+    catch (JsonProcessingException e) {
+      throw new IllegalArgumentException("Failed to serialize policy to JSON", e);
+    }
+    return entity;
+  }
+
+  public static void updateEntity(final EntityEntity entity, final FederationEntityInputDto dto) {
+    entity.setSubject(dto.getSubject());
+    entity.setIssuer(dto.getIssuer());
+    if (dto.getMetadata() != null) {
+      try {
+        entity.setMetadata(mapper.writeValueAsString(dto.getMetadata()));
+      }
+      catch (JsonProcessingException e) {
+        throw new IllegalArgumentException("Failed to serialize metadata to JSON", e);
+      }
+    }
+  }
+
+  public static void updateEntity(final EntityEntity entity, final HostedEntityInputDto dto) {
+    entity.setSubject(dto.getSubject());
+    entity.setIssuer(dto.getIssuer());
+    if (dto.getMetadata() != null) {
+      try {
+        entity.setMetadata(mapper.writeValueAsString(dto.getMetadata()));
+      }
+      catch (JsonProcessingException e) {
+        throw new IllegalArgumentException("Failed to serialize metadata to JSON", e);
+      }
+    }
+  }
+
+  public static void updateEntity(final EntityEntity entity, final SubordinateEntityInputDto dto) {
+    entity.setSubject(dto.getSubject());
+    entity.setIssuer(dto.getIssuer());
+    entity.setJwks(dto.getJwks());
+  }
+
+  public static void updateEntity(final PolicyEntity entity, final PolicyInputDto dto) {
+    entity.setName(dto.getName());
+    try {
+      entity.setPolicy(mapper.writeValueAsString(
+          dto.getPolicy() != null ? dto.getPolicy() : Collections.emptyMap()));
+    }
+    catch (JsonProcessingException e) {
+      throw new IllegalArgumentException("Failed to serialize policy to JSON", e);
+    }
+  }
+
+  public static void updateModuleEntity(final ModuleEntity module, final TrustAnchorInputDto dto) {
+    module.setEntityIdValue(dto.getEntityId());
+    module.setActive(dto.getActive());
+
+    // Save trust mark issuers to JSON column
+    if (dto.getTrustMarkIssuers() != null) {
+      try {
+        module.setTrustMarkIssuers(mapper.writeValueAsString(dto.getTrustMarkIssuers()));
+      }
+      catch (JsonProcessingException e) {
+        throw new IllegalArgumentException("Failed to serialize trustMarkIssuers to JSON", e);
+      }
+    }
+    else {
+      module.setTrustMarkIssuers(null);
+    }
+  }
+
+  public static void updateModuleEntity(final ModuleEntity module, final ResolverInputDto dto) {
+    module.setEntityIdValue(dto.getEntityId());
+    module.setActive(dto.getActive());
+    module.setResolveResponseDuration(dto.getResolveResponseDuration());
+    module.setTrustAnchor(dto.getTrustAnchor());
+    module.setTrustedKeys(dto.getTrustedKeys());
+    module.setStepRetryDuration(dto.getStepRetryDuration());
+  }
+
+  public static TrustMarkEntity toEntity(final java.util.UUID id,
+      final TrustmarkInputDto dto,
+      final ModuleEntity moduleEntity) {
+    final TrustMarkEntity entity = TrustMarkEntity.builder()
+        .trustmarkId(id)
+        .module(moduleEntity)
+        .trustmarkissuerId(dto.getTrustmarkissuerId())
+        .trustMarkEntityId(dto.getTrustMarkEntityId())
+        .logoUri(dto.getLogoUri())
+        .refUri(dto.getRefUri())
+        .delegation(dto.getDelegation())
+        .build();
+    return entity;
+  }
+
+  public static void updateEntity(final TrustMarkEntity entity, final TrustmarkInputDto dto) {
+    entity.setTrustmarkissuerId(dto.getTrustmarkissuerId());
+    entity.setTrustMarkEntityId(dto.getTrustMarkEntityId());
+    entity.setLogoUri(dto.getLogoUri());
+    entity.setRefUri(dto.getRefUri());
+    entity.setDelegation(dto.getDelegation());
+  }
+
+  public static TrustMarkSubjectEntity toEntity(final java.util.UUID id,
+      final TrustmarkSubjectInputDto dto,
+      final TrustMarkEntity trustMarkEntity) {
+    final TrustMarkSubjectEntity entity = TrustMarkSubjectEntity.builder()
+        .trustmarksubjectId(id)
+        .trustMark(trustMarkEntity)
+        .trustmarkIdRef(dto.getTrustmarkId())
+        .subject(dto.getSubject())
+        .revoked(dto.getRevoked())
+        .granted(dto.getGranted() != null && !dto.getGranted().isBlank()
+            ? java.time.LocalDateTime.parse(dto.getGranted())
+            : null)
+        .expires(dto.getExpires() != null && !dto.getExpires().isBlank()
+            ? java.time.LocalDateTime.parse(dto.getExpires())
+            : null)
+        .build();
+    return entity;
+  }
+
+  public static void updateEntity(final TrustMarkSubjectEntity entity, final TrustmarkSubjectInputDto dto) {
+    entity.setTrustmarkIdRef(dto.getTrustmarkId());
+    entity.setSubject(dto.getSubject());
+    entity.setRevoked(dto.getRevoked());
+    entity.setGranted(dto.getGranted() != null && !dto.getGranted().isBlank()
+        ? java.time.LocalDateTime.parse(dto.getGranted())
+        : null);
+    entity.setExpires(dto.getExpires() != null && !dto.getExpires().isBlank()
+        ? java.time.LocalDateTime.parse(dto.getExpires())
+        : null);
+  }
+
+  public static ModuleEntity toEntity(final java.util.UUID id,
+      final TrustAnchorInputDto dto,
+      final EntityEntity entityEntity,
+      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization) {
+    final ModuleEntity module = new ModuleEntity();
+    module.setModuleId(id);
+    module.setModuleType(FkKeyType.TRUSTANCHOR.name());
+    module.setEntity(entityEntity);
+    module.setOrganization(organization);
+    module.setEntityIdValue(dto.getEntityId());
+    module.setActive(dto.getActive());
+
+    if (dto.getTrustMarkIssuers() != null) {
+      try {
+        module.setTrustMarkIssuers(mapper.writeValueAsString(dto.getTrustMarkIssuers()));
+      }
+      catch (JsonProcessingException e) {
+        throw new IllegalArgumentException("Failed to serialize trustMarkIssuers to JSON", e);
+      }
+    }
+
+    return module;
+  }
+
+  public static ModuleEntity toEntity(final java.util.UUID id,
+      final ResolverInputDto dto,
+      final EntityEntity entityEntity,
+      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization) {
+    final ModuleEntity module = new ModuleEntity();
+    module.setModuleId(id);
+    module.setModuleType(FkKeyType.RESOLVER.name());
+    module.setEntity(entityEntity);
+    module.setOrganization(organization);
+    module.setEntityIdValue(dto.getEntityId());
+    module.setActive(dto.getActive());
+    module.setResolveResponseDuration(dto.getResolveResponseDuration());
+    module.setTrustAnchor(dto.getTrustAnchor());
+    module.setTrustedKeys(dto.getTrustedKeys());
+    module.setStepRetryDuration(dto.getStepRetryDuration());
+
+    return module;
+  }
+}
+

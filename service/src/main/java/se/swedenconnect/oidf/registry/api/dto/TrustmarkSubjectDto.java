@@ -13,39 +13,39 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package se.swedenconnect.oidf.registry.api.dto;
 
-package se.swedenconnect.oidf.registry.domain;
-
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
+/**
+ * Output DTO for trust mark subject configuration.
+ *
+ * @author Per Fredrik Plars
+ */
 @Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class TrustmarkSubject implements ToJson {
+@Schema(name = "TrustmarkSubject")
+public class TrustmarkSubjectDto {
 
-  /** Trustmark subject ID */
-  private java.util.UUID trustmarksubjectId;
+  @Schema(description = "Trustmark subject ID")
+  private UUID trustmarksubjectId;
 
-  /** TrustMark */
-  private EntityID trustmarkId;
+  @Schema(description = "Trust mark identifier (entity id)")
+  private String trustmarkId;
 
-  /** Subject entity id */
-  private EntityID subject;
+  @Schema(description = "Subject entity id")
+  private String subject;
 
-  /** If it is revoked */
+  @Schema(description = "If the trust mark is revoked for this subject")
   private Boolean revoked;
 
-  /** When it should be granted */
+  @Schema(description = "Granted time")
   private LocalDateTime granted;
 
-  /** When it should be expires */
+  @Schema(description = "Expires time")
   private LocalDateTime expires;
 }
 

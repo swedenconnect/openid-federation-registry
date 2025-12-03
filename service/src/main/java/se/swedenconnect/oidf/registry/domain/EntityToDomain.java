@@ -22,14 +22,24 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import se.swedenconnect.oidf.registry.api.dto.input.FederationEntityInputDto;
+import se.swedenconnect.oidf.registry.api.dto.input.HostedEntityInputDto;
+import se.swedenconnect.oidf.registry.api.dto.input.PolicyInputDto;
+import se.swedenconnect.oidf.registry.api.dto.input.ResolverInputDto;
+import se.swedenconnect.oidf.registry.api.dto.input.SubordinateEntityInputDto;
+import se.swedenconnect.oidf.registry.api.dto.input.TrustAnchorInputDto;
+import se.swedenconnect.oidf.registry.api.dto.input.TrustmarkInputDto;
+import se.swedenconnect.oidf.registry.api.dto.input.TrustmarkSubjectInputDto;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.entity.ModuleEntity;
 import se.swedenconnect.oidf.registry.entity.PolicyEntity;
-import se.swedenconnect.oidf.registry.entity.SettingsEntity;
+import se.swedenconnect.oidf.registry.entity.TrustMarkEntity;
+import se.swedenconnect.oidf.registry.entity.TrustMarkSubjectEntity;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -41,43 +51,56 @@ public final class EntityToDomain {
   final static ObjectMapper mapper = new ObjectMapper();
 
   public static TrustAnchor mapTrustAnchor(final ModuleEntity moduleEntity) {
-    final TrustAnchor o = new TrustAnchor();
-    // TODO
-    /*
-    o.setEntityId((String) values.get("entityId"));
-    o.setActive(values.get("active") != null && (Boolean) values.get("active"));
-    o.setTrustMarkIssuer((String) values.get("trustMarkIssuer"));
-*/
-    return o;
+    final TrustAnchor.TrustAnchorBuilder o = TrustAnchor.builder();
+    o.moduleId(moduleEntity.getModuleId());
+
+    // Read from columns directly
+    if (moduleEntity.getEntityIdValue() != null) {
+      o.entityId(toEntityID(moduleEntity.getEntityIdValue()));
+    }
+    if (moduleEntity.getActive() != null) {
+      o.active(moduleEntity.getActive());
+    }
+    if (moduleEntity.getTrustMarkIssuers() != null && !moduleEntity.getTrustMarkIssuers().isBlank()) {
+      try {
+        final List<String> trustMarkIssuers = mapper.readValue(
+            moduleEntity.getTrustMarkIssuers(), new TypeReference<List<String>>() {});
+        o.trustMarkIssuer(trustMarkIssuers.stream()
+            .map(EntityToDomain::toEntityID)
+            .toList());
+      }
+      catch (JsonProcessingException e) {
+        throw new IllegalArgumentException("Failed to parse trustMarkIssuers JSON", e);
+      }
+    }
+
+    return o.build();
   }
 
   public static Resolver mapResolver(final ModuleEntity moduleEntity) {
-    //TODO MAPP DATA
     final Resolver.ResolverBuilder o = Resolver.builder();
-    moduleEntity.getSettingsEntity("active")
-        .map(SettingsEntity::getValue)
-        .map(Boolean::valueOf)
-        .ifPresent(o::active);
+    o.moduleId(moduleEntity.getModuleId());
 
-    moduleEntity.getSettingsEntity("entityId")
-        .map(SettingsEntity::getValue)
-        .map(EntityToDomain::toEntityID)
-        .ifPresent(o::entityId);
-
-    /*
-    final  Map<String, Object> values
-
-    o.setEntityId((String) values.get("entityId"));
-    o.setActive(values.get("active") != null && (Boolean) values.get("active"));
-    o.setResolveResponseDuration(values.get("resolveResponseDuration") != null
-        ? java.time.Duration.parse((String) values.get("resolveResponseDuration"))
-        : java.time.Duration.ofHours(1));
-    o.setTrustAnchor((String) values.get("trustAnchor"));
-    o.setTrustedKeys((String) values.get("trustedKeys"));
-    o.setStepRetryDuration(values.get("stepRetryDuration") != null
-        ? java.time.Duration.parse((String) values.get("stepRetryDuration"))
-        : java.time.Duration.ofMinutes(1));
-    */
+    // Read from columns directly
+    if (moduleEntity.getEntityIdValue() != null) {
+      o.entityId(toEntityID(moduleEntity.getEntityIdValue()));
+    }
+    if (moduleEntity.getActive() != null) {
+      o.active(moduleEntity.getActive());
+    }
+    if (moduleEntity.getResolveResponseDuration() != null) {
+      o.resolveResponseDuration(moduleEntity.getResolveResponseDuration());
+    }
+    if (moduleEntity.getTrustAnchor() != null) {
+      o.trustAnchor(toEntityID(moduleEntity.getTrustAnchor()));
+    }
+    if (moduleEntity.getTrustedKeys() != null && !moduleEntity.getTrustedKeys().isBlank()) {
+      o.trustedKeys(toJwks(moduleEntity.getTrustedKeys()));
+    }
+    if (moduleEntity.getStepRetryDuration() != null) {
+      o.stepRetryDuration(moduleEntity.getStepRetryDuration());
+    }
+    
     return o.build();
   }
 
@@ -98,20 +121,21 @@ public final class EntityToDomain {
   public static Entity map(final EntityEntity entityEntity) {
 
     if (entityEntity.getEntityType() == EntityKeyType.FEDERATION_ENTITY) {
-      final FederationEntity.FederationEntityBuilder o = FederationEntity.builder();
+      final FederationEntity.FederationEntityBuilder<?, ?> o = FederationEntity.builder();
 
-      o.subject(entityEntity.getSettingsEntity("subject")
-          .map(SettingsEntity::getValue)
-          .map(EntityToDomain::toEntityID).orElseThrow());
+      o.entityId(entityEntity.getEntityId());
+      o.subject(toEntityID(entityEntity.getSubject()));
+      o.issuer(toEntityID(entityEntity.getIssuer()));
 
-      o.issuer(entityEntity.getSettingsEntity("issuer")
-          .map(SettingsEntity::getValue)
-          .map(EntityToDomain::toEntityID).orElseThrow());
-
-      o.metadata(entityEntity.getSettingsEntity("metadata")
-          .map(SettingsEntity::castValue)
-          .map(o1 -> (Map<String, Object>) o1)
-          .orElseThrow());
+      // Read metadata from column
+      if (entityEntity.getMetadata() != null && !entityEntity.getMetadata().isBlank()) {
+        try {
+          o.metadata(mapper.readValue(entityEntity.getMetadata(), new TypeReference<Map<String, Object>>() {}));
+        }
+        catch (JsonProcessingException e) {
+          throw new IllegalArgumentException("Failed to parse metadata JSON", e);
+        }
+      }
 
       entityEntity.getModuleByType(FkKeyType.INTERMEDIATE)
           .map(EntityToDomain::mapIntermediate)
@@ -121,43 +145,47 @@ public final class EntityToDomain {
           .map(EntityToDomain::mapResolver)
           .ifPresent(o::resolver);
 
+      entityEntity.getModuleByType(FkKeyType.TRUSTANCHOR)
+          .map(EntityToDomain::mapTrustAnchor)
+          .ifPresent(o::trustAnchor);
+
+      entityEntity.getModuleByType(FkKeyType.TRUSTMARKISSUER)
+          .map(EntityToDomain::mapTrustmarkIssuer)
+          .ifPresent(o::trustmarkIssuer);
+
       return o.build();
     }
 
     if (entityEntity.getEntityType() == EntityKeyType.HOSTED_ENTITY) {
-      final HostedEntity.HostedEntityBuilder o = HostedEntity.builder();
+      final HostedEntity.HostedEntityBuilder<?, ?> o = HostedEntity.builder();
 
-      o.subject(entityEntity.getSettingsEntity("subject")
-          .map(SettingsEntity::getValue)
-          .map(EntityToDomain::toEntityID).orElseThrow());
+      o.entityId(entityEntity.getEntityId());
+      o.subject(toEntityID(entityEntity.getSubject()));
+      o.issuer(toEntityID(entityEntity.getIssuer()));
 
-      o.issuer(entityEntity.getSettingsEntity("issuer")
-          .map(SettingsEntity::getValue)
-          .map(EntityToDomain::toEntityID).orElseThrow());
-
-      o.metadata(entityEntity.getSettingsEntity("metadata")
-          .map(SettingsEntity::castValue)
-          .map(o1 -> (Map<String, Object>) o1)
-          .orElseThrow());
+      // Read metadata from column
+      if (entityEntity.getMetadata() != null && !entityEntity.getMetadata().isBlank()) {
+        try {
+          o.metadata(mapper.readValue(entityEntity.getMetadata(), new TypeReference<Map<String, Object>>() {}));
+        }
+        catch (JsonProcessingException e) {
+          throw new IllegalArgumentException("Failed to parse metadata JSON", e);
+        }
+      }
 
       return o.build();
     }
 
     if (entityEntity.getEntityType() == EntityKeyType.SUBORDINATE_ENTITY) {
 
-      final SubordinateEntity.SubordinateEntityBuilder o = SubordinateEntity.builder();
-      o.subject(entityEntity.getSettingsEntity("subject")
-          .map(SettingsEntity::getValue)
-          .map(EntityToDomain::toEntityID).orElseThrow());
-
-      o.issuer(entityEntity.getSettingsEntity("issuer")
-          .map(SettingsEntity::getValue)
-          .map(EntityToDomain::toEntityID).orElseThrow());
-
-      entityEntity.getSettingsEntity("jwks")
-          .map(SettingsEntity::getValue)
-          .map(EntityToDomain::toJwks)
-          .ifPresent(o::jwks);
+      final SubordinateEntity.SubordinateEntityBuilder<?, ?> o = SubordinateEntity.builder();
+      o.entityId(entityEntity.getEntityId());
+      o.subject(toEntityID(entityEntity.getSubject()));
+      o.issuer(toEntityID(entityEntity.getIssuer()));
+      // Read jwks from column
+      if (entityEntity.getJwks() != null && !entityEntity.getJwks().isBlank()) {
+        o.jwks(toJwks(entityEntity.getJwks()));
+      }
 
       return o.build();
     }
@@ -193,57 +221,310 @@ public final class EntityToDomain {
   }
 
   public static Trustmark mapTrustmark(final ModuleEntity moduleEntity) {
+    // This method should not be used - Trustmark is stored in TrustMarkEntity, not ModuleEntity
+    throw new UnsupportedOperationException(
+        "mapTrustmark(ModuleEntity) is deprecated. Use mapTrustmark(TrustMarkEntity) instead.");
+  }
 
+  public static Trustmark mapTrustmark(final TrustMarkEntity trustMarkEntity) {
     final Trustmark.TrustmarkBuilder o = Trustmark.builder();
-    moduleEntity.getSettingsEntity("trustmarkissuerId")
-        .map(SettingsEntity::getValue)
-        .ifPresent(o::trustmarkissuerId);
+    o.trustmarkId(trustMarkEntity.getTrustmarkId());
 
-    moduleEntity.getSettingsEntity("trustMarkEntityId")
-        .map(SettingsEntity::getValue)
-        .ifPresent(o::trustMarkEntityId);
+    // Read from columns directly
+    if (trustMarkEntity.getTrustmarkissuerId() != null) {
+      o.trustmarkissuerId(trustMarkEntity.getTrustmarkissuerId());
+    }
 
-    moduleEntity.getSettingsEntity("logoUri")
-        .map(SettingsEntity::getValue)
-        .ifPresent(o::logoUri);
+    if (trustMarkEntity.getTrustMarkEntityId() != null) {
+      o.trustMarkEntityId(trustMarkEntity.getTrustMarkEntityId());
+    }
 
-    moduleEntity.getSettingsEntity("refUri")
-        .map(SettingsEntity::getValue)
-        .ifPresent(o::refUri);
+    if (trustMarkEntity.getLogoUri() != null) {
+      o.logoUri(trustMarkEntity.getLogoUri());
+    }
 
-    moduleEntity.getSettingsEntity("delegation")
-        .map(SettingsEntity::getValue)
-        .ifPresent(o::delegation);
+    if (trustMarkEntity.getRefUri() != null) {
+      o.refUri(trustMarkEntity.getRefUri());
+    }
+
+    if (trustMarkEntity.getDelegation() != null) {
+      o.delegation(trustMarkEntity.getDelegation());
+    }
+
+    return o.build();
+  }
+
+  public static TrustmarkSubject mapTrustmarkSubject(final TrustMarkSubjectEntity trustMarkSubjectEntity) {
+    final TrustmarkSubject.TrustmarkSubjectBuilder o = TrustmarkSubject.builder();
+    o.trustmarksubjectId(trustMarkSubjectEntity.getTrustmarksubjectId());
+
+    // Read from columns, with fallback to JSON parsing for backward compatibility
+    if (trustMarkSubjectEntity.getTrustmarkIdRef() != null) {
+      o.trustmarkId(toEntityID(trustMarkSubjectEntity.getTrustmarkIdRef()));
+    }
+
+    if (trustMarkSubjectEntity.getSubject() != null) {
+      o.subject(toEntityID(trustMarkSubjectEntity.getSubject()));
+    }
+
+    if (trustMarkSubjectEntity.getRevoked() != null) {
+      o.revoked(trustMarkSubjectEntity.getRevoked());
+    }
+
+    if (trustMarkSubjectEntity.getGranted() != null) {
+      o.granted(trustMarkSubjectEntity.getGranted());
+    }
+
+    if (trustMarkSubjectEntity.getExpires() != null) {
+      o.expires(trustMarkSubjectEntity.getExpires());
+    }
 
     return o.build();
   }
 
   public static Intermediate mapIntermediate(ModuleEntity moduleEntity) {
     final Intermediate.IntermediateBuilder o = Intermediate.builder();
-    moduleEntity.getSettingsEntity("active")
-        .map(SettingsEntity::getValue)
-        .map(Boolean::valueOf)
-        .ifPresent(o::active);
+
+    // Read from columns directly
+    if (moduleEntity.getActive() != null) {
+      o.active(moduleEntity.getActive());
+    }
+    
     return o.build();
   }
 
   public static TrustmarkIssuer mapTrustmarkIssuer(ModuleEntity moduleEntity) {
     final TrustmarkIssuer.TrustmarkIssuerBuilder o = TrustmarkIssuer.builder();
-    moduleEntity.getSettingsEntity("active")
-        .map(SettingsEntity::getValue)
-        .map(Boolean::valueOf)
-        .ifPresent(o::active);
 
-    moduleEntity.getSettingsEntity("entityId")
-        .map(SettingsEntity::getValue)
-        .map(EntityToDomain::toEntityID)
-        .ifPresent(o::entityId);
-
-    moduleEntity.getSettingsEntity("trustMarkTokenValidityDuration")
-        .map(SettingsEntity::getValue)
-        .ifPresent(o::trustMarkTokenValidityDuration);
-
+    // Read from columns directly
+    if (moduleEntity.getActive() != null) {
+      o.active(moduleEntity.getActive());
+    }
+    if (moduleEntity.getEntityIdValue() != null) {
+      o.entityId(toEntityID(moduleEntity.getEntityIdValue()));
+    }
+    if (moduleEntity.getTrustMarkTokenValidityDuration() != null) {
+      o.trustMarkTokenValidityDuration(moduleEntity.getTrustMarkTokenValidityDuration());
+    }
+    
     return o.build();
+  }
+
+  // -------------------------------------------------------------------------
+  // DTO -> Domain mapping
+  // -------------------------------------------------------------------------
+
+  public static FederationEntity toDomain(final FederationEntityInputDto dto) {
+    return FederationEntity.builder()
+        .subject(toEntityID(dto.getSubject()))
+        .issuer(toEntityID(dto.getIssuer()))
+        .metadata(dto.getMetadata())
+        .build();
+  }
+
+  public static HostedEntity toDomain(final HostedEntityInputDto dto) {
+    return HostedEntity.builder()
+        .subject(toEntityID(dto.getSubject()))
+        .issuer(toEntityID(dto.getIssuer()))
+        .metadata(dto.getMetadata())
+        .build();
+  }
+
+  public static SubordinateEntity toDomain(final SubordinateEntityInputDto dto) {
+    final SubordinateEntity.SubordinateEntityBuilder<?, ?> builder = SubordinateEntity.builder()
+        .subject(toEntityID(dto.getSubject()))
+        .issuer(toEntityID(dto.getIssuer()));
+
+    if (dto.getJwks() != null && !dto.getJwks().isBlank()) {
+      builder.jwks(toJwks(dto.getJwks()));
+    }
+    return builder.build();
+  }
+
+  public static Policies toDomain(final PolicyInputDto dto) {
+    return Policies.builder()
+        .name(dto.getName())
+        .policy(dto.getPolicy())
+        .build();
+  }
+
+  public static TrustAnchor toDomain(final TrustAnchorInputDto dto) {
+    return TrustAnchor.builder()
+        .entityId(toEntityID(dto.getEntityId()))
+        .active(Boolean.TRUE.equals(dto.getActive()))
+        .trustMarkIssuer(dto.getTrustMarkIssuers()
+            .stream()
+            .map(EntityToDomain::toEntityID)
+            .toList())
+        .build();
+  }
+
+  public static Resolver toDomain(final ResolverInputDto dto) {
+    final Resolver.ResolverBuilder builder = Resolver.builder()
+        .entityId(toEntityID(dto.getEntityId()))
+        .active(Boolean.TRUE.equals(dto.getActive()));
+
+    if (dto.getResolveResponseDuration() != null) {
+      builder.resolveResponseDuration(dto.getResolveResponseDuration());
+    }
+    if (dto.getTrustAnchor() != null) {
+      builder.trustAnchor(toEntityID(dto.getTrustAnchor()));
+    }
+    if (dto.getTrustedKeys() != null && !dto.getTrustedKeys().isBlank()) {
+      builder.trustedKeys(toJwks(dto.getTrustedKeys()));
+    }
+    if (dto.getStepRetryDuration() != null) {
+      builder.stepRetryDuration(dto.getStepRetryDuration());
+    }
+    return builder.build();
+  }
+
+  public static Trustmark toDomain(final TrustmarkInputDto dto) {
+    return Trustmark.builder()
+        .trustmarkissuerId(dto.getTrustmarkissuerId())
+        .trustMarkEntityId(dto.getTrustMarkEntityId())
+        .logoUri(dto.getLogoUri())
+        .refUri(dto.getRefUri())
+        .delegation(dto.getDelegation())
+        .build();
+  }
+
+  public static TrustmarkSubject toDomain(final TrustmarkSubjectInputDto dto) {
+    final TrustmarkSubject.TrustmarkSubjectBuilder builder = TrustmarkSubject.builder()
+        .trustmarkId(toEntityID(dto.getTrustmarkId()))
+        .subject(toEntityID(dto.getSubject()))
+        .revoked(Boolean.TRUE.equals(dto.getRevoked()));
+
+    if (dto.getGranted() != null && !dto.getGranted().isBlank()) {
+      builder.granted(java.time.LocalDateTime.parse(dto.getGranted()));
+    }
+    if (dto.getExpires() != null && !dto.getExpires().isBlank()) {
+      builder.expires(java.time.LocalDateTime.parse(dto.getExpires()));
+    }
+    return builder.build();
+  }
+
+  // -------------------------------------------------------------------------
+  // Domain -> JPA mapping
+  // -------------------------------------------------------------------------
+
+  public static EntityEntity toEntityEntity(final java.util.UUID id,
+      final FederationEntity domain,
+      final EntityKeyType entityKeyType,
+      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization,
+      final PolicyEntity policyEntity) {
+
+    final EntityEntity entity = new EntityEntity();
+    entity.setEntityId(id);
+    entity.setEntityType(entityKeyType);
+    entity.setOrganization(organization);
+    entity.setPolicyEntity(policyEntity);
+    entity.setSubject(domain.getSubject().toString());
+    entity.setIssuer(domain.getIssuer().toString());
+
+    // Save metadata to column
+    if (domain.getMetadata() != null) {
+      try {
+        entity.setMetadata(mapper.writeValueAsString(domain.getMetadata()));
+      }
+      catch (JsonProcessingException e) {
+        throw new IllegalArgumentException("Failed to serialize metadata to JSON", e);
+      }
+    }
+
+    return entity;
+  }
+
+  public static EntityEntity toEntityEntity(final java.util.UUID id,
+      final HostedEntity domain,
+      final EntityKeyType entityKeyType,
+      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization,
+      final PolicyEntity policyEntity) {
+
+    final EntityEntity entity = new EntityEntity();
+    entity.setEntityId(id);
+    entity.setEntityType(entityKeyType);
+    entity.setOrganization(organization);
+    entity.setPolicyEntity(policyEntity);
+
+    // Save metadata to column
+    if (domain.getMetadata() != null) {
+      try {
+        entity.setMetadata(mapper.writeValueAsString(domain.getMetadata()));
+      }
+      catch (JsonProcessingException e) {
+        throw new IllegalArgumentException("Failed to serialize metadata to JSON", e);
+      }
+    }
+
+    return entity;
+  }
+
+  public static EntityEntity toEntityEntity(final java.util.UUID id,
+      final SubordinateEntity domain,
+      final EntityKeyType entityKeyType,
+      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization,
+      final PolicyEntity policyEntity) {
+
+    final EntityEntity entity = new EntityEntity();
+    entity.setEntityId(id);
+    entity.setEntityType(entityKeyType);
+    entity.setOrganization(organization);
+    entity.setPolicyEntity(policyEntity);
+
+    // Save jwks to column
+    if (domain.getJwks() != null) {
+      entity.setJwks(domain.getJwks().toString());
+    }
+
+    return entity;
+  }
+
+  public static PolicyEntity toPolicyEntity(final java.util.UUID id,
+      final Policies policies,
+      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization) {
+    final PolicyEntity entity = new PolicyEntity();
+    entity.setPolicyId(id);
+    entity.setOrganization(organization);
+    entity.setName(policies.getName());
+    try {
+      entity.setPolicy(mapper.writeValueAsString(
+          policies.getPolicy() != null ? policies.getPolicy() : java.util.Collections.emptyMap()));
+    }
+    catch (JsonProcessingException e) {
+      throw new IllegalArgumentException(e);
+    }
+    return entity;
+  }
+
+  public static TrustMarkEntity toTrustMarkEntity(final java.util.UUID id,
+      final Trustmark trustmark,
+      final ModuleEntity moduleEntity) {
+    final TrustMarkEntity entity = TrustMarkEntity.builder()
+        .trustmarkId(id)
+        .module(moduleEntity)
+        .trustmarkissuerId(trustmark.getTrustmarkissuerId())
+        .trustMarkEntityId(trustmark.getTrustMarkEntityId())
+        .logoUri(trustmark.getLogoUri())
+        .refUri(trustmark.getRefUri())
+        .delegation(trustmark.getDelegation())
+        .build();
+    return entity;
+  }
+
+  public static TrustMarkSubjectEntity toTrustMarkSubjectEntity(final java.util.UUID id,
+      final TrustmarkSubject subject,
+      final TrustMarkEntity trustMarkEntity) {
+    final TrustMarkSubjectEntity entity = TrustMarkSubjectEntity.builder()
+        .trustmarksubjectId(id)
+        .trustMark(trustMarkEntity)
+        .trustmarkIdRef(subject.getTrustmarkId() != null ? subject.getTrustmarkId().getValue() : null)
+        .subject(subject.getSubject() != null ? subject.getSubject().getValue() : null)
+        .revoked(subject.getRevoked())
+        .granted(subject.getGranted())
+        .expires(subject.getExpires())
+        .build();
+    return entity;
   }
 
   private static EntityID toEntityID(final String value) {

@@ -840,7 +840,9 @@ public class PropertyValidators {
       if (!this.builder.isEmpty() && this.builder.charAt(this.builder.length() - 1) == '|') {
         this.builder.setLength(this.builder.length() - 2);
       }
-      return PropertyValidators.this.resolveValidator(this.builder.toString(), this.variabelResolver);
+      final String builderResult = this.builder.toString();
+      this.builder.setLength(0);
+      return PropertyValidators.this.resolveValidator(builderResult, this.variabelResolver);
     }
   }
 

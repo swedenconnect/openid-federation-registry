@@ -14,25 +14,34 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.domain;
+package se.swedenconnect.oidf.registry.api.dto.input;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.experimental.SuperBuilder;
-
-import java.util.Map;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
 /**
- * Entity that is hosted with ec_location override
+ * Incoming DTO for trust mark configuration.
  *
  * @author Per Fredrik Plars
  */
-@EqualsAndHashCode(callSuper = true)
-@Getter
-@SuperBuilder
-public class HostedEntity extends Entity {
+@Data
+@Schema(name = "TrustmarkInput")
+public class TrustmarkInputDto {
 
-  /** Metadata */
-  private Map<String, Object> metadata;
+  @Schema(description = "Trust mark issuer entity identifier")
+  private String trustmarkissuerId;
 
+  @Schema(description = "Trust mark entity identifier")
+  private String trustMarkEntityId;
+
+  @Schema(description = "Logo URI")
+  private String logoUri;
+
+  @Schema(description = "Reference URI")
+  private String refUri;
+
+  @Schema(description = "Delegation JWT")
+  private String delegation;
 }
+
+

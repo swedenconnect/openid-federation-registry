@@ -15,6 +15,8 @@
  */
 package se.swedenconnect.oidf.registry.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWK;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -26,12 +28,10 @@ import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.entity.InstanceEntity;
 import se.swedenconnect.oidf.registry.entity.ModuleEntity;
-import se.swedenconnect.oidf.registry.entity.SettingsEntity;
 import se.swedenconnect.oidf.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.registry.repository.PolicyRepository;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -198,50 +198,55 @@ public class OidfApiService {
     return hostedEntitys.build();
   }
 
+  private static final ObjectMapper mapper = new ObjectMapper();
+
   private OidfServiceSubModules.TrustAnchor toTaIm(final ModuleEntity taImModuleEntity) {
-    if (!taImModuleEntity.getSettingsEntity("active")
-        .map(settingsEntity -> (Boolean) settingsEntity.castValue()).orElse(true)) {
+    if (taImModuleEntity.getActive() == null || !taImModuleEntity.getActive()) {
       return OidfServiceSubModules.TrustAnchor.builder().build();
+    }
+
+    // Read trust mark issuers from JSON column
+    String trustMarkIssuer = null;
+    if (taImModuleEntity.getTrustMarkIssuers() != null && !taImModuleEntity.getTrustMarkIssuers().isBlank()) {
+      try {
+        final List<String> issuers = mapper.readValue(taImModuleEntity.getTrustMarkIssuers(),
+            new TypeReference<List<String>>() {});
+        if (!issuers.isEmpty()) {
+          trustMarkIssuer = issuers.get(0); // Use first issuer
+        }
+      }
+      catch (Exception e) {
+        // Ignore parsing errors
+      }
     }
 
     return OidfServiceSubModules.TrustAnchor.builder()
         .entityIdentifier(taImModuleEntity.getEntity().getSubject())
-        .trustMarkIssuer(taImModuleEntity.getSettingsEntity("trust_mark_issuer")
-            .map(SettingsEntity::getValue)
-            .orElse(null))
+        .trustMarkIssuer(trustMarkIssuer)
         .build();
   }
 
   private OidfServiceSubModules.Resolver toResolver(final ModuleEntity resolverModuleEntity) {
-    if (!resolverModuleEntity.getSettingsEntity("active")
-        .map(settingsEntity -> (Boolean) settingsEntity.castValue()).orElse(true)) {
+    if (resolverModuleEntity.getActive() == null || !resolverModuleEntity.getActive()) {
       return OidfServiceSubModules.Resolver.builder().build();
     }
 
     return OidfServiceSubModules.Resolver.builder()
         .entityIdentifier(resolverModuleEntity.getEntity().getSubject())
-        .resolveResponseDuration(resolverModuleEntity.getSettingsEntity("resolve_response_duration")
-            .map(SettingsEntity::getValue)
-            .orElse(null))
-        .trustAnchors(resolverModuleEntity.getSettingsEntity("trust_anchor")
-            .map(SettingsEntity::getValue)
-            .orElseThrow())
-        .trustedKeys(resolverModuleEntity.getSettingsEntity("trusted_keys")
-            .map(SettingsEntity::getValue)
-            .orElseThrow())
-        .stepRetryTime(resolverModuleEntity.getSettingsEntity("step_retry_duration")
-            .map(SettingsEntity::getValue)
-            .orElse(null))
-        .stepCachedValueThreshold(resolverModuleEntity.getSettingsEntity("step_cached_value_threshold")
-            .map(SettingsEntity::getValue)
-            .map(Integer::valueOf)
-            .orElse(null))
+        .resolveResponseDuration(resolverModuleEntity.getResolveResponseDuration())
+        .trustAnchors(resolverModuleEntity.getTrustAnchor() != null
+            ? resolverModuleEntity.getTrustAnchor()
+            : null)
+        .trustedKeys(resolverModuleEntity.getTrustedKeys() != null
+            ? resolverModuleEntity.getTrustedKeys()
+            : null)
+        .stepRetryTime(resolverModuleEntity.getStepRetryDuration())
+        .stepCachedValueThreshold(null) // This field is not stored in columns yet
         .build();
   }
 
   private OidfServiceSubModules.TrustMarkIssuer toTrustMarkIssuer(final ModuleEntity tmiModuleEntity) {
-    if (!tmiModuleEntity.getSettingsEntity("active")
-        .map(settingsEntity -> (Boolean) settingsEntity.castValue()).orElse(true)) {
+    if (tmiModuleEntity.getActive() == null || !tmiModuleEntity.getActive()) {
       return OidfServiceSubModules.TrustMarkIssuer.builder().build();
     }
     final List<OidfServiceSubModules.TrustMarkIssuer.TrustMark> trustMarks = tmiModuleEntity.getTrustmarks()
@@ -249,40 +254,26 @@ public class OidfApiService {
         .map(trustMarkEntity ->
             OidfServiceSubModules.TrustMarkIssuer.TrustMark.builder()
                 .trustMarkIssuerId(tmiModuleEntity.getEntity().getSubject())
-                .trustMarkId(trustMarkEntity.getSettingsEntity("trust_mark_entity_id")
-                    .orElseThrow().getValue())
-                .ref(trustMarkEntity.getSettingsEntity("ref")
-                    .map(SettingsEntity::getValue)
-                    .orElse(null))
-                .logoUri(trustMarkEntity.getSettingsEntity("logoUri")
-                    .map(SettingsEntity::getValue)
-                    .orElse(null))
-                .delegation(trustMarkEntity.getSettingsEntity("delegation")
-                    .map(SettingsEntity::getValue)
-                    .orElse(null))
+                .trustMarkId(trustMarkEntity.getTrustMarkEntityId() != null
+                    ? trustMarkEntity.getTrustMarkEntityId()
+                    : null)
+                .ref(trustMarkEntity.getRefUri())
+                .logoUri(trustMarkEntity.getLogoUri())
+                .delegation(trustMarkEntity.getDelegation())
                 .trustMarkSubjects(
                     trustMarkEntity.getTrustmarksubjects()
                         .stream()
-                        .filter(tmSubject -> tmSubject.getSettingsEntity("revoked").isPresent())
+                        .filter(tmSubject -> tmSubject.getRevoked() != null)
                         .map(tmSubject -> OidfServiceSubModules
                             .TrustMarkIssuer.TrustMark.TrustMarkSubject.builder()
-                            .revoked(tmSubject.getSettingsEntity("revoked")
-                                .map(SettingsEntity::getValue)
-                                .map(Boolean::valueOf)
-                                .orElse(false))
-                            .subject(tmSubject.getSettingsEntity("subject")
-                                .map(SettingsEntity::getValue)
-                                .orElseThrow())
-                            .expires(tmSubject.getSettingsEntity("expires")
-                                .map(SettingsEntity::getValue)
-                                .map(Instant::parse)
-                                .map(Instant::toString)
-                                .orElse(null))
-                            .granted(tmSubject.getSettingsEntity("granted")
-                                .map(SettingsEntity::getValue)
-                                .map(Instant::parse)
-                                .map(Instant::toString)
-                                .orElse(null))
+                            .revoked(tmSubject.getRevoked() != null ? tmSubject.getRevoked() : false)
+                            .subject(tmSubject.getSubject() != null ? tmSubject.getSubject() : null)
+                            .expires(tmSubject.getExpires() != null
+                                ? tmSubject.getExpires().toString()
+                                : null)
+                            .granted(tmSubject.getGranted() != null
+                                ? tmSubject.getGranted().toString()
+                                : null)
                             .build())
                         .toList()
                 )
@@ -291,9 +282,7 @@ public class OidfApiService {
 
     return OidfServiceSubModules.TrustMarkIssuer.builder()
         .entityIdentifier(tmiModuleEntity.getEntity().getSubject())
-        .trustMarkTokenValidityDuration(
-            tmiModuleEntity.getSettingsEntity("trust_mark_token_validity_duration")
-                .orElseThrow().getValue())
+        .trustMarkTokenValidityDuration(tmiModuleEntity.getTrustMarkTokenValidityDuration())
         .trustMarks(trustMarks)
         .build();
   }

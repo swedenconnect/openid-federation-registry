@@ -20,8 +20,9 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.time.Duration;
@@ -31,11 +32,15 @@ import java.time.Duration;
  *
  * @author Per Fredrik Plars
  */
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Resolver implements FederationModule, Serializable, ToJson {
+
+  /** Module ID */
+  private java.util.UUID moduleId;
 
   /** Entity config */
   private EntityID entityId;
