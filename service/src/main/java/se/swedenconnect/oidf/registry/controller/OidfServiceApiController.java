@@ -53,8 +53,9 @@ public class OidfServiceApiController {
    * @return SignedJWT with a claim for entity_record
    */
   @GetMapping(value = "/entity_record", produces = "application/jwt")
-  public String entityRecord(@RequestParam(name = "instanceid") final UUID instanceId) {
-    return this.federationApiService.entityRecord(instanceId);
+  public String entityRecord(@RequestParam(name = "instanceid") final UUID instanceId,
+      @RequestParam(name = "plain", defaultValue = "false") final boolean plain) {
+    return this.federationApiService.entityRecord(instanceId, plain);
   }
 
   /**
@@ -64,8 +65,10 @@ public class OidfServiceApiController {
    * @return a signed JWT containing claims for the entity_record
    */
   @GetMapping(value = "/submodules", produces = "application/jwt")
-  public String submoduleRecord(@RequestParam(name = "instanceid") final UUID instanceId) {
-    return this.federationApiService.submoduleRecord(instanceId);
+  public String submoduleRecord(@RequestParam(name = "instanceid") final UUID instanceId,
+      @RequestParam(name = "plain", defaultValue = "false") final boolean plain) {
+
+    return this.federationApiService.submoduleRecord(instanceId, plain);
   }
 
 }

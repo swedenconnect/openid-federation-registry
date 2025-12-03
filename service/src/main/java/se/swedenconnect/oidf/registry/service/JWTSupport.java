@@ -16,6 +16,7 @@
 
 package se.swedenconnect.oidf.registry.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -29,8 +30,12 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
 import java.util.Date;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Function;
+
+import static se.swedenconnect.oidf.registry.validation.PropertyValidators.mapper;
 
 /**
  * A utility class for generating and signing JSON Web Tokens (JWTs) using a specified JSON Web Key (JWK). This class
@@ -40,6 +45,7 @@ import java.util.function.Function;
  */
 public class JWTSupport {
   final JWK signKey;
+  final ObjectMapper objectMapper = new ObjectMapper();
 
   /**
    * Constructs an instance of JWTSupport with the specified signing key.
@@ -100,6 +106,22 @@ public class JWTSupport {
     }
     catch (final JOSEException e) {
       throw new RuntimeException("Unable to sign JWT", e);
+    }
+  }
+
+  public String toPrettyJson(final String jwtString) {
+    try {
+      final SignedJWT signedJWT = SignedJWT.parse(jwtString);
+
+      final Map<String, Object> plainJwt = new TreeMap<>();
+      plainJwt.put("header", signedJWT.getHeader().toJSONObject());
+      plainJwt.put("payload", signedJWT.getJWTClaimsSet().toJSONObject());
+      plainJwt.put("signature", signedJWT.getSignature().toString());
+
+      return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(plainJwt);
+    }
+    catch (final Exception e) {
+      throw new RuntimeException("Error formatting JWT", e);
     }
   }
 

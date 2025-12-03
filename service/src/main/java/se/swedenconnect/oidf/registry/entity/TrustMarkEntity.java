@@ -28,6 +28,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.FilterDef;
 import org.hibernate.annotations.ParamDef;
@@ -44,10 +45,11 @@ import java.util.UUID;
  *
  * @author Per Fredrik Plars
  */
-@NoArgsConstructor
 @Getter
 @Setter
 @Entity
+@SuperBuilder
+@NoArgsConstructor
 @ToString(callSuper = true)
 @Table(name = "trustmark")
 @FilterDef(name = "fkTypeTMFilter", parameters = @ParamDef(name = "TRUSTMARKSUBJECT", type = String.class))
@@ -68,6 +70,10 @@ public class TrustMarkEntity extends BaseEntity {
   @JoinColumn(name = "fk_id", referencedColumnName = "trustmark_id", insertable = false, updatable = false)
   @Filter(name = "fkTypeTMFilter", condition = "fk_type = :fkTypeParam")
   private List<SettingsEntity> settingsEntityList;
+
+  @Column(name = "jsondata")
+  private String jsondata;
+
 
   /**
    * Retrieves the {@link SettingsEntity} associated with the specified key. The method searches through the list of

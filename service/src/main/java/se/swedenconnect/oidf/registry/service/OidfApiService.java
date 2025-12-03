@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
 import org.springframework.web.server.ResponseStatusException;
+import se.swedenconnect.oidf.registry.api.dto.OidfServiceHostedEntitys;
 import se.swedenconnect.oidf.registry.api.dto.OidfServiceSubModules;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
@@ -31,14 +32,9 @@ import se.swedenconnect.oidf.registry.repository.PolicyRepository;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static se.swedenconnect.oidf.registry.entity.FkKeyType.INTERMEDIATE;
 import static se.swedenconnect.oidf.registry.entity.FkKeyType.RESOLVER;
@@ -71,7 +67,7 @@ public class OidfApiService {
   private final String jwkIssuer;
   private final Duration jwkExpiryDuration;
   private final JWTSupport jwtSupport;
-  private final EntityResponseFormatter entityResponseFormatter = new EntityResponseFormatter();
+  private final FederationMetadataCreator entityResponseFormatter = new FederationMetadataCreator();
 
   /**
    * Constructs a FederationApiService instance to handle OpenID Connect Federation related operations.
@@ -103,15 +99,18 @@ public class OidfApiService {
    * @return a signed JSON Web Token (JWT) string containing the entity records
    * @throws ResponseStatusException if the issuer is not set, if no entity records are found, or if signing fails
    */
-  public String entityRecord(final UUID instanceId) {
+  public String entityRecord(final UUID instanceId, final boolean plainJson) {
     Assert.notNull(instanceId, "InstanceId is mandatory");
     final String claimName = "entity_records";
     final String jwt = this.jwtSupport.signJWT(claimName, builder -> builder
-            .claim(claimName, this.resolveEntity(instanceId))
+            .claim(claimName, this.resolveEntityV2(instanceId).getEntityRecords())
             .expirationTime(new Date(System.currentTimeMillis() + this.jwkExpiryDuration.toMillis()))
             .issuer(this.jwkIssuer))
         .serialize();
     log.debug("trustMarkRecord Signed JWT: {}", jwt);
+    if (plainJson) {
+      return this.jwtSupport.toPrettyJson(jwt);
+    }
     return jwt;
   }
 
@@ -123,7 +122,7 @@ public class OidfApiService {
    * @throws IllegalArgumentException if the instanceId is null.
    * @throws ResponseStatusException if an error occurs during the signing of the response.
    */
-  public String submoduleRecord(final UUID instanceId) {
+  public String submoduleRecord(final UUID instanceId, final boolean plainJson) {
     Assert.notNull(instanceId, "instanceId is mandatory");
     final String claimName = "module_records";
     final String jwt = this.jwtSupport.signJWT(claimName, builder -> builder
@@ -132,6 +131,9 @@ public class OidfApiService {
             .issuer(this.jwkIssuer))
         .serialize();
     log.debug("Submodule Signed JWT: {}", jwt);
+    if (plainJson) {
+      return this.jwtSupport.toPrettyJson(jwt);
+    }
     return jwt;
   }
 
@@ -170,43 +172,30 @@ public class OidfApiService {
 
   }
 
-  private List<Map<String, Object>> resolveEntity(final UUID instanceid) {
+  private OidfServiceHostedEntitys resolveEntityV2(final UUID instanceid) {
 
     final InstanceEntity instanceEntity = this.instanceRepository.findById(instanceid)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No instance found for:%s".formatted(instanceid)));
+
 
     final List<EntityEntity> trustmarkIssuersModules = instanceEntity.getOrganizations()
         .stream()
         .flatMap(organizationEntity -> organizationEntity.getEntities().stream())
         .toList();
 
-    return trustmarkIssuersModules.stream().map(this::toMapEntity).toList();
+    final OidfServiceHostedEntitys.OidfServiceHostedEntitysBuilder hostedEntitys = OidfServiceHostedEntitys.builder();
+
+    hostedEntitys.entityRecords(trustmarkIssuersModules.stream().map(this::toMapEntityV2).toList());
+
+    return hostedEntitys.build();
   }
 
-  private Map<String, Object> toMapEntity(final EntityEntity entity) {
+  private OidfServiceHostedEntitys.Record toMapEntityV2(final EntityEntity entity) {
+    final OidfServiceHostedEntitys.Record.RecordBuilder hostedEntitys =
+        this.entityResponseFormatter.createEntityResponseV2(entity);
 
-    final Map<String, Object> settingsEntity = new HashMap<>(this.entityResponseFormatter.createEntityResponse(entity));
-
-    settingsEntity.put(POLICY_RECORD, Collections.emptyMap());
-    Optional.ofNullable(settingsEntity.remove(POLICY_ID))
-        .filter(key -> !key.toString().isBlank())
-        .flatMap(policyId -> this.policyRepository.findById(UUID.fromString(policyId.toString())))
-        .ifPresent(policy ->
-            settingsEntity.put(POLICY_RECORD,
-                policy.getSettingsEntity(POLICY_ATT).map(SettingsEntity::castValue).orElseThrow()));
-    return settingsEntity;
-  }
-
-  private Map<String, Object> toMapEntity(final ModuleEntity moduleEntity) {
-    final Map<String, Object> module = moduleEntity.getSettingsEntityList()
-        .stream()
-        .collect(Collectors.toMap(
-            SettingsEntity::getKey,
-            SettingsEntity::castValue
-        ));
-    module.put(ENTITY_IDENTIFIER, moduleEntity.getEntity().getSubject());
-    return module;
+    return hostedEntitys.build();
   }
 
   private OidfServiceSubModules.TrustAnchor toTaIm(final ModuleEntity taImModuleEntity) {

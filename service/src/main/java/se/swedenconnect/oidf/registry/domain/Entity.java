@@ -14,15 +14,29 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.entity;
+package se.swedenconnect.oidf.registry.domain;
+
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 /**
- * Enumeration representing the types of foreign keys (EntityType) used within the system.
+ * oidf-entity-registry
  *
  * @author Per Fredrik Plars
  */
-public enum EntityKeyType {
-  FEDERATION_ENTITY,
-  SUBORDINATE_ENTITY,
-  HOSTED_ENTITY,
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public abstract class Entity implements ToJson {
+
+  /** Subject */
+  private EntityID subject;
+
+  /** Issuer entityid */
+  private EntityID issuer;
+
 }

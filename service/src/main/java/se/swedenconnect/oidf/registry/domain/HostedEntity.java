@@ -14,15 +14,23 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.entity;
+package se.swedenconnect.oidf.registry.domain;
+
+import lombok.EqualsAndHashCode;
+import lombok.experimental.SuperBuilder;
+
+import java.util.Map;
 
 /**
- * Enumeration representing the types of foreign keys (EntityType) used within the system.
+ * Entity that is hosted with ec_location override
  *
  * @author Per Fredrik Plars
  */
-public enum EntityKeyType {
-  FEDERATION_ENTITY,
-  SUBORDINATE_ENTITY,
-  HOSTED_ENTITY,
+@EqualsAndHashCode(callSuper = true)
+@SuperBuilder
+public class HostedEntity extends Entity {
+
+  /** Metadata */
+  private Map<String, Object> metadata;
+
 }

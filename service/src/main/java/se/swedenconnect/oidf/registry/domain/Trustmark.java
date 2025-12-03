@@ -14,15 +14,36 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.entity;
+package se.swedenconnect.oidf.registry.domain;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
- * Enumeration representing the types of foreign keys (EntityType) used within the system.
+ * oidf-entity-registry
  *
  * @author Per Fredrik Plars
  */
-public enum EntityKeyType {
-  FEDERATION_ENTITY,
-  SUBORDINATE_ENTITY,
-  HOSTED_ENTITY,
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Trustmark {
+
+  /** To what trustmarkissuer should this trustmark belong to */
+  private String trustmarkissuerId;
+
+  /** Trustmark entityid */
+  private String trustMarkEntityId;
+
+  /** Url that points to a logotype image */
+  private String logoUri;
+
+  /** Reference url */
+  private String refUri;
+
+  /** Delegation JWT according to oidf specification */
+  private String delegation;
 }

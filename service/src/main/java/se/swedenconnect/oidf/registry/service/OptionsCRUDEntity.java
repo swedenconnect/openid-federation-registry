@@ -88,13 +88,15 @@ public class OptionsCRUDEntity extends BaseOptionsCRUD {
     return switch (fkKeyType) {
       case SUBORDINATE_ENTITY -> EntityKeyType.SUBORDINATE_ENTITY;
       case FEDERATION_ENTITY -> EntityKeyType.FEDERATION_ENTITY;
+      case HOSTED_ENTITY -> EntityKeyType.HOSTED_ENTITY;
       default -> throw new IllegalArgumentException("Unsupported FkKeyType: %s".formatted(fkKeyType));
     };
   }
 
   @Override
   public OptionsRecord create(final OrganizationRecord organizationRecord,
-      final FkKeyType fkKeyType, final UUID id,
+      final FkKeyType fkKeyType,
+      final UUID id,
       final OptionsRecord record) {
 
     final EntityKeyType entityKeyType = this.getEntityKeyType(fkKeyType);

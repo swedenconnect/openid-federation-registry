@@ -16,15 +16,24 @@
 
 package se.swedenconnect.oidf.registry.validation;
 
+import com.nimbusds.jose.jwk.Curve;
+import com.nimbusds.jose.jwk.ECKey;
+import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import org.junit.jupiter.api.Test;
+
+import java.security.InvalidAlgorithmParameterException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.ECPublicKey;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static se.swedenconnect.oidf.registry.fixture.TestDataOperations.genKey;
 
 public class PropertyValidatorsTest {
   final PropertyValidators propertyValidators = new PropertyValidators();
@@ -42,6 +51,44 @@ public class PropertyValidatorsTest {
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "abcd"));
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "abcdefghijk"));
     assertDoesNotThrow(() -> result.validate("key", "abcde"));
+  }
+
+  @Test
+  public void testResolveValidator_jwksValidatorBuilder() {
+    final String jwks = """
+        {
+                  "keys": [
+                    {
+                      "kty": "RSA",
+                      "e": "AQAB",
+                      "use": "sig",
+                      "kid": "a152f1cd-f25b-47fe-8b06-3aec95357ff8",
+                      "x5c": [
+                        "MIIC6zCCAdOgAwIBAgIJANa6D4qXtBLPMA0GCSqGSIb3DQEBCwUAMDUxEzARBgNVBAMMClNlbGZTaWduZWQxETAPBgNVBAoMCE9pZGZUZXN0MQswCQYDVQQGEwJTRTAeFw0yNTEwMTUxMTQyMTdaFw0yNzEwMTUxMTQzMTdaMDUxEzARBgNVBAMMClNlbGZTaWduZWQxETAPBgNVBAoMCE9pZGZUZXN0MQswCQYDVQQGEwJTRTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKGKheaFfpaMje2SuayUwEkFS7KBbrB6882dXYLkKBM/3/mumadQiS42Trigj/a1r9RwX9oDqTKpoOxXCyyN7qom7QyaSaMrWOGoTK4RbrofCbg5kSIToVrwpxcNR2pUuhJLga1rSVCo626pijK+o4lT9aWhdZrQVCYVFHzoDKLdOINeQAfCIfGaynwa2vcQVr/PHvUWifBlgXe0qig+S8dpIt2Ze8tG1oQgcHhF1dhK7/xiHbsX1XJ79HfEiMBZAmAK6FtITNmklOB83YmN3HCIgQmyFxKcq/NVh+JId287xI/ErEGk5MT0OQhRjsiIUjlSjYxk3uLMZIfJCpKeoTkCAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAFyjB1jqHvzrCgrd3NqNnKfFOu4U/DNhvw/MoVTXA5oXedlbDhLyuIoJ1aPK04xFOg2q2aj579chsl8/HO7yTcD/6wIir3LXl3nat8QfAGbhQNLNhoDS2STweVh6WBvOujWDvqQtQ6w+YdzA5gnomJTlyHRaCxjCFj/PA4VwY2U7AtF1v2APqzhW48mL+DoY+mk6P6x0BleBiuMEDNGM2yGRHOuKu/lPvALDDTCDU5ZCtBMXjaQMVB3dDErwLSqxDRbF6ioEZ55U495y9APP5nZBb7aLB/3ZtCGWy7b9N/6IkqxqCWq8IfdSqNGX+1RXdxq9a9NspQ0hqxHVOnrJJuQ=="
+                      ],
+                      "alg": "RS256",
+                      "n": "oYqF5oV-loyN7ZK5rJTASQVLsoFusHrzzZ1dguQoEz_f-a6Zp1CJLjZOuKCP9rWv1HBf2gOpMqmg7FcLLI3uqibtDJpJoytY4ahMrhFuuh8JuDmRIhOhWvCnFw1HalS6EkuBrWtJUKjrbqmKMr6jiVP1paF1mtBUJhUUfOgMot04g15AB8Ih8ZrKfBra9xBWv88e9RaJ8GWBd7SqKD5Lx2ki3Zl7y0bWhCBweEXV2Erv_GIduxfVcnv0d8SIwFkCYAroW0hM2aSU4HzdiY3ccIiBCbIXEpyr81WH4kh3bzvEj8SsQaTkxPQ5CFGOyIhSOVKNjGTe4sxkh8kKkp6hOQ"
+                    },
+                    {
+                      "kty": "RSA",
+                      "e": "AQAB",
+                      "use": "sig",
+                      "kid": "a152f1cd-f25b-47fe-8b06-3aec95357ff8",
+                      "x5c": [
+                        "MIIC6zCCAdOgAwIBAgIJANa6D4qXtBLPMA0GCSqGSIb3DQEBCwUAMDUxEzARBgNVBAMMClNlbGZTaWduZWQxETAPBgNVBAoMCE9pZGZUZXN0MQswCQYDVQQGEwJTRTAeFw0yNTEwMTUxMTQyMTdaFw0yNzEwMTUxMTQzMTdaMDUxEzARBgNVBAMMClNlbGZTaWduZWQxETAPBgNVBAoMCE9pZGZUZXN0MQswCQYDVQQGEwJTRTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKGKheaFfpaMje2SuayUwEkFS7KBbrB6882dXYLkKBM/3/mumadQiS42Trigj/a1r9RwX9oDqTKpoOxXCyyN7qom7QyaSaMrWOGoTK4RbrofCbg5kSIToVrwpxcNR2pUuhJLga1rSVCo626pijK+o4lT9aWhdZrQVCYVFHzoDKLdOINeQAfCIfGaynwa2vcQVr/PHvUWifBlgXe0qig+S8dpIt2Ze8tG1oQgcHhF1dhK7/xiHbsX1XJ79HfEiMBZAmAK6FtITNmklOB83YmN3HCIgQmyFxKcq/NVh+JId287xI/ErEGk5MT0OQhRjsiIUjlSjYxk3uLMZIfJCpKeoTkCAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAFyjB1jqHvzrCgrd3NqNnKfFOu4U/DNhvw/MoVTXA5oXedlbDhLyuIoJ1aPK04xFOg2q2aj579chsl8/HO7yTcD/6wIir3LXl3nat8QfAGbhQNLNhoDS2STweVh6WBvOujWDvqQtQ6w+YdzA5gnomJTlyHRaCxjCFj/PA4VwY2U7AtF1v2APqzhW48mL+DoY+mk6P6x0BleBiuMEDNGM2yGRHOuKu/lPvALDDTCDU5ZCtBMXjaQMVB3dDErwLSqxDRbF6ioEZ55U495y9APP5nZBb7aLB/3ZtCGWy7b9N/6IkqxqCWq8IfdSqNGX+1RXdxq9a9NspQ0hqxHVOnrJJuQ=="
+                      ],
+                      "alg": "RS256",
+                      "n": "oYqF5oV-loyN7ZK5rJTASQVLsoFusHrzzZ1dguQoEz_f-a6Zp1CJLjZOuKCP9rWv1HBf2gOpMqmg7FcLLI3uqibtDJpJoytY4ahMrhFuuh8JuDmRIhOhWvCnFw1HalS6EkuBrWtJUKjrbqmKMr6jiVP1paF1mtBUJhUUfOgMot04g15AB8Ih8ZrKfBra9xBWv88e9RaJ8GWBd7SqKD5Lx2ki3Zl7y0bWhCBweEXV2Erv_GIduxfVcnv0d8SIwFkCYAroW0hM2aSU4HzdiY3ccIiBCbIXEpyr81WH4kh3bzvEj8SsQaTkxPQ5CFGOyIhSOVKNjGTe4sxkh8kKkp6hOQ"
+                    }
+                  ]
+                }""";
+
+    final PropertyValidator jwksValidator = this.propertyValidators.builder(VariabelValueResolver.defaultResolver())
+        .json()
+        .jwks()
+        .build();
+
+    assertThrows(PropertyValidationFailException.class, () -> jwksValidator.validate("jwks", jwks));
   }
 
   @Test
@@ -63,6 +110,22 @@ public class PropertyValidatorsTest {
     final PropertyValidator result = resolveValidator("ends_with:xyz");
     assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "abc"));
     assertDoesNotThrow(() -> result.validate("key", "abcxyz"));
+  }
+
+  @Test
+  public void testResolveValidator_entityIdValidator() {
+    final PropertyValidator result = resolveValidator("entityid");
+    PropertyValidationFailException ex =
+        assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "abc"));
+    ex = assertThrows(PropertyValidationFailException.class,
+        () -> result.validate("key", "http://example.com/entityid"));
+    ex = assertThrows(PropertyValidationFailException.class,
+        () -> result.validate("key", "https://example.com/entityid?query=123"));
+    ex = assertThrows(PropertyValidationFailException.class,
+        () -> result.validate("key", "https://example.com/entityid#fragment"));
+    assertDoesNotThrow(() -> result.validate("key", "https://example.com/entityid"));
+    assertDoesNotThrow(() -> result.validate("key", "https://example.com/"));
+    assertDoesNotThrow(() -> result.validate("key", "https://example.com"));
   }
 
   @Test
@@ -221,5 +284,21 @@ public class PropertyValidatorsTest {
 
   public PropertyValidator resolveValidator(final String validatorString) {
     return this.propertyValidators.resolveValidator(validatorString, VariabelValueResolver.defaultResolver());
+  }
+
+  public static JWK genKey() {
+    try {
+      final KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
+      keyGen.initialize(Curve.P_256.toECParameterSpec());
+
+      final KeyPair keyPair = keyGen.generateKeyPair();
+
+      return new ECKey.Builder(Curve.P_256, (ECPublicKey) keyPair.getPublic()).privateKey(keyPair.getPrivate())
+          .keyID("ec-key-id" + new Random().nextInt(10))
+          .build();
+    }
+    catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

@@ -14,15 +14,25 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.entity;
+package se.swedenconnect.oidf.registry.domain;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Enumeration representing the types of foreign keys (EntityType) used within the system.
+ * Marker interface for json format
  *
  * @author Per Fredrik Plars
  */
-public enum EntityKeyType {
-  FEDERATION_ENTITY,
-  SUBORDINATE_ENTITY,
-  HOSTED_ENTITY,
+public interface ToJson {
+  ObjectMapper MAPPER = new ObjectMapper();
+
+  default String toJson() {
+    try {
+      return MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(this);
+    }
+    catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
+    }
+  }
 }

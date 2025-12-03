@@ -14,15 +14,27 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.entity;
+package se.swedenconnect.oidf.registry.domain;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
 
 /**
- * Enumeration representing the types of foreign keys (EntityType) used within the system.
+ * oidf-entity-registry
  *
  * @author Per Fredrik Plars
  */
-public enum EntityKeyType {
-  FEDERATION_ENTITY,
-  SUBORDINATE_ENTITY,
-  HOSTED_ENTITY,
+@Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Intermediate implements FederationModule, Serializable, ToJson {
+
+  /** If this module instance should be active or not */
+  @Builder.Default
+  private boolean active = true;
 }

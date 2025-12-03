@@ -14,15 +14,16 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.entity;
+package se.swedenconnect.oidf.registry.api.dto;
+
+import se.swedenconnect.oidf.registry.api.model.OptionsRecordMetadata;
 
 /**
- * Enumeration representing the types of foreign keys (EntityType) used within the system.
+ * oidf-entity-registry
  *
  * @author Per Fredrik Plars
  */
-public enum EntityKeyType {
-  FEDERATION_ENTITY,
-  SUBORDINATE_ENTITY,
-  HOSTED_ENTITY,
+public class DtoEnvelope<V> {
+  private OptionsRecordMetadata header;
+  private V data;
 }

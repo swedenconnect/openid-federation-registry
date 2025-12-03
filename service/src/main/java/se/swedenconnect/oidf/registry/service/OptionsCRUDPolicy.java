@@ -93,6 +93,19 @@ public class OptionsCRUDPolicy extends BaseOptionsCRUD {
     newPolicyEntity.setPolicyId(id);
     newPolicyEntity.setOrganization(getCurrentOrganization(organizationRecord));
 
+    validatedInData.stream()
+        .filter(settingsEntity -> settingsEntity.getKey().equals("policy"))
+        .findFirst()
+        .map(SettingsEntity::getValue)
+        .ifPresent(newPolicyEntity::setPolicy);
+
+    validatedInData.stream()
+        .filter(settingsEntity -> settingsEntity.getKey().equals("name"))
+        .findFirst()
+        .map(SettingsEntity::getValue)
+        .ifPresent(newPolicyEntity::setName);
+
+
     final PolicyEntity savedPolicyEntity = this.policyRepository.saveAndFlush(newPolicyEntity);
     super.deleteSettings(fkKeyType, savedPolicyEntity.getPolicyId().toString());
     super.insertSettings(fkKeyType, savedPolicyEntity.getPolicyId().toString(), validatedInData);
@@ -113,6 +126,19 @@ public class OptionsCRUDPolicy extends BaseOptionsCRUD {
         this.createAndValidateInputData(organizationRecord, template, record.getOption());
     super.deleteSettings(fkKeyType, policyEntity.getPolicyId().toString());
     super.insertSettings(fkKeyType, policyEntity.getPolicyId().toString(), validatedInData);
+
+    validatedInData.stream()
+        .filter(settingsEntity -> settingsEntity.getKey().equals("policy"))
+        .findFirst()
+        .map(SettingsEntity::getValue)
+        .ifPresent(policyEntity::setPolicy);
+
+    validatedInData.stream()
+        .filter(settingsEntity -> settingsEntity.getKey().equals("name"))
+        .findFirst()
+        .map(SettingsEntity::getValue)
+        .ifPresent(policyEntity::setName);
+
     this.policyRepository.saveAndFlush(policyEntity);
     return this.toRecord(validatedInData);
   }

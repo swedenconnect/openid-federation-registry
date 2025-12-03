@@ -24,10 +24,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.FilterDef;
 import org.hibernate.annotations.ParamDef;
@@ -46,7 +46,7 @@ import java.util.UUID;
 @Setter
 @Entity
 @NoArgsConstructor
-@Builder(toBuilder = true)
+@SuperBuilder
 @Table(name = "trustmark_subject")
 @FilterDef(name = "fkTypeTMSFilter", parameters = @ParamDef(name = "TRUSTMARKSUBJECT", type = String.class))
 public class TrustMarkSubjectEntity extends BaseEntity {
@@ -54,28 +54,20 @@ public class TrustMarkSubjectEntity extends BaseEntity {
   @Id
   @Column(name = "trustmarksubject_id", nullable = false, updatable = false)
   private UUID trustmarksubjectId;
+
   @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
   @JoinColumn(name = "trustmark_id", referencedColumnName = "trustmark_id")
   private TrustMarkEntity trustMark;
+
   @OneToMany(cascade = CascadeType.DETACH, fetch = FetchType.LAZY)
   @JoinColumn(name = "fk_id", referencedColumnName = "trustmarksubject_id", insertable = false, updatable = false)
   @Filter(name = "fkTypeTMSFilter", condition = "fk_type = :fkTypeParam")
   private List<SettingsEntity> settingsEntityList;
 
-  /**
-   * Constructs a new TrustMarkSubjectEntity with the specified trustmark subject ID, associated TrustMarkEntity, and a
-   * list of SettingsEntity instances.
-   *
-   * @param trustmarksubjectId the unique identifier for the TrustMarkSubjectEntity
-   * @param trustMark the TrustMarkEntity instance associated with this TrustMarkSubjectEntity
-   * @param settingsEntityList the list of SettingsEntity instances linked to this TrustMarkSubjectEntity
-   */
-  public TrustMarkSubjectEntity(final UUID trustmarksubjectId, final TrustMarkEntity trustMark,
-      final List<SettingsEntity> settingsEntityList) {
-    this.trustmarksubjectId = trustmarksubjectId;
-    this.trustMark = trustMark;
-    this.settingsEntityList = settingsEntityList;
-  }
+  @Column(name = "jsondata")
+  private String jsondata;
+
+
 
   /**
    * Retrieves the unique identifier of the associated TrustMarkEntity.

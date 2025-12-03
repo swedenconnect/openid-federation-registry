@@ -27,7 +27,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
  *
  * @author Per Fredrik Plars
  */
-class VariableValueResolverTest {
+class VariabelValueResolverTest {
 
   @Test
   void insertTemplateValues() {

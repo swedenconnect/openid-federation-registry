@@ -21,6 +21,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import se.swedenconnect.oidf.registry.domain.EntityToDomain;
 
 import java.util.Arrays;
 import java.util.List;
@@ -67,6 +68,9 @@ public class ModuleEntity extends BaseEntity {
   @JoinColumn(name = "entity_id", nullable = false)
   private EntityEntity entity;
 
+  @Column(name = "jsondata")
+  private String jsondata;
+
   /**
    * Determines whether the module is of the specified types. Compares the module's type against the provided array of
    * {@link FkKeyType}.
@@ -94,5 +98,10 @@ public class ModuleEntity extends BaseEntity {
     return this.settingsEntityList.stream()
         .filter(s -> s.getKey().equals(key))
         .findFirst();
+  }
+
+  @PostLoad
+  public void migrate() {
+    this.jsondata = EntityToDomain.map(this).toJson();
   }
 }

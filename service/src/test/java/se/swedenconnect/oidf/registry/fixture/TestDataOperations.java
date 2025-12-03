@@ -43,9 +43,7 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPublicKey;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -119,7 +117,7 @@ public class TestDataOperations {
       final KeyPair keyPair = keyGen.generateKeyPair();
 
       return new ECKey.Builder(Curve.P_256, (ECPublicKey) keyPair.getPublic()).privateKey(keyPair.getPrivate())
-          .keyID("ec-key-id" + new Random().nextInt(10))
+          .keyID("ec-key-id" + new Random().nextInt(100))
           .build();
     }
     catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {

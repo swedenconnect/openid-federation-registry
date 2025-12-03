@@ -12,15 +12,14 @@ management:
 spring:
   application:
     name: OIDF-Registry
+  datasource:
+    url: jdbc:mariadb://localhost:3306/testdb
+    username: test
+    password: test
 
   threads:
     virtual:
       enabled: true
-
-  datasource:
-    url: jdbc:mariadb://db:3306/testdb
-    username: test
-    password: test
 
   flyway:
     enabled: true
@@ -34,9 +33,9 @@ spring:
       hibernate:
         format_sql: false
 
-  docker:
-    compose:
-      enabled: true
+
+
+
 
   security:
     oauth2:
@@ -53,12 +52,19 @@ logging:
 
 credential:
   bundles:
+    pem:
+      sign-key-store-pem:
+        private-key: file:/Users/pepl/src/oidf-entity-registry/oidf_service.key
+        certificates: file:/Users/pepl/src/oidf-entity-registry/oidf_service.pem
     keystore:
       signkey:
         location: file:config/local/rsa1.jks
         password: Test1234
         type: JKS
+
     jks:
+
+
       federationapi:
         store-reference: signkey
         name: "FederationAPI-JWKSignkey"
@@ -71,7 +77,7 @@ openid:
     registry:
       federation_service_api:
         issuer: "http://oidf-registry.swedenconnect.se"
-        sign_key_alias: federationapi
+        sign_key_alias: sign-key-store-pem
         notification_active: true
         notifications:
           - endpoint: http://www.swedenconnect.se/sc/notify

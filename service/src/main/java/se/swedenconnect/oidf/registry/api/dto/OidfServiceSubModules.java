@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * OidfServiceSubModules reply structure
+ * OidfServiceSubModules reply structure for federation api
  *
  * @author Per Fredrik Plars
  */

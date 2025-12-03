@@ -97,6 +97,14 @@ class OidfServiceApiControllerIT {
         OptionsTestData.HostedEntityTestData.create(org)
             .issuer(org.domainPrefix)
             .subject(org.domainPrefix)
+            .metadata("""
+                {
+                  "relying_party":{
+                    "key1":"value1",
+                    "key2":"value2"
+                  }  
+                
+                }""")
             .build());
 
     final UUID tmiId1 = testDataOperations.createTMI(UUID.randomUUID(),
@@ -144,11 +152,11 @@ class OidfServiceApiControllerIT {
 
     assertEquals(new JOSEObjectType("entity-records+jwt"), signedJWT.getHeader().getType());
     assertNotNull(signedJWT.getHeader().getKeyID());
-    System.out.println(signedJWT.getJWTClaimsSet());
+    System.out.println(signedJWT.getJWTClaimsSet().toJSONObject().toString());
     final List<Object> claim = signedJWT.getJWTClaimsSet().getListClaim("entity_records");
     assertNotNull(claim);
     assertFalse(claim.isEmpty());
-    claim.stream().forEach(claimMap -> {
+    claim.forEach(claimMap -> {
       try {
         EntityRecord.fromJson((Map<String, Object>) claimMap);
       }

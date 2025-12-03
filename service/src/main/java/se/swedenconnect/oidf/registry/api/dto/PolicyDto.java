@@ -13,16 +13,28 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package se.swedenconnect.oidf.registry.api.dto;
 
-package se.swedenconnect.oidf.registry.entity;
+import lombok.Data;
+
+import java.util.Map;
+import java.util.UUID;
 
 /**
- * Enumeration representing the types of foreign keys (EntityType) used within the system.
+ * PolicyDao is a JPA entity representing a database table for storing policies as JSON objects with the policy id as
+ * key.
  *
  * @author Per Fredrik Plars
  */
-public enum EntityKeyType {
-  FEDERATION_ENTITY,
-  SUBORDINATE_ENTITY,
-  HOSTED_ENTITY,
+@Data
+public class PolicyDto {
+
+  private UUID policyId;
+
+  private String name;
+
+  private Map<String, Object> policy;
+
 }
+
+
