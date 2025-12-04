@@ -92,12 +92,11 @@ public class OidfApiService {
   }
 
   /**
-   * Generates a signed JWT containing entity records for a specific instance ID. This method fetches the entity records
-   * associated with the issuer from the repository, signs the resulting records, and returns the signed JWT string.
+   * Generates a signed JWT containing entity records for a specific instance ID.
    *
    * @param instanceId the unique identifier of the instance for which the entity records are retrieved
+   * @param plainJson whether to return plain JSON
    * @return a signed JSON Web Token (JWT) string containing the entity records
-   * @throws ResponseStatusException if the issuer is not set, if no entity records are found, or if signing fails
    */
   public String entityRecord(final UUID instanceId, final boolean plainJson) {
     Assert.notNull(instanceId, "InstanceId is mandatory");
@@ -117,10 +116,9 @@ public class OidfApiService {
   /**
    * Retrieves submodule records using the provided instance identifier.
    *
-   * @param instanceId the unique identifier of the instance for which the submodule records are requested;
-   * @return a signed JWT string containing claims for the submodule record.
-   * @throws IllegalArgumentException if the instanceId is null.
-   * @throws ResponseStatusException if an error occurs during the signing of the response.
+   * @param instanceId the unique identifier of the instance for which the submodule records are requested
+   * @param plainJson whether to return plain JSON
+   * @return a signed JWT string containing claims for the submodule record
    */
   public String submoduleRecord(final UUID instanceId, final boolean plainJson) {
     Assert.notNull(instanceId, "instanceId is mandatory");
@@ -215,7 +213,7 @@ public class OidfApiService {
           trustMarkIssuer = issuers.get(0); // Use first issuer
         }
       }
-      catch (Exception e) {
+      catch (final Exception e) {
         // Ignore parsing errors
       }
     }

@@ -52,6 +52,15 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   private final OrganizationService organizationService;
   private final RegistryAuditService auditService;
 
+  /**
+   * Constructor.
+   *
+   * @param moduleRepository the module repository
+   * @param entityRepository the entity repository
+   * @param trustMarkRepository the trust mark repository
+   * @param organizationService the organization service
+   * @param auditService the audit service
+   */
   public ModuleConfigServiceImpl(final ModuleRepository moduleRepository,
       final EntityRepository entityRepository,
       final TrustMarkRepository trustMarkRepository,

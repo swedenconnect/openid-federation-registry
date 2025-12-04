@@ -53,6 +53,13 @@ public class ModuleConfigController {
 
   // TrustAnchor
 
+  /**
+   * Creates a trust anchor with auto-generated ID.
+   *
+   * @param body the trust anchor data
+   * @param organizationRecord the organization record
+   * @return the created trust anchor
+   */
   @PostMapping("/trust-anchor")
   @Operation(summary = "Create trust anchor with auto-generated ID")
   public ResponseEntity<TrustAnchorDto> createTrustAnchor(
@@ -63,6 +70,14 @@ public class ModuleConfigController {
     return ResponseEntity.ok(this.moduleConfigService.createTrustAnchor(organizationRecord, id, body));
   }
 
+  /**
+   * Creates a trust anchor with specified ID.
+   *
+   * @param id the trust anchor ID
+   * @param body the trust anchor data
+   * @param organizationRecord the organization record
+   * @return the created trust anchor
+   */
   @PostMapping("/trust-anchor/{id}")
   @Operation(summary = "Create trust anchor with specified ID")
   public ResponseEntity<TrustAnchorDto> createTrustAnchorWithId(
@@ -73,6 +88,14 @@ public class ModuleConfigController {
     return ResponseEntity.ok(this.moduleConfigService.createTrustAnchor(organizationRecord, id, body));
   }
 
+  /**
+   * Updates a trust anchor.
+   *
+   * @param id the trust anchor ID
+   * @param body the trust anchor data
+   * @param organizationRecord the organization record
+   * @return the updated trust anchor
+   */
   @PutMapping("/trust-anchor/{id}")
   @Operation(summary = "Update trust anchor")
   public ResponseEntity<TrustAnchorDto> updateTrustAnchor(
@@ -83,6 +106,13 @@ public class ModuleConfigController {
     return ResponseEntity.ok(this.moduleConfigService.updateTrustAnchor(organizationRecord, id, body));
   }
 
+  /**
+   * Gets a trust anchor by ID.
+   *
+   * @param id the trust anchor ID
+   * @param organizationRecord the organization record
+   * @return the trust anchor
+   */
   @GetMapping("/trust-anchor/{id}")
   @Operation(summary = "Get trust anchor")
   public ResponseEntity<TrustAnchorDto> getTrustAnchor(
@@ -91,6 +121,13 @@ public class ModuleConfigController {
     return ResponseEntity.ok(this.moduleConfigService.getTrustAnchor(organizationRecord, id));
   }
 
+  /**
+   * Deletes a trust anchor.
+   *
+   * @param id the trust anchor ID
+   * @param organizationRecord the organization record
+   * @return empty response
+   */
   @DeleteMapping("/trust-anchor/{id}")
   @Operation(summary = "Delete trust anchor")
   public ResponseEntity<Void> deleteTrustAnchor(
@@ -102,6 +139,13 @@ public class ModuleConfigController {
 
   // Resolver
 
+  /**
+   * Creates a resolver with auto-generated ID.
+   *
+   * @param body the resolver data
+   * @param organizationRecord the organization record
+   * @return the created resolver
+   */
   @PostMapping("/resolver")
   @Operation(summary = "Create resolver with auto-generated ID")
   public ResponseEntity<ResolverDto> createResolver(
@@ -112,6 +156,14 @@ public class ModuleConfigController {
     return ResponseEntity.ok(this.moduleConfigService.createResolver(organizationRecord, id, body));
   }
 
+  /**
+   * Creates a resolver with specified ID.
+   *
+   * @param id the resolver ID
+   * @param body the resolver data
+   * @param organizationRecord the organization record
+   * @return the created resolver
+   */
   @PostMapping("/resolver/{id}")
   @Operation(summary = "Create resolver with specified ID")
   public ResponseEntity<ResolverDto> createResolverWithId(
@@ -122,6 +174,14 @@ public class ModuleConfigController {
     return ResponseEntity.ok(this.moduleConfigService.createResolver(organizationRecord, id, body));
   }
 
+  /**
+   * Updates a resolver.
+   *
+   * @param id the resolver ID
+   * @param body the resolver data
+   * @param organizationRecord the organization record
+   * @return the updated resolver
+   */
   @PutMapping("/resolver/{id}")
   @Operation(summary = "Update resolver")
   public ResponseEntity<ResolverDto> updateResolver(
@@ -132,6 +192,13 @@ public class ModuleConfigController {
     return ResponseEntity.ok(this.moduleConfigService.updateResolver(organizationRecord, id, body));
   }
 
+  /**
+   * Gets a resolver by ID.
+   *
+   * @param id the resolver ID
+   * @param organizationRecord the organization record
+   * @return the resolver
+   */
   @GetMapping("/resolver/{id}")
   @Operation(summary = "Get resolver")
   public ResponseEntity<ResolverDto> getResolver(
@@ -140,6 +207,13 @@ public class ModuleConfigController {
     return ResponseEntity.ok(this.moduleConfigService.getResolver(organizationRecord, id));
   }
 
+  /**
+   * Deletes a resolver.
+   *
+   * @param id the resolver ID
+   * @param organizationRecord the organization record
+   * @return empty response
+   */
   @DeleteMapping("/resolver/{id}")
   @Operation(summary = "Delete resolver")
   public ResponseEntity<Void> deleteResolver(
@@ -151,6 +225,13 @@ public class ModuleConfigController {
 
   // Trustmark
 
+  /**
+   * Creates a trust mark with auto-generated ID.
+   *
+   * @param body the trust mark data
+   * @param organizationRecord the organization record
+   * @return the created trust mark
+   */
   @PostMapping("/trustmark")
   @Operation(summary = "Create trust mark with auto-generated ID")
   public ResponseEntity<TrustmarkDto> createTrustmark(
@@ -161,6 +242,14 @@ public class ModuleConfigController {
     return ResponseEntity.ok(this.moduleConfigService.createTrustmark(organizationRecord, id, body));
   }
 
+  /**
+   * Creates a trust mark with specified ID.
+   *
+   * @param id the trust mark ID
+   * @param body the trust mark data
+   * @param organizationRecord the organization record
+   * @return the created trust mark
+   */
   @PostMapping("/trustmark/{id}")
   @Operation(summary = "Create trust mark with specified ID")
   public ResponseEntity<TrustmarkDto> createTrustmarkWithId(
@@ -171,6 +260,14 @@ public class ModuleConfigController {
     return ResponseEntity.ok(this.moduleConfigService.createTrustmark(organizationRecord, id, body));
   }
 
+  /**
+   * Updates a trust mark.
+   *
+   * @param id the trust mark ID
+   * @param body the trust mark data
+   * @param organizationRecord the organization record
+   * @return the updated trust mark
+   */
   @PutMapping("/trustmark/{id}")
   @Operation(summary = "Update trust mark")
   public ResponseEntity<TrustmarkDto> updateTrustmark(
@@ -181,6 +278,13 @@ public class ModuleConfigController {
     return ResponseEntity.ok(this.moduleConfigService.updateTrustmark(organizationRecord, id, body));
   }
 
+  /**
+   * Gets a trust mark by ID.
+   *
+   * @param id the trust mark ID
+   * @param organizationRecord the organization record
+   * @return the trust mark
+   */
   @GetMapping("/trustmark/{id}")
   @Operation(summary = "Get trust mark")
   public ResponseEntity<TrustmarkDto> getTrustmark(
@@ -189,6 +293,13 @@ public class ModuleConfigController {
     return ResponseEntity.ok(this.moduleConfigService.getTrustmark(organizationRecord, id));
   }
 
+  /**
+   * Deletes a trust mark.
+   *
+   * @param id the trust mark ID
+   * @param organizationRecord the organization record
+   * @return empty response
+   */
   @DeleteMapping("/trustmark/{id}")
   @Operation(summary = "Delete trust mark")
   public ResponseEntity<Void> deleteTrustmark(

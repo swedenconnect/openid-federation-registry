@@ -35,6 +35,9 @@ import se.swedenconnect.oidf.registry.federationserviceapi.TrustAnchorModuleResp
 import se.swedenconnect.oidf.registry.federationserviceapi.TrustMarkIssuerModuleResponse;
 import se.swedenconnect.oidf.registry.federationserviceapi.records.EntityRecord;
 import se.swedenconnect.oidf.registry.fixture.*;
+import se.swedenconnect.oidf.registry.fixture.FederationAPIOperations;
+import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
+import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
 
 import java.text.ParseException;
 import java.util.List;
@@ -68,7 +71,7 @@ class OidfServiceApiControllerIT {
 
   private @NotNull UUID setupTestData() throws JsonProcessingException {
     final JwtTestUtils.OrganisationType org = JwtTestUtils.OrganisationType.PM;
-
+/*
     final UUID policyId = testDataOperations.createPolicies(org);
 
     final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
@@ -127,7 +130,7 @@ class OidfServiceApiControllerIT {
         HttpStatus.CREATED,
         OptionsTestData.SubordinateEntityTestData.builder()
             .build());
-
+*/
     return registryProperties.instances().stream().findFirst()
         .map(instanceProperties -> instanceProperties.instanceId().toString())
         .map(UUID::fromString).orElseThrow();

@@ -74,7 +74,7 @@ public class EntityEntity extends BaseEntity {
    * @return an {@link Optional} containing the matching {@link ModuleEntity} if found, or an empty {@link Optional} if
    *     no match is found
    */
-  public Optional<ModuleEntity> getModuleByType(FkKeyType fkKeyType) {
+  public Optional<ModuleEntity> getModuleByType(final FkKeyType fkKeyType) {
     return this.getModules().stream()
         .filter(moduleEntity -> moduleEntity.getModuleType().equals(fkKeyType.name()))
         .findFirst();

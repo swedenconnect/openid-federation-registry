@@ -30,18 +30,57 @@ import java.util.UUID;
  */
 public interface PolicyService {
 
+  /**
+   * Lists all policies.
+   *
+   * @param organizationRecord the organization record
+   * @return list of policies
+   */
   List<PolicyDto> listPolicies(OrganizationRecord organizationRecord);
 
+  /**
+   * Gets a policy by ID.
+   *
+   * @param organizationRecord the organization record
+   * @param id the policy ID
+   * @return the policy
+   */
   PolicyDto getPolicy(OrganizationRecord organizationRecord, UUID id);
 
+  /**
+   * Creates a policy.
+   *
+   * @param organizationRecord the organization record
+   * @param id the policy ID
+   * @param input the policy data
+   * @return the created policy
+   */
   PolicyDto createPolicy(OrganizationRecord organizationRecord, UUID id, PolicyDto input);
 
+  /**
+   * Updates a policy.
+   *
+   * @param organizationRecord the organization record
+   * @param id the policy ID
+   * @param input the policy data
+   * @return the updated policy
+   */
   PolicyDto updatePolicy(OrganizationRecord organizationRecord, UUID id, PolicyDto input);
 
+  /**
+   * Deletes a policy.
+   *
+   * @param organizationRecord the organization record
+   * @param id the policy ID
+   */
   void deletePolicy(OrganizationRecord organizationRecord, UUID id);
 
   /**
-   * Helper method if you want to work directly with the domain object.
+   * Gets a policy domain object.
+   *
+   * @param organizationRecord the organization record
+   * @param id the policy ID
+   * @return the policy domain object
    */
   Policies getPolicyDomain(OrganizationRecord organizationRecord, UUID id);
 }

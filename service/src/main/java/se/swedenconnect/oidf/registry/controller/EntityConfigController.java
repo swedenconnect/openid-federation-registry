@@ -51,6 +51,13 @@ public class EntityConfigController {
 
   private final EntityConfigService entityConfigService;
 
+  /**
+   * Creates a federation entity with auto-generated ID.
+   *
+   * @param body the federation entity data
+   * @param organizationRecord the organization record
+   * @return the created federation entity
+   */
   @PostMapping("/federation")
   @Operation(summary = "Create federation entity with auto-generated ID")
   public ResponseEntity<FederationEntityDto> createFederationEntity(
@@ -61,6 +68,14 @@ public class EntityConfigController {
     return ResponseEntity.ok(this.entityConfigService.createFederationEntity(organizationRecord, id, body));
   }
 
+  /**
+   * Creates a federation entity with specified ID.
+   *
+   * @param id the federation entity ID
+   * @param body the federation entity data
+   * @param organizationRecord the organization record
+   * @return the created federation entity
+   */
   @PostMapping("/federation/{id}")
   @Operation(summary = "Create federation entity with specified ID")
   public ResponseEntity<FederationEntityDto> createFederationEntityWithId(
@@ -71,6 +86,14 @@ public class EntityConfigController {
     return ResponseEntity.ok(this.entityConfigService.createFederationEntity(organizationRecord, id, body));
   }
 
+  /**
+   * Updates a federation entity.
+   *
+   * @param id the federation entity ID
+   * @param body the federation entity data
+   * @param organizationRecord the organization record
+   * @return the updated federation entity
+   */
   @PutMapping("/federation/{id}")
   @Operation(summary = "Update federation entity")
   public ResponseEntity<FederationEntityDto> updateFederationEntity(
@@ -81,6 +104,13 @@ public class EntityConfigController {
     return ResponseEntity.ok(this.entityConfigService.updateFederationEntity(organizationRecord, id, body));
   }
 
+  /**
+   * Gets a federation entity by ID.
+   *
+   * @param id the federation entity ID
+   * @param organizationRecord the organization record
+   * @return the federation entity
+   */
   @GetMapping("/federation/{id}")
   @Operation(summary = "Get federation entity")
   public ResponseEntity<FederationEntityDto> getFederationEntity(
@@ -89,6 +119,13 @@ public class EntityConfigController {
     return ResponseEntity.ok(this.entityConfigService.getFederationEntity(organizationRecord, id));
   }
 
+  /**
+   * Deletes a federation entity.
+   *
+   * @param id the federation entity ID
+   * @param organizationRecord the organization record
+   * @return empty response
+   */
   @DeleteMapping("/federation/{id}")
   @Operation(summary = "Delete federation entity")
   public ResponseEntity<Void> deleteFederationEntity(
@@ -98,6 +135,13 @@ public class EntityConfigController {
     return ResponseEntity.noContent().build();
   }
 
+  /**
+   * Creates a hosted entity with auto-generated ID.
+   *
+   * @param body the hosted entity data
+   * @param organizationRecord the organization record
+   * @return the created hosted entity
+   */
   @PostMapping("/hosted")
   @Operation(summary = "Create hosted entity with auto-generated ID")
   public ResponseEntity<HostedEntityDto> createHostedEntity(
@@ -108,6 +152,14 @@ public class EntityConfigController {
     return ResponseEntity.ok(this.entityConfigService.createHostedEntity(organizationRecord, id, body));
   }
 
+  /**
+   * Creates a hosted entity with specified ID.
+   *
+   * @param id the hosted entity ID
+   * @param body the hosted entity data
+   * @param organizationRecord the organization record
+   * @return the created hosted entity
+   */
   @PostMapping("/hosted/{id}")
   @Operation(summary = "Create hosted entity with specified ID")
   public ResponseEntity<HostedEntityDto> createHostedEntityWithId(
@@ -118,6 +170,14 @@ public class EntityConfigController {
     return ResponseEntity.ok(this.entityConfigService.createHostedEntity(organizationRecord, id, body));
   }
 
+  /**
+   * Updates a hosted entity.
+   *
+   * @param id the hosted entity ID
+   * @param body the hosted entity data
+   * @param organizationRecord the organization record
+   * @return the updated hosted entity
+   */
   @PutMapping("/hosted/{id}")
   @Operation(summary = "Update hosted entity")
   public ResponseEntity<HostedEntityDto> updateHostedEntity(
@@ -128,6 +188,13 @@ public class EntityConfigController {
     return ResponseEntity.ok(this.entityConfigService.updateHostedEntity(organizationRecord, id, body));
   }
 
+  /**
+   * Gets a hosted entity by ID.
+   *
+   * @param id the hosted entity ID
+   * @param organizationRecord the organization record
+   * @return the hosted entity
+   */
   @GetMapping("/hosted/{id}")
   @Operation(summary = "Get hosted entity")
   public ResponseEntity<HostedEntityDto> getHostedEntity(
@@ -136,6 +203,13 @@ public class EntityConfigController {
     return ResponseEntity.ok(this.entityConfigService.getHostedEntity(organizationRecord, id));
   }
 
+  /**
+   * Deletes a hosted entity.
+   *
+   * @param id the hosted entity ID
+   * @param organizationRecord the organization record
+   * @return empty response
+   */
   @DeleteMapping("/hosted/{id}")
   @Operation(summary = "Delete hosted entity")
   public ResponseEntity<Void> deleteHostedEntity(
@@ -145,6 +219,13 @@ public class EntityConfigController {
     return ResponseEntity.noContent().build();
   }
 
+  /**
+   * Creates a subordinate entity with auto-generated ID.
+   *
+   * @param body the subordinate entity data
+   * @param organizationRecord the organization record
+   * @return the created subordinate entity
+   */
   @PostMapping("/subordinate")
   @Operation(summary = "Create subordinate entity with auto-generated ID")
   public ResponseEntity<SubordinateEntityDto> createSubordinateEntity(
@@ -155,6 +236,14 @@ public class EntityConfigController {
     return ResponseEntity.ok(this.entityConfigService.createSubordinateEntity(organizationRecord, id, body));
   }
 
+  /**
+   * Creates a subordinate entity with specified ID.
+   *
+   * @param id the subordinate entity ID
+   * @param body the subordinate entity data
+   * @param organizationRecord the organization record
+   * @return the created subordinate entity
+   */
   @PostMapping("/subordinate/{id}")
   @Operation(summary = "Create subordinate entity with specified ID")
   public ResponseEntity<SubordinateEntityDto> createSubordinateEntityWithId(
@@ -165,6 +254,14 @@ public class EntityConfigController {
     return ResponseEntity.ok(this.entityConfigService.createSubordinateEntity(organizationRecord, id, body));
   }
 
+  /**
+   * Updates a subordinate entity.
+   *
+   * @param id the subordinate entity ID
+   * @param body the subordinate entity data
+   * @param organizationRecord the organization record
+   * @return the updated subordinate entity
+   */
   @PutMapping("/subordinate/{id}")
   @Operation(summary = "Update subordinate entity")
   public ResponseEntity<SubordinateEntityDto> updateSubordinateEntity(
@@ -175,6 +272,13 @@ public class EntityConfigController {
     return ResponseEntity.ok(this.entityConfigService.updateSubordinateEntity(organizationRecord, id, body));
   }
 
+  /**
+   * Gets a subordinate entity by ID.
+   *
+   * @param id the subordinate entity ID
+   * @param organizationRecord the organization record
+   * @return the subordinate entity
+   */
   @GetMapping("/subordinate/{id}")
   @Operation(summary = "Get subordinate entity")
   public ResponseEntity<SubordinateEntityDto> getSubordinateEntity(
@@ -183,6 +287,13 @@ public class EntityConfigController {
     return ResponseEntity.ok(this.entityConfigService.getSubordinateEntity(organizationRecord, id));
   }
 
+  /**
+   * Deletes a subordinate entity.
+   *
+   * @param id the subordinate entity ID
+   * @param organizationRecord the organization record
+   * @return empty response
+   */
   @DeleteMapping("/subordinate/{id}")
   @Operation(summary = "Delete subordinate entity")
   public ResponseEntity<Void> deleteSubordinateEntity(

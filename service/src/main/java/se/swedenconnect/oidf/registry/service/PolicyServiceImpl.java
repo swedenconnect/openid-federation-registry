@@ -44,6 +44,13 @@ public class PolicyServiceImpl implements PolicyService {
   private final OrganizationService organizationService;
   private final RegistryAuditService auditService;
 
+  /**
+   * Constructor.
+   *
+   * @param policyRepository the policy repository
+   * @param organizationService the organization service
+   * @param auditService the audit service
+   */
   public PolicyServiceImpl(final PolicyRepository policyRepository,
       final OrganizationService organizationService,
       final RegistryAuditService auditService) {

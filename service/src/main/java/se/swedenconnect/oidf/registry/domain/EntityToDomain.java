@@ -50,6 +50,12 @@ import java.util.Map;
 public final class EntityToDomain {
   final static ObjectMapper mapper = new ObjectMapper();
 
+  /**
+   * Maps ModuleEntity to TrustAnchor domain object.
+   *
+   * @param moduleEntity the module entity
+   * @return the trust anchor domain object
+   */
   public static TrustAnchor mapTrustAnchor(final ModuleEntity moduleEntity) {
     final TrustAnchor.TrustAnchorBuilder o = TrustAnchor.builder();
     o.moduleId(moduleEntity.getModuleId());
@@ -69,7 +75,7 @@ public final class EntityToDomain {
             .map(EntityToDomain::toEntityID)
             .toList());
       }
-      catch (JsonProcessingException e) {
+      catch (final JsonProcessingException e) {
         throw new IllegalArgumentException("Failed to parse trustMarkIssuers JSON", e);
       }
     }
@@ -77,6 +83,12 @@ public final class EntityToDomain {
     return o.build();
   }
 
+  /**
+   * Maps ModuleEntity to Resolver domain object.
+   *
+   * @param moduleEntity the module entity
+   * @return the resolver domain object
+   */
   public static Resolver mapResolver(final ModuleEntity moduleEntity) {
     final Resolver.ResolverBuilder o = Resolver.builder();
     o.moduleId(moduleEntity.getModuleId());
@@ -104,6 +116,12 @@ public final class EntityToDomain {
     return o.build();
   }
 
+  /**
+   * Maps Map to TrustmarkSubject domain object.
+   *
+   * @param values the map of values
+   * @return the trustmark subject domain object
+   */
   public static TrustmarkSubject mapTrustmarkSubject(final Map<String, Object> values) {
     final TrustmarkSubject o = new TrustmarkSubject();
     o.setTrustmarkId(toEntityID((String) values.get("trustmarkId")));
@@ -118,6 +136,12 @@ public final class EntityToDomain {
     return o;
   }
 
+  /**
+   * Maps EntityEntity to Entity domain object.
+   *
+   * @param entityEntity the entity entity
+   * @return the entity domain object
+   */
   public static Entity map(final EntityEntity entityEntity) {
 
     if (entityEntity.getEntityType() == EntityKeyType.FEDERATION_ENTITY) {
@@ -132,7 +156,7 @@ public final class EntityToDomain {
         try {
           o.metadata(mapper.readValue(entityEntity.getMetadata(), new TypeReference<Map<String, Object>>() {}));
         }
-        catch (JsonProcessingException e) {
+        catch (final JsonProcessingException e) {
           throw new IllegalArgumentException("Failed to parse metadata JSON", e);
         }
       }
@@ -168,7 +192,7 @@ public final class EntityToDomain {
         try {
           o.metadata(mapper.readValue(entityEntity.getMetadata(), new TypeReference<Map<String, Object>>() {}));
         }
-        catch (JsonProcessingException e) {
+        catch (final JsonProcessingException e) {
           throw new IllegalArgumentException("Failed to parse metadata JSON", e);
         }
       }
@@ -193,6 +217,12 @@ public final class EntityToDomain {
     throw new IllegalArgumentException("Unknown entity type: " + entityEntity.getEntityType());
   }
 
+  /**
+   * Maps PolicyEntity to Policies domain object.
+   *
+   * @param policyEntity the policy entity
+   * @return the policies domain object
+   */
   public static Policies map(final PolicyEntity policyEntity) {
     if (policyEntity == null) {
       return Policies.builder().policy(Collections.emptyMap()).build();
@@ -204,11 +234,17 @@ public final class EntityToDomain {
       o.setPolicy(mapper.readValue(policyEntity.getPolicy(), new TypeReference<Map<String, Object>>() {}));
       return o;
     }
-    catch (JsonProcessingException e) {
+    catch (final JsonProcessingException e) {
       throw new IllegalArgumentException(e);
     }
   }
 
+  /**
+   * Maps ModuleEntity to FederationModule domain object.
+   *
+   * @param moduleEntity the module entity
+   * @return the federation module domain object
+   */
   public static FederationModule map(final ModuleEntity moduleEntity) {
     return switch (FkKeyType.valueOf(moduleEntity.getModuleType())) {
       case FkKeyType.INTERMEDIATE -> mapIntermediate(moduleEntity);
@@ -220,12 +256,24 @@ public final class EntityToDomain {
 
   }
 
+  /**
+   * Maps ModuleEntity to Trustmark domain object (deprecated).
+   *
+   * @param moduleEntity the module entity
+   * @return the trustmark domain object
+   */
   public static Trustmark mapTrustmark(final ModuleEntity moduleEntity) {
     // This method should not be used - Trustmark is stored in TrustMarkEntity, not ModuleEntity
     throw new UnsupportedOperationException(
         "mapTrustmark(ModuleEntity) is deprecated. Use mapTrustmark(TrustMarkEntity) instead.");
   }
 
+  /**
+   * Maps TrustMarkEntity to Trustmark domain object.
+   *
+   * @param trustMarkEntity the trust mark entity
+   * @return the trustmark domain object
+   */
   public static Trustmark mapTrustmark(final TrustMarkEntity trustMarkEntity) {
     final Trustmark.TrustmarkBuilder o = Trustmark.builder();
     o.trustmarkId(trustMarkEntity.getTrustmarkId());
@@ -254,6 +302,12 @@ public final class EntityToDomain {
     return o.build();
   }
 
+  /**
+   * Maps TrustMarkSubjectEntity to TrustmarkSubject domain object.
+   *
+   * @param trustMarkSubjectEntity the trust mark subject entity
+   * @return the trustmark subject domain object
+   */
   public static TrustmarkSubject mapTrustmarkSubject(final TrustMarkSubjectEntity trustMarkSubjectEntity) {
     final TrustmarkSubject.TrustmarkSubjectBuilder o = TrustmarkSubject.builder();
     o.trustmarksubjectId(trustMarkSubjectEntity.getTrustmarksubjectId());
@@ -282,7 +336,13 @@ public final class EntityToDomain {
     return o.build();
   }
 
-  public static Intermediate mapIntermediate(ModuleEntity moduleEntity) {
+  /**
+   * Maps ModuleEntity to Intermediate domain object.
+   *
+   * @param moduleEntity the module entity
+   * @return the intermediate domain object
+   */
+  public static Intermediate mapIntermediate(final ModuleEntity moduleEntity) {
     final Intermediate.IntermediateBuilder o = Intermediate.builder();
 
     // Read from columns directly
@@ -293,7 +353,13 @@ public final class EntityToDomain {
     return o.build();
   }
 
-  public static TrustmarkIssuer mapTrustmarkIssuer(ModuleEntity moduleEntity) {
+  /**
+   * Maps ModuleEntity to TrustmarkIssuer domain object.
+   *
+   * @param moduleEntity the module entity
+   * @return the trustmark issuer domain object
+   */
+  public static TrustmarkIssuer mapTrustmarkIssuer(final ModuleEntity moduleEntity) {
     final TrustmarkIssuer.TrustmarkIssuerBuilder o = TrustmarkIssuer.builder();
 
     // Read from columns directly
@@ -314,6 +380,12 @@ public final class EntityToDomain {
   // DTO -> Domain mapping
   // -------------------------------------------------------------------------
 
+  /**
+   * Converts FederationEntityDto to FederationEntity domain object.
+   *
+   * @param dto the federation entity DTO
+   * @return the federation entity domain object
+   */
   public static FederationEntity toDomain(final FederationEntityDto dto) {
     return FederationEntity.builder()
         .subject(toEntityID(dto.getSubject()))
@@ -322,6 +394,12 @@ public final class EntityToDomain {
         .build();
   }
 
+  /**
+   * Converts HostedEntityDto to HostedEntity domain object.
+   *
+   * @param dto the hosted entity DTO
+   * @return the hosted entity domain object
+   */
   public static HostedEntity toDomain(final HostedEntityDto dto) {
     return HostedEntity.builder()
         .subject(toEntityID(dto.getSubject()))
@@ -330,6 +408,12 @@ public final class EntityToDomain {
         .build();
   }
 
+  /**
+   * Converts SubordinateEntityDto to SubordinateEntity domain object.
+   *
+   * @param dto the subordinate entity DTO
+   * @return the subordinate entity domain object
+   */
   public static SubordinateEntity toDomain(final SubordinateEntityDto dto) {
     final SubordinateEntity.SubordinateEntityBuilder<?, ?> builder = SubordinateEntity.builder()
         .subject(toEntityID(dto.getSubject()))
@@ -341,6 +425,12 @@ public final class EntityToDomain {
     return builder.build();
   }
 
+  /**
+   * Converts PolicyDto to Policies domain object.
+   *
+   * @param dto the policy DTO
+   * @return the policies domain object
+   */
   public static Policies toDomain(final PolicyDto dto) {
     return Policies.builder()
         .name(dto.getName())
@@ -348,6 +438,12 @@ public final class EntityToDomain {
         .build();
   }
 
+  /**
+   * Converts TrustAnchorDto to TrustAnchor domain object.
+   *
+   * @param dto the trust anchor DTO
+   * @return the trust anchor domain object
+   */
   public static TrustAnchor toDomain(final TrustAnchorDto dto) {
     return TrustAnchor.builder()
         .entityId(toEntityID(dto.getEntityId()))
@@ -359,6 +455,12 @@ public final class EntityToDomain {
         .build();
   }
 
+  /**
+   * Converts ResolverDto to Resolver domain object.
+   *
+   * @param dto the resolver DTO
+   * @return the resolver domain object
+   */
   public static Resolver toDomain(final ResolverDto dto) {
     final Resolver.ResolverBuilder builder = Resolver.builder()
         .entityId(toEntityID(dto.getEntityId()))
@@ -379,6 +481,12 @@ public final class EntityToDomain {
     return builder.build();
   }
 
+  /**
+   * Converts TrustmarkDto to Trustmark domain object.
+   *
+   * @param dto the trustmark DTO
+   * @return the trustmark domain object
+   */
   public static Trustmark toDomain(final TrustmarkDto dto) {
     return Trustmark.builder()
         .trustmarkissuerId(dto.getTrustmarkissuerId())
@@ -389,6 +497,12 @@ public final class EntityToDomain {
         .build();
   }
 
+  /**
+   * Converts TrustmarkSubjectDto to TrustmarkSubject domain object.
+   *
+   * @param dto the trustmark subject DTO
+   * @return the trustmark subject domain object
+   */
   public static TrustmarkSubject toDomain(final TrustmarkSubjectDto dto) {
     final TrustmarkSubject.TrustmarkSubjectBuilder builder = TrustmarkSubject.builder()
         .trustmarkId(toEntityID(dto.getTrustmarkId()))
@@ -408,6 +522,16 @@ public final class EntityToDomain {
   // Domain -> JPA mapping
   // -------------------------------------------------------------------------
 
+  /**
+   * Converts FederationEntity domain object to EntityEntity.
+   *
+   * @param id the entity ID
+   * @param domain the federation entity domain object
+   * @param entityKeyType the entity key type
+   * @param organization the organization entity
+   * @param policyEntity the policy entity
+   * @return the entity entity
+   */
   public static EntityEntity toEntityEntity(final java.util.UUID id,
       final FederationEntity domain,
       final EntityKeyType entityKeyType,
@@ -427,7 +551,7 @@ public final class EntityToDomain {
       try {
         entity.setMetadata(mapper.writeValueAsString(domain.getMetadata()));
       }
-      catch (JsonProcessingException e) {
+      catch (final JsonProcessingException e) {
         throw new IllegalArgumentException("Failed to serialize metadata to JSON", e);
       }
     }
@@ -435,6 +559,16 @@ public final class EntityToDomain {
     return entity;
   }
 
+  /**
+   * Converts HostedEntity domain object to EntityEntity.
+   *
+   * @param id the entity ID
+   * @param domain the hosted entity domain object
+   * @param entityKeyType the entity key type
+   * @param organization the organization entity
+   * @param policyEntity the policy entity
+   * @return the entity entity
+   */
   public static EntityEntity toEntityEntity(final java.util.UUID id,
       final HostedEntity domain,
       final EntityKeyType entityKeyType,
@@ -452,7 +586,7 @@ public final class EntityToDomain {
       try {
         entity.setMetadata(mapper.writeValueAsString(domain.getMetadata()));
       }
-      catch (JsonProcessingException e) {
+      catch (final JsonProcessingException e) {
         throw new IllegalArgumentException("Failed to serialize metadata to JSON", e);
       }
     }
@@ -460,6 +594,16 @@ public final class EntityToDomain {
     return entity;
   }
 
+  /**
+   * Converts SubordinateEntity domain object to EntityEntity.
+   *
+   * @param id the entity ID
+   * @param domain the subordinate entity domain object
+   * @param entityKeyType the entity key type
+   * @param organization the organization entity
+   * @param policyEntity the policy entity
+   * @return the entity entity
+   */
   public static EntityEntity toEntityEntity(final java.util.UUID id,
       final SubordinateEntity domain,
       final EntityKeyType entityKeyType,
@@ -480,6 +624,14 @@ public final class EntityToDomain {
     return entity;
   }
 
+  /**
+   * Converts Policies domain object to PolicyEntity.
+   *
+   * @param id the policy ID
+   * @param policies the policies domain object
+   * @param organization the organization entity
+   * @return the policy entity
+   */
   public static PolicyEntity toPolicyEntity(final java.util.UUID id,
       final Policies policies,
       final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization) {
@@ -491,12 +643,20 @@ public final class EntityToDomain {
       entity.setPolicy(mapper.writeValueAsString(
           policies.getPolicy() != null ? policies.getPolicy() : java.util.Collections.emptyMap()));
     }
-    catch (JsonProcessingException e) {
+    catch (final JsonProcessingException e) {
       throw new IllegalArgumentException(e);
     }
     return entity;
   }
 
+  /**
+   * Converts Trustmark domain object to TrustMarkEntity.
+   *
+   * @param id the trust mark ID
+   * @param trustmark the trustmark domain object
+   * @param moduleEntity the module entity
+   * @return the trust mark entity
+   */
   public static TrustMarkEntity toTrustMarkEntity(final java.util.UUID id,
       final Trustmark trustmark,
       final ModuleEntity moduleEntity) {
@@ -512,6 +672,14 @@ public final class EntityToDomain {
     return entity;
   }
 
+  /**
+   * Converts TrustmarkSubject domain object to TrustMarkSubjectEntity.
+   *
+   * @param id the trust mark subject ID
+   * @param subject the trustmark subject domain object
+   * @param trustMarkEntity the trust mark entity
+   * @return the trust mark subject entity
+   */
   public static TrustMarkSubjectEntity toTrustMarkSubjectEntity(final java.util.UUID id,
       final TrustmarkSubject subject,
       final TrustMarkEntity trustMarkEntity) {
@@ -540,7 +708,7 @@ public final class EntityToDomain {
     try {
       return JWKSet.parse(value);
     }
-    catch (java.text.ParseException e) {
+    catch (final java.text.ParseException e) {
       throw new IllegalArgumentException(e);
     }
   }

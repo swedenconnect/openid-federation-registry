@@ -43,6 +43,12 @@ public final class EntityToDto {
   // Entity -> DTO mapping
   // -------------------------------------------------------------------------
 
+  /**
+   * Converts EntityEntity to FederationEntityDto.
+   *
+   * @param entityEntity the entity entity
+   * @return the federation entity DTO
+   */
   public static FederationEntityDto toDto(final EntityEntity entityEntity) {
     if (entityEntity.getEntityType() != EntityKeyType.FEDERATION_ENTITY) {
       throw new IllegalArgumentException("Entity is not a FederationEntity");
@@ -57,7 +63,7 @@ public final class EntityToDto {
       try {
         dto.setMetadata(mapper.readValue(entityEntity.getMetadata(), new TypeReference<Map<String, Object>>() {}));
       }
-      catch (JsonProcessingException e) {
+      catch (final JsonProcessingException e) {
         throw new IllegalArgumentException("Failed to parse metadata JSON", e);
       }
     }
@@ -65,6 +71,12 @@ public final class EntityToDto {
     return dto;
   }
 
+  /**
+   * Converts EntityEntity to HostedEntityDto.
+   *
+   * @param entityEntity the entity entity
+   * @return the hosted entity DTO
+   */
   public static HostedEntityDto toDtoHosted(final EntityEntity entityEntity) {
     if (entityEntity.getEntityType() != EntityKeyType.HOSTED_ENTITY) {
       throw new IllegalArgumentException("Entity is not a HostedEntity");
@@ -79,7 +91,7 @@ public final class EntityToDto {
       try {
         dto.setMetadata(mapper.readValue(entityEntity.getMetadata(), new TypeReference<Map<String, Object>>() {}));
       }
-      catch (JsonProcessingException e) {
+      catch (final JsonProcessingException e) {
         throw new IllegalArgumentException("Failed to parse metadata JSON", e);
       }
     }
@@ -87,6 +99,12 @@ public final class EntityToDto {
     return dto;
   }
 
+  /**
+   * Converts EntityEntity to SubordinateEntityDto.
+   *
+   * @param entityEntity the entity entity
+   * @return the subordinate entity DTO
+   */
   public static SubordinateEntityDto toDtoSubordinate(final EntityEntity entityEntity) {
     if (entityEntity.getEntityType() != EntityKeyType.SUBORDINATE_ENTITY) {
       throw new IllegalArgumentException("Entity is not a SubordinateEntity");
@@ -101,6 +119,12 @@ public final class EntityToDto {
     return dto;
   }
 
+  /**
+   * Converts PolicyEntity to PolicyDto.
+   *
+   * @param policyEntity the policy entity
+   * @return the policy DTO
+   */
   public static PolicyDto toDto(final PolicyEntity policyEntity) {
     final PolicyDto dto = new PolicyDto();
     dto.setPolicyId(policyEntity.getPolicyId());
@@ -110,7 +134,7 @@ public final class EntityToDto {
       try {
         dto.setPolicy(mapper.readValue(policyEntity.getPolicy(), new TypeReference<Map<String, Object>>() {}));
       }
-      catch (JsonProcessingException e) {
+      catch (final JsonProcessingException e) {
         throw new IllegalArgumentException("Failed to parse policy JSON", e);
       }
     }
@@ -121,6 +145,12 @@ public final class EntityToDto {
     return dto;
   }
 
+  /**
+   * Converts ModuleEntity to TrustAnchorDto.
+   *
+   * @param moduleEntity the module entity
+   * @return the trust anchor DTO
+   */
   public static TrustAnchorDto toDto(final ModuleEntity moduleEntity) {
     if (!moduleEntity.getModuleType().equals(FkKeyType.TRUSTANCHOR.name())) {
       throw new IllegalArgumentException("Module is not a TrustAnchor");
@@ -138,7 +168,7 @@ public final class EntityToDto {
             moduleEntity.getTrustMarkIssuers(), new TypeReference<List<String>>() {});
         dto.setTrustMarkIssuers(trustMarkIssuers);
       }
-      catch (JsonProcessingException e) {
+      catch (final JsonProcessingException e) {
         throw new IllegalArgumentException("Failed to parse trustMarkIssuers JSON", e);
       }
     }
@@ -146,6 +176,12 @@ public final class EntityToDto {
     return dto;
   }
 
+  /**
+   * Converts ModuleEntity to ResolverDto.
+   *
+   * @param moduleEntity the module entity
+   * @return the resolver DTO
+   */
   public static ResolverDto toDtoResolver(final ModuleEntity moduleEntity) {
     if (!moduleEntity.getModuleType().equals(FkKeyType.RESOLVER.name())) {
       throw new IllegalArgumentException("Module is not a Resolver");
@@ -163,6 +199,12 @@ public final class EntityToDto {
     return dto;
   }
 
+  /**
+   * Converts TrustMarkEntity to TrustmarkDto.
+   *
+   * @param trustMarkEntity the trust mark entity
+   * @return the trustmark DTO
+   */
   public static TrustmarkDto toDto(final TrustMarkEntity trustMarkEntity) {
     final TrustmarkDto dto = new TrustmarkDto();
     dto.setTrustmarkId(trustMarkEntity.getTrustmarkId());
@@ -174,6 +216,12 @@ public final class EntityToDto {
     return dto;
   }
 
+  /**
+   * Converts TrustMarkSubjectEntity to TrustmarkSubjectDto.
+   *
+   * @param trustMarkSubjectEntity the trust mark subject entity
+   * @return the trustmark subject DTO
+   */
   public static TrustmarkSubjectDto toDto(final TrustMarkSubjectEntity trustMarkSubjectEntity) {
     final TrustmarkSubjectDto dto = new TrustmarkSubjectDto();
     dto.setTrustmarksubjectId(trustMarkSubjectEntity.getTrustmarksubjectId());
@@ -189,6 +237,16 @@ public final class EntityToDto {
   // DTO -> Entity mapping
   // -------------------------------------------------------------------------
 
+  /**
+   * Converts FederationEntityDto to EntityEntity.
+   *
+   * @param id the entity ID
+   * @param dto the federation entity DTO
+   * @param entityKeyType the entity key type
+   * @param organization the organization entity
+   * @param policyEntity the policy entity
+   * @return the entity entity
+   */
   public static EntityEntity toEntity(final java.util.UUID id,
       final FederationEntityDto dto,
       final EntityKeyType entityKeyType,
@@ -206,7 +264,7 @@ public final class EntityToDto {
       try {
         entity.setMetadata(mapper.writeValueAsString(dto.getMetadata()));
       }
-      catch (JsonProcessingException e) {
+      catch (final JsonProcessingException e) {
         throw new IllegalArgumentException("Failed to serialize metadata to JSON", e);
       }
     }
@@ -214,6 +272,16 @@ public final class EntityToDto {
     return entity;
   }
 
+  /**
+   * Converts HostedEntityDto to EntityEntity.
+   *
+   * @param id the entity ID
+   * @param dto the hosted entity DTO
+   * @param entityKeyType the entity key type
+   * @param organization the organization entity
+   * @param policyEntity the policy entity
+   * @return the entity entity
+   */
   public static EntityEntity toEntity(final java.util.UUID id,
       final HostedEntityDto dto,
       final EntityKeyType entityKeyType,
@@ -231,7 +299,7 @@ public final class EntityToDto {
       try {
         entity.setMetadata(mapper.writeValueAsString(dto.getMetadata()));
       }
-      catch (JsonProcessingException e) {
+      catch (final JsonProcessingException e) {
         throw new IllegalArgumentException("Failed to serialize metadata to JSON", e);
       }
     }
@@ -239,6 +307,16 @@ public final class EntityToDto {
     return entity;
   }
 
+  /**
+   * Converts SubordinateEntityDto to EntityEntity.
+   *
+   * @param id the entity ID
+   * @param dto the subordinate entity DTO
+   * @param entityKeyType the entity key type
+   * @param organization the organization entity
+   * @param policyEntity the policy entity
+   * @return the entity entity
+   */
   public static EntityEntity toEntity(final java.util.UUID id,
       final SubordinateEntityDto dto,
       final EntityKeyType entityKeyType,
@@ -256,6 +334,14 @@ public final class EntityToDto {
     return entity;
   }
 
+  /**
+   * Converts PolicyDto to PolicyEntity.
+   *
+   * @param id the policy ID
+   * @param dto the policy DTO
+   * @param organization the organization entity
+   * @return the policy entity
+   */
   public static PolicyEntity toEntity(final java.util.UUID id,
       final PolicyDto dto,
       final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization) {
@@ -267,12 +353,18 @@ public final class EntityToDto {
       entity.setPolicy(mapper.writeValueAsString(
           dto.getPolicy() != null ? dto.getPolicy() : Collections.emptyMap()));
     }
-    catch (JsonProcessingException e) {
+    catch (final JsonProcessingException e) {
       throw new IllegalArgumentException("Failed to serialize policy to JSON", e);
     }
     return entity;
   }
 
+  /**
+   * Updates EntityEntity with FederationEntityDto data.
+   *
+   * @param entity the entity entity
+   * @param dto the federation entity DTO
+   */
   public static void updateEntity(final EntityEntity entity, final FederationEntityDto dto) {
     entity.setSubject(dto.getSubject());
     entity.setIssuer(dto.getIssuer());
@@ -280,12 +372,18 @@ public final class EntityToDto {
       try {
         entity.setMetadata(mapper.writeValueAsString(dto.getMetadata()));
       }
-      catch (JsonProcessingException e) {
+      catch (final JsonProcessingException e) {
         throw new IllegalArgumentException("Failed to serialize metadata to JSON", e);
       }
     }
   }
 
+  /**
+   * Updates EntityEntity with HostedEntityDto data.
+   *
+   * @param entity the entity entity
+   * @param dto the hosted entity DTO
+   */
   public static void updateEntity(final EntityEntity entity, final HostedEntityDto dto) {
     entity.setSubject(dto.getSubject());
     entity.setIssuer(dto.getIssuer());
@@ -293,29 +391,47 @@ public final class EntityToDto {
       try {
         entity.setMetadata(mapper.writeValueAsString(dto.getMetadata()));
       }
-      catch (JsonProcessingException e) {
+      catch (final JsonProcessingException e) {
         throw new IllegalArgumentException("Failed to serialize metadata to JSON", e);
       }
     }
   }
 
+  /**
+   * Updates EntityEntity with SubordinateEntityDto data.
+   *
+   * @param entity the entity entity
+   * @param dto the subordinate entity DTO
+   */
   public static void updateEntity(final EntityEntity entity, final SubordinateEntityDto dto) {
     entity.setSubject(dto.getSubject());
     entity.setIssuer(dto.getIssuer());
     entity.setJwks(dto.getJwks());
   }
 
+  /**
+   * Updates PolicyEntity with PolicyDto data.
+   *
+   * @param entity the policy entity
+   * @param dto the policy DTO
+   */
   public static void updateEntity(final PolicyEntity entity, final PolicyDto dto) {
     entity.setName(dto.getName());
     try {
       entity.setPolicy(mapper.writeValueAsString(
           dto.getPolicy() != null ? dto.getPolicy() : Collections.emptyMap()));
     }
-    catch (JsonProcessingException e) {
+    catch (final JsonProcessingException e) {
       throw new IllegalArgumentException("Failed to serialize policy to JSON", e);
     }
   }
 
+  /**
+   * Updates ModuleEntity with TrustAnchorDto data.
+   *
+   * @param module the module entity
+   * @param dto the trust anchor DTO
+   */
   public static void updateModuleEntity(final ModuleEntity module, final TrustAnchorDto dto) {
     module.setEntityIdValue(dto.getEntityId());
     module.setActive(dto.getActive());
@@ -325,7 +441,7 @@ public final class EntityToDto {
       try {
         module.setTrustMarkIssuers(mapper.writeValueAsString(dto.getTrustMarkIssuers()));
       }
-      catch (JsonProcessingException e) {
+      catch (final JsonProcessingException e) {
         throw new IllegalArgumentException("Failed to serialize trustMarkIssuers to JSON", e);
       }
     }
@@ -334,6 +450,12 @@ public final class EntityToDto {
     }
   }
 
+  /**
+   * Updates ModuleEntity with ResolverDto data.
+   *
+   * @param module the module entity
+   * @param dto the resolver DTO
+   */
   public static void updateModuleEntity(final ModuleEntity module, final ResolverDto dto) {
     module.setEntityIdValue(dto.getEntityId());
     module.setActive(dto.getActive());
@@ -343,6 +465,14 @@ public final class EntityToDto {
     module.setStepRetryDuration(dto.getStepRetryDuration());
   }
 
+  /**
+   * Converts TrustmarkDto to TrustMarkEntity.
+   *
+   * @param id the trust mark ID
+   * @param dto the trustmark DTO
+   * @param moduleEntity the module entity
+   * @return the trust mark entity
+   */
   public static TrustMarkEntity toEntity(final java.util.UUID id,
       final TrustmarkDto dto,
       final ModuleEntity moduleEntity) {
@@ -358,6 +488,12 @@ public final class EntityToDto {
     return entity;
   }
 
+  /**
+   * Updates TrustMarkEntity with TrustmarkDto data.
+   *
+   * @param entity the trust mark entity
+   * @param dto the trustmark DTO
+   */
   public static void updateEntity(final TrustMarkEntity entity, final TrustmarkDto dto) {
     entity.setTrustmarkissuerId(dto.getTrustmarkissuerId());
     entity.setTrustMarkEntityId(dto.getTrustMarkEntityId());
@@ -366,6 +502,14 @@ public final class EntityToDto {
     entity.setDelegation(dto.getDelegation());
   }
 
+  /**
+   * Converts TrustmarkSubjectDto to TrustMarkSubjectEntity.
+   *
+   * @param id the trust mark subject ID
+   * @param dto the trustmark subject DTO
+   * @param trustMarkEntity the trust mark entity
+   * @return the trust mark subject entity
+   */
   public static TrustMarkSubjectEntity toEntity(final java.util.UUID id,
       final TrustmarkSubjectDto dto,
       final TrustMarkEntity trustMarkEntity) {
@@ -381,6 +525,12 @@ public final class EntityToDto {
     return entity;
   }
 
+  /**
+   * Updates TrustMarkSubjectEntity with TrustmarkSubjectDto data.
+   *
+   * @param entity the trust mark subject entity
+   * @param dto the trustmark subject DTO
+   */
   public static void updateEntity(final TrustMarkSubjectEntity entity, final TrustmarkSubjectDto dto) {
     entity.setTrustmarkIdRef(dto.getTrustmarkId());
     entity.setSubject(dto.getSubject());
@@ -389,6 +539,15 @@ public final class EntityToDto {
     entity.setExpires(dto.getExpires());
   }
 
+  /**
+   * Converts TrustAnchorDto to ModuleEntity.
+   *
+   * @param id the module ID
+   * @param dto the trust anchor DTO
+   * @param entityEntity the entity entity
+   * @param organization the organization entity
+   * @return the module entity
+   */
   public static ModuleEntity toEntity(final java.util.UUID id,
       final TrustAnchorDto dto,
       final EntityEntity entityEntity,
@@ -405,7 +564,7 @@ public final class EntityToDto {
       try {
         module.setTrustMarkIssuers(mapper.writeValueAsString(dto.getTrustMarkIssuers()));
       }
-      catch (JsonProcessingException e) {
+      catch (final JsonProcessingException e) {
         throw new IllegalArgumentException("Failed to serialize trustMarkIssuers to JSON", e);
       }
     }
@@ -413,6 +572,15 @@ public final class EntityToDto {
     return module;
   }
 
+  /**
+   * Converts ResolverDto to ModuleEntity.
+   *
+   * @param id the module ID
+   * @param dto the resolver DTO
+   * @param entityEntity the entity entity
+   * @param organization the organization entity
+   * @return the module entity
+   */
   public static ModuleEntity toEntity(final java.util.UUID id,
       final ResolverDto dto,
       final EntityEntity entityEntity,

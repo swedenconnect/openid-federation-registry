@@ -52,6 +52,13 @@ public class OidfServiceApiController {
    * @param instanceId instanceId is mandatory
    * @return SignedJWT with a claim for entity_record
    */
+  /**
+   * Gets entity record.
+   *
+   * @param instanceId the instance ID
+   * @param plain whether to return plain JSON
+   * @return the entity record
+   */
   @GetMapping(value = "/entity_record", produces = "application/jwt")
   public String entityRecord(@RequestParam(name = "instanceid") final UUID instanceId,
       @RequestParam(name = "plain", defaultValue = "false") final boolean plain) {
@@ -61,7 +68,8 @@ public class OidfServiceApiController {
   /**
    * Retrieves submodules using the provided instance identifier.
    *
-   * @param instanceId the unique identifier for the instance group.
+   * @param instanceId the unique identifier for the instance group
+   * @param plain whether to return plain JSON
    * @return a signed JWT containing claims for the entity_record
    */
   @GetMapping(value = "/submodules", produces = "application/jwt")

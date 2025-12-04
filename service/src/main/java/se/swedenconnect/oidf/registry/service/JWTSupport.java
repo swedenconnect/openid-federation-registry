@@ -109,6 +109,12 @@ public class JWTSupport {
     }
   }
 
+  /**
+   * Converts JWT string to pretty JSON format.
+   *
+   * @param jwtString the JWT string
+   * @return the pretty JSON format
+   */
   public String toPrettyJson(final String jwtString) {
     try {
       final SignedJWT signedJWT = SignedJWT.parse(jwtString);
