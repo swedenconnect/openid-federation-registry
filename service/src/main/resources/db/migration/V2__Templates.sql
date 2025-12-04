@@ -433,4 +433,14 @@ VALUES ('TEMPLATE',
         'Flyway');
 
 
-
+INSERT INTO settings(fk_id, fk_type, data_key, description, data_type, data_value, validation, created_by,
+                     last_modified_by)
+VALUES ('TEMPLATE',
+        'SUBORDINATE_ENTITY',
+        'policy_id',
+        'Policy id',
+        'OPTIONS',
+        '',
+        '',
+        'Flyway',
+        'Flyway');
