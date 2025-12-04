@@ -97,7 +97,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TrustmarkSubjectInput"
+                "$ref": "#/components/schemas/TrustmarkSubject"
               }
             }
           },
@@ -137,7 +137,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TrustmarkSubjectInput"
+                "$ref": "#/components/schemas/TrustmarkSubject"
               }
             }
           },
@@ -204,7 +204,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PolicyDto"
+                  "$ref": "#/components/schemas/Policy"
                 }
               }
             }
@@ -232,7 +232,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PolicyInput"
+                "$ref": "#/components/schemas/Policy"
               }
             }
           },
@@ -244,7 +244,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PolicyDto"
+                  "$ref": "#/components/schemas/Policy"
                 }
               }
             }
@@ -272,7 +272,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PolicyInput"
+                "$ref": "#/components/schemas/Policy"
               }
             }
           },
@@ -284,7 +284,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PolicyDto"
+                  "$ref": "#/components/schemas/Policy"
                 }
               }
             }
@@ -367,7 +367,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TrustmarkInput"
+                "$ref": "#/components/schemas/Trustmark"
               }
             }
           },
@@ -407,7 +407,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TrustmarkInput"
+                "$ref": "#/components/schemas/Trustmark"
               }
             }
           },
@@ -502,7 +502,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TrustAnchorInput"
+                "$ref": "#/components/schemas/TrustAnchor"
               }
             }
           },
@@ -542,7 +542,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TrustAnchorInput"
+                "$ref": "#/components/schemas/TrustAnchor"
               }
             }
           },
@@ -637,7 +637,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ResolverInput"
+                "$ref": "#/components/schemas/Resolver"
               }
             }
           },
@@ -677,7 +677,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ResolverInput"
+                "$ref": "#/components/schemas/Resolver"
               }
             }
           },
@@ -772,7 +772,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SubordinateEntityInput"
+                "$ref": "#/components/schemas/SubordinateEntity"
               }
             }
           },
@@ -812,7 +812,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SubordinateEntityInput"
+                "$ref": "#/components/schemas/SubordinateEntity"
               }
             }
           },
@@ -907,7 +907,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/HostedEntityInput"
+                "$ref": "#/components/schemas/HostedEntity"
               }
             }
           },
@@ -947,7 +947,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/HostedEntityInput"
+                "$ref": "#/components/schemas/HostedEntity"
               }
             }
           },
@@ -1042,7 +1042,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/FederationEntityInput"
+                "$ref": "#/components/schemas/FederationEntity"
               }
             }
           },
@@ -1082,7 +1082,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/FederationEntityInput"
+                "$ref": "#/components/schemas/FederationEntity"
               }
             }
           },
@@ -1136,7 +1136,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TrustmarkSubjectInput"
+                "$ref": "#/components/schemas/TrustmarkSubject"
               }
             }
           },
@@ -1171,7 +1171,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/PolicyDto"
+                    "$ref": "#/components/schemas/Policy"
                   }
                 }
               }
@@ -1189,7 +1189,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PolicyInput"
+                "$ref": "#/components/schemas/Policy"
               }
             }
           },
@@ -1201,7 +1201,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PolicyDto"
+                  "$ref": "#/components/schemas/Policy"
                 }
               }
             }
@@ -1220,7 +1220,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TrustmarkInput"
+                "$ref": "#/components/schemas/Trustmark"
               }
             }
           },
@@ -1251,7 +1251,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TrustAnchorInput"
+                "$ref": "#/components/schemas/TrustAnchor"
               }
             }
           },
@@ -1282,7 +1282,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ResolverInput"
+                "$ref": "#/components/schemas/Resolver"
               }
             }
           },
@@ -1313,7 +1313,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SubordinateEntityInput"
+                "$ref": "#/components/schemas/SubordinateEntity"
               }
             }
           },
@@ -1344,7 +1344,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/HostedEntityInput"
+                "$ref": "#/components/schemas/HostedEntity"
               }
             }
           },
@@ -1375,7 +1375,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/FederationEntityInput"
+                "$ref": "#/components/schemas/FederationEntity"
               }
             }
           },
@@ -1478,38 +1478,14 @@
   },
   "components": {
     "schemas": {
-      "TrustmarkSubjectInput": {
-        "type": "object",
-        "properties": {
-          "trustmarkId": {
-            "type": "string",
-            "description": "Trust mark identifier (entity id)"
-          },
-          "subject": {
-            "type": "string",
-            "description": "Subject entity id"
-          },
-          "revoked": {
-            "type": "boolean",
-            "description": "If the trust mark is revoked for this subject"
-          },
-          "granted": {
-            "type": "string",
-            "description": "Granted time (ISO-8601, e.g. 2025-01-01T00:00:00Z)"
-          },
-          "expires": {
-            "type": "string",
-            "description": "Expires time (ISO-8601)"
-          }
-        }
-      },
       "TrustmarkSubject": {
         "type": "object",
         "properties": {
           "trustmarksubjectId": {
             "type": "string",
             "format": "uuid",
-            "description": "Trustmark subject ID"
+            "description": "Trustmark subject ID",
+            "readOnly": true
           },
           "trustmarkId": {
             "type": "string",
@@ -1526,18 +1502,24 @@
           "granted": {
             "type": "string",
             "format": "date-time",
-            "description": "Granted time"
+            "description": "Granted time (ISO-8601, e.g. 2025-01-01T00:00:00)"
           },
           "expires": {
             "type": "string",
             "format": "date-time",
-            "description": "Expires time"
+            "description": "Expires time (ISO-8601, e.g. 2025-01-01T00:00:00)"
           }
         }
       },
-      "PolicyInput": {
+      "Policy": {
         "type": "object",
         "properties": {
+          "policyId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Policy ID",
+            "readOnly": true
+          },
           "name": {
             "type": "string",
             "description": "Policy name",
@@ -1550,54 +1532,14 @@
           }
         }
       },
-      "PolicyDto": {
-        "type": "object",
-        "properties": {
-          "policyId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "policy": {
-            "type": "object",
-            "additionalProperties": {}
-          }
-        }
-      },
-      "TrustmarkInput": {
-        "type": "object",
-        "properties": {
-          "trustmarkissuerId": {
-            "type": "string",
-            "description": "Trust mark issuer entity identifier"
-          },
-          "trustMarkEntityId": {
-            "type": "string",
-            "description": "Trust mark entity identifier"
-          },
-          "logoUri": {
-            "type": "string",
-            "description": "Logo URI"
-          },
-          "refUri": {
-            "type": "string",
-            "description": "Reference URI"
-          },
-          "delegation": {
-            "type": "string",
-            "description": "Delegation JWT"
-          }
-        }
-      },
       "Trustmark": {
         "type": "object",
         "properties": {
           "trustmarkId": {
             "type": "string",
             "format": "uuid",
-            "description": "Trustmark ID"
+            "description": "Trustmark ID",
+            "readOnly": true
           },
           "trustmarkissuerId": {
             "type": "string",
@@ -1618,26 +1560,6 @@
           "delegation": {
             "type": "string",
             "description": "Delegation JWT"
-          }
-        }
-      },
-      "TrustAnchorInput": {
-        "type": "object",
-        "properties": {
-          "entityId": {
-            "type": "string",
-            "description": "Entity identifier for this trust anchor"
-          },
-          "active": {
-            "type": "boolean",
-            "description": "If this trust anchor is active"
-          },
-          "trustMarkIssuers": {
-            "type": "array",
-            "description": "Entity identifiers for trust mark issuers",
-            "items": {
-              "type": "string"
-            }
           }
         }
       },
@@ -1647,7 +1569,8 @@
           "moduleId": {
             "type": "string",
             "format": "uuid",
-            "description": "Module ID"
+            "description": "Module ID",
+            "readOnly": true
           },
           "entityId": {
             "type": "string",
@@ -1666,42 +1589,14 @@
           }
         }
       },
-      "ResolverInput": {
-        "type": "object",
-        "properties": {
-          "entityId": {
-            "type": "string",
-            "description": "Entity identifier for this resolver"
-          },
-          "active": {
-            "type": "boolean",
-            "description": "If this resolver instance is active"
-          },
-          "resolveResponseDuration": {
-            "type": "string",
-            "description": "Response duration (ISO-8601 duration, e.g. PT1H)"
-          },
-          "trustAnchor": {
-            "type": "string",
-            "description": "Trust anchor entity identifier"
-          },
-          "trustedKeys": {
-            "type": "string",
-            "description": "Trusted keys as JWKS JSON"
-          },
-          "stepRetryDuration": {
-            "type": "string",
-            "description": "Step retry duration (ISO-8601 duration, e.g. PT1H)"
-          }
-        }
-      },
       "Resolver": {
         "type": "object",
         "properties": {
           "moduleId": {
             "type": "string",
             "format": "uuid",
-            "description": "Module ID"
+            "description": "Module ID",
+            "readOnly": true
           },
           "entityId": {
             "type": "string",
@@ -1726,23 +1621,6 @@
           "stepRetryDuration": {
             "type": "string",
             "description": "Step retry duration (ISO-8601 duration, e.g. PT1H)"
-          }
-        }
-      },
-      "SubordinateEntityInput": {
-        "type": "object",
-        "properties": {
-          "subject": {
-            "type": "string",
-            "description": "Subject (entity identifier)"
-          },
-          "issuer": {
-            "type": "string",
-            "description": "Issuer (entity identifier)"
-          },
-          "jwks": {
-            "type": "string",
-            "description": "JWKS as JSON string"
           }
         }
       },
@@ -1752,7 +1630,8 @@
           "entityId": {
             "type": "string",
             "format": "uuid",
-            "description": "Entity ID"
+            "description": "Entity ID",
+            "readOnly": true
           },
           "subject": {
             "type": "string",
@@ -1768,31 +1647,14 @@
           }
         }
       },
-      "HostedEntityInput": {
-        "type": "object",
-        "properties": {
-          "subject": {
-            "type": "string",
-            "description": "Subject (entity identifier)"
-          },
-          "issuer": {
-            "type": "string",
-            "description": "Issuer (entity identifier)"
-          },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": {},
-            "description": "Metadata for hosted entity"
-          }
-        }
-      },
       "HostedEntity": {
         "type": "object",
         "properties": {
           "entityId": {
             "type": "string",
             "format": "uuid",
-            "description": "Entity ID"
+            "description": "Entity ID",
+            "readOnly": true
           },
           "subject": {
             "type": "string",
@@ -1806,29 +1668,6 @@
             "type": "object",
             "additionalProperties": {},
             "description": "Metadata for hosted entity"
-          }
-        }
-      },
-      "FederationEntityInput": {
-        "type": "object",
-        "properties": {
-          "subject": {
-            "type": "string",
-            "description": "Subject (entity identifier)",
-            "example": "https://rp.example.se"
-          },
-          "issuer": {
-            "type": "string",
-            "description": "Issuer (entity identifier)",
-            "example": "https://ta.example.se"
-          },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": {},
-            "description": "Federation entity metadata",
-            "example": {
-              "federation_entity": {}
-            }
           }
         }
       },
@@ -1838,7 +1677,8 @@
           "entityId": {
             "type": "string",
             "format": "uuid",
-            "description": "Entity ID"
+            "description": "Entity ID",
+            "readOnly": true
           },
           "subject": {
             "type": "string",

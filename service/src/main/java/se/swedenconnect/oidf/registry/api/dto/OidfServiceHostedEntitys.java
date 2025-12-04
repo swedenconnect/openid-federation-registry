@@ -89,6 +89,9 @@ public class OidfServiceHostedEntitys {
   public static class HostedRecord {
     private Map<String, Object> metadata;
 
+    /**
+     * Federation entity record.
+     */
     @Data
     @Builder
     @AllArgsConstructor

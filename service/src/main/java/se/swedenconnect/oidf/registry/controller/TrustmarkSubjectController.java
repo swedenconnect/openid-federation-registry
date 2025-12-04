@@ -49,6 +49,13 @@ public class TrustmarkSubjectController {
 
   private final TrustmarkSubjectService trustmarkSubjectService;
 
+  /**
+   * Creates a trust mark subject with auto-generated ID.
+   *
+   * @param body the trust mark subject data
+   * @param organizationRecord the organization record
+   * @return the created trust mark subject
+   */
   @PostMapping
   @Operation(summary = "Create trust mark subject with auto-generated ID")
   public ResponseEntity<TrustmarkSubjectDto> createTrustmarkSubject(
@@ -59,6 +66,14 @@ public class TrustmarkSubjectController {
     return ResponseEntity.ok(this.trustmarkSubjectService.createTrustmarkSubject(organizationRecord, id, body));
   }
 
+  /**
+   * Creates a trust mark subject with specified ID.
+   *
+   * @param id the trust mark subject ID
+   * @param body the trust mark subject data
+   * @param organizationRecord the organization record
+   * @return the created trust mark subject
+   */
   @PostMapping("/{id}")
   @Operation(summary = "Create trust mark subject with specified ID")
   public ResponseEntity<TrustmarkSubjectDto> createTrustmarkSubjectWithId(
@@ -69,6 +84,14 @@ public class TrustmarkSubjectController {
     return ResponseEntity.ok(this.trustmarkSubjectService.createTrustmarkSubject(organizationRecord, id, body));
   }
 
+  /**
+   * Updates a trust mark subject.
+   *
+   * @param id the trust mark subject ID
+   * @param body the trust mark subject data
+   * @param organizationRecord the organization record
+   * @return the updated trust mark subject
+   */
   @PutMapping("/{id}")
   @Operation(summary = "Update trust mark subject")
   public ResponseEntity<TrustmarkSubjectDto> updateTrustmarkSubject(
@@ -79,6 +102,13 @@ public class TrustmarkSubjectController {
     return ResponseEntity.ok(this.trustmarkSubjectService.updateTrustmarkSubject(organizationRecord, id, body));
   }
 
+  /**
+   * Gets a trust mark subject by ID.
+   *
+   * @param id the trust mark subject ID
+   * @param organizationRecord the organization record
+   * @return the trust mark subject
+   */
   @GetMapping("/{id}")
   @Operation(summary = "Get trust mark subject")
   public ResponseEntity<TrustmarkSubjectDto> getTrustmarkSubject(
@@ -87,6 +117,13 @@ public class TrustmarkSubjectController {
     return ResponseEntity.ok(this.trustmarkSubjectService.getTrustmarkSubject(organizationRecord, id));
   }
 
+  /**
+   * Deletes a trust mark subject.
+   *
+   * @param id the trust mark subject ID
+   * @param organizationRecord the organization record
+   * @return empty response
+   */
   @DeleteMapping("/{id}")
   @Operation(summary = "Delete trust mark subject")
   public ResponseEntity<Void> deleteTrustmarkSubject(

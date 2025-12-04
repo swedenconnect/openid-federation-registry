@@ -46,6 +46,13 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   private final OrganizationService organizationService;
   private final RegistryAuditService auditService;
 
+  /**
+   * Constructor.
+   *
+   * @param entityRepository the entity repository
+   * @param organizationService the organization service
+   * @param auditService the audit service
+   */
   public EntityConfigServiceImpl(final EntityRepository entityRepository,
       final OrganizationService organizationService,
       final RegistryAuditService auditService) {

@@ -66,7 +66,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>3.0.0</version>
+            <version>2.8.14</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -205,14 +205,16 @@
                                 <skipOverwrite>true</skipOverwrite>
                                 <useJakartaEe>true</useJakartaEe>
                                 <modelPackage>se.swedenconnect.oidf.registry.api.model</modelPackage>
+                                <apiPackage>se.swedenconnect.oidf.registry.api</apiPackage>
+
                                 <serializableModel>true</serializableModel>
                                 <packageName>se.swedenconnect.oidf.registry.api</packageName>
                                 <generateBuilders>true</generateBuilders>
                                 <serializationLibrary>jackson</serializationLibrary>
-                                <library>native</library>
+                                <library>restclient</library>
                                 <openApiNullable>false</openApiNullable>
-                                <performBeanValidation>true</performBeanValidation>
-                                <useBeanValidation>true</useBeanValidation>
+                                <performBeanValidation>false</performBeanValidation>
+                                <useBeanValidation>false</useBeanValidation>
                                 <dateLibrary>java8</dateLibrary>
                             </configOptions>
                         </configuration>

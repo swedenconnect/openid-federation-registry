@@ -36,11 +36,21 @@ public class ValidateDto {
   private final PropertyValidators.ValidationStringBuilder v;
   private static final ObjectMapper mapper = new ObjectMapper();
 
+  /**
+   * Constructor.
+   *
+   * @param organizationRecord the organization record
+   */
   public ValidateDto(final OrganizationRecord organizationRecord) {
     final PropertyValidators propertyValidators = new PropertyValidators();
     this.v = propertyValidators.builder(VariabelValueResolver.orgResolver(organizationRecord));
   }
 
+  /**
+   * Validates FederationEntityDto.
+   *
+   * @param dto the federation entity DTO
+   */
   public void validate(final FederationEntityDto dto) {
     this.v.required().startsWith("@{entityprefix}").entityid().build()
         .validate("subject", dto.getSubject());
@@ -61,6 +71,11 @@ public class ValidateDto {
     }
   }
 
+  /**
+   * Validates HostedEntityDto.
+   *
+   * @param dto the hosted entity DTO
+   */
   public void validate(final HostedEntityDto dto) {
     this.v.required().entityid().build()
         .validate("subject", dto.getSubject());
@@ -81,6 +96,11 @@ public class ValidateDto {
     }
   }
 
+  /**
+   * Validates SubordinateEntityDto.
+   *
+   * @param dto the subordinate entity DTO
+   */
   public void validate(final SubordinateEntityDto dto) {
     this.v.required().entityid().build().validate("subject", dto.getSubject());
     this.v.required().entityid().build().validate("issuer", dto.getIssuer());
@@ -88,6 +108,11 @@ public class ValidateDto {
     this.v.required().jwks().build().validate("jwks", dto.getJwks());
   }
 
+  /**
+   * Validates ResolverDto.
+   *
+   * @param dto the resolver DTO
+   */
   public void validate(final ResolverDto dto) {
     // entityId: required | uuid (actually entityid, not uuid)
     this.v.required().entityid().build().validate("entityId", dto.getEntityId());
@@ -108,6 +133,11 @@ public class ValidateDto {
     this.v.required().duration().build().validate("stepRetryDuration", dto.getStepRetryDuration());
   }
 
+  /**
+   * Validates TrustAnchorDto.
+   *
+   * @param dto the trust anchor DTO
+   */
   public void validate(final TrustAnchorDto dto) {
     // entityId: required | uuid (actually entityid, not uuid)
     this.v.required().entityid().build().validate("entityId", dto.getEntityId());
@@ -128,6 +158,11 @@ public class ValidateDto {
     }
   }
 
+  /**
+   * Validates TrustmarkDto.
+   *
+   * @param dto the trustmark DTO
+   */
   public void validate(final TrustmarkDto dto) {
     // trustmarkissuerId: required | uuid
     this.v.required().uuid().build().validate("trustmarkissuerId", dto.getTrustmarkissuerId());
@@ -145,6 +180,11 @@ public class ValidateDto {
     this.v.jwt().build().validate("delegation", dto.getDelegation());
   }
 
+  /**
+   * Validates PolicyDto.
+   *
+   * @param dto the policy DTO
+   */
   public void validate(final PolicyDto dto) {
     // name: required
     this.v.required().build().validate("name", dto.getName());
@@ -162,6 +202,11 @@ public class ValidateDto {
     }
   }
 
+  /**
+   * Validates TrustmarkSubjectDto.
+   *
+   * @param dto the trustmark subject DTO
+   */
   public void validate(final TrustmarkSubjectDto dto) {
     this.v.required().entityid().build().validate("trustmarkId", dto.getTrustmarkId());
     this.v.required().entityid().build().validate("subject", dto.getSubject());

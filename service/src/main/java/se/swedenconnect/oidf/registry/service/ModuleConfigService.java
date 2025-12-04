@@ -30,34 +30,121 @@ import java.util.UUID;
  */
 public interface ModuleConfigService {
 
+  /**
+   * Creates a trust anchor.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust anchor ID
+   * @param input the trust anchor data
+   * @return the created trust anchor
+   */
   TrustAnchorDto createTrustAnchor(OrganizationRecord organizationRecord,
       UUID id, TrustAnchorDto input);
 
+  /**
+   * Updates a trust anchor.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust anchor ID
+   * @param input the trust anchor data
+   * @return the updated trust anchor
+   */
   TrustAnchorDto updateTrustAnchor(OrganizationRecord organizationRecord,
       UUID id, TrustAnchorDto input);
 
+  /**
+   * Gets a trust anchor by ID.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust anchor ID
+   * @return the trust anchor
+   */
   TrustAnchorDto getTrustAnchor(OrganizationRecord organizationRecord, UUID id);
 
+  /**
+   * Deletes a trust anchor.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust anchor ID
+   */
   void deleteTrustAnchor(OrganizationRecord organizationRecord, UUID id);
 
+  /**
+   * Creates a resolver.
+   *
+   * @param organizationRecord the organization record
+   * @param id the resolver ID
+   * @param input the resolver data
+   * @return the created resolver
+   */
   ResolverDto createResolver(OrganizationRecord organizationRecord,
       UUID id, ResolverDto input);
 
+  /**
+   * Updates a resolver.
+   *
+   * @param organizationRecord the organization record
+   * @param id the resolver ID
+   * @param input the resolver data
+   * @return the updated resolver
+   */
   ResolverDto updateResolver(OrganizationRecord organizationRecord,
       UUID id, ResolverDto input);
 
+  /**
+   * Gets a resolver by ID.
+   *
+   * @param organizationRecord the organization record
+   * @param id the resolver ID
+   * @return the resolver
+   */
   ResolverDto getResolver(OrganizationRecord organizationRecord, UUID id);
 
+  /**
+   * Deletes a resolver.
+   *
+   * @param organizationRecord the organization record
+   * @param id the resolver ID
+   */
   void deleteResolver(OrganizationRecord organizationRecord, UUID id);
 
+  /**
+   * Creates a trust mark.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark ID
+   * @param input the trust mark data
+   * @return the created trust mark
+   */
   TrustmarkDto createTrustmark(OrganizationRecord organizationRecord,
       UUID id, TrustmarkDto input);
 
+  /**
+   * Updates a trust mark.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark ID
+   * @param input the trust mark data
+   * @return the updated trust mark
+   */
   TrustmarkDto updateTrustmark(OrganizationRecord organizationRecord,
       UUID id, TrustmarkDto input);
 
+  /**
+   * Gets a trust mark by ID.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark ID
+   * @return the trust mark
+   */
   TrustmarkDto getTrustmark(OrganizationRecord organizationRecord, UUID id);
 
+  /**
+   * Deletes a trust mark.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark ID
+   */
   void deleteTrustmark(OrganizationRecord organizationRecord, UUID id);
 }
 

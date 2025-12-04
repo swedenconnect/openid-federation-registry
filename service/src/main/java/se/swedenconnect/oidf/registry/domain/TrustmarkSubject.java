@@ -24,6 +24,11 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/**
+ * Trustmark subject domain object.
+ *
+ * @author Per Fredrik Plars
+ */
 @Data
 @Builder
 @NoArgsConstructor

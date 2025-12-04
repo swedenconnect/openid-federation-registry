@@ -43,6 +43,13 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
   private final TrustMarkRepository trustMarkRepository;
   private final RegistryAuditService auditService;
 
+  /**
+   * Constructor.
+   *
+   * @param trustMarkSubjectRepository the trust mark subject repository
+   * @param trustMarkRepository the trust mark repository
+   * @param auditService the audit service
+   */
   public TrustmarkSubjectServiceImpl(final TrustMarkSubjectRepository trustMarkSubjectRepository,
       final TrustMarkRepository trustMarkRepository,
       final RegistryAuditService auditService) {

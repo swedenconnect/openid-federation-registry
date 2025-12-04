@@ -28,14 +28,43 @@ import java.util.UUID;
  */
 public interface TrustmarkSubjectService {
 
+  /**
+   * Creates a trust mark subject.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark subject ID
+   * @param input the trust mark subject data
+   * @return the created trust mark subject
+   */
   TrustmarkSubjectDto createTrustmarkSubject(OrganizationRecord organizationRecord,
       UUID id, TrustmarkSubjectDto input);
 
+  /**
+   * Updates a trust mark subject.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark subject ID
+   * @param input the trust mark subject data
+   * @return the updated trust mark subject
+   */
   TrustmarkSubjectDto updateTrustmarkSubject(OrganizationRecord organizationRecord,
       UUID id, TrustmarkSubjectDto input);
 
+  /**
+   * Gets a trust mark subject by ID.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark subject ID
+   * @return the trust mark subject
+   */
   TrustmarkSubjectDto getTrustmarkSubject(OrganizationRecord organizationRecord, UUID id);
 
+  /**
+   * Deletes a trust mark subject.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark subject ID
+   */
   void deleteTrustmarkSubject(OrganizationRecord organizationRecord, UUID id);
 }
 

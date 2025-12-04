@@ -50,6 +50,12 @@ public class PolicyController {
 
   private final PolicyService policyService;
 
+  /**
+   * Lists all policies.
+   *
+   * @param organizationRecord the organization record
+   * @return list of policies
+   */
   @GetMapping
   @Operation(summary = "List all policies")
   public ResponseEntity<List<PolicyDto>> listPolicies(
@@ -57,6 +63,13 @@ public class PolicyController {
     return ResponseEntity.ok(this.policyService.listPolicies(organizationRecord));
   }
 
+  /**
+   * Gets a policy by ID.
+   *
+   * @param id the policy ID
+   * @param organizationRecord the organization record
+   * @return the policy
+   */
   @GetMapping("/{id}")
   @Operation(summary = "Get policy by id")
   public ResponseEntity<PolicyDto> getPolicy(
@@ -65,6 +78,13 @@ public class PolicyController {
     return ResponseEntity.ok(this.policyService.getPolicy(organizationRecord, id));
   }
 
+  /**
+   * Creates a policy with auto-generated ID.
+   *
+   * @param body the policy data
+   * @param organizationRecord the organization record
+   * @return the created policy
+   */
   @PostMapping
   @Operation(summary = "Create policy with auto-generated ID")
   public ResponseEntity<PolicyDto> createPolicy(
@@ -75,6 +95,14 @@ public class PolicyController {
     return ResponseEntity.ok(this.policyService.createPolicy(organizationRecord, id, body));
   }
 
+  /**
+   * Creates a policy with specified ID.
+   *
+   * @param id the policy ID
+   * @param body the policy data
+   * @param organizationRecord the organization record
+   * @return the created policy
+   */
   @PostMapping("/{id}")
   @Operation(summary = "Create policy with specified ID")
   public ResponseEntity<PolicyDto> createPolicyWithId(
@@ -85,6 +113,14 @@ public class PolicyController {
     return ResponseEntity.ok(this.policyService.createPolicy(organizationRecord, id, body));
   }
 
+  /**
+   * Updates a policy.
+   *
+   * @param id the policy ID
+   * @param body the policy data
+   * @param organizationRecord the organization record
+   * @return the updated policy
+   */
   @PutMapping("/{id}")
   @Operation(summary = "Update policy")
   public ResponseEntity<PolicyDto> updatePolicy(
@@ -95,6 +131,13 @@ public class PolicyController {
     return ResponseEntity.ok(this.policyService.updatePolicy(organizationRecord, id, body));
   }
 
+  /**
+   * Deletes a policy.
+   *
+   * @param id the policy ID
+   * @param organizationRecord the organization record
+   * @return empty response
+   */
   @DeleteMapping("/{id}")
   @Operation(summary = "Delete policy")
   public ResponseEntity<Void> deletePolicy(

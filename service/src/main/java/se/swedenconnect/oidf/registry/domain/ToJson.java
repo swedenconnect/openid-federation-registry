@@ -27,6 +27,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public interface ToJson {
   ObjectMapper MAPPER = new ObjectMapper();
 
+  /**
+   * Converts object to JSON string.
+   *
+   * @return the JSON string representation
+   */
   default String toJson() {
     try {
       return MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(this);
