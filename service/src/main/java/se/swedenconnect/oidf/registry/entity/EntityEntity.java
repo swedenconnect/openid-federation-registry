@@ -67,6 +67,14 @@ public class EntityEntity extends BaseEntity {
   @OneToMany(mappedBy = "entity")
   private List<ModuleEntity> modules;
 
+  @OneToOne(mappedBy = "entity")
+  private ResolverEntity resolver;
+
+  @OneToOne(mappedBy = "entity")
+  private TrustmarkIssuerEntity trustmarkIssuer;
+
+
+
   /**
    * Retrieves a {@link ModuleEntity} from the list of modules that matches the given module type.
    *

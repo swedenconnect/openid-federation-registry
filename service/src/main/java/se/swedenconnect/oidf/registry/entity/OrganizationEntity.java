@@ -60,6 +60,7 @@ public class OrganizationEntity extends BaseEntity {
   @JoinColumn(name = "instance_id", nullable = false)
   private InstanceEntity instance;
 
+  @Deprecated
   @OneToMany(mappedBy = "organization", cascade = CascadeType.DETACH)
   private List<ModuleEntity> module;
 

@@ -28,10 +28,6 @@
   ],
   "tags": [
     {
-      "name": "TrustmarkSubjects",
-      "description": "CRUD for trust mark subjects"
-    },
-    {
       "name": "Policies",
       "description": "CRUD for metadata policies"
     },
@@ -42,13 +38,152 @@
     {
       "name": "Entities",
       "description": "CRUD for federation, hosted and subordinate entities"
+    },
+    {
+      "name": "Trustmarks",
+      "description": "CRUD for trustmarks and trust mark subjects"
     }
   ],
   "paths": {
-    "/registry/v1/trustmark-subjects/{id}": {
+    "/registry/v1/trustmarks/{id}": {
       "get": {
         "tags": [
-          "TrustmarkSubjects"
+          "Trustmarks"
+        ],
+        "summary": "Get trust mark",
+        "operationId": "getTrustmark",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Trustmark"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Trustmarks"
+        ],
+        "summary": "Update trust mark",
+        "operationId": "updateTrustmark",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Trustmark"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Trustmark"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Trustmarks"
+        ],
+        "summary": "Create trust mark with specified ID",
+        "operationId": "createTrustmarkWithId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Trustmark"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Trustmark"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Trustmarks"
+        ],
+        "summary": "Delete trust mark",
+        "operationId": "deleteTrustmark",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/registry/v1/trustmarks/subjects/{id}": {
+      "get": {
+        "tags": [
+          "Trustmarks"
         ],
         "summary": "Get trust mark subject",
         "operationId": "getTrustmarkSubject",
@@ -78,7 +213,7 @@
       },
       "put": {
         "tags": [
-          "TrustmarkSubjects"
+          "Trustmarks"
         ],
         "summary": "Update trust mark subject",
         "operationId": "updateTrustmarkSubject",
@@ -118,7 +253,7 @@
       },
       "post": {
         "tags": [
-          "TrustmarkSubjects"
+          "Trustmarks"
         ],
         "summary": "Create trust mark subject with specified ID",
         "operationId": "createTrustmarkSubjectWithId",
@@ -158,7 +293,7 @@
       },
       "delete": {
         "tags": [
-          "TrustmarkSubjects"
+          "Trustmarks"
         ],
         "summary": "Delete trust mark subject",
         "operationId": "deleteTrustmarkSubject",
@@ -315,13 +450,13 @@
         }
       }
     },
-    "/registry/v1/modules/trustmark/{id}": {
+    "/registry/v1/modules/trustmark-issuer/{id}": {
       "get": {
         "tags": [
           "Modules"
         ],
-        "summary": "Get trust mark",
-        "operationId": "getTrustmark",
+        "summary": "Get trust mark issuer",
+        "operationId": "getTrustmarkIssuer",
         "parameters": [
           {
             "name": "id",
@@ -339,7 +474,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Trustmark"
+                  "$ref": "#/components/schemas/TrustmarkIssuer"
                 }
               }
             }
@@ -350,8 +485,8 @@
         "tags": [
           "Modules"
         ],
-        "summary": "Update trust mark",
-        "operationId": "updateTrustmark",
+        "summary": "Update trust mark issuer",
+        "operationId": "updateTrustmarkIssuer",
         "parameters": [
           {
             "name": "id",
@@ -367,7 +502,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Trustmark"
+                "$ref": "#/components/schemas/TrustmarkIssuer"
               }
             }
           },
@@ -379,7 +514,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Trustmark"
+                  "$ref": "#/components/schemas/TrustmarkIssuer"
                 }
               }
             }
@@ -390,8 +525,8 @@
         "tags": [
           "Modules"
         ],
-        "summary": "Create trust mark with specified ID",
-        "operationId": "createTrustmarkWithId",
+        "summary": "Create trust mark issuer with specified ID",
+        "operationId": "createTrustmarkIssuerWithId",
         "parameters": [
           {
             "name": "id",
@@ -407,7 +542,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Trustmark"
+                "$ref": "#/components/schemas/TrustmarkIssuer"
               }
             }
           },
@@ -419,7 +554,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Trustmark"
+                  "$ref": "#/components/schemas/TrustmarkIssuer"
                 }
               }
             }
@@ -430,8 +565,8 @@
         "tags": [
           "Modules"
         ],
-        "summary": "Delete trust mark",
-        "operationId": "deleteTrustmark",
+        "summary": "Delete trust mark issuer",
+        "operationId": "deleteTrustmarkIssuer",
         "parameters": [
           {
             "name": "id",
@@ -1125,10 +1260,41 @@
         }
       }
     },
-    "/registry/v1/trustmark-subjects": {
+    "/registry/v1/trustmarks": {
       "post": {
         "tags": [
-          "TrustmarkSubjects"
+          "Trustmarks"
+        ],
+        "summary": "Create trust mark with auto-generated ID",
+        "operationId": "createTrustmark",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Trustmark"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Trustmark"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/v1/trustmarks/subjects": {
+      "post": {
+        "tags": [
+          "Trustmarks"
         ],
         "summary": "Create trust mark subject with auto-generated ID",
         "operationId": "createTrustmarkSubject",
@@ -1209,18 +1375,18 @@
         }
       }
     },
-    "/registry/v1/modules/trustmark": {
+    "/registry/v1/modules/trustmark-issuer": {
       "post": {
         "tags": [
           "Modules"
         ],
-        "summary": "Create trust mark with auto-generated ID",
-        "operationId": "createTrustmark",
+        "summary": "Create trust mark issuer with auto-generated ID",
+        "operationId": "createTrustmarkIssuer",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Trustmark"
+                "$ref": "#/components/schemas/TrustmarkIssuer"
               }
             }
           },
@@ -1232,7 +1398,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Trustmark"
+                  "$ref": "#/components/schemas/TrustmarkIssuer"
                 }
               }
             }
@@ -1478,6 +1644,38 @@
   },
   "components": {
     "schemas": {
+      "Trustmark": {
+        "type": "object",
+        "properties": {
+          "trustmarkId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Trustmark ID",
+            "readOnly": true
+          },
+          "trustmarkissuerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Trust mark issuer entity identifier"
+          },
+          "trustMarkEntityId": {
+            "type": "string",
+            "description": "Trust mark entity identifier"
+          },
+          "logoUri": {
+            "type": "string",
+            "description": "Logo URI"
+          },
+          "refUri": {
+            "type": "string",
+            "description": "Reference URI"
+          },
+          "delegation": {
+            "type": "string",
+            "description": "Delegation JWT"
+          }
+        }
+      },
       "TrustmarkSubject": {
         "type": "object",
         "properties": {
@@ -1532,36 +1730,34 @@
           }
         }
       },
-      "Trustmark": {
+      "TrustmarkIssuer": {
         "type": "object",
         "properties": {
-          "trustmarkId": {
+          "trustmarkIssuerId": {
             "type": "string",
             "format": "uuid",
-            "description": "Trustmark ID",
+            "description": "Trustmark issuer ID",
             "readOnly": true
           },
-          "trustmarkissuerId": {
+          "entityId": {
             "type": "string",
-            "description": "Trust mark issuer entity identifier"
+            "format": "uuid",
+            "description": "Entity identifier that this trustmark issuer belongs to"
           },
-          "trustMarkEntityId": {
-            "type": "string",
-            "description": "Trust mark entity identifier"
+          "active": {
+            "type": "boolean",
+            "description": "If this trustmark issuer is active"
           },
-          "logoUri": {
+          "trustMarkTokenValidityDuration": {
             "type": "string",
-            "description": "Logo URI"
-          },
-          "refUri": {
-            "type": "string",
-            "description": "Reference URI"
-          },
-          "delegation": {
-            "type": "string",
-            "description": "Delegation JWT"
+            "description": "Trust mark token validity duration (ISO-8601 duration, e.g. PT1H)"
           }
-        }
+        },
+        "required": [
+          "active",
+          "entityId",
+          "trustMarkTokenValidityDuration"
+        ]
       },
       "TrustAnchor": {
         "type": "object",
@@ -1593,10 +1789,10 @@
       "Resolver": {
         "type": "object",
         "properties": {
-          "moduleId": {
+          "resolverId": {
             "type": "string",
             "format": "uuid",
-            "description": "Module ID",
+            "description": "Resolver ID",
             "readOnly": true
           },
           "entityId": {

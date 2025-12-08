@@ -30,23 +30,111 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.dto.TrustmarkSubjectDto;
+import se.swedenconnect.oidf.registry.service.ModuleConfigService;
 import se.swedenconnect.oidf.registry.service.TrustmarkSubjectService;
 
 import java.util.UUID;
 
 /**
- * REST controller for managing trust mark subjects.
+ * REST controller for managing trust marks and trust mark subjects.
  *
  * @author Per Fredrik Plars
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/registry/v1/trustmark-subjects")
-@Tag(name = "TrustmarkSubjects", description = "CRUD for trust mark subjects")
-public class TrustmarkSubjectController {
+@RequestMapping("/registry/v1/trustmarks")
+@Tag(name = "Trustmarks", description = "CRUD for trustmarks and trust mark subjects")
+public class TrustmarkController {
 
+  private final ModuleConfigService moduleConfigService;
   private final TrustmarkSubjectService trustmarkSubjectService;
+
+  // Trustmark
+
+  /**
+   * Creates a trust mark with auto-generated ID.
+   *
+   * @param body the trust mark data
+   * @param organizationRecord the organization record
+   * @return the created trust mark
+   */
+  @PostMapping
+  @Operation(summary = "Create trust mark with auto-generated ID")
+  public ResponseEntity<TrustmarkDto> createTrustmark(
+      @RequestBody final TrustmarkDto body,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    final UUID id = UUID.randomUUID();
+    return ResponseEntity.ok(this.moduleConfigService.createTrustmark(organizationRecord, id, body));
+  }
+
+  /**
+   * Creates a trust mark with specified ID.
+   *
+   * @param id the trust mark ID
+   * @param body the trust mark data
+   * @param organizationRecord the organization record
+   * @return the created trust mark
+   */
+  @PostMapping("/{id}")
+  @Operation(summary = "Create trust mark with specified ID")
+  public ResponseEntity<TrustmarkDto> createTrustmarkWithId(
+      @PathVariable("id") final UUID id,
+      @RequestBody final TrustmarkDto body,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(this.moduleConfigService.createTrustmark(organizationRecord, id, body));
+  }
+
+  /**
+   * Updates a trust mark.
+   *
+   * @param id the trust mark ID
+   * @param body the trust mark data
+   * @param organizationRecord the organization record
+   * @return the updated trust mark
+   */
+  @PutMapping("/{id}")
+  @Operation(summary = "Update trust mark")
+  public ResponseEntity<TrustmarkDto> updateTrustmark(
+      @PathVariable("id") final UUID id,
+      @RequestBody final TrustmarkDto body,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(this.moduleConfigService.updateTrustmark(organizationRecord, id, body));
+  }
+
+  /**
+   * Gets a trust mark by ID.
+   *
+   * @param id the trust mark ID
+   * @param organizationRecord the organization record
+   * @return the trust mark
+   */
+  @GetMapping("/{id}")
+  @Operation(summary = "Get trust mark")
+  public ResponseEntity<TrustmarkDto> getTrustmark(
+      @PathVariable("id") final UUID id,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(this.moduleConfigService.getTrustmark(organizationRecord, id));
+  }
+
+  /**
+   * Deletes a trust mark.
+   *
+   * @param id the trust mark ID
+   * @param organizationRecord the organization record
+   * @return empty response
+   */
+  @DeleteMapping("/{id}")
+  @Operation(summary = "Delete trust mark")
+  public ResponseEntity<Void> deleteTrustmark(
+      @PathVariable("id") final UUID id,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    this.moduleConfigService.deleteTrustmark(organizationRecord, id);
+    return ResponseEntity.noContent().build();
+  }
+
+  // Trustmark Subject
 
   /**
    * Creates a trust mark subject with auto-generated ID.
@@ -55,7 +143,7 @@ public class TrustmarkSubjectController {
    * @param organizationRecord the organization record
    * @return the created trust mark subject
    */
-  @PostMapping
+  @PostMapping("/subjects")
   @Operation(summary = "Create trust mark subject with auto-generated ID")
   public ResponseEntity<TrustmarkSubjectDto> createTrustmarkSubject(
       @RequestBody final TrustmarkSubjectDto body,
@@ -72,7 +160,7 @@ public class TrustmarkSubjectController {
    * @param organizationRecord the organization record
    * @return the created trust mark subject
    */
-  @PostMapping("/{id}")
+  @PostMapping("/subjects/{id}")
   @Operation(summary = "Create trust mark subject with specified ID")
   public ResponseEntity<TrustmarkSubjectDto> createTrustmarkSubjectWithId(
       @PathVariable("id") final UUID id,
@@ -89,7 +177,7 @@ public class TrustmarkSubjectController {
    * @param organizationRecord the organization record
    * @return the updated trust mark subject
    */
-  @PutMapping("/{id}")
+  @PutMapping("/subjects/{id}")
   @Operation(summary = "Update trust mark subject")
   public ResponseEntity<TrustmarkSubjectDto> updateTrustmarkSubject(
       @PathVariable("id") final UUID id,
@@ -105,7 +193,7 @@ public class TrustmarkSubjectController {
    * @param organizationRecord the organization record
    * @return the trust mark subject
    */
-  @GetMapping("/{id}")
+  @GetMapping("/subjects/{id}")
   @Operation(summary = "Get trust mark subject")
   public ResponseEntity<TrustmarkSubjectDto> getTrustmarkSubject(
       @PathVariable("id") final UUID id,
@@ -120,7 +208,7 @@ public class TrustmarkSubjectController {
    * @param organizationRecord the organization record
    * @return empty response
    */
-  @DeleteMapping("/{id}")
+  @DeleteMapping("/subjects/{id}")
   @Operation(summary = "Delete trust mark subject")
   public ResponseEntity<Void> deleteTrustmarkSubject(
       @PathVariable("id") final UUID id,
@@ -129,5 +217,3 @@ public class TrustmarkSubjectController {
     return ResponseEntity.noContent().build();
   }
 }
-
-

@@ -36,7 +36,7 @@ public class TrustmarkDto {
   private UUID trustmarkId;
 
   @Schema(description = "Trust mark issuer entity identifier")
-  private String trustmarkissuerId;
+  private UUID trustmarkissuerId;
 
   @Schema(description = "Trust mark entity identifier")
   private String trustMarkEntityId;

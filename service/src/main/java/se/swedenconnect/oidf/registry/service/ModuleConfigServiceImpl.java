@@ -24,17 +24,22 @@ import se.swedenconnect.oidf.registry.dto.EntityToDto;
 import se.swedenconnect.oidf.registry.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.dto.TrustmarkDto;
+import se.swedenconnect.oidf.registry.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.entity.ModuleEntity;
 import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
+import se.swedenconnect.oidf.registry.entity.ResolverEntity;
 import se.swedenconnect.oidf.registry.entity.TrustMarkEntity;
+import se.swedenconnect.oidf.registry.entity.TrustmarkIssuerEntity;
 import se.swedenconnect.oidf.registry.errorhandling.ErrorTypes;
 import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.repository.ModuleRepository;
+import se.swedenconnect.oidf.registry.repository.ResolverRepository;
 import se.swedenconnect.oidf.registry.repository.TrustMarkRepository;
+import se.swedenconnect.oidf.registry.repository.TrustmarkIssuerRepository;
 import se.swedenconnect.oidf.registry.validation.ValidateDto;
 
 import java.util.UUID;
@@ -50,6 +55,8 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   private final ModuleRepository moduleRepository;
   private final EntityRepository entityRepository;
   private final TrustMarkRepository trustMarkRepository;
+  private final TrustmarkIssuerRepository trustmarkIssuerRepository;
+  private final ResolverRepository resolverRepository;
   private final OrganizationService organizationService;
   private final RegistryAuditService auditService;
 
@@ -59,17 +66,23 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
    * @param moduleRepository the module repository
    * @param entityRepository the entity repository
    * @param trustMarkRepository the trust mark repository
+   * @param trustmarkIssuerRepository the trustmark issuer repository
+   * @param resolverRepository the resolver repository
    * @param organizationService the organization service
    * @param auditService the audit service
    */
   public ModuleConfigServiceImpl(final ModuleRepository moduleRepository,
       final EntityRepository entityRepository,
       final TrustMarkRepository trustMarkRepository,
+      final TrustmarkIssuerRepository trustmarkIssuerRepository,
+      final ResolverRepository resolverRepository,
       final OrganizationService organizationService,
       final RegistryAuditService auditService) {
     this.moduleRepository = moduleRepository;
     this.entityRepository = entityRepository;
     this.trustMarkRepository = trustMarkRepository;
+    this.trustmarkIssuerRepository = trustmarkIssuerRepository;
+    this.resolverRepository = resolverRepository;
     this.organizationService = organizationService;
     this.auditService = auditService;
   }
@@ -161,6 +174,12 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   // Resolver
   // ---------------------------------------------------------------------------
 
+  private ResolverEntity findResolverOrThrow(final OrganizationRecord organizationRecord, final UUID id) {
+    return this.resolverRepository.findByOrgNumberAndResolverId(organizationRecord.orgNumber(), id)
+        .orElseThrow(() -> new RegistryServerException(
+            ErrorTypes.NOT_FOUND, "No resolver found for id %s".formatted(id)));
+  }
+
   @Override
   @Transactional
   public ResolverDto createResolver(final OrganizationRecord organizationRecord,
@@ -169,17 +188,11 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
 
     final UUID entityId = input.getEntityId();
     final EntityEntity entityEntity = this.findFederationEntityOrThrow(organizationRecord, entityId);
-    final OrganizationEntity org = this.resolveOrganization(organizationRecord);
 
-    if (entityEntity.getModuleByType(FkKeyType.RESOLVER).isPresent()) {
-      throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
-          "A RESOLVER module already exists for entity %s".formatted(entityEntity.getEntityId()));
-    }
+    final ResolverEntity entity = EntityToDto.toEntity(id, input, entityEntity);
 
-    final ModuleEntity module = EntityToDto.toEntity(id, input, entityEntity, org);
-
-    this.moduleRepository.save(module);
-    final ResolverDto dto = EntityToDto.toDtoResolver(module);
+    this.resolverRepository.save(entity);
+    final ResolverDto dto = EntityToDto.toDto(entity);
     this.auditService.resolverCreated(id, null, dto);
     return dto;
   }
@@ -190,12 +203,12 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
       final UUID id, final ResolverDto input) {
     new ValidateDto(organizationRecord).validate(input);
 
-    final ModuleEntity module = this.findModuleOrThrow(organizationRecord, id, FkKeyType.RESOLVER);
-    final ResolverDto oldDto = EntityToDto.toDtoResolver(module);
+    final ResolverEntity existing = this.findResolverOrThrow(organizationRecord, id);
+    final ResolverDto oldDto = EntityToDto.toDto(existing);
 
-    EntityToDto.updateModuleEntity(module, input);
-    this.moduleRepository.save(module);
-    final ResolverDto newDto = EntityToDto.toDtoResolver(module);
+    EntityToDto.updateEntity(existing, input);
+    this.resolverRepository.save(existing);
+    final ResolverDto newDto = EntityToDto.toDto(existing);
     this.auditService.resolverUpdated(id, oldDto, newDto);
     return newDto;
   }
@@ -203,16 +216,16 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Override
   @Transactional(readOnly = true)
   public ResolverDto getResolver(final OrganizationRecord organizationRecord, final UUID id) {
-    final ModuleEntity module = this.findModuleOrThrow(organizationRecord, id, FkKeyType.RESOLVER);
-    return EntityToDto.toDtoResolver(module);
+    final ResolverEntity entity = this.findResolverOrThrow(organizationRecord, id);
+    return EntityToDto.toDto(entity);
   }
 
   @Override
   @Transactional
   public void deleteResolver(final OrganizationRecord organizationRecord, final UUID id) {
-    final ModuleEntity module = this.findModuleOrThrow(organizationRecord, id, FkKeyType.RESOLVER);
-    final ResolverDto dto = EntityToDto.toDtoResolver(module);
-    this.moduleRepository.delete(module);
+    final ResolverEntity entity = this.findResolverOrThrow(organizationRecord, id);
+    final ResolverDto dto = EntityToDto.toDto(entity);
+    this.resolverRepository.delete(entity);
     this.auditService.resolverDeleted(id, dto);
   }
 
@@ -227,13 +240,12 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     new ValidateDto(organizationRecord).validate(input);
 
     // trustmarkissuerId is a module UUID (TRUSTMARKISSUER)
-    final UUID moduleId = UUID.fromString(input.getTrustmarkissuerId());
-    final ModuleEntity issuerModule = this.moduleRepository
-        .findByOrgNumberAndModuleIdAndModuleType(
-            organizationRecord.orgNumber(), moduleId, FkKeyType.TRUSTMARKISSUER.name())
+    final UUID inputTrustmarkissuerId = input.getTrustmarkissuerId();
+    final TrustmarkIssuerEntity issuerModule = this.trustmarkIssuerRepository
+        .findByOrgNumberAndTrustmarkIssuerId(organizationRecord.orgNumber(), inputTrustmarkissuerId)
         .orElseThrow(() -> new RegistryServerException(
             ErrorTypes.RELATION_NOT_FOUND,
-            "No TRUSTMARKISSUER module found for id %s".formatted(moduleId)));
+            "No TRUSTMARKISSUER  found for id %s".formatted(inputTrustmarkissuerId)));
 
     final TrustMarkEntity entity = EntityToDto.toEntity(id, input, issuerModule);
     this.trustMarkRepository.save(entity);
@@ -283,6 +295,70 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     final TrustmarkDto dto = EntityToDto.toDto(entity);
     this.trustMarkRepository.delete(entity);
     this.auditService.trustmarkDeleted(id, dto);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Trustmark Issuer
+  // ---------------------------------------------------------------------------
+
+  @Override
+  @Transactional
+  public TrustmarkIssuerDto createTrustmarkIssuer(final OrganizationRecord organizationRecord,
+      final UUID id, final TrustmarkIssuerDto input) {
+    new ValidateDto(organizationRecord).validate(input);
+
+    final UUID entityId = input.getEntityId();
+    final EntityEntity entityEntity = this.findFederationEntityOrThrow(organizationRecord, entityId);
+
+    final TrustmarkIssuerEntity entity = EntityToDto.toEntity(id, input, entityEntity);
+
+    this.trustmarkIssuerRepository.save(entity);
+    final TrustmarkIssuerDto dto = EntityToDto.toDto(entity);
+    this.auditService.trustmarkIssuerCreated(id, null, dto);
+    return dto;
+  }
+
+  @Override
+  @Transactional
+  public TrustmarkIssuerDto updateTrustmarkIssuer(final OrganizationRecord organizationRecord,
+      final UUID id, final TrustmarkIssuerDto input) {
+    new ValidateDto(organizationRecord).validate(input);
+
+    final TrustmarkIssuerEntity existing = this.trustmarkIssuerRepository
+        .findByOrgNumberAndTrustmarkIssuerId(organizationRecord.orgNumber(), id)
+        .orElseThrow(() -> new RegistryServerException(
+            ErrorTypes.NOT_FOUND, "No trust mark issuer found for id %s".formatted(id)));
+    final TrustmarkIssuerDto oldDto = EntityToDto.toDto(existing);
+
+    EntityToDto.updateEntity(existing, input);
+
+    this.trustmarkIssuerRepository.save(existing);
+    final TrustmarkIssuerDto newDto = EntityToDto.toDto(existing);
+    this.auditService.trustmarkIssuerUpdated(id, oldDto, newDto);
+    return newDto;
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public TrustmarkIssuerDto getTrustmarkIssuer(final OrganizationRecord organizationRecord, final UUID id) {
+    final TrustmarkIssuerEntity entity = this.trustmarkIssuerRepository
+        .findByOrgNumberAndTrustmarkIssuerId(organizationRecord.orgNumber(), id)
+        .orElseThrow(() -> new RegistryServerException(
+            ErrorTypes.NOT_FOUND, "No trust mark issuer found for id %s".formatted(id)));
+
+    return EntityToDto.toDto(entity);
+  }
+
+  @Override
+  @Transactional
+  public void deleteTrustmarkIssuer(final OrganizationRecord organizationRecord, final UUID id) {
+    final TrustmarkIssuerEntity entity = this.trustmarkIssuerRepository
+        .findByOrgNumberAndTrustmarkIssuerId(organizationRecord.orgNumber(), id)
+        .orElseThrow(() -> new RegistryServerException(
+            ErrorTypes.NOT_FOUND, "No trust mark issuer found for id %s".formatted(id)));
+    final TrustmarkIssuerDto dto = EntityToDto.toDto(entity);
+    this.trustmarkIssuerRepository.delete(entity);
+    this.auditService.trustmarkIssuerDeleted(id, dto);
   }
 }
 

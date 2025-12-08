@@ -20,6 +20,7 @@ import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.dto.TrustmarkDto;
+import se.swedenconnect.oidf.registry.dto.TrustmarkIssuerDto;
 
 import java.util.UUID;
 
@@ -146,6 +147,45 @@ public interface ModuleConfigService {
    * @param id the trust mark ID
    */
   void deleteTrustmark(OrganizationRecord organizationRecord, UUID id);
+
+  /**
+   * Creates a trust mark issuer.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark issuer ID
+   * @param input the trust mark issuer data
+   * @return the created trust mark issuer
+   */
+  TrustmarkIssuerDto createTrustmarkIssuer(OrganizationRecord organizationRecord,
+      UUID id, TrustmarkIssuerDto input);
+
+  /**
+   * Updates a trust mark issuer.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark issuer ID
+   * @param input the trust mark issuer data
+   * @return the updated trust mark issuer
+   */
+  TrustmarkIssuerDto updateTrustmarkIssuer(OrganizationRecord organizationRecord,
+      UUID id, TrustmarkIssuerDto input);
+
+  /**
+   * Gets a trust mark issuer by ID.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark issuer ID
+   * @return the trust mark issuer
+   */
+  TrustmarkIssuerDto getTrustmarkIssuer(OrganizationRecord organizationRecord, UUID id);
+
+  /**
+   * Deletes a trust mark issuer.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark issuer ID
+   */
+  void deleteTrustmarkIssuer(OrganizationRecord organizationRecord, UUID id);
 }
 
 
