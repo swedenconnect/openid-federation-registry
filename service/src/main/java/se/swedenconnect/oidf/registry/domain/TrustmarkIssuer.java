@@ -16,13 +16,13 @@
 
 package se.swedenconnect.oidf.registry.domain;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Duration;
+import java.util.UUID;
 
 /**
  * oidf-entity-registry
@@ -36,7 +36,7 @@ import java.time.Duration;
 public class TrustmarkIssuer implements FederationModule {
 
   /** Entity config */
-  private EntityID entityId;
+  private UUID entityId;
 
   /** If this module instance should be active or not */
   private Boolean active;

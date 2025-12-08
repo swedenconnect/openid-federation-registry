@@ -18,16 +18,17 @@ package se.swedenconnect.oidf.registry.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import se.swedenconnect.oidf.registry.api.dto.EntityToDto;
-import se.swedenconnect.oidf.registry.api.dto.TrustmarkSubjectDto;
 import se.swedenconnect.oidf.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.dto.EntityToDto;
+import se.swedenconnect.oidf.registry.dto.TrustmarkSubjectDto;
 import se.swedenconnect.oidf.registry.entity.TrustMarkEntity;
 import se.swedenconnect.oidf.registry.entity.TrustMarkSubjectEntity;
 import se.swedenconnect.oidf.registry.errorhandling.ErrorTypes;
 import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.TrustMarkRepository;
 import se.swedenconnect.oidf.registry.repository.TrustMarkSubjectRepository;
+import se.swedenconnect.oidf.registry.validation.ValidateDto;
 
 import java.util.UUID;
 
@@ -76,6 +77,7 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
   @Transactional
   public TrustmarkSubjectDto createTrustmarkSubject(final OrganizationRecord organizationRecord,
       final UUID id, final TrustmarkSubjectDto input) {
+    new ValidateDto(organizationRecord).validate(input);
 
     final UUID trustmarkId = UUID.fromString(input.getTrustmarkId());
     final TrustMarkEntity trustMarkEntity = this.findTrustMarkOrThrow(organizationRecord, trustmarkId);
@@ -93,6 +95,7 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
   @Transactional
   public TrustmarkSubjectDto updateTrustmarkSubject(final OrganizationRecord organizationRecord,
       final UUID id, final TrustmarkSubjectDto input) {
+    new ValidateDto(organizationRecord).validate(input);
 
     final TrustMarkSubjectEntity existing = this.findSubjectOrThrow(organizationRecord, id);
     final TrustmarkSubjectDto oldDto = EntityToDto.toDto(existing);

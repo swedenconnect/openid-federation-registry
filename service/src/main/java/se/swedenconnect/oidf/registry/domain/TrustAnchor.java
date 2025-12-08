@@ -25,6 +25,7 @@ import lombok.Setter;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * oidf-entity-registry
@@ -42,7 +43,7 @@ public class TrustAnchor implements FederationModule, Serializable, ToJson {
   private java.util.UUID moduleId;
 
   /** Entity config */
-  private EntityID entityId;
+  private UUID entityId;
 
   /** If this module instance should be active or not */
   private boolean active;

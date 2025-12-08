@@ -16,9 +16,8 @@
 
 package se.swedenconnect.oidf.registry.service;
 
-import se.swedenconnect.oidf.registry.api.dto.PolicyDto;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
-import se.swedenconnect.oidf.registry.domain.Policies;
+import se.swedenconnect.oidf.registry.dto.PolicyDto;
 
 import java.util.List;
 import java.util.UUID;
@@ -76,13 +75,13 @@ public interface PolicyService {
   void deletePolicy(OrganizationRecord organizationRecord, UUID id);
 
   /**
-   * Gets a policy domain object.
+   * Gets a policy DTO.
    *
    * @param organizationRecord the organization record
    * @param id the policy ID
-   * @return the policy domain object
+   * @return the policy DTO
    */
-  Policies getPolicyDomain(OrganizationRecord organizationRecord, UUID id);
+  PolicyDto getPolicyDomain(OrganizationRecord organizationRecord, UUID id);
 }
 
 

@@ -18,16 +18,16 @@ package se.swedenconnect.oidf.registry.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import se.swedenconnect.oidf.registry.api.dto.PolicyDto;
 import se.swedenconnect.oidf.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
-import se.swedenconnect.oidf.registry.domain.EntityToDomain;
-import se.swedenconnect.oidf.registry.domain.Policies;
+import se.swedenconnect.oidf.registry.dto.EntityToDto;
+import se.swedenconnect.oidf.registry.dto.PolicyDto;
 import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.entity.PolicyEntity;
 import se.swedenconnect.oidf.registry.errorhandling.ErrorTypes;
 import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.PolicyRepository;
+import se.swedenconnect.oidf.registry.validation.ValidateDto;
 
 import java.util.List;
 import java.util.UUID;
@@ -72,12 +72,7 @@ public class PolicyServiceImpl implements PolicyService {
   }
 
   private static PolicyDto toDto(final PolicyEntity entity) {
-    final Policies policies = EntityToDomain.map(entity);
-    final PolicyDto dto = new PolicyDto();
-    dto.setPolicyId(policies.getPolicyId());
-    dto.setName(policies.getName());
-    dto.setPolicy(policies.getPolicy());
-    return dto;
+    return EntityToDto.toDto(entity);
   }
 
   @Override
@@ -100,9 +95,9 @@ public class PolicyServiceImpl implements PolicyService {
   @Transactional
   public PolicyDto createPolicy(final OrganizationRecord organizationRecord,
       final UUID id, final PolicyDto input) {
+    new ValidateDto(organizationRecord).validate(input);
     final OrganizationEntity org = this.resolveOrganization(organizationRecord);
-    final Policies policies = EntityToDomain.toDomain(input);
-    final PolicyEntity entity = EntityToDomain.toPolicyEntity(id, policies, org);
+    final PolicyEntity entity = EntityToDto.toEntity(id, input, org);
     this.policyRepository.save(entity);
     final PolicyDto dto = toDto(entity);
     this.auditService.policyCreated(id, null, dto);
@@ -113,15 +108,14 @@ public class PolicyServiceImpl implements PolicyService {
   @Transactional
   public PolicyDto updatePolicy(final OrganizationRecord organizationRecord,
       final UUID id, final PolicyDto input) {
-    final Policies policies = EntityToDomain.toDomain(input);
+    new ValidateDto(organizationRecord).validate(input);
     final PolicyEntity existing = this.findPolicyOrThrow(organizationRecord, id);
     final PolicyDto oldDto = toDto(existing);
 
-    final PolicyEntity updated = EntityToDomain.toPolicyEntity(
-        id, policies, existing.getOrganization());
+    EntityToDto.updateEntity(existing, input);
 
-    this.policyRepository.save(updated);
-    final PolicyDto newDto = toDto(updated);
+    this.policyRepository.save(existing);
+    final PolicyDto newDto = toDto(existing);
     this.auditService.policyUpdated(id, oldDto, newDto);
     return newDto;
   }
@@ -137,9 +131,9 @@ public class PolicyServiceImpl implements PolicyService {
 
   @Override
   @Transactional(readOnly = true)
-  public Policies getPolicyDomain(final OrganizationRecord organizationRecord, final UUID id) {
+  public PolicyDto getPolicyDomain(final OrganizationRecord organizationRecord, final UUID id) {
     final PolicyEntity entity = this.findPolicyOrThrow(organizationRecord, id);
-    return EntityToDomain.map(entity);
+    return toDto(entity);
   }
 }
 

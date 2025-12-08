@@ -13,35 +13,36 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.registry.api.dto;
+package se.swedenconnect.oidf.registry.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 /**
- * DTO for policy configuration. Used for both input (create/update) and output (get).
- * The policyId field is read-only and will be ignored when deserializing from JSON input.
+ * DTO for Trust Anchor module. Used for both input (create/update) and output (get).
+ * The moduleId field is read-only and will be ignored when deserializing from JSON input.
  *
  * @author Per Fredrik Plars
  */
 @Data
-@Schema(name = "Policy")
-public class PolicyDto {
+@Schema(name = "TrustAnchor")
+public class TrustAnchorDto {
 
-  @Schema(description = "Policy ID", accessMode = Schema.AccessMode.READ_ONLY)
+  @Schema(description = "Module ID", accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private UUID policyId;
+  private UUID moduleId;
 
-  @Schema(description = "Policy name", example = "Default OIDC RP policy")
-  private String name;
+  @Schema(description = "Entity identifier that this trust anchor belongs to. ")
+  private UUID entityId;
 
-  @Schema(description = "JSON policy document")
-  private Map<String, Object> policy;
+  @Schema(description = "If this trust anchor is active")
+  private Boolean active;
 
+  @Schema(description = "Entity identifiers for trust mark issuers")
+  private List<String> trustMarkIssuers;
 }
-
 

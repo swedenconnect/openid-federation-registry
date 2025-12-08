@@ -29,12 +29,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import se.swedenconnect.oidf.registry.api.dto.ResolverDto;
-import se.swedenconnect.oidf.registry.api.dto.TrustAnchorDto;
-import se.swedenconnect.oidf.registry.api.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.dto.ResolverDto;
+import se.swedenconnect.oidf.registry.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.service.ModuleConfigService;
-import se.swedenconnect.oidf.registry.validation.ValidateDto;
 
 import java.util.UUID;
 
@@ -65,7 +64,6 @@ public class ModuleConfigController {
   public ResponseEntity<TrustAnchorDto> createTrustAnchor(
       @RequestBody final TrustAnchorDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    new ValidateDto(organizationRecord).validate(body);
     final UUID id = UUID.randomUUID();
     return ResponseEntity.ok(this.moduleConfigService.createTrustAnchor(organizationRecord, id, body));
   }
@@ -84,7 +82,6 @@ public class ModuleConfigController {
       @PathVariable("id") final UUID id,
       @RequestBody final TrustAnchorDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.moduleConfigService.createTrustAnchor(organizationRecord, id, body));
   }
 
@@ -102,7 +99,6 @@ public class ModuleConfigController {
       @PathVariable("id") final UUID id,
       @RequestBody final TrustAnchorDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.moduleConfigService.updateTrustAnchor(organizationRecord, id, body));
   }
 
@@ -151,7 +147,6 @@ public class ModuleConfigController {
   public ResponseEntity<ResolverDto> createResolver(
       @RequestBody final ResolverDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    new ValidateDto(organizationRecord).validate(body);
     final UUID id = UUID.randomUUID();
     return ResponseEntity.ok(this.moduleConfigService.createResolver(organizationRecord, id, body));
   }
@@ -170,7 +165,6 @@ public class ModuleConfigController {
       @PathVariable("id") final UUID id,
       @RequestBody final ResolverDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.moduleConfigService.createResolver(organizationRecord, id, body));
   }
 
@@ -188,7 +182,6 @@ public class ModuleConfigController {
       @PathVariable("id") final UUID id,
       @RequestBody final ResolverDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.moduleConfigService.updateResolver(organizationRecord, id, body));
   }
 
@@ -237,7 +230,6 @@ public class ModuleConfigController {
   public ResponseEntity<TrustmarkDto> createTrustmark(
       @RequestBody final TrustmarkDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    new ValidateDto(organizationRecord).validate(body);
     final UUID id = UUID.randomUUID();
     return ResponseEntity.ok(this.moduleConfigService.createTrustmark(organizationRecord, id, body));
   }
@@ -256,7 +248,6 @@ public class ModuleConfigController {
       @PathVariable("id") final UUID id,
       @RequestBody final TrustmarkDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.moduleConfigService.createTrustmark(organizationRecord, id, body));
   }
 
@@ -274,7 +265,6 @@ public class ModuleConfigController {
       @PathVariable("id") final UUID id,
       @RequestBody final TrustmarkDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.moduleConfigService.updateTrustmark(organizationRecord, id, body));
   }
 

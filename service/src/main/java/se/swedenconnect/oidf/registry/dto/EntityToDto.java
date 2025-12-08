@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.api.dto;
+package se.swedenconnect.oidf.registry.dto;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -158,7 +158,7 @@ public final class EntityToDto {
 
     final TrustAnchorDto dto = new TrustAnchorDto();
     dto.setModuleId(moduleEntity.getModuleId());
-    dto.setEntityId(moduleEntity.getEntityIdValue());
+    dto.setEntityId(moduleEntity.getEntity().getEntityId());
     dto.setActive(moduleEntity.getActive());
 
     // Read trust mark issuers from JSON column
@@ -189,7 +189,7 @@ public final class EntityToDto {
 
     final ResolverDto dto = new ResolverDto();
     dto.setModuleId(moduleEntity.getModuleId());
-    dto.setEntityId(moduleEntity.getEntityIdValue());
+    dto.setEntityId(moduleEntity.getEntity().getEntityId());
     dto.setActive(moduleEntity.getActive());
     dto.setResolveResponseDuration(moduleEntity.getResolveResponseDuration());
     dto.setTrustAnchor(moduleEntity.getTrustAnchor());
@@ -320,13 +320,11 @@ public final class EntityToDto {
   public static EntityEntity toEntity(final java.util.UUID id,
       final SubordinateEntityDto dto,
       final EntityKeyType entityKeyType,
-      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization,
-      final PolicyEntity policyEntity) {
+      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization) {
     final EntityEntity entity = new EntityEntity();
     entity.setEntityId(id);
     entity.setEntityType(entityKeyType);
     entity.setOrganization(organization);
-    entity.setPolicyEntity(policyEntity);
     entity.setSubject(dto.getSubject());
     entity.setIssuer(dto.getIssuer());
     entity.setJwks(dto.getJwks());
@@ -433,7 +431,7 @@ public final class EntityToDto {
    * @param dto the trust anchor DTO
    */
   public static void updateModuleEntity(final ModuleEntity module, final TrustAnchorDto dto) {
-    module.setEntityIdValue(dto.getEntityId());
+
     module.setActive(dto.getActive());
 
     // Save trust mark issuers to JSON column
@@ -457,7 +455,6 @@ public final class EntityToDto {
    * @param dto the resolver DTO
    */
   public static void updateModuleEntity(final ModuleEntity module, final ResolverDto dto) {
-    module.setEntityIdValue(dto.getEntityId());
     module.setActive(dto.getActive());
     module.setResolveResponseDuration(dto.getResolveResponseDuration());
     module.setTrustAnchor(dto.getTrustAnchor());
@@ -557,7 +554,6 @@ public final class EntityToDto {
     module.setModuleType(FkKeyType.TRUSTANCHOR.name());
     module.setEntity(entityEntity);
     module.setOrganization(organization);
-    module.setEntityIdValue(dto.getEntityId());
     module.setActive(dto.getActive());
 
     if (dto.getTrustMarkIssuers() != null) {
@@ -590,7 +586,6 @@ public final class EntityToDto {
     module.setModuleType(FkKeyType.RESOLVER.name());
     module.setEntity(entityEntity);
     module.setOrganization(organization);
-    module.setEntityIdValue(dto.getEntityId());
     module.setActive(dto.getActive());
     module.setResolveResponseDuration(dto.getResolveResponseDuration());
     module.setTrustAnchor(dto.getTrustAnchor());

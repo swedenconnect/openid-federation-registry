@@ -18,12 +18,12 @@ package se.swedenconnect.oidf.registry.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import se.swedenconnect.oidf.registry.api.dto.EntityToDto;
-import se.swedenconnect.oidf.registry.api.dto.ResolverDto;
-import se.swedenconnect.oidf.registry.api.dto.TrustAnchorDto;
-import se.swedenconnect.oidf.registry.api.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.dto.EntityToDto;
+import se.swedenconnect.oidf.registry.dto.ResolverDto;
+import se.swedenconnect.oidf.registry.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
@@ -35,6 +35,7 @@ import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.repository.ModuleRepository;
 import se.swedenconnect.oidf.registry.repository.TrustMarkRepository;
+import se.swedenconnect.oidf.registry.validation.ValidateDto;
 
 import java.util.UUID;
 
@@ -104,9 +105,10 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional
   public TrustAnchorDto createTrustAnchor(final OrganizationRecord organizationRecord,
       final UUID id, final TrustAnchorDto input) {
+    new ValidateDto(organizationRecord).validate(input);
 
     // entityId is a database UUID to EntityEntity
-    final UUID entityId = UUID.fromString(input.getEntityId());
+    final UUID entityId = input.getEntityId();
     final EntityEntity entityEntity = this.findFederationEntityOrThrow(organizationRecord, entityId);
     final OrganizationEntity org = this.resolveOrganization(organizationRecord);
 
@@ -127,6 +129,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional
   public TrustAnchorDto updateTrustAnchor(final OrganizationRecord organizationRecord,
       final UUID id, final TrustAnchorDto input) {
+    new ValidateDto(organizationRecord).validate(input);
 
     final ModuleEntity module = this.findModuleOrThrow(organizationRecord, id, FkKeyType.TRUSTANCHOR);
     final TrustAnchorDto oldDto = EntityToDto.toDto(module);
@@ -162,8 +165,9 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional
   public ResolverDto createResolver(final OrganizationRecord organizationRecord,
       final UUID id, final ResolverDto input) {
+    new ValidateDto(organizationRecord).validate(input);
 
-    final UUID entityId = UUID.fromString(input.getEntityId());
+    final UUID entityId = input.getEntityId();
     final EntityEntity entityEntity = this.findFederationEntityOrThrow(organizationRecord, entityId);
     final OrganizationEntity org = this.resolveOrganization(organizationRecord);
 
@@ -184,6 +188,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional
   public ResolverDto updateResolver(final OrganizationRecord organizationRecord,
       final UUID id, final ResolverDto input) {
+    new ValidateDto(organizationRecord).validate(input);
 
     final ModuleEntity module = this.findModuleOrThrow(organizationRecord, id, FkKeyType.RESOLVER);
     final ResolverDto oldDto = EntityToDto.toDtoResolver(module);
@@ -219,6 +224,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional
   public TrustmarkDto createTrustmark(final OrganizationRecord organizationRecord,
       final UUID id, final TrustmarkDto input) {
+    new ValidateDto(organizationRecord).validate(input);
 
     // trustmarkissuerId is a module UUID (TRUSTMARKISSUER)
     final UUID moduleId = UUID.fromString(input.getTrustmarkissuerId());
@@ -240,6 +246,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional
   public TrustmarkDto updateTrustmark(final OrganizationRecord organizationRecord,
       final UUID id, final TrustmarkDto input) {
+    new ValidateDto(organizationRecord).validate(input);
 
     final TrustMarkEntity existing = this.trustMarkRepository
         .findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), id)

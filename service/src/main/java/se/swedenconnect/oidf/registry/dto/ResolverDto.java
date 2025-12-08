@@ -13,36 +13,44 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.registry.api.dto;
+package se.swedenconnect.oidf.registry.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
- * DTO for Trust Anchor module. Used for both input (create/update) and output (get).
+ * DTO for Resolver module. Used for both input (create/update) and output (get).
  * The moduleId field is read-only and will be ignored when deserializing from JSON input.
  *
  * @author Per Fredrik Plars
  */
 @Data
-@Schema(name = "TrustAnchor")
-public class TrustAnchorDto {
+@Schema(name = "Resolver")
+public class ResolverDto {
 
   @Schema(description = "Module ID", accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private UUID moduleId;
 
-  @Schema(description = "Entity identifier for this trust anchor")
-  private String entityId;
+  @Schema(description = "Entity identifier that this module belongs to")
+  private UUID entityId;
 
-  @Schema(description = "If this trust anchor is active")
+  @Schema(description = "If this resolver instance is active")
   private Boolean active;
 
-  @Schema(description = "Entity identifiers for trust mark issuers")
-  private List<String> trustMarkIssuers;
+  @Schema(description = "Response duration (ISO-8601 duration, e.g. PT1H)")
+  private String resolveResponseDuration;
+
+  @Schema(description = "Trust anchor entityId that this resolver is connected to")
+  private String trustAnchor;
+
+  @Schema(description = "Trusted keys as JWKS JSON of the trust anchor")
+  private String trustedKeys;
+
+  @Schema(description = "Step retry duration (ISO-8601 duration, e.g. PT1H)")
+  private String stepRetryDuration;
 }
 

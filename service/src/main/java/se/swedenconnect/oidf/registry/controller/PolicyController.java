@@ -29,10 +29,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import se.swedenconnect.oidf.registry.api.dto.PolicyDto;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.dto.PolicyDto;
 import se.swedenconnect.oidf.registry.service.PolicyService;
-import se.swedenconnect.oidf.registry.validation.ValidateDto;
 
 import java.util.List;
 import java.util.UUID;
@@ -90,7 +89,6 @@ public class PolicyController {
   public ResponseEntity<PolicyDto> createPolicy(
       @RequestBody final PolicyDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    new ValidateDto(organizationRecord).validate(body);
     final UUID id = UUID.randomUUID();
     return ResponseEntity.ok(this.policyService.createPolicy(organizationRecord, id, body));
   }
@@ -109,7 +107,6 @@ public class PolicyController {
       @PathVariable("id") final UUID id,
       @RequestBody final PolicyDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.policyService.createPolicy(organizationRecord, id, body));
   }
 
@@ -127,7 +124,6 @@ public class PolicyController {
       @PathVariable("id") final UUID id,
       @RequestBody final PolicyDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.policyService.updatePolicy(organizationRecord, id, body));
   }
 

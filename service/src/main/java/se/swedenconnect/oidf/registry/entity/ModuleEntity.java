@@ -67,8 +67,6 @@ public class ModuleEntity extends BaseEntity {
   private EntityEntity entity;
 
   // Columns for module data (used by TrustAnchor, Resolver, TrustmarkIssuer)
-  @Column(name = "entity_id_value")
-  private String entityIdValue;
 
   @Column(name = "active")
   private Boolean active;
