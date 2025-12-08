@@ -24,8 +24,10 @@ import se.swedenconnect.oidf.registry.entity.EntityKeyType;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.entity.ModuleEntity;
 import se.swedenconnect.oidf.registry.entity.PolicyEntity;
+import se.swedenconnect.oidf.registry.entity.ResolverEntity;
 import se.swedenconnect.oidf.registry.entity.TrustMarkEntity;
 import se.swedenconnect.oidf.registry.entity.TrustMarkSubjectEntity;
+import se.swedenconnect.oidf.registry.entity.TrustmarkIssuerEntity;
 
 import java.util.Collections;
 import java.util.List;
@@ -177,24 +179,20 @@ public final class EntityToDto {
   }
 
   /**
-   * Converts ModuleEntity to ResolverDto.
+   * Converts ResolverEntity to ResolverDto.
    *
-   * @param moduleEntity the module entity
+   * @param resolverEntity the resolver entity
    * @return the resolver DTO
    */
-  public static ResolverDto toDtoResolver(final ModuleEntity moduleEntity) {
-    if (!moduleEntity.getModuleType().equals(FkKeyType.RESOLVER.name())) {
-      throw new IllegalArgumentException("Module is not a Resolver");
-    }
-
+  public static ResolverDto toDto(final ResolverEntity resolverEntity) {
     final ResolverDto dto = new ResolverDto();
-    dto.setModuleId(moduleEntity.getModuleId());
-    dto.setEntityId(moduleEntity.getEntity().getEntityId());
-    dto.setActive(moduleEntity.getActive());
-    dto.setResolveResponseDuration(moduleEntity.getResolveResponseDuration());
-    dto.setTrustAnchor(moduleEntity.getTrustAnchor());
-    dto.setTrustedKeys(moduleEntity.getTrustedKeys());
-    dto.setStepRetryDuration(moduleEntity.getStepRetryDuration());
+    dto.setResolverId(resolverEntity.getResolverId());
+    dto.setEntityId(resolverEntity.getEntity().getEntityId());
+    dto.setActive(resolverEntity.getActive());
+    dto.setResolveResponseDuration(resolverEntity.getResolveResponseDuration());
+    dto.setTrustAnchor(resolverEntity.getTrustAnchor());
+    dto.setTrustedKeys(resolverEntity.getTrustedKeys());
+    dto.setStepRetryDuration(resolverEntity.getStepRetryDuration());
 
     return dto;
   }
@@ -208,7 +206,7 @@ public final class EntityToDto {
   public static TrustmarkDto toDto(final TrustMarkEntity trustMarkEntity) {
     final TrustmarkDto dto = new TrustmarkDto();
     dto.setTrustmarkId(trustMarkEntity.getTrustmarkId());
-    dto.setTrustmarkissuerId(trustMarkEntity.getTrustmarkissuerId());
+    dto.setTrustmarkissuerId(trustMarkEntity.getTrustmarkIssuer().getTrustmarkIssuerId());
     dto.setTrustMarkEntityId(trustMarkEntity.getTrustMarkEntityId());
     dto.setLogoUri(trustMarkEntity.getLogoUri());
     dto.setRefUri(trustMarkEntity.getRefUri());
@@ -314,7 +312,6 @@ public final class EntityToDto {
    * @param dto the subordinate entity DTO
    * @param entityKeyType the entity key type
    * @param organization the organization entity
-   * @param policyEntity the policy entity
    * @return the entity entity
    */
   public static EntityEntity toEntity(final java.util.UUID id,
@@ -449,18 +446,19 @@ public final class EntityToDto {
   }
 
   /**
-   * Updates ModuleEntity with ResolverDto data.
+   * Updates ResolverEntity with ResolverDto data.
    *
-   * @param module the module entity
+   * @param entity the resolver entity
    * @param dto the resolver DTO
    */
-  public static void updateModuleEntity(final ModuleEntity module, final ResolverDto dto) {
-    module.setActive(dto.getActive());
-    module.setResolveResponseDuration(dto.getResolveResponseDuration());
-    module.setTrustAnchor(dto.getTrustAnchor());
-    module.setTrustedKeys(dto.getTrustedKeys());
-    module.setStepRetryDuration(dto.getStepRetryDuration());
+  public static void updateEntity(final ResolverEntity entity, final ResolverDto dto) {
+    entity.setActive(dto.getActive());
+    entity.setResolveResponseDuration(dto.getResolveResponseDuration());
+    entity.setTrustAnchor(dto.getTrustAnchor());
+    entity.setTrustedKeys(dto.getTrustedKeys());
+    entity.setStepRetryDuration(dto.getStepRetryDuration());
   }
+
 
   /**
    * Converts TrustmarkDto to TrustMarkEntity.
@@ -472,11 +470,10 @@ public final class EntityToDto {
    */
   public static TrustMarkEntity toEntity(final java.util.UUID id,
       final TrustmarkDto dto,
-      final ModuleEntity moduleEntity) {
+      final TrustmarkIssuerEntity trustmarkIssuerEntity) {
     final TrustMarkEntity entity = TrustMarkEntity.builder()
         .trustmarkId(id)
-        .module(moduleEntity)
-        .trustmarkissuerId(dto.getTrustmarkissuerId())
+        .trustmarkIssuer(trustmarkIssuerEntity)
         .trustMarkEntityId(dto.getTrustMarkEntityId())
         .logoUri(dto.getLogoUri())
         .refUri(dto.getRefUri())
@@ -492,7 +489,7 @@ public final class EntityToDto {
    * @param dto the trustmark DTO
    */
   public static void updateEntity(final TrustMarkEntity entity, final TrustmarkDto dto) {
-    entity.setTrustmarkissuerId(dto.getTrustmarkissuerId());
+
     entity.setTrustMarkEntityId(dto.getTrustMarkEntityId());
     entity.setLogoUri(dto.getLogoUri());
     entity.setRefUri(dto.getRefUri());
@@ -569,30 +566,72 @@ public final class EntityToDto {
   }
 
   /**
-   * Converts ResolverDto to ModuleEntity.
+   * Converts ResolverDto to ResolverEntity.
    *
-   * @param id the module ID
+   * @param id the resolver ID
    * @param dto the resolver DTO
    * @param entityEntity the entity entity
-   * @param organization the organization entity
-   * @return the module entity
+   * @return the resolver entity
    */
-  public static ModuleEntity toEntity(final java.util.UUID id,
+  public static ResolverEntity toEntity(final java.util.UUID id,
       final ResolverDto dto,
-      final EntityEntity entityEntity,
-      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization) {
-    final ModuleEntity module = new ModuleEntity();
-    module.setModuleId(id);
-    module.setModuleType(FkKeyType.RESOLVER.name());
-    module.setEntity(entityEntity);
-    module.setOrganization(organization);
-    module.setActive(dto.getActive());
-    module.setResolveResponseDuration(dto.getResolveResponseDuration());
-    module.setTrustAnchor(dto.getTrustAnchor());
-    module.setTrustedKeys(dto.getTrustedKeys());
-    module.setStepRetryDuration(dto.getStepRetryDuration());
+      final EntityEntity entityEntity) {
+    final ResolverEntity entity = ResolverEntity.builder()
+        .resolverId(id)
+        .entity(entityEntity)
+        .active(dto.getActive())
+        .resolveResponseDuration(dto.getResolveResponseDuration())
+        .trustAnchor(dto.getTrustAnchor())
+        .trustedKeys(dto.getTrustedKeys())
+        .stepRetryDuration(dto.getStepRetryDuration())
+        .build();
+    return entity;
+  }
 
-    return module;
+  /**
+   * Converts TrustmarkIssuerEntity to TrustmarkIssuerDto.
+   *
+   * @param entity the trustmark issuer entity
+   * @return the trustmark issuer DTO
+   */
+  public static TrustmarkIssuerDto toDto(final TrustmarkIssuerEntity entity) {
+    final TrustmarkIssuerDto dto = new TrustmarkIssuerDto();
+    dto.setTrustmarkIssuerId(entity.getTrustmarkIssuerId());
+    dto.setEntityId(entity.getEntity().getEntityId());
+    dto.setActive(entity.getActive());
+    dto.setTrustMarkTokenValidityDuration(entity.getTrustMarkTokenValidityDuration());
+    return dto;
+  }
+
+  /**
+   * Converts TrustmarkIssuerDto to TrustmarkIssuerEntity.
+   *
+   * @param id the trustmark issuer ID
+   * @param dto the trustmark issuer DTO
+   * @param entityEntity the entity entity
+   * @return the trustmark issuer entity
+   */
+  public static TrustmarkIssuerEntity toEntity(final java.util.UUID id,
+      final TrustmarkIssuerDto dto,
+      final EntityEntity entityEntity) {
+    final TrustmarkIssuerEntity entity = TrustmarkIssuerEntity.builder()
+        .trustmarkIssuerId(id)
+        .entity(entityEntity)
+        .active(dto.getActive())
+        .trustMarkTokenValidityDuration(dto.getTrustMarkTokenValidityDuration())
+        .build();
+    return entity;
+  }
+
+  /**
+   * Updates TrustmarkIssuerEntity with TrustmarkIssuerDto data.
+   *
+   * @param entity the trustmark issuer entity
+   * @param dto the trustmark issuer DTO
+   */
+  public static void updateEntity(final TrustmarkIssuerEntity entity, final TrustmarkIssuerDto dto) {
+    entity.setActive(dto.getActive());
+    entity.setTrustMarkTokenValidityDuration(dto.getTrustMarkTokenValidityDuration());
   }
 }
 

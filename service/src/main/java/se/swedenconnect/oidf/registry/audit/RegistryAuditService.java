@@ -22,6 +22,7 @@ import se.swedenconnect.oidf.registry.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
 import se.swedenconnect.oidf.registry.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.dto.TrustmarkDto;
+import se.swedenconnect.oidf.registry.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.dto.TrustmarkSubjectDto;
 
 import java.util.UUID;
@@ -256,4 +257,30 @@ public interface RegistryAuditService {
    * @param deletedData the data of the deleted trustmark subject.
    */
   void trustmarkSubjectDeleted(UUID trustmarkSubjectId, UUID trustmarkId, TrustmarkSubjectDto deletedData);
+
+  /**
+   * Audits the creation of a trustmark issuer.
+   *
+   * @param trustmarkIssuerId the unique identifier of the trustmark issuer being created.
+   * @param oldData the previous state of the trustmark issuer. Typically null during creation.
+   * @param newData the new state of the trustmark issuer after it has been created.
+   */
+  void trustmarkIssuerCreated(UUID trustmarkIssuerId, TrustmarkIssuerDto oldData, TrustmarkIssuerDto newData);
+
+  /**
+   * Audits the update operation performed on a trustmark issuer.
+   *
+   * @param trustmarkIssuerId the unique identifier of the trustmark issuer being updated.
+   * @param oldData the previous state of the trustmark issuer before the update.
+   * @param newData the new state of the trustmark issuer after the update.
+   */
+  void trustmarkIssuerUpdated(UUID trustmarkIssuerId, TrustmarkIssuerDto oldData, TrustmarkIssuerDto newData);
+
+  /**
+   * Audits the deletion of a trustmark issuer.
+   *
+   * @param trustmarkIssuerId the unique identifier of the trustmark issuer being deleted.
+   * @param deletedData the data of the deleted trustmark issuer.
+   */
+  void trustmarkIssuerDeleted(UUID trustmarkIssuerId, TrustmarkIssuerDto deletedData);
 }

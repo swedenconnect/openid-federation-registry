@@ -17,40 +17,34 @@ package se.swedenconnect.oidf.registry.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.util.UUID;
 
 /**
- * DTO for Resolver. Used for both input (create/update) and output (get).
- * The resolverId field is read-only and will be ignored when deserializing from JSON input.
+ * DTO for Trustmark Issuer. Used for both input (create/update) and output (get). The trustmarkIssuerId field is
+ * read-only and will be ignored when deserializing from JSON input.
  *
  * @author Per Fredrik Plars
  */
 @Data
-@Schema(name = "Resolver")
-public class ResolverDto {
+@Schema(name = "TrustmarkIssuer")
+public class TrustmarkIssuerDto {
 
-  @Schema(description = "Resolver ID", accessMode = Schema.AccessMode.READ_ONLY)
+  @Schema(description = "Trustmark issuer ID", accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private UUID resolverId;
+  private UUID trustmarkIssuerId;
 
-  @Schema(description = "Entity identifier that this module belongs to")
+  @Schema(description = "Entity identifier that this trustmark issuer belongs to")
+  @NotNull
   private UUID entityId;
 
-  @Schema(description = "If this resolver instance is active")
+  @Schema(description = "If this trustmark issuer is active")
+  @NotNull
   private Boolean active;
 
-  @Schema(description = "Response duration (ISO-8601 duration, e.g. PT1H)")
-  private String resolveResponseDuration;
-
-  @Schema(description = "Trust anchor entityId that this resolver is connected to")
-  private String trustAnchor;
-
-  @Schema(description = "Trusted keys as JWKS JSON of the trust anchor")
-  private String trustedKeys;
-
-  @Schema(description = "Step retry duration (ISO-8601 duration, e.g. PT1H)")
-  private String stepRetryDuration;
+  @Schema(description = "Trust mark token validity duration (ISO-8601 duration, e.g. PT1H)")
+  @NotNull
+  private String trustMarkTokenValidityDuration;
 }
-

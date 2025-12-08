@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.dto.TrustAnchorDto;
-import se.swedenconnect.oidf.registry.dto.TrustmarkDto;
+import se.swedenconnect.oidf.registry.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.service.ModuleConfigService;
 
 import java.util.UUID;
@@ -216,86 +216,86 @@ public class ModuleConfigController {
     return ResponseEntity.noContent().build();
   }
 
-  // Trustmark
+  // Trustmark Issuer
 
   /**
-   * Creates a trust mark with auto-generated ID.
+   * Creates a trust mark issuer with auto-generated ID.
    *
-   * @param body the trust mark data
+   * @param body the trust mark issuer data
    * @param organizationRecord the organization record
-   * @return the created trust mark
+   * @return the created trust mark issuer
    */
-  @PostMapping("/trustmark")
-  @Operation(summary = "Create trust mark with auto-generated ID")
-  public ResponseEntity<TrustmarkDto> createTrustmark(
-      @RequestBody final TrustmarkDto body,
+  @PostMapping("/trustmark-issuer")
+  @Operation(summary = "Create trust mark issuer with auto-generated ID")
+  public ResponseEntity<TrustmarkIssuerDto> createTrustmarkIssuer(
+      @RequestBody final TrustmarkIssuerDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     final UUID id = UUID.randomUUID();
-    return ResponseEntity.ok(this.moduleConfigService.createTrustmark(organizationRecord, id, body));
+    return ResponseEntity.ok(this.moduleConfigService.createTrustmarkIssuer(organizationRecord, id, body));
   }
 
   /**
-   * Creates a trust mark with specified ID.
+   * Creates a trust mark issuer with specified ID.
    *
-   * @param id the trust mark ID
-   * @param body the trust mark data
+   * @param id the trust mark issuer ID
+   * @param body the trust mark issuer data
    * @param organizationRecord the organization record
-   * @return the created trust mark
+   * @return the created trust mark issuer
    */
-  @PostMapping("/trustmark/{id}")
-  @Operation(summary = "Create trust mark with specified ID")
-  public ResponseEntity<TrustmarkDto> createTrustmarkWithId(
+  @PostMapping("/trustmark-issuer/{id}")
+  @Operation(summary = "Create trust mark issuer with specified ID")
+  public ResponseEntity<TrustmarkIssuerDto> createTrustmarkIssuerWithId(
       @PathVariable("id") final UUID id,
-      @RequestBody final TrustmarkDto body,
+      @RequestBody final TrustmarkIssuerDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    return ResponseEntity.ok(this.moduleConfigService.createTrustmark(organizationRecord, id, body));
+    return ResponseEntity.ok(this.moduleConfigService.createTrustmarkIssuer(organizationRecord, id, body));
   }
 
   /**
-   * Updates a trust mark.
+   * Updates a trust mark issuer.
    *
-   * @param id the trust mark ID
-   * @param body the trust mark data
+   * @param id the trust mark issuer ID
+   * @param body the trust mark issuer data
    * @param organizationRecord the organization record
-   * @return the updated trust mark
+   * @return the updated trust mark issuer
    */
-  @PutMapping("/trustmark/{id}")
-  @Operation(summary = "Update trust mark")
-  public ResponseEntity<TrustmarkDto> updateTrustmark(
+  @PutMapping("/trustmark-issuer/{id}")
+  @Operation(summary = "Update trust mark issuer")
+  public ResponseEntity<TrustmarkIssuerDto> updateTrustmarkIssuer(
       @PathVariable("id") final UUID id,
-      @RequestBody final TrustmarkDto body,
+      @RequestBody final TrustmarkIssuerDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    return ResponseEntity.ok(this.moduleConfigService.updateTrustmark(organizationRecord, id, body));
+    return ResponseEntity.ok(this.moduleConfigService.updateTrustmarkIssuer(organizationRecord, id, body));
   }
 
   /**
-   * Gets a trust mark by ID.
+   * Gets a trust mark issuer by ID.
    *
-   * @param id the trust mark ID
+   * @param id the trust mark issuer ID
    * @param organizationRecord the organization record
-   * @return the trust mark
+   * @return the trust mark issuer
    */
-  @GetMapping("/trustmark/{id}")
-  @Operation(summary = "Get trust mark")
-  public ResponseEntity<TrustmarkDto> getTrustmark(
+  @GetMapping("/trustmark-issuer/{id}")
+  @Operation(summary = "Get trust mark issuer")
+  public ResponseEntity<TrustmarkIssuerDto> getTrustmarkIssuer(
       @PathVariable("id") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    return ResponseEntity.ok(this.moduleConfigService.getTrustmark(organizationRecord, id));
+    return ResponseEntity.ok(this.moduleConfigService.getTrustmarkIssuer(organizationRecord, id));
   }
 
   /**
-   * Deletes a trust mark.
+   * Deletes a trust mark issuer.
    *
-   * @param id the trust mark ID
+   * @param id the trust mark issuer ID
    * @param organizationRecord the organization record
    * @return empty response
    */
-  @DeleteMapping("/trustmark/{id}")
-  @Operation(summary = "Delete trust mark")
-  public ResponseEntity<Void> deleteTrustmark(
+  @DeleteMapping("/trustmark-issuer/{id}")
+  @Operation(summary = "Delete trust mark issuer")
+  public ResponseEntity<Void> deleteTrustmarkIssuer(
       @PathVariable("id") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    this.moduleConfigService.deleteTrustmark(organizationRecord, id);
+    this.moduleConfigService.deleteTrustmarkIssuer(organizationRecord, id);
     return ResponseEntity.noContent().build();
   }
 }

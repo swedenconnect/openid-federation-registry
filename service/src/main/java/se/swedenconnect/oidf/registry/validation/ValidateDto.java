@@ -25,6 +25,7 @@ import se.swedenconnect.oidf.registry.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
 import se.swedenconnect.oidf.registry.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.dto.TrustmarkDto;
+import se.swedenconnect.oidf.registry.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.dto.TrustmarkSubjectDto;
 
 /**
@@ -53,16 +54,16 @@ public class ValidateDto {
    */
   public void validate(final FederationEntityDto dto) {
     this.v.required().startsWith("@{entityprefix}").entityid().build()
-        .validate("subject", dto.getSubject());
+        .ifFailThrow("subject", dto.getSubject());
 
     this.v.required().startsWith("@{entityprefix}").entityid().build()
-        .validate("issuer", dto.getIssuer());
+        .ifFailThrow("issuer", dto.getIssuer());
 
     // metadata: json
     if (dto.getMetadata() != null) {
       try {
         final String metadataJson = mapper.writeValueAsString(dto.getMetadata());
-        this.v.json().build().validate("metadata", metadataJson);
+        this.v.json().build().ifFailThrow("metadata", metadataJson);
       }
       catch (final com.fasterxml.jackson.core.JsonProcessingException e) {
         throw new PropertyValidationFailException("metadata", dto.getMetadata().toString(),
@@ -78,16 +79,16 @@ public class ValidateDto {
    */
   public void validate(final HostedEntityDto dto) {
     this.v.required().entityid().build()
-        .validate("subject", dto.getSubject());
+        .ifFailThrow("subject", dto.getSubject());
 
     this.v.required().entityid().build()
-        .validate("issuer", dto.getIssuer());
+        .ifFailThrow("issuer", dto.getIssuer());
 
     // metadata: json
     if (dto.getMetadata() != null) {
       try {
         final String metadataJson = mapper.writeValueAsString(dto.getMetadata());
-        this.v.json().build().validate("metadata", metadataJson);
+        this.v.json().build().ifFailThrow("metadata", metadataJson);
       }
       catch (final com.fasterxml.jackson.core.JsonProcessingException e) {
         throw new PropertyValidationFailException("metadata", dto.getMetadata().toString(),
@@ -102,9 +103,9 @@ public class ValidateDto {
    * @param dto the subordinate entity DTO
    */
   public void validate(final SubordinateEntityDto dto) {
-    this.v.required().entityid().build().validate("subject", dto.getSubject());
-    this.v.required().entityid().build().validate("issuer", dto.getIssuer());
-    this.v.required().jwks().build().validate("jwks", dto.getJwks());
+    this.v.required().entityid().build().ifFailThrow("subject", dto.getSubject());
+    this.v.required().entityid().build().ifFailThrow("issuer", dto.getIssuer());
+    this.v.required().jwks().build().ifFailThrow("jwks", dto.getJwks());
   }
 
   /**
@@ -113,12 +114,12 @@ public class ValidateDto {
    * @param dto the resolver DTO
    */
   public void validate(final ResolverDto dto) {
-    this.v.required().entityid().build().ifFailThrow("entityId", dto.getEntityId());
+    this.v.required().uuid().build().ifFailThrow("entityId", dto.getEntityId());
     this.v.required().build().ifFailThrow("active", dto.getActive());
-    this.v.required().duration().build().validate("resolveResponseDuration", dto.getResolveResponseDuration());
-    this.v.required().entityid().build().validate("trustAnchor", dto.getTrustAnchor());
-    this.v.required().required().jwks().build().validate("trustedKeys", dto.getTrustedKeys());
-    this.v.required().duration().build().validate("stepRetryDuration", dto.getStepRetryDuration());
+    this.v.required().duration().build().ifFailThrow("resolveResponseDuration", dto.getResolveResponseDuration());
+    this.v.required().entityid().build().ifFailThrow("trustAnchor", dto.getTrustAnchor());
+    this.v.required().required().jwks().build().ifFailThrow("trustedKeys", dto.getTrustedKeys());
+    this.v.required().duration().build().ifFailThrow("stepRetryDuration", dto.getStepRetryDuration());
   }
 
   /**
@@ -139,11 +140,11 @@ public class ValidateDto {
    * @param dto the trustmark DTO
    */
   public void validate(final TrustmarkDto dto) {
-    this.v.required().uuid().build().validate("trustmarkissuerId", dto.getTrustmarkissuerId());
-    this.v.required().url().build().validate("trustMarkEntityId", dto.getTrustMarkEntityId());
-    this.v.url().build().validate("logoUri", dto.getLogoUri());
-    this.v.url().build().validate("refUri", dto.getRefUri());
-    this.v.jwt().build().validate("delegation", dto.getDelegation());
+    this.v.required().uuid().build().ifFailThrow("trustmarkissuerId", dto.getTrustmarkissuerId());
+    this.v.required().url().build().ifFailThrow("trustMarkEntityId", dto.getTrustMarkEntityId());
+    this.v.url().build().ifFailThrow("logoUri", dto.getLogoUri());
+    this.v.url().build().ifFailThrow("refUri", dto.getRefUri());
+    this.v.jwt().build().ifFailThrow("delegation", dto.getDelegation());
   }
 
   /**
@@ -152,11 +153,11 @@ public class ValidateDto {
    * @param dto the policy DTO
    */
   public void validate(final PolicyDto dto) {
-    this.v.required().build().validate("name", dto.getName());
+    this.v.required().build().ifFailThrow("name", dto.getName());
     if (dto.getPolicy() != null) {
       try {
         final String policyJson = mapper.writeValueAsString(dto.getPolicy());
-        this.v.required().json().build().validate("policy", policyJson);
+        this.v.required().json().build().ifFailThrow("policy", policyJson);
       }
       catch (final com.fasterxml.jackson.core.JsonProcessingException e) {
         throw new PropertyValidationFailException("policy", dto.getPolicy().toString(),
@@ -171,12 +172,24 @@ public class ValidateDto {
    * @param dto the trustmark subject DTO
    */
   public void validate(final TrustmarkSubjectDto dto) {
-    this.v.required().entityid().build().validate("trustmarkId", dto.getTrustmarkId());
-    this.v.required().entityid().build().validate("subject", dto.getSubject());
+    this.v.required().entityid().build().ifFailThrow("trustmarkId", dto.getTrustmarkId());
+    this.v.required().entityid().build().ifFailThrow("subject", dto.getSubject());
     this.v.required().build().ifFailThrow("revoked", dto.getRevoked());
 
     // granted and expires are LocalDateTime and will be validated by Jackson during deserialization
     // No additional validation needed here
+  }
+
+  /**
+   * Validates TrustmarkIssuerDto.
+   *
+   * @param dto the trustmark issuer DTO
+   */
+  public void validate(final TrustmarkIssuerDto dto) {
+    this.v.required().uuid().build().ifFailThrow("entityId", dto.getEntityId());
+    this.v.required().build().ifFailThrow("active", dto.getActive());
+    this.v.required().duration().build().ifFailThrow("trustMarkTokenValidityDuration",
+        dto.getTrustMarkTokenValidityDuration());
   }
 }
 

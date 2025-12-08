@@ -25,6 +25,7 @@ import se.swedenconnect.oidf.registry.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
 import se.swedenconnect.oidf.registry.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.dto.TrustmarkDto;
+import se.swedenconnect.oidf.registry.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.dto.TrustmarkSubjectDto;
 
 import java.util.UUID;
@@ -334,6 +335,40 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
             .event(RegistryAuditEventType.TRUSTMARK_SUBJECT_DELETED)
             .extId(trustmarkSubjectId.toString())
             .trustMarkId(trustmarkId.toString())
+            .oldData(this.toJson(deletedData))
+            .build());
+  }
+
+  @Override
+  public void trustmarkIssuerCreated(final UUID trustmarkIssuerId, final TrustmarkIssuerDto oldData,
+      final TrustmarkIssuerDto newData) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(RegistryAuditEventType.TRUSTMARK_ISSUER_CREATED)
+            .extId(trustmarkIssuerId.toString())
+            .oldData(this.toJson(oldData))
+            .newData(this.toJson(newData))
+            .build());
+  }
+
+  @Override
+  public void trustmarkIssuerUpdated(final UUID trustmarkIssuerId, final TrustmarkIssuerDto oldData,
+      final TrustmarkIssuerDto newData) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(RegistryAuditEventType.TRUSTMARK_ISSUER_UPDATED)
+            .extId(trustmarkIssuerId.toString())
+            .oldData(this.toJson(oldData))
+            .newData(this.toJson(newData))
+            .build());
+  }
+
+  @Override
+  public void trustmarkIssuerDeleted(final UUID trustmarkIssuerId, final TrustmarkIssuerDto deletedData) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(RegistryAuditEventType.TRUSTMARK_ISSUER_DELETED)
+            .extId(trustmarkIssuerId.toString())
             .oldData(this.toJson(deletedData))
             .build());
   }

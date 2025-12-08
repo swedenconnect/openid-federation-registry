@@ -30,10 +30,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.api.EntitiesApi;
 import se.swedenconnect.oidf.registry.api.ModulesApi;
-import se.swedenconnect.oidf.registry.api.TrustmarkSubjectsApi;
+import se.swedenconnect.oidf.registry.api.TrustmarksApi;
 import se.swedenconnect.oidf.registry.api.model.HostedEntity;
-import se.swedenconnect.oidf.registry.api.model.TrustAnchor;
 import se.swedenconnect.oidf.registry.api.model.Trustmark;
+import se.swedenconnect.oidf.registry.api.model.TrustmarkIssuer;
 import se.swedenconnect.oidf.registry.api.model.TrustmarkSubject;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
 
@@ -63,7 +63,7 @@ class TrustmarkSubjectCRUDIT {
   @Autowired
   private JwtTestUtils jwtTestUtils;
 
-  private TrustmarkSubjectsApi trustmarkSubjectsApi;
+  private TrustmarksApi trustmarksApi;
   private ModulesApi modulesApi;
   private EntitiesApi entitiesApi;
   private ApiClient apiClient;
@@ -77,9 +77,26 @@ class TrustmarkSubjectCRUDIT {
     this.apiClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.PM));
     this.apiClient.setApiKey(JwtTestUtils.OrganisationType.PM.orgId);
 
-    this.trustmarkSubjectsApi = new TrustmarkSubjectsApi(this.apiClient);
+    this.trustmarksApi = new TrustmarksApi(this.apiClient);
     this.modulesApi = new ModulesApi(this.apiClient);
     this.entitiesApi = new EntitiesApi(this.apiClient);
+  }
+
+  /**
+   * Helper method to create a TrustmarkIssuer. This is needed because trustmarks require a TrustmarkIssuer to exist.
+   *
+   * @param entityId the entity ID to associate the trustmark issuer with
+   * @return the created trustmark issuer ID
+   */
+  private UUID createTrustmarkIssuer(final UUID entityId) {
+    final UUID trustmarkIssuerId = UUID.randomUUID();
+    final TrustmarkIssuer issuerInput = new TrustmarkIssuer()
+        .entityId(entityId)
+        .active(true)
+        .trustMarkTokenValidityDuration("PT1H");
+
+    final TrustmarkIssuer createdIssuer = this.modulesApi.createTrustmarkIssuerWithId(trustmarkIssuerId, issuerInput);
+    return createdIssuer.getTrustmarkIssuerId();
   }
 
   private UUID createTrustmark() {
@@ -90,19 +107,15 @@ class TrustmarkSubjectCRUDIT {
         .issuer("http://www.pm.se/oidf/tmi-entity");
     this.entitiesApi.createHostedEntityWithId(entityId, entityInput);
 
-    // Create a trust anchor
-    final UUID taModuleId = UUID.randomUUID();
-    final TrustAnchor taInput = new TrustAnchor()
-        .entityId(entityId)
-        .active(true);
-    this.modulesApi.createTrustAnchorWithId(taModuleId, taInput);
+    // Create a TrustmarkIssuer
+    final UUID trustmarkIssuerId = this.createTrustmarkIssuer(entityId);
 
     // Create a trustmark
     final UUID trustmarkId = UUID.randomUUID();
     final Trustmark trustmarkInput = new Trustmark()
-        .trustmarkissuerId("http://www.pm.se/oidf/tmi-entity")
+        .trustmarkissuerId(trustmarkIssuerId)
         .trustMarkEntityId("http://www.pm.se/oidf/trustmark");
-    this.modulesApi.createTrustmarkWithId(trustmarkId, trustmarkInput);
+    this.trustmarksApi.createTrustmarkWithId(trustmarkId, trustmarkInput);
 
     return trustmarkId;
   }
@@ -119,7 +132,7 @@ class TrustmarkSubjectCRUDIT {
         .expires(OffsetDateTime.parse("2026-01-01T00:00:00"));
 
     // Act
-    final TrustmarkSubject created = this.trustmarkSubjectsApi.createTrustmarkSubject(input);
+    final TrustmarkSubject created = this.trustmarksApi.createTrustmarkSubject(input);
 
     // Assert
     assertThat(created).isNotNull();
@@ -142,7 +155,7 @@ class TrustmarkSubjectCRUDIT {
         .revoked(true);
 
     // Act
-    final TrustmarkSubject created = this.trustmarkSubjectsApi.createTrustmarkSubjectWithId(subjectId, input);
+    final TrustmarkSubject created = this.trustmarksApi.createTrustmarkSubjectWithId(subjectId, input);
 
     // Assert
     assertThat(created).isNotNull();
@@ -160,10 +173,10 @@ class TrustmarkSubjectCRUDIT {
         .trustmarkId(trustmarkId.toString())
         .subject("http://www.pm.se/oidf/subject3")
         .revoked(false);
-    this.trustmarkSubjectsApi.createTrustmarkSubjectWithId(subjectId, input);
+    this.trustmarksApi.createTrustmarkSubjectWithId(subjectId, input);
 
     // Act
-    final TrustmarkSubject retrieved = this.trustmarkSubjectsApi.getTrustmarkSubject(subjectId);
+    final TrustmarkSubject retrieved = this.trustmarksApi.getTrustmarkSubject(subjectId);
 
     // Assert
     assertThat(retrieved).isNotNull();
@@ -178,7 +191,7 @@ class TrustmarkSubjectCRUDIT {
     final UUID nonExistentId = UUID.randomUUID();
 
     // Act & Assert
-    assertThatThrownBy(() -> this.trustmarkSubjectsApi.getTrustmarkSubject(nonExistentId))
+    assertThatThrownBy(() -> this.trustmarksApi.getTrustmarkSubject(nonExistentId))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(exception -> {
           final RestClientResponseException apiException = (RestClientResponseException) exception;
@@ -195,7 +208,7 @@ class TrustmarkSubjectCRUDIT {
         .trustmarkId(trustmarkId.toString())
         .subject("http://www.pm.se/oidf/subject4")
         .revoked(false);
-    this.trustmarkSubjectsApi.createTrustmarkSubjectWithId(subjectId, createInput);
+    this.trustmarksApi.createTrustmarkSubjectWithId(subjectId, createInput);
 
     final TrustmarkSubject updateInput = new TrustmarkSubject()
         .trustmarkId(trustmarkId.toString())
@@ -205,7 +218,7 @@ class TrustmarkSubjectCRUDIT {
         .expires(OffsetDateTime.parse("2026-01-01T00:00:00"));
 
     // Act
-    final TrustmarkSubject updated = this.trustmarkSubjectsApi.updateTrustmarkSubject(subjectId, updateInput);
+    final TrustmarkSubject updated = this.trustmarksApi.updateTrustmarkSubject(subjectId, updateInput);
 
     // Assert
     assertThat(updated).isNotNull();
@@ -215,7 +228,7 @@ class TrustmarkSubjectCRUDIT {
     assertThat(updated.getExpires()).isNotNull();
 
     // Verify by getting again
-    final TrustmarkSubject retrieved = this.trustmarkSubjectsApi.getTrustmarkSubject(subjectId);
+    final TrustmarkSubject retrieved = this.trustmarksApi.getTrustmarkSubject(subjectId);
     assertThat(retrieved.getSubject()).isEqualTo("http://www.pm.se/oidf/subject4-updated");
     assertThat(retrieved.getRevoked()).isTrue();
   }
@@ -229,17 +242,17 @@ class TrustmarkSubjectCRUDIT {
         .trustmarkId(trustmarkId.toString())
         .subject("http://www.pm.se/oidf/subject5")
         .revoked(false);
-    this.trustmarkSubjectsApi.createTrustmarkSubjectWithId(subjectId, input);
+    this.trustmarksApi.createTrustmarkSubjectWithId(subjectId, input);
 
     // Verify it exists
-    final TrustmarkSubject beforeDelete = this.trustmarkSubjectsApi.getTrustmarkSubject(subjectId);
+    final TrustmarkSubject beforeDelete = this.trustmarksApi.getTrustmarkSubject(subjectId);
     assertThat(beforeDelete).isNotNull();
 
     // Act
-    this.trustmarkSubjectsApi.deleteTrustmarkSubject(subjectId);
+    this.trustmarksApi.deleteTrustmarkSubject(subjectId);
 
     // Assert - should not be found
-    assertThatThrownBy(() -> this.trustmarkSubjectsApi.getTrustmarkSubject(subjectId))
+    assertThatThrownBy(() -> this.trustmarksApi.getTrustmarkSubject(subjectId))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(exception -> {
           final RestClientResponseException apiException = (RestClientResponseException) exception;
@@ -259,7 +272,7 @@ class TrustmarkSubjectCRUDIT {
         .expires(OffsetDateTime.parse("2026-01-01T00:00:00"));
 
     // Act
-    final TrustmarkSubject created = this.trustmarkSubjectsApi.createTrustmarkSubject(input);
+    final TrustmarkSubject created = this.trustmarksApi.createTrustmarkSubject(input);
 
     // Assert
     assertThat(created).isNotNull();
@@ -280,17 +293,17 @@ class TrustmarkSubjectCRUDIT {
         .trustmarkId(trustmarkId.toString())
         .subject("http://www.pm.se/oidf/pm-subject")
         .revoked(false);
-    this.trustmarkSubjectsApi.createTrustmarkSubjectWithId(subjectId, input);
+    this.trustmarksApi.createTrustmarkSubjectWithId(subjectId, input);
 
     // Act - Try to access with AF organization
     final ApiClient afApiClient = new ApiClient();
     afApiClient.setBasePath("http://localhost:" + this.port);
     afApiClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.AF));
     afApiClient.setApiKey(JwtTestUtils.OrganisationType.AF.orgId);
-    final TrustmarkSubjectsApi afTrustmarkSubjectsApi = new TrustmarkSubjectsApi(afApiClient);
+    final TrustmarksApi trApi = new TrustmarksApi(afApiClient);
 
     // Assert - Should not be found
-    assertThatThrownBy(() -> afTrustmarkSubjectsApi.getTrustmarkSubject(subjectId))
+    assertThatThrownBy(() -> trApi.getTrustmarkSubject(subjectId))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(exception -> {
           final RestClientResponseException restException = (RestClientResponseException) exception;

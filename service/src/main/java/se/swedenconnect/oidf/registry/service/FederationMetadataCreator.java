@@ -147,14 +147,20 @@ public class FederationMetadataCreator {
 
         });
 
-    entityEntity.getModules()
-        .stream()
-        .filter(moduleEntity -> moduleEntity.isOfType(FkKeyType.RESOLVER))
-        .findFirst()
+    Optional.ofNullable(entityEntity.getTrustmarkIssuer())
+        .ifPresent(moduleEntity -> {
+          federationEntity.federationTrustMarkListEndpoint(String.format("%s/trust_mark_listing", sub));
+          federationEntity.federationTrustMarkEndpoint(String.format("%s/trust_mark", sub));
+          federationEntity.federationTrustMarkStatusEndpoint(String.format("%s/trust_mark_status", sub));
+
+        });
+
+    Optional.ofNullable(entityEntity.getResolver())
         .ifPresent(moduleEntity -> {
           federationEntity.federationResolveEndpoint(String.format("%s/resolve", sub));
           federationEntity.federationDiscoveryEndpoint(String.format("%s/discovery", sub));
         });
+
     return federationEntity.build();
 
   }

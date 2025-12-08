@@ -92,7 +92,10 @@ public class JwtTestUtils {
           "http://registry.swedenconnect.se/modules/write " +
           "http://registry.swedenconnect.se/entity/read " +
           "http://registry.swedenconnect.se/entity/write " +
-          "http://registry.swedenconnect.se/trustmarksubjects/write";
+          "http://registry.swedenconnect.se/trustmarksubjects/write " +
+          "http://registry.swedenconnect.se/trustmarksubjects/read " +
+          "http://registry.swedenconnect.se/trustmarks/read " +
+          "http://registry.swedenconnect.se/trustmarks/write ";
 
       final JWTClaimsSet claims = new com.nimbusds.jwt.JWTClaimsSet.Builder()
           .subject("test-user")

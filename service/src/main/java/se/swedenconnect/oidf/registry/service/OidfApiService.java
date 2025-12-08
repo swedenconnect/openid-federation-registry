@@ -28,8 +28,11 @@ import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.entity.InstanceEntity;
 import se.swedenconnect.oidf.registry.entity.ModuleEntity;
+import se.swedenconnect.oidf.registry.entity.ResolverEntity;
+import se.swedenconnect.oidf.registry.entity.TrustmarkIssuerEntity;
 import se.swedenconnect.oidf.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.registry.repository.PolicyRepository;
+import se.swedenconnect.oidf.registry.repository.ResolverRepository;
 
 import java.time.Duration;
 import java.util.Date;
@@ -37,9 +40,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static se.swedenconnect.oidf.registry.entity.FkKeyType.INTERMEDIATE;
-import static se.swedenconnect.oidf.registry.entity.FkKeyType.RESOLVER;
 import static se.swedenconnect.oidf.registry.entity.FkKeyType.TRUSTANCHOR;
-import static se.swedenconnect.oidf.registry.entity.FkKeyType.TRUSTMARKISSUER;
 
 /**
  * Service to collect data to federation services
@@ -64,6 +65,7 @@ public class OidfApiService {
 
   private final PolicyRepository policyRepository;
   private final InstanceRepository instanceRepository;
+  private final ResolverRepository resolverRepository;
   private final String jwkIssuer;
   private final Duration jwkExpiryDuration;
   private final JWTSupport jwtSupport;
@@ -75,6 +77,7 @@ public class OidfApiService {
    * @param signKey the JSON Web Key (JWK) used for signing operations
    * @param policyRepository the repository for managing policy records
    * @param instanceRepository the repository for managing instances
+   * @param resolverRepository the repository for managing resolvers
    * @param jwkIssuer the issuer associated with the JSON Web Key (JWK)
    * @param jwkExpiryDuration jwkExpiryDuration
    */
@@ -83,10 +86,12 @@ public class OidfApiService {
       final PolicyRepository policyRepository,
       final String jwkIssuer,
       final InstanceRepository instanceRepository,
+      final ResolverRepository resolverRepository,
       final Duration jwkExpiryDuration) {
     this.policyRepository = policyRepository;
     this.jwkIssuer = jwkIssuer;
     this.instanceRepository = instanceRepository;
+    this.resolverRepository = resolverRepository;
     this.jwkExpiryDuration = jwkExpiryDuration;
     this.jwtSupport = new JWTSupport(signKey);
   }
@@ -147,8 +152,12 @@ public class OidfApiService {
         .flatMap(organizationEntity -> organizationEntity.getModule().stream())
         .toList();
 
-    final List<OidfServiceSubModules.TrustMarkIssuer> tmi = moduleEntities.stream()
-        .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(TRUSTMARKISSUER))
+    final List<EntityEntity> entities = instanceEntity.getOrganizations().stream()
+        .flatMap(organizationEntity -> organizationEntity.getEntities().stream())
+        .toList();
+
+    final List<OidfServiceSubModules.TrustMarkIssuer> tmi = entities.stream()
+        .map(EntityEntity::getTrustmarkIssuer)
         .map(this::toTrustMarkIssuer)
         .toList();
     subModules.trustMarkIssuers(tmi);
@@ -160,11 +169,11 @@ public class OidfApiService {
         .toList();
     subModules.trustAnchors(taIm);
 
-    final List<OidfServiceSubModules.Resolver> res = moduleEntities.stream()
-        .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(RESOLVER))
+    final List<OidfServiceSubModules.Resolver> resolverEntities = entities.stream()
+        .map(EntityEntity::getResolver)
         .map(this::toResolver)
         .toList();
-    subModules.resolvers(res);
+    subModules.resolvers(resolverEntities);
 
     return subModules.build();
 
@@ -224,26 +233,26 @@ public class OidfApiService {
         .build();
   }
 
-  private OidfServiceSubModules.Resolver toResolver(final ModuleEntity resolverModuleEntity) {
-    if (resolverModuleEntity.getActive() == null || !resolverModuleEntity.getActive()) {
+  private OidfServiceSubModules.Resolver toResolver(final ResolverEntity resolverEntity) {
+    if (resolverEntity.getActive() == null || !resolverEntity.getActive()) {
       return OidfServiceSubModules.Resolver.builder().build();
     }
 
     return OidfServiceSubModules.Resolver.builder()
-        .entityIdentifier(resolverModuleEntity.getEntity().getSubject())
-        .resolveResponseDuration(resolverModuleEntity.getResolveResponseDuration())
-        .trustAnchors(resolverModuleEntity.getTrustAnchor() != null
-            ? resolverModuleEntity.getTrustAnchor()
+        .entityIdentifier(resolverEntity.getEntity().getSubject())
+        .resolveResponseDuration(resolverEntity.getResolveResponseDuration())
+        .trustAnchors(resolverEntity.getTrustAnchor() != null
+            ? resolverEntity.getTrustAnchor()
             : null)
-        .trustedKeys(resolverModuleEntity.getTrustedKeys() != null
-            ? resolverModuleEntity.getTrustedKeys()
+        .trustedKeys(resolverEntity.getTrustedKeys() != null
+            ? resolverEntity.getTrustedKeys()
             : null)
-        .stepRetryTime(resolverModuleEntity.getStepRetryDuration())
+        .stepRetryTime(resolverEntity.getStepRetryDuration())
         .stepCachedValueThreshold(null) // This field is not stored in columns yet
         .build();
   }
 
-  private OidfServiceSubModules.TrustMarkIssuer toTrustMarkIssuer(final ModuleEntity tmiModuleEntity) {
+  private OidfServiceSubModules.TrustMarkIssuer toTrustMarkIssuer(final TrustmarkIssuerEntity tmiModuleEntity) {
     if (tmiModuleEntity.getActive() == null || !tmiModuleEntity.getActive()) {
       return OidfServiceSubModules.TrustMarkIssuer.builder().build();
     }

@@ -59,9 +59,6 @@ public class ModuleEntity extends BaseEntity {
   @JoinColumn(name = "organization_id", nullable = false)
   private OrganizationEntity organization;
 
-  @OneToMany(mappedBy = "module", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-  private List<TrustMarkEntity> trustmarks;
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "entity_id", nullable = false)
   private EntityEntity entity;
@@ -71,23 +68,10 @@ public class ModuleEntity extends BaseEntity {
   @Column(name = "active")
   private Boolean active;
 
-  @Column(name = "resolve_response_duration")
-  private String resolveResponseDuration;
-
-  @Column(name = "trust_anchor")
-  private String trustAnchor;
-
-  @Column(name = "trusted_keys", columnDefinition = "TEXT")
-  private String trustedKeys;
-
-  @Column(name = "step_retry_duration")
-  private String stepRetryDuration;
 
   @Column(name = "trust_mark_issuers", columnDefinition = "JSON")
   private String trustMarkIssuers;
 
-  @Column(name = "trust_mark_token_validity_duration")
-  private String trustMarkTokenValidityDuration;
 
   /**
    * Determines whether the module is of the specified types. Compares the module's type against the provided array of

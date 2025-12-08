@@ -43,10 +43,6 @@ public class FederationAPIOperations {
     this.restTemplate = restTemplate;
   }
 
-  public SignedJWT callTrustMark(UUID instanceId) throws ParseException {
-    return getSignedJWT("trustmarks_record", instanceId);
-  }
-
   public SignedJWT callSubmodule(UUID instanceId) throws ParseException {
     return getSignedJWT("submodules", instanceId);
   }

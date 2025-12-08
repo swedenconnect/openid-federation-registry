@@ -41,10 +41,11 @@ public interface TrustMarkSubjectRepository extends JpaRepository<TrustMarkSubje
    * @param orgNumber the organization number
    * @return a list of TrustMarkSubjectEntity
    */
-  @Query("SELECT t FROM TrustMarkSubjectEntity t "
-        + "JOIN t.trustMark tm "
-        + "JOIN tm.module m "
-        + "JOIN m.organization o "
+  @Query("SELECT ts FROM TrustMarkSubjectEntity ts "
+      + "JOIN ts.trustMark tm "
+      + "JOIN tm.trustmarkIssuer tmi "
+      + "JOIN tmi.entity e "
+      + "JOIN e.organization o "
         + "WHERE o.orgNumber = :orgNumber")
   List<TrustMarkSubjectEntity> findByOrgNumber(@Param("orgNumber") String orgNumber);
 
@@ -57,9 +58,10 @@ public interface TrustMarkSubjectRepository extends JpaRepository<TrustMarkSubje
    * @return an {@link Optional} containing the {@link TrustMarkEntity} if found, otherwise empty
    */
   @Query("SELECT ts FROM TrustMarkSubjectEntity ts "
-      + "JOIN ts.trustMark t "
-      + "JOIN t.module m "
-      + "JOIN m.organization o "
+      + "JOIN ts.trustMark tm "
+      + "JOIN tm.trustmarkIssuer tmi "
+      + "JOIN tmi.entity e "
+      + "JOIN e.organization o "
       + "WHERE o.orgNumber = :orgNumber AND ts.trustmarksubjectId = :id")
   Optional<TrustMarkSubjectEntity> findByOrgNumberAndTrustmarkId(@Param("orgNumber") String orgNumber,
       @Param("id") UUID trustmarksubjectId);
