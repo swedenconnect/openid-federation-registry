@@ -77,12 +77,12 @@ public class OptionsCRUDTrustMarkSubject extends BaseOptionsCRUD {
   @Override
   public OptionsRecord create(final OrganizationRecord organizationRecord,
       final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
-    final Optional<TrustMarkSubjectEntity> trustMarkEntity =
+    final Optional<TrustMarkSubjectEntity> entity =
         this.trustMarkSubjectRepository.findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), id);
 
-    if (trustMarkEntity.isPresent()) {
+    if (entity.isPresent()) {
       throw new RegistryServerException(CONFLICT,
-          "TrustMark already exists for:%s %s".formatted(fkKeyType, id));
+          "TrustMark Subject already exists for:%s %s".formatted(fkKeyType, id));
     }
 
     final List<SettingsEntity> template = this.getTemplateSettings(organizationRecord, fkKeyType);
@@ -130,8 +130,8 @@ public class OptionsCRUDTrustMarkSubject extends BaseOptionsCRUD {
 
     final List<SettingsEntity> validatedInData =
         this.createAndValidateInputData(organizationRecord, template, Objects.requireNonNull(record.getOption()));
-    super.deleteSettings(fkKeyType, entity.getTrustmarkId().toString());
-    super.insertSettings(fkKeyType, entity.getTrustmarkId().toString(), validatedInData);
+    super.deleteSettings(fkKeyType, entity.getTrustmarksubjectId().toString());
+    super.insertSettings(fkKeyType, entity.getTrustmarksubjectId().toString(), validatedInData);
 
     this.trustMarkSubjectRepository.saveAndFlush(entity);
     return this.toRecord(validatedInData);
@@ -182,14 +182,17 @@ public class OptionsCRUDTrustMarkSubject extends BaseOptionsCRUD {
   @Override
   @Transactional
   public OptionsRecord delete(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType, final UUID id) {
-    final TrustMarkSubjectEntity trustMarkEntity = this.trustMarkSubjectRepository
+    final TrustMarkSubjectEntity entity = this.trustMarkSubjectRepository
         .findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), id)
         .orElseThrow(() -> new RegistryServerException(NOT_FOUND,
             "No data found for:%s %s".formatted(fkKeyType, id)));
+
     final List<SettingsEntity> deletedSettings =
-        super.deleteSettings(fkKeyType, trustMarkEntity.getTrustmarkId().toString());
-    this.trustMarkSubjectRepository.delete(trustMarkEntity);
+        super.deleteSettings(fkKeyType, entity.getTrustmarksubjectId().toString());
+
+    this.trustMarkSubjectRepository.delete(entity);
     this.trustMarkSubjectRepository.flush();
+
     return this.toRecord(deletedSettings);
   }
 
