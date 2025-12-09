@@ -16,16 +16,18 @@
 
 package se.swedenconnect.oidf.registry.service;
 
+import com.nimbusds.jose.jwk.JWKSet;
 import lombok.extern.slf4j.Slf4j;
-import se.swedenconnect.oidf.registry.domain.Entity;
-import se.swedenconnect.oidf.registry.domain.EntityToDomain;
-import se.swedenconnect.oidf.registry.domain.FederationEntity;
-import se.swedenconnect.oidf.registry.domain.HostedEntity;
-import se.swedenconnect.oidf.registry.domain.SubordinateEntity;
+import se.swedenconnect.oidf.registry.dto.EntityToDto;
+import se.swedenconnect.oidf.registry.dto.FederationEntityDto;
+import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.dto.OidfServiceHostedEntitys;
+import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
+import se.swedenconnect.oidf.registry.entity.EntityKeyType;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,30 +64,45 @@ public class FederationMetadataCreator {
 
     Optional.ofNullable(entityEntity.getPolicyEntity())
         .ifPresent(policyEntity -> {
-
-          entityData.policyRecord()
+          entityData.policyRecord(EntityToDto.toDto(policyEntity).getPolicy());
         });
-    entityData.policyRecord(EntityToDomain.map(entityEntity.getPolicyEntity()).getPolicy());
 
-    final Entity entity = EntityToDomain.map(entityEntity);
+    final EntityKeyType entityType = entityEntity.getEntityType();
 
-    entityData.subject(entity.getSubject().toString())
-        .issuer(entity.getIssuer().toString());
-
-    if (entity instanceof HostedEntity hostedEntity) {
+    if (entityType == EntityKeyType.HOSTED_ENTITY) {
+      final HostedEntityDto dto = EntityToDto.toDtoHosted(entityEntity);
+      entityData.subject(dto.getSubject())
+          .issuer(dto.getIssuer());
       entityData.overrideConfigurationLocation("https://www.swedenconnect.se/test_ec_location");
       entityData.crit(List.of("ec_location"));
       //entityData.metadataPolicyCrit()
       return entityData;
     }
 
-    if (entity instanceof SubordinateEntity subordinateEntity) {
-      entityData.jwks(subordinateEntity.getJwks().toJSONObject());
+    if (entityType == EntityKeyType.SUBORDINATE_ENTITY) {
+      final SubordinateEntityDto dto = EntityToDto.toDtoSubordinate(entityEntity);
+      entityData.subject(dto.getSubject())
+          .issuer(dto.getIssuer());
+      if (dto.getJwks() != null && !dto.getJwks().isBlank()) {
+        try {
+          final JWKSet jwkSet = JWKSet.parse(dto.getJwks());
+          entityData.jwks(jwkSet.toJSONObject());
+        }
+        catch (final ParseException e) {
+          throw new IllegalArgumentException("Failed to parse JWKS", e);
+        }
+      }
       return entityData;
     }
 
-    if (entity instanceof FederationEntity federationEntity) {
-      final Map<String, Object> federationEntityData = new HashMap<>(federationEntity.getMetadata());
+    if (entityType == EntityKeyType.FEDERATION_ENTITY) {
+      final FederationEntityDto dto = EntityToDto.toDto(entityEntity);
+      entityData.subject(dto.getSubject())
+          .issuer(dto.getIssuer());
+      final Map<String, Object> federationEntityData = new HashMap<>();
+      if (dto.getMetadata() != null) {
+        federationEntityData.putAll(dto.getMetadata());
+      }
       federationEntityData.put("federation_entity", this.createFederationMetadata(entityEntity));
 
       entityData.hostedRecord(OidfServiceHostedEntitys
