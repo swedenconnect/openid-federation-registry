@@ -16,15 +16,12 @@
 
 package se.swedenconnect.oidf.registry.service;
 
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
-import se.swedenconnect.oidf.registry.errorhandling.ErrorTypes;
-import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -104,17 +101,11 @@ public class OptionsCRUDSelector implements OptionsCRUD {
   @Override
   @Transactional
   public OptionsRecord delete(final OrganizationRecord organizationRecord,
-      final FkKeyType fkKeyType, final UUID id) {
+                              final FkKeyType fkKeyType, final UUID id) {
 
-    try {
-      final OptionsRecord deletedRecord = this.getOptionsCRUD(fkKeyType).delete(organizationRecord, fkKeyType, id);
-      this.registryAuditService.optionsDelete(id, fkKeyType, deletedRecord);
-      return deletedRecord;
-    }
-    catch (final DataIntegrityViolationException e) {
-      throw new RegistryServerException(ErrorTypes.PARENT_HAS_CHILDREN,
-          "Unable to delete entity, remove children first", e);
-    }
+    final OptionsRecord deletedRecord = this.getOptionsCRUD(fkKeyType).delete(organizationRecord, fkKeyType, id);
+    this.registryAuditService.optionsDelete(id, fkKeyType, deletedRecord);
+    return deletedRecord;
   }
 
   @Override

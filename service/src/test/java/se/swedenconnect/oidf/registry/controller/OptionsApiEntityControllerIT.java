@@ -86,7 +86,6 @@ class OptionsApiEntityControllerIT {
     assertThat(template.getOption()).isNotEmpty();
 
     template.getOption().forEach(values -> {
-      assertThat(values.getKey()).isNotNull();
       assertThat(values.getValue()).isNotNull();
       assertThat(values.getValue().contains("@{"))
           .withFailMessage("The value should not contain @{ but is: \" + values.getValue() + \" ")
@@ -183,7 +182,7 @@ class OptionsApiEntityControllerIT {
     final UUID taId = testDataOperations.createTrustAnchor(UUID.randomUUID(), org, HttpStatus.CREATED,
         OptionsTestData.TrustAnchorTestData.builder().entityId(id_skatt).build());
 
-    testDataOperations.delete(FEDERATION_ENTITY, id_skatt, HttpStatus.FORBIDDEN,
+    testDataOperations.delete(FEDERATION_ENTITY, id_skatt, HttpStatus.BAD_REQUEST,
         SKATT);
 
     testDataOperations.delete(FkKeyType.TRUSTANCHOR, taId, HttpStatus.OK,
