@@ -18,14 +18,14 @@ package se.swedenconnect.oidf.registry.audit;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import se.swedenconnect.oidf.registry.api.dto.FederationEntityDto;
-import se.swedenconnect.oidf.registry.api.dto.HostedEntityDto;
-import se.swedenconnect.oidf.registry.api.dto.PolicyDto;
-import se.swedenconnect.oidf.registry.api.dto.ResolverDto;
-import se.swedenconnect.oidf.registry.api.dto.SubordinateEntityDto;
-import se.swedenconnect.oidf.registry.api.dto.TrustAnchorDto;
-import se.swedenconnect.oidf.registry.api.dto.TrustmarkDto;
-import se.swedenconnect.oidf.registry.api.dto.TrustmarkSubjectDto;
+import se.swedenconnect.oidf.registry.dto.FederationEntityDto;
+import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
+import se.swedenconnect.oidf.registry.dto.PolicyDto;
+import se.swedenconnect.oidf.registry.dto.ResolverDto;
+import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
+import se.swedenconnect.oidf.registry.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.dto.TrustmarkDto;
+import se.swedenconnect.oidf.registry.dto.TrustmarkSubjectDto;
 
 import java.util.UUID;
 

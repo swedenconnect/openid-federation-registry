@@ -17,12 +17,12 @@
 package se.swedenconnect.oidf.registry.service;
 
 import lombok.extern.slf4j.Slf4j;
-import se.swedenconnect.oidf.registry.api.dto.OidfServiceHostedEntitys;
 import se.swedenconnect.oidf.registry.domain.Entity;
 import se.swedenconnect.oidf.registry.domain.EntityToDomain;
 import se.swedenconnect.oidf.registry.domain.FederationEntity;
 import se.swedenconnect.oidf.registry.domain.HostedEntity;
 import se.swedenconnect.oidf.registry.domain.SubordinateEntity;
+import se.swedenconnect.oidf.registry.dto.OidfServiceHostedEntitys;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 
@@ -60,6 +60,11 @@ public class FederationMetadataCreator {
 
     final OidfServiceHostedEntitys.Record.RecordBuilder entityData = OidfServiceHostedEntitys.Record.builder();
 
+    Optional.ofNullable(entityEntity.getPolicyEntity())
+        .ifPresent(policyEntity -> {
+
+          entityData.policyRecord()
+        });
     entityData.policyRecord(EntityToDomain.map(entityEntity.getPolicyEntity()).getPolicy());
 
     final Entity entity = EntityToDomain.map(entityEntity);

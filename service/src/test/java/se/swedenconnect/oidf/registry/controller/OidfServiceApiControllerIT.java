@@ -20,24 +20,26 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.config.RegistryProperties;
 import se.swedenconnect.oidf.registry.federationserviceapi.ModuleResponse;
 import se.swedenconnect.oidf.registry.federationserviceapi.ResolverModuleResponse;
 import se.swedenconnect.oidf.registry.federationserviceapi.TrustAnchorModuleResponse;
 import se.swedenconnect.oidf.registry.federationserviceapi.TrustMarkIssuerModuleResponse;
 import se.swedenconnect.oidf.registry.federationserviceapi.records.EntityRecord;
-import se.swedenconnect.oidf.registry.fixture.*;
 import se.swedenconnect.oidf.registry.fixture.FederationAPIOperations;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
 import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
+import se.swedenconnect.oidf.registry.fixture.UseMariaDBContainer;
 
 import java.text.ParseException;
 import java.util.List;
@@ -45,7 +47,9 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Integration test for the OIDF Federation Service API
@@ -59,87 +63,35 @@ class OidfServiceApiControllerIT {
 
   @Autowired
   private TestRestTemplate restTemplate;
-
+  @LocalServerPort
+  private int port;
   @Autowired
   private RegistryProperties registryProperties;
 
   @Autowired
   private TestDataOperations testDataOperations;
-
+  @Autowired
+  private JwtTestUtils jwtTestUtils;
   @Autowired
   private FederationAPIOperations federationAPIOperations;
 
-  private @NotNull UUID setupTestData() throws JsonProcessingException {
-    final JwtTestUtils.OrganisationType org = JwtTestUtils.OrganisationType.PM;
-/*
-    final UUID policyId = testDataOperations.createPolicies(org);
+  final UUID instanceId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
 
-    final UUID entityId = testDataOperations.createHostedEntity(UUID.randomUUID(),
-        org,
-        HttpStatus.CREATED,
-        OptionsTestData.HostedEntityTestData.create(org)
-            .policyId(policyId)
-            .issuer(org.domainPrefix)
-            .subject(org.domainPrefix)
-            .build());
+  @BeforeEach
+  void setUp() {
+    final ApiClient apiClient = new ApiClient();
+    apiClient.setBasePath("http://localhost:" + this.port);
 
-    final UUID entityId2 = testDataOperations.createHostedEntity(UUID.randomUUID(),
-        org,
-        HttpStatus.CREATED,
-        OptionsTestData.HostedEntityTestData.create(org)
-            .issuer(org.domainPrefix)
-            .subject(org.domainPrefix)
-            .metadata("""
-                {
-                  "relying_party":{
-                    "key1":"value1",
-                    "key2":"value2"
-                  }  
-                
-                }""")
-            .build());
+    // Configure authentication
+    apiClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.PM));
+    apiClient.setApiKey(JwtTestUtils.OrganisationType.PM.orgId);
+    testDataOperations.createTestScenarioWithPolicyAndEntities(apiClient, "http://localhost:" + this.port);
 
-    final UUID tmiId1 = testDataOperations.createTMI(UUID.randomUUID(),
-        org,
-        HttpStatus.CREATED,
-        TestDataOperations.defaultTrustMarkIssuer(entityId));
-
-    final UUID resolverId = testDataOperations.createResolver(UUID.randomUUID(),
-        org,
-        HttpStatus.CREATED,
-        TestDataOperations.defaultResolver(entityId));
-
-    final UUID trustanchor = testDataOperations.createTrustAnchor(UUID.randomUUID(),
-        org,
-        HttpStatus.CREATED,
-        OptionsTestData.TrustAnchorTestData.builder().entityId(entityId).build());
-
-    final UUID trustmarkId = testDataOperations.createTrustMark(
-        UUID.randomUUID(),
-        org,
-        HttpStatus.CREATED,
-        TestDataOperations.defaultTrustMark(tmiId1));
-
-    testDataOperations.createTrustMarkSubject(UUID.randomUUID(),
-        org,
-        HttpStatus.CREATED,
-        TestDataOperations.defaultTrustMarkSubject(trustmarkId));
-
-    testDataOperations.createSubordinateEntity(UUID.randomUUID(),
-        org,
-        HttpStatus.CREATED,
-        OptionsTestData.SubordinateEntityTestData.builder()
-            .build());
-*/
-    return registryProperties.instances().stream().findFirst()
-        .map(instanceProperties -> instanceProperties.instanceId().toString())
-        .map(UUID::fromString).orElseThrow();
   }
 
   @Test
   @DisplayName( "Entity record endpoint - should return a JWT with the expected structure")
   void entityRecordSuccess() throws ParseException, JsonProcessingException {
-    final UUID instanceId = setupTestData();
 
     final SignedJWT signedJWT = federationAPIOperations.callEntity(instanceId);
 
@@ -164,7 +116,6 @@ class OidfServiceApiControllerIT {
   @DisplayName( "Submodule record endpoint - should return a JWT with the expected structure")
   void submoduleRecordSuccess() throws ParseException, JsonProcessingException {
 
-    final UUID instanceId = setupTestData();
     final SignedJWT signedJWT = this.federationAPIOperations.callSubmodule(instanceId);
 
     assertEquals(new JOSEObjectType("module-records+jwt"), signedJWT.getHeader().getType());

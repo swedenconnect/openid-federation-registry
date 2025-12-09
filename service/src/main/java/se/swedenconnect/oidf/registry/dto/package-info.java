@@ -19,4 +19,4 @@
  *
  * @author Per Fredrik Plars
  */
-package se.swedenconnect.oidf.registry.api.dto;
+package se.swedenconnect.oidf.registry.dto;

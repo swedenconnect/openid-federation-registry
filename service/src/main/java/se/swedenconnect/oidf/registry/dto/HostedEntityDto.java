@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.registry.api.dto;
+package se.swedenconnect.oidf.registry.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
- * DTO for Subordinate Entity. Used for both input (create/update) and output (get).
+ * DTO for Hosted Entity. Used for both input (create/update) and output (get).
  * The entityId field is read-only and will be ignored when deserializing from JSON input.
  *
  * @author Per Fredrik Plars
  */
 @Data
-@Schema(name = "SubordinateEntity")
-public class SubordinateEntityDto {
+@Schema(name = "HostedEntity")
+public class HostedEntityDto {
 
   @Schema(description = "Entity ID", accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
@@ -41,7 +42,7 @@ public class SubordinateEntityDto {
   @Schema(description = "Issuer (entity identifier)")
   private String issuer;
 
-  @Schema(description = "JWKS as JSON string")
-  private String jwks;
+  @Schema(description = "Metadata for hosted entity")
+  private Map<String, Object> metadata;
 }
 

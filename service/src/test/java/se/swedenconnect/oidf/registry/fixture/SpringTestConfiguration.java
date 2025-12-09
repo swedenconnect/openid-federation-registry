@@ -16,7 +16,6 @@
 
 package se.swedenconnect.oidf.registry.fixture;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.client.RestTemplateCustomizer;
 import org.springframework.context.annotation.Bean;
@@ -42,8 +41,8 @@ public class SpringTestConfiguration {
   }
 
   @Bean
-  TestDataOperations testDataOperations(final TestRestTemplate restTemplate, final ObjectMapper objectMapper) {
-    return new TestDataOperations(restTemplate, objectMapper);
+  TestDataOperations testDataOperations() {
+    return new TestDataOperations();
   }
 
   @Bean

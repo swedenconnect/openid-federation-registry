@@ -29,10 +29,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import se.swedenconnect.oidf.registry.api.dto.TrustmarkSubjectDto;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.dto.TrustmarkSubjectDto;
 import se.swedenconnect.oidf.registry.service.TrustmarkSubjectService;
-import se.swedenconnect.oidf.registry.validation.ValidateDto;
 
 import java.util.UUID;
 
@@ -61,7 +60,6 @@ public class TrustmarkSubjectController {
   public ResponseEntity<TrustmarkSubjectDto> createTrustmarkSubject(
       @RequestBody final TrustmarkSubjectDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    new ValidateDto(organizationRecord).validate(body);
     final UUID id = UUID.randomUUID();
     return ResponseEntity.ok(this.trustmarkSubjectService.createTrustmarkSubject(organizationRecord, id, body));
   }
@@ -80,7 +78,6 @@ public class TrustmarkSubjectController {
       @PathVariable("id") final UUID id,
       @RequestBody final TrustmarkSubjectDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.trustmarkSubjectService.createTrustmarkSubject(organizationRecord, id, body));
   }
 
@@ -98,7 +95,6 @@ public class TrustmarkSubjectController {
       @PathVariable("id") final UUID id,
       @RequestBody final TrustmarkSubjectDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    new ValidateDto(organizationRecord).validate(body);
     return ResponseEntity.ok(this.trustmarkSubjectService.updateTrustmarkSubject(organizationRecord, id, body));
   }
 

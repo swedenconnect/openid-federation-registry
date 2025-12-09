@@ -16,10 +16,10 @@
 
 package se.swedenconnect.oidf.registry.service;
 
-import se.swedenconnect.oidf.registry.api.dto.ResolverDto;
-import se.swedenconnect.oidf.registry.api.dto.TrustAnchorDto;
-import se.swedenconnect.oidf.registry.api.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.dto.ResolverDto;
+import se.swedenconnect.oidf.registry.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.dto.TrustmarkDto;
 
 import java.util.UUID;
 

@@ -48,6 +48,24 @@ public interface PropertyValidator {
    */
   default Optional<PropertyValidationFailException> eval(String key, Object value) {
     try {
+      ifFailThrow(key, value);
+    }
+    catch (PropertyValidationFailException e) {
+      return Optional.of(e);
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Validates a property based on its key and value. If the value is a list, each element of the list is validated
+   * individually. If the list is empty, the validation is performed with a null value. If the value is not a list, it
+   * is validated directly.
+   *
+   * @param key the property key to be validated
+   * @param value the property value to be validated, which can be a single object or a list of objects
+   * @throws PropertyValidationFailException if the validation for any property fails
+   */
+  default void ifFailThrow(String key, Object value) {
       if (value instanceof final List<?> values) {
         for (int i = 0; i < values.size(); i++) {
           this.validate(key + "[" + i + "]", values.get(i) == null ? null : values.get(i).toString());
@@ -59,10 +77,5 @@ public interface PropertyValidator {
       else {
         this.validate(key, value == null ? null : value.toString());
       }
-    }
-    catch (PropertyValidationFailException e) {
-      return Optional.of(e);
-    }
-    return Optional.empty();
   }
 }

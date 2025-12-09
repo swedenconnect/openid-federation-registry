@@ -1574,7 +1574,8 @@
           },
           "entityId": {
             "type": "string",
-            "description": "Entity identifier for this trust anchor"
+            "format": "uuid",
+            "description": "Entity identifier that this trust anchor belongs to. "
           },
           "active": {
             "type": "boolean",
@@ -1600,7 +1601,8 @@
           },
           "entityId": {
             "type": "string",
-            "description": "Entity identifier for this resolver"
+            "format": "uuid",
+            "description": "Entity identifier that this module belongs to"
           },
           "active": {
             "type": "boolean",
@@ -1612,11 +1614,11 @@
           },
           "trustAnchor": {
             "type": "string",
-            "description": "Trust anchor entity identifier"
+            "description": "Trust anchor entityId that this resolver is connected to"
           },
           "trustedKeys": {
             "type": "string",
-            "description": "Trusted keys as JWKS JSON"
+            "description": "Trusted keys as JWKS JSON of the trust anchor"
           },
           "stepRetryDuration": {
             "type": "string",
@@ -1644,6 +1646,11 @@
           "jwks": {
             "type": "string",
             "description": "JWKS as JSON string"
+          },
+          "policyId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Pointer to the policy used for this subordinate"
           }
         }
       },

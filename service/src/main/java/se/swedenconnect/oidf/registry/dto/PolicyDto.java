@@ -13,41 +13,35 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.registry.api.dto;
+package se.swedenconnect.oidf.registry.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
- * DTO for trust mark configuration. Used for both input (create/update) and output (get).
- * The trustmarkId field is read-only and will be ignored when deserializing from JSON input.
+ * DTO for policy configuration. Used for both input (create/update) and output (get).
+ * The policyId field is read-only and will be ignored when deserializing from JSON input.
  *
  * @author Per Fredrik Plars
  */
 @Data
-@Schema(name = "Trustmark")
-public class TrustmarkDto {
+@Schema(name = "Policy")
+public class PolicyDto {
 
-  @Schema(description = "Trustmark ID", accessMode = Schema.AccessMode.READ_ONLY)
+  @Schema(description = "Policy ID", accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private UUID trustmarkId;
+  private UUID policyId;
 
-  @Schema(description = "Trust mark issuer entity identifier")
-  private String trustmarkissuerId;
+  @Schema(description = "Policy name", example = "Default OIDC RP policy")
+  private String name;
 
-  @Schema(description = "Trust mark entity identifier")
-  private String trustMarkEntityId;
+  @Schema(description = "JSON policy document")
+  private Map<String, Object> policy;
 
-  @Schema(description = "Logo URI")
-  private String logoUri;
-
-  @Schema(description = "Reference URI")
-  private String refUri;
-
-  @Schema(description = "Delegation JWT")
-  private String delegation;
 }
+
 

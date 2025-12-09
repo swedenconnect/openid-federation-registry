@@ -93,7 +93,7 @@ class TrustmarkSubjectCRUDIT {
     // Create a trust anchor
     final UUID taModuleId = UUID.randomUUID();
     final TrustAnchor taInput = new TrustAnchor()
-        .entityId("http://www.pm.se/oidf/tmi-entity")
+        .entityId(entityId)
         .active(true);
     this.modulesApi.createTrustAnchorWithId(taModuleId, taInput);
 

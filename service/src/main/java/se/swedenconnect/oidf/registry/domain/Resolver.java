@@ -26,6 +26,7 @@ import lombok.Setter;
 
 import java.io.Serializable;
 import java.time.Duration;
+import java.util.UUID;
 
 /**
  * Represents a resolver module that is connected to an entity
@@ -43,7 +44,7 @@ public class Resolver implements FederationModule, Serializable, ToJson {
   private java.util.UUID moduleId;
 
   /** Entity config */
-  private EntityID entityId;
+  private UUID entityId;
 
   /** If this module instance should be active or not */
   @Builder.Default

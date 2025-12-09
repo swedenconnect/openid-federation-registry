@@ -16,10 +16,10 @@
 
 package se.swedenconnect.oidf.registry.service;
 
-import se.swedenconnect.oidf.registry.api.dto.FederationEntityDto;
-import se.swedenconnect.oidf.registry.api.dto.HostedEntityDto;
-import se.swedenconnect.oidf.registry.api.dto.SubordinateEntityDto;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.dto.FederationEntityDto;
+import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
+import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
 
 import java.util.UUID;
 

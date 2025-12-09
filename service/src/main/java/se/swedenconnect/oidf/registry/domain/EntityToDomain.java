@@ -22,20 +22,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
-import se.swedenconnect.oidf.registry.api.dto.FederationEntityDto;
-import se.swedenconnect.oidf.registry.api.dto.HostedEntityDto;
-import se.swedenconnect.oidf.registry.api.dto.PolicyDto;
-import se.swedenconnect.oidf.registry.api.dto.ResolverDto;
-import se.swedenconnect.oidf.registry.api.dto.SubordinateEntityDto;
-import se.swedenconnect.oidf.registry.api.dto.TrustAnchorDto;
-import se.swedenconnect.oidf.registry.api.dto.TrustmarkDto;
-import se.swedenconnect.oidf.registry.api.dto.TrustmarkSubjectDto;
+import se.swedenconnect.oidf.registry.dto.TrustmarkSubjectDto;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.entity.ModuleEntity;
 import se.swedenconnect.oidf.registry.entity.PolicyEntity;
-import se.swedenconnect.oidf.registry.entity.TrustMarkEntity;
 import se.swedenconnect.oidf.registry.entity.TrustMarkSubjectEntity;
 
 import java.util.Collections;
@@ -61,9 +53,8 @@ public final class EntityToDomain {
     o.moduleId(moduleEntity.getModuleId());
 
     // Read from columns directly
-    if (moduleEntity.getEntityIdValue() != null) {
-      o.entityId(toEntityID(moduleEntity.getEntityIdValue()));
-    }
+    o.entityId(moduleEntity.getEntity().getEntityId());
+
     if (moduleEntity.getActive() != null) {
       o.active(moduleEntity.getActive());
     }
@@ -94,9 +85,9 @@ public final class EntityToDomain {
     o.moduleId(moduleEntity.getModuleId());
 
     // Read from columns directly
-    if (moduleEntity.getEntityIdValue() != null) {
-      o.entityId(toEntityID(moduleEntity.getEntityIdValue()));
-    }
+
+    o.entityId(moduleEntity.getEntity().getEntityId());
+
     if (moduleEntity.getActive() != null) {
       o.active(moduleEntity.getActive());
     }
@@ -116,25 +107,7 @@ public final class EntityToDomain {
     return o.build();
   }
 
-  /**
-   * Maps Map to TrustmarkSubject domain object.
-   *
-   * @param values the map of values
-   * @return the trustmark subject domain object
-   */
-  public static TrustmarkSubject mapTrustmarkSubject(final Map<String, Object> values) {
-    final TrustmarkSubject o = new TrustmarkSubject();
-    o.setTrustmarkId(toEntityID((String) values.get("trustmarkId")));
-    o.setSubject(toEntityID((String) values.get("subject")));
-    o.setRevoked(values.get("revoked") != null && (Boolean) values.get("revoked"));
-    o.setGranted(values.get("granted") != null
-        ? java.time.LocalDateTime.parse((String) values.get("granted"))
-        : null);
-    o.setExpires(values.get("expires") != null
-        ? java.time.LocalDateTime.parse((String) values.get("expires"))
-        : null);
-    return o;
-  }
+
 
   /**
    * Maps EntityEntity to Entity domain object.
@@ -256,51 +229,7 @@ public final class EntityToDomain {
 
   }
 
-  /**
-   * Maps ModuleEntity to Trustmark domain object (deprecated).
-   *
-   * @param moduleEntity the module entity
-   * @return the trustmark domain object
-   */
-  public static Trustmark mapTrustmark(final ModuleEntity moduleEntity) {
-    // This method should not be used - Trustmark is stored in TrustMarkEntity, not ModuleEntity
-    throw new UnsupportedOperationException(
-        "mapTrustmark(ModuleEntity) is deprecated. Use mapTrustmark(TrustMarkEntity) instead.");
-  }
 
-  /**
-   * Maps TrustMarkEntity to Trustmark domain object.
-   *
-   * @param trustMarkEntity the trust mark entity
-   * @return the trustmark domain object
-   */
-  public static Trustmark mapTrustmark(final TrustMarkEntity trustMarkEntity) {
-    final Trustmark.TrustmarkBuilder o = Trustmark.builder();
-    o.trustmarkId(trustMarkEntity.getTrustmarkId());
-
-    // Read from columns directly
-    if (trustMarkEntity.getTrustmarkissuerId() != null) {
-      o.trustmarkissuerId(trustMarkEntity.getTrustmarkissuerId());
-    }
-
-    if (trustMarkEntity.getTrustMarkEntityId() != null) {
-      o.trustMarkEntityId(trustMarkEntity.getTrustMarkEntityId());
-    }
-
-    if (trustMarkEntity.getLogoUri() != null) {
-      o.logoUri(trustMarkEntity.getLogoUri());
-    }
-
-    if (trustMarkEntity.getRefUri() != null) {
-      o.refUri(trustMarkEntity.getRefUri());
-    }
-
-    if (trustMarkEntity.getDelegation() != null) {
-      o.delegation(trustMarkEntity.getDelegation());
-    }
-
-    return o.build();
-  }
 
   /**
    * Maps TrustMarkSubjectEntity to TrustmarkSubject domain object.
@@ -366,9 +295,8 @@ public final class EntityToDomain {
     if (moduleEntity.getActive() != null) {
       o.active(moduleEntity.getActive());
     }
-    if (moduleEntity.getEntityIdValue() != null) {
-      o.entityId(toEntityID(moduleEntity.getEntityIdValue()));
-    }
+    o.entityId(moduleEntity.getEntity().getEntityId());
+
     if (moduleEntity.getTrustMarkTokenValidityDuration() != null) {
       o.trustMarkTokenValidityDuration(moduleEntity.getTrustMarkTokenValidityDuration());
     }
@@ -380,122 +308,6 @@ public final class EntityToDomain {
   // DTO -> Domain mapping
   // -------------------------------------------------------------------------
 
-  /**
-   * Converts FederationEntityDto to FederationEntity domain object.
-   *
-   * @param dto the federation entity DTO
-   * @return the federation entity domain object
-   */
-  public static FederationEntity toDomain(final FederationEntityDto dto) {
-    return FederationEntity.builder()
-        .subject(toEntityID(dto.getSubject()))
-        .issuer(toEntityID(dto.getIssuer()))
-        .metadata(dto.getMetadata())
-        .build();
-  }
-
-  /**
-   * Converts HostedEntityDto to HostedEntity domain object.
-   *
-   * @param dto the hosted entity DTO
-   * @return the hosted entity domain object
-   */
-  public static HostedEntity toDomain(final HostedEntityDto dto) {
-    return HostedEntity.builder()
-        .subject(toEntityID(dto.getSubject()))
-        .issuer(toEntityID(dto.getIssuer()))
-        .metadata(dto.getMetadata())
-        .build();
-  }
-
-  /**
-   * Converts SubordinateEntityDto to SubordinateEntity domain object.
-   *
-   * @param dto the subordinate entity DTO
-   * @return the subordinate entity domain object
-   */
-  public static SubordinateEntity toDomain(final SubordinateEntityDto dto) {
-    final SubordinateEntity.SubordinateEntityBuilder<?, ?> builder = SubordinateEntity.builder()
-        .subject(toEntityID(dto.getSubject()))
-        .issuer(toEntityID(dto.getIssuer()));
-
-    if (dto.getJwks() != null && !dto.getJwks().isBlank()) {
-      builder.jwks(toJwks(dto.getJwks()));
-    }
-    return builder.build();
-  }
-
-  /**
-   * Converts PolicyDto to Policies domain object.
-   *
-   * @param dto the policy DTO
-   * @return the policies domain object
-   */
-  public static Policies toDomain(final PolicyDto dto) {
-    return Policies.builder()
-        .name(dto.getName())
-        .policy(dto.getPolicy())
-        .build();
-  }
-
-  /**
-   * Converts TrustAnchorDto to TrustAnchor domain object.
-   *
-   * @param dto the trust anchor DTO
-   * @return the trust anchor domain object
-   */
-  public static TrustAnchor toDomain(final TrustAnchorDto dto) {
-    return TrustAnchor.builder()
-        .entityId(toEntityID(dto.getEntityId()))
-        .active(Boolean.TRUE.equals(dto.getActive()))
-        .trustMarkIssuer(dto.getTrustMarkIssuers()
-            .stream()
-            .map(EntityToDomain::toEntityID)
-            .toList())
-        .build();
-  }
-
-  /**
-   * Converts ResolverDto to Resolver domain object.
-   *
-   * @param dto the resolver DTO
-   * @return the resolver domain object
-   */
-  public static Resolver toDomain(final ResolverDto dto) {
-    final Resolver.ResolverBuilder builder = Resolver.builder()
-        .entityId(toEntityID(dto.getEntityId()))
-        .active(Boolean.TRUE.equals(dto.getActive()));
-
-    if (dto.getResolveResponseDuration() != null) {
-      builder.resolveResponseDuration(dto.getResolveResponseDuration());
-    }
-    if (dto.getTrustAnchor() != null) {
-      builder.trustAnchor(toEntityID(dto.getTrustAnchor()));
-    }
-    if (dto.getTrustedKeys() != null && !dto.getTrustedKeys().isBlank()) {
-      builder.trustedKeys(toJwks(dto.getTrustedKeys()));
-    }
-    if (dto.getStepRetryDuration() != null) {
-      builder.stepRetryDuration(dto.getStepRetryDuration());
-    }
-    return builder.build();
-  }
-
-  /**
-   * Converts TrustmarkDto to Trustmark domain object.
-   *
-   * @param dto the trustmark DTO
-   * @return the trustmark domain object
-   */
-  public static Trustmark toDomain(final TrustmarkDto dto) {
-    return Trustmark.builder()
-        .trustmarkissuerId(dto.getTrustmarkissuerId())
-        .trustMarkEntityId(dto.getTrustMarkEntityId())
-        .logoUri(dto.getLogoUri())
-        .refUri(dto.getRefUri())
-        .delegation(dto.getDelegation())
-        .build();
-  }
 
   /**
    * Converts TrustmarkSubjectDto to TrustmarkSubject domain object.
@@ -522,107 +334,8 @@ public final class EntityToDomain {
   // Domain -> JPA mapping
   // -------------------------------------------------------------------------
 
-  /**
-   * Converts FederationEntity domain object to EntityEntity.
-   *
-   * @param id the entity ID
-   * @param domain the federation entity domain object
-   * @param entityKeyType the entity key type
-   * @param organization the organization entity
-   * @param policyEntity the policy entity
-   * @return the entity entity
-   */
-  public static EntityEntity toEntityEntity(final java.util.UUID id,
-      final FederationEntity domain,
-      final EntityKeyType entityKeyType,
-      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization,
-      final PolicyEntity policyEntity) {
 
-    final EntityEntity entity = new EntityEntity();
-    entity.setEntityId(id);
-    entity.setEntityType(entityKeyType);
-    entity.setOrganization(organization);
-    entity.setPolicyEntity(policyEntity);
-    entity.setSubject(domain.getSubject().toString());
-    entity.setIssuer(domain.getIssuer().toString());
 
-    // Save metadata to column
-    if (domain.getMetadata() != null) {
-      try {
-        entity.setMetadata(mapper.writeValueAsString(domain.getMetadata()));
-      }
-      catch (final JsonProcessingException e) {
-        throw new IllegalArgumentException("Failed to serialize metadata to JSON", e);
-      }
-    }
-
-    return entity;
-  }
-
-  /**
-   * Converts HostedEntity domain object to EntityEntity.
-   *
-   * @param id the entity ID
-   * @param domain the hosted entity domain object
-   * @param entityKeyType the entity key type
-   * @param organization the organization entity
-   * @param policyEntity the policy entity
-   * @return the entity entity
-   */
-  public static EntityEntity toEntityEntity(final java.util.UUID id,
-      final HostedEntity domain,
-      final EntityKeyType entityKeyType,
-      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization,
-      final PolicyEntity policyEntity) {
-
-    final EntityEntity entity = new EntityEntity();
-    entity.setEntityId(id);
-    entity.setEntityType(entityKeyType);
-    entity.setOrganization(organization);
-    entity.setPolicyEntity(policyEntity);
-
-    // Save metadata to column
-    if (domain.getMetadata() != null) {
-      try {
-        entity.setMetadata(mapper.writeValueAsString(domain.getMetadata()));
-      }
-      catch (final JsonProcessingException e) {
-        throw new IllegalArgumentException("Failed to serialize metadata to JSON", e);
-      }
-    }
-
-    return entity;
-  }
-
-  /**
-   * Converts SubordinateEntity domain object to EntityEntity.
-   *
-   * @param id the entity ID
-   * @param domain the subordinate entity domain object
-   * @param entityKeyType the entity key type
-   * @param organization the organization entity
-   * @param policyEntity the policy entity
-   * @return the entity entity
-   */
-  public static EntityEntity toEntityEntity(final java.util.UUID id,
-      final SubordinateEntity domain,
-      final EntityKeyType entityKeyType,
-      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization,
-      final PolicyEntity policyEntity) {
-
-    final EntityEntity entity = new EntityEntity();
-    entity.setEntityId(id);
-    entity.setEntityType(entityKeyType);
-    entity.setOrganization(organization);
-    entity.setPolicyEntity(policyEntity);
-
-    // Save jwks to column
-    if (domain.getJwks() != null) {
-      entity.setJwks(domain.getJwks().toString());
-    }
-
-    return entity;
-  }
 
   /**
    * Converts Policies domain object to PolicyEntity.
@@ -646,52 +359,6 @@ public final class EntityToDomain {
     catch (final JsonProcessingException e) {
       throw new IllegalArgumentException(e);
     }
-    return entity;
-  }
-
-  /**
-   * Converts Trustmark domain object to TrustMarkEntity.
-   *
-   * @param id the trust mark ID
-   * @param trustmark the trustmark domain object
-   * @param moduleEntity the module entity
-   * @return the trust mark entity
-   */
-  public static TrustMarkEntity toTrustMarkEntity(final java.util.UUID id,
-      final Trustmark trustmark,
-      final ModuleEntity moduleEntity) {
-    final TrustMarkEntity entity = TrustMarkEntity.builder()
-        .trustmarkId(id)
-        .module(moduleEntity)
-        .trustmarkissuerId(trustmark.getTrustmarkissuerId())
-        .trustMarkEntityId(trustmark.getTrustMarkEntityId())
-        .logoUri(trustmark.getLogoUri())
-        .refUri(trustmark.getRefUri())
-        .delegation(trustmark.getDelegation())
-        .build();
-    return entity;
-  }
-
-  /**
-   * Converts TrustmarkSubject domain object to TrustMarkSubjectEntity.
-   *
-   * @param id the trust mark subject ID
-   * @param subject the trustmark subject domain object
-   * @param trustMarkEntity the trust mark entity
-   * @return the trust mark subject entity
-   */
-  public static TrustMarkSubjectEntity toTrustMarkSubjectEntity(final java.util.UUID id,
-      final TrustmarkSubject subject,
-      final TrustMarkEntity trustMarkEntity) {
-    final TrustMarkSubjectEntity entity = TrustMarkSubjectEntity.builder()
-        .trustmarksubjectId(id)
-        .trustMark(trustMarkEntity)
-        .trustmarkIdRef(subject.getTrustmarkId() != null ? subject.getTrustmarkId().getValue() : null)
-        .subject(subject.getSubject() != null ? subject.getSubject().getValue() : null)
-        .revoked(subject.getRevoked())
-        .granted(subject.getGranted())
-        .expires(subject.getExpires())
-        .build();
     return entity;
   }
 
