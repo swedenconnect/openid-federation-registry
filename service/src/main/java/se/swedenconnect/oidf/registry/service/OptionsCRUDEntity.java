@@ -18,7 +18,6 @@ package se.swedenconnect.oidf.registry.service;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.registry.api.model.OptionChildren;
 import se.swedenconnect.oidf.registry.api.model.OptionRecord;
@@ -199,7 +198,6 @@ public class OptionsCRUDEntity extends BaseOptionsCRUD {
   }
 
   @Override
-  @Transactional
   public OptionsRecord delete(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType, final UUID id) {
     final EntityEntity entity = this.entityRepository.findByOrgNumberAndEntityIdAndEntityKeyType(
             organizationRecord.orgNumber(), id, this.getEntityKeyType(fkKeyType))

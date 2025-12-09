@@ -17,7 +17,6 @@ package se.swedenconnect.oidf.registry.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.registry.api.model.OptionRecord;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
@@ -176,7 +175,6 @@ public class OptionsCRUDTrustMark extends BaseOptionsCRUD {
   }
 
   @Override
-  @Transactional
   public OptionsRecord delete(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType, final UUID id) {
     final TrustMarkEntity trustMarkEntity = this.trustMarkRepository
         .findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), id)

@@ -19,14 +19,7 @@ package se.swedenconnect.oidf.registry.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
@@ -69,6 +62,7 @@ public class OptionsApiController {
       @PathVariable("optionsgroup") final String optionsgroup,
       @PathVariable(name = "identifier") final UUID identifier,
       final OrganizationRecord organizationRecord) {
+    log.debug("Getting options for {}/{}", optionsgroup, identifier);
 
     final OptionsRecord optionsRecord = this.optionsCRUDSelector.get(organizationRecord,
         FkKeyType.valueOf(optionsgroup.toUpperCase()), identifier);
@@ -88,6 +82,7 @@ public class OptionsApiController {
   public ResponseEntity<?> getTemplateConfig(
       @PathVariable("optionsgroup") final String optionsgroup,
       final OrganizationRecord organizationRecord) {
+    log.debug("Getting template for {}", optionsgroup);
 
     final OptionsRecord optionsRecord = this.optionsCRUDSelector.template(organizationRecord,
         FkKeyType.valueOf(optionsgroup.toUpperCase()));
@@ -105,6 +100,8 @@ public class OptionsApiController {
   public ResponseEntity<?> list(
       @PathVariable("optionsgroup") final String optionsgroup,
       final OrganizationRecord organizationRecord) {
+    log.debug("Listing options for {}", optionsgroup);
+
     return ResponseEntity.ok(
         this.optionsCRUDSelector.list(
             organizationRecord, FkKeyType.valueOf(optionsgroup.toUpperCase())));
@@ -126,6 +123,8 @@ public class OptionsApiController {
       @PathVariable(name = "identifier") final UUID identifier,
       @RequestBody final OptionsRecord record,
       final OrganizationRecord organizationRecord) {
+    log.debug("Creating configuration for {}/{}", optionsgroup, identifier);
+
     final OptionsRecord optionsRecord = this.optionsCRUDSelector.create(organizationRecord,
         FkKeyType.valueOf(optionsgroup.toUpperCase()), identifier, record);
     return ResponseEntity.status(HttpStatus.CREATED).body(optionsRecord);
@@ -146,6 +145,7 @@ public class OptionsApiController {
       @PathVariable(name = "identifier") final UUID identifier,
       @RequestBody final OptionsRecord record,
       final OrganizationRecord organizationRecord) {
+    log.debug("Updating configuration for {}/{}", optionsgroup, identifier);
 
     final OptionsRecord optionsRecord = this.optionsCRUDSelector.update(organizationRecord,
         FkKeyType.valueOf(optionsgroup.toUpperCase()), identifier, record);
@@ -165,6 +165,8 @@ public class OptionsApiController {
       @PathVariable("optionsgroup") final String optionsgroup,
       @PathVariable(name = "identifier") final UUID identifier,
       final OrganizationRecord organizationRecord) {
+    log.debug("Deleting configuration for {}/{}", optionsgroup, identifier);
+
     this.optionsCRUDSelector.delete(organizationRecord, FkKeyType.valueOf(optionsgroup.toUpperCase()), identifier);
     return ResponseEntity.ok("Configuration deleted successfully.");
   }
@@ -178,6 +180,8 @@ public class OptionsApiController {
   @GetMapping("/list")
   public ResponseEntity<?> query(
       final OrganizationRecord organizationRecord) {
+    log.debug("Listing all options");
+
     return ResponseEntity.ok(this.optionsCRUDSelector.listAll(organizationRecord));
   }
 }

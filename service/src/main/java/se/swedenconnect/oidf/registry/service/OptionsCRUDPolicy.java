@@ -18,7 +18,6 @@ package se.swedenconnect.oidf.registry.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
@@ -131,7 +130,6 @@ public class OptionsCRUDPolicy extends BaseOptionsCRUD {
   }
 
   @Override
-  @Transactional
   public OptionsRecord delete(final OrganizationRecord organizationRecord,
       final FkKeyType fkKeyType, final UUID id) {
     final PolicyEntity entity = this.policyRepository
