@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.registry.dto.EntityToDto;
 import se.swedenconnect.oidf.registry.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
-import se.swedenconnect.oidf.registry.dto.OidfServiceHostedEntitys;
+import se.swedenconnect.oidf.registry.dto.OidfServiceHostedEntities;
 import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
@@ -58,9 +58,9 @@ public class FederationMetadataCreator {
    *     {@code FEDERATION_ENTITY}, the return value contains metadata specific to hosted entities. Otherwise, it
    *     contains the mapped entity settings.
    */
-  public OidfServiceHostedEntitys.Record.RecordBuilder createEntityResponseV2(final EntityEntity entityEntity) {
+  public OidfServiceHostedEntities.Record.RecordBuilder createEntityResponseV2(final EntityEntity entityEntity) {
 
-    final OidfServiceHostedEntitys.Record.RecordBuilder entityData = OidfServiceHostedEntitys.Record.builder();
+    final OidfServiceHostedEntities.Record.RecordBuilder entityData = OidfServiceHostedEntities.Record.builder();
 
     Optional.ofNullable(entityEntity.getPolicyEntity())
         .ifPresent(policyEntity -> {
@@ -105,7 +105,7 @@ public class FederationMetadataCreator {
       }
       federationEntityData.put("federation_entity", this.createFederationMetadata(entityEntity));
 
-      entityData.hostedRecord(OidfServiceHostedEntitys
+      entityData.hostedRecord(OidfServiceHostedEntities
           .HostedRecord
           .builder()
           .metadata(federationEntityData)
@@ -116,13 +116,13 @@ public class FederationMetadataCreator {
     return entityData;
   }
 
-  protected OidfServiceHostedEntitys.Metadata.FederationEntity createFederationMetadata(
+  protected OidfServiceHostedEntities.Metadata.FederationEntity createFederationMetadata(
       final EntityEntity entityEntity) {
     final String orgName = Optional.ofNullable(entityEntity.getOrganization().getOrgName())
         .orElseGet(() -> String.valueOf(entityEntity.getOrganization().getOrganizationId()));
 
-    final OidfServiceHostedEntitys.Metadata.FederationEntity.FederationEntityBuilder federationEntity =
-        OidfServiceHostedEntitys.Metadata.FederationEntity.builder();
+    final OidfServiceHostedEntities.Metadata.FederationEntity.FederationEntityBuilder federationEntity =
+        OidfServiceHostedEntities.Metadata.FederationEntity.builder();
     federationEntity.organizationName(orgName);
 
     final String sub = entityEntity.getSubject();

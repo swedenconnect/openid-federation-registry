@@ -44,7 +44,7 @@ public class ValidateDto {
    */
   public ValidateDto(final OrganizationRecord organizationRecord) {
     final PropertyValidators propertyValidators = new PropertyValidators();
-    this.v = propertyValidators.builder(VariabelValueResolver.orgResolver(organizationRecord));
+    this.v = propertyValidators.builder(VariableValueResolver.orgResolver(organizationRecord));
   }
 
   /**

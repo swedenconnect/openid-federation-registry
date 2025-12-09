@@ -48,7 +48,7 @@ public interface PropertyValidator {
    */
   default Optional<PropertyValidationFailException> eval(String key, Object value) {
     try {
-      ifFailThrow(key, value);
+      this.ifFailThrow(key, value);
     }
     catch (PropertyValidationFailException e) {
       return Optional.of(e);

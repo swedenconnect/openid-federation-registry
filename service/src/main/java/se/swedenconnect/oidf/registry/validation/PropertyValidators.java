@@ -63,7 +63,7 @@ public class PropertyValidators {
    *     null or blank, a no-op validator is returned.
    */
   public PropertyValidator resolveValidator(final String validatorNameSetting,
-      final VariabelValueResolver variabelResolver) {
+      final VariableValueResolver variabelResolver) {
     log.debug("Resolving validators: {}", validatorNameSetting);
 
     if (validatorNameSetting == null || validatorNameSetting.isBlank()) {
@@ -102,7 +102,7 @@ public class PropertyValidators {
    * @param variabelResolver the resolver to be used for resolving variables in validation strings
    * @return a new ValidationStringBuilder instance configured with the specified resolver
    */
-  public ValidationStringBuilder builder(final VariabelValueResolver variabelResolver) {
+  public ValidationStringBuilder builder(final VariableValueResolver variabelResolver) {
     return new ValidationStringBuilder(variabelResolver);
   }
 
@@ -138,7 +138,7 @@ public class PropertyValidators {
    * @return the created PropertyValidator instance for the specified type and configuration
    * @throws IllegalArgumentException if the validator type specified in validatorNameSetting is unknown
    */
-  protected PropertyValidator propertyValidatorCreator(final VariabelValueResolver variabelResolver,
+  protected PropertyValidator propertyValidatorCreator(final VariableValueResolver variabelResolver,
       final String validatorNameSetting) {
     log.debug("Creating validator: {}", validatorNameSetting);
     final String[] split = validatorNameSetting.trim().split(":", 2);
@@ -576,11 +576,11 @@ public class PropertyValidators {
    */
   public class ValidationStringBuilder {
 
-    final VariabelValueResolver variabelResolver;
+    final VariableValueResolver variabelResolver;
     private final StringBuilder builder;
 
     // Private constructor to enforce the builder pattern
-    private ValidationStringBuilder(final VariabelValueResolver variabelResolver) {
+    private ValidationStringBuilder(final VariableValueResolver variabelResolver) {
       this.builder = new StringBuilder();
       this.variabelResolver = variabelResolver;
     }

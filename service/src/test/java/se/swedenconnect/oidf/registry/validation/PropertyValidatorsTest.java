@@ -83,7 +83,7 @@ public class PropertyValidatorsTest {
                   ]
                 }""";
 
-    final PropertyValidator jwksValidator = this.propertyValidators.builder(VariabelValueResolver.defaultResolver())
+    final PropertyValidator jwksValidator = this.propertyValidators.builder(VariableValueResolver.defaultResolver())
         .json()
         .jwks()
         .build();
@@ -283,7 +283,7 @@ public class PropertyValidatorsTest {
   }
 
   public PropertyValidator resolveValidator(final String validatorString) {
-    return this.propertyValidators.resolveValidator(validatorString, VariabelValueResolver.defaultResolver());
+    return this.propertyValidators.resolveValidator(validatorString, VariableValueResolver.defaultResolver());
   }
 
   public static JWK genKey() {

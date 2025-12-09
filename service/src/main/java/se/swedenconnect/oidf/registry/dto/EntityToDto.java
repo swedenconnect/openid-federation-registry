@@ -465,7 +465,7 @@ public final class EntityToDto {
    *
    * @param id the trust mark ID
    * @param dto the trustmark DTO
-   * @param moduleEntity the module entity
+   * @param trustmarkIssuerEntity trustmarkissuer
    * @return the trust mark entity
    */
   public static TrustMarkEntity toEntity(final java.util.UUID id,

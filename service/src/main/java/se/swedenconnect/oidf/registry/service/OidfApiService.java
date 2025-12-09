@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
 import org.springframework.web.server.ResponseStatusException;
-import se.swedenconnect.oidf.registry.dto.OidfServiceHostedEntitys;
+import se.swedenconnect.oidf.registry.dto.OidfServiceHostedEntities;
 import se.swedenconnect.oidf.registry.dto.OidfServiceSubModules;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
@@ -179,7 +179,7 @@ public class OidfApiService {
 
   }
 
-  private OidfServiceHostedEntitys resolveEntityV2(final UUID instanceid) {
+  private OidfServiceHostedEntities resolveEntityV2(final UUID instanceid) {
 
     final InstanceEntity instanceEntity = this.instanceRepository.findById(instanceid)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -191,15 +191,16 @@ public class OidfApiService {
         .flatMap(organizationEntity -> organizationEntity.getEntities().stream())
         .toList();
 
-    final OidfServiceHostedEntitys.OidfServiceHostedEntitysBuilder hostedEntitys = OidfServiceHostedEntitys.builder();
+    final OidfServiceHostedEntities.OidfServiceHostedEntitiesBuilder hostedEntitys =
+        OidfServiceHostedEntities.builder();
 
     hostedEntitys.entityRecords(trustmarkIssuersModules.stream().map(this::toMapEntityV2).toList());
 
     return hostedEntitys.build();
   }
 
-  private OidfServiceHostedEntitys.Record toMapEntityV2(final EntityEntity entity) {
-    final OidfServiceHostedEntitys.Record.RecordBuilder hostedEntitys =
+  private OidfServiceHostedEntities.Record toMapEntityV2(final EntityEntity entity) {
+    final OidfServiceHostedEntities.Record.RecordBuilder hostedEntitys =
         this.entityResponseFormatter.createEntityResponseV2(entity);
 
     return hostedEntitys.build();

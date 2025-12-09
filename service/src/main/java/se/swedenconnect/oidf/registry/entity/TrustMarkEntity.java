@@ -36,7 +36,8 @@ import java.util.UUID;
 /**
  * Entity class representing the 'trustmark' table in the database. This class extends {@link BaseEntity}, inheriting
  * common auditing fields such as created date, last modified date, created by, and last modified by. A TrustMarkEntity
- * represents a specific trust mark and is associated with a {@link TrustmarkIssuerEntity}. It includes unique identification and
+ * represents a specific trust mark and is associated with a {@link TrustmarkIssuerEntity}. It includes unique
+ * identification and
  * relational mapping to the corresponding trustmark issuer.
  *
  * @author Per Fredrik Plars
