@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Entity class representing the 'module' table in the database. This class is a representation of a module entity and
+ * Entity class representing the 'module' table in the database. This class is a representation of a TaIm entity and
  * extends the {@link BaseEntity}, inheriting auditing fields like created date, last modified date, created by, and
  * last modified by.
  *
@@ -36,12 +36,12 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
-@Table(name = "module")
-public class ModuleEntity extends BaseEntity {
+@Table(name = "TrustanchorIntermediate")
+public class TaImEntity extends BaseEntity {
 
   @Id
-  @Column(name = "module_id", nullable = false, updatable = false)
-  private UUID moduleId;
+  @Column(name = "ta_im_id", nullable = false, updatable = false)
+  private UUID taImId;
 
   @Size(max = 255)
   @NotNull
@@ -51,7 +51,7 @@ public class ModuleEntity extends BaseEntity {
   @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   @JoinColumns({
       @JoinColumn(name = "fk_type", referencedColumnName = "module_type", insertable = false, updatable = false),
-      @JoinColumn(name = "fk_id", referencedColumnName = "module_id", insertable = false, updatable = false)
+      @JoinColumn(name = "fk_id", referencedColumnName = "ta_im_id", insertable = false, updatable = false)
   })
   private List<SettingsEntity> settingsEntityList;
 
@@ -68,10 +68,8 @@ public class ModuleEntity extends BaseEntity {
   @Column(name = "active")
   private Boolean active;
 
-
   @Column(name = "trust_mark_issuers", columnDefinition = "JSON")
   private String trustMarkIssuers;
-
 
   /**
    * Determines whether the module is of the specified types. Compares the module's type against the provided array of

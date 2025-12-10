@@ -20,43 +20,42 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import se.swedenconnect.oidf.registry.entity.ModuleEntity;
+import se.swedenconnect.oidf.registry.entity.TaImEntity;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Repository interface for managing ModuleRepository.
+ * Repository interface for managing TaImRepository.
  *
  * @author Per Fredrik Plars
  */
 @Repository
-public interface ModuleRepository extends JpaRepository<ModuleEntity, UUID> {
+public interface TaImRepository extends JpaRepository<TaImEntity, UUID> {
 
   /**
-   * Retrieves a module entity based on the given organization number, module ID, and module type.
+   * Retrieves a TaIm entity based on the given organization number, TaIm ID, and module type.
    *
-   * @param orgNumber the organization number associated with the module
-   * @param moduleId the unique identifier of the module
-   * @param moduleType the type of the module
-   * @return an Optional containing the ModuleEntity if found, otherwise an empty Optional
+   * @param orgNumber the organization number associated with the TaIm
+   * @param taImId the unique identifier of the TaIm
+   * @param moduleType the type of the TaIm
+   * @return an Optional containing the TaImEntity if found, otherwise an empty Optional
    */
-  @Query("SELECT m FROM ModuleEntity m JOIN m.organization o "
-      + "WHERE o.orgNumber = :orgNumber AND m.moduleType = :moduleType AND m.moduleId=:moduleId")
-  Optional<ModuleEntity> findByOrgNumberAndModuleIdAndModuleType(
-      @Param("orgNumber") String orgNumber, @Param("moduleId") UUID moduleId, @Param("moduleType") String moduleType);
+  @Query("SELECT m FROM TaImEntity m JOIN m.organization o "
+      + "WHERE o.orgNumber = :orgNumber AND m.moduleType = :moduleType AND m.taImId=:taImId")
+  Optional<TaImEntity> findByOrgNumberAndTaImIdAndModuleType(
+      @Param("orgNumber") String orgNumber, @Param("taImId") UUID taImId, @Param("moduleType") String moduleType);
 
   /**
-   * Retrieves a list of ModuleEntity objects associated with the specified organization number
-   * and module type.
+   * Retrieves a list of TaImEntity objects associated with the specified organization number and module type.
    *
    * @param orgNumber the organization number to filter by.
    * @param moduleType the type of module to filter by.
-   * @return a list of ModuleEntity objects matching the specified organization number and module type.
+   * @return a list of TaImEntity objects matching the specified organization number and module type.
    */
-  @Query("SELECT m FROM ModuleEntity m JOIN m.organization o "
+  @Query("SELECT m FROM TaImEntity m JOIN m.organization o "
       + "WHERE o.orgNumber = :orgNumber AND m.moduleType = :moduleType")
-  List<ModuleEntity> findByOrgNumberAndModuleType(
+  List<TaImEntity> findByOrgNumberAndModuleType(
       @Param("orgNumber") String orgNumber, @Param("moduleType") String moduleType);
 }
