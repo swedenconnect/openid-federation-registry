@@ -16,15 +16,12 @@
 
 package se.swedenconnect.oidf.registry.service;
 
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
 import se.swedenconnect.oidf.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
-import se.swedenconnect.oidf.registry.errorhandling.ErrorTypes;
-import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -64,12 +61,13 @@ public class OptionsCRUDSelector implements OptionsCRUD {
   }
 
   @Override
+  @Transactional(readOnly = true)
   public boolean supports(final FkKeyType fkKeyType) {
     return this.getOptionsCRUD(fkKeyType).supports(fkKeyType);
   }
 
-  @Transactional
   @Override
+  @Transactional
   public OptionsRecord create(final OrganizationRecord organizationRecord,
       final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
     final OptionsRecord newRecord = this.getOptionsCRUD(fkKeyType).create(organizationRecord, fkKeyType, id, record);
@@ -77,8 +75,8 @@ public class OptionsCRUDSelector implements OptionsCRUD {
     return newRecord;
   }
 
-  @Transactional
   @Override
+  @Transactional
   public OptionsRecord update(final OrganizationRecord organizationRecord,
       final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
     final OptionsRecord newRecord = this.getOptionsCRUD(fkKeyType).update(organizationRecord, fkKeyType, id, record);
@@ -87,33 +85,31 @@ public class OptionsCRUDSelector implements OptionsCRUD {
   }
 
   @Override
+  @Transactional(readOnly = true)
   public OptionsRecord get(final OrganizationRecord organizationRecord,
       final FkKeyType fkKeyType, final UUID id) {
     return this.getOptionsCRUD(fkKeyType).get(organizationRecord, fkKeyType, id);
   }
 
   @Override
+  @Transactional(readOnly = true)
   public OptionsRecord template(final OrganizationRecord organizationRecord,
       final FkKeyType fkKeyType) {
     return this.getOptionsCRUD(fkKeyType).template(organizationRecord, fkKeyType);
   }
 
   @Override
+  @Transactional
   public OptionsRecord delete(final OrganizationRecord organizationRecord,
-      final FkKeyType fkKeyType, final UUID id) {
+                              final FkKeyType fkKeyType, final UUID id) {
 
-    try {
-      final OptionsRecord deletedRecord = this.getOptionsCRUD(fkKeyType).delete(organizationRecord, fkKeyType, id);
-      this.registryAuditService.optionsDelete(id, fkKeyType, deletedRecord);
-      return deletedRecord;
-    }
-    catch (final DataIntegrityViolationException e) {
-      throw new RegistryServerException(ErrorTypes.PARENT_HAS_CHILDREN,
-          "Unable to delete entity, remove children first", e);
-    }
+    final OptionsRecord deletedRecord = this.getOptionsCRUD(fkKeyType).delete(organizationRecord, fkKeyType, id);
+    this.registryAuditService.optionsDelete(id, fkKeyType, deletedRecord);
+    return deletedRecord;
   }
 
   @Override
+  @Transactional(readOnly = true)
   public List<Map<String, Object>> list(final OrganizationRecord organizationRecord,
       final FkKeyType fkKeyType) {
     return this.getOptionsCRUD(fkKeyType).list(organizationRecord, fkKeyType);
@@ -127,6 +123,7 @@ public class OptionsCRUDSelector implements OptionsCRUD {
    * @return a map where the keys are the names of each FkKeyType and the values are lists of maps containing related
    *     objects
    */
+  @Transactional(readOnly = true)
   public Map<String, List<Map<String, Object>>> listAll(final OrganizationRecord organizationRecord) {
     final Map<String, List<Map<String, Object>>> result = new HashMap<>();
     for (FkKeyType value : FkKeyType.values()) {

@@ -86,7 +86,7 @@ class OptionsApiEntityControllerIT {
     assertThat(template.getOption()).isNotEmpty();
 
     template.getOption().forEach(values -> {
-      assertThat(values.getKey()).isNotNull();
+      assertThat(values.getValue()).isNotNull();
       assertThat(values.getValue().contains("@{"))
           .withFailMessage("The value should not contain @{ but is: \" + values.getValue() + \" ")
           .isFalse();

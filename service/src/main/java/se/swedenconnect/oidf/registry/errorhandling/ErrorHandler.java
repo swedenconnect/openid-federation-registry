@@ -19,6 +19,7 @@ package se.swedenconnect.oidf.registry.errorhandling;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
@@ -36,6 +37,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.INVALID_PARAMETER;
+import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.PARENT_HAS_CHILDREN;
 
 /**
  * Error Handler ControllerAdvice.
@@ -109,6 +111,28 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         e.getMessage());
 
     problemDetail.setType(e.getErrorTypes().errorURI);
+
+    return this.handleExceptionInternal(e,
+        problemDetail,
+        new HttpHeaders(),
+        HttpStatusCode.valueOf(problemDetail.getStatus()),
+        request);
+  }
+
+  /**
+   * Handles {@code DataIntegrityViolationException} which typically occurs when a database constraint is violated
+   * (e.g., trying to delete a parent entity that still has children).
+   *
+   * @param e the exception
+   * @param request the {@link WebRequest} during which the exception occurred
+   * @return a {@link ResponseEntity} with 400 Bad Request
+   */
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<Object> handle(final DataIntegrityViolationException e, final WebRequest request) {
+
+    final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400),
+        "Unable to delete entity, remove children first");
+    problemDetail.setType(PARENT_HAS_CHILDREN.errorURI);
 
     return this.handleExceptionInternal(e,
         problemDetail,

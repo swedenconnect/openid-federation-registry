@@ -17,7 +17,6 @@ package se.swedenconnect.oidf.registry.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.registry.api.model.OptionRecord;
 import se.swedenconnect.oidf.registry.api.model.OptionsRecord;
@@ -73,7 +72,6 @@ public class OptionsCRUDTrustMarkSubject extends BaseOptionsCRUD {
     return FK_KEY_TYPE == fkKeyType;
   }
 
-  @Transactional
   @Override
   public OptionsRecord create(final OrganizationRecord organizationRecord,
       final FkKeyType fkKeyType, final UUID id, final OptionsRecord record) {
@@ -180,7 +178,6 @@ public class OptionsCRUDTrustMarkSubject extends BaseOptionsCRUD {
   }
 
   @Override
-  @Transactional
   public OptionsRecord delete(final OrganizationRecord organizationRecord, final FkKeyType fkKeyType, final UUID id) {
     final TrustMarkSubjectEntity entity = this.trustMarkSubjectRepository
         .findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), id)
