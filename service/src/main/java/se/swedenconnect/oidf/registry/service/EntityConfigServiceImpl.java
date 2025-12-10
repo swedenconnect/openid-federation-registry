@@ -21,11 +21,14 @@ import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.dto.EntityToDto;
+import se.swedenconnect.oidf.registry.dto.EntityWithModulesDto;
 import se.swedenconnect.oidf.registry.dto.FederationEntityDto;
+import se.swedenconnect.oidf.registry.dto.FederationEntityWithModulesDto;
 import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
+import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.entity.PolicyEntity;
 import se.swedenconnect.oidf.registry.errorhandling.ErrorTypes;
@@ -33,7 +36,9 @@ import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.validation.ValidateDto;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Default implementation of {@link EntityConfigService} using JPA entities.
@@ -256,6 +261,96 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     final SubordinateEntityDto dto = EntityToDto.toDtoSubordinate(entity);
     this.entityRepository.delete(entity);
     this.auditService.subordinateEntityDeleted(id, dto);
+  }
+
+  // ---------------------------------------------------------------------------
+  // List entities
+  // ---------------------------------------------------------------------------
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<EntityWithModulesDto> listEntities(final OrganizationRecord organizationRecord,
+      final String type, final boolean includeModules) {
+    final EntityKeyType entityKeyType = this.parseEntityType(type);
+    final List<EntityEntity> entities = this.entityRepository
+        .findByOrgNumberAndOptionalEntityKeyType(organizationRecord.orgNumber(), entityKeyType);
+
+    return entities.stream()
+        .map(entity -> this.toEntityWithModulesDto(entity, includeModules))
+        .collect(Collectors.toList());
+  }
+
+  private EntityKeyType parseEntityType(final String type) {
+    if (type == null || type.isBlank()) {
+      return null;
+    }
+    try {
+      return EntityKeyType.valueOf(type.toUpperCase());
+    }
+    catch (final IllegalArgumentException e) {
+      throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
+          "Invalid entity type: %s. Valid values are: federation, hosted, subordinate".formatted(type));
+    }
+  }
+
+  private EntityWithModulesDto toEntityWithModulesDto(final EntityEntity entity,
+      final boolean includeModules) {
+    final EntityWithModulesDto dto = new EntityWithModulesDto();
+
+    // Set entity based on type
+    if (entity.getEntityType() == EntityKeyType.FEDERATION_ENTITY) {
+      if (includeModules) {
+        dto.setFederationEntity(this.toFederationEntityWithModules(entity));
+      }
+      else {
+        final FederationEntityDto federationDto = EntityToDto.toDto(entity);
+        final FederationEntityWithModulesDto federationWithModules = new FederationEntityWithModulesDto();
+        federationWithModules.setEntityId(federationDto.getEntityId());
+        federationWithModules.setSubject(federationDto.getSubject());
+        federationWithModules.setIssuer(federationDto.getIssuer());
+        federationWithModules.setMetadata(federationDto.getMetadata());
+        dto.setFederationEntity(federationWithModules);
+      }
+    }
+    else if (entity.getEntityType() == EntityKeyType.HOSTED_ENTITY) {
+      dto.setHostedEntity(EntityToDto.toDtoHosted(entity));
+    }
+    else if (entity.getEntityType() == EntityKeyType.SUBORDINATE_ENTITY) {
+      dto.setSubordinateEntity(EntityToDto.toDtoSubordinate(entity));
+    }
+
+    return dto;
+  }
+
+  private FederationEntityWithModulesDto toFederationEntityWithModules(final EntityEntity entity) {
+    final FederationEntityDto baseDto = EntityToDto.toDto(entity);
+    final FederationEntityWithModulesDto dto = new FederationEntityWithModulesDto();
+    dto.setEntityId(baseDto.getEntityId());
+    dto.setSubject(baseDto.getSubject());
+    dto.setIssuer(baseDto.getIssuer());
+    dto.setMetadata(baseDto.getMetadata());
+
+    // TrustAnchor and Intermediate from TaImEntity modules
+    entity.getModules().forEach(module -> {
+      if (module.getModuleType().equals(FkKeyType.TRUSTANCHOR.name())) {
+        dto.setTrustAnchor(EntityToDto.toDto(module));
+      }
+      else if (module.getModuleType().equals(FkKeyType.INTERMEDIATE.name())) {
+        dto.setIntermediate(EntityToDto.toDtoIntermediate(module));
+      }
+    });
+
+    // Resolver
+    if (entity.getResolver() != null) {
+      dto.setResolver(EntityToDto.toDto(entity.getResolver()));
+    }
+
+    // TrustmarkIssuer
+    if (entity.getTrustmarkIssuer() != null) {
+      dto.setTrustmarkIssuer(EntityToDto.toDto(entity.getTrustmarkIssuer()));
+    }
+
+    return dto;
   }
 }
 

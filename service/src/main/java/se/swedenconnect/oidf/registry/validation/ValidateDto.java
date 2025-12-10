@@ -18,15 +18,7 @@ package se.swedenconnect.oidf.registry.validation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
-import se.swedenconnect.oidf.registry.dto.FederationEntityDto;
-import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
-import se.swedenconnect.oidf.registry.dto.PolicyDto;
-import se.swedenconnect.oidf.registry.dto.ResolverDto;
-import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
-import se.swedenconnect.oidf.registry.dto.TrustAnchorDto;
-import se.swedenconnect.oidf.registry.dto.TrustmarkDto;
-import se.swedenconnect.oidf.registry.dto.TrustmarkIssuerDto;
-import se.swedenconnect.oidf.registry.dto.TrustmarkSubjectDto;
+import se.swedenconnect.oidf.registry.dto.*;
 
 /**
  * Validator for DTO objects using PropertyValidators framework.
@@ -132,6 +124,16 @@ public class ValidateDto {
     this.v.required().build().ifFailThrow("active", dto.getActive());
     this.v.entityid().build().ifFailThrow("trustmarkissuers", dto.getTrustMarkIssuers());
 
+  }
+
+  /**
+   * Validates IntermediateDto.
+   *
+   * @param dto the intermediate DTO
+   */
+  public void validate(final IntermediateDto dto) {
+    this.v.required().uuid().build().ifFailThrow("entityId", dto.getEntityId());
+    this.v.required().build().ifFailThrow("active", dto.getActive());
   }
 
   /**

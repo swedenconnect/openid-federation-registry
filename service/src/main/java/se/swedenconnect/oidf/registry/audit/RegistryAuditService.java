@@ -15,15 +15,7 @@
  */
 package se.swedenconnect.oidf.registry.audit;
 
-import se.swedenconnect.oidf.registry.dto.FederationEntityDto;
-import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
-import se.swedenconnect.oidf.registry.dto.PolicyDto;
-import se.swedenconnect.oidf.registry.dto.ResolverDto;
-import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
-import se.swedenconnect.oidf.registry.dto.TrustAnchorDto;
-import se.swedenconnect.oidf.registry.dto.TrustmarkDto;
-import se.swedenconnect.oidf.registry.dto.TrustmarkIssuerDto;
-import se.swedenconnect.oidf.registry.dto.TrustmarkSubjectDto;
+import se.swedenconnect.oidf.registry.dto.*;
 
 import java.util.UUID;
 
@@ -174,6 +166,32 @@ public interface RegistryAuditService {
    * @param deletedData the data of the deleted module.
    */
   void trustAnchorDeleted(UUID moduleId, TrustAnchorDto deletedData);
+
+  /**
+   * Audits the creation of an intermediate module.
+   *
+   * @param moduleId the unique identifier of the module being created.
+   * @param oldData the previous state of the module. Typically null during creation.
+   * @param newData the new state of the module after it has been created.
+   */
+  void intermediateCreated(UUID moduleId, IntermediateDto oldData, IntermediateDto newData);
+
+  /**
+   * Audits the update operation performed on an intermediate module.
+   *
+   * @param moduleId the unique identifier of the module being updated.
+   * @param oldData the previous state of the module before the update.
+   * @param newData the new state of the module after the update.
+   */
+  void intermediateUpdated(UUID moduleId, IntermediateDto oldData, IntermediateDto newData);
+
+  /**
+   * Audits the deletion of an intermediate module.
+   *
+   * @param moduleId the unique identifier of the module being deleted.
+   * @param deletedData the data of the deleted module.
+   */
+  void intermediateDeleted(UUID moduleId, IntermediateDto deletedData);
 
   /**
    * Audits the creation of a resolver module.

@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.dto.EntityToDto;
+import se.swedenconnect.oidf.registry.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.dto.TrustmarkDto;
@@ -28,16 +29,16 @@ import se.swedenconnect.oidf.registry.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
-import se.swedenconnect.oidf.registry.entity.ModuleEntity;
 import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.entity.ResolverEntity;
+import se.swedenconnect.oidf.registry.entity.TaImEntity;
 import se.swedenconnect.oidf.registry.entity.TrustMarkEntity;
 import se.swedenconnect.oidf.registry.entity.TrustmarkIssuerEntity;
 import se.swedenconnect.oidf.registry.errorhandling.ErrorTypes;
 import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.EntityRepository;
-import se.swedenconnect.oidf.registry.repository.ModuleRepository;
 import se.swedenconnect.oidf.registry.repository.ResolverRepository;
+import se.swedenconnect.oidf.registry.repository.TaImRepository;
 import se.swedenconnect.oidf.registry.repository.TrustMarkRepository;
 import se.swedenconnect.oidf.registry.repository.TrustmarkIssuerRepository;
 import se.swedenconnect.oidf.registry.validation.ValidateDto;
@@ -52,7 +53,7 @@ import java.util.UUID;
 @Service
 public class ModuleConfigServiceImpl implements ModuleConfigService {
 
-  private final ModuleRepository moduleRepository;
+  private final TaImRepository moduleRepository;
   private final EntityRepository entityRepository;
   private final TrustMarkRepository trustMarkRepository;
   private final TrustmarkIssuerRepository trustmarkIssuerRepository;
@@ -71,7 +72,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
    * @param organizationService the organization service
    * @param auditService the audit service
    */
-  public ModuleConfigServiceImpl(final ModuleRepository moduleRepository,
+  public ModuleConfigServiceImpl(final TaImRepository moduleRepository,
       final EntityRepository entityRepository,
       final TrustMarkRepository trustMarkRepository,
       final TrustmarkIssuerRepository trustmarkIssuerRepository,
@@ -101,9 +102,9 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
             "No federation entity found for id %s".formatted(entityId)));
   }
 
-  private ModuleEntity findModuleOrThrow(final OrganizationRecord organizationRecord,
+  private TaImEntity findModuleOrThrow(final OrganizationRecord organizationRecord,
       final UUID id, final FkKeyType type) {
-    return this.moduleRepository.findByOrgNumberAndModuleIdAndModuleType(
+    return this.moduleRepository.findByOrgNumberAndTaImIdAndModuleType(
             organizationRecord.orgNumber(), id, type.name())
         .orElseThrow(() -> new RegistryServerException(
             ErrorTypes.NOT_FOUND,
@@ -130,7 +131,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
           "A TRUSTANCHOR module already exists for entity %s".formatted(entityEntity.getEntityId()));
     }
 
-    final ModuleEntity module = EntityToDto.toEntity(id, input, entityEntity, org);
+    final TaImEntity module = EntityToDto.toEntity(id, input, entityEntity, org);
 
     this.moduleRepository.save(module);
     final TrustAnchorDto dto = EntityToDto.toDto(module);
@@ -144,7 +145,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
       final UUID id, final TrustAnchorDto input) {
     new ValidateDto(organizationRecord).validate(input);
 
-    final ModuleEntity module = this.findModuleOrThrow(organizationRecord, id, FkKeyType.TRUSTANCHOR);
+    final TaImEntity module = this.findModuleOrThrow(organizationRecord, id, FkKeyType.TRUSTANCHOR);
     final TrustAnchorDto oldDto = EntityToDto.toDto(module);
 
     EntityToDto.updateModuleEntity(module, input);
@@ -157,17 +158,77 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Override
   @Transactional(readOnly = true)
   public TrustAnchorDto getTrustAnchor(final OrganizationRecord organizationRecord, final UUID id) {
-    final ModuleEntity module = this.findModuleOrThrow(organizationRecord, id, FkKeyType.TRUSTANCHOR);
+    final TaImEntity module = this.findModuleOrThrow(organizationRecord, id, FkKeyType.TRUSTANCHOR);
     return EntityToDto.toDto(module);
   }
 
   @Override
   @Transactional
   public void deleteTrustAnchor(final OrganizationRecord organizationRecord, final UUID id) {
-    final ModuleEntity module = this.findModuleOrThrow(organizationRecord, id, FkKeyType.TRUSTANCHOR);
+    final TaImEntity module = this.findModuleOrThrow(organizationRecord, id, FkKeyType.TRUSTANCHOR);
     final TrustAnchorDto dto = EntityToDto.toDto(module);
     this.moduleRepository.delete(module);
     this.auditService.trustAnchorDeleted(id, dto);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Intermediate
+  // ---------------------------------------------------------------------------
+
+  @Override
+  @Transactional
+  public IntermediateDto createIntermediate(final OrganizationRecord organizationRecord,
+      final UUID id, final IntermediateDto input) {
+    new ValidateDto(organizationRecord).validate(input);
+
+    // entityId is a database UUID to EntityEntity
+    final UUID entityId = input.getEntityId();
+    final EntityEntity entityEntity = this.findFederationEntityOrThrow(organizationRecord, entityId);
+    final OrganizationEntity org = this.resolveOrganization(organizationRecord);
+
+    if (entityEntity.getModuleByType(FkKeyType.INTERMEDIATE).isPresent()) {
+      throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
+          "An INTERMEDIATE module already exists for entity %s".formatted(entityEntity.getEntityId()));
+    }
+
+    final TaImEntity module = EntityToDto.toEntity(id, input, entityEntity, org);
+
+    this.moduleRepository.save(module);
+    final IntermediateDto dto = EntityToDto.toDtoIntermediate(module);
+    this.auditService.intermediateCreated(id, null, dto);
+    return dto;
+  }
+
+  @Override
+  @Transactional
+  public IntermediateDto updateIntermediate(final OrganizationRecord organizationRecord,
+      final UUID id, final IntermediateDto input) {
+    new ValidateDto(organizationRecord).validate(input);
+
+    final TaImEntity module = this.findModuleOrThrow(organizationRecord, id, FkKeyType.INTERMEDIATE);
+    final IntermediateDto oldDto = EntityToDto.toDtoIntermediate(module);
+
+    EntityToDto.updateModuleEntity(module, input);
+    this.moduleRepository.save(module);
+    final IntermediateDto newDto = EntityToDto.toDtoIntermediate(module);
+    this.auditService.intermediateUpdated(id, oldDto, newDto);
+    return newDto;
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public IntermediateDto getIntermediate(final OrganizationRecord organizationRecord, final UUID id) {
+    final TaImEntity module = this.findModuleOrThrow(organizationRecord, id, FkKeyType.INTERMEDIATE);
+    return EntityToDto.toDtoIntermediate(module);
+  }
+
+  @Override
+  @Transactional
+  public void deleteIntermediate(final OrganizationRecord organizationRecord, final UUID id) {
+    final TaImEntity module = this.findModuleOrThrow(organizationRecord, id, FkKeyType.INTERMEDIATE);
+    final IntermediateDto dto = EntityToDto.toDtoIntermediate(module);
+    this.moduleRepository.delete(module);
+    this.auditService.intermediateDeleted(id, dto);
   }
 
   // ---------------------------------------------------------------------------

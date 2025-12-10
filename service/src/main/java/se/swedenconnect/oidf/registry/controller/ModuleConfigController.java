@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.dto.TrustmarkIssuerDto;
@@ -130,6 +131,89 @@ public class ModuleConfigController {
       @PathVariable("id") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     this.moduleConfigService.deleteTrustAnchor(organizationRecord, id);
+    return ResponseEntity.noContent().build();
+  }
+
+  // Intermediate
+
+  /**
+   * Creates an intermediate with auto-generated ID.
+   *
+   * @param body the intermediate data
+   * @param organizationRecord the organization record
+   * @return the created intermediate
+   */
+  @PostMapping("/intermediate")
+  @Operation(summary = "Create intermediate with auto-generated ID")
+  public ResponseEntity<IntermediateDto> createIntermediate(
+      @RequestBody final IntermediateDto body,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    final UUID id = UUID.randomUUID();
+    return ResponseEntity.ok(this.moduleConfigService.createIntermediate(organizationRecord, id, body));
+  }
+
+  /**
+   * Creates an intermediate with specified ID.
+   *
+   * @param id the intermediate ID
+   * @param body the intermediate data
+   * @param organizationRecord the organization record
+   * @return the created intermediate
+   */
+  @PostMapping("/intermediate/{id}")
+  @Operation(summary = "Create intermediate with specified ID")
+  public ResponseEntity<IntermediateDto> createIntermediateWithId(
+      @PathVariable("id") final UUID id,
+      @RequestBody final IntermediateDto body,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(this.moduleConfigService.createIntermediate(organizationRecord, id, body));
+  }
+
+  /**
+   * Updates an intermediate.
+   *
+   * @param id the intermediate ID
+   * @param body the intermediate data
+   * @param organizationRecord the organization record
+   * @return the updated intermediate
+   */
+  @PutMapping("/intermediate/{id}")
+  @Operation(summary = "Update intermediate")
+  public ResponseEntity<IntermediateDto> updateIntermediate(
+      @PathVariable("id") final UUID id,
+      @RequestBody final IntermediateDto body,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(this.moduleConfigService.updateIntermediate(organizationRecord, id, body));
+  }
+
+  /**
+   * Gets an intermediate by ID.
+   *
+   * @param id the intermediate ID
+   * @param organizationRecord the organization record
+   * @return the intermediate
+   */
+  @GetMapping("/intermediate/{id}")
+  @Operation(summary = "Get intermediate")
+  public ResponseEntity<IntermediateDto> getIntermediate(
+      @PathVariable("id") final UUID id,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(this.moduleConfigService.getIntermediate(organizationRecord, id));
+  }
+
+  /**
+   * Deletes an intermediate.
+   *
+   * @param id the intermediate ID
+   * @param organizationRecord the organization record
+   * @return empty response
+   */
+  @DeleteMapping("/intermediate/{id}")
+  @Operation(summary = "Delete intermediate")
+  public ResponseEntity<Void> deleteIntermediate(
+      @PathVariable("id") final UUID id,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    this.moduleConfigService.deleteIntermediate(organizationRecord, id);
     return ResponseEntity.noContent().build();
   }
 

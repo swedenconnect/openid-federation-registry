@@ -65,7 +65,7 @@ public class EntityEntity extends BaseEntity {
   private PolicyEntity policyEntity;
 
   @OneToMany(mappedBy = "entity")
-  private List<ModuleEntity> modules;
+  private List<TaImEntity> modules;
 
   @OneToOne(mappedBy = "entity")
   private ResolverEntity resolver;
@@ -76,13 +76,13 @@ public class EntityEntity extends BaseEntity {
 
 
   /**
-   * Retrieves a {@link ModuleEntity} from the list of modules that matches the given module type.
+   * Retrieves a {@link TaImEntity} from the list of modules that matches the given module type.
    *
    * @param fkKeyType the type of the module to search for
-   * @return an {@link Optional} containing the matching {@link ModuleEntity} if found, or an empty {@link Optional} if
+   * @return an {@link Optional} containing the matching {@link TaImEntity} if found, or an empty {@link Optional} if
    *     no match is found
    */
-  public Optional<ModuleEntity> getModuleByType(final FkKeyType fkKeyType) {
+  public Optional<TaImEntity> getModuleByType(final FkKeyType fkKeyType) {
     return this.getModules().stream()
         .filter(moduleEntity -> moduleEntity.getModuleType().equals(fkKeyType.name()))
         .findFirst();

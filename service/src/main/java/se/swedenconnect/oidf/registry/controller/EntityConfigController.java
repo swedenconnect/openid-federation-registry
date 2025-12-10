@@ -28,13 +28,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.dto.EntityWithModulesDto;
 import se.swedenconnect.oidf.registry.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
 import se.swedenconnect.oidf.registry.service.EntityConfigService;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -49,6 +52,23 @@ import java.util.UUID;
 public class EntityConfigController {
 
   private final EntityConfigService entityConfigService;
+
+  /**
+   * Lists all entities for the organization.
+   *
+   * @param type optional entity type filter (federation, hosted, subordinate)
+   * @param includeModules whether to include modules (trustanchor, intermediate, resolver, trustmarkissuer)
+   * @param organizationRecord the organization record
+   * @return list of entities with optional modules
+   */
+  @GetMapping
+  @Operation(summary = "List all entities", description = "Lists all entities for the organization, optionally filtered by type and with modules included")
+  public ResponseEntity<List<EntityWithModulesDto>> listEntities(
+      @RequestParam(required = false) final String type,
+      @RequestParam(defaultValue = "false") final boolean includeModules,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(this.entityConfigService.listEntities(organizationRecord, type, includeModules));
+  }
 
   /**
    * Creates a federation entity with auto-generated ID.

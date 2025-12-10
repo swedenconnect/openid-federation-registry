@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.registry.service;
 
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.dto.TrustmarkDto;
@@ -69,6 +70,45 @@ public interface ModuleConfigService {
    * @param id the trust anchor ID
    */
   void deleteTrustAnchor(OrganizationRecord organizationRecord, UUID id);
+
+  /**
+   * Creates an intermediate.
+   *
+   * @param organizationRecord the organization record
+   * @param id the intermediate ID
+   * @param input the intermediate data
+   * @return the created intermediate
+   */
+  IntermediateDto createIntermediate(OrganizationRecord organizationRecord,
+      UUID id, IntermediateDto input);
+
+  /**
+   * Updates an intermediate.
+   *
+   * @param organizationRecord the organization record
+   * @param id the intermediate ID
+   * @param input the intermediate data
+   * @return the updated intermediate
+   */
+  IntermediateDto updateIntermediate(OrganizationRecord organizationRecord,
+      UUID id, IntermediateDto input);
+
+  /**
+   * Gets an intermediate by ID.
+   *
+   * @param organizationRecord the organization record
+   * @param id the intermediate ID
+   * @return the intermediate
+   */
+  IntermediateDto getIntermediate(OrganizationRecord organizationRecord, UUID id);
+
+  /**
+   * Deletes an intermediate.
+   *
+   * @param organizationRecord the organization record
+   * @param id the intermediate ID
+   */
+  void deleteIntermediate(OrganizationRecord organizationRecord, UUID id);
 
   /**
    * Creates a resolver.

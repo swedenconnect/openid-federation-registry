@@ -18,15 +18,7 @@ package se.swedenconnect.oidf.registry.audit;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import se.swedenconnect.oidf.registry.dto.FederationEntityDto;
-import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
-import se.swedenconnect.oidf.registry.dto.PolicyDto;
-import se.swedenconnect.oidf.registry.dto.ResolverDto;
-import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
-import se.swedenconnect.oidf.registry.dto.TrustAnchorDto;
-import se.swedenconnect.oidf.registry.dto.TrustmarkDto;
-import se.swedenconnect.oidf.registry.dto.TrustmarkIssuerDto;
-import se.swedenconnect.oidf.registry.dto.TrustmarkSubjectDto;
+import se.swedenconnect.oidf.registry.dto.*;
 
 import java.util.UUID;
 
@@ -230,6 +222,38 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.TRUST_ANCHOR_DELETED)
+            .extId(moduleId.toString())
+            .oldData(this.toJson(deletedData))
+            .build());
+  }
+
+  @Override
+  public void intermediateCreated(final UUID moduleId, final IntermediateDto oldData, final IntermediateDto newData) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(RegistryAuditEventType.INTERMEDIATE_CREATED)
+            .extId(moduleId.toString())
+            .oldData(this.toJson(oldData))
+            .newData(this.toJson(newData))
+            .build());
+  }
+
+  @Override
+  public void intermediateUpdated(final UUID moduleId, final IntermediateDto oldData, final IntermediateDto newData) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(RegistryAuditEventType.INTERMEDIATE_UPDATED)
+            .extId(moduleId.toString())
+            .oldData(this.toJson(oldData))
+            .newData(this.toJson(newData))
+            .build());
+  }
+
+  @Override
+  public void intermediateDeleted(final UUID moduleId, final IntermediateDto deletedData) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(RegistryAuditEventType.INTERMEDIATE_DELETED)
             .extId(moduleId.toString())
             .oldData(this.toJson(deletedData))
             .build());

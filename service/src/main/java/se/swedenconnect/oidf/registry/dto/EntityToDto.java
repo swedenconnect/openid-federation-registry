@@ -22,9 +22,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
-import se.swedenconnect.oidf.registry.entity.ModuleEntity;
 import se.swedenconnect.oidf.registry.entity.PolicyEntity;
 import se.swedenconnect.oidf.registry.entity.ResolverEntity;
+import se.swedenconnect.oidf.registry.entity.TaImEntity;
 import se.swedenconnect.oidf.registry.entity.TrustMarkEntity;
 import se.swedenconnect.oidf.registry.entity.TrustMarkSubjectEntity;
 import se.swedenconnect.oidf.registry.entity.TrustmarkIssuerEntity;
@@ -148,18 +148,18 @@ public final class EntityToDto {
   }
 
   /**
-   * Converts ModuleEntity to TrustAnchorDto.
+   * Converts TaImEntity to TrustAnchorDto.
    *
-   * @param moduleEntity the module entity
+   * @param moduleEntity the TaIm entity
    * @return the trust anchor DTO
    */
-  public static TrustAnchorDto toDto(final ModuleEntity moduleEntity) {
+  public static TrustAnchorDto toDto(final TaImEntity moduleEntity) {
     if (!moduleEntity.getModuleType().equals(FkKeyType.TRUSTANCHOR.name())) {
       throw new IllegalArgumentException("Module is not a TrustAnchor");
     }
 
     final TrustAnchorDto dto = new TrustAnchorDto();
-    dto.setModuleId(moduleEntity.getModuleId());
+    dto.setTaImId(moduleEntity.getTaImId());
     dto.setEntityId(moduleEntity.getEntity().getEntityId());
     dto.setActive(moduleEntity.getActive());
 
@@ -174,6 +174,25 @@ public final class EntityToDto {
         throw new IllegalArgumentException("Failed to parse trustMarkIssuers JSON", e);
       }
     }
+
+    return dto;
+  }
+
+  /**
+   * Converts TaImEntity to IntermediateDto.
+   *
+   * @param moduleEntity the TaIm entity
+   * @return the intermediate DTO
+   */
+  public static IntermediateDto toDtoIntermediate(final TaImEntity moduleEntity) {
+    if (!moduleEntity.getModuleType().equals(FkKeyType.INTERMEDIATE.name())) {
+      throw new IllegalArgumentException("Module is not an Intermediate");
+    }
+
+    final IntermediateDto dto = new IntermediateDto();
+    dto.setTaImId(moduleEntity.getTaImId());
+    dto.setEntityId(moduleEntity.getEntity().getEntityId());
+    dto.setActive(moduleEntity.getActive());
 
     return dto;
   }
@@ -422,12 +441,12 @@ public final class EntityToDto {
   }
 
   /**
-   * Updates ModuleEntity with TrustAnchorDto data.
+   * Updates TaImEntity with TrustAnchorDto data.
    *
-   * @param module the module entity
+   * @param module the TaIm entity
    * @param dto the trust anchor DTO
    */
-  public static void updateModuleEntity(final ModuleEntity module, final TrustAnchorDto dto) {
+  public static void updateModuleEntity(final TaImEntity module, final TrustAnchorDto dto) {
 
     module.setActive(dto.getActive());
 
@@ -443,6 +462,16 @@ public final class EntityToDto {
     else {
       module.setTrustMarkIssuers(null);
     }
+  }
+
+  /**
+   * Updates TaImEntity with IntermediateDto data.
+   *
+   * @param module the TaIm entity
+   * @param dto the intermediate DTO
+   */
+  public static void updateModuleEntity(final TaImEntity module, final IntermediateDto dto) {
+    module.setActive(dto.getActive());
   }
 
   /**
@@ -534,20 +563,20 @@ public final class EntityToDto {
   }
 
   /**
-   * Converts TrustAnchorDto to ModuleEntity.
+   * Converts TrustAnchorDto to TaImEntity.
    *
    * @param id the module ID
    * @param dto the trust anchor DTO
    * @param entityEntity the entity entity
    * @param organization the organization entity
-   * @return the module entity
+   * @return the TaIm entity
    */
-  public static ModuleEntity toEntity(final java.util.UUID id,
+  public static TaImEntity toEntity(final java.util.UUID id,
       final TrustAnchorDto dto,
       final EntityEntity entityEntity,
       final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization) {
-    final ModuleEntity module = new ModuleEntity();
-    module.setModuleId(id);
+    final TaImEntity module = new TaImEntity();
+    module.setTaImId(id);
     module.setModuleType(FkKeyType.TRUSTANCHOR.name());
     module.setEntity(entityEntity);
     module.setOrganization(organization);
@@ -561,6 +590,29 @@ public final class EntityToDto {
         throw new IllegalArgumentException("Failed to serialize trustMarkIssuers to JSON", e);
       }
     }
+
+    return module;
+  }
+
+  /**
+   * Converts IntermediateDto to TaImEntity.
+   *
+   * @param id the module ID
+   * @param dto the intermediate DTO
+   * @param entityEntity the entity entity
+   * @param organization the organization entity
+   * @return the TaIm entity
+   */
+  public static TaImEntity toEntity(final java.util.UUID id,
+      final IntermediateDto dto,
+      final EntityEntity entityEntity,
+      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization) {
+    final TaImEntity module = new TaImEntity();
+    module.setTaImId(id);
+    module.setModuleType(FkKeyType.INTERMEDIATE.name());
+    module.setEntity(entityEntity);
+    module.setOrganization(organization);
+    module.setActive(dto.getActive());
 
     return module;
   }

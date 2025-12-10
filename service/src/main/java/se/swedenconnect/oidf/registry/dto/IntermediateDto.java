@@ -19,18 +19,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
- * DTO for Trust Anchor module. Used for both input (create/update) and output (get).
- * The taImId field is read-only and will be ignored when deserializing from JSON input.
+ * DTO for Trust Anchor module. Used for both input (create/update) and output (get). The taImId field is read-only and
+ * will be ignored when deserializing from JSON input.
  *
  * @author Per Fredrik Plars
  */
 @Data
-@Schema(name = "TrustAnchor")
-public class TrustAnchorDto {
+@Schema(name = "Intermediate")
+public class IntermediateDto {
 
   @Schema(description = "TaIm ID", accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
@@ -39,10 +38,8 @@ public class TrustAnchorDto {
   @Schema(description = "Entity identifier that this trust anchor belongs to. ")
   private UUID entityId;
 
-  @Schema(description = "If this trust anchor is active")
+  @Schema(description = "If this intermediate is active")
   private Boolean active;
 
-  @Schema(description = "Entity identifiers for trust mark issuers")
-  private List<String> trustMarkIssuers;
 }
 

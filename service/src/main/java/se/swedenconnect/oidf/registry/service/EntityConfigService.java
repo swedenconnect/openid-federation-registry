@@ -17,10 +17,12 @@
 package se.swedenconnect.oidf.registry.service;
 
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.dto.EntityWithModulesDto;
 import se.swedenconnect.oidf.registry.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -146,6 +148,17 @@ public interface EntityConfigService {
    * @param id the entity ID
    */
   void deleteSubordinateEntity(OrganizationRecord organizationRecord, UUID id);
+
+  /**
+   * Lists all entities for the organization, optionally filtered by type and with modules included.
+   *
+   * @param organizationRecord the organization record
+   * @param type optional entity type filter (federation, hosted, subordinate)
+   * @param includeModules whether to include modules (trustanchor, intermediate, resolver, trustmarkissuer)
+   * @return list of entities with optional modules
+   */
+  List<EntityWithModulesDto> listEntities(OrganizationRecord organizationRecord,
+      String type, boolean includeModules);
 }
 
 

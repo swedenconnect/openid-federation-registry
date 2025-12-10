@@ -27,8 +27,8 @@ import se.swedenconnect.oidf.registry.dto.OidfServiceSubModules;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.entity.InstanceEntity;
-import se.swedenconnect.oidf.registry.entity.ModuleEntity;
 import se.swedenconnect.oidf.registry.entity.ResolverEntity;
+import se.swedenconnect.oidf.registry.entity.TaImEntity;
 import se.swedenconnect.oidf.registry.entity.TrustmarkIssuerEntity;
 import se.swedenconnect.oidf.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.registry.repository.PolicyRepository;
@@ -148,7 +148,7 @@ public class OidfApiService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No instance found for:%s".formatted(instanceid)));
 
-    final List<ModuleEntity> moduleEntities = instanceEntity.getOrganizations().stream()
+    final List<TaImEntity> moduleEntities = instanceEntity.getOrganizations().stream()
         .flatMap(organizationEntity -> organizationEntity.getModule().stream())
         .toList();
 
@@ -208,7 +208,7 @@ public class OidfApiService {
 
   private static final ObjectMapper mapper = new ObjectMapper();
 
-  private OidfServiceSubModules.TrustAnchor toTaIm(final ModuleEntity taImModuleEntity) {
+  private OidfServiceSubModules.TrustAnchor toTaIm(final TaImEntity taImModuleEntity) {
     if (taImModuleEntity.getActive() == null || !taImModuleEntity.getActive()) {
       return OidfServiceSubModules.TrustAnchor.builder().build();
     }
