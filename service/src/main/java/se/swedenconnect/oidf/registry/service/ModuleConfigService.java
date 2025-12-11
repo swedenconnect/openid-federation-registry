@@ -18,11 +18,14 @@ package se.swedenconnect.oidf.registry.service;
 
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.dto.IntermediateDto;
+import se.swedenconnect.oidf.registry.dto.ModuleDto;
 import se.swedenconnect.oidf.registry.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.dto.TrustmarkIssuerDto;
+import se.swedenconnect.oidf.registry.dto.TrustmarkWithSubjectsDto;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -226,6 +229,24 @@ public interface ModuleConfigService {
    * @param id the trust mark issuer ID
    */
   void deleteTrustmarkIssuer(OrganizationRecord organizationRecord, UUID id);
+
+  /**
+   * Lists all modules for the organization, optionally filtered by type.
+   *
+   * @param organizationRecord the organization record
+   * @param type optional module type filter (trustanchor, intermediate, resolver, trustmarkissuer)
+   * @return modules grouped by type
+   */
+  ModuleDto listModules(OrganizationRecord organizationRecord, String type);
+
+  /**
+   * Lists all trustmarks for the organization, optionally including trustmark subjects.
+   *
+   * @param organizationRecord the organization record
+   * @param includeSubjects if true, includes trustmark subjects in the response
+   * @return list of trustmarks with optionally included trustmark subjects
+   */
+  List<TrustmarkWithSubjectsDto> listTrustmarks(OrganizationRecord organizationRecord, boolean includeSubjects);
 }
 
 

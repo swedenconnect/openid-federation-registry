@@ -234,6 +234,50 @@ public final class EntityToDto {
   }
 
   /**
+   * Converts TrustMarkEntity to TrustmarkWithSubjectsDto including trustmark subjects.
+   *
+   * @param trustMarkEntity the trust mark entity
+   * @return the trustmark with subjects DTO
+   */
+  public static TrustmarkWithSubjectsDto toDtoWithSubjects(final TrustMarkEntity trustMarkEntity) {
+    final TrustmarkWithSubjectsDto dto = new TrustmarkWithSubjectsDto();
+    dto.setTrustmarkId(trustMarkEntity.getTrustmarkId());
+    dto.setTrustmarkissuerId(trustMarkEntity.getTrustmarkIssuer().getTrustmarkIssuerId());
+    dto.setTrustMarkEntityId(trustMarkEntity.getTrustMarkEntityId());
+    dto.setLogoUri(trustMarkEntity.getLogoUri());
+    dto.setRefUri(trustMarkEntity.getRefUri());
+    dto.setDelegation(trustMarkEntity.getDelegation());
+
+    // Convert trustmark subjects
+    if (trustMarkEntity.getTrustmarksubjects() != null) {
+      final List<TrustmarkSubjectDto> subjects = trustMarkEntity.getTrustmarksubjects().stream()
+          .map(EntityToDto::toDto)
+          .toList();
+      dto.setTrustmarkSubjects(subjects);
+    }
+
+    return dto;
+  }
+
+  /**
+   * Converts TrustMarkEntity to TrustmarkWithSubjectsDto with empty subjects list.
+   *
+   * @param trustMarkEntity the trust mark entity
+   * @return the trustmark with empty subjects DTO
+   */
+  public static TrustmarkWithSubjectsDto toDtoWithSubjectsEmpty(final TrustMarkEntity trustMarkEntity) {
+    final TrustmarkWithSubjectsDto dto = new TrustmarkWithSubjectsDto();
+    dto.setTrustmarkId(trustMarkEntity.getTrustmarkId());
+    dto.setTrustmarkissuerId(trustMarkEntity.getTrustmarkIssuer().getTrustmarkIssuerId());
+    dto.setTrustMarkEntityId(trustMarkEntity.getTrustMarkEntityId());
+    dto.setLogoUri(trustMarkEntity.getLogoUri());
+    dto.setRefUri(trustMarkEntity.getRefUri());
+    dto.setDelegation(trustMarkEntity.getDelegation());
+    dto.setTrustmarkSubjects(Collections.emptyList());
+    return dto;
+  }
+
+  /**
    * Converts TrustMarkSubjectEntity to TrustmarkSubjectDto.
    *
    * @param trustMarkSubjectEntity the trust mark subject entity

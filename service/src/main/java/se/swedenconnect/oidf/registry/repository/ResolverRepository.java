@@ -22,6 +22,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import se.swedenconnect.oidf.registry.entity.ResolverEntity;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -44,4 +45,14 @@ public interface ResolverRepository extends JpaRepository<ResolverEntity, UUID> 
       + "WHERE o.orgNumber = :orgNumber AND r.resolverId = :resolverId")
   Optional<ResolverEntity> findByOrgNumberAndResolverId(
       @Param("orgNumber") String orgNumber, @Param("resolverId") UUID resolverId);
+
+  /**
+   * Retrieves a list of ResolverEntity objects associated with the specified organization number.
+   *
+   * @param orgNumber the organization number to filter by.
+   * @return a list of ResolverEntity objects matching the specified organization number.
+   */
+  @Query("SELECT r FROM ResolverEntity r JOIN r.entity e JOIN e.organization o "
+      + "WHERE o.orgNumber = :orgNumber")
+  List<ResolverEntity> findByOrgNumber(@Param("orgNumber") String orgNumber);
 }

@@ -27,7 +27,11 @@ import lombok.EqualsAndHashCode;
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
-@Schema(name = "FederationEntity")
+@Schema(
+    name = "FederationEntityWithModules",
+    description = "Extended federation entity including modules",
+    allOf = { FederationEntityDto.class }
+)
 public class FederationEntityWithModulesDto extends FederationEntityDto {
 
   @Schema(description = "Trust anchor module (if exists on federation entity)")

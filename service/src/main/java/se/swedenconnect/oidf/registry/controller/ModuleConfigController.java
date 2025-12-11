@@ -28,9 +28,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.dto.IntermediateDto;
+import se.swedenconnect.oidf.registry.dto.ModuleDto;
 import se.swedenconnect.oidf.registry.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.dto.TrustmarkIssuerDto;
@@ -50,6 +52,21 @@ import java.util.UUID;
 public class ModuleConfigController {
 
   private final ModuleConfigService moduleConfigService;
+
+  /**
+   * Lists all modules for the organization.
+   *
+   * @param type optional module type filter (trustanchor, intermediate, resolver, trustmarkissuer)
+   * @param organizationRecord the organization record
+   * @return modules grouped by type
+   */
+  @GetMapping
+  @Operation(summary = "List all modules", description = "Lists all modules for the organization, optionally filtered by type")
+  public ResponseEntity<ModuleDto> listModules(
+      @RequestParam(name = "type", required = false) final String type,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(this.moduleConfigService.listModules(organizationRecord, type));
+  }
 
   // TrustAnchor
 

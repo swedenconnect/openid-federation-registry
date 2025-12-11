@@ -22,6 +22,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import se.swedenconnect.oidf.registry.entity.TrustmarkIssuerEntity;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -44,4 +45,14 @@ public interface TrustmarkIssuerRepository extends JpaRepository<TrustmarkIssuer
       + "WHERE o.orgNumber = :orgNumber AND ti.trustmarkIssuerId = :trustmarkIssuerId")
   Optional<TrustmarkIssuerEntity> findByOrgNumberAndTrustmarkIssuerId(
       @Param("orgNumber") String orgNumber, @Param("trustmarkIssuerId") UUID trustmarkIssuerId);
+
+  /**
+   * Retrieves a list of TrustmarkIssuerEntity objects associated with the specified organization number.
+   *
+   * @param orgNumber the organization number to filter by.
+   * @return a list of TrustmarkIssuerEntity objects matching the specified organization number.
+   */
+  @Query("SELECT ti FROM TrustmarkIssuerEntity ti JOIN ti.entity e JOIN e.organization o "
+      + "WHERE o.orgNumber = :orgNumber")
+  List<TrustmarkIssuerEntity> findByOrgNumber(@Param("orgNumber") String orgNumber);
 }

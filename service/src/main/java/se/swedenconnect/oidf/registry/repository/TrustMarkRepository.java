@@ -44,6 +44,19 @@ public interface TrustMarkRepository extends JpaRepository<TrustMarkEntity, UUID
   List<TrustMarkEntity> findByOrgNumber(@Param("orgNumber") String orgNumber);
 
   /**
+   * Executes the SQL query to retrieve trust marks with subjects based on the organization number. Uses LEFT JOIN FETCH
+   * to eagerly load trustmark subjects, including trustmarks without subjects.
+   *
+   * @param orgNumber the organization number
+   * @return a list of TrustMarkEntity with subjects loaded
+   */
+  @Query("SELECT DISTINCT t FROM TrustMarkEntity t "
+      + "LEFT JOIN FETCH t.trustmarksubjects "
+      + "JOIN t.trustmarkIssuer tmi JOIN tmi.entity e JOIN e.organization o "
+      + "WHERE o.orgNumber = :orgNumber")
+  List<TrustMarkEntity> findByOrgNumberWithSubjects(@Param("orgNumber") String orgNumber);
+
+  /**
    * Finds a {@link TrustMarkEntity} based on the organization's number and the trustmark's ID.
    *
    * @param orgNumber the unique number of the organization

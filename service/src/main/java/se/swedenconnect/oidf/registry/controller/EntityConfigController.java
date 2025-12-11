@@ -64,8 +64,8 @@ public class EntityConfigController {
   @GetMapping
   @Operation(summary = "List all entities", description = "Lists all entities for the organization, optionally filtered by type and with modules included")
   public ResponseEntity<List<EntityWithModulesDto>> listEntities(
-      @RequestParam(required = false) final String type,
-      @RequestParam(defaultValue = "false") final boolean includeModules,
+      @RequestParam(name = "type", required = false) final String type,
+      @RequestParam(name = "includemodules", defaultValue = "false") final boolean includeModules,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.entityConfigService.listEntities(organizationRecord, type, includeModules));
   }

@@ -28,13 +28,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.dto.TrustmarkSubjectDto;
+import se.swedenconnect.oidf.registry.dto.TrustmarkWithSubjectsDto;
 import se.swedenconnect.oidf.registry.service.ModuleConfigService;
 import se.swedenconnect.oidf.registry.service.TrustmarkSubjectService;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -50,6 +53,21 @@ public class TrustmarkController {
 
   private final ModuleConfigService moduleConfigService;
   private final TrustmarkSubjectService trustmarkSubjectService;
+
+  /**
+   * Lists all trustmarks for the organization.
+   *
+   * @param includeSubjects if true, includes trustmark subjects in the response
+   * @param organizationRecord the organization record
+   * @return list of trustmarks with optionally included trustmark subjects
+   */
+  @GetMapping
+  @Operation(summary = "List all trustmarks", description = "Lists all trustmarks for the organization, optionally including trustmark subjects")
+  public ResponseEntity<List<TrustmarkWithSubjectsDto>> listTrustmarks(
+      @RequestParam(name = "includeSubjects", required = false, defaultValue = "false") final boolean includeSubjects,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(this.moduleConfigService.listTrustmarks(organizationRecord, includeSubjects));
+  }
 
   // Trustmark
 

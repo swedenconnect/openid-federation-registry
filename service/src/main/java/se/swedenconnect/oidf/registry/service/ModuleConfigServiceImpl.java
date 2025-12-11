@@ -22,10 +22,12 @@ import se.swedenconnect.oidf.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.dto.EntityToDto;
 import se.swedenconnect.oidf.registry.dto.IntermediateDto;
+import se.swedenconnect.oidf.registry.dto.ModuleDto;
 import se.swedenconnect.oidf.registry.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.dto.TrustmarkIssuerDto;
+import se.swedenconnect.oidf.registry.dto.TrustmarkWithSubjectsDto;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
@@ -40,9 +42,11 @@ import se.swedenconnect.oidf.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.repository.ResolverRepository;
 import se.swedenconnect.oidf.registry.repository.TaImRepository;
 import se.swedenconnect.oidf.registry.repository.TrustMarkRepository;
+import se.swedenconnect.oidf.registry.repository.TrustMarkSubjectRepository;
 import se.swedenconnect.oidf.registry.repository.TrustmarkIssuerRepository;
 import se.swedenconnect.oidf.registry.validation.ValidateDto;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -56,6 +60,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   private final TaImRepository moduleRepository;
   private final EntityRepository entityRepository;
   private final TrustMarkRepository trustMarkRepository;
+  private final TrustMarkSubjectRepository trustMarkSubjectRepository;
   private final TrustmarkIssuerRepository trustmarkIssuerRepository;
   private final ResolverRepository resolverRepository;
   private final OrganizationService organizationService;
@@ -67,6 +72,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
    * @param moduleRepository the module repository
    * @param entityRepository the entity repository
    * @param trustMarkRepository the trust mark repository
+   * @param trustMarkSubjectRepository the trust mark subject repository
    * @param trustmarkIssuerRepository the trustmark issuer repository
    * @param resolverRepository the resolver repository
    * @param organizationService the organization service
@@ -75,6 +81,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   public ModuleConfigServiceImpl(final TaImRepository moduleRepository,
       final EntityRepository entityRepository,
       final TrustMarkRepository trustMarkRepository,
+      final TrustMarkSubjectRepository trustMarkSubjectRepository,
       final TrustmarkIssuerRepository trustmarkIssuerRepository,
       final ResolverRepository resolverRepository,
       final OrganizationService organizationService,
@@ -82,6 +89,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     this.moduleRepository = moduleRepository;
     this.entityRepository = entityRepository;
     this.trustMarkRepository = trustMarkRepository;
+    this.trustMarkSubjectRepository = trustMarkSubjectRepository;
     this.trustmarkIssuerRepository = trustmarkIssuerRepository;
     this.resolverRepository = resolverRepository;
     this.organizationService = organizationService;
@@ -420,6 +428,98 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     final TrustmarkIssuerDto dto = EntityToDto.toDto(entity);
     this.trustmarkIssuerRepository.delete(entity);
     this.auditService.trustmarkIssuerDeleted(id, dto);
+  }
+
+  // ---------------------------------------------------------------------------
+  // List Modules
+  // ---------------------------------------------------------------------------
+
+  @Override
+  @Transactional(readOnly = true)
+  public ModuleDto listModules(final OrganizationRecord organizationRecord, final String type) {
+    final FkKeyType moduleType = this.parseModuleType(type);
+    final ModuleDto moduleDto = new ModuleDto();
+
+    // Add TrustAnchor modules (TaImEntity)
+    if (moduleType == null || moduleType == FkKeyType.TRUSTANCHOR) {
+      final List<TaImEntity> trustAnchorModules = this.moduleRepository
+          .findByOrgNumberAndOptionalModuleType(organizationRecord.orgNumber(), FkKeyType.TRUSTANCHOR.name());
+      final List<TrustAnchorDto> trustAnchors = trustAnchorModules.stream()
+          .map(EntityToDto::toDto)
+          .toList();
+      moduleDto.setTrustAnchors(trustAnchors);
+    }
+
+    // Add Intermediate modules (TaImEntity)
+    if (moduleType == null || moduleType == FkKeyType.INTERMEDIATE) {
+      final List<TaImEntity> intermediateModules = this.moduleRepository
+          .findByOrgNumberAndOptionalModuleType(organizationRecord.orgNumber(), FkKeyType.INTERMEDIATE.name());
+      final List<IntermediateDto> intermediates = intermediateModules.stream()
+          .map(EntityToDto::toDtoIntermediate)
+          .toList();
+      moduleDto.setIntermediates(intermediates);
+    }
+
+    // Add Resolver modules
+    if (moduleType == null || moduleType == FkKeyType.RESOLVER) {
+      final List<ResolverEntity> resolverModules = this.resolverRepository
+          .findByOrgNumber(organizationRecord.orgNumber());
+      final List<ResolverDto> resolvers = resolverModules.stream()
+          .map(EntityToDto::toDto)
+          .toList();
+      moduleDto.setResolvers(resolvers);
+    }
+
+    // Add TrustmarkIssuer modules
+    if (moduleType == null || moduleType == FkKeyType.TRUSTMARKISSUER) {
+      final List<TrustmarkIssuerEntity> trustmarkIssuerModules = this.trustmarkIssuerRepository
+          .findByOrgNumber(organizationRecord.orgNumber());
+      final List<TrustmarkIssuerDto> trustmarkIssuers = trustmarkIssuerModules.stream()
+          .map(EntityToDto::toDto)
+          .toList();
+      moduleDto.setTrustmarkIssuers(trustmarkIssuers);
+    }
+
+    return moduleDto;
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<TrustmarkWithSubjectsDto> listTrustmarks(final OrganizationRecord organizationRecord,
+      final boolean includeSubjects) {
+    final List<TrustMarkEntity> trustMarkEntities;
+
+    if (includeSubjects) {
+      // Fetch trustmarks with subjects using FETCH JOIN
+      trustMarkEntities = this.trustMarkRepository
+          .findByOrgNumberWithSubjects(organizationRecord.orgNumber());
+    }
+    else {
+      // Fetch trustmarks without subjects
+      trustMarkEntities = this.trustMarkRepository
+          .findByOrgNumber(organizationRecord.orgNumber());
+    }
+
+    // Convert to DTOs - always use TrustmarkWithSubjectsDto, but only populate subjects if requested
+    return trustMarkEntities.stream()
+        .map(entity -> includeSubjects
+            ? EntityToDto.toDtoWithSubjects(entity)
+            : EntityToDto.toDtoWithSubjectsEmpty(entity))
+        .toList();
+  }
+
+  private FkKeyType parseModuleType(final String type) {
+    if (type == null || type.isBlank()) {
+      return null;
+    }
+    try {
+      return FkKeyType.valueOf(type.toUpperCase());
+    }
+    catch (final IllegalArgumentException e) {
+      throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
+          "Invalid module type: %s. Valid values are: trustanchor, intermediate, resolver, trustmarkissuer"
+              .formatted(type));
+    }
   }
 }
 
