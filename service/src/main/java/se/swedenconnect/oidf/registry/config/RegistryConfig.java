@@ -16,10 +16,8 @@
 package se.swedenconnect.oidf.registry.config;
 
 import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;
@@ -64,9 +62,6 @@ public class RegistryConfig {
   private final PolicyRepository policyRepository;
 
   private final RegistryProperties registryProperties;
-
-  @Value("${openid.federation.registry.dev-mode:false}")
-  private boolean devMode;
 
   /**
    * Constructs a RegistryConfig object, initializing various repositories and services required for the registry
@@ -221,31 +216,16 @@ public class RegistryConfig {
 
   /**
    * Resolves the signing key to be used based on the provided credential bundles and federation API properties.
-   * If in development mode, an ephemeral key is generated for signing purposes.
    *
    * @param credentialBundles the credential bundle containing the necessary keys and certificates.
    * @param federationApiProperties the federation API properties that define key-related configurations.
    * @return the resolved signing key as a {@link JWK} instance.
-   * @throws IllegalStateException if no signing key is found for the specified alias, or if an error occurs during
-   * key generation in development mode.
+   * @throws IllegalStateException if no signing key is found for the specified alias.
    */
   private JWK resolveSigningKey(final Optional<CredentialBundles> credentialBundles,
                                 final RegistryProperties.FederationAPIProperties federationApiProperties) {
-    if (this.devMode) {
-      log.warn("DEV-MODE ACTIVE: Using generated ephemeral key for signing. This is NOT suitable for production!");
-      try {
-        return new RSAKeyGenerator(2048)
-            .keyID(UUID.randomUUID().toString())
-            .generate();
-      }
-      catch (final Exception e) {
-        throw new IllegalStateException("Unable to generate ephemeral key for signing", e);
-      }
-    }
-
     final CredentialBundles bundles = credentialBundles.orElseThrow(() ->
-        new IllegalStateException("Production mode requires configured credentials. " +
-            "Either configure 'credential.bundles' or enable 'openid.federation.registry.dev-mode=true'."));
+        new IllegalStateException("Missing required 'credential.bundles' configuration."));
 
     final String signKeyAlias = federationApiProperties.signKeyAlias();
     final PkiCredential sighKey = bundles.getCredential(signKeyAlias);

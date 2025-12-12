@@ -21,10 +21,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 import se.swedenconnect.oidf.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.registry.repository.PolicyRepository;
-import se.swedenconnect.oidf.registry.service.OidfApiService;
 import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.bundle.CredentialBundles;
 
@@ -70,35 +68,17 @@ class RegistryConfigTest {
   }
 
   @Test
-  @DisplayName("DevMode enabled - should succeed")
-  void testDevModeEnable() {
-    // Set devMode = true
-    ReflectionTestUtils.setField(registryConfig, "devMode", true);
-
-    // Call with empty credentials
-    OidfApiService service = registryConfig.federationServiceApiService(Optional.empty());
-
-    assertThat(service).isNotNull();
-  }
-
-  @Test
-  @DisplayName("ProductionMode enabled and missing Credentials - should fail")
-  void testProductionModeMissingCredentialsBundle() {
-    // Set devMode = false (default)
-    ReflectionTestUtils.setField(registryConfig, "devMode", false);
-
+  @DisplayName("Missing Credentials Bundle - should fail")
+  void testMissingCredentialsBundle() {
     // Call with empty Optional (simulating missing credential bundle bean)
     assertThatThrownBy(() -> registryConfig.federationServiceApiService(Optional.empty()))
         .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("Production mode requires configured credentials");
+        .hasMessageContaining("Missing required 'credential.bundles' configuration.");
   }
 
   @Test
-  @DisplayName("ProductionMode enabled and missing key in Credentials bundle - should fail")
-  void testProductionModeMissingKeyInBundle() {
-    // Set devMode = false
-    ReflectionTestUtils.setField(registryConfig, "devMode", false);
-
+  @DisplayName("Missing key in Credentials bundle - should fail")
+  void testMissingKeyInBundle() {
     // Configure mock to return an alias
     when(apiProperties.signKeyAlias()).thenReturn("my-key");
 
@@ -111,11 +91,8 @@ class RegistryConfigTest {
   }
 
   @Test
-  @DisplayName("ProductionMode enabled and valid bundle - should succeed")
-  void testProductionModeSuccess() {
-    // Set devMode = false
-    ReflectionTestUtils.setField(registryConfig, "devMode", false);
-
+  @DisplayName("Valid configuration - should succeed")
+  void testSuccess() {
     // Mock successful key retrieval
     when(apiProperties.signKeyAlias()).thenReturn("my-key");
     PkiCredential mockCredential = mock(PkiCredential.class);
