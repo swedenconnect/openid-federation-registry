@@ -33,8 +33,6 @@ import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.auth.RegistryJwtConverter;
 import se.swedenconnect.oidf.registry.service.OrganizationService;
 
-import javax.crypto.spec.SecretKeySpec;
-
 /**
  * Security configuration class that defines security-related settings for the application. This class integrates OAuth2
  * Resource Server and configures security rules for specific HTTP endpoints. It uses Spring Security to define the
