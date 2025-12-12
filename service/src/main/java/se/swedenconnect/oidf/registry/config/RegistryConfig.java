@@ -16,10 +16,8 @@
 package se.swedenconnect.oidf.registry.config;
 
 import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;

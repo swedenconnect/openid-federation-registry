@@ -33,26 +33,30 @@ mvn clean install
 To run the application locally, you need to start the supporting dependencies and then launch the Spring Boot application
 with the `docker` profile.
 
-### 1. Start the Local Database
+### 1. Start the Local Environment
 
-The application requires a MariaDB database. A minimal environment setup is provided in the `config/local` directory.
+The application requires a MariaDB database, as well as signing keys and a resource server public key.
+A setup script is provided in the `config/local` directory to generate these keys and start the environment.
 
 1.  Navigate to the local configuration directory:
-    ```shell
-    cd config/local
-    ```
+```shell
+cd config/local
+ ```
 
-2.  Start the docker compose environment:
-    ```shell
-    docker compose up -d
-    ```
+2.  Run the setup script:
+```shell
+sh setup.sh
+```
 
-    This will start a MariaDB instance.
+This script will:
+*   Generate a self-signed certificate and a PKCS12 keystore (`snake-oil.p12`) for signing.
+*   Extract the public key (`snake-oil.pem`) for the resource server configuration.
+*   Start the MariaDB instance using Docker Compose.
 
 To stop the docker compose environment:
 ```shell
 docker compose down
-```
+   ```
 
 ### 2. Start the Application
 
@@ -60,7 +64,7 @@ You can run the application using Maven or your IDE.
 
 **Using Maven:**
 
-From the project root (or `service` directory), run:
+From the project root run:
 ```shell
 mvn spring-boot:run -pl service \
 -Dspring-boot.run.arguments="--spring.profiles.active=docker --spring.config.import=../config/local/application-docker.yml"
@@ -82,7 +86,8 @@ Once the application is running, you can access the following endpoints:
 *   **API Documentation:** [localhost:8010/swagger-ui/index.html](http://localhost:8010/swagger-ui/index.html)
 *   **OpenAPI Specification:** [localhost:8010/v3/api-docs](http://localhost:8010/v3/api-docs)
 
-> **WARNING:** This Docker Compose setup is intended **strictly for local development**. It uses HTTP, self-signed certificates (where applicable), and default passwords. A production setup mandates HTTPS, valid certificates, and hardened security configurations.
+> **WARNING:** This Docker Compose setup is intended **strictly for local testing/development**. It uses HTTP, self-signed certificates,
+> and default passwords. A production or serious development setup mandates HTTPS, valid certificates, and hardened security configurations.
 
 ---
 ## Configuration
