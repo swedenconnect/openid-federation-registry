@@ -28,7 +28,6 @@ import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
-import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.entity.PolicyEntity;
 import se.swedenconnect.oidf.registry.errorhandling.ErrorTypes;
@@ -122,11 +121,12 @@ public class EntityConfigServiceImpl implements EntityConfigService {
 
   @Override
   @Transactional(readOnly = true)
-  public FederationEntityDto getFederationEntity(final OrganizationRecord organizationRecord,
-      final UUID id) {
+  public FederationEntityWithModulesDto getFederationEntity(final OrganizationRecord organizationRecord,
+      final UUID id,
+      final boolean includeModules) {
     final EntityEntity entity = this.findEntityOrThrow(
         organizationRecord, id, EntityKeyType.FEDERATION_ENTITY);
-    return EntityToDto.toDto(entity);
+    return EntityToDto.toFederationEntityWithModules(entity);
   }
 
   @Override
@@ -238,6 +238,13 @@ public class EntityConfigServiceImpl implements EntityConfigService {
 
     EntityToDto.updateEntity(existing, input);
 
+    final OrganizationEntity org = this.resolveOrganization(organizationRecord);
+    org.getPolicies()
+        .stream()
+        .filter(policyEntity -> policyEntity.getPolicyId().equals(input.getPolicyId()))
+        .findFirst()
+        .ifPresent(existing::setPolicyEntity);
+
     this.entityRepository.save(existing);
     final SubordinateEntityDto newDto = EntityToDto.toDtoSubordinate(existing);
     this.auditService.subordinateEntityUpdated(id, oldDto, newDto);
@@ -276,7 +283,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
         .findByOrgNumberAndOptionalEntityKeyType(organizationRecord.orgNumber(), entityKeyType);
 
     return entities.stream()
-        .map(entity -> this.toEntityWithModulesDto(entity, includeModules))
+        .map(entity -> EntityToDto.toEntityWithModulesDto(entity, includeModules))
         .collect(Collectors.toList());
   }
 
@@ -293,65 +300,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     }
   }
 
-  private EntityWithModulesDto toEntityWithModulesDto(final EntityEntity entity,
-      final boolean includeModules) {
-    final EntityWithModulesDto dto = new EntityWithModulesDto();
 
-    // Set entity based on type
-    if (entity.getEntityType() == EntityKeyType.FEDERATION_ENTITY) {
-      if (includeModules) {
-        dto.setFederationEntity(this.toFederationEntityWithModules(entity));
-      }
-      else {
-        final FederationEntityDto federationDto = EntityToDto.toDto(entity);
-        final FederationEntityWithModulesDto federationWithModules = new FederationEntityWithModulesDto();
-        federationWithModules.setEntityId(federationDto.getEntityId());
-        federationWithModules.setSubject(federationDto.getSubject());
-        federationWithModules.setIssuer(federationDto.getIssuer());
-        federationWithModules.setMetadata(federationDto.getMetadata());
-        dto.setFederationEntity(federationWithModules);
-      }
-    }
-    else if (entity.getEntityType() == EntityKeyType.HOSTED_ENTITY) {
-      dto.setHostedEntity(EntityToDto.toDtoHosted(entity));
-    }
-    else if (entity.getEntityType() == EntityKeyType.SUBORDINATE_ENTITY) {
-      dto.setSubordinateEntity(EntityToDto.toDtoSubordinate(entity));
-    }
-
-    return dto;
-  }
-
-  private FederationEntityWithModulesDto toFederationEntityWithModules(final EntityEntity entity) {
-    final FederationEntityDto baseDto = EntityToDto.toDto(entity);
-    final FederationEntityWithModulesDto dto = new FederationEntityWithModulesDto();
-    dto.setEntityId(baseDto.getEntityId());
-    dto.setSubject(baseDto.getSubject());
-    dto.setIssuer(baseDto.getIssuer());
-    dto.setMetadata(baseDto.getMetadata());
-
-    // TrustAnchor and Intermediate from TaImEntity modules
-    entity.getModules().forEach(module -> {
-      if (module.getModuleType().equals(FkKeyType.TRUSTANCHOR.name())) {
-        dto.setTrustAnchor(EntityToDto.toDto(module));
-      }
-      else if (module.getModuleType().equals(FkKeyType.INTERMEDIATE.name())) {
-        dto.setIntermediate(EntityToDto.toDtoIntermediate(module));
-      }
-    });
-
-    // Resolver
-    if (entity.getResolver() != null) {
-      dto.setResolver(EntityToDto.toDto(entity.getResolver()));
-    }
-
-    // TrustmarkIssuer
-    if (entity.getTrustmarkIssuer() != null) {
-      dto.setTrustmarkIssuer(EntityToDto.toDto(entity.getTrustmarkIssuer()));
-    }
-
-    return dto;
-  }
 }
 
 

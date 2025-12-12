@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS `resolver`
     `entity_id`                 UUID         NOT NULL,
     `active`                    BOOLEAN      NOT NULL,
     `resolve_response_duration` VARCHAR(255) NOT NULL,
+    `step_cached_value_threshold` INTEGER NOT NULL,
     `trust_anchor`              VARCHAR(255) NOT NULL,
     `trusted_keys`              TEXT         NOT NULL,
     `step_retry_duration`       VARCHAR(255) NOT NULL,

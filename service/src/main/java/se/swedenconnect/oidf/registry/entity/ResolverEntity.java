@@ -68,4 +68,7 @@ public class ResolverEntity extends BaseEntity {
 
   @Column(name = "step_retry_duration", nullable = false)
   private String stepRetryDuration;
+
+  @Column(name = "step_cached_value_threshold", nullable = false)
+  private Integer stepCachedValueThreshold;
 }

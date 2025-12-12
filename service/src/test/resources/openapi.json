@@ -855,6 +855,141 @@
         }
       }
     },
+    "/registry/v1/modules/intermediate/{id}": {
+      "get": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Get intermediate",
+        "operationId": "getIntermediate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Intermediate"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Update intermediate",
+        "operationId": "updateIntermediate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Intermediate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Intermediate"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Create intermediate with specified ID",
+        "operationId": "createIntermediateWithId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Intermediate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Intermediate"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Delete intermediate",
+        "operationId": "deleteIntermediate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/registry/v1/entities/subordinate/{id}": {
       "get": {
         "tags": [
@@ -1141,6 +1276,15 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "includemodules",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -1149,7 +1293,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/FederationEntity"
+                  "$ref": "#/components/schemas/FederationEntityWithModules"
                 }
               }
             }
@@ -1261,6 +1405,40 @@
       }
     },
     "/registry/v1/trustmarks": {
+      "get": {
+        "tags": [
+          "Trustmarks"
+        ],
+        "summary": "List all trustmarks",
+        "description": "Lists all trustmarks for the organization, optionally including trustmark subjects",
+        "operationId": "listTrustmarks",
+        "parameters": [
+          {
+            "name": "includeSubjects",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TrustmarkWithSubjects"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "Trustmarks"
@@ -1468,6 +1646,37 @@
         }
       }
     },
+    "/registry/v1/modules/intermediate": {
+      "post": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Create intermediate with auto-generated ID",
+        "operationId": "createIntermediate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Intermediate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Intermediate"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/registry/v1/entities/subordinate": {
       "post": {
         "tags": [
@@ -1554,6 +1763,82 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/FederationEntity"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/v1/modules": {
+      "get": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "List all modules",
+        "description": "Lists all modules for the organization, optionally filtered by type",
+        "operationId": "listModules",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Modules"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/v1/entities": {
+      "get": {
+        "tags": [
+          "Entities"
+        ],
+        "summary": "List all entities",
+        "description": "Lists all entities for the organization, optionally filtered by type and with modules included",
+        "operationId": "listEntities",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includemodules",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntityWithModules"
+                  }
                 }
               }
             }
@@ -1762,10 +2047,10 @@
       "TrustAnchor": {
         "type": "object",
         "properties": {
-          "moduleId": {
+          "taImId": {
             "type": "string",
             "format": "uuid",
-            "description": "Module ID",
+            "description": "TaIm ID",
             "readOnly": true
           },
           "entityId": {
@@ -1819,6 +2104,26 @@
           "stepRetryDuration": {
             "type": "string",
             "description": "Step retry duration (ISO-8601 duration, e.g. PT1H)"
+          }
+        }
+      },
+      "Intermediate": {
+        "type": "object",
+        "properties": {
+          "taImId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "TaIm ID",
+            "readOnly": true
+          },
+          "entityId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity identifier that this trust anchor belongs to. "
+          },
+          "active": {
+            "type": "boolean",
+            "description": "If this intermediate is active"
           }
         }
       },
@@ -1902,6 +2207,157 @@
             }
           }
         }
+      },
+      "TrustmarkWithSubjects": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Trustmark"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "trustmarkId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Trustmark ID",
+                "readOnly": true
+              },
+              "trustmarkissuerId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Trust mark issuer entity identifier"
+              },
+              "trustMarkEntityId": {
+                "type": "string",
+                "description": "Trust mark entity identifier"
+              },
+              "logoUri": {
+                "type": "string",
+                "description": "Logo URI"
+              },
+              "refUri": {
+                "type": "string",
+                "description": "Reference URI"
+              },
+              "delegation": {
+                "type": "string",
+                "description": "Delegation JWT"
+              },
+              "trustmarkSubjects": {
+                "type": "array",
+                "description": "List of trustmark subjects associated with this trustmark",
+                "items": {
+                  "$ref": "#/components/schemas/TrustmarkSubject"
+                }
+              }
+            }
+          }
+        ],
+        "description": "Trustmark with associated trustmark subjects"
+      },
+      "Modules": {
+        "type": "object",
+        "description": "All modules grouped by type",
+        "properties": {
+          "trustAnchors": {
+            "type": "array",
+            "description": "List of trust anchor modules",
+            "items": {
+              "$ref": "#/components/schemas/TrustAnchor"
+            }
+          },
+          "intermediates": {
+            "type": "array",
+            "description": "List of intermediate modules",
+            "items": {
+              "$ref": "#/components/schemas/Intermediate"
+            }
+          },
+          "resolvers": {
+            "type": "array",
+            "description": "List of resolver modules",
+            "items": {
+              "$ref": "#/components/schemas/Resolver"
+            }
+          },
+          "trustmarkIssuers": {
+            "type": "array",
+            "description": "List of trustmark issuer modules",
+            "items": {
+              "$ref": "#/components/schemas/TrustmarkIssuer"
+            }
+          }
+        }
+      },
+      "EntityWithModules": {
+        "type": "object",
+        "properties": {
+          "federationEntity": {
+            "$ref": "#/components/schemas/FederationEntityWithModules",
+            "description": "Federation entity (if entity type is federation)"
+          },
+          "hostedEntity": {
+            "$ref": "#/components/schemas/HostedEntity",
+            "description": "Hosted entity (if entity type is hosted)"
+          },
+          "subordinateEntity": {
+            "$ref": "#/components/schemas/SubordinateEntity",
+            "description": "Subordinate entity (if entity type is subordinate)"
+          }
+        }
+      },
+      "FederationEntityWithModules": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/FederationEntity"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entityId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Entity ID",
+                "readOnly": true
+              },
+              "subject": {
+                "type": "string",
+                "description": "Subject (entity identifier)",
+                "example": "https://rp.example.se"
+              },
+              "issuer": {
+                "type": "string",
+                "description": "Issuer (entity identifier)",
+                "example": "https://ta.example.se"
+              },
+              "metadata": {
+                "type": "object",
+                "additionalProperties": {},
+                "description": "Federation entity metadata",
+                "example": {
+                  "federation_entity": {}
+                }
+              },
+              "trustAnchor": {
+                "$ref": "#/components/schemas/TrustAnchor",
+                "description": "Trust anchor module (if exists on federation entity)"
+              },
+              "intermediate": {
+                "$ref": "#/components/schemas/Intermediate",
+                "description": "Intermediate module (if exists on federation entity)"
+              },
+              "resolver": {
+                "$ref": "#/components/schemas/Resolver",
+                "description": "Resolver module (if exists on entity)"
+              },
+              "trustmarkIssuer": {
+                "$ref": "#/components/schemas/TrustmarkIssuer",
+                "description": "Trustmark issuer module (if exists on entity)"
+              }
+            }
+          }
+        ],
+        "description": "Extended federation entity including modules"
       }
     },
     "securitySchemes": {

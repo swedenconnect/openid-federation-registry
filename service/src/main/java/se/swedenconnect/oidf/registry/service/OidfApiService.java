@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWK;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.registry.dto.OidfServiceHostedEntities;
@@ -37,6 +38,7 @@ import se.swedenconnect.oidf.registry.repository.ResolverRepository;
 import java.time.Duration;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import static se.swedenconnect.oidf.registry.entity.FkKeyType.INTERMEDIATE;
@@ -50,18 +52,7 @@ import static se.swedenconnect.oidf.registry.entity.FkKeyType.TRUSTANCHOR;
 @Slf4j
 public class OidfApiService {
 
-  public static final String ENTITY_IDENTIFIER = "entity_identifier";
-  public static final String POLICY_ID = "policy_id";
-  public static final String POLICY_RECORD = "policy_record";
-  public static final String TRUST_MARKS = "trust_marks";
-  public static final String TRUST_MARK_ISSUERS = "trust_mark_issuers";
   public static final String TRUST_MARK_SUBJECTS = "trust_mark_subjects";
-  public static final String TRUST_ANCHORS = "trust_anchors";
-  public static final String RESOLVERS = "resolvers";
-  public static final String HOSTED_RECORD_ATT = "hosted_record";
-  public static final String METADATA_ATT = "metadata";
-  public static final String FEDERATION_ENTITY_ATT = "federation_entity";
-  public static final String POLICY_ATT = "policy";
 
   private final PolicyRepository policyRepository;
   private final InstanceRepository instanceRepository;
@@ -103,6 +94,7 @@ public class OidfApiService {
    * @param plainJson whether to return plain JSON
    * @return a signed JSON Web Token (JWT) string containing the entity records
    */
+  @Transactional(readOnly = true)
   public String entityRecord(final UUID instanceId, final boolean plainJson) {
     Assert.notNull(instanceId, "InstanceId is mandatory");
     final String claimName = "entity_records";
@@ -125,6 +117,7 @@ public class OidfApiService {
    * @param plainJson whether to return plain JSON
    * @return a signed JWT string containing claims for the submodule record
    */
+  @Transactional(readOnly = true)
   public String submoduleRecord(final UUID instanceId, final boolean plainJson) {
     Assert.notNull(instanceId, "instanceId is mandatory");
     final String claimName = "module_records";
@@ -158,6 +151,7 @@ public class OidfApiService {
 
     final List<OidfServiceSubModules.TrustMarkIssuer> tmi = entities.stream()
         .map(EntityEntity::getTrustmarkIssuer)
+        .filter(Objects::nonNull)
         .map(this::toTrustMarkIssuer)
         .toList();
     subModules.trustMarkIssuers(tmi);
@@ -171,6 +165,7 @@ public class OidfApiService {
 
     final List<OidfServiceSubModules.Resolver> resolverEntities = entities.stream()
         .map(EntityEntity::getResolver)
+        .filter(Objects::nonNull)
         .map(this::toResolver)
         .toList();
     subModules.resolvers(resolverEntities);
@@ -209,7 +204,7 @@ public class OidfApiService {
   private static final ObjectMapper mapper = new ObjectMapper();
 
   private OidfServiceSubModules.TrustAnchor toTaIm(final TaImEntity taImModuleEntity) {
-    if (taImModuleEntity.getActive() == null || !taImModuleEntity.getActive()) {
+    if (taImModuleEntity == null || taImModuleEntity.getActive() == null || !taImModuleEntity.getActive()) {
       return OidfServiceSubModules.TrustAnchor.builder().build();
     }
 
@@ -231,11 +226,12 @@ public class OidfApiService {
     return OidfServiceSubModules.TrustAnchor.builder()
         .entityIdentifier(taImModuleEntity.getEntity().getSubject())
         .trustMarkIssuer(trustMarkIssuer)
+        .active(taImModuleEntity.getActive())
         .build();
   }
 
   private OidfServiceSubModules.Resolver toResolver(final ResolverEntity resolverEntity) {
-    if (resolverEntity.getActive() == null || !resolverEntity.getActive()) {
+    if (resolverEntity == null || resolverEntity.getActive() == null || !resolverEntity.getActive()) {
       return OidfServiceSubModules.Resolver.builder().build();
     }
 
@@ -249,12 +245,13 @@ public class OidfApiService {
             ? resolverEntity.getTrustedKeys()
             : null)
         .stepRetryTime(resolverEntity.getStepRetryDuration())
-        .stepCachedValueThreshold(null) // This field is not stored in columns yet
+        .stepCachedValueThreshold(
+            resolverEntity.getStepCachedValueThreshold()) // This field is not stored in columns yet
         .build();
   }
 
   private OidfServiceSubModules.TrustMarkIssuer toTrustMarkIssuer(final TrustmarkIssuerEntity tmiModuleEntity) {
-    if (tmiModuleEntity.getActive() == null || !tmiModuleEntity.getActive()) {
+    if (tmiModuleEntity == null || tmiModuleEntity.getActive() == null || !tmiModuleEntity.getActive()) {
       return OidfServiceSubModules.TrustMarkIssuer.builder().build();
     }
     final List<OidfServiceSubModules.TrustMarkIssuer.TrustMark> trustMarks = tmiModuleEntity.getTrustmarks()

@@ -32,6 +32,7 @@ import se.swedenconnect.oidf.registry.entity.TrustmarkIssuerEntity;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Utility class for converting between Entity and DTO objects.
@@ -48,28 +49,62 @@ public final class EntityToDto {
   /**
    * Converts EntityEntity to FederationEntityDto.
    *
-   * @param entityEntity the entity entity
+   * @param entity the entity entity
    * @return the federation entity DTO
    */
-  public static FederationEntityDto toDto(final EntityEntity entityEntity) {
-    if (entityEntity.getEntityType() != EntityKeyType.FEDERATION_ENTITY) {
-      throw new IllegalArgumentException("Entity is not a FederationEntity");
+  public static EntityWithModulesDto toEntityWithModulesDto(final EntityEntity entity,
+      final boolean includeModules) {
+    final EntityWithModulesDto dto = new EntityWithModulesDto();
+
+    // Set entity based on type
+    if (entity.getEntityType() == EntityKeyType.FEDERATION_ENTITY) {
+      if (includeModules) {
+        dto.setFederationEntity(EntityToDto.toFederationEntityWithModules(entity));
+      }
+      else {
+        final FederationEntityDto federationDto = EntityToDto.toDto(entity);
+        final FederationEntityWithModulesDto federationWithModules = new FederationEntityWithModulesDto();
+        federationWithModules.setEntityId(entity.getEntityId());
+        federationWithModules.setSubject(entity.getSubject());
+        federationWithModules.setIssuer(entity.getIssuer());
+        federationWithModules.setMetadata(federationDto.getMetadata());
+        dto.setFederationEntity(federationWithModules);
+      }
+    }
+    else if (entity.getEntityType() == EntityKeyType.HOSTED_ENTITY) {
+      dto.setHostedEntity(EntityToDto.toDtoHosted(entity));
+    }
+    else if (entity.getEntityType() == EntityKeyType.SUBORDINATE_ENTITY) {
+      dto.setSubordinateEntity(EntityToDto.toDtoSubordinate(entity));
     }
 
-    final FederationEntityDto dto = new FederationEntityDto();
-    dto.setEntityId(entityEntity.getEntityId());
-    dto.setSubject(entityEntity.getSubject());
-    dto.setIssuer(entityEntity.getIssuer());
+    return dto;
+  }
 
-    if (entityEntity.getMetadata() != null && !entityEntity.getMetadata().isBlank()) {
-      try {
-        dto.setMetadata(mapper.readValue(entityEntity.getMetadata(), new TypeReference<Map<String, Object>>() {}));
+  public static FederationEntityWithModulesDto toFederationEntityWithModules(final EntityEntity entity) {
+    final FederationEntityDto baseDto = EntityToDto.toDto(entity);
+    final FederationEntityWithModulesDto dto = new FederationEntityWithModulesDto();
+    dto.setEntityId(baseDto.getEntityId());
+    dto.setSubject(baseDto.getSubject());
+    dto.setIssuer(baseDto.getIssuer());
+    dto.setMetadata(baseDto.getMetadata());
+
+    entity.getModules().forEach(module -> {
+      if (module.getModuleType().equals(FkKeyType.TRUSTANCHOR.name())) {
+        dto.setTrustAnchor(EntityToDto.toDto(module));
       }
-      catch (final JsonProcessingException e) {
-        throw new IllegalArgumentException("Failed to parse metadata JSON", e);
+      else if (module.getModuleType().equals(FkKeyType.INTERMEDIATE.name())) {
+        dto.setIntermediate(EntityToDto.toDtoIntermediate(module));
       }
+    });
+
+    if (entity.getResolver() != null) {
+      dto.setResolver(EntityToDto.toDto(entity.getResolver()));
     }
 
+    if (entity.getTrustmarkIssuer() != null) {
+      dto.setTrustmarkIssuer(EntityToDto.toDto(entity.getTrustmarkIssuer()));
+    }
     return dto;
   }
 
@@ -117,6 +152,30 @@ public final class EntityToDto {
     dto.setSubject(entityEntity.getSubject());
     dto.setIssuer(entityEntity.getIssuer());
     dto.setJwks(entityEntity.getJwks());
+    Optional.ofNullable(entityEntity.getPolicyEntity())
+        .ifPresent(policyEntity -> dto.setPolicyId(policyEntity.getPolicyId()));
+
+    return dto;
+  }
+
+  public static FederationEntityDto toDto(final EntityEntity entityEntity) {
+    if (entityEntity.getEntityType() != EntityKeyType.FEDERATION_ENTITY) {
+      throw new IllegalArgumentException("Entity is not a FederationEntity");
+    }
+
+    final FederationEntityDto dto = new FederationEntityDto();
+    dto.setEntityId(entityEntity.getEntityId());
+    dto.setSubject(entityEntity.getSubject());
+    dto.setIssuer(entityEntity.getIssuer());
+
+    if (entityEntity.getMetadata() != null && !entityEntity.getMetadata().isBlank()) {
+      try {
+        dto.setMetadata(mapper.readValue(entityEntity.getMetadata(), new TypeReference<Map<String, Object>>() {}));
+      }
+      catch (final JsonProcessingException e) {
+        throw new IllegalArgumentException("Failed to parse metadata JSON", e);
+      }
+    }
 
     return dto;
   }
@@ -531,7 +590,6 @@ public final class EntityToDto {
     entity.setTrustedKeys(dto.getTrustedKeys());
     entity.setStepRetryDuration(dto.getStepRetryDuration());
   }
-
 
   /**
    * Converts TrustmarkDto to TrustMarkEntity.

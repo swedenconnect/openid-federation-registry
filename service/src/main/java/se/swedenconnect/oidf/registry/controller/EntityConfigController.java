@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.dto.EntityWithModulesDto;
 import se.swedenconnect.oidf.registry.dto.FederationEntityDto;
+import se.swedenconnect.oidf.registry.dto.FederationEntityWithModulesDto;
 import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
 import se.swedenconnect.oidf.registry.service.EntityConfigService;
@@ -62,7 +63,8 @@ public class EntityConfigController {
    * @return list of entities with optional modules
    */
   @GetMapping
-  @Operation(summary = "List all entities", description = "Lists all entities for the organization, optionally filtered by type and with modules included")
+  @Operation(summary = "List all entities",
+      description = "Lists all entities for the organization, optionally filtered by type and with modules included")
   public ResponseEntity<List<EntityWithModulesDto>> listEntities(
       @RequestParam(name = "type", required = false) final String type,
       @RequestParam(name = "includemodules", defaultValue = "false") final boolean includeModules,
@@ -129,10 +131,11 @@ public class EntityConfigController {
    */
   @GetMapping("/federation/{id}")
   @Operation(summary = "Get federation entity")
-  public ResponseEntity<FederationEntityDto> getFederationEntity(
+  public ResponseEntity<FederationEntityWithModulesDto> getFederationEntity(
       @PathVariable("id") final UUID id,
+      @RequestParam(name = "includemodules", defaultValue = "false") final boolean includeModules,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    return ResponseEntity.ok(this.entityConfigService.getFederationEntity(organizationRecord, id));
+    return ResponseEntity.ok(this.entityConfigService.getFederationEntity(organizationRecord, id, includeModules));
   }
 
   /**

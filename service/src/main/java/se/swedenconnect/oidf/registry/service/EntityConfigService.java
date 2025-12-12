@@ -19,6 +19,7 @@ package se.swedenconnect.oidf.registry.service;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.dto.EntityWithModulesDto;
 import se.swedenconnect.oidf.registry.dto.FederationEntityDto;
+import se.swedenconnect.oidf.registry.dto.FederationEntityWithModulesDto;
 import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
 
@@ -61,7 +62,8 @@ public interface EntityConfigService {
    * @param id the entity ID
    * @return the federation entity
    */
-  FederationEntityDto getFederationEntity(OrganizationRecord organizationRecord, UUID id);
+  FederationEntityWithModulesDto getFederationEntity(OrganizationRecord organizationRecord, UUID id,
+      boolean includeModules);
 
   /**
    * Deletes a federation entity.

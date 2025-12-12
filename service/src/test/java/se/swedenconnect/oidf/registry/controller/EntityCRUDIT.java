@@ -30,6 +30,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.api.EntitiesApi;
 import se.swedenconnect.oidf.registry.api.model.FederationEntity;
+import se.swedenconnect.oidf.registry.api.model.FederationEntityWithModules;
 import se.swedenconnect.oidf.registry.api.model.HostedEntity;
 import se.swedenconnect.oidf.registry.api.model.SubordinateEntity;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
@@ -124,7 +125,7 @@ class EntityCRUDIT {
     this.entitiesApi.createFederationEntityWithId(entityId, input);
 
     // Act
-    final FederationEntity retrieved = this.entitiesApi.getFederationEntity(entityId);
+    final FederationEntityWithModules retrieved = this.entitiesApi.getFederationEntity(entityId, false);
 
     // Assert
     assertThat(retrieved).isNotNull();
@@ -165,14 +166,14 @@ class EntityCRUDIT {
     this.entitiesApi.createFederationEntityWithId(entityId, input);
 
     // Verify it exists
-    final FederationEntity beforeDelete = this.entitiesApi.getFederationEntity(entityId);
+    final FederationEntityWithModules beforeDelete = this.entitiesApi.getFederationEntity(entityId, false);
     assertThat(beforeDelete).isNotNull();
 
     // Act
     this.entitiesApi.deleteFederationEntity(entityId);
 
     // Assert
-    assertThatThrownBy(() -> this.entitiesApi.getFederationEntity(entityId))
+    assertThatThrownBy(() -> this.entitiesApi.getFederationEntity(entityId, false))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(exception -> {
           final RestClientResponseException restException = (RestClientResponseException) exception;
@@ -407,7 +408,7 @@ class EntityCRUDIT {
     final EntitiesApi afEntitiesApi = new EntitiesApi(afApiClient);
 
     // Assert - Should not be found
-    assertThatThrownBy(() -> afEntitiesApi.getFederationEntity(entityId))
+    assertThatThrownBy(() -> afEntitiesApi.getFederationEntity(entityId, false))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(exception -> {
           final RestClientResponseException restException = (RestClientResponseException) exception;

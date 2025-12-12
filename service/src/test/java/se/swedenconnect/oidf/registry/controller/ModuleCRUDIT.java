@@ -243,7 +243,7 @@ class ModuleCRUDIT {
 
     // Assert
     assertThat(created).isNotNull();
-    assertThat(created.getModuleId()).isNotNull();
+    assertThat(created.getTaImId()).isNotNull();
     assertThat(created.getEntityId()).isEqualTo(entityId);
     assertThat(created.getActive()).isTrue();
     assertThat(created.getTrustMarkIssuers()).contains("https://www.pm.se/oidf/tmi1", "https://www.pm.se/oidf/tmi2");
@@ -266,7 +266,7 @@ class ModuleCRUDIT {
 
     // Assert
     assertThat(created).isNotNull();
-    assertThat(created.getModuleId()).isEqualTo(moduleId);
+    assertThat(created.getTaImId()).isEqualTo(moduleId);
     assertThat(created.getActive()).isFalse();
   }
 
@@ -288,7 +288,7 @@ class ModuleCRUDIT {
 
     // Assert
     assertThat(retrieved).isNotNull();
-    assertThat(retrieved.getModuleId()).isEqualTo(moduleId);
+    assertThat(retrieved.getTaImId()).isEqualTo(moduleId);
     assertThat(retrieved.getEntityId()).isEqualTo(entityId);
   }
 
