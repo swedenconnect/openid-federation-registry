@@ -124,7 +124,6 @@ public class SecurityConfig {
       this.organizationInformation = information;
     }
 
-
     /**
      * Retrieves an {@link OrganizationRecord} that matches the given organization number from the list of available
      * organizations. If no matching record is found, an exception is thrown.
@@ -140,26 +139,6 @@ public class SecurityConfig {
           .findFirst()
           .orElseThrow();
     }
-  }
-
-  /**
-   * Provides a fallback JwtDecoder for Docker/Dev environments where no public key or IDP is available.
-   * This allows the application to start without crashing due to missing configuration. Only works in dev mode.
-   * I.e., {@code openid.federation.registry.dev-mode=true}
-   *
-   * @return a JwtDecoder instance
-   */
-  @Bean
-  @ConditionalOnExpression(
-      "T(org.springframework.util.StringUtils).isEmpty(" +
-          "'${spring.security.oauth2.resourceserver.jwt.public-key-location:}'" +
-          ") && ${openid.federation.registry.dev-mode:false}")
-  public JwtDecoder devJwtDecoder() {
-    // A dummy secret key (must be at least 32 bytes for HmacSHA256)
-    final String secret = "dev_secret_key_for_docker_compose_startup_only_12345";
-    return NimbusJwtDecoder.withSecretKey(
-        new SecretKeySpec(secret.getBytes(), "HmacSHA256")
-    ).build();
   }
 
 }
