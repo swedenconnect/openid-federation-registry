@@ -22,6 +22,7 @@ import se.swedenconnect.oidf.registry.dto.EntityToDto;
 import se.swedenconnect.oidf.registry.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.dto.OidfServiceHostedEntities;
+import se.swedenconnect.oidf.registry.dto.PolicyDto;
 import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
@@ -63,7 +64,12 @@ public class FederationMetadataCreator {
 
     Optional.ofNullable(entityEntity.getPolicyEntity())
         .ifPresent(policyEntity -> {
-          entityData.policyRecord(EntityToDto.toDtoTrustAnchor(policyEntity).getPolicy());
+          final PolicyDto policyDto = EntityToDto.toDtoPolicy(policyEntity);
+          entityData.policyRecord(
+              OidfServiceHostedEntities.Record.PolicyRecord
+                  .builder()
+                  .policyRecordId(policyDto.getPolicyId().toString())
+                  .policy(policyDto.getPolicy()).build());
         });
 
     final EntityKeyType entityType = entityEntity.getEntityType();
@@ -82,7 +88,9 @@ public class FederationMetadataCreator {
       final SubordinateEntityDto dto = EntityToDto.toDtoSubordinate(entityEntity);
       entityData.subject(dto.getSubject())
           .issuer(dto.getIssuer())
-          .policyRecord(dto.getPolicy());
+          .policyRecord(OidfServiceHostedEntities.Record.PolicyRecord.builder()
+              .policyRecordId(dto.getPolicy().toString())
+              .policy(dto.getPolicy()).build());
 
 
       if (dto.getJwks() != null && !dto.getJwks().isBlank()) {
@@ -98,7 +106,7 @@ public class FederationMetadataCreator {
     }
 
     if (entityType == EntityKeyType.FEDERATION_ENTITY) {
-      final FederationEntityDto dto = EntityToDto.toDtoTrustAnchor(entityEntity);
+      final FederationEntityDto dto = EntityToDto.toDtoPolicy(entityEntity);
       entityData.subject(dto.getSubject())
           .issuer(dto.getIssuer());
       final Map<String, Object> federationEntityData = new HashMap<>();

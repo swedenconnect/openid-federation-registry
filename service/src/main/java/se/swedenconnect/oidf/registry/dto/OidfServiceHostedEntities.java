@@ -59,7 +59,7 @@ public class OidfServiceHostedEntities {
 
     @JsonProperty("policy_record")
     @SerializedName("policy_record")
-    private Map<String, Object> policyRecord;
+    private PolicyRecord policyRecord;
 
     @JsonProperty("override_configuration_location")
     @SerializedName("override_configuration_location")
@@ -77,6 +77,26 @@ public class OidfServiceHostedEntities {
     private String issuer;
 
     private Map<String, Object> jwks;
+
+    /**
+     * Encapsulates details related to a policy record, including its unique identifier and policy configuration. This
+     * class is typically used as part of a larger entity to represent policy details for an entity.
+     *
+     * Fields: - `policyRecordId`: A unique identifier for the policy record. - `policy`: A map representing the policy
+     * configuration details.
+     */
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class PolicyRecord {
+      @JsonProperty("policy_record_id")
+      @SerializedName("policy_record_id")
+      private String policyRecordId;
+
+      private Map<String, Object> policy;
+    }
+
   }
 
   /**
