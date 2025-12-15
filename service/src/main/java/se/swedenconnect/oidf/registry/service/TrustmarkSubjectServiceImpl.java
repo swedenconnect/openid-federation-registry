@@ -94,7 +94,7 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
         EntityToDto.toEntity(id, input, trustMarkEntity);
 
     this.trustMarkSubjectRepository.save(entity);
-    final TrustmarkSubjectDto dto = EntityToDto.toDto(entity);
+    final TrustmarkSubjectDto dto = EntityToDto.toDtoTrustAnchor(entity);
     this.auditService.trustmarkSubjectCreated(id, trustmarkId, null, dto);
     return dto;
   }
@@ -114,13 +114,13 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
     new ValidateDto(organizationRecord).validate(input);
 
     final TrustMarkSubjectEntity existing = this.findSubjectOrThrow(organizationRecord, id);
-    final TrustmarkSubjectDto oldDto = EntityToDto.toDto(existing);
+    final TrustmarkSubjectDto oldDto = EntityToDto.toDtoTrustAnchor(existing);
     final UUID trustmarkId = existing.getTrustMark().getTrustmarkId();
 
     EntityToDto.updateEntity(existing, input);
 
     this.trustMarkSubjectRepository.save(existing);
-    final TrustmarkSubjectDto newDto = EntityToDto.toDto(existing);
+    final TrustmarkSubjectDto newDto = EntityToDto.toDtoTrustAnchor(existing);
     this.auditService.trustmarkSubjectUpdated(id, trustmarkId, oldDto, newDto);
     return newDto;
   }
@@ -136,7 +136,7 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
   @Transactional(readOnly = true)
   public TrustmarkSubjectDto getTrustmarkSubject(final OrganizationRecord organizationRecord, final UUID id) {
     final TrustMarkSubjectEntity entity = this.findSubjectOrThrow(organizationRecord, id);
-    return EntityToDto.toDto(entity);
+    return EntityToDto.toDtoTrustAnchor(entity);
   }
 
   /**
@@ -149,7 +149,7 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
   @Transactional
   public void deleteTrustmarkSubject(final OrganizationRecord organizationRecord, final UUID id) {
     final TrustMarkSubjectEntity entity = this.findSubjectOrThrow(organizationRecord, id);
-    final TrustmarkSubjectDto dto = EntityToDto.toDto(entity);
+    final TrustmarkSubjectDto dto = EntityToDto.toDtoTrustAnchor(entity);
     final UUID trustmarkId = entity.getTrustMark().getTrustmarkId();
     this.trustMarkSubjectRepository.delete(entity);
     this.auditService.trustmarkSubjectDeleted(id, trustmarkId, dto);

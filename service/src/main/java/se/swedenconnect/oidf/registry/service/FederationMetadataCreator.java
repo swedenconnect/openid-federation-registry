@@ -25,7 +25,6 @@ import se.swedenconnect.oidf.registry.dto.OidfServiceHostedEntities;
 import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
-import se.swedenconnect.oidf.registry.entity.FkKeyType;
 
 import java.text.ParseException;
 import java.util.HashMap;
@@ -64,7 +63,7 @@ public class FederationMetadataCreator {
 
     Optional.ofNullable(entityEntity.getPolicyEntity())
         .ifPresent(policyEntity -> {
-          entityData.policyRecord(EntityToDto.toDto(policyEntity).getPolicy());
+          entityData.policyRecord(EntityToDto.toDtoTrustAnchor(policyEntity).getPolicy());
         });
 
     final EntityKeyType entityType = entityEntity.getEntityType();
@@ -82,7 +81,10 @@ public class FederationMetadataCreator {
     if (entityType == EntityKeyType.SUBORDINATE_ENTITY) {
       final SubordinateEntityDto dto = EntityToDto.toDtoSubordinate(entityEntity);
       entityData.subject(dto.getSubject())
-          .issuer(dto.getIssuer());
+          .issuer(dto.getIssuer())
+          .policyRecord(dto.getPolicy());
+
+
       if (dto.getJwks() != null && !dto.getJwks().isBlank()) {
         try {
           final JWKSet jwkSet = JWKSet.parse(dto.getJwks());
@@ -96,7 +98,7 @@ public class FederationMetadataCreator {
     }
 
     if (entityType == EntityKeyType.FEDERATION_ENTITY) {
-      final FederationEntityDto dto = EntityToDto.toDto(entityEntity);
+      final FederationEntityDto dto = EntityToDto.toDtoTrustAnchor(entityEntity);
       entityData.subject(dto.getSubject())
           .issuer(dto.getIssuer());
       final Map<String, Object> federationEntityData = new HashMap<>();
@@ -127,19 +129,13 @@ public class FederationMetadataCreator {
 
     final String sub = entityEntity.getSubject();
 
-    entityEntity.getModules()
-        .stream()
-        .filter(moduleEntity -> moduleEntity.isOfType(FkKeyType.INTERMEDIATE, FkKeyType.TRUSTANCHOR))
-        .findFirst()
+    Optional.ofNullable(entityEntity.getTrustanchorIntermediate())
         .ifPresent(moduleEntity -> {
           federationEntity.federationFetchEndpoint(String.format("%s/fetch", sub));
           federationEntity.federationListEndpoint(String.format("%s/subordinate_listing", sub));
         });
 
-    entityEntity.getModules()
-        .stream()
-        .filter(moduleEntity -> moduleEntity.isOfType(FkKeyType.TRUSTMARKISSUER))
-        .findFirst()
+    Optional.ofNullable(entityEntity.getTrustanchorIntermediate())
         .ifPresent(moduleEntity -> {
           federationEntity.federationTrustMarkListEndpoint(String.format("%s/trust_mark_listing", sub));
           federationEntity.federationTrustMarkEndpoint(String.format("%s/trust_mark", sub));

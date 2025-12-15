@@ -112,6 +112,7 @@ public class ValidateDto {
     this.v.required().entityid().build().ifFailThrow("trustAnchor", dto.getTrustAnchor());
     this.v.required().required().jwks().build().ifFailThrow("trustedKeys", dto.getTrustedKeys());
     this.v.required().duration().build().ifFailThrow("stepRetryDuration", dto.getStepRetryDuration());
+    this.v.required().duration().build().ifFailThrow("stepCachedValueThreshold", dto.getStepCachedValueThreshold());
   }
 
   /**

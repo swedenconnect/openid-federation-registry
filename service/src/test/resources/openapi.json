@@ -2047,7 +2047,7 @@
       "TrustAnchor": {
         "type": "object",
         "properties": {
-          "taImId": {
+          "trustAnchorId": {
             "type": "string",
             "format": "uuid",
             "description": "TaIm ID",
@@ -2104,13 +2104,18 @@
           "stepRetryDuration": {
             "type": "string",
             "description": "Step retry duration (ISO-8601 duration, e.g. PT1H)"
+          },
+          "stepCachedValueThreshold": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Step Cached Value Threshold"
           }
         }
       },
       "Intermediate": {
         "type": "object",
         "properties": {
-          "taImId": {
+          "intermediateId": {
             "type": "string",
             "format": "uuid",
             "description": "TaIm ID",
@@ -2152,6 +2157,12 @@
             "type": "string",
             "format": "uuid",
             "description": "Pointer to the policy used for this subordinate"
+          },
+          "policy": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Policy",
+            "readOnly": true
           }
         }
       },

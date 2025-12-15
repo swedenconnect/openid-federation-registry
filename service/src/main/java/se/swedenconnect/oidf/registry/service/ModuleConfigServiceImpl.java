@@ -107,9 +107,9 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   }
 
   private TaImEntity findModuleOrThrow(final OrganizationRecord organizationRecord,
-      final UUID id, final FkKeyType type) {
+      final UUID id, final TaImEntity.Type type) {
     return this.moduleRepository.findByOrgNumberAndTaImIdAndModuleType(
-            organizationRecord.orgNumber(), id, type.name())
+            organizationRecord.orgNumber(), id, type)
         .orElseThrow(() -> new RegistryServerException(
             ErrorTypes.NOT_FOUND,
             "No module of type %s found for id %s".formatted(type, id)));
@@ -134,15 +134,15 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     final EntityEntity entityEntity = this.findFederationEntityOrThrow(organizationRecord, entityId);
     final OrganizationEntity org = this.resolveOrganization(organizationRecord);
 
-    if (entityEntity.getModuleByType(FkKeyType.TRUSTANCHOR).isPresent()) {
+    if (entityEntity.getTrustanchorIntermediate() != null) {
       throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
-          "A TRUSTANCHOR module already exists for entity %s".formatted(entityEntity.getEntityId()));
+          "A INTERMEDIATE or TRUSTANCHOR module already exists for entity %s".formatted(entityEntity.getEntityId()));
     }
 
     final TaImEntity module = EntityToDto.toEntity(id, input, entityEntity, org);
 
     this.moduleRepository.save(module);
-    final TrustAnchorDto dto = EntityToDto.toDto(module);
+    final TrustAnchorDto dto = EntityToDto.toDtoTrustAnchor(module);
     this.auditService.trustAnchorCreated(id, null, dto);
     return dto;
   }
@@ -161,12 +161,12 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
       final UUID id, final TrustAnchorDto input) {
     new ValidateDto(organizationRecord).validate(input);
 
-    final TaImEntity module = this.findModuleOrThrow(organizationRecord, id, FkKeyType.TRUSTANCHOR);
-    final TrustAnchorDto oldDto = EntityToDto.toDto(module);
+    final TaImEntity module = this.findModuleOrThrow(organizationRecord, id, TaImEntity.Type.TRUSTANCHOR);
+    final TrustAnchorDto oldDto = EntityToDto.toDtoTrustAnchor(module);
 
-    EntityToDto.updateModuleEntity(module, input);
+    EntityToDto.updateIntermediate(module, input);
     this.moduleRepository.save(module);
-    final TrustAnchorDto newDto = EntityToDto.toDto(module);
+    final TrustAnchorDto newDto = EntityToDto.toDtoTrustAnchor(module);
     this.auditService.trustAnchorUpdated(id, oldDto, newDto);
     return newDto;
   }
@@ -181,8 +181,8 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Override
   @Transactional(readOnly = true)
   public TrustAnchorDto getTrustAnchor(final OrganizationRecord organizationRecord, final UUID id) {
-    final TaImEntity module = this.findModuleOrThrow(organizationRecord, id, FkKeyType.TRUSTANCHOR);
-    return EntityToDto.toDto(module);
+    final TaImEntity module = this.findModuleOrThrow(organizationRecord, id, TaImEntity.Type.TRUSTANCHOR);
+    return EntityToDto.toDtoTrustAnchor(module);
   }
 
   /**
@@ -194,8 +194,8 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Override
   @Transactional
   public void deleteTrustAnchor(final OrganizationRecord organizationRecord, final UUID id) {
-    final TaImEntity module = this.findModuleOrThrow(organizationRecord, id, FkKeyType.TRUSTANCHOR);
-    final TrustAnchorDto dto = EntityToDto.toDto(module);
+    final TaImEntity module = this.findModuleOrThrow(organizationRecord, id, TaImEntity.Type.TRUSTANCHOR);
+    final TrustAnchorDto dto = EntityToDto.toDtoTrustAnchor(module);
     this.moduleRepository.delete(module);
     this.auditService.trustAnchorDeleted(id, dto);
   }
@@ -223,9 +223,9 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     final EntityEntity entityEntity = this.findFederationEntityOrThrow(organizationRecord, entityId);
     final OrganizationEntity org = this.resolveOrganization(organizationRecord);
 
-    if (entityEntity.getModuleByType(FkKeyType.INTERMEDIATE).isPresent()) {
+    if (entityEntity.getTrustanchorIntermediate() != null) {
       throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
-          "An INTERMEDIATE module already exists for entity %s".formatted(entityEntity.getEntityId()));
+          "A INTERMEDIATE or TRUSTANCHOR module already exists for entity %s".formatted(entityEntity.getEntityId()));
     }
 
     final TaImEntity module = EntityToDto.toEntity(id, input, entityEntity, org);
@@ -250,10 +250,10 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
       final UUID id, final IntermediateDto input) {
     new ValidateDto(organizationRecord).validate(input);
 
-    final TaImEntity module = this.findModuleOrThrow(organizationRecord, id, FkKeyType.INTERMEDIATE);
+    final TaImEntity module = this.findModuleOrThrow(organizationRecord, id, TaImEntity.Type.INTERMEDIATE);
     final IntermediateDto oldDto = EntityToDto.toDtoIntermediate(module);
 
-    EntityToDto.updateModuleEntity(module, input);
+    EntityToDto.updateIntermediate(module, input);
     this.moduleRepository.save(module);
     final IntermediateDto newDto = EntityToDto.toDtoIntermediate(module);
     this.auditService.intermediateUpdated(id, oldDto, newDto);
@@ -270,7 +270,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Override
   @Transactional(readOnly = true)
   public IntermediateDto getIntermediate(final OrganizationRecord organizationRecord, final UUID id) {
-    final TaImEntity module = this.findModuleOrThrow(organizationRecord, id, FkKeyType.INTERMEDIATE);
+    final TaImEntity module = this.findModuleOrThrow(organizationRecord, id, TaImEntity.Type.INTERMEDIATE);
     return EntityToDto.toDtoIntermediate(module);
   }
 
@@ -283,7 +283,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Override
   @Transactional
   public void deleteIntermediate(final OrganizationRecord organizationRecord, final UUID id) {
-    final TaImEntity module = this.findModuleOrThrow(organizationRecord, id, FkKeyType.INTERMEDIATE);
+    final TaImEntity module = this.findModuleOrThrow(organizationRecord, id, TaImEntity.Type.INTERMEDIATE);
     final IntermediateDto dto = EntityToDto.toDtoIntermediate(module);
     this.moduleRepository.delete(module);
     this.auditService.intermediateDeleted(id, dto);
@@ -319,7 +319,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     final ResolverEntity entity = EntityToDto.toEntity(id, input, entityEntity);
 
     this.resolverRepository.save(entity);
-    final ResolverDto dto = EntityToDto.toDto(entity);
+    final ResolverDto dto = EntityToDto.toDtoTrustAnchor(entity);
     this.auditService.resolverCreated(id, null, dto);
     return dto;
   }
@@ -339,11 +339,11 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     new ValidateDto(organizationRecord).validate(input);
 
     final ResolverEntity existing = this.findResolverOrThrow(organizationRecord, id);
-    final ResolverDto oldDto = EntityToDto.toDto(existing);
+    final ResolverDto oldDto = EntityToDto.toDtoTrustAnchor(existing);
 
     EntityToDto.updateEntity(existing, input);
     this.resolverRepository.save(existing);
-    final ResolverDto newDto = EntityToDto.toDto(existing);
+    final ResolverDto newDto = EntityToDto.toDtoTrustAnchor(existing);
     this.auditService.resolverUpdated(id, oldDto, newDto);
     return newDto;
   }
@@ -359,7 +359,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional(readOnly = true)
   public ResolverDto getResolver(final OrganizationRecord organizationRecord, final UUID id) {
     final ResolverEntity entity = this.findResolverOrThrow(organizationRecord, id);
-    return EntityToDto.toDto(entity);
+    return EntityToDto.toDtoTrustAnchor(entity);
   }
 
   /**
@@ -372,7 +372,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional
   public void deleteResolver(final OrganizationRecord organizationRecord, final UUID id) {
     final ResolverEntity entity = this.findResolverOrThrow(organizationRecord, id);
-    final ResolverDto dto = EntityToDto.toDto(entity);
+    final ResolverDto dto = EntityToDto.toDtoTrustAnchor(entity);
     this.resolverRepository.delete(entity);
     this.auditService.resolverDeleted(id, dto);
   }
@@ -405,7 +405,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
 
     final TrustMarkEntity entity = EntityToDto.toEntity(id, input, issuerModule);
     this.trustMarkRepository.save(entity);
-    final TrustmarkDto dto = EntityToDto.toDto(entity);
+    final TrustmarkDto dto = EntityToDto.toDtoTrustAnchor(entity);
     this.auditService.trustmarkCreated(id, null, dto);
     return dto;
   }
@@ -428,12 +428,12 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
         .findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), id)
         .orElseThrow(() -> new RegistryServerException(
             ErrorTypes.NOT_FOUND, "No trust mark found for id %s".formatted(id)));
-    final TrustmarkDto oldDto = EntityToDto.toDto(existing);
+    final TrustmarkDto oldDto = EntityToDto.toDtoTrustAnchor(existing);
 
     EntityToDto.updateEntity(existing, input);
 
     this.trustMarkRepository.save(existing);
-    final TrustmarkDto newDto = EntityToDto.toDto(existing);
+    final TrustmarkDto newDto = EntityToDto.toDtoTrustAnchor(existing);
     this.auditService.trustmarkUpdated(id, oldDto, newDto);
     return newDto;
   }
@@ -453,7 +453,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
         .orElseThrow(() -> new RegistryServerException(
             ErrorTypes.NOT_FOUND, "No trust mark found for id %s".formatted(id)));
 
-    return EntityToDto.toDto(entity);
+    return EntityToDto.toDtoTrustAnchor(entity);
   }
 
   /**
@@ -469,7 +469,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
         .findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), id)
         .orElseThrow(() -> new RegistryServerException(
             ErrorTypes.NOT_FOUND, "No trust mark found for id %s".formatted(id)));
-    final TrustmarkDto dto = EntityToDto.toDto(entity);
+    final TrustmarkDto dto = EntityToDto.toDtoTrustAnchor(entity);
     this.trustMarkRepository.delete(entity);
     this.auditService.trustmarkDeleted(id, dto);
   }
@@ -498,7 +498,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     final TrustmarkIssuerEntity entity = EntityToDto.toEntity(id, input, entityEntity);
 
     this.trustmarkIssuerRepository.save(entity);
-    final TrustmarkIssuerDto dto = EntityToDto.toDto(entity);
+    final TrustmarkIssuerDto dto = EntityToDto.toDtoTrustAnchor(entity);
     this.auditService.trustmarkIssuerCreated(id, null, dto);
     return dto;
   }
@@ -521,12 +521,12 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
         .findByOrgNumberAndTrustmarkIssuerId(organizationRecord.orgNumber(), id)
         .orElseThrow(() -> new RegistryServerException(
             ErrorTypes.NOT_FOUND, "No trust mark issuer found for id %s".formatted(id)));
-    final TrustmarkIssuerDto oldDto = EntityToDto.toDto(existing);
+    final TrustmarkIssuerDto oldDto = EntityToDto.toDtoTrustAnchor(existing);
 
     EntityToDto.updateEntity(existing, input);
 
     this.trustmarkIssuerRepository.save(existing);
-    final TrustmarkIssuerDto newDto = EntityToDto.toDto(existing);
+    final TrustmarkIssuerDto newDto = EntityToDto.toDtoTrustAnchor(existing);
     this.auditService.trustmarkIssuerUpdated(id, oldDto, newDto);
     return newDto;
   }
@@ -546,7 +546,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
         .orElseThrow(() -> new RegistryServerException(
             ErrorTypes.NOT_FOUND, "No trust mark issuer found for id %s".formatted(id)));
 
-    return EntityToDto.toDto(entity);
+    return EntityToDto.toDtoTrustAnchor(entity);
   }
 
   /**
@@ -562,7 +562,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
         .findByOrgNumberAndTrustmarkIssuerId(organizationRecord.orgNumber(), id)
         .orElseThrow(() -> new RegistryServerException(
             ErrorTypes.NOT_FOUND, "No trust mark issuer found for id %s".formatted(id)));
-    final TrustmarkIssuerDto dto = EntityToDto.toDto(entity);
+    final TrustmarkIssuerDto dto = EntityToDto.toDtoTrustAnchor(entity);
     this.trustmarkIssuerRepository.delete(entity);
     this.auditService.trustmarkIssuerDeleted(id, dto);
   }
@@ -589,7 +589,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
       final List<TaImEntity> trustAnchorModules = this.moduleRepository
           .findByOrgNumberAndOptionalModuleType(organizationRecord.orgNumber(), FkKeyType.TRUSTANCHOR.name());
       final List<TrustAnchorDto> trustAnchors = trustAnchorModules.stream()
-          .map(EntityToDto::toDto)
+          .map(EntityToDto::toDtoTrustAnchor)
           .toList();
       moduleDto.setTrustAnchors(trustAnchors);
     }
@@ -609,7 +609,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
       final List<ResolverEntity> resolverModules = this.resolverRepository
           .findByOrgNumber(organizationRecord.orgNumber());
       final List<ResolverDto> resolvers = resolverModules.stream()
-          .map(EntityToDto::toDto)
+          .map(EntityToDto::toDtoTrustAnchor)
           .toList();
       moduleDto.setResolvers(resolvers);
     }
@@ -619,7 +619,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
       final List<TrustmarkIssuerEntity> trustmarkIssuerModules = this.trustmarkIssuerRepository
           .findByOrgNumber(organizationRecord.orgNumber());
       final List<TrustmarkIssuerDto> trustmarkIssuers = trustmarkIssuerModules.stream()
-          .map(EntityToDto::toDto)
+          .map(EntityToDto::toDtoTrustAnchor)
           .toList();
       moduleDto.setTrustmarkIssuers(trustmarkIssuers);
     }

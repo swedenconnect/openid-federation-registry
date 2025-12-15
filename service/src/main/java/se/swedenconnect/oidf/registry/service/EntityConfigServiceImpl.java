@@ -104,7 +104,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
         id, input, EntityKeyType.FEDERATION_ENTITY, org, policy);
 
     this.entityRepository.save(entity);
-    final FederationEntityDto dto = EntityToDto.toDto(entity);
+    final FederationEntityDto dto = EntityToDto.toDtoTrustAnchor(entity);
     this.auditService.federationEntityCreated(id, dto.getIssuer(), dto.getSubject(), null, dto);
     return dto;
   }
@@ -125,12 +125,12 @@ public class EntityConfigServiceImpl implements EntityConfigService {
 
     final EntityEntity existing = this.findEntityOrThrow(
         organizationRecord, id, EntityKeyType.FEDERATION_ENTITY);
-    final FederationEntityDto oldDto = EntityToDto.toDto(existing);
+    final FederationEntityDto oldDto = EntityToDto.toDtoTrustAnchor(existing);
 
     EntityToDto.updateEntity(existing, input);
 
     this.entityRepository.save(existing);
-    final FederationEntityDto newDto = EntityToDto.toDto(existing);
+    final FederationEntityDto newDto = EntityToDto.toDtoTrustAnchor(existing);
     this.auditService.federationEntityUpdated(id, newDto.getIssuer(), newDto.getSubject(), oldDto, newDto);
     return newDto;
   }
@@ -164,7 +164,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   public void deleteFederationEntity(final OrganizationRecord organizationRecord, final UUID id) {
     final EntityEntity entity = this.findEntityOrThrow(
         organizationRecord, id, EntityKeyType.FEDERATION_ENTITY);
-    final FederationEntityDto dto = EntityToDto.toDto(entity);
+    final FederationEntityDto dto = EntityToDto.toDtoTrustAnchor(entity);
     this.entityRepository.delete(entity);
     this.auditService.federationEntityDeleted(id, dto.getIssuer(), dto.getSubject(), dto);
   }

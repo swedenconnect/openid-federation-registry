@@ -72,7 +72,7 @@ public class PolicyServiceImpl implements PolicyService {
   }
 
   private static PolicyDto toDto(final PolicyEntity entity) {
-    return EntityToDto.toDto(entity);
+    return EntityToDto.toDtoTrustAnchor(entity);
   }
 
   /**

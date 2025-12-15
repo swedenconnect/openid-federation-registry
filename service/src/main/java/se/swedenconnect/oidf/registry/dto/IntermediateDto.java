@@ -33,7 +33,7 @@ public class IntermediateDto {
 
   @Schema(description = "TaIm ID", accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private UUID taImId;
+  private UUID intermediateId;
 
   @Schema(description = "Entity identifier that this trust anchor belongs to. ")
   private UUID entityId;

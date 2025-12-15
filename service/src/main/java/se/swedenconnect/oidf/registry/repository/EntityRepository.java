@@ -76,7 +76,7 @@ public interface EntityRepository extends JpaRepository<EntityEntity, UUID> {
    * @return a list of {@link EntityEntity} matching the specified organization number and optional entity type
    */
   @Query("SELECT DISTINCT e FROM EntityEntity e JOIN fetch e.organization o "
-      + "LEFT JOIN fetch e.modules m "
+      + "LEFT JOIN fetch e.trustanchorIntermediate m "
       + "LEFT JOIN fetch e.resolver r "
       + "LEFT JOIN fetch e.trustmarkIssuer tmi "
       + "WHERE o.orgNumber = :orgNumber "

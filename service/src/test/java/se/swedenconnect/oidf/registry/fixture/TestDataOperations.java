@@ -115,9 +115,9 @@ public class TestDataOperations {
         .active(true)
         .build();
     final TrustAnchor createdTrustAnchor = modulesApi.createTrustAnchor(trustAnchorInput);
-    result.put("trustAnchorModuleId", createdTrustAnchor.getTaImId());
+    result.put("trustAnchorModuleId", createdTrustAnchor.getTrustAnchorId());
     log.info("Created trustanchor module with ID: {} for entity: {}",
-        createdTrustAnchor.getTaImId(), firstFederationEntity.getSubject());
+        createdTrustAnchor.getTrustAnchorId(), firstFederationEntity.getSubject());
 
     // Step 4: Create second federation entity with relying_party metadata
     final Map<String, Object> relyingPartyMetadata = new HashMap<>();

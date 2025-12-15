@@ -34,7 +34,7 @@ public class TrustAnchorDto {
 
   @Schema(description = "TaIm ID", accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private UUID taImId;
+  private UUID trustAnchorId;
 
   @Schema(description = "Entity identifier that this trust anchor belongs to. ")
   private UUID entityId;
@@ -44,5 +44,6 @@ public class TrustAnchorDto {
 
   @Schema(description = "Entity identifiers for trust mark issuers")
   private List<String> trustMarkIssuers;
+
 }
 

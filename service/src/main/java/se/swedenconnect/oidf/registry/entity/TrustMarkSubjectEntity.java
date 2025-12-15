@@ -22,18 +22,12 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.annotations.Filter;
-import org.hibernate.annotations.FilterDef;
-import org.hibernate.annotations.ParamDef;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -48,7 +42,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @SuperBuilder
 @Table(name = "trustmark_subject")
-@FilterDef(name = "fkTypeTMSFilter", parameters = @ParamDef(name = "TRUSTMARKSUBJECT", type = String.class))
 public class TrustMarkSubjectEntity extends BaseEntity {
 
   @Id
@@ -59,10 +52,6 @@ public class TrustMarkSubjectEntity extends BaseEntity {
   @JoinColumn(name = "trustmark_id", referencedColumnName = "trustmark_id")
   private TrustMarkEntity trustMark;
 
-  @OneToMany(cascade = CascadeType.DETACH, fetch = FetchType.LAZY)
-  @JoinColumn(name = "fk_id", referencedColumnName = "trustmarksubject_id", insertable = false, updatable = false)
-  @Filter(name = "fkTypeTMSFilter", condition = "fk_type = :fkTypeParam")
-  private List<SettingsEntity> settingsEntityList;
 
   @Column(name = "trustmark_id_ref")
   private String trustmarkIdRef;
@@ -99,20 +88,6 @@ public class TrustMarkSubjectEntity extends BaseEntity {
   public void setTrustMark(final TrustMarkEntity trustMark) {
     this.trustMark = trustMark;
     trustMark.getTrustmarksubjects().add(this);
-  }
-
-  /**
-   * Retrieves the {@link SettingsEntity} associated with the specified key. The method searches through the list of
-   * settings entities and returns an optional containing the first entity matching the given key, if one exists.
-   *
-   * @param key the key to search for in the list of settings entities
-   * @return an {@link Optional} containing the matching {@link SettingsEntity} if found, otherwise an empty
-   *     {@link Optional}
-   */
-  public Optional<SettingsEntity> getSettingsEntity(final String key) {
-    return this.settingsEntityList.stream()
-        .filter(s -> s.getKey().equals(key))
-        .findFirst();
   }
 
 }

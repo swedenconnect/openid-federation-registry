@@ -21,7 +21,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
-import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.entity.PolicyEntity;
 import se.swedenconnect.oidf.registry.entity.ResolverEntity;
 import se.swedenconnect.oidf.registry.entity.TaImEntity;
@@ -59,7 +58,7 @@ public final class EntityToDto {
         dto.setFederationEntity(EntityToDto.toFederationEntityWithModules(entity));
       }
       else {
-        final FederationEntityDto federationDto = EntityToDto.toDto(entity);
+        final FederationEntityDto federationDto = EntityToDto.toDtoTrustAnchor(entity);
         final FederationEntityWithModulesDto federationWithModules = new FederationEntityWithModulesDto();
         federationWithModules.setEntityId(entity.getEntityId());
         federationWithModules.setSubject(entity.getSubject());
@@ -86,28 +85,28 @@ public final class EntityToDto {
    * @return a FederationEntityWithModulesDto object populated with data from the provided entity
    */
   public static FederationEntityWithModulesDto toFederationEntityWithModules(final EntityEntity entity) {
-    final FederationEntityDto baseDto = EntityToDto.toDto(entity);
+    final FederationEntityDto baseDto = EntityToDto.toDtoTrustAnchor(entity);
     final FederationEntityWithModulesDto dto = new FederationEntityWithModulesDto();
     dto.setEntityId(baseDto.getEntityId());
     dto.setSubject(baseDto.getSubject());
     dto.setIssuer(baseDto.getIssuer());
     dto.setMetadata(baseDto.getMetadata());
 
-    entity.getModules().forEach(module -> {
-      if (module.getModuleType().equals(FkKeyType.TRUSTANCHOR.name())) {
-        dto.setTrustAnchor(EntityToDto.toDto(module));
+    if (entity.getTrustanchorIntermediate() != null) {
+      if (entity.getTrustanchorIntermediate().isOfType(TaImEntity.Type.TRUSTANCHOR)) {
+        dto.setTrustAnchor(EntityToDto.toDtoTrustAnchor(entity.getTrustanchorIntermediate()));
       }
-      else if (module.getModuleType().equals(FkKeyType.INTERMEDIATE.name())) {
-        dto.setIntermediate(EntityToDto.toDtoIntermediate(module));
+      else if (entity.getTrustanchorIntermediate().isOfType(TaImEntity.Type.INTERMEDIATE)) {
+        dto.setIntermediate(EntityToDto.toDtoIntermediate(entity.getTrustanchorIntermediate()));
       }
-    });
+    }
 
     if (entity.getResolver() != null) {
-      dto.setResolver(EntityToDto.toDto(entity.getResolver()));
+      dto.setResolver(EntityToDto.toDtoTrustAnchor(entity.getResolver()));
     }
 
     if (entity.getTrustmarkIssuer() != null) {
-      dto.setTrustmarkIssuer(EntityToDto.toDto(entity.getTrustmarkIssuer()));
+      dto.setTrustmarkIssuer(EntityToDto.toDtoTrustAnchor(entity.getTrustmarkIssuer()));
     }
     return dto;
   }
@@ -159,6 +158,11 @@ public final class EntityToDto {
     Optional.ofNullable(entityEntity.getPolicyEntity())
         .ifPresent(policyEntity -> dto.setPolicyId(policyEntity.getPolicyId()));
 
+    Optional.ofNullable(entityEntity.getPolicyEntity())
+        .map(PolicyEntity::getPolicy)
+        .map(EntityToDto::toJson)
+        .ifPresent(policyEntity -> dto.setPolicy(policyEntity));
+
     return dto;
   }
 
@@ -171,7 +175,7 @@ public final class EntityToDto {
    * @throws IllegalArgumentException if the input entity is not of type FEDERATION_ENTITY or if the metadata JSON
    *     fails to parse
    */
-  public static FederationEntityDto toDto(final EntityEntity entityEntity) {
+  public static FederationEntityDto toDtoTrustAnchor(final EntityEntity entityEntity) {
     if (entityEntity.getEntityType() != EntityKeyType.FEDERATION_ENTITY) {
       throw new IllegalArgumentException("Entity is not a FederationEntity");
     }
@@ -182,15 +186,22 @@ public final class EntityToDto {
     dto.setIssuer(entityEntity.getIssuer());
 
     if (entityEntity.getMetadata() != null && !entityEntity.getMetadata().isBlank()) {
-      try {
-        dto.setMetadata(mapper.readValue(entityEntity.getMetadata(), new TypeReference<Map<String, Object>>() {}));
-      }
-      catch (final JsonProcessingException e) {
-        throw new IllegalArgumentException("Failed to parse metadata JSON", e);
-      }
+      dto.setMetadata(toJson(entityEntity.getMetadata()));
     }
 
     return dto;
+  }
+
+  private static Map<String, Object> toJson(final String jsonStr) {
+    if (jsonStr == null || jsonStr.isBlank()) {
+      return Collections.emptyMap();
+    }
+    try {
+      return mapper.readValue(jsonStr, new TypeReference<Map<String, Object>>() {});
+    }
+    catch (final JsonProcessingException e) {
+      throw new IllegalArgumentException("Failed to parse metadata JSON", e);
+    }
   }
 
   /**
@@ -199,7 +210,7 @@ public final class EntityToDto {
    * @param policyEntity the policy entity
    * @return the policy DTO
    */
-  public static PolicyDto toDto(final PolicyEntity policyEntity) {
+  public static PolicyDto toDtoTrustAnchor(final PolicyEntity policyEntity) {
     final PolicyDto dto = new PolicyDto();
     dto.setPolicyId(policyEntity.getPolicyId());
     dto.setName(policyEntity.getName());
@@ -225,28 +236,15 @@ public final class EntityToDto {
    * @param moduleEntity the TaIm entity
    * @return the trust anchor DTO
    */
-  public static TrustAnchorDto toDto(final TaImEntity moduleEntity) {
-    if (!moduleEntity.getModuleType().equals(FkKeyType.TRUSTANCHOR.name())) {
+  public static TrustAnchorDto toDtoTrustAnchor(final TaImEntity moduleEntity) {
+    if (!moduleEntity.isOfType(TaImEntity.Type.TRUSTANCHOR)) {
       throw new IllegalArgumentException("Module is not a TrustAnchor");
     }
-
     final TrustAnchorDto dto = new TrustAnchorDto();
-    dto.setTaImId(moduleEntity.getTaImId());
+    dto.setTrustAnchorId(moduleEntity.getTaImId());
     dto.setEntityId(moduleEntity.getEntity().getEntityId());
     dto.setActive(moduleEntity.getActive());
-
-    // Read trust mark issuers from JSON column
-    if (moduleEntity.getTrustMarkIssuers() != null && !moduleEntity.getTrustMarkIssuers().isBlank()) {
-      try {
-        final List<String> trustMarkIssuers = mapper.readValue(
-            moduleEntity.getTrustMarkIssuers(), new TypeReference<List<String>>() {});
-        dto.setTrustMarkIssuers(trustMarkIssuers);
-      }
-      catch (final JsonProcessingException e) {
-        throw new IllegalArgumentException("Failed to parse trustMarkIssuers JSON", e);
-      }
-    }
-
+    dto.setTrustMarkIssuers(moduleEntity.getTrustMarkIssuers());
     return dto;
   }
 
@@ -254,20 +252,21 @@ public final class EntityToDto {
    * Converts TaImEntity to IntermediateDto.
    *
    * @param moduleEntity the TaIm entity
-   * @return the intermediate DTO
+   * @return the trust anchor DTO
    */
   public static IntermediateDto toDtoIntermediate(final TaImEntity moduleEntity) {
-    if (!moduleEntity.getModuleType().equals(FkKeyType.INTERMEDIATE.name())) {
-      throw new IllegalArgumentException("Module is not an Intermediate");
+    if (!moduleEntity.isOfType(TaImEntity.Type.INTERMEDIATE)) {
+      throw new IllegalArgumentException("Module is not a INTERMEDIATE");
     }
 
     final IntermediateDto dto = new IntermediateDto();
-    dto.setTaImId(moduleEntity.getTaImId());
+    dto.setIntermediateId(moduleEntity.getTaImId());
     dto.setEntityId(moduleEntity.getEntity().getEntityId());
     dto.setActive(moduleEntity.getActive());
 
     return dto;
   }
+
 
   /**
    * Converts ResolverEntity to ResolverDto.
@@ -275,7 +274,7 @@ public final class EntityToDto {
    * @param resolverEntity the resolver entity
    * @return the resolver DTO
    */
-  public static ResolverDto toDto(final ResolverEntity resolverEntity) {
+  public static ResolverDto toDtoTrustAnchor(final ResolverEntity resolverEntity) {
     final ResolverDto dto = new ResolverDto();
     dto.setResolverId(resolverEntity.getResolverId());
     dto.setEntityId(resolverEntity.getEntity().getEntityId());
@@ -294,7 +293,7 @@ public final class EntityToDto {
    * @param trustMarkEntity the trust mark entity
    * @return the trustmark DTO
    */
-  public static TrustmarkDto toDto(final TrustMarkEntity trustMarkEntity) {
+  public static TrustmarkDto toDtoTrustAnchor(final TrustMarkEntity trustMarkEntity) {
     final TrustmarkDto dto = new TrustmarkDto();
     dto.setTrustmarkId(trustMarkEntity.getTrustmarkId());
     dto.setTrustmarkissuerId(trustMarkEntity.getTrustmarkIssuer().getTrustmarkIssuerId());
@@ -323,7 +322,7 @@ public final class EntityToDto {
     // Convert trustmark subjects
     if (trustMarkEntity.getTrustmarksubjects() != null) {
       final List<TrustmarkSubjectDto> subjects = trustMarkEntity.getTrustmarksubjects().stream()
-          .map(EntityToDto::toDto)
+          .map(EntityToDto::toDtoTrustAnchor)
           .toList();
       dto.setTrustmarkSubjects(subjects);
     }
@@ -355,7 +354,7 @@ public final class EntityToDto {
    * @param trustMarkSubjectEntity the trust mark subject entity
    * @return the trustmark subject DTO
    */
-  public static TrustmarkSubjectDto toDto(final TrustMarkSubjectEntity trustMarkSubjectEntity) {
+  public static TrustmarkSubjectDto toDtoTrustAnchor(final TrustMarkSubjectEntity trustMarkSubjectEntity) {
     final TrustmarkSubjectDto dto = new TrustmarkSubjectDto();
     dto.setTrustmarksubjectId(trustMarkSubjectEntity.getTrustmarksubjectId());
     dto.setTrustmarkId(trustMarkSubjectEntity.getTrustmarkIdRef());
@@ -559,22 +558,9 @@ public final class EntityToDto {
    * @param module the TaIm entity
    * @param dto the trust anchor DTO
    */
-  public static void updateModuleEntity(final TaImEntity module, final TrustAnchorDto dto) {
-
+  public static void updateIntermediate(final TaImEntity module, final TrustAnchorDto dto) {
     module.setActive(dto.getActive());
-
-    // Save trust mark issuers to JSON column
-    if (dto.getTrustMarkIssuers() != null) {
-      try {
-        module.setTrustMarkIssuers(mapper.writeValueAsString(dto.getTrustMarkIssuers()));
-      }
-      catch (final JsonProcessingException e) {
-        throw new IllegalArgumentException("Failed to serialize trustMarkIssuers to JSON", e);
-      }
-    }
-    else {
-      module.setTrustMarkIssuers(null);
-    }
+    module.setTrustMarkIssuers(dto.getTrustMarkIssuers());
   }
 
   /**
@@ -583,7 +569,7 @@ public final class EntityToDto {
    * @param module the TaIm entity
    * @param dto the intermediate DTO
    */
-  public static void updateModuleEntity(final TaImEntity module, final IntermediateDto dto) {
+  public static void updateIntermediate(final TaImEntity module, final IntermediateDto dto) {
     module.setActive(dto.getActive());
   }
 
@@ -687,19 +673,11 @@ public final class EntityToDto {
       final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization) {
     final TaImEntity module = new TaImEntity();
     module.setTaImId(id);
-    module.setModuleType(FkKeyType.TRUSTANCHOR.name());
+    module.setModuleType(TaImEntity.Type.TRUSTANCHOR);
     module.setEntity(entityEntity);
     module.setOrganization(organization);
     module.setActive(dto.getActive());
-
-    if (dto.getTrustMarkIssuers() != null) {
-      try {
-        module.setTrustMarkIssuers(mapper.writeValueAsString(dto.getTrustMarkIssuers()));
-      }
-      catch (final JsonProcessingException e) {
-        throw new IllegalArgumentException("Failed to serialize trustMarkIssuers to JSON", e);
-      }
-    }
+    module.setTrustMarkIssuers(dto.getTrustMarkIssuers());
 
     return module;
   }
@@ -719,7 +697,7 @@ public final class EntityToDto {
       final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization) {
     final TaImEntity module = new TaImEntity();
     module.setTaImId(id);
-    module.setModuleType(FkKeyType.INTERMEDIATE.name());
+    module.setModuleType(TaImEntity.Type.INTERMEDIATE);
     module.setEntity(entityEntity);
     module.setOrganization(organization);
     module.setActive(dto.getActive());
@@ -755,7 +733,7 @@ public final class EntityToDto {
    * @param entity the trustmark issuer entity
    * @return the trustmark issuer DTO
    */
-  public static TrustmarkIssuerDto toDto(final TrustmarkIssuerEntity entity) {
+  public static TrustmarkIssuerDto toDtoTrustAnchor(final TrustmarkIssuerEntity entity) {
     final TrustmarkIssuerDto dto = new TrustmarkIssuerDto();
     dto.setTrustmarkIssuerId(entity.getTrustmarkIssuerId());
     dto.setEntityId(entity.getEntity().getEntityId());

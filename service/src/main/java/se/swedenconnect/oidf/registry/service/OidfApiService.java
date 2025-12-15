@@ -15,7 +15,6 @@
  */
 package se.swedenconnect.oidf.registry.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWK;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +25,6 @@ import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.registry.dto.OidfServiceHostedEntities;
 import se.swedenconnect.oidf.registry.dto.OidfServiceSubModules;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
-import se.swedenconnect.oidf.registry.entity.FkKeyType;
 import se.swedenconnect.oidf.registry.entity.InstanceEntity;
 import se.swedenconnect.oidf.registry.entity.ResolverEntity;
 import se.swedenconnect.oidf.registry.entity.TaImEntity;
@@ -40,9 +38,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-
-import static se.swedenconnect.oidf.registry.entity.FkKeyType.INTERMEDIATE;
-import static se.swedenconnect.oidf.registry.entity.FkKeyType.TRUSTANCHOR;
 
 /**
  * Service to collect data to federation services
@@ -141,13 +136,11 @@ public class OidfApiService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No instance found for:%s".formatted(instanceid)));
 
-    final List<TaImEntity> moduleEntities = instanceEntity.getOrganizations().stream()
-        .flatMap(organizationEntity -> organizationEntity.getModule().stream())
-        .toList();
 
     final List<EntityEntity> entities = instanceEntity.getOrganizations().stream()
         .flatMap(organizationEntity -> organizationEntity.getEntities().stream())
         .toList();
+
 
     final List<OidfServiceSubModules.TrustMarkIssuer> tmi = entities.stream()
         .map(EntityEntity::getTrustmarkIssuer)
@@ -156,9 +149,8 @@ public class OidfApiService {
         .toList();
     subModules.trustMarkIssuers(tmi);
 
-    final List<OidfServiceSubModules.TrustAnchor> taIm = moduleEntities.stream()
-        .filter(moduleEntity -> FkKeyType.valueOf(moduleEntity.getModuleType()).equals(TRUSTANCHOR) ||
-            FkKeyType.valueOf(moduleEntity.getModuleType()).equals(INTERMEDIATE))
+    final List<OidfServiceSubModules.TrustAnchor> taIm = entities.stream()
+        .map(EntityEntity::getTrustanchorIntermediate)
         .map(this::toTaIm)
         .toList();
     subModules.trustAnchors(taIm);
@@ -180,8 +172,7 @@ public class OidfApiService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No instance found for:%s".formatted(instanceid)));
 
-
-    final List<EntityEntity> trustmarkIssuersModules = instanceEntity.getOrganizations()
+    final List<EntityEntity> entities = instanceEntity.getOrganizations()
         .stream()
         .flatMap(organizationEntity -> organizationEntity.getEntities().stream())
         .toList();
@@ -189,12 +180,13 @@ public class OidfApiService {
     final OidfServiceHostedEntities.OidfServiceHostedEntitiesBuilder hostedEntitys =
         OidfServiceHostedEntities.builder();
 
-    hostedEntitys.entityRecords(trustmarkIssuersModules.stream().map(this::toMapEntityV2).toList());
+    hostedEntitys.entityRecords(entities.stream().map(this::toMapEntityV2).toList());
 
     return hostedEntitys.build();
   }
 
   private OidfServiceHostedEntities.Record toMapEntityV2(final EntityEntity entity) {
+
     final OidfServiceHostedEntities.Record.RecordBuilder hostedEntitys =
         this.entityResponseFormatter.createEntityResponseV2(entity);
 
@@ -208,24 +200,10 @@ public class OidfApiService {
       return OidfServiceSubModules.TrustAnchor.builder().build();
     }
 
-    // Read trust mark issuers from JSON column
-    String trustMarkIssuer = null;
-    if (taImModuleEntity.getTrustMarkIssuers() != null && !taImModuleEntity.getTrustMarkIssuers().isBlank()) {
-      try {
-        final List<String> issuers = mapper.readValue(taImModuleEntity.getTrustMarkIssuers(),
-            new TypeReference<List<String>>() {});
-        if (!issuers.isEmpty()) {
-          trustMarkIssuer = issuers.get(0); // Use first issuer
-        }
-      }
-      catch (final Exception e) {
-        // Ignore parsing errors
-      }
-    }
-
     return OidfServiceSubModules.TrustAnchor.builder()
         .entityIdentifier(taImModuleEntity.getEntity().getSubject())
-        .trustMarkIssuer(trustMarkIssuer)
+        .trustMarkIssuer(
+            taImModuleEntity.getTrustMarkIssuers() != null ? null : taImModuleEntity.getTrustMarkIssuers().get(0))
         .active(taImModuleEntity.getActive())
         .build();
   }

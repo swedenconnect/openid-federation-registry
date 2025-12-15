@@ -20,8 +20,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -64,8 +62,8 @@ public class EntityEntity extends BaseEntity {
   @JoinColumn(name = "policy_id")
   private PolicyEntity policyEntity;
 
-  @OneToMany(mappedBy = "entity")
-  private List<TaImEntity> modules;
+  @OneToOne(mappedBy = "entity")
+  private TaImEntity trustanchorIntermediate;
 
   @OneToOne(mappedBy = "entity")
   private ResolverEntity resolver;
@@ -73,18 +71,4 @@ public class EntityEntity extends BaseEntity {
   @OneToOne(mappedBy = "entity")
   private TrustmarkIssuerEntity trustmarkIssuer;
 
-
-
-  /**
-   * Retrieves a {@link TaImEntity} from the list of modules that matches the given module type.
-   *
-   * @param fkKeyType the type of the module to search for
-   * @return an {@link Optional} containing the matching {@link TaImEntity} if found, or an empty {@link Optional} if
-   *     no match is found
-   */
-  public Optional<TaImEntity> getModuleByType(final FkKeyType fkKeyType) {
-    return this.getModules().stream()
-        .filter(moduleEntity -> moduleEntity.getModuleType().equals(fkKeyType.name()))
-        .findFirst();
-  }
 }

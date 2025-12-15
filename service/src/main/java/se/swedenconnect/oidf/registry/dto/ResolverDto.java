@@ -52,5 +52,8 @@ public class ResolverDto {
 
   @Schema(description = "Step retry duration (ISO-8601 duration, e.g. PT1H)")
   private String stepRetryDuration;
+
+  @Schema(description = "Step Cached Value Threshold")
+  private Integer stepCachedValueThreshold;
 }
 

@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -46,5 +47,12 @@ public class SubordinateEntityDto {
 
   @Schema(description = "Pointer to the policy used for this subordinate")
   private UUID policyId;
+
+  @Schema(description = "Policy", accessMode = Schema.AccessMode.READ_ONLY)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  private Map<String, Object> policy;
+
+
+
 }
 
