@@ -60,13 +60,6 @@ public class TaImEntity extends BaseEntity {
   @Column(name = "module_type", nullable = false)
   private Type moduleType;
 
-  @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  @JoinColumns({
-      @JoinColumn(name = "fk_type", referencedColumnName = "module_type", insertable = false, updatable = false),
-      @JoinColumn(name = "fk_id", referencedColumnName = "ta_im_id", insertable = false, updatable = false)
-  })
-  private List<SettingsEntity> settingsEntityList;
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "organization_id", nullable = false)
   private OrganizationEntity organization;

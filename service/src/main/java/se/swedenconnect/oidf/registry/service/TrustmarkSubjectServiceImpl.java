@@ -87,7 +87,7 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
       final UUID id, final TrustmarkSubjectDto input) {
     new ValidateDto(organizationRecord).validate(input);
 
-    final UUID trustmarkId = UUID.fromString(input.getTrustmarkId());
+    final UUID trustmarkId = input.getTrustmarkId();
     final TrustMarkEntity trustMarkEntity = this.findTrustMarkOrThrow(organizationRecord, trustmarkId);
 
     final TrustMarkSubjectEntity entity =

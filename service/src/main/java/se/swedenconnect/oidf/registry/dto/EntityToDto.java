@@ -283,7 +283,6 @@ public final class EntityToDto {
     dto.setTrustAnchor(resolverEntity.getTrustAnchor());
     dto.setTrustedKeys(resolverEntity.getTrustedKeys());
     dto.setStepRetryDuration(resolverEntity.getStepRetryDuration());
-
     return dto;
   }
 
@@ -357,7 +356,7 @@ public final class EntityToDto {
   public static TrustmarkSubjectDto toDtoTrustAnchor(final TrustMarkSubjectEntity trustMarkSubjectEntity) {
     final TrustmarkSubjectDto dto = new TrustmarkSubjectDto();
     dto.setTrustmarksubjectId(trustMarkSubjectEntity.getTrustmarksubjectId());
-    dto.setTrustmarkId(trustMarkSubjectEntity.getTrustmarkIdRef());
+    dto.setTrustmarkId(trustMarkSubjectEntity.getTrustmarkId());
     dto.setSubject(trustMarkSubjectEntity.getSubject());
     dto.setRevoked(trustMarkSubjectEntity.getRevoked());
     dto.setGranted(trustMarkSubjectEntity.getGranted());
@@ -636,7 +635,6 @@ public final class EntityToDto {
     return TrustMarkSubjectEntity.builder()
         .trustmarksubjectId(id)
         .trustMark(trustMarkEntity)
-        .trustmarkIdRef(dto.getTrustmarkId())
         .subject(dto.getSubject())
         .revoked(dto.getRevoked())
         .granted(dto.getGranted())
@@ -651,7 +649,6 @@ public final class EntityToDto {
    * @param dto the trustmark subject DTO
    */
   public static void updateEntity(final TrustMarkSubjectEntity entity, final TrustmarkSubjectDto dto) {
-    entity.setTrustmarkIdRef(dto.getTrustmarkId());
     entity.setSubject(dto.getSubject());
     entity.setRevoked(dto.getRevoked());
     entity.setGranted(dto.getGranted());
@@ -724,6 +721,7 @@ public final class EntityToDto {
         .trustAnchor(dto.getTrustAnchor())
         .trustedKeys(dto.getTrustedKeys())
         .stepRetryDuration(dto.getStepRetryDuration())
+        .stepCachedValueThreshold(dto.getStepCachedValueThreshold())
         .build();
   }
 

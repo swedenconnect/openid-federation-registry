@@ -31,7 +31,7 @@ import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.api.EntitiesApi;
 import se.swedenconnect.oidf.registry.api.ModulesApi;
 import se.swedenconnect.oidf.registry.api.TrustmarksApi;
-import se.swedenconnect.oidf.registry.api.model.HostedEntity;
+import se.swedenconnect.oidf.registry.api.model.FederationEntity;
 import se.swedenconnect.oidf.registry.api.model.Trustmark;
 import se.swedenconnect.oidf.registry.api.model.TrustmarkIssuer;
 import se.swedenconnect.oidf.registry.api.model.TrustmarkSubject;
@@ -102,10 +102,10 @@ class TrustmarkSubjectCRUDIT {
   private UUID createTrustmark() {
     // Create a hosted entity
     final UUID entityId = UUID.randomUUID();
-    final HostedEntity entityInput = new HostedEntity()
-        .subject("http://www.pm.se/oidf/tmi-entity")
-        .issuer("http://www.pm.se/oidf/tmi-entity");
-    this.entitiesApi.createHostedEntityWithId(entityId, entityInput);
+    final FederationEntity entityInput = new FederationEntity()
+        .subject("https://www.pm.se/oidf/tmi-entity")
+        .issuer("https://www.pm.se/oidf/tmi-entity");
+    this.entitiesApi.createFederationEntityWithId(entityId, entityInput);
 
     // Create a TrustmarkIssuer
     final UUID trustmarkIssuerId = this.createTrustmarkIssuer(entityId);
@@ -114,9 +114,8 @@ class TrustmarkSubjectCRUDIT {
     final UUID trustmarkId = UUID.randomUUID();
     final Trustmark trustmarkInput = new Trustmark()
         .trustmarkissuerId(trustmarkIssuerId)
-        .trustMarkEntityId("http://www.pm.se/oidf/trustmark");
+        .trustMarkEntityId("https://www.pm.se/oidf/loa3");
     this.trustmarksApi.createTrustmarkWithId(trustmarkId, trustmarkInput);
-
     return trustmarkId;
   }
 
@@ -125,11 +124,11 @@ class TrustmarkSubjectCRUDIT {
     // Arrange
     final UUID trustmarkId = this.createTrustmark();
     final TrustmarkSubject input = new TrustmarkSubject()
-        .trustmarkId(trustmarkId.toString())
-        .subject("http://www.pm.se/oidf/subject")
+        .trustmarkId(trustmarkId)
+        .subject("https://www.pm.se/oidf/subject")
         .revoked(false)
         .granted(OffsetDateTime.parse("2025-01-01T00:00:00+01:00"))
-        .expires(OffsetDateTime.parse("2026-01-01T00:00:00"));
+        .expires(OffsetDateTime.parse("2026-01-01T00:00:00+01:00"));
 
     // Act
     final TrustmarkSubject created = this.trustmarksApi.createTrustmarkSubject(input);
@@ -137,8 +136,8 @@ class TrustmarkSubjectCRUDIT {
     // Assert
     assertThat(created).isNotNull();
     assertThat(created.getTrustmarksubjectId()).isNotNull();
-    assertThat(created.getTrustmarkId()).isEqualTo(trustmarkId.toString());
-    assertThat(created.getSubject()).isEqualTo("http://www.pm.se/oidf/subject");
+    assertThat(created.getTrustmarkId()).isEqualTo(trustmarkId);
+    assertThat(created.getSubject()).isEqualTo("https://www.pm.se/oidf/subject");
     assertThat(created.getRevoked()).isFalse();
     assertThat(created.getGranted()).isNotNull();
     assertThat(created.getExpires()).isNotNull();
@@ -150,8 +149,8 @@ class TrustmarkSubjectCRUDIT {
     final UUID trustmarkId = this.createTrustmark();
     final UUID subjectId = UUID.randomUUID();
     final TrustmarkSubject input = new TrustmarkSubject()
-        .trustmarkId(trustmarkId.toString())
-        .subject("http://www.pm.se/oidf/subject2")
+        .trustmarkId(trustmarkId)
+        .subject("https://www.pm.se/oidf/subject2")
         .revoked(true);
 
     // Act
@@ -160,7 +159,7 @@ class TrustmarkSubjectCRUDIT {
     // Assert
     assertThat(created).isNotNull();
     assertThat(created.getTrustmarksubjectId()).isEqualTo(subjectId);
-    assertThat(created.getSubject()).isEqualTo("http://www.pm.se/oidf/subject2");
+    assertThat(created.getSubject()).isEqualTo("https://www.pm.se/oidf/subject2");
     assertThat(created.getRevoked()).isTrue();
   }
 
@@ -170,8 +169,8 @@ class TrustmarkSubjectCRUDIT {
     final UUID trustmarkId = this.createTrustmark();
     final UUID subjectId = UUID.randomUUID();
     final TrustmarkSubject input = new TrustmarkSubject()
-        .trustmarkId(trustmarkId.toString())
-        .subject("http://www.pm.se/oidf/subject3")
+        .trustmarkId(trustmarkId)
+        .subject("https://www.pm.se/oidf/subject3")
         .revoked(false);
     this.trustmarksApi.createTrustmarkSubjectWithId(subjectId, input);
 
@@ -181,8 +180,8 @@ class TrustmarkSubjectCRUDIT {
     // Assert
     assertThat(retrieved).isNotNull();
     assertThat(retrieved.getTrustmarksubjectId()).isEqualTo(subjectId);
-    assertThat(retrieved.getTrustmarkId()).isEqualTo(trustmarkId.toString());
-    assertThat(retrieved.getSubject()).isEqualTo("http://www.pm.se/oidf/subject3");
+    assertThat(retrieved.getTrustmarkId()).isEqualTo(trustmarkId);
+    assertThat(retrieved.getSubject()).isEqualTo("https://www.pm.se/oidf/subject3");
   }
 
   @Test
@@ -205,31 +204,31 @@ class TrustmarkSubjectCRUDIT {
     final UUID trustmarkId = this.createTrustmark();
     final UUID subjectId = UUID.randomUUID();
     final TrustmarkSubject createInput = new TrustmarkSubject()
-        .trustmarkId(trustmarkId.toString())
-        .subject("http://www.pm.se/oidf/subject4")
+        .trustmarkId(trustmarkId)
+        .subject("https://www.pm.se/oidf/subject4")
         .revoked(false);
     this.trustmarksApi.createTrustmarkSubjectWithId(subjectId, createInput);
 
     final TrustmarkSubject updateInput = new TrustmarkSubject()
-        .trustmarkId(trustmarkId.toString())
-        .subject("http://www.pm.se/oidf/subject4-updated")
+        .trustmarkId(trustmarkId)
+        .subject("https://www.pm.se/oidf/subject4-updated")
         .revoked(true)
         .granted(OffsetDateTime.parse("2025-01-01T00:00:00+01:00"))
-        .expires(OffsetDateTime.parse("2026-01-01T00:00:00"));
+        .expires(OffsetDateTime.parse("2026-01-01T00:00:00+01:00"));
 
     // Act
     final TrustmarkSubject updated = this.trustmarksApi.updateTrustmarkSubject(subjectId, updateInput);
 
     // Assert
     assertThat(updated).isNotNull();
-    assertThat(updated.getSubject()).isEqualTo("http://www.pm.se/oidf/subject4-updated");
+    assertThat(updated.getSubject()).isEqualTo("https://www.pm.se/oidf/subject4-updated");
     assertThat(updated.getRevoked()).isTrue();
     assertThat(updated.getGranted()).isNotNull();
     assertThat(updated.getExpires()).isNotNull();
 
     // Verify by getting again
     final TrustmarkSubject retrieved = this.trustmarksApi.getTrustmarkSubject(subjectId);
-    assertThat(retrieved.getSubject()).isEqualTo("http://www.pm.se/oidf/subject4-updated");
+    assertThat(retrieved.getSubject()).isEqualTo("https://www.pm.se/oidf/subject4-updated");
     assertThat(retrieved.getRevoked()).isTrue();
   }
 
@@ -239,8 +238,8 @@ class TrustmarkSubjectCRUDIT {
     final UUID trustmarkId = this.createTrustmark();
     final UUID subjectId = UUID.randomUUID();
     final TrustmarkSubject input = new TrustmarkSubject()
-        .trustmarkId(trustmarkId.toString())
-        .subject("http://www.pm.se/oidf/subject5")
+        .trustmarkId(trustmarkId)
+        .subject("https://www.pm.se/oidf/subject5")
         .revoked(false);
     this.trustmarksApi.createTrustmarkSubjectWithId(subjectId, input);
 
@@ -265,11 +264,11 @@ class TrustmarkSubjectCRUDIT {
     // Arrange
     final UUID trustmarkId = this.createTrustmark();
     final TrustmarkSubject input = new TrustmarkSubject()
-        .trustmarkId(trustmarkId.toString())
-        .subject("http://www.pm.se/oidf/subject-datetime")
+        .trustmarkId(trustmarkId)
+        .subject("https://www.pm.se/oidf/subject-datetime")
         .revoked(false)
-        .granted(OffsetDateTime.parse("2025-01-01T00:00:00+01:00"))
-        .expires(OffsetDateTime.parse("2026-01-01T00:00:00"));
+        .granted(OffsetDateTime.parse("2025-01-15T00:00:00+00:00"))
+        .expires(OffsetDateTime.parse("2026-01-01T00:00:00+00:00"));
 
     // Act
     final TrustmarkSubject created = this.trustmarksApi.createTrustmarkSubject(input);
@@ -290,8 +289,8 @@ class TrustmarkSubjectCRUDIT {
     final UUID trustmarkId = this.createTrustmark();
     final UUID subjectId = UUID.randomUUID();
     final TrustmarkSubject input = new TrustmarkSubject()
-        .trustmarkId(trustmarkId.toString())
-        .subject("http://www.pm.se/oidf/pm-subject")
+        .trustmarkId(trustmarkId)
+        .subject("https://www.pm.se/oidf/pm-subject")
         .revoked(false);
     this.trustmarksApi.createTrustmarkSubjectWithId(subjectId, input);
 

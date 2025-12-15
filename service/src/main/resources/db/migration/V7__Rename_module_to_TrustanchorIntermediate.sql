@@ -20,3 +20,5 @@ RENAME TABLE `module` TO `trustanchor_intermediate`;
 -- Rename column from module_id to ta_im_id in TrustanchorIntermediate table
 ALTER TABLE `trustanchor_intermediate`
     CHANGE COLUMN `module_id` `ta_im_id` UUID NOT NULL DEFAULT (UUID ());
+
+drop table settings;

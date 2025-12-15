@@ -111,8 +111,8 @@ public class ValidateDto {
     this.v.required().duration().build().ifFailThrow("resolveResponseDuration", dto.getResolveResponseDuration());
     this.v.required().entityid().build().ifFailThrow("trustAnchor", dto.getTrustAnchor());
     this.v.required().required().jwks().build().ifFailThrow("trustedKeys", dto.getTrustedKeys());
-    this.v.required().duration().build().ifFailThrow("stepRetryDuration", dto.getStepRetryDuration());
-    this.v.required().duration().build().ifFailThrow("stepCachedValueThreshold", dto.getStepCachedValueThreshold());
+    this.v.required().required().duration().build().ifFailThrow("stepRetryDuration", dto.getStepRetryDuration());
+    this.v.required().required().build().ifFailThrow("stepCachedValueThreshold", dto.getStepCachedValueThreshold());
   }
 
   /**
@@ -175,12 +175,9 @@ public class ValidateDto {
    * @param dto the trustmark subject DTO
    */
   public void validate(final TrustmarkSubjectDto dto) {
-    this.v.required().entityid().build().ifFailThrow("trustmarkId", dto.getTrustmarkId());
+    this.v.required().uuid().build().ifFailThrow("trustmarkId", dto.getTrustmarkId());
     this.v.required().entityid().build().ifFailThrow("subject", dto.getSubject());
     this.v.required().build().ifFailThrow("revoked", dto.getRevoked());
-
-    // granted and expires are LocalDateTime and will be validated by Jackson during deserialization
-    // No additional validation needed here
   }
 
   /**

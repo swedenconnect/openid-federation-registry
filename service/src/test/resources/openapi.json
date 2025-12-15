@@ -1972,7 +1972,8 @@
           },
           "trustmarkId": {
             "type": "string",
-            "description": "Trust mark identifier (entity id)"
+            "format": "uuid",
+            "description": "Trustmarkid that this subject belongs to"
           },
           "subject": {
             "type": "string",
@@ -1985,12 +1986,14 @@
           "granted": {
             "type": "string",
             "format": "date-time",
-            "description": "Granted time (ISO-8601, e.g. 2025-01-01T00:00:00)"
+            "description": "Granted time in ISO-8601-format with offset, ex. 2025-03-12T14:37:00Z",
+            "example": "2025-03-12T14:37:00Z"
           },
           "expires": {
             "type": "string",
             "format": "date-time",
-            "description": "Expires time (ISO-8601, e.g. 2025-01-01T00:00:00)"
+            "description": "Expires time in ISO-8601-format with offset, ex. 2025-03-12T14:37:00Z",
+            "example": "2025-03-12T14:37:00Z"
           }
         }
       },

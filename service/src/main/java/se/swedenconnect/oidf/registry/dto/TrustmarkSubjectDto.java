@@ -15,16 +15,11 @@
  */
 package se.swedenconnect.oidf.registry.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 /**
@@ -42,8 +37,8 @@ public class TrustmarkSubjectDto {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private UUID trustmarksubjectId;
 
-  @Schema(description = "Trust mark identifier (entity id)")
-  private String trustmarkId;
+  @Schema(description = "Trustmarkid that this subject belongs to")
+  private UUID trustmarkId;
 
   @Schema(description = "Subject entity id")
   private String subject;
@@ -51,16 +46,18 @@ public class TrustmarkSubjectDto {
   @Schema(description = "If the trust mark is revoked for this subject")
   private Boolean revoked;
 
-  @Schema(description = "Granted time (ISO-8601, e.g. 2025-01-01T00:00:00)")
-  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-  @JsonSerialize(using = LocalDateTimeSerializer.class)
-  @JsonDeserialize(using = LocalDateTimeDeserializer.class)
-  private LocalDateTime granted;
+  @Schema(
+      description = "Granted time in ISO-8601-format with offset, ex. 2025-03-12T14:37:00Z",
+      example = "2025-03-12T14:37:00Z",
+      format = "date-time"
+  )
+  private OffsetDateTime granted;
 
-  @Schema(description = "Expires time (ISO-8601, e.g. 2025-01-01T00:00:00)")
-  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-  @JsonSerialize(using = LocalDateTimeSerializer.class)
-  @JsonDeserialize(using = LocalDateTimeDeserializer.class)
-  private LocalDateTime expires;
+  @Schema(
+      description = "Expires time in ISO-8601-format with offset, ex. 2025-03-12T14:37:00Z",
+      example = "2025-03-12T14:37:00Z",
+      format = "date-time"
+  )
+  private OffsetDateTime expires;
 }
 

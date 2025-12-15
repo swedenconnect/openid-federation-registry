@@ -363,6 +363,7 @@ class ModuleCRUDIT {
         .trustAnchor("https://www.pm.se/oidf/ta")
         .trustedKeys(TestDataOperations.genJWKS().toString())
         .stepRetryDuration("PT30M")
+        .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT1H");
 
     // Act
@@ -391,6 +392,7 @@ class ModuleCRUDIT {
         .trustAnchor("https://www.pm.se/oidf/ta")
         .trustedKeys(TestDataOperations.genJWKS().toString())
         .stepRetryDuration("PT5M")
+        .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT2H");
 
     // Act
@@ -416,6 +418,7 @@ class ModuleCRUDIT {
         .trustAnchor("https://www.pm.se/oidf/ta")
         .trustedKeys(TestDataOperations.genJWKS().toString())
         .stepRetryDuration("PT5M")
+        .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT1H");
     this.modulesApi.createResolverWithId(resolverId, input);
 
@@ -442,6 +445,7 @@ class ModuleCRUDIT {
         .trustAnchor("https://www.pm.se/oidf/ta")
         .trustedKeys(TestDataOperations.genJWKS().toString())
         .stepRetryDuration("PT5M")
+        .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT1H");
     this.modulesApi.createResolverWithId(resolverId, createInput);
 
@@ -451,6 +455,7 @@ class ModuleCRUDIT {
         .trustAnchor("https://www.pm.se/oidf/ta-updated")
         .trustedKeys(TestDataOperations.genJWKS().toString())
         .stepRetryDuration("PT5M")
+        .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT3H");
 
     // Act
@@ -477,6 +482,7 @@ class ModuleCRUDIT {
         .trustAnchor("https://www.pm.se/oidf/ta")
         .trustedKeys(TestDataOperations.genJWKS().toString())
         .stepRetryDuration("PT5M")
+        .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT1H");
     this.modulesApi.createResolverWithId(resolverId, input);
 

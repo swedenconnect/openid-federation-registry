@@ -52,10 +52,6 @@ public class TrustMarkSubjectEntity extends BaseEntity {
   @JoinColumn(name = "trustmark_id", referencedColumnName = "trustmark_id")
   private TrustMarkEntity trustMark;
 
-
-  @Column(name = "trustmark_id_ref")
-  private String trustmarkIdRef;
-
   @Column(name = "subject")
   private String subject;
 
@@ -63,12 +59,10 @@ public class TrustMarkSubjectEntity extends BaseEntity {
   private Boolean revoked;
 
   @Column(name = "granted")
-  private java.time.LocalDateTime granted;
+  private java.time.OffsetDateTime granted;
 
   @Column(name = "expires")
-  private java.time.LocalDateTime expires;
-
-
+  private java.time.OffsetDateTime expires;
 
   /**
    * Retrieves the unique identifier of the associated TrustMarkEntity.
