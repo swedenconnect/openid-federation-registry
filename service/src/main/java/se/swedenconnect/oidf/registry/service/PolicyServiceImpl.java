@@ -75,6 +75,12 @@ public class PolicyServiceImpl implements PolicyService {
     return EntityToDto.toDto(entity);
   }
 
+  /**
+   * Lists all policies.
+   *
+   * @param organizationRecord the organization record
+   * @return list of policies
+   */
   @Override
   @Transactional(readOnly = true)
   public List<PolicyDto> listPolicies(final OrganizationRecord organizationRecord) {
@@ -84,6 +90,13 @@ public class PolicyServiceImpl implements PolicyService {
         .toList();
   }
 
+  /**
+   * Gets a policy by ID.
+   *
+   * @param organizationRecord the organization record
+   * @param id the policy ID
+   * @return the policy
+   */
   @Override
   @Transactional(readOnly = true)
   public PolicyDto getPolicy(final OrganizationRecord organizationRecord, final UUID id) {
@@ -91,6 +104,14 @@ public class PolicyServiceImpl implements PolicyService {
     return toDto(entity);
   }
 
+  /**
+   * Creates a policy.
+   *
+   * @param organizationRecord the organization record
+   * @param id the policy ID
+   * @param input the policy data
+   * @return the created policy
+   */
   @Override
   @Transactional
   public PolicyDto createPolicy(final OrganizationRecord organizationRecord,
@@ -104,6 +125,14 @@ public class PolicyServiceImpl implements PolicyService {
     return dto;
   }
 
+  /**
+   * Updates a policy.
+   *
+   * @param organizationRecord the organization record
+   * @param id the policy ID
+   * @param input the policy data
+   * @return the updated policy
+   */
   @Override
   @Transactional
   public PolicyDto updatePolicy(final OrganizationRecord organizationRecord,
@@ -120,6 +149,12 @@ public class PolicyServiceImpl implements PolicyService {
     return newDto;
   }
 
+  /**
+   * Deletes a policy.
+   *
+   * @param organizationRecord the organization record
+   * @param id the policy ID
+   */
   @Override
   @Transactional
   public void deletePolicy(final OrganizationRecord organizationRecord, final UUID id) {
@@ -129,6 +164,13 @@ public class PolicyServiceImpl implements PolicyService {
     this.auditService.policyDeleted(id, dto);
   }
 
+  /**
+   * Gets a policy DTO.
+   *
+   * @param organizationRecord the organization record
+   * @param id the policy ID
+   * @return the policy DTO
+   */
   @Override
   @Transactional(readOnly = true)
   public PolicyDto getPolicyDomain(final OrganizationRecord organizationRecord, final UUID id) {

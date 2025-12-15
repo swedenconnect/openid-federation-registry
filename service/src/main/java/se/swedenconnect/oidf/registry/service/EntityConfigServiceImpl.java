@@ -83,6 +83,14 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   // Federation entities
   // ---------------------------------------------------------------------------
 
+  /**
+   * Creates a federation entity.
+   *
+   * @param organizationRecord the organization record
+   * @param id the entity ID
+   * @param input the federation entity data
+   * @return the created federation entity
+   */
   @Override
   @Transactional
   public FederationEntityDto createFederationEntity(final OrganizationRecord organizationRecord,
@@ -101,6 +109,14 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     return dto;
   }
 
+  /**
+   * Updates a federation entity.
+   *
+   * @param organizationRecord the organization record
+   * @param id the entity ID
+   * @param input the federation entity data
+   * @return the updated federation entity
+   */
   @Override
   @Transactional
   public FederationEntityDto updateFederationEntity(final OrganizationRecord organizationRecord,
@@ -119,6 +135,14 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     return newDto;
   }
 
+  /**
+   * Gets a federation entity by ID.
+   *
+   * @param organizationRecord the organization record
+   * @param id the entity ID
+   * @param includeModules whether to include modules in the response
+   * @return the federation entity with optional modules
+   */
   @Override
   @Transactional(readOnly = true)
   public FederationEntityWithModulesDto getFederationEntity(final OrganizationRecord organizationRecord,
@@ -129,6 +153,12 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     return EntityToDto.toFederationEntityWithModules(entity);
   }
 
+  /**
+   * Deletes a federation entity.
+   *
+   * @param organizationRecord the organization record
+   * @param id the entity ID
+   */
   @Override
   @Transactional
   public void deleteFederationEntity(final OrganizationRecord organizationRecord, final UUID id) {
@@ -143,6 +173,14 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   // Hosted entities
   // ---------------------------------------------------------------------------
 
+  /**
+   * Creates a hosted entity.
+   *
+   * @param organizationRecord the organization record
+   * @param id the entity ID
+   * @param input the hosted entity data
+   * @return the created hosted entity
+   */
   @Override
   @Transactional
   public HostedEntityDto createHostedEntity(final OrganizationRecord organizationRecord,
@@ -161,6 +199,14 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     return dto;
   }
 
+  /**
+   * Updates a hosted entity.
+   *
+   * @param organizationRecord the organization record
+   * @param id the entity ID
+   * @param input the hosted entity data
+   * @return the updated hosted entity
+   */
   @Override
   @Transactional
   public HostedEntityDto updateHostedEntity(final OrganizationRecord organizationRecord,
@@ -179,6 +225,13 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     return newDto;
   }
 
+  /**
+   * Gets a hosted entity by ID.
+   *
+   * @param organizationRecord the organization record
+   * @param id the entity ID
+   * @return the hosted entity
+   */
   @Override
   @Transactional(readOnly = true)
   public HostedEntityDto getHostedEntity(final OrganizationRecord organizationRecord,
@@ -188,6 +241,12 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     return EntityToDto.toDtoHosted(entity);
   }
 
+  /**
+   * Deletes a hosted entity.
+   *
+   * @param organizationRecord the organization record
+   * @param id the entity ID
+   */
   @Override
   @Transactional
   public void deleteHostedEntity(final OrganizationRecord organizationRecord, final UUID id) {
@@ -202,6 +261,14 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   // Subordinate entities
   // ---------------------------------------------------------------------------
 
+  /**
+   * Creates a subordinate entity.
+   *
+   * @param organizationRecord the organization record
+   * @param id the entity ID
+   * @param input the subordinate entity data
+   * @return the created subordinate entity
+   */
   @Override
   @Transactional
   public SubordinateEntityDto createSubordinateEntity(final OrganizationRecord organizationRecord,
@@ -226,6 +293,14 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     return dto;
   }
 
+  /**
+   * Updates a subordinate entity.
+   *
+   * @param organizationRecord the organization record
+   * @param id the entity ID
+   * @param input the subordinate entity data
+   * @return the updated subordinate entity
+   */
   @Override
   @Transactional
   public SubordinateEntityDto updateSubordinateEntity(final OrganizationRecord organizationRecord,
@@ -251,6 +326,13 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     return newDto;
   }
 
+  /**
+   * Gets a subordinate entity by ID.
+   *
+   * @param organizationRecord the organization record
+   * @param id the entity ID
+   * @return the subordinate entity
+   */
   @Override
   @Transactional(readOnly = true)
   public SubordinateEntityDto getSubordinateEntity(final OrganizationRecord organizationRecord,
@@ -260,6 +342,12 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     return EntityToDto.toDtoSubordinate(entity);
   }
 
+  /**
+   * Deletes a subordinate entity.
+   *
+   * @param organizationRecord the organization record
+   * @param id the entity ID
+   */
   @Override
   @Transactional
   public void deleteSubordinateEntity(final OrganizationRecord organizationRecord, final UUID id) {
@@ -274,6 +362,14 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   // List entities
   // ---------------------------------------------------------------------------
 
+  /**
+   * Lists all entities for the organization, optionally filtered by type and with modules included.
+   *
+   * @param organizationRecord the organization record
+   * @param type optional entity type filter (federation, hosted, subordinate)
+   * @param includeModules whether to include modules (trustanchor, intermediate, resolver, trustmarkissuer)
+   * @return list of entities with optional modules
+   */
   @Override
   @Transactional(readOnly = true)
   public List<EntityWithModulesDto> listEntities(final OrganizationRecord organizationRecord,

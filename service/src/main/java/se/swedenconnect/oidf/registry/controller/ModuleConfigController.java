@@ -61,14 +61,14 @@ public class ModuleConfigController {
    * @return modules grouped by type
    */
   @GetMapping
-  @Operation(summary = "List all modules", description = "Lists all modules for the organization, optionally filtered by type")
+  @Operation(summary = "List all modules", description = "Lists all modules for the organization, "
+      + "optionally filtered by type")
   public ResponseEntity<ModuleDto> listModules(
       @RequestParam(name = "type", required = false) final String type,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.listModules(organizationRecord, type));
   }
 
-  // TrustAnchor
 
   /**
    * Creates a trust anchor with auto-generated ID.

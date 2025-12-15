@@ -73,6 +73,14 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
             ErrorTypes.NOT_FOUND, "No trust mark found for id %s".formatted(trustmarkId)));
   }
 
+  /**
+   * Creates a trust mark subject.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark subject ID
+   * @param input the trust mark subject data
+   * @return the created trust mark subject
+   */
   @Override
   @Transactional
   public TrustmarkSubjectDto createTrustmarkSubject(final OrganizationRecord organizationRecord,
@@ -91,6 +99,14 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
     return dto;
   }
 
+  /**
+   * Updates a trust mark subject.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark subject ID
+   * @param input the trust mark subject data
+   * @return the updated trust mark subject
+   */
   @Override
   @Transactional
   public TrustmarkSubjectDto updateTrustmarkSubject(final OrganizationRecord organizationRecord,
@@ -109,6 +125,13 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
     return newDto;
   }
 
+  /**
+   * Gets a trust mark subject by ID.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark subject ID
+   * @return the trust mark subject
+   */
   @Override
   @Transactional(readOnly = true)
   public TrustmarkSubjectDto getTrustmarkSubject(final OrganizationRecord organizationRecord, final UUID id) {
@@ -116,6 +139,12 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
     return EntityToDto.toDto(entity);
   }
 
+  /**
+   * Deletes a trust mark subject.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark subject ID
+   */
   @Override
   @Transactional
   public void deleteTrustmarkSubject(final OrganizationRecord organizationRecord, final UUID id) {

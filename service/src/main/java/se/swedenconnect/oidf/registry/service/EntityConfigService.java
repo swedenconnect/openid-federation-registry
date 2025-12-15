@@ -56,11 +56,13 @@ public interface EntityConfigService {
       UUID id, FederationEntityDto input);
 
   /**
-   * Gets a federation entity by ID.
+   * Retrieves a federation entity along with its optional modules.
    *
-   * @param organizationRecord the organization record
-   * @param id the entity ID
-   * @return the federation entity
+   * @param organizationRecord the organization record associated with the entity
+   * @param id the unique identifier of the federation entity
+   * @param includeModules whether to include associated modules (such as trust anchor, intermediate, resolver,
+   *                       and trustmark issuer) in the retrieved entity
+   * @return the federation entity with its optional modules if requested
    */
   FederationEntityWithModulesDto getFederationEntity(OrganizationRecord organizationRecord, UUID id,
       boolean includeModules);

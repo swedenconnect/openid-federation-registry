@@ -42,14 +42,11 @@ import java.util.Optional;
 public final class EntityToDto {
   private static final ObjectMapper mapper = new ObjectMapper();
 
-  // -------------------------------------------------------------------------
-  // Entity -> DTO mapping
-  // -------------------------------------------------------------------------
-
   /**
    * Converts EntityEntity to FederationEntityDto.
    *
    * @param entity the entity entity
+   * @param includeModules Will include modules
    * @return the federation entity DTO
    */
   public static EntityWithModulesDto toEntityWithModulesDto(final EntityEntity entity,
@@ -81,6 +78,13 @@ public final class EntityToDto {
     return dto;
   }
 
+  /**
+   * Converts an EntityEntity object to a FederationEntityWithModulesDto object. Transfers relevant properties from the
+   * source entity, including entity details and its associated modules and resolvers, into the target DTO.
+   *
+   * @param entity the EntityEntity object containing the data to be converted
+   * @return a FederationEntityWithModulesDto object populated with data from the provided entity
+   */
   public static FederationEntityWithModulesDto toFederationEntityWithModules(final EntityEntity entity) {
     final FederationEntityDto baseDto = EntityToDto.toDto(entity);
     final FederationEntityWithModulesDto dto = new FederationEntityWithModulesDto();
@@ -158,6 +162,15 @@ public final class EntityToDto {
     return dto;
   }
 
+  /**
+   * Converts an EntityEntity object to a FederationEntityDto object. Validates that the input EntityEntity is of type
+   * FEDERATION_ENTITY before conversion.
+   *
+   * @param entityEntity the EntityEntity object to be converted, must be of type FEDERATION_ENTITY
+   * @return a FederationEntityDto object representing the converted data
+   * @throws IllegalArgumentException if the input entity is not of type FEDERATION_ENTITY or if the metadata JSON
+   *     fails to parse
+   */
   public static FederationEntityDto toDto(final EntityEntity entityEntity) {
     if (entityEntity.getEntityType() != EntityKeyType.FEDERATION_ENTITY) {
       throw new IllegalArgumentException("Entity is not a FederationEntity");
@@ -444,10 +457,7 @@ public final class EntityToDto {
     entity.setEntityId(id);
     entity.setEntityType(entityKeyType);
     entity.setOrganization(organization);
-    entity.setSubject(dto.getSubject());
-    entity.setIssuer(dto.getIssuer());
-    entity.setJwks(dto.getJwks());
-
+    updateEntity(entity, dto);
     return entity;
   }
 
@@ -467,7 +477,7 @@ public final class EntityToDto {
     entity.setOrganization(organization);
     entity.setName(dto.getName());
     try {
-      entity.setPolicy(mapper.writeValueAsString(
+      entity.setPolicy(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
           dto.getPolicy() != null ? dto.getPolicy() : Collections.emptyMap()));
     }
     catch (final JsonProcessingException e) {
@@ -602,7 +612,7 @@ public final class EntityToDto {
   public static TrustMarkEntity toEntity(final java.util.UUID id,
       final TrustmarkDto dto,
       final TrustmarkIssuerEntity trustmarkIssuerEntity) {
-    final TrustMarkEntity entity = TrustMarkEntity.builder()
+    return TrustMarkEntity.builder()
         .trustmarkId(id)
         .trustmarkIssuer(trustmarkIssuerEntity)
         .trustMarkEntityId(dto.getTrustMarkEntityId())
@@ -610,7 +620,6 @@ public final class EntityToDto {
         .refUri(dto.getRefUri())
         .delegation(dto.getDelegation())
         .build();
-    return entity;
   }
 
   /**
@@ -638,7 +647,7 @@ public final class EntityToDto {
   public static TrustMarkSubjectEntity toEntity(final java.util.UUID id,
       final TrustmarkSubjectDto dto,
       final TrustMarkEntity trustMarkEntity) {
-    final TrustMarkSubjectEntity entity = TrustMarkSubjectEntity.builder()
+    return TrustMarkSubjectEntity.builder()
         .trustmarksubjectId(id)
         .trustMark(trustMarkEntity)
         .trustmarkIdRef(dto.getTrustmarkId())
@@ -647,7 +656,6 @@ public final class EntityToDto {
         .granted(dto.getGranted())
         .expires(dto.getExpires())
         .build();
-    return entity;
   }
 
   /**
@@ -730,7 +738,7 @@ public final class EntityToDto {
   public static ResolverEntity toEntity(final java.util.UUID id,
       final ResolverDto dto,
       final EntityEntity entityEntity) {
-    final ResolverEntity entity = ResolverEntity.builder()
+    return ResolverEntity.builder()
         .resolverId(id)
         .entity(entityEntity)
         .active(dto.getActive())
@@ -739,7 +747,6 @@ public final class EntityToDto {
         .trustedKeys(dto.getTrustedKeys())
         .stepRetryDuration(dto.getStepRetryDuration())
         .build();
-    return entity;
   }
 
   /**
@@ -768,13 +775,12 @@ public final class EntityToDto {
   public static TrustmarkIssuerEntity toEntity(final java.util.UUID id,
       final TrustmarkIssuerDto dto,
       final EntityEntity entityEntity) {
-    final TrustmarkIssuerEntity entity = TrustmarkIssuerEntity.builder()
+    return TrustmarkIssuerEntity.builder()
         .trustmarkIssuerId(id)
         .entity(entityEntity)
         .active(dto.getActive())
         .trustMarkTokenValidityDuration(dto.getTrustMarkTokenValidityDuration())
         .build();
-    return entity;
   }
 
   /**

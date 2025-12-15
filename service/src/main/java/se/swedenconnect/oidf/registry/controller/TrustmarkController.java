@@ -62,7 +62,8 @@ public class TrustmarkController {
    * @return list of trustmarks with optionally included trustmark subjects
    */
   @GetMapping
-  @Operation(summary = "List all trustmarks", description = "Lists all trustmarks for the organization, optionally including trustmark subjects")
+  @Operation(summary = "List all trustmarks", description = "Lists all trustmarks for the organization, "
+      + "optionally including trustmark subjects")
   public ResponseEntity<List<TrustmarkWithSubjectsDto>> listTrustmarks(
       @RequestParam(name = "includeSubjects", required = false, defaultValue = "false") final boolean includeSubjects,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {

@@ -42,7 +42,6 @@ import se.swedenconnect.oidf.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.repository.ResolverRepository;
 import se.swedenconnect.oidf.registry.repository.TaImRepository;
 import se.swedenconnect.oidf.registry.repository.TrustMarkRepository;
-import se.swedenconnect.oidf.registry.repository.TrustMarkSubjectRepository;
 import se.swedenconnect.oidf.registry.repository.TrustmarkIssuerRepository;
 import se.swedenconnect.oidf.registry.validation.ValidateDto;
 
@@ -60,7 +59,6 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   private final TaImRepository moduleRepository;
   private final EntityRepository entityRepository;
   private final TrustMarkRepository trustMarkRepository;
-  private final TrustMarkSubjectRepository trustMarkSubjectRepository;
   private final TrustmarkIssuerRepository trustmarkIssuerRepository;
   private final ResolverRepository resolverRepository;
   private final OrganizationService organizationService;
@@ -72,7 +70,6 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
    * @param moduleRepository the module repository
    * @param entityRepository the entity repository
    * @param trustMarkRepository the trust mark repository
-   * @param trustMarkSubjectRepository the trust mark subject repository
    * @param trustmarkIssuerRepository the trustmark issuer repository
    * @param resolverRepository the resolver repository
    * @param organizationService the organization service
@@ -81,7 +78,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   public ModuleConfigServiceImpl(final TaImRepository moduleRepository,
       final EntityRepository entityRepository,
       final TrustMarkRepository trustMarkRepository,
-      final TrustMarkSubjectRepository trustMarkSubjectRepository,
+
       final TrustmarkIssuerRepository trustmarkIssuerRepository,
       final ResolverRepository resolverRepository,
       final OrganizationService organizationService,
@@ -89,7 +86,6 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     this.moduleRepository = moduleRepository;
     this.entityRepository = entityRepository;
     this.trustMarkRepository = trustMarkRepository;
-    this.trustMarkSubjectRepository = trustMarkSubjectRepository;
     this.trustmarkIssuerRepository = trustmarkIssuerRepository;
     this.resolverRepository = resolverRepository;
     this.organizationService = organizationService;
@@ -119,10 +115,14 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
             "No module of type %s found for id %s".formatted(type, id)));
   }
 
-  // ---------------------------------------------------------------------------
-  // TrustAnchor
-  // ---------------------------------------------------------------------------
-
+  /**
+   * Creates a trust anchor.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust anchor ID
+   * @param input the trust anchor data
+   * @return the created trust anchor
+   */
   @Override
   @Transactional
   public TrustAnchorDto createTrustAnchor(final OrganizationRecord organizationRecord,
@@ -147,6 +147,14 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     return dto;
   }
 
+  /**
+   * Updates a trust anchor.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust anchor ID
+   * @param input the trust anchor data
+   * @return the updated trust anchor
+   */
   @Override
   @Transactional
   public TrustAnchorDto updateTrustAnchor(final OrganizationRecord organizationRecord,
@@ -163,6 +171,13 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     return newDto;
   }
 
+  /**
+   * Gets a trust anchor by ID.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust anchor ID
+   * @return the trust anchor
+   */
   @Override
   @Transactional(readOnly = true)
   public TrustAnchorDto getTrustAnchor(final OrganizationRecord organizationRecord, final UUID id) {
@@ -170,6 +185,12 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     return EntityToDto.toDto(module);
   }
 
+  /**
+   * Deletes a trust anchor.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust anchor ID
+   */
   @Override
   @Transactional
   public void deleteTrustAnchor(final OrganizationRecord organizationRecord, final UUID id) {
@@ -183,6 +204,14 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   // Intermediate
   // ---------------------------------------------------------------------------
 
+  /**
+   * Creates an intermediate.
+   *
+   * @param organizationRecord the organization record
+   * @param id the intermediate ID
+   * @param input the intermediate data
+   * @return the created intermediate
+   */
   @Override
   @Transactional
   public IntermediateDto createIntermediate(final OrganizationRecord organizationRecord,
@@ -207,6 +236,14 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     return dto;
   }
 
+  /**
+   * Updates an intermediate.
+   *
+   * @param organizationRecord the organization record
+   * @param id the intermediate ID
+   * @param input the intermediate data
+   * @return the updated intermediate
+   */
   @Override
   @Transactional
   public IntermediateDto updateIntermediate(final OrganizationRecord organizationRecord,
@@ -223,6 +260,13 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     return newDto;
   }
 
+  /**
+   * Gets an intermediate by ID.
+   *
+   * @param organizationRecord the organization record
+   * @param id the intermediate ID
+   * @return the intermediate
+   */
   @Override
   @Transactional(readOnly = true)
   public IntermediateDto getIntermediate(final OrganizationRecord organizationRecord, final UUID id) {
@@ -230,6 +274,12 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     return EntityToDto.toDtoIntermediate(module);
   }
 
+  /**
+   * Deletes an intermediate.
+   *
+   * @param organizationRecord the organization record
+   * @param id the intermediate ID
+   */
   @Override
   @Transactional
   public void deleteIntermediate(final OrganizationRecord organizationRecord, final UUID id) {
@@ -249,6 +299,14 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
             ErrorTypes.NOT_FOUND, "No resolver found for id %s".formatted(id)));
   }
 
+  /**
+   * Creates a resolver.
+   *
+   * @param organizationRecord the organization record
+   * @param id the resolver ID
+   * @param input the resolver data
+   * @return the created resolver
+   */
   @Override
   @Transactional
   public ResolverDto createResolver(final OrganizationRecord organizationRecord,
@@ -266,6 +324,14 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     return dto;
   }
 
+  /**
+   * Updates a resolver.
+   *
+   * @param organizationRecord the organization record
+   * @param id the resolver ID
+   * @param input the resolver data
+   * @return the updated resolver
+   */
   @Override
   @Transactional
   public ResolverDto updateResolver(final OrganizationRecord organizationRecord,
@@ -282,6 +348,13 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     return newDto;
   }
 
+  /**
+   * Gets a resolver by ID.
+   *
+   * @param organizationRecord the organization record
+   * @param id the resolver ID
+   * @return the resolver
+   */
   @Override
   @Transactional(readOnly = true)
   public ResolverDto getResolver(final OrganizationRecord organizationRecord, final UUID id) {
@@ -289,6 +362,12 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     return EntityToDto.toDto(entity);
   }
 
+  /**
+   * Deletes a resolver.
+   *
+   * @param organizationRecord the organization record
+   * @param id the resolver ID
+   */
   @Override
   @Transactional
   public void deleteResolver(final OrganizationRecord organizationRecord, final UUID id) {
@@ -302,6 +381,14 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   // Trustmark
   // ---------------------------------------------------------------------------
 
+  /**
+   * Creates a trust mark.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark ID
+   * @param input the trust mark data
+   * @return the created trust mark
+   */
   @Override
   @Transactional
   public TrustmarkDto createTrustmark(final OrganizationRecord organizationRecord,
@@ -323,6 +410,14 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     return dto;
   }
 
+  /**
+   * Updates a trust mark.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark ID
+   * @param input the trust mark data
+   * @return the updated trust mark
+   */
   @Override
   @Transactional
   public TrustmarkDto updateTrustmark(final OrganizationRecord organizationRecord,
@@ -343,6 +438,13 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     return newDto;
   }
 
+  /**
+   * Gets a trust mark by ID.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark ID
+   * @return the trust mark
+   */
   @Override
   @Transactional(readOnly = true)
   public TrustmarkDto getTrustmark(final OrganizationRecord organizationRecord, final UUID id) {
@@ -354,6 +456,12 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     return EntityToDto.toDto(entity);
   }
 
+  /**
+   * Deletes a trust mark.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark ID
+   */
   @Override
   @Transactional
   public void deleteTrustmark(final OrganizationRecord organizationRecord, final UUID id) {
@@ -370,6 +478,14 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   // Trustmark Issuer
   // ---------------------------------------------------------------------------
 
+  /**
+   * Creates a trust mark issuer.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark issuer ID
+   * @param input the trust mark issuer data
+   * @return the created trust mark issuer
+   */
   @Override
   @Transactional
   public TrustmarkIssuerDto createTrustmarkIssuer(final OrganizationRecord organizationRecord,
@@ -387,6 +503,14 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     return dto;
   }
 
+  /**
+   * Updates a trust mark issuer.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark issuer ID
+   * @param input the trust mark issuer data
+   * @return the updated trust mark issuer
+   */
   @Override
   @Transactional
   public TrustmarkIssuerDto updateTrustmarkIssuer(final OrganizationRecord organizationRecord,
@@ -407,6 +531,13 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     return newDto;
   }
 
+  /**
+   * Gets a trust mark issuer by ID.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark issuer ID
+   * @return the trust mark issuer
+   */
   @Override
   @Transactional(readOnly = true)
   public TrustmarkIssuerDto getTrustmarkIssuer(final OrganizationRecord organizationRecord, final UUID id) {
@@ -418,6 +549,12 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     return EntityToDto.toDto(entity);
   }
 
+  /**
+   * Deletes a trust mark issuer.
+   *
+   * @param organizationRecord the organization record
+   * @param id the trust mark issuer ID
+   */
   @Override
   @Transactional
   public void deleteTrustmarkIssuer(final OrganizationRecord organizationRecord, final UUID id) {
@@ -434,6 +571,13 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   // List Modules
   // ---------------------------------------------------------------------------
 
+  /**
+   * Lists all modules for the organization, optionally filtered by type.
+   *
+   * @param organizationRecord the organization record
+   * @param type optional module type filter (trustanchor, intermediate, resolver, trustmarkissuer)
+   * @return modules grouped by type
+   */
   @Override
   @Transactional(readOnly = true)
   public ModuleDto listModules(final OrganizationRecord organizationRecord, final String type) {
@@ -483,6 +627,13 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     return moduleDto;
   }
 
+  /**
+   * Lists all trustmarks for the organization, optionally including trustmark subjects.
+   *
+   * @param organizationRecord the organization record
+   * @param includeSubjects if true, includes trustmark subjects in the response
+   * @return list of trustmarks with optionally included trustmark subjects
+   */
   @Override
   @Transactional(readOnly = true)
   public List<TrustmarkWithSubjectsDto> listTrustmarks(final OrganizationRecord organizationRecord,

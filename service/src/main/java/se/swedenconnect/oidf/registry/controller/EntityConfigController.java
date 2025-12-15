@@ -123,11 +123,13 @@ public class EntityConfigController {
   }
 
   /**
-   * Gets a federation entity by ID.
+   * Retrieves a federation entity by its unique identifier. Optionally includes associated modules
+   * based on the provided parameter.
    *
-   * @param id the federation entity ID
-   * @param organizationRecord the organization record
-   * @return the federation entity
+   * @param id the unique identifier of the federation entity
+   * @param includeModules a flag indicating whether to include associated modules in the response
+   * @param organizationRecord the organization context for the request, typically populated internally
+   * @return a ResponseEntity containing the federation entity along with its modules if requested
    */
   @GetMapping("/federation/{id}")
   @Operation(summary = "Get federation entity")
