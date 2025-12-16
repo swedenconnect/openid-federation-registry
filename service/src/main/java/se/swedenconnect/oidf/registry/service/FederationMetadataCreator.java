@@ -58,7 +58,7 @@ public class FederationMetadataCreator {
    *     {@code FEDERATION_ENTITY}, the return value contains metadata specific to hosted entities. Otherwise, it
    *     contains the mapped entity settings.
    */
-  public OidfServiceHostedEntities.Record.RecordBuilder createEntityResponseV2(final EntityEntity entityEntity) {
+  public OidfServiceHostedEntities.Record createEntityResponseV2(final EntityEntity entityEntity) {
 
     final OidfServiceHostedEntities.Record.RecordBuilder entityData = OidfServiceHostedEntities.Record.builder();
     entityData.policyRecord(OidfServiceHostedEntities.Record.PolicyRecord.builder().build());
@@ -81,7 +81,7 @@ public class FederationMetadataCreator {
       entityData.overrideConfigurationLocation("https://www.swedenconnect.se/test_ec_location");
       entityData.crit(List.of("ec_location"));
       //entityData.metadataPolicyCrit()
-      return entityData;
+      return entityData.build();
     }
 
     if (entityType == EntityKeyType.SUBORDINATE_ENTITY) {
@@ -103,7 +103,7 @@ public class FederationMetadataCreator {
           throw new IllegalArgumentException("Failed to parse JWKS", e);
         }
       }
-      return entityData;
+      return entityData.build();
     }
 
     if (entityType == EntityKeyType.FEDERATION_ENTITY) {
@@ -121,10 +121,10 @@ public class FederationMetadataCreator {
           .builder()
           .metadata(federationEntityData)
           .build());
-      return entityData;
+      return entityData.build();
     }
 
-    return entityData;
+    return entityData.build();
   }
 
   protected OidfServiceHostedEntities.Metadata.FederationEntity createFederationMetadata(

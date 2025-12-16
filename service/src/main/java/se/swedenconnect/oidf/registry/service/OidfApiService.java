@@ -177,8 +177,7 @@ public class OidfApiService {
 
     return OidfServiceHostedEntities.builder()
         .entityRecords(entities.stream()
-            .map(entity -> this.entityResponseFormatter.createEntityResponseV2(entity)
-                .build())
+            .map(this.entityResponseFormatter::createEntityResponseV2)
             .toList())
         .build();
   }
