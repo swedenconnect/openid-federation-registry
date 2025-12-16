@@ -28,8 +28,10 @@ import se.swedenconnect.oidf.registry.api.ModulesApi;
 import se.swedenconnect.oidf.registry.api.PoliciesApi;
 import se.swedenconnect.oidf.registry.api.model.FederationEntity;
 import se.swedenconnect.oidf.registry.api.model.Policy;
+import se.swedenconnect.oidf.registry.api.model.Resolver;
 import se.swedenconnect.oidf.registry.api.model.SubordinateEntity;
 import se.swedenconnect.oidf.registry.api.model.TrustAnchor;
+import se.swedenconnect.oidf.registry.api.model.TrustmarkIssuer;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
@@ -62,7 +64,7 @@ public class TestDataOperations {
       final KeyPair keyPair = keyGen.generateKeyPair();
 
       return new ECKey.Builder(Curve.P_256, (ECPublicKey) keyPair.getPublic()).privateKey(keyPair.getPrivate())
-          .keyID("ec-key-id" + new Random().nextInt(100))
+          .keyID("ec-key-id" + new Random().nextInt(1000))
           .keyUse(KeyUse.SIGNATURE)
           .build();
     }
@@ -118,6 +120,30 @@ public class TestDataOperations {
     result.put("trustAnchorModuleId", createdTrustAnchor.getTrustAnchorId());
     log.info("Created trustanchor module with ID: {} for entity: {}",
         createdTrustAnchor.getTrustAnchorId(), firstFederationEntity.getSubject());
+
+    final Resolver resolverInput = Resolver.builder()
+        .entityId(firstFederationEntity.getEntityId())
+        .trustAnchor(firstFederationEntity.getSubject())
+        .trustedKeys(genJWKS().toString())
+        .resolveResponseDuration("PT1H")
+        .stepCachedValueThreshold(10)
+        .stepRetryDuration("PT2M")
+        .active(true)
+        .build();
+    final Resolver createdResolver = modulesApi.createResolver(resolverInput);
+    result.put("resolveModuleId", createdResolver.getResolverId());
+    log.info("Created resolver module with ID: {} for entity: {}",
+        createdResolver.getResolverId(), firstFederationEntity.getSubject());
+
+    final TrustmarkIssuer trustmarkIssuerInput = TrustmarkIssuer.builder()
+        .entityId(firstFederationEntity.getEntityId())
+        .trustMarkTokenValidityDuration("PT1H")
+        .active(true)
+        .build();
+    final TrustmarkIssuer createdTrustmarkIssuer = modulesApi.createTrustmarkIssuer(trustmarkIssuerInput);
+    result.put("tmiId", createdTrustmarkIssuer.getTrustmarkIssuerId());
+    log.info("Created tmi module with ID: {} for entity: {}",
+        createdTrustmarkIssuer.getTrustmarkIssuerId(), firstFederationEntity.getSubject());
 
     // Step 4: Create second federation entity with relying_party metadata
     final Map<String, Object> relyingPartyMetadata = new HashMap<>();

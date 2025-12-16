@@ -151,6 +151,7 @@ public class OidfApiService {
 
     final List<OidfServiceSubModules.TrustAnchor> taIm = entities.stream()
         .map(EntityEntity::getTrustanchorIntermediate)
+        .filter(Objects::nonNull)
         .map(this::toTaIm)
         .toList();
     subModules.trustAnchors(taIm);

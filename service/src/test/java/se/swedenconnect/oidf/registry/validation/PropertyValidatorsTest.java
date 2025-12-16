@@ -294,7 +294,7 @@ public class PropertyValidatorsTest {
       final KeyPair keyPair = keyGen.generateKeyPair();
 
       return new ECKey.Builder(Curve.P_256, (ECPublicKey) keyPair.getPublic()).privateKey(keyPair.getPrivate())
-          .keyID("ec-key-id" + new Random().nextInt(10))
+          .keyID("ec-key-id" + new Random().nextInt(1000))
           .build();
     }
     catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {

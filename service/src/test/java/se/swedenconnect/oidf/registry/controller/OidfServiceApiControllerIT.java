@@ -130,13 +130,13 @@ class OidfServiceApiControllerIT {
     assertNotNull(moduleResponse.getTrustAnchors());
     assertNotNull(moduleResponse.getTrustMarkIssuers());
 
-    assertFalse(moduleResponse.getResolvers().isEmpty());
+    assertFalse(moduleResponse.getResolvers().isEmpty(), "Expects resolver to be present in the response.");
     moduleResponse.getResolvers().forEach(ResolverModuleResponse::validate);
 
     assertFalse(moduleResponse.getTrustAnchors().isEmpty());
     moduleResponse.getTrustAnchors().forEach(TrustAnchorModuleResponse::validate);
 
-    assertFalse(moduleResponse.getTrustMarkIssuers().isEmpty());
+    assertFalse(moduleResponse.getTrustMarkIssuers().isEmpty(), "TMI is expected");
     moduleResponse.getTrustMarkIssuers().forEach(TrustMarkIssuerModuleResponse::validate);
 
   }
