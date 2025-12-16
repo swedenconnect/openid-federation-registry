@@ -78,7 +78,6 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   public ModuleConfigServiceImpl(final TaImRepository moduleRepository,
       final EntityRepository entityRepository,
       final TrustMarkRepository trustMarkRepository,
-
       final TrustmarkIssuerRepository trustmarkIssuerRepository,
       final ResolverRepository resolverRepository,
       final OrganizationService organizationService,

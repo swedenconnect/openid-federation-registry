@@ -91,7 +91,7 @@ class OidfServiceApiControllerIT {
 
   @Test
   @DisplayName( "Entity record endpoint - should return a JWT with the expected structure")
-  void entityRecordSuccess() throws ParseException, JsonProcessingException {
+  void entityRecordSuccess() throws ParseException {
 
     final SignedJWT signedJWT = federationAPIOperations.callEntity(instanceId);
 

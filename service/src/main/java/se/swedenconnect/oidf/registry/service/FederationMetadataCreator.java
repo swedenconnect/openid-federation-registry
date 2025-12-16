@@ -61,7 +61,7 @@ public class FederationMetadataCreator {
   public OidfServiceHostedEntities.Record.RecordBuilder createEntityResponseV2(final EntityEntity entityEntity) {
 
     final OidfServiceHostedEntities.Record.RecordBuilder entityData = OidfServiceHostedEntities.Record.builder();
-
+    entityData.policyRecord(OidfServiceHostedEntities.Record.PolicyRecord.builder().build());
     Optional.ofNullable(entityEntity.getPolicyEntity())
         .ifPresent(policyEntity -> {
           final PolicyDto policyDto = EntityToDto.toDtoPolicy(policyEntity);
@@ -89,8 +89,9 @@ public class FederationMetadataCreator {
       entityData.subject(dto.getSubject())
           .issuer(dto.getIssuer())
           .policyRecord(OidfServiceHostedEntities.Record.PolicyRecord.builder()
-              .policyRecordId(dto.getPolicy().toString())
-              .policy(dto.getPolicy()).build());
+              .policyRecordId(dto.getPolicyId() == null ? null : dto.getPolicyId().toString())
+              .policy(dto.getPolicy() == null ? Map.of() : dto.getPolicy())
+              .build());
 
 
       if (dto.getJwks() != null && !dto.getJwks().isBlank()) {
