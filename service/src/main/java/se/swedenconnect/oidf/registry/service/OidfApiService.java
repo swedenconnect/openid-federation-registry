@@ -15,7 +15,6 @@
  */
 package se.swedenconnect.oidf.registry.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWK;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -136,11 +135,9 @@ public class OidfApiService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No instance found for:%s".formatted(instanceid)));
 
-
     final List<EntityEntity> entities = instanceEntity.getOrganizations().stream()
         .flatMap(organizationEntity -> organizationEntity.getEntities().stream())
         .toList();
-
 
     final List<OidfServiceSubModules.TrustMarkIssuer> tmi = entities.stream()
         .map(EntityEntity::getTrustmarkIssuer)
@@ -178,29 +175,18 @@ public class OidfApiService {
         .flatMap(organizationEntity -> organizationEntity.getEntities().stream())
         .toList();
 
-    final OidfServiceHostedEntities.OidfServiceHostedEntitiesBuilder hostedEntitys =
-        OidfServiceHostedEntities.builder();
-
-    hostedEntitys.entityRecords(entities.stream().map(this::toMapEntityV2).toList());
-
-    return hostedEntitys.build();
+    return OidfServiceHostedEntities.builder()
+        .entityRecords(entities.stream()
+            .map(entity -> this.entityResponseFormatter.createEntityResponseV2(entity)
+                .build())
+            .toList())
+        .build();
   }
-
-  private OidfServiceHostedEntities.Record toMapEntityV2(final EntityEntity entity) {
-
-    final OidfServiceHostedEntities.Record.RecordBuilder hostedEntitys =
-        this.entityResponseFormatter.createEntityResponseV2(entity);
-
-    return hostedEntitys.build();
-  }
-
-  private static final ObjectMapper mapper = new ObjectMapper();
 
   private OidfServiceSubModules.TrustAnchor toTaIm(final TaImEntity taImModuleEntity) {
     if (taImModuleEntity == null || taImModuleEntity.getActive() == null || !taImModuleEntity.getActive()) {
       return OidfServiceSubModules.TrustAnchor.builder().build();
     }
-
     return OidfServiceSubModules.TrustAnchor.builder()
         .entityIdentifier(taImModuleEntity.getEntity().getSubject())
         .trustMarkIssuer(
@@ -213,7 +199,6 @@ public class OidfApiService {
     if (resolverEntity == null || resolverEntity.getActive() == null || !resolverEntity.getActive()) {
       return OidfServiceSubModules.Resolver.builder().build();
     }
-
     return OidfServiceSubModules.Resolver.builder()
         .entityIdentifier(resolverEntity.getEntity().getSubject())
         .resolveResponseDuration(resolverEntity.getResolveResponseDuration())
