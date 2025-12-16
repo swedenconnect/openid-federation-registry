@@ -12,15 +12,30 @@ spring:
     oauth2:
       resourceserver:
         jwt:
+          public-key-location: file:../config/local/snake-oil.pem
           audiences: account
+
+credential:
+  bundles:
+    keystore:
+      signkey:
+        location: file:../config/local/snake-oil.p12
+        password: EBA4286F-4C20-4BAF-BE54-95FA31646DF5
+        type: JKS
+    jks:
+      federationapi:
+        store-reference: signkey
+        name: "FederationAPI-JWKSignkey"
+        key:
+          alias: snake-oil
+          key-password: EBA4286F-4C20-4BAF-BE54-95FA31646DF5
 
 openid:
   federation:
     registry:
-      dev-mode: true
       federation_service_api:
         issuer: "http://oidf-registry.example.org"
-        sign_key_alias: federationapi # should match the keystore alias in a production setup
+        sign_key_alias: federationapi
         notification_active: true
         notifications:
           - endpoint: http://www.swedenconnect.se/sc/notify
