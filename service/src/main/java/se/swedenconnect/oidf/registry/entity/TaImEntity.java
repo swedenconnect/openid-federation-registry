@@ -23,6 +23,7 @@ import lombok.Setter;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -113,7 +114,8 @@ public class TaImEntity extends BaseEntity {
    *     set to null.
    */
   public void setTrustMarkIssuers(final List<String> trustMarkIssuers) {
-    this.trustMarkIssuers = trustMarkIssuers.isEmpty() ? null : String.join(",", trustMarkIssuers);
+    this.trustMarkIssuers = Objects.isNull(trustMarkIssuers) ||
+        trustMarkIssuers.isEmpty() ? null : String.join(",", trustMarkIssuers);
   }
 
   /**
@@ -123,7 +125,7 @@ public class TaImEntity extends BaseEntity {
    * @param critical the list of strings to set as critical data
    */
   public void setCritical(final List<String> critical) {
-    this.critical = critical.isEmpty() ? null : String.join(",", critical);
+    this.critical = Objects.isNull(critical) || critical.isEmpty() ? null : String.join(",", critical);
   }
 
   /**

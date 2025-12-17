@@ -166,7 +166,7 @@ public class FederationMetadataCreator {
         OidfServiceHostedEntities.Metadata.FederationEntity.builder();
     federationEntity.organizationName(orgName);
 
-    final String sub = entityEntity.getSubject();
+    final String sub = entityEntity.getIssuer();
 
     Optional.ofNullable(entityEntity.getTrustanchorIntermediate())
         .ifPresent(moduleEntity -> {
