@@ -58,10 +58,12 @@ public class FederationMetadataCreator {
    *     {@code FEDERATION_ENTITY}, the return value contains metadata specific to hosted entities. Otherwise, it
    *     contains the mapped entity settings.
    */
-  public OidfServiceHostedEntities.Record createEntityResponseV2(final EntityEntity entityEntity) {
+  public List<OidfServiceHostedEntities.Record> createEntityResponseV2(final EntityEntity entityEntity) {
 
     final OidfServiceHostedEntities.Record.RecordBuilder entityData = OidfServiceHostedEntities.Record.builder();
+
     entityData.policyRecord(OidfServiceHostedEntities.Record.PolicyRecord.builder().build());
+
     Optional.ofNullable(entityEntity.getPolicyEntity())
         .ifPresent(policyEntity -> {
           final PolicyDto policyDto = EntityToDto.toDtoPolicy(policyEntity);
@@ -75,13 +77,38 @@ public class FederationMetadataCreator {
     final EntityKeyType entityType = entityEntity.getEntityType();
 
     if (entityType == EntityKeyType.HOSTED_ENTITY) {
+
       final HostedEntityDto dto = EntityToDto.toDtoHosted(entityEntity);
-      entityData.subject(dto.getSubject())
-          .issuer(dto.getIssuer());
-      entityData.overrideConfigurationLocation("https://www.swedenconnect.se/test_ec_location");
-      entityData.crit(List.of("ec_location"));
-      //entityData.metadataPolicyCrit()
-      return entityData.build();
+
+      final String id = entityEntity.getIssuer()
+          .replace("https://", "")
+          .replace("http://", "")
+          .replace(".", "_")
+          .replace("/", "_");
+
+      String calculatedEcLocation = entityEntity.getSubject().endsWith("/") ?
+          entityEntity.getSubject() : entityEntity.getSubject() + "/";
+
+      calculatedEcLocation += id + "/.well-known/openid-federation";
+
+      entityData.subject(dto.getIssuer())
+          .issuer(dto.getIssuer())
+          .overrideConfigurationLocation(calculatedEcLocation)
+          .crit(List.of("ec_location", "configuration_location_override"));
+
+      final OidfServiceHostedEntities.Record record = entityData.build();
+
+      final OidfServiceHostedEntities.Record hosted = OidfServiceHostedEntities.Record
+          .builder()
+          .issuer(record.getOverrideConfigurationLocation())
+          .subject(record.getOverrideConfigurationLocation())
+          .overrideConfigurationLocation(record.getOverrideConfigurationLocation())
+          .crit(record.getCrit())
+          .policyRecord(OidfServiceHostedEntities.Record.PolicyRecord.builder().build())
+          .hostedRecord(OidfServiceHostedEntities.HostedRecord.builder().metadata(dto.getMetadata()).build())
+          .build();
+
+      return List.of(record, hosted);
     }
 
     if (entityType == EntityKeyType.SUBORDINATE_ENTITY) {
@@ -103,13 +130,16 @@ public class FederationMetadataCreator {
           throw new IllegalArgumentException("Failed to parse JWKS", e);
         }
       }
-      return entityData.build();
+      return List.of(entityData.build());
     }
 
     if (entityType == EntityKeyType.FEDERATION_ENTITY) {
       final FederationEntityDto dto = EntityToDto.toDtoPolicy(entityEntity);
-      entityData.subject(dto.getSubject())
-          .issuer(dto.getIssuer());
+      entityData.subject(dto.getIssuer())
+          .issuer(dto.getIssuer())
+          .crit(dto.getCrit())
+          .metadataPolicyCrit(dto.getMetadataPolicyCrit());
+
       final Map<String, Object> federationEntityData = new HashMap<>();
       if (dto.getMetadata() != null) {
         federationEntityData.putAll(dto.getMetadata());
@@ -121,10 +151,10 @@ public class FederationMetadataCreator {
           .builder()
           .metadata(federationEntityData)
           .build());
-      return entityData.build();
+      return List.of(entityData.build());
     }
 
-    return entityData.build();
+    return List.of(entityData.build());
   }
 
   protected OidfServiceHostedEntities.Metadata.FederationEntity createFederationMetadata(

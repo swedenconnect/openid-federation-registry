@@ -177,7 +177,8 @@ public class OidfApiService {
 
     return OidfServiceHostedEntities.builder()
         .entityRecords(entities.stream()
-            .map(this.entityResponseFormatter::createEntityResponseV2)
+            .flatMap(entityEntity ->
+                this.entityResponseFormatter.createEntityResponseV2(entityEntity).stream())
             .toList())
         .build();
   }
@@ -187,9 +188,9 @@ public class OidfApiService {
       return OidfServiceSubModules.TrustAnchor.builder().build();
     }
     return OidfServiceSubModules.TrustAnchor.builder()
-        .entityIdentifier(taImModuleEntity.getEntity().getSubject())
+        .entityIdentifier(taImModuleEntity.getEntity().getIssuer())
         .trustMarkIssuer(
-            taImModuleEntity.getTrustMarkIssuers() != null ? null : taImModuleEntity.getTrustMarkIssuers().get(0))
+            taImModuleEntity.getTrustMarkIssuers() != null ? null : taImModuleEntity.getTrustMarkIssuers().getFirst())
         .active(taImModuleEntity.getActive())
         .build();
   }
@@ -199,7 +200,7 @@ public class OidfApiService {
       return OidfServiceSubModules.Resolver.builder().build();
     }
     return OidfServiceSubModules.Resolver.builder()
-        .entityIdentifier(resolverEntity.getEntity().getSubject())
+        .entityIdentifier(resolverEntity.getEntity().getIssuer())
         .resolveResponseDuration(resolverEntity.getResolveResponseDuration())
         .trustAnchors(resolverEntity.getTrustAnchor() != null
             ? resolverEntity.getTrustAnchor()
@@ -221,7 +222,7 @@ public class OidfApiService {
         .stream()
         .map(trustMarkEntity ->
             OidfServiceSubModules.TrustMarkIssuer.TrustMark.builder()
-                .trustMarkIssuerId(tmiModuleEntity.getEntity().getSubject())
+                .trustMarkIssuerId(tmiModuleEntity.getEntity().getIssuer())
                 .trustMarkId(trustMarkEntity.getTrustMarkEntityId() != null
                     ? trustMarkEntity.getTrustMarkEntityId()
                     : null)
@@ -249,7 +250,7 @@ public class OidfApiService {
         ).toList();
 
     return OidfServiceSubModules.TrustMarkIssuer.builder()
-        .entityIdentifier(tmiModuleEntity.getEntity().getSubject())
+        .entityIdentifier(tmiModuleEntity.getEntity().getIssuer())
         .trustMarkTokenValidityDuration(tmiModuleEntity.getTrustMarkTokenValidityDuration())
         .trustMarks(trustMarks)
         .build();

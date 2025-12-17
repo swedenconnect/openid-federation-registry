@@ -27,6 +27,7 @@ import se.swedenconnect.oidf.registry.api.EntitiesApi;
 import se.swedenconnect.oidf.registry.api.ModulesApi;
 import se.swedenconnect.oidf.registry.api.PoliciesApi;
 import se.swedenconnect.oidf.registry.api.model.FederationEntity;
+import se.swedenconnect.oidf.registry.api.model.HostedEntity;
 import se.swedenconnect.oidf.registry.api.model.Policy;
 import se.swedenconnect.oidf.registry.api.model.Resolver;
 import se.swedenconnect.oidf.registry.api.model.SubordinateEntity;
@@ -103,7 +104,6 @@ public class TestDataOperations {
 
     // Step 2: Create first federation entity
     final FederationEntity firstFederationEntityInput = FederationEntity.builder()
-        .subject("https://www.pm.se/oidf/ta")
         .issuer("https://www.pm.se/oidf/ta")
         .metadata(Map.of("federation_entity", Map.of("organization_name", "Test Organization 1")))
         .build();
@@ -119,11 +119,11 @@ public class TestDataOperations {
     final TrustAnchor createdTrustAnchor = modulesApi.createTrustAnchor(trustAnchorInput);
     result.put("trustAnchorModuleId", createdTrustAnchor.getTrustAnchorId());
     log.info("Created trustanchor module with ID: {} for entity: {}",
-        createdTrustAnchor.getTrustAnchorId(), firstFederationEntity.getSubject());
+        createdTrustAnchor.getTrustAnchorId(), firstFederationEntity.getIssuer());
 
     final Resolver resolverInput = Resolver.builder()
         .entityId(firstFederationEntity.getEntityId())
-        .trustAnchor(firstFederationEntity.getSubject())
+        .trustAnchor(firstFederationEntity.getIssuer())
         .trustedKeys(genJWKS().toString())
         .resolveResponseDuration("PT1H")
         .stepCachedValueThreshold(10)
@@ -133,7 +133,7 @@ public class TestDataOperations {
     final Resolver createdResolver = modulesApi.createResolver(resolverInput);
     result.put("resolveModuleId", createdResolver.getResolverId());
     log.info("Created resolver module with ID: {} for entity: {}",
-        createdResolver.getResolverId(), firstFederationEntity.getSubject());
+        createdResolver.getResolverId(), firstFederationEntity.getIssuer());
 
     final TrustmarkIssuer trustmarkIssuerInput = TrustmarkIssuer.builder()
         .entityId(firstFederationEntity.getEntityId())
@@ -143,7 +143,7 @@ public class TestDataOperations {
     final TrustmarkIssuer createdTrustmarkIssuer = modulesApi.createTrustmarkIssuer(trustmarkIssuerInput);
     result.put("tmiId", createdTrustmarkIssuer.getTrustmarkIssuerId());
     log.info("Created tmi module with ID: {} for entity: {}",
-        createdTrustmarkIssuer.getTrustmarkIssuerId(), firstFederationEntity.getSubject());
+        createdTrustmarkIssuer.getTrustmarkIssuerId(), firstFederationEntity.getIssuer());
 
     // Step 4: Create second federation entity with relying_party metadata
     final Map<String, Object> relyingPartyMetadata = new HashMap<>();
@@ -152,7 +152,6 @@ public class TestDataOperations {
         "redirect_uris", java.util.List.of("https://rp.test.se/callback")
     ));
     final FederationEntity secondFederationEntityInput = FederationEntity.builder()
-        .subject("https://www.pm.se/oidf/relyingparty")
         .issuer("https://www.pm.se/oidf/relyingparty")
         .metadata(relyingPartyMetadata)
         .build();
@@ -164,14 +163,22 @@ public class TestDataOperations {
     // Step 5: Create subordinate entity with subject set to first federation entity,
     // issuer set to second federation entity, and the created policy
     final SubordinateEntity subordinateEntityInput = SubordinateEntity.builder()
-        .subject(firstFederationEntity.getSubject())
-        .issuer(secondFederationEntity.getSubject())
+        .subject(firstFederationEntity.getIssuer())
+        .issuer(secondFederationEntity.getIssuer())
         .policyId(createdPolicy.getPolicyId())
         .jwks(genJWKS().toString())
         .build();
 
     final SubordinateEntity createdSubordinateEntity = entitiesApi.createSubordinateEntity(subordinateEntityInput);
     result.put("subordinateEntityId", createdSubordinateEntity.getEntityId());
+
+    final HostedEntity hostedEntityEntityInput = HostedEntity.builder()
+        .issuer("https://www.polisen.se/op/swerigeid")
+        .build();
+
+    final HostedEntity createdHostedEntity = entitiesApi.createHostedEntity(hostedEntityEntityInput);
+    result.put("createdHostedEntityId", createdHostedEntity.getEntityId());
+
     log.info("Created subordinate entity with ID: {}, subject: {}, issuer: {}, policyId: {}",
         createdSubordinateEntity.getEntityId(),
         createdSubordinateEntity.getSubject(),

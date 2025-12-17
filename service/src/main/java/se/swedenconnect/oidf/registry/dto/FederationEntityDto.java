@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -36,13 +37,17 @@ public class FederationEntityDto {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private UUID entityId;
 
-  @Schema(description = "Subject (entity identifier)", example = "https://rp.example.se")
-  private String subject;
-
   @Schema(description = "Issuer (entity identifier)", example = "https://ta.example.se")
   private String issuer;
 
   @Schema(description = "Federation entity metadata", example = "{\"federation_entity\":{}}")
   private Map<String, Object> metadata;
+
+  @Schema(description = "Crit ", example = "ec_location")
+  private List<String> crit;
+
+  @Schema(description = "metadata_policy_crit ", example = "ec_location")
+  private List<String> metadataPolicyCrit;
+
 }
 

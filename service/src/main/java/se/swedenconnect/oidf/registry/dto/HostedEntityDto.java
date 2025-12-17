@@ -36,13 +36,11 @@ public class HostedEntityDto {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private UUID entityId;
 
-  @Schema(description = "Subject (entity identifier)")
-  private String subject;
-
   @Schema(description = "Issuer (entity identifier)")
   private String issuer;
 
   @Schema(description = "Metadata for hosted entity")
   private Map<String, Object> metadata;
+
 }
 

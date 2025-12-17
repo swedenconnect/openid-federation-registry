@@ -126,7 +126,6 @@ class ModuleCRUDIT {
     // Step 1: Create FederationEntity
     final UUID entityId = UUID.randomUUID();
     final FederationEntity entityInput = new FederationEntity()
-        .subject(entitySubject)
         .issuer(entityIssuer);
     this.entitiesApi.createFederationEntityWithId(entityId, entityInput);
 
@@ -202,7 +201,6 @@ class ModuleCRUDIT {
   private UUID createFederationEntity(final String subject, final String issuer) {
     final UUID entityId = UUID.randomUUID();
     final FederationEntity entityInput = new FederationEntity()
-        .subject(subject)
         .issuer(issuer);
     this.entitiesApi.createFederationEntityWithId(entityId, entityInput);
     return entityId;
@@ -218,7 +216,6 @@ class ModuleCRUDIT {
   private UUID createHostedEntity(final String subject, final String issuer) {
     final UUID entityId = UUID.randomUUID();
     final HostedEntity entityInput = new HostedEntity()
-        .subject(subject)
         .issuer(issuer);
     this.entitiesApi.createHostedEntityWithId(entityId, entityInput);
     return entityId;

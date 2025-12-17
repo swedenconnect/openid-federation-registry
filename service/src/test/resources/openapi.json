@@ -2178,10 +2178,6 @@
             "description": "Entity ID",
             "readOnly": true
           },
-          "subject": {
-            "type": "string",
-            "description": "Subject (entity identifier)"
-          },
           "issuer": {
             "type": "string",
             "description": "Issuer (entity identifier)"
@@ -2201,11 +2197,6 @@
             "format": "uuid",
             "description": "Entity ID",
             "readOnly": true
-          },
-          "subject": {
-            "type": "string",
-            "description": "Subject (entity identifier)",
-            "example": "https://rp.example.se"
           },
           "issuer": {
             "type": "string",
@@ -2333,11 +2324,6 @@
                 "format": "uuid",
                 "description": "Entity ID",
                 "readOnly": true
-              },
-              "subject": {
-                "type": "string",
-                "description": "Subject (entity identifier)",
-                "example": "https://rp.example.se"
               },
               "issuer": {
                 "type": "string",

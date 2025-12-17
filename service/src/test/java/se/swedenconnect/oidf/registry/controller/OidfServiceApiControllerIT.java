@@ -16,7 +16,6 @@
 
 package se.swedenconnect.oidf.registry.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.extern.slf4j.Slf4j;
@@ -114,7 +113,7 @@ class OidfServiceApiControllerIT {
 
   @Test
   @DisplayName( "Submodule record endpoint - should return a JWT with the expected structure")
-  void submoduleRecordSuccess() throws ParseException, JsonProcessingException {
+  void submoduleRecordSuccess() throws ParseException {
 
     final SignedJWT signedJWT = this.federationAPIOperations.callSubmodule(instanceId);
 

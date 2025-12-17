@@ -45,8 +45,6 @@ public class ValidateDto {
    * @param dto the federation entity DTO
    */
   public void validate(final FederationEntityDto dto) {
-    this.v.required().startsWith("@{entityprefix}").entityid().build()
-        .ifFailThrow("subject", dto.getSubject());
 
     this.v.required().startsWith("@{entityprefix}").entityid().build()
         .ifFailThrow("issuer", dto.getIssuer());
@@ -70,9 +68,6 @@ public class ValidateDto {
    * @param dto the hosted entity DTO
    */
   public void validate(final HostedEntityDto dto) {
-    this.v.required().entityid().build()
-        .ifFailThrow("subject", dto.getSubject());
-
     this.v.required().entityid().build()
         .ifFailThrow("issuer", dto.getIssuer());
 

@@ -61,7 +61,6 @@ public final class EntityToDto {
         final FederationEntityDto federationDto = EntityToDto.toDtoPolicy(entity);
         final FederationEntityWithModulesDto federationWithModules = new FederationEntityWithModulesDto();
         federationWithModules.setEntityId(entity.getEntityId());
-        federationWithModules.setSubject(entity.getSubject());
         federationWithModules.setIssuer(entity.getIssuer());
         federationWithModules.setMetadata(federationDto.getMetadata());
         dto.setFederationEntity(federationWithModules);
@@ -88,7 +87,6 @@ public final class EntityToDto {
     final FederationEntityDto baseDto = EntityToDto.toDtoPolicy(entity);
     final FederationEntityWithModulesDto dto = new FederationEntityWithModulesDto();
     dto.setEntityId(baseDto.getEntityId());
-    dto.setSubject(baseDto.getSubject());
     dto.setIssuer(baseDto.getIssuer());
     dto.setMetadata(baseDto.getMetadata());
 
@@ -124,7 +122,6 @@ public final class EntityToDto {
 
     final HostedEntityDto dto = new HostedEntityDto();
     dto.setEntityId(entityEntity.getEntityId());
-    dto.setSubject(entityEntity.getSubject());
     dto.setIssuer(entityEntity.getIssuer());
 
     if (entityEntity.getMetadata() != null && !entityEntity.getMetadata().isBlank()) {
@@ -182,7 +179,6 @@ public final class EntityToDto {
 
     final FederationEntityDto dto = new FederationEntityDto();
     dto.setEntityId(entityEntity.getEntityId());
-    dto.setSubject(entityEntity.getSubject());
     dto.setIssuer(entityEntity.getIssuer());
 
     if (entityEntity.getMetadata() != null && !entityEntity.getMetadata().isBlank()) {
@@ -388,7 +384,6 @@ public final class EntityToDto {
     entity.setEntityType(entityKeyType);
     entity.setOrganization(organization);
     entity.setPolicyEntity(policyEntity);
-    entity.setSubject(dto.getSubject());
     entity.setIssuer(dto.getIssuer());
 
     if (dto.getMetadata() != null) {
@@ -423,7 +418,6 @@ public final class EntityToDto {
     entity.setEntityType(entityKeyType);
     entity.setOrganization(organization);
     entity.setPolicyEntity(policyEntity);
-    entity.setSubject(dto.getSubject());
     entity.setIssuer(dto.getIssuer());
 
     if (dto.getMetadata() != null) {
@@ -491,7 +485,6 @@ public final class EntityToDto {
    * @param dto the federation entity DTO
    */
   public static void updateEntity(final EntityEntity entity, final FederationEntityDto dto) {
-    entity.setSubject(dto.getSubject());
     entity.setIssuer(dto.getIssuer());
     if (dto.getMetadata() != null) {
       try {
@@ -510,7 +503,6 @@ public final class EntityToDto {
    * @param dto the hosted entity DTO
    */
   public static void updateEntity(final EntityEntity entity, final HostedEntityDto dto) {
-    entity.setSubject(dto.getSubject());
     entity.setIssuer(dto.getIssuer());
     if (dto.getMetadata() != null) {
       try {
