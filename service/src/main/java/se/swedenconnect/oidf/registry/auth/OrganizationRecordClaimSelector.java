@@ -38,6 +38,12 @@ import java.util.Optional;
 public class OrganizationRecordClaimSelector implements HandlerMethodArgumentResolver {
   public final static String SELECTED_ORG_NUMBER_HEADER_NAME = "selected-org-number";
 
+  /**
+   * Determines whether this resolver supports the given method parameter.
+   *
+   * @param parameter the method parameter to check
+   * @return true if the parameter type is OrganizationRecord and the authentication is RegistryClaims
+   */
   @Override
   public boolean supportsParameter(final MethodParameter parameter) {
     return parameter.getParameterType().equals(OrganizationRecord.class) &&
@@ -45,6 +51,16 @@ public class OrganizationRecordClaimSelector implements HandlerMethodArgumentRes
             SecurityConfig.RegistryClaims;
   }
 
+  /**
+   * Resolves the OrganizationRecord argument from the request header or JWT claims.
+   *
+   * @param parameter the method parameter
+   * @param mavContainer the model and view container
+   * @param webRequest the web request
+   * @param binderFactory the binder factory
+   * @return the OrganizationRecord resolved from the header or JWT claims
+   * @throws IllegalArgumentException if the header is missing or the organization is not found in claims
+   */
   @Override
   public Object resolveArgument(
       @Nonnull final MethodParameter parameter,

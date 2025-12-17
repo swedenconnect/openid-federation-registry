@@ -60,8 +60,9 @@ public class OrganizationEntity extends BaseEntity {
   @JoinColumn(name = "instance_id", nullable = false)
   private InstanceEntity instance;
 
+  @Deprecated
   @OneToMany(mappedBy = "organization", cascade = CascadeType.DETACH)
-  private List<ModuleEntity> module;
+  private List<TaImEntity> module;
 
   @OneToMany(mappedBy = "organization", cascade = CascadeType.DETACH)
   private List<PolicyEntity> policies = new ArrayList<>();
@@ -70,12 +71,12 @@ public class OrganizationEntity extends BaseEntity {
   private List<EntityEntity> entities;
 
   /**
-   * Filters and retrieves a list of {@link ModuleEntity} objects associated with the given foreign key type.
+   * Filters and retrieves a list of {@link TaImEntity} objects associated with the given foreign key type.
    *
-   * @param fkKeyType the foreign key type used to filter {@link ModuleEntity} objects based on their module type
-   * @return a list of {@link ModuleEntity} objects where the module type matches the specified foreign key type
+   * @param fkKeyType the foreign key type used to filter {@link TaImEntity} objects based on their module type
+   * @return a list of {@link TaImEntity} objects where the module type matches the specified foreign key type
    */
-  public List<ModuleEntity> getModuleByFKType(final FkKeyType fkKeyType) {
+  public List<TaImEntity> getModuleByFKType(final FkKeyType fkKeyType) {
     return this.module
         .stream()
         .filter(moduleEntity -> moduleEntity.getModuleType().equals(fkKeyType.name()))

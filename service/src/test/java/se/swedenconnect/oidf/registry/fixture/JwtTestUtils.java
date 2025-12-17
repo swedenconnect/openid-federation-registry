@@ -25,7 +25,12 @@ import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.*;
+import java.security.Key;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -80,15 +85,25 @@ public class JwtTestUtils {
    */
   public String createJwt(OrganisationType orgType) {
     try {
+      final String scopes = "http://registry.swedenconnect.se/policies/write " +
+          "http://registry.swedenconnect.se/policies/read" +
+          "http://registry.swedenconnect.se/trustmarksubjects/read " +
+          "http://registry.swedenconnect.se/modules/read " +
+          "http://registry.swedenconnect.se/modules/write " +
+          "http://registry.swedenconnect.se/entity/read " +
+          "http://registry.swedenconnect.se/entity/write " +
+          "http://registry.swedenconnect.se/trustmarksubjects/write " +
+          "http://registry.swedenconnect.se/trustmarksubjects/read " +
+          "http://registry.swedenconnect.se/trustmarks/read " +
+          "http://registry.swedenconnect.se/trustmarks/write ";
+
       final JWTClaimsSet claims = new com.nimbusds.jwt.JWTClaimsSet.Builder()
           .subject("test-user")
           .audience("account")
           .issueTime(new java.util.Date())
           .expirationTime(Date.from(Instant.now().plus(30, ChronoUnit.DAYS)))
           .issuer("http://swedenconnect.se/op")
-          .claim("scope", "entity_read entity_write policies_read policies_write "
-              + "trustmarksubject_read trustmarksubject_write "
-              + "options_read options_update options_delete options_create")
+          .claim("scope", scopes)
 
           .claim("org", Arrays.stream(OrganisationType.values())
               .map(o ->
@@ -137,9 +152,9 @@ public class JwtTestUtils {
   }
 
   public enum OrganisationType {
-    PM("Pensionsmyndigheten", "55555", "http://www.pm.se/oidf"),
-    AF("Arbetsförmedlingen", "66666", "http://www.af.se/oidf"),
-    SKATT("Skatteverket", "77777", "http://www.skv.se/oidf"),
+    PM("Pensionsmyndigheten", "55555", "https://www.pm.se/oidf"),
+    AF("Arbetsförmedlingen", "66666", "https://www.af.se/oidf"),
+    SKATT("Skatteverket", "77777", "https://www.skv.se/oidf"),
     ;
 
     public final String name;

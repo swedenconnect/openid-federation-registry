@@ -1,15 +1,15 @@
 # Docker Compose file for setting up a local database needed by the application.
 services:
-  db:
+  registry-db:
     image: mariadb:11.7
-    container_name: registry_db
+    container_name: registry-db
     environment:
       MYSQL_ROOT_PASSWORD: EE4E679A-318A-45B3-AFA4-1ABDDF45C652
       MYSQL_DATABASE: registry
       MYSQL_USER: registry
       MYSQL_PASSWORD: 45743523-DE8C-45FE-BD3D-36A5E17922AC
     ports:
-      - "3306:3306"
+      - "3307:3306"
     networks:
       - app-network
 

@@ -33,6 +33,7 @@ import se.swedenconnect.oidf.registry.entity.InstanceEntity;
 import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.registry.repository.PolicyRepository;
+import se.swedenconnect.oidf.registry.repository.ResolverRepository;
 import se.swedenconnect.oidf.registry.service.NotifyService;
 import se.swedenconnect.oidf.registry.service.OidfApiService;
 import se.swedenconnect.security.credential.PkiCredential;
@@ -60,6 +61,7 @@ public class RegistryConfig {
 
   final InstanceRepository instanceRepository;
   private final PolicyRepository policyRepository;
+  private final ResolverRepository resolverRepository;
 
   private final RegistryProperties registryProperties;
 
@@ -69,14 +71,16 @@ public class RegistryConfig {
    *
    * @param policyRepository a repository for managing policies
    * @param instanceRepository a repository for managing instance data
+   * @param resolverRepository a repository for managing resolvers
    * @param registryProperties the configuration properties for the registry
    */
   public RegistryConfig(final PolicyRepository policyRepository,
       final InstanceRepository instanceRepository,
+      final ResolverRepository resolverRepository,
       final RegistryProperties registryProperties) {
     this.policyRepository = policyRepository;
-
     this.instanceRepository = instanceRepository;
+    this.resolverRepository = resolverRepository;
     this.registryProperties = registryProperties;
   }
 
@@ -110,6 +114,7 @@ public class RegistryConfig {
         this.policyRepository,
         federationAPIProperties.issuer(),
         this.instanceRepository,
+        this.resolverRepository,
         tokenExpiryDuration
     );
   }

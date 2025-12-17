@@ -35,7 +35,9 @@ import java.util.UUID;
 public record RegistryProperties(FederationAPIProperties federationServiceApi, List<InstanceProperties> instances) {
 
   /**
-   * Validate properties
+   * Validates the registry properties to ensure all required fields are properly configured.
+   * Checks that federationServiceApi and instances are not null, instances list is not empty,
+   * and that at most one instance is marked for default assignment.
    */
   @PostConstruct
   public void validate() {
@@ -78,7 +80,9 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi, L
   ) {
 
     /**
-     * Validate properties
+     * Validates the federation API properties to ensure all required fields are properly configured.
+     * Checks that signKeyAlias, tokenExpiryDuration, and issuer are set. If notifications are active,
+     * validates that notification endpoints are configured.
      */
     public void validate() {
       Assert.hasText(
@@ -138,7 +142,8 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi, L
       boolean useForDefaultAssignment,
       List<String> org_numbers) {
     /**
-     * Validate properties
+     * Validates the instance properties to ensure all required fields are properly configured.
+     * Checks that instanceId and name are set. If org_numbers is empty, useForDefaultAssignment must be true.
      */
     public void validate() {
       Assert.notNull(

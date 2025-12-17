@@ -16,6 +16,9 @@
 
 package se.swedenconnect.oidf.registry.validation;
 
+import java.util.List;
+import java.util.Optional;
+
 /**
  * An interface for defining property validation rules. Implementations of this interface are used to apply specific
  * validation logic to key-value pairs, ensuring that the data adheres to specified constraints or requirements.
@@ -32,4 +35,47 @@ public interface PropertyValidator {
    * @throws PropertyValidationFailException if the validation for the property fails
    */
   void validate(String key, String value) throws PropertyValidationFailException;
+
+  /**
+   * Evaluates the validity of a property using its key and value pair by invoking the validation logic. If the
+   * validation fails, it returns an Optional containing the exception. If the validation succeeds, an empty Optional is
+   * returned.
+   *
+   * @param key the property key to be validated
+   * @param value the property value to be validated
+   * @return an Optional containing {@code PropertyValidationFailException} if validation fails, or an empty Optional if
+   *     validation succeeds
+   */
+  default Optional<PropertyValidationFailException> eval(String key, Object value) {
+    try {
+      this.ifFailThrow(key, value);
+    }
+    catch (PropertyValidationFailException e) {
+      return Optional.of(e);
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Validates a property based on its key and value. If the value is a list, each element of the list is validated
+   * individually. If the list is empty, the validation is performed with a null value. If the value is not a list, it
+   * is validated directly.
+   *
+   * @param key the property key to be validated
+   * @param value the property value to be validated, which can be a single object or a list of objects
+   * @throws PropertyValidationFailException if the validation for any property fails
+   */
+  default void ifFailThrow(String key, Object value) {
+      if (value instanceof final List<?> values) {
+        for (int i = 0; i < values.size(); i++) {
+          this.validate(key + "[" + i + "]", values.get(i) == null ? null : values.get(i).toString());
+        }
+        if (values.isEmpty()) {
+          this.validate(key, null);
+        }
+      }
+      else {
+        this.validate(key, value == null ? null : value.toString());
+      }
+  }
 }

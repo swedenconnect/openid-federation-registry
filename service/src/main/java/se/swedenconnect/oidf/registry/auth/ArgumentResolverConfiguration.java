@@ -28,6 +28,11 @@ import java.util.List;
  */
 @Configuration
 public class ArgumentResolverConfiguration implements WebMvcConfigurer {
+  /**
+   * Adds custom argument resolvers to the list of resolvers.
+   *
+   * @param resolvers the list of argument resolvers to add to
+   */
   @Override
   public void addArgumentResolvers(final List<HandlerMethodArgumentResolver> resolvers) {
     resolvers.add(new OrganizationRecordClaimSelector());

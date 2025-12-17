@@ -15,15 +15,17 @@
  */
 package se.swedenconnect.oidf.registry.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.FilterDef;
 import org.hibernate.annotations.ParamDef;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -50,24 +52,11 @@ public class PolicyEntity extends BaseEntity {
   @JoinColumn(name = "organization_id")
   private OrganizationEntity organization;
 
-  @OneToMany(cascade = CascadeType.DETACH, fetch = FetchType.LAZY)
-  @JoinColumn(name = "fk_id", referencedColumnName = "policy_id", insertable = false, updatable = false)
-  @Filter(name = "fkTypeFilter", condition = "fk_type = :fkTypeParam")
-  private List<SettingsEntity> settingsEntityList;
+  @Column(name = "name", nullable = false)
+  private String name;
 
-  /**
-   * Retrieves the {@link SettingsEntity} associated with the specified key. The method searches through the list of
-   * settings entities and returns an optional containing the first entity matching the given key if one exists.
-   *
-   * @param key the key to search for in the list of settings entities
-   * @return an {@link Optional} containing the matching {@link SettingsEntity} if found, otherwise an empty
-   *     {@link Optional}
-   */
-  public Optional<SettingsEntity> getSettingsEntity(final String key) {
-    return this.settingsEntityList.stream()
-        .filter(s -> s.getKey().equals(key))
-        .findFirst();
-  }
+  @Column(name = "policy", nullable = false)
+  private String policy;
 
 }
 
