@@ -5,7 +5,7 @@ spring:
   application:
     name: OIDF-Registry
   datasource:
-    url: jdbc:mariadb://localhost:3306/registry
+    url: jdbc:mariadb://localhost:3307/registry
     username: registry
     password: 45743523-DE8C-45FE-BD3D-36A5E17922AC
   security:
