@@ -140,6 +140,7 @@ public class SecurityConfig {
      *
      * @param jwt the JWT object representing the JSON Web Token used for authentication and authorization.
      * @param information an instance of OrganizationInformation
+     * @param userName to be used JwtAuthenticationToken
      */
     public RegistryClaims(final Jwt jwt,
         final OrganizationInformation information,
