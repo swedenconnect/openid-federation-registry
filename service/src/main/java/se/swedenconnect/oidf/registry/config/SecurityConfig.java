@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import se.swedenconnect.oidf.registry.auth.OrganizationInformation;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.auth.RegistryJwtConverter;
 import se.swedenconnect.oidf.registry.service.OrganizationService;
+
+import java.util.Collections;
 
 /**
  * Security configuration class that defines security-related settings for the application. This class integrates OAuth2
@@ -140,8 +142,9 @@ public class SecurityConfig {
      * @param information an instance of OrganizationInformation
      */
     public RegistryClaims(final Jwt jwt,
-        final OrganizationInformation information) {
-      super(jwt);
+        final OrganizationInformation information,
+        final String userName) {
+      super(jwt, Collections.emptyList(), userName);
       this.organizationInformation = information;
     }
 

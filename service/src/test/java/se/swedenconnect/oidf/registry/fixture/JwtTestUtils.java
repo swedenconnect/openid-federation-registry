@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,8 +98,9 @@ public class JwtTestUtils {
           "http://registry.swedenconnect.se/trustmarks/write ";
 
       final JWTClaimsSet claims = new com.nimbusds.jwt.JWTClaimsSet.Builder()
-          .subject("test-user")
+          .subject("test-user-subject")
           .audience("account")
+          .claim("preferred_username", "test-user")
           .issueTime(new java.util.Date())
           .expirationTime(Date.from(Instant.now().plus(30, ChronoUnit.DAYS)))
           .issuer("http://swedenconnect.se/op")
