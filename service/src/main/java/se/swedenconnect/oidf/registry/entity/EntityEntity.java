@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,21 +54,21 @@ public class EntityEntity extends BaseEntity {
   @Column(name = "subject", columnDefinition = "TEXT")
   private String subject;
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.DETACH)
   @JoinColumn(name = "organization_id", nullable = false)
   private OrganizationEntity organization;
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.DETACH)
   @JoinColumn(name = "policy_id")
   private PolicyEntity policyEntity;
 
-  @OneToOne(mappedBy = "entity")
+  @OneToOne(mappedBy = "entity", cascade = CascadeType.REMOVE)
   private TaImEntity trustanchorIntermediate;
 
-  @OneToOne(mappedBy = "entity")
+  @OneToOne(mappedBy = "entity", cascade = CascadeType.REMOVE)
   private ResolverEntity resolver;
 
-  @OneToOne(mappedBy = "entity")
+  @OneToOne(mappedBy = "entity", cascade = CascadeType.REMOVE)
   private TrustmarkIssuerEntity trustmarkIssuer;
 
 }

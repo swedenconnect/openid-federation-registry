@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,15 +47,18 @@ class RegistryAuditServiceAdapterTest {
     };
 
     final UUID policyId = UUID.randomUUID();
+    final UUID organizationId = UUID.randomUUID();
     final PolicyDto newData = new PolicyDto();
     newData.setPolicyId(policyId);
     newData.setName("Test Policy");
-    auditService.policyCreated(policyId, null, newData);
+    auditService.policyCreated(policyId, organizationId, null, newData);
     assertEquals(stack.peek().getType(), RegistryAuditEventType.POLICY_CREATED.name());
     assertNull(stack.peek().getData().get("oldData"));
     assertNotNull(stack.peek().getData().get("newData"));
     assertNotNull(stack.peek().getData().get("extId"));
     assertEquals(policyId.toString(), stack.peek().getData().get("extId"));
+    assertNotNull(stack.peek().getData().get("organizationId"));
+    assertEquals(organizationId.toString(), stack.peek().getData().get("organizationId"));
   }
 
   @Test
@@ -70,18 +73,21 @@ class RegistryAuditServiceAdapterTest {
     };
 
     final UUID policyId = UUID.randomUUID();
+    final UUID organizationId = UUID.randomUUID();
     final PolicyDto oldData = new PolicyDto();
     oldData.setPolicyId(policyId);
     oldData.setName("Old Policy");
     final PolicyDto newData = new PolicyDto();
     newData.setPolicyId(policyId);
     newData.setName("New Policy");
-    auditService.policyUpdated(policyId, oldData, newData);
+    auditService.policyUpdated(policyId, organizationId, oldData, newData);
     assertEquals(stack.peek().getType(), RegistryAuditEventType.POLICY_UPDATED.name());
     assertNotNull(stack.peek().getData().get("oldData"));
     assertNotNull(stack.peek().getData().get("newData"));
     assertNotNull(stack.peek().getData().get("extId"));
     assertEquals(policyId.toString(), stack.peek().getData().get("extId"));
+    assertNotNull(stack.peek().getData().get("organizationId"));
+    assertEquals(organizationId.toString(), stack.peek().getData().get("organizationId"));
   }
 
   @Test
@@ -96,15 +102,18 @@ class RegistryAuditServiceAdapterTest {
     };
 
     final UUID policyId = UUID.randomUUID();
+    final UUID organizationId = UUID.randomUUID();
     final PolicyDto deletedData = new PolicyDto();
     deletedData.setPolicyId(policyId);
     deletedData.setName("Deleted Policy");
-    auditService.policyDeleted(policyId, deletedData);
+    auditService.policyDeleted(policyId, organizationId, deletedData);
     assertEquals(stack.peek().getType(), RegistryAuditEventType.POLICY_DELETED.name());
     assertNotNull(stack.peek().getData().get("oldData"));
     assertNull(stack.peek().getData().get("newData"));
     assertNotNull(stack.peek().getData().get("extId"));
     assertEquals(policyId.toString(), stack.peek().getData().get("extId"));
+    assertNotNull(stack.peek().getData().get("organizationId"));
+    assertEquals(organizationId.toString(), stack.peek().getData().get("organizationId"));
   }
 
 }

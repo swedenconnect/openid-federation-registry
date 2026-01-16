@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2025 Sweden Connect
+  ~ Copyright 2026 Sweden Connect
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
     <parent>
         <groupId>se.swedenconnect.oidf</groupId>
         <artifactId>openid-federation-parent</artifactId>
-        <version>0.5.6</version>
+        <version>0.5.14</version>
     </parent>
     <artifactId>oidf-entity-registry-parent</artifactId>
     <packaging>pom</packaging>

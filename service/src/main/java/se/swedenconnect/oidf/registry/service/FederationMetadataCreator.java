@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class FederationMetadataCreator {
 
     Optional.ofNullable(entityEntity.getPolicyEntity())
         .ifPresent(policyEntity -> {
-          final PolicyDto policyDto = EntityToDto.toDtoPolicy(policyEntity);
+          final PolicyDto policyDto = EntityToDto.toDto(policyEntity);
           entityData.policyRecord(
               OidfServiceHostedEntities.Record.PolicyRecord
                   .builder()
@@ -134,7 +134,7 @@ public class FederationMetadataCreator {
     }
 
     if (entityType == EntityKeyType.FEDERATION_ENTITY) {
-      final FederationEntityDto dto = EntityToDto.toDtoPolicy(entityEntity);
+      final FederationEntityDto dto = EntityToDto.toDto(entityEntity);
       entityData.subject(dto.getIssuer())
           .issuer(dto.getIssuer())
           .crit(dto.getCrit())
