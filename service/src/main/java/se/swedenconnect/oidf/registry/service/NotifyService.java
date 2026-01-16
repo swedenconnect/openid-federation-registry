@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.registry.audit.FederationAuditEvent;
+import se.swedenconnect.oidf.registry.config.RegistryProperties;
 
 import java.net.URI;
 import java.util.List;
@@ -43,7 +44,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 public class NotifyService {
-  final List<URI> notificationEndPoints;
+  final List<RegistryProperties.FederationAPIProperties.NotificationProperties> notificationEndPoints;
 
   final RestClient restClient;
   final JWTSupport jwtSupport;
@@ -59,7 +60,7 @@ public class NotifyService {
    * @param signKey the {@link JWK} signing key used to generate JWT-signed payloads for notifications
    */
   public NotifyService(final RestClient restClient,
-      final List<URI> notificationEndPoints,
+      final List<RegistryProperties.FederationAPIProperties.NotificationProperties> notificationEndPoints,
       final JWK signKey) {
 
     this.restClient = restClient;
@@ -78,17 +79,19 @@ public class NotifyService {
   public void onAuditEvent(final FederationAuditEvent event) {
     if (event.getFkKeyType() != null) {
 
-      this.notificationEndPoints.forEach(endpoint -> {
-        this.executorService.submit(() -> {
-          try {
-            final String payload = this.createPayLoad(event);
-            this.callNotifyEndpoint(endpoint, payload);
-          }
-          catch (final Exception e) {
-            log.warn("Problem calling notify endpoint: {}", endpoint, e);
-          }
-        });
-      });
+      this.notificationEndPoints.stream()
+          .filter(np -> np.instanceId().toString().equals(event.getOrganizationId()))
+          .forEach(endpoint -> {
+            this.executorService.submit(() -> {
+              try {
+                final String payload = this.createPayLoad(event);
+                this.callNotifyEndpoint(endpoint.endpoint(), payload);
+              }
+              catch (final Exception e) {
+                log.warn("Problem calling notify endpoint: {}", endpoint, e);
+              }
+            });
+          });
 
     }
   }

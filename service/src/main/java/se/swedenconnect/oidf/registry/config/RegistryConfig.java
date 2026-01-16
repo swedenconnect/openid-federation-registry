@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,8 +142,7 @@ public class RegistryConfig {
     final JWK jwk = this.resolveSigningKey(credentialBundles, federationAPIProperties); //function.apply(signKey);
 
     return new NotifyService(restClient,
-        federationAPIProperties.notifications().stream().map(
-            RegistryProperties.FederationAPIProperties.NotificationProperties::endpoint).toList(),
+        federationAPIProperties.notifications(),
         jwk
     );
   }
