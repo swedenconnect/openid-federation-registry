@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,8 @@ import se.swedenconnect.oidf.registry.entity.InstanceEntity;
 import se.swedenconnect.oidf.registry.entity.ResolverEntity;
 import se.swedenconnect.oidf.registry.entity.TaImEntity;
 import se.swedenconnect.oidf.registry.entity.TrustmarkIssuerEntity;
+import se.swedenconnect.oidf.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.repository.InstanceRepository;
-import se.swedenconnect.oidf.registry.repository.PolicyRepository;
-import se.swedenconnect.oidf.registry.repository.ResolverRepository;
 
 import java.time.Duration;
 import java.util.Date;
@@ -48,37 +47,35 @@ public class OidfApiService {
 
   public static final String TRUST_MARK_SUBJECTS = "trust_mark_subjects";
 
-  private final PolicyRepository policyRepository;
   private final InstanceRepository instanceRepository;
-  private final ResolverRepository resolverRepository;
+  private final EntityRepository entityRepository;
+
   private final String jwkIssuer;
   private final Duration jwkExpiryDuration;
   private final JWTSupport jwtSupport;
-  private final FederationMetadataCreator entityResponseFormatter = new FederationMetadataCreator();
+  private final FederationMetadataCreator entityResponseFormatter;
 
   /**
    * Constructs a FederationApiService instance to handle OpenID Connect Federation related operations.
    *
+   * @param entityRepository EntityRepository
    * @param signKey the JSON Web Key (JWK) used for signing operations
-   * @param policyRepository the repository for managing policy records
    * @param instanceRepository the repository for managing instances
-   * @param resolverRepository the repository for managing resolvers
    * @param jwkIssuer the issuer associated with the JSON Web Key (JWK)
    * @param jwkExpiryDuration jwkExpiryDuration
    */
   public OidfApiService(
       final JWK signKey,
-      final PolicyRepository policyRepository,
+      final EntityRepository entityRepository,
       final String jwkIssuer,
       final InstanceRepository instanceRepository,
-      final ResolverRepository resolverRepository,
       final Duration jwkExpiryDuration) {
-    this.policyRepository = policyRepository;
+    this.entityRepository = entityRepository;
     this.jwkIssuer = jwkIssuer;
     this.instanceRepository = instanceRepository;
-    this.resolverRepository = resolverRepository;
     this.jwkExpiryDuration = jwkExpiryDuration;
     this.jwtSupport = new JWTSupport(signKey);
+    this.entityResponseFormatter = new FederationMetadataCreator(entityRepository);
   }
 
   /**

@@ -52,19 +52,8 @@ public final class EntityToDto {
       final boolean includeModules) {
     final EntityWithModulesDto dto = new EntityWithModulesDto();
 
-    // Set entity based on type
     if (entity.getEntityType() == EntityKeyType.FEDERATION_ENTITY) {
-      if (includeModules) {
-        dto.setFederationEntity(EntityToDto.toFederationEntityWithModules(entity));
-      }
-      else {
-        final FederationEntityDto federationDto = EntityToDto.toDto(entity);
-        final FederationEntityWithModulesDto federationWithModules = new FederationEntityWithModulesDto();
-        federationWithModules.setEntityId(entity.getEntityId());
-        federationWithModules.setIssuer(entity.getIssuer());
-        federationWithModules.setMetadata(federationDto.getMetadata());
-        dto.setFederationEntity(federationWithModules);
-      }
+      dto.setFederationEntity(EntityToDto.toFederationEntity(entity, includeModules));
     }
     else if (entity.getEntityType() == EntityKeyType.HOSTED_ENTITY) {
       dto.setHostedEntity(EntityToDto.toDtoHosted(entity));
@@ -81,14 +70,23 @@ public final class EntityToDto {
    * source entity, including entity details and its associated modules and resolvers, into the target DTO.
    *
    * @param entity the EntityEntity object containing the data to be converted
+   * @param includeModules If modules should be included
    * @return a FederationEntityWithModulesDto object populated with data from the provided entity
    */
-  public static FederationEntityWithModulesDto toFederationEntityWithModules(final EntityEntity entity) {
-    final FederationEntityDto baseDto = EntityToDto.toDto(entity);
+  public static FederationEntityWithModulesDto toFederationEntity(final EntityEntity entity,
+      final boolean includeModules) {
     final FederationEntityWithModulesDto dto = new FederationEntityWithModulesDto();
-    dto.setEntityId(baseDto.getEntityId());
-    dto.setIssuer(baseDto.getIssuer());
-    dto.setMetadata(baseDto.getMetadata());
+    dto.setEntityId(entity.getEntityId());
+    dto.setIssuer(entity.getIssuer());
+    if (entity.getMetadata() != null && !entity.getMetadata().isBlank()) {
+      dto.setMetadata(toJson(entity.getMetadata()));
+    }
+    dto.setCrit(entity.getCrit());
+    dto.setMetadataPolicyCrit(entity.getMetadataPolicyCrit());
+
+    if (!includeModules) {
+      return dto;
+    }
 
     if (entity.getTrustanchorIntermediate() != null) {
       if (entity.getTrustanchorIntermediate().isOfType(TaImEntity.Type.TRUSTANCHOR)) {
@@ -123,7 +121,7 @@ public final class EntityToDto {
     final HostedEntityDto dto = new HostedEntityDto();
     dto.setEntityId(entityEntity.getEntityId());
     dto.setIssuer(entityEntity.getIssuer());
-
+    dto.setEcLocation(calculatedEcLocation(entityEntity.getSubject(), entityEntity.getIssuer()));
     if (entityEntity.getMetadata() != null && !entityEntity.getMetadata().isBlank()) {
       try {
         dto.setMetadata(mapper.readValue(entityEntity.getMetadata(), new TypeReference<Map<String, Object>>() {}));
@@ -136,6 +134,17 @@ public final class EntityToDto {
     return dto;
   }
 
+  private static String calculatedEcLocation(final String baseUrl, final String subject) {
+    final String id = subject
+        .replace("https://", "")
+        .replace("http://", "")
+        .replace(".", "_")
+        .replace("/", "_");
+
+    final String calculatedEcLocation = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
+    return calculatedEcLocation + id + "/.well-known/openid-federation";
+
+  }
   /**
    * Converts EntityEntity to SubordinateEntityDto.
    *
@@ -163,30 +172,7 @@ public final class EntityToDto {
     return dto;
   }
 
-  /**
-   * Converts an EntityEntity object to a FederationEntityDto object. Validates that the input EntityEntity is of type
-   * FEDERATION_ENTITY before conversion.
-   *
-   * @param entityEntity the EntityEntity object to be converted, must be of type FEDERATION_ENTITY
-   * @return a FederationEntityDto object representing the converted data
-   * @throws IllegalArgumentException if the input entity is not of type FEDERATION_ENTITY or if the metadata JSON
-   *     fails to parse
-   */
-  public static FederationEntityDto toDto(final EntityEntity entityEntity) {
-    if (entityEntity.getEntityType() != EntityKeyType.FEDERATION_ENTITY) {
-      throw new IllegalArgumentException("Entity is not a FederationEntity");
-    }
 
-    final FederationEntityDto dto = new FederationEntityDto();
-    dto.setEntityId(entityEntity.getEntityId());
-    dto.setIssuer(entityEntity.getIssuer());
-
-    if (entityEntity.getMetadata() != null && !entityEntity.getMetadata().isBlank()) {
-      dto.setMetadata(toJson(entityEntity.getMetadata()));
-    }
-
-    return dto;
-  }
 
   private static Map<String, Object> toJson(final String jsonStr) {
     if (jsonStr == null || jsonStr.isBlank()) {
@@ -386,6 +372,8 @@ public final class EntityToDto {
     entity.setPolicyEntity(policyEntity);
     entity.setIssuer(dto.getIssuer());
     entity.setSubject(dto.getIssuer());
+    entity.setCrit(dto.getCrit());
+    entity.setMetadataPolicyCrit(dto.getMetadataPolicyCrit());
 
     if (dto.getMetadata() != null) {
       try {
@@ -489,6 +477,8 @@ public final class EntityToDto {
   public static void updateEntity(final EntityEntity entity, final FederationEntityDto dto) {
     entity.setIssuer(dto.getIssuer());
     entity.setSubject(dto.getIssuer());
+    entity.setCrit(dto.getCrit());
+    entity.setMetadataPolicyCrit(dto.getMetadataPolicyCrit());
     if (dto.getMetadata() != null) {
       try {
         entity.setMetadata(mapper.writeValueAsString(dto.getMetadata()));

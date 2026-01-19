@@ -29,7 +29,6 @@ import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
 import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
-import se.swedenconnect.oidf.registry.entity.PolicyEntity;
 import se.swedenconnect.oidf.registry.errorhandling.ErrorTypes;
 import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.EntityRepository;
@@ -98,13 +97,11 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     new ValidateDto(organizationRecord).validate(input);
 
     final OrganizationEntity org = this.resolveOrganization(organizationRecord);
-    final PolicyEntity policy = null; // policy relation can be handled later if needed
 
-    final EntityEntity entity = EntityToDto.toEntity(
-        id, input, EntityKeyType.FEDERATION_ENTITY, org, policy);
+    final EntityEntity entity = EntityToDto.toEntity(id, input, EntityKeyType.FEDERATION_ENTITY, org, null);
 
     this.entityRepository.save(entity);
-    final FederationEntityDto dto = EntityToDto.toDto(entity);
+    final FederationEntityDto dto = EntityToDto.toFederationEntity(entity, false);
     this.auditService.federationEntityCreated(id, org.getOrganizationId(), dto.getIssuer(), dto.getIssuer(), null,
         dto);
     return dto;
@@ -124,14 +121,13 @@ public class EntityConfigServiceImpl implements EntityConfigService {
       final UUID id, final FederationEntityDto input) {
     new ValidateDto(organizationRecord).validate(input);
 
-    final EntityEntity existing = this.findEntityOrThrow(
-        organizationRecord, id, EntityKeyType.FEDERATION_ENTITY);
-    final FederationEntityDto oldDto = EntityToDto.toDto(existing);
+    final EntityEntity existing = this.findEntityOrThrow(organizationRecord, id, EntityKeyType.FEDERATION_ENTITY);
+    final FederationEntityDto oldDto = EntityToDto.toFederationEntity(existing, false);
 
     EntityToDto.updateEntity(existing, input);
 
     this.entityRepository.save(existing);
-    final FederationEntityDto newDto = EntityToDto.toDto(existing);
+    final FederationEntityDto newDto = EntityToDto.toFederationEntity(existing, false);
     this.auditService.federationEntityUpdated(id, existing.getOrganization().getOrganizationId(), newDto.getIssuer(),
         newDto.getIssuer(), oldDto, newDto);
     return newDto;
@@ -152,7 +148,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
       final boolean includeModules) {
     final EntityEntity entity = this.findEntityOrThrow(
         organizationRecord, id, EntityKeyType.FEDERATION_ENTITY);
-    return EntityToDto.toFederationEntityWithModules(entity);
+    return EntityToDto.toFederationEntity(entity, false);
   }
 
   /**
@@ -166,7 +162,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   public void deleteFederationEntity(final OrganizationRecord organizationRecord, final UUID id) {
     final EntityEntity entity = this.findEntityOrThrow(
         organizationRecord, id, EntityKeyType.FEDERATION_ENTITY);
-    final FederationEntityDto dto = EntityToDto.toDto(entity);
+    final FederationEntityDto dto = EntityToDto.toFederationEntity(entity, false);
     this.entityRepository.delete(entity);
     this.auditService.federationEntityDeleted(id, entity.getOrganization().getOrganizationId(), dto.getIssuer(),
         dto.getIssuer(), dto);
@@ -191,10 +187,8 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     new ValidateDto(organizationRecord).validate(input);
 
     final OrganizationEntity org = this.resolveOrganization(organizationRecord);
-    final PolicyEntity policy = null;
-
     final EntityEntity entity = EntityToDto.toEntity(
-        id, input, EntityKeyType.HOSTED_ENTITY, org, policy);
+        id, input, EntityKeyType.HOSTED_ENTITY, org, null);
     entity.setSubject(organizationRecord.entityPrefix());
     this.entityRepository.save(entity);
     final HostedEntityDto dto = EntityToDto.toDtoHosted(entity);
@@ -218,6 +212,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
 
     final EntityEntity existing = this.findEntityOrThrow(
         organizationRecord, id, EntityKeyType.HOSTED_ENTITY);
+    existing.setSubject(organizationRecord.entityPrefix());
     final HostedEntityDto oldDto = EntityToDto.toDtoHosted(existing);
 
     EntityToDto.updateEntity(existing, input);
