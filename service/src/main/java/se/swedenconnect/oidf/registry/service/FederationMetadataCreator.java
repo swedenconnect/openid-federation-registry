@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import se.swedenconnect.oidf.registry.dto.PolicyDto;
 import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
+import se.swedenconnect.oidf.registry.repository.EntityRepository;
 
 import java.text.ParseException;
 import java.util.HashMap;
@@ -42,6 +43,17 @@ import java.util.Optional;
  */
 @Slf4j
 public class FederationMetadataCreator {
+
+  final EntityRepository entityRepository;
+
+  /**
+   * Create federation metadata
+   *
+   * @param entityRepository entityRepository used to get hosted entities
+   */
+  public FederationMetadataCreator(final EntityRepository entityRepository) {
+    this.entityRepository = entityRepository;
+  }
 
   /**
    * Creates a response map based on the provided {@code EntityEntity}. The response includes entity configuration
@@ -66,7 +78,7 @@ public class FederationMetadataCreator {
 
     Optional.ofNullable(entityEntity.getPolicyEntity())
         .ifPresent(policyEntity -> {
-          final PolicyDto policyDto = EntityToDto.toDtoPolicy(policyEntity);
+          final PolicyDto policyDto = EntityToDto.toDto(policyEntity);
           entityData.policyRecord(
               OidfServiceHostedEntities.Record.PolicyRecord
                   .builder()
@@ -79,21 +91,9 @@ public class FederationMetadataCreator {
     if (entityType == EntityKeyType.HOSTED_ENTITY) {
 
       final HostedEntityDto dto = EntityToDto.toDtoHosted(entityEntity);
-
-      final String id = entityEntity.getIssuer()
-          .replace("https://", "")
-          .replace("http://", "")
-          .replace(".", "_")
-          .replace("/", "_");
-
-      String calculatedEcLocation = entityEntity.getSubject().endsWith("/") ?
-          entityEntity.getSubject() : entityEntity.getSubject() + "/";
-
-      calculatedEcLocation += id + "/.well-known/openid-federation";
-
       entityData.subject(dto.getIssuer())
           .issuer(dto.getIssuer())
-          .overrideConfigurationLocation(calculatedEcLocation)
+          .overrideConfigurationLocation(dto.getEcLocation())
           .crit(List.of("ec_location", "configuration_location_override"));
 
       final OidfServiceHostedEntities.Record record = entityData.build();
@@ -120,6 +120,19 @@ public class FederationMetadataCreator {
               .policy(dto.getPolicy() == null ? Map.of() : dto.getPolicy())
               .build());
 
+      // Looking if there is a hosted entity registered.
+      this.entityRepository.findByOrgNumberAndEntityKeyTypeAndIssuer(entityEntity.getOrganization().getOrgNumber(),
+              EntityKeyType.HOSTED_ENTITY,
+              dto.getSubject())
+          .map(EntityToDto::toDtoHosted)
+          .ifPresent(hostedDto -> {
+            log.debug("When creating subordinatestatement a hosted entity was "
+                    + "found for issuer: {} and organization: {}",
+                hostedDto.getIssuer(),
+                entityEntity.getOrganization().getOrgNumber());
+            entityData.overrideConfigurationLocation(hostedDto.getEcLocation());
+          });
+
 
       if (dto.getJwks() != null && !dto.getJwks().isBlank()) {
         try {
@@ -134,7 +147,7 @@ public class FederationMetadataCreator {
     }
 
     if (entityType == EntityKeyType.FEDERATION_ENTITY) {
-      final FederationEntityDto dto = EntityToDto.toDtoPolicy(entityEntity);
+      final FederationEntityDto dto = EntityToDto.toFederationEntity(entityEntity, false);
       entityData.subject(dto.getIssuer())
           .issuer(dto.getIssuer())
           .crit(dto.getCrit())
@@ -174,13 +187,6 @@ public class FederationMetadataCreator {
           federationEntity.federationListEndpoint(String.format("%s/subordinate_listing", sub));
         });
 
-    Optional.ofNullable(entityEntity.getTrustanchorIntermediate())
-        .ifPresent(moduleEntity -> {
-          federationEntity.federationTrustMarkListEndpoint(String.format("%s/trust_mark_listing", sub));
-          federationEntity.federationTrustMarkEndpoint(String.format("%s/trust_mark", sub));
-          federationEntity.federationTrustMarkStatusEndpoint(String.format("%s/trust_mark_status", sub));
-
-        });
 
     Optional.ofNullable(entityEntity.getTrustmarkIssuer())
         .ifPresent(moduleEntity -> {
@@ -199,5 +205,8 @@ public class FederationMetadataCreator {
     return federationEntity.build();
 
   }
+
+
+
 
 }

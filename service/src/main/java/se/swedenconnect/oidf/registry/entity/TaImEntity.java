@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,9 +77,6 @@ public class TaImEntity extends BaseEntity {
   @Column(name = "trust_mark_issuers")
   private String trustMarkIssuers;
 
-  @Column(name = "critical")
-  private String critical;
-
   /**
    * Retrieves a list of trust mark issuers by splitting the stored string of trust mark issuers using a comma as a
    * delimiter. If the stored string is empty, returns null.
@@ -94,19 +91,6 @@ public class TaImEntity extends BaseEntity {
   }
 
   /**
-   * Retrieves a list of critical components by splitting the stored string using a comma as a delimiter. If the stored
-   * string is empty, returns null.
-   *
-   * @return a list of critical component strings, or null if no critical components are available
-   */
-  public List<String> getCritical() {
-    if (this.critical == null) {
-      return Collections.emptyList();
-    }
-    return this.critical.isEmpty() ? null : List.of(this.critical.split(","));
-  }
-
-  /**
    * Sets the trust mark issuers for the system. The provided list of issuer names is processed and stored as a
    * comma-separated string. If the provided list is empty, the internal value is set to null.
    *
@@ -116,16 +100,6 @@ public class TaImEntity extends BaseEntity {
   public void setTrustMarkIssuers(final List<String> trustMarkIssuers) {
     this.trustMarkIssuers = Objects.isNull(trustMarkIssuers) ||
         trustMarkIssuers.isEmpty() ? null : String.join(",", trustMarkIssuers);
-  }
-
-  /**
-   * Sets the critical data by taking a list of strings as input. If the provided list is empty, the critical data is
-   * set to null. Otherwise, the strings in the list are joined into a single comma-separated string.
-   *
-   * @param critical the list of strings to set as critical data
-   */
-  public void setCritical(final List<String> critical) {
-    this.critical = Objects.isNull(critical) || critical.isEmpty() ? null : String.join(",", critical);
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,19 +52,8 @@ public final class EntityToDto {
       final boolean includeModules) {
     final EntityWithModulesDto dto = new EntityWithModulesDto();
 
-    // Set entity based on type
     if (entity.getEntityType() == EntityKeyType.FEDERATION_ENTITY) {
-      if (includeModules) {
-        dto.setFederationEntity(EntityToDto.toFederationEntityWithModules(entity));
-      }
-      else {
-        final FederationEntityDto federationDto = EntityToDto.toDtoPolicy(entity);
-        final FederationEntityWithModulesDto federationWithModules = new FederationEntityWithModulesDto();
-        federationWithModules.setEntityId(entity.getEntityId());
-        federationWithModules.setIssuer(entity.getIssuer());
-        federationWithModules.setMetadata(federationDto.getMetadata());
-        dto.setFederationEntity(federationWithModules);
-      }
+      dto.setFederationEntity(EntityToDto.toFederationEntity(entity, includeModules));
     }
     else if (entity.getEntityType() == EntityKeyType.HOSTED_ENTITY) {
       dto.setHostedEntity(EntityToDto.toDtoHosted(entity));
@@ -81,18 +70,27 @@ public final class EntityToDto {
    * source entity, including entity details and its associated modules and resolvers, into the target DTO.
    *
    * @param entity the EntityEntity object containing the data to be converted
+   * @param includeModules If modules should be included
    * @return a FederationEntityWithModulesDto object populated with data from the provided entity
    */
-  public static FederationEntityWithModulesDto toFederationEntityWithModules(final EntityEntity entity) {
-    final FederationEntityDto baseDto = EntityToDto.toDtoPolicy(entity);
+  public static FederationEntityWithModulesDto toFederationEntity(final EntityEntity entity,
+      final boolean includeModules) {
     final FederationEntityWithModulesDto dto = new FederationEntityWithModulesDto();
-    dto.setEntityId(baseDto.getEntityId());
-    dto.setIssuer(baseDto.getIssuer());
-    dto.setMetadata(baseDto.getMetadata());
+    dto.setEntityId(entity.getEntityId());
+    dto.setIssuer(entity.getIssuer());
+    if (entity.getMetadata() != null && !entity.getMetadata().isBlank()) {
+      dto.setMetadata(toJson(entity.getMetadata()));
+    }
+    dto.setCrit(entity.getCrit());
+    dto.setMetadataPolicyCrit(entity.getMetadataPolicyCrit());
+
+    if (!includeModules) {
+      return dto;
+    }
 
     if (entity.getTrustanchorIntermediate() != null) {
       if (entity.getTrustanchorIntermediate().isOfType(TaImEntity.Type.TRUSTANCHOR)) {
-        dto.setTrustAnchor(EntityToDto.toDtoPolicy(entity.getTrustanchorIntermediate()));
+        dto.setTrustAnchor(EntityToDto.toDto(entity.getTrustanchorIntermediate()));
       }
       else if (entity.getTrustanchorIntermediate().isOfType(TaImEntity.Type.INTERMEDIATE)) {
         dto.setIntermediate(EntityToDto.toDtoIntermediate(entity.getTrustanchorIntermediate()));
@@ -100,11 +98,11 @@ public final class EntityToDto {
     }
 
     if (entity.getResolver() != null) {
-      dto.setResolver(EntityToDto.toDtoPolicy(entity.getResolver()));
+      dto.setResolver(EntityToDto.toDto(entity.getResolver()));
     }
 
     if (entity.getTrustmarkIssuer() != null) {
-      dto.setTrustmarkIssuer(EntityToDto.toDtoPolicy(entity.getTrustmarkIssuer()));
+      dto.setTrustmarkIssuer(EntityToDto.toDto(entity.getTrustmarkIssuer()));
     }
     return dto;
   }
@@ -123,7 +121,7 @@ public final class EntityToDto {
     final HostedEntityDto dto = new HostedEntityDto();
     dto.setEntityId(entityEntity.getEntityId());
     dto.setIssuer(entityEntity.getIssuer());
-
+    dto.setEcLocation(calculatedEcLocation(entityEntity.getSubject(), entityEntity.getIssuer()));
     if (entityEntity.getMetadata() != null && !entityEntity.getMetadata().isBlank()) {
       try {
         dto.setMetadata(mapper.readValue(entityEntity.getMetadata(), new TypeReference<Map<String, Object>>() {}));
@@ -136,6 +134,17 @@ public final class EntityToDto {
     return dto;
   }
 
+  private static String calculatedEcLocation(final String baseUrl, final String subject) {
+    final String id = subject
+        .replace("https://", "")
+        .replace("http://", "")
+        .replace(".", "_")
+        .replace("/", "_");
+
+    final String calculatedEcLocation = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
+    return calculatedEcLocation + id + "/.well-known/openid-federation";
+
+  }
   /**
    * Converts EntityEntity to SubordinateEntityDto.
    *
@@ -163,30 +172,7 @@ public final class EntityToDto {
     return dto;
   }
 
-  /**
-   * Converts an EntityEntity object to a FederationEntityDto object. Validates that the input EntityEntity is of type
-   * FEDERATION_ENTITY before conversion.
-   *
-   * @param entityEntity the EntityEntity object to be converted, must be of type FEDERATION_ENTITY
-   * @return a FederationEntityDto object representing the converted data
-   * @throws IllegalArgumentException if the input entity is not of type FEDERATION_ENTITY or if the metadata JSON
-   *     fails to parse
-   */
-  public static FederationEntityDto toDtoPolicy(final EntityEntity entityEntity) {
-    if (entityEntity.getEntityType() != EntityKeyType.FEDERATION_ENTITY) {
-      throw new IllegalArgumentException("Entity is not a FederationEntity");
-    }
 
-    final FederationEntityDto dto = new FederationEntityDto();
-    dto.setEntityId(entityEntity.getEntityId());
-    dto.setIssuer(entityEntity.getIssuer());
-
-    if (entityEntity.getMetadata() != null && !entityEntity.getMetadata().isBlank()) {
-      dto.setMetadata(toJson(entityEntity.getMetadata()));
-    }
-
-    return dto;
-  }
 
   private static Map<String, Object> toJson(final String jsonStr) {
     if (jsonStr == null || jsonStr.isBlank()) {
@@ -206,7 +192,7 @@ public final class EntityToDto {
    * @param policyEntity the policy entity
    * @return the policy DTO
    */
-  public static PolicyDto toDtoPolicy(final PolicyEntity policyEntity) {
+  public static PolicyDto toDto(final PolicyEntity policyEntity) {
     final PolicyDto dto = new PolicyDto();
     dto.setPolicyId(policyEntity.getPolicyId());
     dto.setName(policyEntity.getName());
@@ -232,7 +218,7 @@ public final class EntityToDto {
    * @param moduleEntity the TaIm entity
    * @return the trust anchor DTO
    */
-  public static TrustAnchorDto toDtoPolicy(final TaImEntity moduleEntity) {
+  public static TrustAnchorDto toDto(final TaImEntity moduleEntity) {
     if (!moduleEntity.isOfType(TaImEntity.Type.TRUSTANCHOR)) {
       throw new IllegalArgumentException("Module is not a TrustAnchor");
     }
@@ -270,7 +256,7 @@ public final class EntityToDto {
    * @param resolverEntity the resolver entity
    * @return the resolver DTO
    */
-  public static ResolverDto toDtoPolicy(final ResolverEntity resolverEntity) {
+  public static ResolverDto toDto(final ResolverEntity resolverEntity) {
     final ResolverDto dto = new ResolverDto();
     dto.setResolverId(resolverEntity.getResolverId());
     dto.setEntityId(resolverEntity.getEntity().getEntityId());
@@ -288,7 +274,7 @@ public final class EntityToDto {
    * @param trustMarkEntity the trust mark entity
    * @return the trustmark DTO
    */
-  public static TrustmarkDto toDtoPolicy(final TrustMarkEntity trustMarkEntity) {
+  public static TrustmarkDto toDto(final TrustMarkEntity trustMarkEntity) {
     final TrustmarkDto dto = new TrustmarkDto();
     dto.setTrustmarkId(trustMarkEntity.getTrustmarkId());
     dto.setTrustmarkissuerId(trustMarkEntity.getTrustmarkIssuer().getTrustmarkIssuerId());
@@ -317,7 +303,7 @@ public final class EntityToDto {
     // Convert trustmark subjects
     if (trustMarkEntity.getTrustmarksubjects() != null) {
       final List<TrustmarkSubjectDto> subjects = trustMarkEntity.getTrustmarksubjects().stream()
-          .map(EntityToDto::toDtoPolicy)
+          .map(EntityToDto::toDto)
           .toList();
       dto.setTrustmarkSubjects(subjects);
     }
@@ -349,7 +335,7 @@ public final class EntityToDto {
    * @param trustMarkSubjectEntity the trust mark subject entity
    * @return the trustmark subject DTO
    */
-  public static TrustmarkSubjectDto toDtoPolicy(final TrustMarkSubjectEntity trustMarkSubjectEntity) {
+  public static TrustmarkSubjectDto toDto(final TrustMarkSubjectEntity trustMarkSubjectEntity) {
     final TrustmarkSubjectDto dto = new TrustmarkSubjectDto();
     dto.setTrustmarksubjectId(trustMarkSubjectEntity.getTrustmarksubjectId());
     dto.setTrustmarkId(trustMarkSubjectEntity.getTrustmarkId());
@@ -386,6 +372,8 @@ public final class EntityToDto {
     entity.setPolicyEntity(policyEntity);
     entity.setIssuer(dto.getIssuer());
     entity.setSubject(dto.getIssuer());
+    entity.setCrit(dto.getCrit());
+    entity.setMetadataPolicyCrit(dto.getMetadataPolicyCrit());
 
     if (dto.getMetadata() != null) {
       try {
@@ -489,6 +477,8 @@ public final class EntityToDto {
   public static void updateEntity(final EntityEntity entity, final FederationEntityDto dto) {
     entity.setIssuer(dto.getIssuer());
     entity.setSubject(dto.getIssuer());
+    entity.setCrit(dto.getCrit());
+    entity.setMetadataPolicyCrit(dto.getMetadataPolicyCrit());
     if (dto.getMetadata() != null) {
       try {
         entity.setMetadata(mapper.writeValueAsString(dto.getMetadata()));
@@ -727,7 +717,7 @@ public final class EntityToDto {
    * @param entity the trustmark issuer entity
    * @return the trustmark issuer DTO
    */
-  public static TrustmarkIssuerDto toDtoPolicy(final TrustmarkIssuerEntity entity) {
+  public static TrustmarkIssuerDto toDto(final TrustmarkIssuerEntity entity) {
     final TrustmarkIssuerDto dto = new TrustmarkIssuerDto();
     dto.setTrustmarkIssuerId(entity.getTrustmarkIssuerId());
     dto.setEntityId(entity.getEntity().getEntityId());

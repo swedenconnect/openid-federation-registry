@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,14 +59,17 @@ public interface EntityRepository extends JpaRepository<EntityEntity, UUID> {
    *
    * @param orgNumber the organization number used to filter the query
    * @param entityType the type of entity used to filter the query
+   * @param issuer issuer
    * @return a list of {@link EntityEntity} matching the specified organization number and entity type
    */
   @Query("SELECT e FROM EntityEntity e JOIN fetch e.organization o "
-      + "WHERE o.orgNumber = :orgNumber "
+      + "WHERE o.orgNumber = :orgNumber AND e.issuer = :issuer "
       + "AND e.entityType = :entityType")
-  List<EntityEntity> findByOrgNumberAndEntityKeyType(
+  Optional<EntityEntity> findByOrgNumberAndEntityKeyTypeAndIssuer(
       @Param("orgNumber") String orgNumber,
-      @Param("entityType") EntityKeyType entityType);
+      @Param("entityType") EntityKeyType entityType,
+      @Param("issuer") String issuer
+  );
 
   /**
    * Finds all {@link EntityEntity} objects for the given organization number, optionally filtered by entity type.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,11 @@ public class RegistryJwtConverter implements Converter<Jwt, AbstractAuthenticati
   public AbstractAuthenticationToken convert(final Jwt jwt) {
     final OrganizationInformation information = OrganizationInformationFactory.getInformation(jwt.getClaims());
     Assert.isTrue(!information.organizations().isEmpty(), "Organizations can not be empty");
-
-    final SecurityConfig.RegistryClaims registryClaims = new SecurityConfig.RegistryClaims(jwt, information);
+    String username = jwt.getClaimAsString("preferred_username");
+    if (username == null) {
+      username = jwt.getSubject();
+    }
+    final SecurityConfig.RegistryClaims registryClaims = new SecurityConfig.RegistryClaims(jwt, information, username);
     registryClaims.setAuthenticated(true);
     return registryClaims;
   }

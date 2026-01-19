@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.springframework.util.Assert;
 import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.registry.entity.InstanceEntity;
 import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
+import se.swedenconnect.oidf.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.registry.repository.PolicyRepository;
 import se.swedenconnect.oidf.registry.repository.ResolverRepository;
@@ -59,9 +60,10 @@ import java.util.UUID;
 @Configuration
 public class RegistryConfig {
 
-  final InstanceRepository instanceRepository;
+  private final InstanceRepository instanceRepository;
   private final PolicyRepository policyRepository;
   private final ResolverRepository resolverRepository;
+  private final EntityRepository entityRepository;
 
   private final RegistryProperties registryProperties;
 
@@ -73,15 +75,18 @@ public class RegistryConfig {
    * @param instanceRepository a repository for managing instance data
    * @param resolverRepository a repository for managing resolvers
    * @param registryProperties the configuration properties for the registry
+   * @param entityRepository entityRepository
    */
   public RegistryConfig(final PolicyRepository policyRepository,
       final InstanceRepository instanceRepository,
       final ResolverRepository resolverRepository,
+      final EntityRepository entityRepository,
       final RegistryProperties registryProperties) {
     this.policyRepository = policyRepository;
     this.instanceRepository = instanceRepository;
     this.resolverRepository = resolverRepository;
     this.registryProperties = registryProperties;
+    this.entityRepository = entityRepository;
   }
 
   private static boolean hasOrg(final String org_nr, final InstanceEntity entity) {
@@ -111,10 +116,9 @@ public class RegistryConfig {
 
     return new OidfApiService(
         jwk,
-        this.policyRepository,
+        this.entityRepository,
         federationAPIProperties.issuer(),
         this.instanceRepository,
-        this.resolverRepository,
         tokenExpiryDuration
     );
   }
@@ -142,8 +146,7 @@ public class RegistryConfig {
     final JWK jwk = this.resolveSigningKey(credentialBundles, federationAPIProperties); //function.apply(signKey);
 
     return new NotifyService(restClient,
-        federationAPIProperties.notifications().stream().map(
-            RegistryProperties.FederationAPIProperties.NotificationProperties::endpoint).toList(),
+        federationAPIProperties.notifications(),
         jwk
     );
   }

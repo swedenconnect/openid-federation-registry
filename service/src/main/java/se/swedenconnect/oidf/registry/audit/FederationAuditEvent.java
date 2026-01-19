@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,8 @@ import java.util.UUID;
 @Getter
 public class FederationAuditEvent implements Serializable {
   final RegistryAuditEventType event;
+  final String organizationId;
+
   final String issuer;
   final String subject;
   final String trustMarkId;
@@ -68,7 +70,7 @@ public class FederationAuditEvent implements Serializable {
     Optional.ofNullable(this.newData).ifPresent(v -> data.put("newData", v));
     Optional.ofNullable(this.extId).ifPresent(v -> data.put("extId", v));
     Optional.ofNullable(this.fkKeyType).ifPresent(v -> data.put("optionType", v));
-    Optional.ofNullable(this.optionId).ifPresent(v -> data.put("optionId", v));
+    Optional.ofNullable(this.organizationId).ifPresent(v -> data.put("organizationId", v));
     return new AuditEvent(principal, this.event.name(), data);
   }
 }

@@ -41,6 +41,7 @@ server:
   port: 8010
   compression:
     enabled: true
+  forward-headers-strategy: framework
 
 openid:
   federation:

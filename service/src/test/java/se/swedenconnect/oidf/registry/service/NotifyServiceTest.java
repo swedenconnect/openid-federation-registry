@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.registry.audit.FederationAuditEvent;
 import se.swedenconnect.oidf.registry.audit.RegistryAuditEventType;
+import se.swedenconnect.oidf.registry.config.RegistryProperties;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
 
 import java.net.URI;
@@ -52,7 +53,7 @@ class NotifyServiceTest {
   static final WireMockExtension wireMockExtension = WireMockExtension.newInstance()
       .options(options().dynamicPort())
       .build();
-
+  final UUID organizationUUID = UUID.randomUUID();
   private NotifyService notifyService;
 
   @BeforeEach
@@ -64,11 +65,21 @@ class NotifyServiceTest {
     notifyService = new NotifyService(
         RestClient.builder().build(),
         List.of(
-            URI.create(wireMockExtension.baseUrl() + "/test1"),
-            URI.create(wireMockExtension.baseUrl() + "/test2"),
-            URI.create(wireMockExtension.baseUrl() + "/test3"),
-            URI.create(wireMockExtension.baseUrl() + "/test4"),
-            URI.create(wireMockExtension.baseUrl() + "/test5")
+            new RegistryProperties.FederationAPIProperties.NotificationProperties(
+                URI.create(wireMockExtension.baseUrl() + "/test1"),
+                organizationUUID),
+            new RegistryProperties.FederationAPIProperties.NotificationProperties(
+                URI.create(wireMockExtension.baseUrl() + "/test2"),
+                organizationUUID),
+            new RegistryProperties.FederationAPIProperties.NotificationProperties(
+                URI.create(wireMockExtension.baseUrl() + "/test3"),
+                organizationUUID),
+            new RegistryProperties.FederationAPIProperties.NotificationProperties(
+                URI.create(wireMockExtension.baseUrl() + "/test4"),
+                organizationUUID),
+            new RegistryProperties.FederationAPIProperties.NotificationProperties(
+                URI.create(wireMockExtension.baseUrl() + "/test5"),
+                organizationUUID)
         ),
         rsaJWK
     );
@@ -85,6 +96,7 @@ class NotifyServiceTest {
             .fkKeyType(FkKeyType.TRUSTMARKSUBJECT)
             .event(RegistryAuditEventType.OPTIONS_UPDATE)
             .optionId(UUID.randomUUID())
+            .organizationId(organizationUUID.toString())
             .build())
         .limit(10)
         .forEach(notifyService::onAuditEvent);

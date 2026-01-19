@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
 import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
-import se.swedenconnect.oidf.registry.entity.PolicyEntity;
 import se.swedenconnect.oidf.registry.errorhandling.ErrorTypes;
 import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.EntityRepository;
@@ -98,14 +97,13 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     new ValidateDto(organizationRecord).validate(input);
 
     final OrganizationEntity org = this.resolveOrganization(organizationRecord);
-    final PolicyEntity policy = null; // policy relation can be handled later if needed
 
-    final EntityEntity entity = EntityToDto.toEntity(
-        id, input, EntityKeyType.FEDERATION_ENTITY, org, policy);
+    final EntityEntity entity = EntityToDto.toEntity(id, input, EntityKeyType.FEDERATION_ENTITY, org, null);
 
     this.entityRepository.save(entity);
-    final FederationEntityDto dto = EntityToDto.toDtoPolicy(entity);
-    this.auditService.federationEntityCreated(id, dto.getIssuer(), dto.getIssuer(), null, dto);
+    final FederationEntityDto dto = EntityToDto.toFederationEntity(entity, false);
+    this.auditService.federationEntityCreated(id, org.getOrganizationId(), dto.getIssuer(), dto.getIssuer(), null,
+        dto);
     return dto;
   }
 
@@ -123,15 +121,15 @@ public class EntityConfigServiceImpl implements EntityConfigService {
       final UUID id, final FederationEntityDto input) {
     new ValidateDto(organizationRecord).validate(input);
 
-    final EntityEntity existing = this.findEntityOrThrow(
-        organizationRecord, id, EntityKeyType.FEDERATION_ENTITY);
-    final FederationEntityDto oldDto = EntityToDto.toDtoPolicy(existing);
+    final EntityEntity existing = this.findEntityOrThrow(organizationRecord, id, EntityKeyType.FEDERATION_ENTITY);
+    final FederationEntityDto oldDto = EntityToDto.toFederationEntity(existing, false);
 
     EntityToDto.updateEntity(existing, input);
 
     this.entityRepository.save(existing);
-    final FederationEntityDto newDto = EntityToDto.toDtoPolicy(existing);
-    this.auditService.federationEntityUpdated(id, newDto.getIssuer(), newDto.getIssuer(), oldDto, newDto);
+    final FederationEntityDto newDto = EntityToDto.toFederationEntity(existing, false);
+    this.auditService.federationEntityUpdated(id, existing.getOrganization().getOrganizationId(), newDto.getIssuer(),
+        newDto.getIssuer(), oldDto, newDto);
     return newDto;
   }
 
@@ -150,7 +148,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
       final boolean includeModules) {
     final EntityEntity entity = this.findEntityOrThrow(
         organizationRecord, id, EntityKeyType.FEDERATION_ENTITY);
-    return EntityToDto.toFederationEntityWithModules(entity);
+    return EntityToDto.toFederationEntity(entity, false);
   }
 
   /**
@@ -164,9 +162,10 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   public void deleteFederationEntity(final OrganizationRecord organizationRecord, final UUID id) {
     final EntityEntity entity = this.findEntityOrThrow(
         organizationRecord, id, EntityKeyType.FEDERATION_ENTITY);
-    final FederationEntityDto dto = EntityToDto.toDtoPolicy(entity);
+    final FederationEntityDto dto = EntityToDto.toFederationEntity(entity, false);
     this.entityRepository.delete(entity);
-    this.auditService.federationEntityDeleted(id, dto.getIssuer(), dto.getIssuer(), dto);
+    this.auditService.federationEntityDeleted(id, entity.getOrganization().getOrganizationId(), dto.getIssuer(),
+        dto.getIssuer(), dto);
   }
 
   // ---------------------------------------------------------------------------
@@ -188,14 +187,12 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     new ValidateDto(organizationRecord).validate(input);
 
     final OrganizationEntity org = this.resolveOrganization(organizationRecord);
-    final PolicyEntity policy = null;
-
     final EntityEntity entity = EntityToDto.toEntity(
-        id, input, EntityKeyType.HOSTED_ENTITY, org, policy);
+        id, input, EntityKeyType.HOSTED_ENTITY, org, null);
     entity.setSubject(organizationRecord.entityPrefix());
     this.entityRepository.save(entity);
     final HostedEntityDto dto = EntityToDto.toDtoHosted(entity);
-    this.auditService.hostedEntityCreated(id, null, dto);
+    this.auditService.hostedEntityCreated(id, org.getOrganizationId(), null, dto);
     return dto;
   }
 
@@ -215,13 +212,14 @@ public class EntityConfigServiceImpl implements EntityConfigService {
 
     final EntityEntity existing = this.findEntityOrThrow(
         organizationRecord, id, EntityKeyType.HOSTED_ENTITY);
+    existing.setSubject(organizationRecord.entityPrefix());
     final HostedEntityDto oldDto = EntityToDto.toDtoHosted(existing);
 
     EntityToDto.updateEntity(existing, input);
 
     this.entityRepository.save(existing);
     final HostedEntityDto newDto = EntityToDto.toDtoHosted(existing);
-    this.auditService.hostedEntityUpdated(id, oldDto, newDto);
+    this.auditService.hostedEntityUpdated(id, existing.getOrganization().getOrganizationId(), oldDto, newDto);
     return newDto;
   }
 
@@ -254,7 +252,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
         organizationRecord, id, EntityKeyType.HOSTED_ENTITY);
     final HostedEntityDto dto = EntityToDto.toDtoHosted(entity);
     this.entityRepository.delete(entity);
-    this.auditService.hostedEntityDeleted(id, dto);
+    this.auditService.hostedEntityDeleted(id, entity.getOrganization().getOrganizationId(), dto);
   }
 
   // ---------------------------------------------------------------------------
@@ -289,7 +287,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
 
     this.entityRepository.save(entity);
     final SubordinateEntityDto dto = EntityToDto.toDtoSubordinate(entity);
-    this.auditService.subordinateEntityCreated(id, null, dto);
+    this.auditService.subordinateEntityCreated(id, org.getOrganizationId(), null, dto);
     return dto;
   }
 
@@ -322,7 +320,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
 
     this.entityRepository.save(existing);
     final SubordinateEntityDto newDto = EntityToDto.toDtoSubordinate(existing);
-    this.auditService.subordinateEntityUpdated(id, oldDto, newDto);
+    this.auditService.subordinateEntityUpdated(id, existing.getOrganization().getOrganizationId(), oldDto, newDto);
     return newDto;
   }
 
@@ -355,7 +353,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
         organizationRecord, id, EntityKeyType.SUBORDINATE_ENTITY);
     final SubordinateEntityDto dto = EntityToDto.toDtoSubordinate(entity);
     this.entityRepository.delete(entity);
-    this.auditService.subordinateEntityDeleted(id, dto);
+    this.auditService.subordinateEntityDeleted(id, entity.getOrganization().getOrganizationId(), dto);
   }
 
   // ---------------------------------------------------------------------------
