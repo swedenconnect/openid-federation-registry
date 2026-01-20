@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import se.swedenconnect.oidf.registry.api.EntitiesApi;
 import se.swedenconnect.oidf.registry.api.ModulesApi;
 import se.swedenconnect.oidf.registry.api.TrustmarksApi;
 import se.swedenconnect.oidf.registry.api.model.FederationEntity;
-import se.swedenconnect.oidf.registry.api.model.HostedEntity;
 import se.swedenconnect.oidf.registry.api.model.Resolver;
 import se.swedenconnect.oidf.registry.api.model.TrustAnchor;
 import se.swedenconnect.oidf.registry.api.model.Trustmark;
@@ -203,21 +202,6 @@ class ModuleCRUDIT {
     final FederationEntity entityInput = new FederationEntity()
         .issuer(issuer);
     this.entitiesApi.createFederationEntityWithId(entityId, entityInput);
-    return entityId;
-  }
-
-  /**
-   * Helper method to create a HostedEntity for testing.
-   *
-   * @param subject the entity subject
-   * @param issuer the entity issuer
-   * @return the created entity ID
-   */
-  private UUID createHostedEntity(final String subject, final String issuer) {
-    final UUID entityId = UUID.randomUUID();
-    final HostedEntity entityInput = new HostedEntity()
-        .issuer(issuer);
-    this.entitiesApi.createHostedEntityWithId(entityId, entityInput);
     return entityId;
   }
 

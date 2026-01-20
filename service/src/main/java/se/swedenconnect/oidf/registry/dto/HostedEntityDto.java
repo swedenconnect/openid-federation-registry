@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -36,15 +37,26 @@ public class HostedEntityDto {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private UUID entityId;
 
-  @Schema(description = "Issuer (entity identifier)")
-  private String issuer;
+  @Schema(description = "EntityId.")
+  private String entityIdentifier;
 
-  @Schema(description = "Metadata for hosted entity")
+  @Schema(description = "FederationMetadata")
   private Map<String, Object> metadata;
 
-  @Schema(description = "ecLocation - location where the actual entity statement is placed")
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  @Schema(description = "ecLocation - location where the actual entity statement is placed. Expressed as a url. "
+      + "Ex https://my.company.se/entitystatement")
   private String ecLocation;
+
+  @Schema(description = "When true, eclocation will be loaded from the hosted entity with the same issuer entityid")
+  private boolean ecLocationAutomaticResolve;
+
+  @Schema(description = "Effective EcLocation that is calculated serverside")
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  private String effectiveEcLocation;
+
+  @Schema(description = "Trustmark sources that can be used to include trustmarks.")
+  private List<TrustmarkSourceDto> trustMarkSources;
+
 
 }
 

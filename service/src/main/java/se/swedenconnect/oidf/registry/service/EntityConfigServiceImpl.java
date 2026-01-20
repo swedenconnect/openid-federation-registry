@@ -94,7 +94,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   @Transactional
   public FederationEntityDto createFederationEntity(final OrganizationRecord organizationRecord,
       final UUID id, final FederationEntityDto input) {
-    new ValidateDto(organizationRecord).validate(input);
+    ValidateDto.init(organizationRecord).validate(input);
 
     final OrganizationEntity org = this.resolveOrganization(organizationRecord);
 
@@ -119,7 +119,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   @Transactional
   public FederationEntityDto updateFederationEntity(final OrganizationRecord organizationRecord,
       final UUID id, final FederationEntityDto input) {
-    new ValidateDto(organizationRecord).validate(input);
+    ValidateDto.init(organizationRecord).validate(input);
 
     final EntityEntity existing = this.findEntityOrThrow(organizationRecord, id, EntityKeyType.FEDERATION_ENTITY);
     final FederationEntityDto oldDto = EntityToDto.toFederationEntity(existing, false);
@@ -184,7 +184,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   @Transactional
   public HostedEntityDto createHostedEntity(final OrganizationRecord organizationRecord,
       final UUID id, final HostedEntityDto input) {
-    new ValidateDto(organizationRecord).validate(input);
+    ValidateDto.init(organizationRecord).validate(input);
 
     final OrganizationEntity org = this.resolveOrganization(organizationRecord);
     final EntityEntity entity = EntityToDto.toEntity(
@@ -208,15 +208,13 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   @Transactional
   public HostedEntityDto updateHostedEntity(final OrganizationRecord organizationRecord,
       final UUID id, final HostedEntityDto input) {
-    new ValidateDto(organizationRecord).validate(input);
+    ValidateDto.init(organizationRecord).validate(input);
 
     final EntityEntity existing = this.findEntityOrThrow(
         organizationRecord, id, EntityKeyType.HOSTED_ENTITY);
-    existing.setSubject(organizationRecord.entityPrefix());
     final HostedEntityDto oldDto = EntityToDto.toDtoHosted(existing);
-
     EntityToDto.updateEntity(existing, input);
-
+    existing.setSubject(organizationRecord.entityPrefix());
     this.entityRepository.save(existing);
     final HostedEntityDto newDto = EntityToDto.toDtoHosted(existing);
     this.auditService.hostedEntityUpdated(id, existing.getOrganization().getOrganizationId(), oldDto, newDto);
@@ -271,7 +269,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   @Transactional
   public SubordinateEntityDto createSubordinateEntity(final OrganizationRecord organizationRecord,
       final UUID id, final SubordinateEntityDto input) {
-    new ValidateDto(organizationRecord).validate(input);
+    ValidateDto.init(organizationRecord).validate(input);
 
     final OrganizationEntity org = this.resolveOrganization(organizationRecord);
 
@@ -303,7 +301,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   @Transactional
   public SubordinateEntityDto updateSubordinateEntity(final OrganizationRecord organizationRecord,
       final UUID id, final SubordinateEntityDto input) {
-    new ValidateDto(organizationRecord).validate(input);
+    ValidateDto.init(organizationRecord).validate(input);
 
     final EntityEntity existing = this.findEntityOrThrow(
         organizationRecord, id, EntityKeyType.SUBORDINATE_ENTITY);

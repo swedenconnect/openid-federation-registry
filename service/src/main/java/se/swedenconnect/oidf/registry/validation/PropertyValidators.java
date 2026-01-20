@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -827,6 +827,16 @@ public class PropertyValidators {
      */
     public ValidationStringBuilder ping() {
       this.builder.append("PING:").append("| ");
+      return this;
+    }
+
+    /**
+     * Creates a validator
+     *
+     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     */
+    public ValidationStringBuilder oidfPolicy() {
+      this.builder.append("OIDFPOLICY:").append("| ");
       return this;
     }
 

@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -51,6 +52,14 @@ public class SubordinateEntityDto {
   @Schema(description = "Policy", accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private Map<String, Object> policy;
+
+  @Schema(description = "metadataPolicyCrit ", example = "Array of strings specifying critical "
+      + "metadata policy operators")
+  private List<String> metadataPolicyCrit;
+
+  @Schema(description = "crit ", example = "The crit (critical) Claim indicates that extensions to "
+      + "the set of Claims specified for use in this type of JWT")
+  private List<String> crit;
 
 }
 

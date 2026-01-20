@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 
 package se.swedenconnect.oidf.registry.validation;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -26,6 +29,8 @@ import java.util.Optional;
  * @author Per Fredrik Plars
  */
 public interface PropertyValidator {
+  ObjectMapper mapper = new ObjectMapper();
+
   /**
    * Validates a property based on the provided key and value. The method applies predefined validation rules and throws
    * an exception if the validation fails.
@@ -72,6 +77,15 @@ public interface PropertyValidator {
         }
         if (values.isEmpty()) {
           this.validate(key, null);
+        }
+      }
+      else if (value instanceof Map<?, ?> values) {
+        try {
+          this.validate(key, mapper.writeValueAsString(values));
+        }
+        catch (final com.fasterxml.jackson.core.JsonProcessingException e) {
+          throw new PropertyValidationFailException(key, values.toString(),
+              "Invalid JSON format: " + e.getMessage());
         }
       }
       else {

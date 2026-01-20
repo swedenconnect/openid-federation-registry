@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,7 +173,8 @@ public class TestDataOperations {
     result.put("subordinateEntityId", createdSubordinateEntity.getEntityId());
 
     final HostedEntity hostedEntityEntityInput = HostedEntity.builder()
-        .issuer("https://www.polisen.se/op/swerigeid")
+        .entityIdentifier("https://www.polisen.se/op/swerigeid")
+        .ecLocationAutomaticResolve(true)
         .build();
 
     final HostedEntity createdHostedEntity = entitiesApi.createHostedEntity(hostedEntityEntityInput);

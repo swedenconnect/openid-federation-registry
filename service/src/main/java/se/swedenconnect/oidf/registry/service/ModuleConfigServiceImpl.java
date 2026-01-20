@@ -126,7 +126,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional
   public TrustAnchorDto createTrustAnchor(final OrganizationRecord organizationRecord,
       final UUID id, final TrustAnchorDto input) {
-    new ValidateDto(organizationRecord).validate(input);
+    ValidateDto.init(organizationRecord).validate(input);
 
     // entityId is a database UUID to EntityEntity
     final UUID entityId = input.getEntityId();
@@ -158,7 +158,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional
   public TrustAnchorDto updateTrustAnchor(final OrganizationRecord organizationRecord,
       final UUID id, final TrustAnchorDto input) {
-    new ValidateDto(organizationRecord).validate(input);
+    ValidateDto.init(organizationRecord).validate(input);
 
     final TaImEntity module = this.findModuleOrThrow(organizationRecord, id, TaImEntity.Type.TRUSTANCHOR);
     final TrustAnchorDto oldDto = EntityToDto.toDto(module);
@@ -216,7 +216,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional
   public IntermediateDto createIntermediate(final OrganizationRecord organizationRecord,
       final UUID id, final IntermediateDto input) {
-    new ValidateDto(organizationRecord).validate(input);
+    ValidateDto.init(organizationRecord).validate(input);
 
     // entityId is a database UUID to EntityEntity
     final UUID entityId = input.getEntityId();
@@ -248,7 +248,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional
   public IntermediateDto updateIntermediate(final OrganizationRecord organizationRecord,
       final UUID id, final IntermediateDto input) {
-    new ValidateDto(organizationRecord).validate(input);
+    ValidateDto.init(organizationRecord).validate(input);
 
     final TaImEntity module = this.findModuleOrThrow(organizationRecord, id, TaImEntity.Type.INTERMEDIATE);
     final IntermediateDto oldDto = EntityToDto.toDtoIntermediate(module);
@@ -311,7 +311,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional
   public ResolverDto createResolver(final OrganizationRecord organizationRecord,
       final UUID id, final ResolverDto input) {
-    new ValidateDto(organizationRecord).validate(input);
+    ValidateDto.init(organizationRecord).validate(input);
 
     final UUID entityId = input.getEntityId();
     final EntityEntity entityEntity = this.findFederationEntityOrThrow(organizationRecord, entityId);
@@ -337,7 +337,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional
   public ResolverDto updateResolver(final OrganizationRecord organizationRecord,
       final UUID id, final ResolverDto input) {
-    new ValidateDto(organizationRecord).validate(input);
+    ValidateDto.init(organizationRecord).validate(input);
 
     final ResolverEntity existing = this.findResolverOrThrow(organizationRecord, id);
     final ResolverDto oldDto = EntityToDto.toDto(existing);
@@ -396,7 +396,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional
   public TrustmarkDto createTrustmark(final OrganizationRecord organizationRecord,
       final UUID id, final TrustmarkDto input) {
-    new ValidateDto(organizationRecord).validate(input);
+    ValidateDto.init(organizationRecord).validate(input);
 
     // trustmarkissuerId is a module UUID (TRUSTMARKISSUER)
     final UUID inputTrustmarkissuerId = input.getTrustmarkissuerId();
@@ -425,7 +425,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional
   public TrustmarkDto updateTrustmark(final OrganizationRecord organizationRecord,
       final UUID id, final TrustmarkDto input) {
-    new ValidateDto(organizationRecord).validate(input);
+    ValidateDto.init(organizationRecord).validate(input);
 
     final TrustMarkEntity existing = this.trustMarkRepository
         .findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), id)
@@ -495,7 +495,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional
   public TrustmarkIssuerDto createTrustmarkIssuer(final OrganizationRecord organizationRecord,
       final UUID id, final TrustmarkIssuerDto input) {
-    new ValidateDto(organizationRecord).validate(input);
+    ValidateDto.init(organizationRecord).validate(input);
 
     final UUID entityId = input.getEntityId();
     final EntityEntity entityEntity = this.findFederationEntityOrThrow(organizationRecord, entityId);
@@ -520,7 +520,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional
   public TrustmarkIssuerDto updateTrustmarkIssuer(final OrganizationRecord organizationRecord,
       final UUID id, final TrustmarkIssuerDto input) {
-    new ValidateDto(organizationRecord).validate(input);
+    ValidateDto.init(organizationRecord).validate(input);
 
     final TrustmarkIssuerEntity existing = this.trustmarkIssuerRepository
         .findByOrgNumberAndTrustmarkIssuerId(organizationRecord.orgNumber(), id)

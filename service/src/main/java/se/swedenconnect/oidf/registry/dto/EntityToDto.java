@@ -28,6 +28,8 @@ import se.swedenconnect.oidf.registry.entity.TrustMarkEntity;
 import se.swedenconnect.oidf.registry.entity.TrustMarkSubjectEntity;
 import se.swedenconnect.oidf.registry.entity.TrustmarkIssuerEntity;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -82,7 +84,6 @@ public final class EntityToDto {
       dto.setMetadata(toJson(entity.getMetadata()));
     }
     dto.setCrit(entity.getCrit());
-    dto.setMetadataPolicyCrit(entity.getMetadataPolicyCrit());
 
     if (!includeModules) {
       return dto;
@@ -120,8 +121,17 @@ public final class EntityToDto {
 
     final HostedEntityDto dto = new HostedEntityDto();
     dto.setEntityId(entityEntity.getEntityId());
-    dto.setIssuer(entityEntity.getIssuer());
-    dto.setEcLocation(calculatedEcLocation(entityEntity.getSubject(), entityEntity.getIssuer()));
+    dto.setEntityIdentifier(entityEntity.getIssuer());
+
+    if (entityEntity.isEcLocationAutomatic()) {
+      dto.setEffectiveEcLocation(calculatedEcLocation(entityEntity.getSubject(), entityEntity.getIssuer()));
+    }
+    else {
+      dto.setEffectiveEcLocation(entityEntity.getEcLocation());
+    }
+    dto.setEcLocation(entityEntity.getEcLocation());
+    dto.setEcLocationAutomaticResolve(entityEntity.isEcLocationAutomatic());
+
     if (entityEntity.getMetadata() != null && !entityEntity.getMetadata().isBlank()) {
       try {
         dto.setMetadata(mapper.readValue(entityEntity.getMetadata(), new TypeReference<Map<String, Object>>() {}));
@@ -134,16 +144,60 @@ public final class EntityToDto {
     return dto;
   }
 
+  /**
+   * Converts HostedEntityDto to EntityEntity.
+   *
+   * @param id the entity ID
+   * @param dto the hosted entity DTO
+   * @param entityKeyType the entity key type
+   * @param organization the organization entity
+   * @param policyEntity the policy entity
+   * @return the entity entity
+   */
+  public static EntityEntity toEntity(final java.util.UUID id,
+      final HostedEntityDto dto,
+      final EntityKeyType entityKeyType,
+      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization,
+      final PolicyEntity policyEntity) {
+    final EntityEntity entity = new EntityEntity();
+    entity.setEntityId(id);
+    entity.setEntityType(entityKeyType);
+    entity.setOrganization(organization);
+    entity.setPolicyEntity(policyEntity);
+    updateEntity(entity, dto);
+    return entity;
+  }
+
   private static String calculatedEcLocation(final String baseUrl, final String subject) {
     final String id = subject
         .replace("https://", "")
         .replace("http://", "")
         .replace(".", "_")
         .replace("/", "_");
-
+    final String encodedId = URLEncoder.encode(id, StandardCharsets.UTF_8);
     final String calculatedEcLocation = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
-    return calculatedEcLocation + id + "/.well-known/openid-federation";
+    return calculatedEcLocation + encodedId + "/.well-known/openid-federation";
+  }
 
+  /**
+   * Updates EntityEntity with HostedEntityDto data.
+   *
+   * @param entity the entity entity
+   * @param dto the hosted entity DTO
+   */
+  public static void updateEntity(final EntityEntity entity, final HostedEntityDto dto) {
+    entity.setIssuer(dto.getEntityIdentifier());
+    entity.setSubject(dto.getEntityIdentifier());
+    entity.setEcLocation(dto.getEcLocation());
+    entity.setEcLocationAutomatic(dto.isEcLocationAutomaticResolve());
+    if (dto.getMetadata() != null) {
+      try {
+        entity.setMetadata(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(dto.getMetadata()));
+      }
+      catch (final JsonProcessingException e) {
+        throw new IllegalArgumentException("Failed to serialize metadata to JSON", e);
+      }
+    }
   }
   /**
    * Converts EntityEntity to SubordinateEntityDto.
@@ -168,6 +222,9 @@ public final class EntityToDto {
         .map(PolicyEntity::getPolicy)
         .map(EntityToDto::toJson)
         .ifPresent(policyEntity -> dto.setPolicy(policyEntity));
+
+    dto.setCrit(entityEntity.getCrit());
+    dto.setMetadataPolicyCrit(entityEntity.getMetadataPolicyCrit());
 
     return dto;
   }
@@ -373,42 +430,7 @@ public final class EntityToDto {
     entity.setIssuer(dto.getIssuer());
     entity.setSubject(dto.getIssuer());
     entity.setCrit(dto.getCrit());
-    entity.setMetadataPolicyCrit(dto.getMetadataPolicyCrit());
 
-    if (dto.getMetadata() != null) {
-      try {
-        entity.setMetadata(mapper.writeValueAsString(dto.getMetadata()));
-      }
-      catch (final JsonProcessingException e) {
-        throw new IllegalArgumentException("Failed to serialize metadata to JSON", e);
-      }
-    }
-
-    return entity;
-  }
-
-  /**
-   * Converts HostedEntityDto to EntityEntity.
-   *
-   * @param id the entity ID
-   * @param dto the hosted entity DTO
-   * @param entityKeyType the entity key type
-   * @param organization the organization entity
-   * @param policyEntity the policy entity
-   * @return the entity entity
-   */
-  public static EntityEntity toEntity(final java.util.UUID id,
-      final HostedEntityDto dto,
-      final EntityKeyType entityKeyType,
-      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization,
-      final PolicyEntity policyEntity) {
-    final EntityEntity entity = new EntityEntity();
-    entity.setEntityId(id);
-    entity.setEntityType(entityKeyType);
-    entity.setOrganization(organization);
-    entity.setPolicyEntity(policyEntity);
-    entity.setIssuer(dto.getIssuer());
-    entity.setSubject(dto.getIssuer());
 
     if (dto.getMetadata() != null) {
       try {
@@ -478,7 +500,6 @@ public final class EntityToDto {
     entity.setIssuer(dto.getIssuer());
     entity.setSubject(dto.getIssuer());
     entity.setCrit(dto.getCrit());
-    entity.setMetadataPolicyCrit(dto.getMetadataPolicyCrit());
     if (dto.getMetadata() != null) {
       try {
         entity.setMetadata(mapper.writeValueAsString(dto.getMetadata()));
@@ -489,24 +510,7 @@ public final class EntityToDto {
     }
   }
 
-  /**
-   * Updates EntityEntity with HostedEntityDto data.
-   *
-   * @param entity the entity entity
-   * @param dto the hosted entity DTO
-   */
-  public static void updateEntity(final EntityEntity entity, final HostedEntityDto dto) {
-    entity.setIssuer(dto.getIssuer());
-    entity.setSubject(dto.getIssuer());
-    if (dto.getMetadata() != null) {
-      try {
-        entity.setMetadata(mapper.writeValueAsString(dto.getMetadata()));
-      }
-      catch (final JsonProcessingException e) {
-        throw new IllegalArgumentException("Failed to serialize metadata to JSON", e);
-      }
-    }
-  }
+
 
   /**
    * Updates EntityEntity with SubordinateEntityDto data.
@@ -518,6 +522,8 @@ public final class EntityToDto {
     entity.setSubject(dto.getSubject());
     entity.setIssuer(dto.getIssuer());
     entity.setJwks(dto.getJwks());
+    entity.setMetadataPolicyCrit(dto.getMetadataPolicyCrit());
+    entity.setCrit(dto.getCrit());
   }
 
   /**
