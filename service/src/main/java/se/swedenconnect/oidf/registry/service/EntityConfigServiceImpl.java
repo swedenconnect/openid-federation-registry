@@ -148,7 +148,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
       final boolean includeModules) {
     final EntityEntity entity = this.findEntityOrThrow(
         organizationRecord, id, EntityKeyType.FEDERATION_ENTITY);
-    return EntityToDto.toFederationEntity(entity, false);
+    return EntityToDto.toFederationEntity(entity, includeModules);
   }
 
   /**
