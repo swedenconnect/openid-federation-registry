@@ -77,8 +77,20 @@ public class EntityEntity extends BaseEntity {
   @Column(name = "crit")
   private String crit;
 
-  @Column(name = "metadataPolicyCrit")
+  @Column(name = "metadata_policy_crit")
   private String metadataPolicyCrit;
+
+  @Column(name = "ec_location")
+  private String ecLocation;
+
+  @Column(name = "ec_location_automatic")
+  private boolean ecLocationAutomatic;
+
+  @Column(name = "trustmarksources", columnDefinition = "TEXT")
+  private String trustmarksources;
+
+
+
 
   /**
    * Sets the critical data by taking a list of strings as input. If the provided list is empty, the critical data is

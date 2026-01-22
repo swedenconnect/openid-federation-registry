@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import se.swedenconnect.oidf.registry.ApiClient;
-import se.swedenconnect.oidf.registry.config.RegistryProperties;
 import se.swedenconnect.oidf.registry.federationserviceapi.ModuleResponse;
 import se.swedenconnect.oidf.registry.federationserviceapi.ResolverModuleResponse;
 import se.swedenconnect.oidf.registry.federationserviceapi.TrustAnchorModuleResponse;
@@ -64,8 +63,6 @@ class OidfServiceApiControllerIT {
   private TestRestTemplate restTemplate;
   @LocalServerPort
   private int port;
-  @Autowired
-  private RegistryProperties registryProperties;
 
   @Autowired
   private TestDataOperations testDataOperations;

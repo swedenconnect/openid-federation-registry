@@ -116,7 +116,7 @@ public class PolicyServiceImpl implements PolicyService {
   @Transactional
   public PolicyDto createPolicy(final OrganizationRecord organizationRecord,
       final UUID id, final PolicyDto input) {
-    new ValidateDto(organizationRecord).validate(input);
+    ValidateDto.init(organizationRecord).validate(input);
     final OrganizationEntity org = this.resolveOrganization(organizationRecord);
     final PolicyEntity entity = EntityToDto.toEntity(id, input, org);
     this.policyRepository.save(entity);
@@ -137,7 +137,7 @@ public class PolicyServiceImpl implements PolicyService {
   @Transactional
   public PolicyDto updatePolicy(final OrganizationRecord organizationRecord,
       final UUID id, final PolicyDto input) {
-    new ValidateDto(organizationRecord).validate(input);
+    ValidateDto.init(organizationRecord).validate(input);
     final PolicyEntity existing = this.findPolicyOrThrow(organizationRecord, id);
     final PolicyDto oldDto = toDto(existing);
 

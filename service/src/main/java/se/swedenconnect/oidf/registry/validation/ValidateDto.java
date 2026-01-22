@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +34,19 @@ public class ValidateDto {
    *
    * @param organizationRecord the organization record
    */
-  public ValidateDto(final OrganizationRecord organizationRecord) {
+  private ValidateDto(final OrganizationRecord organizationRecord) {
     final PropertyValidators propertyValidators = new PropertyValidators();
     this.v = propertyValidators.builder(VariableValueResolver.orgResolver(organizationRecord));
+  }
+
+  /**
+   * Creates a new ValidateDto instance.
+   *
+   * @param organizationRecord the organization record
+   * @return a new ValidateDto instance
+   */
+  public static ValidateDto init(final OrganizationRecord organizationRecord) {
+    return new ValidateDto(organizationRecord);
   }
 
   /**
@@ -45,21 +55,9 @@ public class ValidateDto {
    * @param dto the federation entity DTO
    */
   public void validate(final FederationEntityDto dto) {
-
-    this.v.required().startsWith("@{entityprefix}").entityid().build()
-        .ifFailThrow("issuer", dto.getIssuer());
-
-    // metadata: json
-    if (dto.getMetadata() != null) {
-      try {
-        final String metadataJson = mapper.writeValueAsString(dto.getMetadata());
-        this.v.json().build().ifFailThrow("metadata", metadataJson);
-      }
-      catch (final com.fasterxml.jackson.core.JsonProcessingException e) {
-        throw new PropertyValidationFailException("metadata", dto.getMetadata().toString(),
-            "Invalid JSON format: " + e.getMessage());
-      }
-    }
+    this.v.required().startsWith("@{entityprefix}").entityid().build().ifFailThrow("issuer", dto.getIssuer());
+    this.v.json().build().ifFailThrow("metadata", dto.getMetadata());
+    this.v.length(1, 500).build().ifFailThrow("crit", dto.getCrit());
   }
 
   /**
@@ -68,20 +66,16 @@ public class ValidateDto {
    * @param dto the hosted entity DTO
    */
   public void validate(final HostedEntityDto dto) {
-    this.v.required().entityid().build()
-        .ifFailThrow("issuer", dto.getIssuer());
-
-    // metadata: json
-    if (dto.getMetadata() != null) {
-      try {
-        final String metadataJson = mapper.writeValueAsString(dto.getMetadata());
-        this.v.json().build().ifFailThrow("metadata", metadataJson);
-      }
-      catch (final com.fasterxml.jackson.core.JsonProcessingException e) {
-        throw new PropertyValidationFailException("metadata", dto.getMetadata().toString(),
-            "Invalid JSON format: " + e.getMessage());
-      }
+    this.v.required().entityid().build().ifFailThrow("entityidentifier", dto.getEntityIdentifier());
+    this.v.required().build().ifFailThrow("metadata", dto.getMetadata());
+    this.v.url().build().ifFailThrow("eclocation", dto.getEcLocation());
+    this.v.required().json().build().ifFailThrow("metadata", dto.getMetadata());
+    if (!dto.isEcLocationAutomaticResolve() && (dto.getEcLocation() == null || dto.getEcLocation().isBlank())) {
+      this.v.required()
+          .startsWith("@{entityprefix}").entityid().build()
+          .ifFailThrow("entityidentifier", dto.getEntityIdentifier());
     }
+
   }
 
   /**
@@ -152,6 +146,8 @@ public class ValidateDto {
    */
   public void validate(final PolicyDto dto) {
     this.v.required().build().ifFailThrow("name", dto.getName());
+    this.v.required().build().ifFailThrow("policy", dto.getPolicy());
+
     if (dto.getPolicy() != null) {
       try {
         final String policyJson = mapper.writeValueAsString(dto.getPolicy());

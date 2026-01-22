@@ -16,7 +16,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8010",
+      "url": "https://registry.local.swedenconnect.se",
       "description": "Generated server url"
     }
   ],
@@ -2166,6 +2166,22 @@
             "additionalProperties": {},
             "description": "Policy",
             "readOnly": true
+          },
+          "metadataPolicyCrit": {
+            "type": "array",
+            "description": "metadataPolicyCrit ",
+            "example": "Array of strings specifying critical metadata policy operators",
+            "items": {
+              "type": "string"
+            }
+          },
+          "crit": {
+            "type": "array",
+            "description": "crit ",
+            "example": "The crit (critical) Claim indicates that extensions to the set of Claims specified for use in this type of JWT",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -2178,14 +2194,47 @@
             "description": "Entity ID",
             "readOnly": true
           },
-          "issuer": {
+          "entityIdentifier": {
             "type": "string",
-            "description": "Issuer (entity identifier)"
+            "description": "EntityId."
           },
           "metadata": {
             "type": "object",
             "additionalProperties": {},
-            "description": "Metadata for hosted entity"
+            "description": "FederationMetadata"
+          },
+          "ecLocation": {
+            "type": "string",
+            "description": "ecLocation - location where the actual entity statement is placed. Expressed as a url. Ex https://my.company.se/entitystatement"
+          },
+          "ecLocationAutomaticResolve": {
+            "type": "boolean",
+            "description": "When true, eclocation will be loaded from the hosted entity with the same issuer entityid"
+          },
+          "effectiveEcLocation": {
+            "type": "string",
+            "description": "Effective EcLocation that is calculated serverside",
+            "readOnly": true
+          },
+          "trustMarkSources": {
+            "type": "array",
+            "description": "Trustmark sources that can be used to include trustmarks.",
+            "items": {
+              "$ref": "#/components/schemas/TrustmarkSourceDto"
+            }
+          }
+        }
+      },
+      "TrustmarkSourceDto": {
+        "type": "object",
+        "properties": {
+          "trustMarkIssuer": {
+            "type": "string",
+            "description": "Trustmark "
+          },
+          "trustmarkId": {
+            "type": "string",
+            "description": "Id of the trustmark to be included (entity identifier)"
           }
         }
       },
@@ -2209,6 +2258,14 @@
             "description": "Federation entity metadata",
             "example": {
               "federation_entity": {}
+            }
+          },
+          "crit": {
+            "type": "array",
+            "description": "crit ",
+            "example": "The crit (critical) Claim indicates that extensions to the set of Claims specified for use in this type of JWT",
+            "items": {
+              "type": "string"
             }
           }
         }
@@ -2336,6 +2393,14 @@
                 "description": "Federation entity metadata",
                 "example": {
                   "federation_entity": {}
+                }
+              },
+              "crit": {
+                "type": "array",
+                "description": "crit ",
+                "example": "The crit (critical) Claim indicates that extensions to the set of Claims specified for use in this type of JWT",
+                "items": {
+                  "type": "string"
                 }
               },
               "trustAnchor": {

@@ -71,18 +71,18 @@ public class SecurityConfig {
             .requestMatchers("/registry/v1/modules/**").authenticated()
             .requestMatchers(HttpMethod.GET, "/registry/v1/modules/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/modules/read")
-            .requestMatchers(HttpMethod.POST, "/registry/v1/entities/**")
+            .requestMatchers(HttpMethod.POST, "/registry/v1/modules/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/modules/write")
-            .requestMatchers(HttpMethod.PUT, "/registry/v1/entities/**")
+            .requestMatchers(HttpMethod.PUT, "/registry/v1/modules/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/modules/write")
-            .requestMatchers(HttpMethod.DELETE, "/registry/v1/entities/**")
+            .requestMatchers(HttpMethod.DELETE, "/registry/v1/modules/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/modules/write")
 
             .requestMatchers("/registry/v1/trustmarks/**").authenticated()
             .requestMatchers(HttpMethod.GET, "/registry/v1/trustmarks/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/trustmarks/read")
             .requestMatchers(HttpMethod.POST, "/registry/v1/trustmarks/**")
-            .hasAuthority("SCOPE_http://registry.swedenconnect.se/modules/write")
+            .hasAuthority("SCOPE_http://registry.swedenconnect.se/trustmarks/write")
             .requestMatchers(HttpMethod.PUT, "/registry/v1/trustmarks/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/trustmarks/write")
             .requestMatchers(HttpMethod.DELETE, "/registry/v1/trustmarks/**")
@@ -110,8 +110,7 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.DELETE, "/registry/v1/policies/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/policies/write")
 
-
-            .requestMatchers(HttpMethod.GET, "/api/v1/federationservice/**").permitAll() // Always open
+            .requestMatchers(HttpMethod.GET, "/api/v1/federationservice/**").permitAll()
             .requestMatchers(HttpMethod.OPTIONS).permitAll()
             .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/swagger-ui.html",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,11 +43,8 @@ public class FederationEntityDto {
   @Schema(description = "Federation entity metadata", example = "{\"federation_entity\":{}}")
   private Map<String, Object> metadata;
 
-  @Schema(description = "Crit ", example = "ec_location")
+  @Schema(description = "crit ", example = "The crit (critical) Claim indicates that extensions to the set of "
+      + "Claims specified for use in this type of JWT")
   private List<String> crit;
-
-  @Schema(description = "metadata_policy_crit ", example = "ec_location")
-  private List<String> metadataPolicyCrit;
-
 }
 

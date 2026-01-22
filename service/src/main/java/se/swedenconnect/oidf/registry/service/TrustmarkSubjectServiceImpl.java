@@ -85,7 +85,7 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
   @Transactional
   public TrustmarkSubjectDto createTrustmarkSubject(final OrganizationRecord organizationRecord,
       final UUID id, final TrustmarkSubjectDto input) {
-    new ValidateDto(organizationRecord).validate(input);
+    ValidateDto.init(organizationRecord).validate(input);
 
     final UUID trustmarkId = input.getTrustmarkId();
     final TrustMarkEntity trustMarkEntity = this.findTrustMarkOrThrow(organizationRecord, trustmarkId);
@@ -112,7 +112,7 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
   @Transactional
   public TrustmarkSubjectDto updateTrustmarkSubject(final OrganizationRecord organizationRecord,
       final UUID id, final TrustmarkSubjectDto input) {
-    new ValidateDto(organizationRecord).validate(input);
+    ValidateDto.init(organizationRecord).validate(input);
 
     final TrustMarkSubjectEntity existing = this.findSubjectOrThrow(organizationRecord, id);
     final TrustmarkSubjectDto oldDto = EntityToDto.toDto(existing);

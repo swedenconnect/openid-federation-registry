@@ -91,9 +91,9 @@ public class FederationMetadataCreator {
     if (entityType == EntityKeyType.HOSTED_ENTITY) {
 
       final HostedEntityDto dto = EntityToDto.toDtoHosted(entityEntity);
-      entityData.subject(dto.getIssuer())
-          .issuer(dto.getIssuer())
-          .overrideConfigurationLocation(dto.getEcLocation())
+      entityData.subject(dto.getEntityIdentifier())
+          .issuer(dto.getEntityIdentifier())
+          .overrideConfigurationLocation(dto.getEffectiveEcLocation())
           .crit(List.of("ec_location", "configuration_location_override"));
 
       final OidfServiceHostedEntities.Record record = entityData.build();
@@ -127,8 +127,8 @@ public class FederationMetadataCreator {
           .map(EntityToDto::toDtoHosted)
           .ifPresent(hostedDto -> {
             log.debug("When creating subordinatestatement a hosted entity was "
-                    + "found for issuer: {} and organization: {}",
-                hostedDto.getIssuer(),
+                    + "found for entityIdentifier: {} and organization: {}",
+                hostedDto.getEntityIdentifier(),
                 entityEntity.getOrganization().getOrgNumber());
             entityData.overrideConfigurationLocation(hostedDto.getEcLocation());
           });
@@ -150,8 +150,7 @@ public class FederationMetadataCreator {
       final FederationEntityDto dto = EntityToDto.toFederationEntity(entityEntity, false);
       entityData.subject(dto.getIssuer())
           .issuer(dto.getIssuer())
-          .crit(dto.getCrit())
-          .metadataPolicyCrit(dto.getMetadataPolicyCrit());
+          .crit(dto.getCrit());
 
       final Map<String, Object> federationEntityData = new HashMap<>();
       if (dto.getMetadata() != null) {
