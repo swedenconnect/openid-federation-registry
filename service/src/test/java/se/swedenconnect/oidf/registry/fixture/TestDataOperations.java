@@ -27,12 +27,13 @@ import se.swedenconnect.oidf.registry.api.EntitiesApi;
 import se.swedenconnect.oidf.registry.api.ModulesApi;
 import se.swedenconnect.oidf.registry.api.PoliciesApi;
 import se.swedenconnect.oidf.registry.api.SubordinatesApi;
+import se.swedenconnect.oidf.registry.api.model.EntityWithModules;
 import se.swedenconnect.oidf.registry.api.model.FederationEntity;
+import se.swedenconnect.oidf.registry.api.model.FederationEntityWithModules;
 import se.swedenconnect.oidf.registry.api.model.HostedEntity;
 import se.swedenconnect.oidf.registry.api.model.Policy;
 import se.swedenconnect.oidf.registry.api.model.Resolver;
 import se.swedenconnect.oidf.registry.api.model.Subordinate;
-import se.swedenconnect.oidf.registry.api.model.SubordinateEntity;
 import se.swedenconnect.oidf.registry.api.model.TrustAnchor;
 import se.swedenconnect.oidf.registry.api.model.TrustmarkIssuer;
 
@@ -45,7 +46,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.UUID;
+
+import static se.swedenconnect.oidf.registry.entity.EntityKeyType.FEDERATION_ENTITY;
 
 /**
  * oidf-entity-registry
@@ -85,7 +87,7 @@ public class TestDataOperations {
    * @param apiClient the OpenAPI client configured with authentication
    * @param baseUrl the base URL of the API (e.g., "https://localhost:8080")
    */
-  public void createTestScenarioWithPolicyAndEntities(final ApiClient apiClient, final String baseUrl) {
+  public String createTestScenarioWithPolicyAndEntities(final ApiClient apiClient, final String baseUrl) {
     apiClient.setBasePath(baseUrl);
 
     final PoliciesApi policiesApi = new PoliciesApi(apiClient);
@@ -93,6 +95,14 @@ public class TestDataOperations {
     final ModulesApi modulesApi = new ModulesApi(apiClient);
     final SubordinatesApi subordinatesApi = new SubordinatesApi(apiClient);
 
+    final List<EntityWithModules> e = entitiesApi.listEntities(FEDERATION_ENTITY.toString(), true);
+    final String taEntityid = "https://www.pm.se/oidf/ta/";
+    if (e.stream()
+        .map(EntityWithModules::getFederationEntity)
+        .map(FederationEntityWithModules::getEntityIdentifier)
+        .anyMatch(s -> s.equals(taEntityid))) {
+      return taEntityid;
+    }
 
     // Step 1: Create a policy
     final Policy policyInput = Policy.builder()
@@ -104,8 +114,9 @@ public class TestDataOperations {
 
     // Step 2: Create first federation entity
     final FederationEntity taFederationEntityInput = FederationEntity.builder()
-        .entityIdentifier("https://www.pm.se/oidf/ta")
+        .entityIdentifier(taEntityid)
         .build();
+
     final FederationEntity trustAnchorEntity = entitiesApi.createFederationEntity(taFederationEntityInput);
     log.info("Created first federation entity with ID: {}", trustAnchorEntity.getEntityId());
 
@@ -178,7 +189,7 @@ public class TestDataOperations {
         .jwks(genJWKS().toString())
         .build());
 
-
+    return taFederationEntityInput.getEntityIdentifier();
   }
 
 }

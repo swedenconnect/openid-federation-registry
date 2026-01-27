@@ -59,6 +59,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 @Slf4j
 @UseMariaDBContainer
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+
 class OidfServiceApiControllerIT {
 
   @Autowired
@@ -76,6 +77,7 @@ class OidfServiceApiControllerIT {
   final JsonRegistryLoader jsonRegistryLoader = new JsonRegistryLoader();
 
   final UUID instanceId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+  String taEntityId;
 
   @BeforeEach
   void setUp() {
@@ -85,7 +87,7 @@ class OidfServiceApiControllerIT {
     // Configure authentication
     apiClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.PM));
     apiClient.setApiKey(JwtTestUtils.OrganisationType.PM.orgId);
-    testDataOperations.createTestScenarioWithPolicyAndEntities(apiClient, "http://localhost:" + this.port);
+    taEntityId = testDataOperations.createTestScenarioWithPolicyAndEntities(apiClient, "http://localhost:" + this.port);
 
   }
 
@@ -116,7 +118,7 @@ class OidfServiceApiControllerIT {
     assertNull(polisen.getJwks());
     assertEquals("https://www.pm.se/oidf/www_polisen_se_op_sverigeid/.well-known/openid-federation",
         polisen.getEcLocation());
-    assertEquals("https://www.pm.se/oidf/ta", polisen.getAuthorityHints().getFirst());
+    assertEquals(this.taEntityId, polisen.getAuthorityHints().getFirst());
 
   }
 
