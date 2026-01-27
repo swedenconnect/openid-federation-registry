@@ -16,20 +16,20 @@
 
 package se.swedenconnect.oidf.registry.service;
 
-import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.registry.dto.EntityToDto;
 import se.swedenconnect.oidf.registry.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
-import se.swedenconnect.oidf.registry.dto.OidfServiceHostedEntities;
-import se.swedenconnect.oidf.registry.dto.PolicyDto;
-import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
+import se.swedenconnect.oidf.registry.dto.oidfservice.EntityRecord;
+import se.swedenconnect.oidf.registry.dto.oidfservice.FederationMetadata;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
+import se.swedenconnect.oidf.registry.entity.SubordinateEntity;
 import se.swedenconnect.oidf.registry.repository.EntityRepository;
+import se.swedenconnect.oidf.registry.repository.SubordinateRepository;
 
-import java.text.ParseException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -44,15 +44,15 @@ import java.util.Optional;
 @Slf4j
 public class FederationMetadataCreator {
 
-  final EntityRepository entityRepository;
+  final SubordinateRepository subordinateRepository;
 
   /**
    * Create federation metadata
    *
-   * @param entityRepository entityRepository used to get hosted entities
+   * @param subordinateRepository subordinateRepository
    */
-  public FederationMetadataCreator(final EntityRepository entityRepository) {
-    this.entityRepository = entityRepository;
+  public FederationMetadataCreator(final SubordinateRepository subordinateRepository) {
+    this.subordinateRepository = subordinateRepository;
   }
 
   /**
@@ -70,47 +70,22 @@ public class FederationMetadataCreator {
    *     {@code FEDERATION_ENTITY}, the return value contains metadata specific to hosted entities. Otherwise, it
    *     contains the mapped entity settings.
    */
-  public List<OidfServiceHostedEntities.Record> createEntityResponseV2(final EntityEntity entityEntity) {
-
-    final OidfServiceHostedEntities.Record.RecordBuilder entityData = OidfServiceHostedEntities.Record.builder();
-
-    entityData.policyRecord(OidfServiceHostedEntities.Record.PolicyRecord.builder().build());
-
-    Optional.ofNullable(entityEntity.getPolicyEntity())
-        .ifPresent(policyEntity -> {
-          final PolicyDto policyDto = EntityToDto.toDto(policyEntity);
-          entityData.policyRecord(
-              OidfServiceHostedEntities.Record.PolicyRecord
-                  .builder()
-                  .policyRecordId(policyDto.getPolicyId().toString())
-                  .policy(policyDto.getPolicy()).build());
-        });
-
+  public EntityRecord createEntityResponse(final EntityEntity entityEntity) {
+    final EntityRecord entityData = new EntityRecord();
     final EntityKeyType entityType = entityEntity.getEntityType();
+    try {
+      if (entityType == EntityKeyType.HOSTED_ENTITY) {
+        final HostedEntityDto dto = EntityToDto.toDtoHosted(entityEntity);
 
-    if (entityType == EntityKeyType.HOSTED_ENTITY) {
-
-      final HostedEntityDto dto = EntityToDto.toDtoHosted(entityEntity);
-      entityData.subject(dto.getEntityIdentifier())
-          .issuer(dto.getEntityIdentifier())
-          .overrideConfigurationLocation(dto.getEffectiveEcLocation())
-          .crit(List.of("ec_location", "configuration_location_override"));
-
-      final OidfServiceHostedEntities.Record record = entityData.build();
-
-      final OidfServiceHostedEntities.Record hosted = OidfServiceHostedEntities.Record
-          .builder()
-          .issuer(record.getOverrideConfigurationLocation())
-          .subject(record.getOverrideConfigurationLocation())
-          .overrideConfigurationLocation(record.getOverrideConfigurationLocation())
-          .crit(record.getCrit())
-          .policyRecord(OidfServiceHostedEntities.Record.PolicyRecord.builder().build())
-          .hostedRecord(OidfServiceHostedEntities.HostedRecord.builder().metadata(dto.getMetadata()).build())
-          .build();
-
-      return List.of(record, hosted);
-    }
-
+        entityData.setEntityIdentifier(EntityID.parse(dto.getEntityIdentifier()));
+        entityData.setMetadata(dto.getMetadata());
+        entityData.setOverrideConfigurationLocation(dto.getEffectiveEcLocation());
+        entityData.setCrit(dto.getCrit());
+        entityData.setTrustMarkSource(entityData.getTrustMarkSource());
+        this.authorityHint(entityEntity).map(List::of).ifPresent(entityData::setAuthorityHints);
+        return entityData;
+      }
+/*
     if (entityType == EntityKeyType.SUBORDINATE_ENTITY) {
       final SubordinateEntityDto dto = EntityToDto.toDtoSubordinate(entityEntity);
       entityData.subject(dto.getSubject())
@@ -145,37 +120,43 @@ public class FederationMetadataCreator {
       }
       return List.of(entityData.build());
     }
-
-    if (entityType == EntityKeyType.FEDERATION_ENTITY) {
-      final FederationEntityDto dto = EntityToDto.toFederationEntity(entityEntity, false);
-      entityData.subject(dto.getIssuer())
-          .issuer(dto.getIssuer())
-          .crit(dto.getCrit());
-
-      final Map<String, Object> federationEntityData = new HashMap<>();
-      if (dto.getMetadata() != null) {
-        federationEntityData.putAll(dto.getMetadata());
+*/
+      if (entityType == EntityKeyType.FEDERATION_ENTITY) {
+        final FederationEntityDto dto = EntityToDto.toFederationEntity(entityEntity, false);
+        entityData.setEntityIdentifier(EntityID.parse(dto.getEntityIdentifier()));
+        entityData.setCrit(dto.getCrit());
+        entityData.setMetadata(Map.of("federation_entity", this.createFederationMetadata(entityEntity)));
+        this.authorityHint(entityEntity).map(List::of).ifPresent(entityData::setAuthorityHints);
+        return entityData;
       }
-      federationEntityData.put("federation_entity", this.createFederationMetadata(entityEntity));
 
-      entityData.hostedRecord(OidfServiceHostedEntities
-          .HostedRecord
-          .builder()
-          .metadata(federationEntityData)
-          .build());
-      return List.of(entityData.build());
+      return entityData;
     }
-
-    return List.of(entityData.build());
+    catch (final ParseException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  protected OidfServiceHostedEntities.Metadata.FederationEntity createFederationMetadata(
-      final EntityEntity entityEntity) {
+  /**
+   * Trying to find a subordinate statement that are pointing to this entity. If true the superior entity will be set as
+   * a authorityHint
+   *
+   * @param entity Entity
+   * @return Issuer for subordinate statement if there is one.
+   */
+  private Optional<String> authorityHint(final EntityEntity entity) {
+    return this.subordinateRepository.findByOrgNumberAndEntityidentifyer(entity.getOrganization().getOrgNumber(),
+            entity.getIssuer()).map(SubordinateEntity::getTaIm)
+        .map(taImEntity -> taImEntity.getEntity().getSubject());
+
+  }
+
+  protected FederationMetadata createFederationMetadata(final EntityEntity entityEntity) {
+
     final String orgName = Optional.ofNullable(entityEntity.getOrganization().getOrgName())
         .orElseGet(() -> String.valueOf(entityEntity.getOrganization().getOrganizationId()));
 
-    final OidfServiceHostedEntities.Metadata.FederationEntity.FederationEntityBuilder federationEntity =
-        OidfServiceHostedEntities.Metadata.FederationEntity.builder();
+    final FederationMetadata.FederationMetadataBuilder federationEntity = FederationMetadata.builder();
     federationEntity.organizationName(orgName);
 
     final String sub = entityEntity.getIssuer();
@@ -185,7 +166,6 @@ public class FederationMetadataCreator {
           federationEntity.federationFetchEndpoint(String.format("%s/fetch", sub));
           federationEntity.federationListEndpoint(String.format("%s/subordinate_listing", sub));
         });
-
 
     Optional.ofNullable(entityEntity.getTrustmarkIssuer())
         .ifPresent(moduleEntity -> {
@@ -204,8 +184,5 @@ public class FederationMetadataCreator {
     return federationEntity.build();
 
   }
-
-
-
 
 }

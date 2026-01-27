@@ -16,7 +16,7 @@
   },
   "servers": [
     {
-      "url": "https://registry.local.swedenconnect.se",
+      "url": "http://localhost:8010",
       "description": "Generated server url"
     }
   ],
@@ -34,6 +34,10 @@
     {
       "name": "Modules",
       "description": "CRUD for federation modules"
+    },
+    {
+      "name": "Subordinates",
+      "description": "CRUD for subordinates"
     },
     {
       "name": "Entities",
@@ -297,6 +301,141 @@
         ],
         "summary": "Delete trust mark subject",
         "operationId": "deleteTrustmarkSubject",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/registry/v1/subordinates/{id}": {
+      "get": {
+        "tags": [
+          "Subordinates"
+        ],
+        "summary": "Get subordinate by id",
+        "operationId": "getSubordinate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subordinate"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Subordinates"
+        ],
+        "summary": "Update subordinate",
+        "operationId": "updateSubordinate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Subordinate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subordinate"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Subordinates"
+        ],
+        "summary": "Create subordinate with specified ID",
+        "operationId": "createSubordinateWithId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Subordinate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subordinate"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Subordinates"
+        ],
+        "summary": "Delete subordinate",
+        "operationId": "deleteSubordinate",
         "parameters": [
           {
             "name": "id",
@@ -1500,6 +1639,37 @@
         }
       }
     },
+    "/registry/v1/subordinates/": {
+      "post": {
+        "tags": [
+          "Subordinates"
+        ],
+        "summary": "Create subordinate with auto-generated ID",
+        "operationId": "createSubordinate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Subordinate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subordinate"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/registry/v1/policies": {
       "get": {
         "tags": [
@@ -1997,6 +2167,74 @@
           }
         }
       },
+      "Subordinate": {
+        "type": "object",
+        "properties": {
+          "subordinateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Subordinate ID",
+            "readOnly": true
+          },
+          "taImId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "TaIm ID that this subordinate belongs to"
+          },
+          "policyId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Policy ID",
+            "example": "Optional policy reference"
+          },
+          "jwks": {
+            "type": "string",
+            "description": "JWKSet for Subordinate",
+            "example": "JSON Web Key Set as string"
+          },
+          "entityIdentifier": {
+            "type": "string",
+            "description": "Subject (entity identifier)",
+            "example": "https://subordinate.example.se"
+          },
+          "crit": {
+            "type": "array",
+            "description": "List of crit claims",
+            "example": [
+              "claim1",
+              "claim2"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "metadataPolicyCrit": {
+            "type": "array",
+            "description": "List of metadata_policy_crit",
+            "example": [
+              "operator1",
+              "operator2"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "policy": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Policy",
+            "readOnly": true
+          },
+          "ecLocation": {
+            "type": "string",
+            "description": "ecLocation - location where the actual entity statement is placed. Expressed as a url. Ex https://my.company.se/entitystatement"
+          },
+          "ecLocationAutomaticResolve": {
+            "type": "boolean",
+            "description": "When true, eclocation will be loaded from the hosted entity with the same issuer entityid"
+          }
+        }
+      },
       "Policy": {
         "type": "object",
         "properties": {
@@ -2071,6 +2309,13 @@
             "items": {
               "type": "string"
             }
+          },
+          "subordinates": {
+            "type": "array",
+            "description": "List of subordinates for this trust anchor",
+            "items": {
+              "$ref": "#/components/schemas/Subordinate"
+            }
           }
         }
       },
@@ -2132,6 +2377,13 @@
           "active": {
             "type": "boolean",
             "description": "If this intermediate is active"
+          },
+          "subordinates": {
+            "type": "array",
+            "description": "List of subordinates for this intermediate",
+            "items": {
+              "$ref": "#/components/schemas/Subordinate"
+            }
           }
         }
       },
@@ -2182,6 +2434,19 @@
             "items": {
               "type": "string"
             }
+          },
+          "ecLocation": {
+            "type": "string",
+            "description": "ecLocation - location where the actual entity statement is placed. Expressed as a url. Ex https://my.company.se/entitystatement"
+          },
+          "ecLocationAutomaticResolve": {
+            "type": "boolean",
+            "description": "When true, eclocation will be loaded from the hosted entity with the same issuer entityid"
+          },
+          "effectiveEcLocation": {
+            "type": "string",
+            "description": "Effective EcLocation that is calculated serverside",
+            "readOnly": true
           }
         }
       },
@@ -2203,14 +2468,6 @@
             "additionalProperties": {},
             "description": "FederationMetadata"
           },
-          "ecLocation": {
-            "type": "string",
-            "description": "ecLocation - location where the actual entity statement is placed. Expressed as a url. Ex https://my.company.se/entitystatement"
-          },
-          "ecLocationAutomaticResolve": {
-            "type": "boolean",
-            "description": "When true, eclocation will be loaded from the hosted entity with the same issuer entityid"
-          },
           "effectiveEcLocation": {
             "type": "string",
             "description": "Effective EcLocation that is calculated serverside",
@@ -2221,6 +2478,22 @@
             "description": "Trustmark sources that can be used to include trustmarks.",
             "items": {
               "$ref": "#/components/schemas/TrustmarkSourceDto"
+            }
+          },
+          "crit": {
+            "type": "array",
+            "description": "crit ",
+            "example": "The crit (critical) Claim indicates that extensions to the set of Claims specified for use in this type of JWT",
+            "items": {
+              "type": "string"
+            }
+          },
+          "authorityhints": {
+            "type": "array",
+            "description": "authorityhints",
+            "example": "An array of strings representing the Entity Identifiers of Intermediate Entities or Trust Anchors that are Immediate Superiors of the Entity. the set of Claims specified for use in this type of JWT",
+            "items": {
+              "type": "string"
             }
           }
         }
@@ -2247,23 +2520,23 @@
             "description": "Entity ID",
             "readOnly": true
           },
-          "issuer": {
+          "entityIdentifier": {
             "type": "string",
-            "description": "Issuer (entity identifier)",
-            "example": "https://ta.example.se"
-          },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": {},
-            "description": "Federation entity metadata",
-            "example": {
-              "federation_entity": {}
-            }
+            "description": "EntityIdentifier",
+            "example": "https://ta.example.se/ta"
           },
           "crit": {
             "type": "array",
             "description": "crit ",
             "example": "The crit (critical) Claim indicates that extensions to the set of Claims specified for use in this type of JWT",
+            "items": {
+              "type": "string"
+            }
+          },
+          "authorityhints": {
+            "type": "array",
+            "description": "authorityhints",
+            "example": "An array of strings representing the Entity Identifiers of Intermediate Entities or Trust Anchors that are Immediate Superiors of the Entity. the set of Claims specified for use in this type of JWT",
             "items": {
               "type": "string"
             }
@@ -2382,23 +2655,23 @@
                 "description": "Entity ID",
                 "readOnly": true
               },
-              "issuer": {
+              "entityIdentifier": {
                 "type": "string",
-                "description": "Issuer (entity identifier)",
-                "example": "https://ta.example.se"
-              },
-              "metadata": {
-                "type": "object",
-                "additionalProperties": {},
-                "description": "Federation entity metadata",
-                "example": {
-                  "federation_entity": {}
-                }
+                "description": "EntityIdentifier",
+                "example": "https://ta.example.se/ta"
               },
               "crit": {
                 "type": "array",
                 "description": "crit ",
                 "example": "The crit (critical) Claim indicates that extensions to the set of Claims specified for use in this type of JWT",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "authorityhints": {
+                "type": "array",
+                "description": "authorityhints",
+                "example": "An array of strings representing the Entity Identifiers of Intermediate Entities or Trust Anchors that are Immediate Superiors of the Entity. the set of Claims specified for use in this type of JWT",
                 "items": {
                   "type": "string"
                 }

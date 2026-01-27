@@ -37,14 +37,16 @@ public class FederationEntityDto {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private UUID entityId;
 
-  @Schema(description = "Issuer (entity identifier)", example = "https://ta.example.se")
-  private String issuer;
-
-  @Schema(description = "Federation entity metadata", example = "{\"federation_entity\":{}}")
-  private Map<String, Object> metadata;
+  @Schema(description = "EntityIdentifier", example = "https://ta.example.se/ta")
+  private String entityIdentifier;
 
   @Schema(description = "crit ", example = "The crit (critical) Claim indicates that extensions to the set of "
       + "Claims specified for use in this type of JWT")
   private List<String> crit;
+
+  @Schema(description = "authorityhints", example = "An array of strings representing the Entity Identifiers of "
+      + "Intermediate Entities or Trust Anchors that are Immediate Superiors of the Entity. "
+      + "the set of Claims specified for use in this type of JWT")
+  private List<String> authorityhints;
 }
 

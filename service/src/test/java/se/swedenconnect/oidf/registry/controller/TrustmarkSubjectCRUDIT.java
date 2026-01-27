@@ -103,7 +103,7 @@ class TrustmarkSubjectCRUDIT {
     // Create a hosted entity
     final UUID entityId = UUID.randomUUID();
     final FederationEntity entityInput = new FederationEntity()
-        .issuer("https://www.pm.se/oidf/tmi-entity");
+        .entityIdentifier("https://www.pm.se/oidf/tmi-entity");
     this.entitiesApi.createFederationEntityWithId(entityId, entityInput);
 
     // Create a TrustmarkIssuer

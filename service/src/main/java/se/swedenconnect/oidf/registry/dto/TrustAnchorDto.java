@@ -45,5 +45,8 @@ public class TrustAnchorDto {
   @Schema(description = "Entity identifiers for trust mark issuers")
   private List<String> trustMarkIssuers;
 
+  @Schema(description = "List of subordinates for this trust anchor")
+  private List<SubordinateDto> subordinates;
+
 }
 

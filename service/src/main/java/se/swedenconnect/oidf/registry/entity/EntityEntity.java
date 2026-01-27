@@ -61,6 +61,7 @@ public class EntityEntity extends BaseEntity {
   @JoinColumn(name = "organization_id", nullable = false)
   private OrganizationEntity organization;
 
+  @Deprecated
   @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.DETACH)
   @JoinColumn(name = "policy_id")
   private PolicyEntity policyEntity;
@@ -77,18 +78,22 @@ public class EntityEntity extends BaseEntity {
   @Column(name = "crit")
   private String crit;
 
+  @Deprecated
   @Column(name = "metadata_policy_crit")
   private String metadataPolicyCrit;
 
   @Column(name = "ec_location")
   private String ecLocation;
 
+  @Deprecated
   @Column(name = "ec_location_automatic")
   private boolean ecLocationAutomatic;
 
   @Column(name = "trustmarksources", columnDefinition = "TEXT")
   private String trustmarksources;
 
+  @Column(name = "authorityhints", columnDefinition = "TEXT")
+  private String authorityhints;
 
 
 

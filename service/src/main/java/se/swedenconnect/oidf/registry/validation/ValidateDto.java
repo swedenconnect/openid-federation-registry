@@ -55,8 +55,7 @@ public class ValidateDto {
    * @param dto the federation entity DTO
    */
   public void validate(final FederationEntityDto dto) {
-    this.v.required().startsWith("@{entityprefix}").entityid().build().ifFailThrow("issuer", dto.getIssuer());
-    this.v.json().build().ifFailThrow("metadata", dto.getMetadata());
+    this.v.required().startsWith("@{entityprefix}").entityid().build().ifFailThrow("issuer", dto.getEntityIdentifier());
     this.v.length(1, 500).build().ifFailThrow("crit", dto.getCrit());
   }
 
@@ -67,15 +66,7 @@ public class ValidateDto {
    */
   public void validate(final HostedEntityDto dto) {
     this.v.required().entityid().build().ifFailThrow("entityidentifier", dto.getEntityIdentifier());
-    this.v.required().build().ifFailThrow("metadata", dto.getMetadata());
-    this.v.url().build().ifFailThrow("eclocation", dto.getEcLocation());
     this.v.required().json().build().ifFailThrow("metadata", dto.getMetadata());
-    if (!dto.isEcLocationAutomaticResolve() && (dto.getEcLocation() == null || dto.getEcLocation().isBlank())) {
-      this.v.required()
-          .startsWith("@{entityprefix}").entityid().build()
-          .ifFailThrow("entityidentifier", dto.getEntityIdentifier());
-    }
-
   }
 
   /**
@@ -83,10 +74,12 @@ public class ValidateDto {
    *
    * @param dto the subordinate entity DTO
    */
+  @Deprecated
   public void validate(final SubordinateEntityDto dto) {
     this.v.required().entityid().build().ifFailThrow("subject", dto.getSubject());
     this.v.required().entityid().build().ifFailThrow("issuer", dto.getIssuer());
     this.v.required().jwks().build().ifFailThrow("jwks", dto.getJwks());
+    this.v.length(2, 150).build().ifFailThrow("crit", dto.getCrit());
   }
 
   /**
@@ -181,6 +174,23 @@ public class ValidateDto {
     this.v.required().build().ifFailThrow("active", dto.getActive());
     this.v.required().duration().build().ifFailThrow("trustMarkTokenValidityDuration",
         dto.getTrustMarkTokenValidityDuration());
+  }
+
+  /**
+   * Validates SubordinateDto.
+   *
+   * @param dto the subordinate DTO
+   */
+  public void validate(final SubordinateDto dto) {
+    this.v.required().uuid().build().ifFailThrow("taImId", dto.getTaImId());
+    this.v.required().entityid().build().ifFailThrow("entityidentifyer", dto.getEntityIdentifier());
+    this.v.jwks().build().ifFailThrow("jwks", dto.getJwks());
+
+    this.v.uuid().build().ifFailThrow("policyid", dto.getPolicyId());
+    this.v.url().build().ifFailThrow("eclocation", dto.getEcLocation());
+    this.v.length(2, 150).build().ifFailThrow("metadatapolicycrit", dto.getMetadataPolicyCrit());
+    this.v.length(2, 150).build().ifFailThrow("crit", dto.getCrit());
+
   }
 }
 

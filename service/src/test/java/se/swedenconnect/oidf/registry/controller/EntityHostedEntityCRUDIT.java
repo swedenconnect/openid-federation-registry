@@ -168,16 +168,14 @@ class EntityHostedEntityCRUDIT {
     // Arrange
     final HostedEntity input = new HostedEntity()
         .entityIdentifier("https://www.telia.se/oidf/ta")
-        .metadata(Map.of("hosted_entity", Map.of("name", "Hosted Entity")))
-        .ecLocationAutomaticResolve(true);
+        .metadata(Map.of("hosted_entity", Map.of("name", "Hosted Entity")));
     // Act
     final HostedEntity created = this.entitiesApi.createHostedEntity(input);
     // Assert
     assertThat(created).isNotNull();
-    assertThat(created.getEcLocation()).isNull();
+    assertThat(created.getEffectiveEcLocation()).isNotNull();
     assertThat(created.getEntityId()).isNotNull();
     assertThat(created.getEntityIdentifier()).isEqualTo(input.getEntityIdentifier());
-    assertThat(created.getEcLocationAutomaticResolve()).isEqualTo(true);
 
   }
 

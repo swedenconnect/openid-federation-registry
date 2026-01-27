@@ -337,4 +337,33 @@ public interface RegistryAuditService {
    * @param deletedData the data of the deleted trustmark issuer.
    */
   void trustmarkIssuerDeleted(UUID trustmarkIssuerId, UUID organizationId, TrustmarkIssuerDto deletedData);
+
+  /**
+   * Audits the creation of a subordinate.
+   *
+   * @param subordinateId the unique identifier of the subordinate being created.
+   * @param organizationId the unique identifier of the organization that owns the subordinate.
+   * @param oldData the previous state of the subordinate. Typically null during creation.
+   * @param newData the new state of the subordinate after it has been created.
+   */
+  void subordinateCreated(UUID subordinateId, UUID organizationId, SubordinateDto oldData, SubordinateDto newData);
+
+  /**
+   * Audits the update operation performed on a subordinate.
+   *
+   * @param subordinateId the unique identifier of the subordinate being updated.
+   * @param organizationId the unique identifier of the organization that owns the subordinate.
+   * @param oldData the previous state of the subordinate before the update.
+   * @param newData the new state of the subordinate after the update.
+   */
+  void subordinateUpdated(UUID subordinateId, UUID organizationId, SubordinateDto oldData, SubordinateDto newData);
+
+  /**
+   * Audits the deletion of a subordinate.
+   *
+   * @param subordinateId the unique identifier of the subordinate being deleted.
+   * @param organizationId the unique identifier of the organization that owns the subordinate.
+   * @param deletedData the data of the deleted subordinate.
+   */
+  void subordinateDeleted(UUID subordinateId, UUID organizationId, SubordinateDto deletedData);
 }

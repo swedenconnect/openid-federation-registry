@@ -125,7 +125,7 @@ class ModuleCRUDIT {
     // Step 1: Create FederationEntity
     final UUID entityId = UUID.randomUUID();
     final FederationEntity entityInput = new FederationEntity()
-        .issuer(entityIssuer);
+        .entityIdentifier(entityIssuer);
     this.entitiesApi.createFederationEntityWithId(entityId, entityInput);
 
     // Step 2: Create TrustmarkIssuer on the FederationEntity
@@ -200,7 +200,7 @@ class ModuleCRUDIT {
   private UUID createFederationEntity(final String subject, final String issuer) {
     final UUID entityId = UUID.randomUUID();
     final FederationEntity entityInput = new FederationEntity()
-        .issuer(issuer);
+        .entityIdentifier(issuer);
     this.entitiesApi.createFederationEntityWithId(entityId, entityInput);
     return entityId;
   }

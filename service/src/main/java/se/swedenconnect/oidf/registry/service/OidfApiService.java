@@ -16,25 +16,46 @@
 package se.swedenconnect.oidf.registry.service;
 
 import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.web.server.ResponseStatusException;
-import se.swedenconnect.oidf.registry.dto.OidfServiceHostedEntities;
-import se.swedenconnect.oidf.registry.dto.OidfServiceSubModules;
+import se.swedenconnect.oidf.registry.dto.EntityToDto;
+import se.swedenconnect.oidf.registry.dto.SubordinateDto;
+import se.swedenconnect.oidf.registry.dto.oidfservice.EntityRecord;
+import se.swedenconnect.oidf.registry.dto.oidfservice.ModuleRecord;
+import se.swedenconnect.oidf.registry.dto.oidfservice.ResolverProperties;
+import se.swedenconnect.oidf.registry.dto.oidfservice.TrustAnchorProperties;
+import se.swedenconnect.oidf.registry.dto.oidfservice.TrustMarkDelegation;
+import se.swedenconnect.oidf.registry.dto.oidfservice.TrustMarkIssuerProperties;
+import se.swedenconnect.oidf.registry.dto.oidfservice.TrustMarkProperties;
+import se.swedenconnect.oidf.registry.dto.oidfservice.TrustMarkSubjectProperty;
+import se.swedenconnect.oidf.registry.dto.oidfservice.gsonserde.JsonRegistryLoader;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
+import se.swedenconnect.oidf.registry.entity.EntityKeyType;
 import se.swedenconnect.oidf.registry.entity.InstanceEntity;
 import se.swedenconnect.oidf.registry.entity.ResolverEntity;
+import se.swedenconnect.oidf.registry.entity.SubordinateEntity;
 import se.swedenconnect.oidf.registry.entity.TaImEntity;
 import se.swedenconnect.oidf.registry.entity.TrustmarkIssuerEntity;
+import se.swedenconnect.oidf.registry.errorhandling.ErrorTypes;
+import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.repository.InstanceRepository;
+import se.swedenconnect.oidf.registry.repository.SubordinateRepository;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -54,11 +75,12 @@ public class OidfApiService {
   private final Duration jwkExpiryDuration;
   private final JWTSupport jwtSupport;
   private final FederationMetadataCreator entityResponseFormatter;
+  private final JsonRegistryLoader serdeLoader = new JsonRegistryLoader();
 
   /**
    * Constructs a FederationApiService instance to handle OpenID Connect Federation related operations.
    *
-   * @param entityRepository EntityRepository
+   * @param subordinateRepository EntityRepository
    * @param signKey the JSON Web Key (JWK) used for signing operations
    * @param instanceRepository the repository for managing instances
    * @param jwkIssuer the issuer associated with the JSON Web Key (JWK)
@@ -66,6 +88,7 @@ public class OidfApiService {
    */
   public OidfApiService(
       final JWK signKey,
+      final SubordinateRepository subordinateRepository,
       final EntityRepository entityRepository,
       final String jwkIssuer,
       final InstanceRepository instanceRepository,
@@ -75,7 +98,7 @@ public class OidfApiService {
     this.instanceRepository = instanceRepository;
     this.jwkExpiryDuration = jwkExpiryDuration;
     this.jwtSupport = new JWTSupport(signKey);
-    this.entityResponseFormatter = new FederationMetadataCreator(entityRepository);
+    this.entityResponseFormatter = new FederationMetadataCreator(subordinateRepository);
   }
 
   /**
@@ -87,10 +110,11 @@ public class OidfApiService {
    */
   @Transactional(readOnly = true)
   public String entityRecord(final UUID instanceId, final boolean plainJson) {
+
     Assert.notNull(instanceId, "InstanceId is mandatory");
     final String claimName = "entity_records";
     final String jwt = this.jwtSupport.signJWT(claimName, builder -> builder
-            .claim(claimName, this.resolveEntityV2(instanceId).getEntityRecords())
+            .claim(claimName, serdeLoader.toJson(this.resolveEntityV2(instanceId)))
             .expirationTime(new Date(System.currentTimeMillis() + this.jwkExpiryDuration.toMillis()))
             .issuer(this.jwkIssuer))
         .serialize();
@@ -109,11 +133,11 @@ public class OidfApiService {
    * @return a signed JWT string containing claims for the submodule record
    */
   @Transactional(readOnly = true)
-  public String submoduleRecord(final UUID instanceId, final boolean plainJson) {
+  public String moduleRecord(final UUID instanceId, final boolean plainJson) {
     Assert.notNull(instanceId, "instanceId is mandatory");
     final String claimName = "module_records";
     final String jwt = this.jwtSupport.signJWT(claimName, builder -> builder
-            .claim(claimName, this.resolveSubmodulesV2(instanceId))
+            .claim(claimName, serdeLoader.toJson(this.resolveModules(instanceId)))
             .expirationTime(new Date(System.currentTimeMillis() + this.jwkExpiryDuration.toMillis()))
             .issuer(this.jwkIssuer))
         .serialize();
@@ -124,9 +148,9 @@ public class OidfApiService {
     return jwt;
   }
 
-  private OidfServiceSubModules resolveSubmodulesV2(final UUID instanceid) {
+  private ModuleRecord resolveModules(final UUID instanceid) {
 
-    final OidfServiceSubModules.OidfServiceSubModulesBuilder subModules = OidfServiceSubModules.builder();
+    final ModuleRecord subModules = new ModuleRecord();
 
     final InstanceEntity instanceEntity = this.instanceRepository.findById(instanceid)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -134,34 +158,34 @@ public class OidfApiService {
 
     final List<EntityEntity> entities = instanceEntity.getOrganizations().stream()
         .flatMap(organizationEntity -> organizationEntity.getEntities().stream())
+        .filter(entityEntity -> entityEntity.getEntityType().equals(EntityKeyType.FEDERATION_ENTITY))
         .toList();
 
-    final List<OidfServiceSubModules.TrustMarkIssuer> tmi = entities.stream()
+    final List<TrustMarkIssuerProperties> tmi = entities.stream()
         .map(EntityEntity::getTrustmarkIssuer)
         .filter(Objects::nonNull)
         .map(this::toTrustMarkIssuer)
         .toList();
-    subModules.trustMarkIssuers(tmi);
+    subModules.setTrustMarkIssuers(tmi);
 
-    final List<OidfServiceSubModules.TrustAnchor> taIm = entities.stream()
+    final List<TrustAnchorProperties> taIm = entities.stream()
         .map(EntityEntity::getTrustanchorIntermediate)
         .filter(Objects::nonNull)
         .map(this::toTaIm)
         .toList();
-    subModules.trustAnchors(taIm);
+    subModules.setTrustAnchors(taIm);
 
-    final List<OidfServiceSubModules.Resolver> resolverEntities = entities.stream()
+    final List<ResolverProperties> resolverEntities = entities.stream()
         .map(EntityEntity::getResolver)
         .filter(Objects::nonNull)
         .map(this::toResolver)
         .toList();
-    subModules.resolvers(resolverEntities);
+    subModules.setResolvers(resolverEntities);
 
-    return subModules.build();
-
+    return subModules;
   }
 
-  private OidfServiceHostedEntities resolveEntityV2(final UUID instanceid) {
+  private List<EntityRecord> resolveEntityV2(final UUID instanceid) {
 
     final InstanceEntity instanceEntity = this.instanceRepository.findById(instanceid)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -172,85 +196,130 @@ public class OidfApiService {
         .flatMap(organizationEntity -> organizationEntity.getEntities().stream())
         .toList();
 
-    return OidfServiceHostedEntities.builder()
-        .entityRecords(entities.stream()
-            .flatMap(entityEntity ->
-                this.entityResponseFormatter.createEntityResponseV2(entityEntity).stream())
-            .toList())
-        .build();
+    return entities.stream()
+        .map(this.entityResponseFormatter::createEntityResponse)
+        .toList();
+
   }
 
-  private OidfServiceSubModules.TrustAnchor toTaIm(final TaImEntity taImModuleEntity) {
+  private TrustAnchorProperties toTaIm(final TaImEntity taImModuleEntity) {
     if (taImModuleEntity == null || taImModuleEntity.getActive() == null || !taImModuleEntity.getActive()) {
-      return OidfServiceSubModules.TrustAnchor.builder().build();
+      return TrustAnchorProperties.builder().build();
     }
-    return OidfServiceSubModules.TrustAnchor.builder()
-        .entityIdentifier(taImModuleEntity.getEntity().getIssuer())
-        .trustMarkIssuer(
-            taImModuleEntity.getTrustMarkIssuers() != null ? null : taImModuleEntity.getTrustMarkIssuers().getFirst())
-        .active(taImModuleEntity.getActive())
+    return TrustAnchorProperties.builder()
+        .entityIdentifier(this.toEntityid(taImModuleEntity.getEntity().getIssuer()))
+        //TODO .trustMarkOwners()
+        //TODO .trustMarkIssuers()
+        .subordinates(taImModuleEntity.getSubordinates()
+            .stream()
+            .map(this::toSubordinates)
+            .filter(Objects::nonNull).toList())
         .build();
   }
 
-  private OidfServiceSubModules.Resolver toResolver(final ResolverEntity resolverEntity) {
+  private TrustAnchorProperties.SubordinateListingProperty toSubordinates(final SubordinateEntity subordinateEntity) {
+    final TrustAnchorProperties.SubordinateListingProperty sub = new TrustAnchorProperties.SubordinateListingProperty();
+    final SubordinateDto subDto = EntityToDto.toDto(subordinateEntity);
+
+    sub.setJwks(this.toJwksSet(subDto.getJwks()));
+    sub.setOverrideConfigurationLocation(subDto.getEcLocation());
+    sub.setMetadataPolicyCrit(subDto.getMetadataPolicyCrit());
+    sub.setCrit(Optional.ofNullable(subDto.getCrit()).orElse(new ArrayList<>(1)));
+    //TODO Implement naming constraints
+    //sub.setConstraints();
+    sub.setEntityIdentifier(this.toEntityid(subDto.getEntityIdentifier()));
+    // if auto resolve is marked true. System tries to get the hosted entity.
+    // If not found this subordinate relation is removed since it can not be resolved
+    if (subDto.isEcLocationAutomaticResolve()) {
+      return entityRepository.findByOrgNumberAndEntityKeyTypeAndIssuer(
+              subordinateEntity.getTaIm().getOrganization().getOrgNumber(),
+              EntityKeyType.HOSTED_ENTITY,
+              subordinateEntity.getEntityidentifyer())
+          .map(EntityToDto::toDtoHosted)
+          .map(dto -> {
+            sub.setOverrideConfigurationLocation(dto.getEffectiveEcLocation());
+            sub.getCrit().add("ec_location");
+            return sub;
+          })
+          .orElse(null);
+    }
+    return sub;
+  }
+
+  private ResolverProperties toResolver(final ResolverEntity resolverEntity) {
     if (resolverEntity == null || resolverEntity.getActive() == null || !resolverEntity.getActive()) {
-      return OidfServiceSubModules.Resolver.builder().build();
+      return ResolverProperties.builder().build();
     }
-    return OidfServiceSubModules.Resolver.builder()
+    return ResolverProperties.builder()
         .entityIdentifier(resolverEntity.getEntity().getIssuer())
-        .resolveResponseDuration(resolverEntity.getResolveResponseDuration())
-        .trustAnchors(resolverEntity.getTrustAnchor() != null
-            ? resolverEntity.getTrustAnchor()
-            : null)
-        .trustedKeys(resolverEntity.getTrustedKeys() != null
-            ? resolverEntity.getTrustedKeys()
-            : null)
-        .stepRetryTime(resolverEntity.getStepRetryDuration())
-        .stepCachedValueThreshold(
-            resolverEntity.getStepCachedValueThreshold()) // This field is not stored in columns yet
+        .resolveResponseDuration(this.toDuration(resolverEntity.getResolveResponseDuration()))
+
+        .trustAnchor(resolverEntity.getTrustAnchor())
+        .trustedKeys(this.toJwksSet(resolverEntity.getTrustedKeys()))
+        .stepRetryTime(this.toDuration(resolverEntity.getStepRetryDuration()))
+        .useCachedValue(resolverEntity.getStepCachedValueThreshold())
         .build();
   }
 
-  private OidfServiceSubModules.TrustMarkIssuer toTrustMarkIssuer(final TrustmarkIssuerEntity tmiModuleEntity) {
+  private TrustMarkIssuerProperties toTrustMarkIssuer(final TrustmarkIssuerEntity tmiModuleEntity) {
     if (tmiModuleEntity == null || tmiModuleEntity.getActive() == null || !tmiModuleEntity.getActive()) {
-      return OidfServiceSubModules.TrustMarkIssuer.builder().build();
+      return TrustMarkIssuerProperties.builder().build();
     }
-    final List<OidfServiceSubModules.TrustMarkIssuer.TrustMark> trustMarks = tmiModuleEntity.getTrustmarks()
+    final List<TrustMarkProperties> trustMarks = tmiModuleEntity.getTrustmarks()
         .stream()
         .map(trustMarkEntity ->
-            OidfServiceSubModules.TrustMarkIssuer.TrustMark.builder()
-                .trustMarkIssuerId(tmiModuleEntity.getEntity().getIssuer())
-                .trustMarkId(trustMarkEntity.getTrustMarkEntityId() != null
-                    ? trustMarkEntity.getTrustMarkEntityId()
-                    : null)
-                .ref(trustMarkEntity.getRefUri())
+            TrustMarkProperties.builder()
+                .trustMarkId(this.toEntityid(trustMarkEntity.getTrustMarkEntityId()))
+                .refUri(trustMarkEntity.getRefUri())
                 .logoUri(trustMarkEntity.getLogoUri())
-                .delegation(trustMarkEntity.getDelegation())
+                .delegation(new TrustMarkDelegation(trustMarkEntity.getDelegation()))
                 .trustMarkSubjects(
                     trustMarkEntity.getTrustmarksubjects()
                         .stream()
                         .filter(tmSubject -> tmSubject.getRevoked() != null)
-                        .map(tmSubject -> OidfServiceSubModules
-                            .TrustMarkIssuer.TrustMark.TrustMarkSubject.builder()
+                        .map(tmSubject -> TrustMarkSubjectProperty.builder()
                             .revoked(tmSubject.getRevoked() != null ? tmSubject.getRevoked() : false)
-                            .subject(tmSubject.getSubject() != null ? tmSubject.getSubject() : null)
-                            .expires(tmSubject.getExpires() != null
-                                ? tmSubject.getExpires().toString()
-                                : null)
-                            .granted(tmSubject.getGranted() != null
-                                ? tmSubject.getGranted().toString()
-                                : null)
+                            .sub(tmSubject.getSubject() != null ? tmSubject.getSubject() : null)
+                            .expires(this.toInstant(tmSubject.getExpires()))
+                            .granted(this.toInstant(tmSubject.getGranted()))
                             .build())
                         .toList()
                 )
                 .build()
         ).toList();
 
-    return OidfServiceSubModules.TrustMarkIssuer.builder()
-        .entityIdentifier(tmiModuleEntity.getEntity().getIssuer())
-        .trustMarkTokenValidityDuration(tmiModuleEntity.getTrustMarkTokenValidityDuration())
+    return TrustMarkIssuerProperties.builder()
+        .entityIdentifier(this.toEntityid(tmiModuleEntity.getEntity().getIssuer()))
+        .trustMarkValidityDuration(this.toDuration(tmiModuleEntity.getTrustMarkTokenValidityDuration()))
         .trustMarks(trustMarks)
         .build();
   }
 
+  private EntityID toEntityid(final String entityId) {
+    try {
+
+      return entityId == null ? null : EntityID.parse(entityId);
+    }
+    catch (final ParseException e) {
+      throw new RuntimeException("Unable to parse entityid", e);
+    }
+  }
+
+  private JWKSet toJwksSet(final String jwks) {
+    try {
+
+      return jwks == null ? null : JWKSet.parse(jwks);
+    }
+    catch (final java.text.ParseException e) {
+      throw new RuntimeException("Unable to create JWKSet", e);
+    }
+  }
+
+  private Instant toInstant(final OffsetDateTime offsetDateTime) {
+    return offsetDateTime == null ? null : offsetDateTime.toInstant();
+  }
+
+  private Duration toDuration(final String duration) {
+    return duration == null ? null : Duration.parse(duration);
+  }
 }

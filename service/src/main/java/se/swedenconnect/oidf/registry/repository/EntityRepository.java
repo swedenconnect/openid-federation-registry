@@ -72,6 +72,23 @@ public interface EntityRepository extends JpaRepository<EntityEntity, UUID> {
   );
 
   /**
+   * Finds a list of {@link EntityEntity} objects based on the given organization number and entity type.
+   *
+   * @param orgNumber the organization number used to filter the query
+   * @param entityType the type of entity used to filter the query
+   * @param subject subject
+   * @return a list of {@link EntityEntity} matching the specified organization number and entity type
+   */
+  @Query("SELECT e FROM EntityEntity e JOIN fetch e.organization o "
+      + "WHERE o.orgNumber = :orgNumber AND e.subject = :subject "
+      + "AND e.entityType = :entityType")
+  Optional<EntityEntity> findByOrgNumberAndEntityKeyTypeAndSubject(
+      @Param("orgNumber") String orgNumber,
+      @Param("entityType") EntityKeyType entityType,
+      @Param("subject") String subject
+  );
+
+  /**
    * Finds all {@link EntityEntity} objects for the given organization number, optionally filtered by entity type.
    *
    * @param orgNumber the organization number used to filter the query

@@ -26,7 +26,7 @@ import java.net.URI;
 public enum ErrorTypes {
   INVALID_PARAMETER("https://oidf.swedenconnect.se/error/invalid_parameter"),
   PARENT_HAS_CHILDREN("https://oidf.swedenconnect.se/error/parent_has_children"),
-  RELATION_NOT_FOUND("https://oidf.swedenconnect.se/error/parent_has_children"),
+  RELATION_NOT_FOUND("https://oidf.swedenconnect.se/error/realtion_not_found"),
   NOT_FOUND("about:blank"),
   CONFLICT("about:blank"),
   BLANK("about:blank");

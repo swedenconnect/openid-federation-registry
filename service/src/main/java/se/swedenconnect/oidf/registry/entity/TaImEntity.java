@@ -21,6 +21,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -68,6 +69,9 @@ public class TaImEntity extends BaseEntity {
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "entity_id", nullable = false)
   private EntityEntity entity;
+
+  @OneToMany(mappedBy = "taIm", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<SubordinateEntity> subordinates = new ArrayList<>();
 
   // Columns for module data (used by TrustAnchor, Resolver, TrustmarkIssuer)
 

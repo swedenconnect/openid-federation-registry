@@ -50,6 +50,19 @@ public interface TaImRepository extends JpaRepository<TaImEntity, UUID> {
       @Param("moduleType") TaImEntity.Type moduleType);
 
   /**
+   * Retrieves a TaIm entity based on the given organization number, TaIm ID
+   *
+   * @param orgNumber the organization number associated with the TaIm
+   * @param taImId the unique identifier of the TaIm
+   * @return an Optional containing the TaImEntity if found, otherwise an empty Optional
+   */
+  @Query("SELECT m FROM TaImEntity m JOIN m.organization o "
+      + "WHERE o.orgNumber = :orgNumber  AND m.taImId=:taImId")
+  Optional<TaImEntity> findByOrgNumberAndTaImId(
+      @Param("orgNumber") String orgNumber,
+      @Param("taImId") UUID taImId);
+
+  /**
    * Retrieves a list of TaImEntity objects associated with the specified organization number and module type.
    *
    * @param orgNumber the organization number to filter by.

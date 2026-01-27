@@ -21,8 +21,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
+import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.entity.PolicyEntity;
 import se.swedenconnect.oidf.registry.entity.ResolverEntity;
+import se.swedenconnect.oidf.registry.entity.SubordinateEntity;
 import se.swedenconnect.oidf.registry.entity.TaImEntity;
 import se.swedenconnect.oidf.registry.entity.TrustMarkEntity;
 import se.swedenconnect.oidf.registry.entity.TrustMarkSubjectEntity;
@@ -30,10 +32,12 @@ import se.swedenconnect.oidf.registry.entity.TrustmarkIssuerEntity;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Utility class for converting between Entity and DTO objects.
@@ -79,8 +83,8 @@ public final class EntityToDto {
       final boolean includeModules) {
     final FederationEntityWithModulesDto dto = new FederationEntityWithModulesDto();
     dto.setEntityId(entity.getEntityId());
-    dto.setIssuer(entity.getIssuer());
-    dto.setMetadata(readMapFromJson(entity.getMetadata()));
+    dto.setEntityIdentifier(entity.getIssuer());
+    dto.setAuthorityhints(readListJson(entity.getAuthorityhints()));
     dto.setCrit(entity.getCrit());
 
     if (!includeModules) {
@@ -116,28 +120,22 @@ public final class EntityToDto {
     if (entityEntity.getEntityType() != EntityKeyType.HOSTED_ENTITY) {
       throw new IllegalArgumentException("Entity is not a HostedEntity");
     }
-
     final HostedEntityDto dto = new HostedEntityDto();
     dto.setEntityId(entityEntity.getEntityId());
     dto.setEntityIdentifier(entityEntity.getIssuer());
+    dto.setCrit(Optional.ofNullable(entityEntity.getCrit()).map(ArrayList::new).orElse(new ArrayList<>(1)));
+    dto.setTrustMarkSources(readTrustMarkSourcesFromJson(entityEntity.getTrustmarksources()));
+    dto.setAuthorityhints(readListJson(entityEntity.getAuthorityhints()));
 
-    // Parse trustMarkSources from JSON string
-    final List<TrustmarkSourceDto> trustMarkSources = readTrustMarkSourcesFromJson(entityEntity.getTrustmarksources());
-    if (!trustMarkSources.isEmpty()) {
-      dto.setTrustMarkSources(trustMarkSources);
-    }
-
-    if (entityEntity.isEcLocationAutomatic()) {
+    // Calculation of ec_location will be made if EntityIdentifier differ from entity prefix.
+    // Example EntityIdentifier is set to http://www.telia.com/oidf but the entityprefix is set to http://www.sc.se
+    // An ec_location will be calculated according to calculatedEcLocation(...
+    if (!entityEntity.getIssuer().startsWith(entityEntity.getSubject())) {
       dto.setEffectiveEcLocation(calculatedEcLocation(entityEntity.getSubject(), entityEntity.getIssuer()));
-    }
-    else {
-      dto.setEffectiveEcLocation(entityEntity.getEcLocation());
-    }
-    dto.setEcLocation(entityEntity.getEcLocation());
-    dto.setEcLocationAutomaticResolve(entityEntity.isEcLocationAutomatic());
+      dto.getCrit().add("ec_location");
 
+    }
     dto.setMetadata(readMapFromJson(entityEntity.getMetadata()));
-
     return dto;
   }
 
@@ -185,9 +183,6 @@ public final class EntityToDto {
   public static void updateEntity(final EntityEntity entity, final HostedEntityDto dto) {
     entity.setIssuer(dto.getEntityIdentifier());
     entity.setSubject(dto.getEntityIdentifier());
-    entity.setEcLocation(dto.getEcLocation());
-    entity.setEcLocationAutomatic(dto.isEcLocationAutomaticResolve());
-
     // Serialize trustMarkSources to JSON string
     entity.setTrustmarksources(writeTrustMarkSourcesToJson(dto.getTrustMarkSources()));
     entity.setMetadata(writeMapToJsonPretty(dto.getMetadata()));
@@ -263,6 +258,29 @@ public final class EntityToDto {
     }
   }
 
+  private static List<String> readListJson(final String jsonStr) {
+    if (jsonStr == null || jsonStr.isBlank()) {
+      return Collections.emptyList();
+    }
+    try {
+      return mapper.readValue(jsonStr, new TypeReference<List<String>>() {});
+    }
+    catch (final JsonProcessingException e) {
+      throw new IllegalArgumentException("Failed to parse trustMarkSources JSON", e);
+    }
+  }
+
+  private static String writeListJson(final List<String> sources) {
+    if (sources == null) {
+      return null;
+    }
+    try {
+      return mapper.writeValueAsString(sources);
+    }
+    catch (final JsonProcessingException e) {
+      throw new IllegalArgumentException("Failed to serialize trustMarkSources to JSON", e);
+    }
+  }
   /**
    * Writes a Map to JSON string with pretty printing.
    *
@@ -337,6 +355,15 @@ public final class EntityToDto {
     dto.setEntityId(moduleEntity.getEntity().getEntityId());
     dto.setActive(moduleEntity.getActive());
     dto.setTrustMarkIssuers(moduleEntity.getTrustMarkIssuers());
+
+    // Add subordinates
+    if (moduleEntity.getSubordinates() != null) {
+      final List<SubordinateDto> subordinates = moduleEntity.getSubordinates().stream()
+          .map(EntityToDto::toDto)
+          .toList();
+      dto.setSubordinates(subordinates);
+    }
+    
     return dto;
   }
 
@@ -355,6 +382,14 @@ public final class EntityToDto {
     dto.setIntermediateId(moduleEntity.getTaImId());
     dto.setEntityId(moduleEntity.getEntity().getEntityId());
     dto.setActive(moduleEntity.getActive());
+
+    // Add subordinates
+    if (moduleEntity.getSubordinates() != null) {
+      final List<SubordinateDto> subordinates = moduleEntity.getSubordinates().stream()
+          .map(EntityToDto::toDto)
+          .toList();
+      dto.setSubordinates(subordinates);
+    }
 
     return dto;
   }
@@ -480,15 +515,10 @@ public final class EntityToDto {
     entity.setEntityType(entityKeyType);
     entity.setOrganization(organization);
     entity.setPolicyEntity(policyEntity);
-    entity.setIssuer(dto.getIssuer());
-    entity.setSubject(dto.getIssuer());
+    entity.setIssuer(dto.getEntityIdentifier());
+    entity.setSubject(dto.getEntityIdentifier());
     entity.setCrit(dto.getCrit());
-
-
-    if (dto.getMetadata() != null) {
-      entity.setMetadata(writeMapToJsonPretty(dto.getMetadata()));
-    }
-
+    entity.setTrustmarksources(writeListJson(dto.getAuthorityhints()));
     return entity;
   }
 
@@ -527,9 +557,7 @@ public final class EntityToDto {
     final PolicyEntity entity = new PolicyEntity();
     entity.setPolicyId(id);
     entity.setOrganization(organization);
-    entity.setName(dto.getName());
-    final Map<String, Object> policy = dto.getPolicy() != null ? dto.getPolicy() : Collections.emptyMap();
-    entity.setPolicy(writeMapToJsonPretty(policy));
+    updateEntity(entity, dto);
     return entity;
   }
 
@@ -540,12 +568,10 @@ public final class EntityToDto {
    * @param dto the federation entity DTO
    */
   public static void updateEntity(final EntityEntity entity, final FederationEntityDto dto) {
-    entity.setIssuer(dto.getIssuer());
-    entity.setSubject(dto.getIssuer());
+    entity.setIssuer(dto.getEntityIdentifier());
+    entity.setSubject(dto.getEntityIdentifier());
     entity.setCrit(dto.getCrit());
-    if (dto.getMetadata() != null) {
-      entity.setMetadata(writeMapToJsonPretty(dto.getMetadata()));
-    }
+    entity.setAuthorityhints(writeListJson(dto.getAuthorityhints()));
   }
 
 
@@ -793,6 +819,106 @@ public final class EntityToDto {
   public static void updateEntity(final TrustmarkIssuerEntity entity, final TrustmarkIssuerDto dto) {
     entity.setActive(dto.getActive());
     entity.setTrustMarkTokenValidityDuration(dto.getTrustMarkTokenValidityDuration());
+  }
+
+  /**
+   * Converts SubordinateEntity to SubordinateDto.
+   *
+   * @param subordinateEntity the subordinate entity
+   * @return the subordinate DTO
+   */
+  public static SubordinateDto toDto(final SubordinateEntity subordinateEntity) {
+    final SubordinateDto dto = new SubordinateDto();
+    dto.setSubordinateId(subordinateEntity.getSubordinateId());
+    dto.setTaImId(subordinateEntity.getTaIm().getTaImId());
+
+    if (subordinateEntity.getPolicy() != null) {
+      dto.setPolicyId(subordinateEntity.getPolicy().getPolicyId());
+      // Set policy as read-only field
+      final String policyJson = subordinateEntity.getPolicy().getPolicy();
+      if (policyJson != null && !policyJson.isBlank()) {
+        dto.setPolicy(readMapFromJson(policyJson));
+      }
+    }
+
+    dto.setJwks(subordinateEntity.getJwks());
+    dto.setEntityIdentifier(subordinateEntity.getEntityidentifyer());
+
+    // Convert crit and metadataPolicyCrit from comma-separated strings to lists
+    if (subordinateEntity.getCrit() != null && !subordinateEntity.getCrit().isEmpty()) {
+      dto.setCrit(List.of(subordinateEntity.getCrit().split(",")));
+    }
+
+    if (subordinateEntity.getMetadataPolicyCrit() != null && !subordinateEntity.getMetadataPolicyCrit().isEmpty()) {
+      dto.setMetadataPolicyCrit(List.of(subordinateEntity.getMetadataPolicyCrit().split(",")));
+    }
+
+    dto.setEcLocation(subordinateEntity.getEcLocation());
+    dto.setEcLocationAutomaticResolve(subordinateEntity.isEcLocationAutomatic());
+
+    return dto;
+  }
+
+  /**
+   * Converts SubordinateDto to SubordinateEntity.
+   *
+   * @param id the subordinate ID
+   * @param dto the subordinate DTO
+   * @param taIm the TaIm entity
+   * @return the subordinate entity
+   */
+  public static SubordinateEntity toEntity(final UUID id,
+      final SubordinateDto dto,
+      final TaImEntity taIm) {
+    final SubordinateEntity entity = new SubordinateEntity();
+    entity.setSubordinateId(id);
+    entity.setTaIm(taIm);
+    entity.setJwks(dto.getJwks());
+    entity.setEntityidentifyer(dto.getEntityIdentifier());
+
+    // Convert crit and metadataPolicyCrit from lists to comma-separated strings
+    if (dto.getCrit() != null && !dto.getCrit().isEmpty()) {
+      entity.setCrit(String.join(",", dto.getCrit()));
+    }
+
+    if (dto.getMetadataPolicyCrit() != null && !dto.getMetadataPolicyCrit().isEmpty()) {
+      entity.setMetadataPolicyCrit(String.join(",", dto.getMetadataPolicyCrit()));
+    }
+
+    if (!entity.isEcLocationAutomatic()) {
+      entity.setEcLocation(dto.getEcLocation());
+    }
+    entity.setEcLocationAutomatic(dto.isEcLocationAutomaticResolve());
+    return entity;
+  }
+
+  /**
+   * Updates SubordinateEntity with SubordinateDto data.
+   *
+   * @param entity the subordinate entity
+   * @param dto the subordinate DTO
+   */
+  public static void updateEntity(final SubordinateEntity entity, final SubordinateDto dto) {
+    entity.setJwks(dto.getJwks());
+    entity.setEntityidentifyer(dto.getEntityIdentifier());
+
+    // Convert crit and metadataPolicyCrit from lists to comma-separated strings
+    if (dto.getCrit() != null && !dto.getCrit().isEmpty()) {
+      entity.setCrit(String.join(",", dto.getCrit()));
+    }
+    else {
+      entity.setCrit(null);
+    }
+
+    if (dto.getMetadataPolicyCrit() != null && !dto.getMetadataPolicyCrit().isEmpty()) {
+      entity.setMetadataPolicyCrit(String.join(",", dto.getMetadataPolicyCrit()));
+    }
+    else {
+      entity.setMetadataPolicyCrit(null);
+    }
+
+    entity.setEcLocation(dto.getEcLocation());
+    entity.setEcLocationAutomatic(dto.isEcLocationAutomaticResolve());
   }
 }
 

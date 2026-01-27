@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package se.swedenconnect.oidf.registry.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,42 +25,40 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * DTO for Subordinate Entity. Used for both input (create/update) and output (get).
- * The entityId field is read-only and will be ignored when deserializing from JSON input.
+ * DTO for Subordinate. Used for both input (create/update) and output (get). The subordinateId field is read-only and
+ * will be ignored when deserializing from JSON input.
  *
  * @author Per Fredrik Plars
  */
 @Data
-@Schema(name = "SubordinateEntity")
-public class SubordinateEntityDto {
+@Schema(name = "Subordinate")
+public class SubordinateDto {
 
-  @Schema(description = "Entity ID", accessMode = Schema.AccessMode.READ_ONLY)
+  @Schema(description = "Subordinate ID", accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private UUID entityId;
+  private UUID subordinateId;
 
-  @Schema(description = "Subject (entity identifier)")
-  private String subject;
+  @Schema(description = "TaIm ID that this subordinate belongs to")
+  private UUID taImId;
 
-  @Schema(description = "Issuer (entity identifier)")
-  private String issuer;
+  @Schema(description = "Policy ID", example = "Optional policy reference")
+  private UUID policyId;
 
-  @Schema(description = "JWKS as JSON string")
+  @Schema(description = "JWKSet for Subordinate", example = "JSON Web Key Set as string")
   private String jwks;
 
-  @Schema(description = "Pointer to the policy used for this subordinate")
-  private UUID policyId;
+  @Schema(description = "Subject (entity identifier)", example = "https://subordinate.example.se")
+  private String entityIdentifier;
+
+  @Schema(description = "List of crit claims", example = "[\"claim1\", \"claim2\"]")
+  private List<String> crit;
+
+  @Schema(description = "List of metadata_policy_crit", example = "[\"operator1\", \"operator2\"]")
+  private List<String> metadataPolicyCrit;
 
   @Schema(description = "Policy", accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private Map<String, Object> policy;
-
-  @Schema(description = "metadataPolicyCrit ", example = "Array of strings specifying critical "
-      + "metadata policy operators")
-  private List<String> metadataPolicyCrit;
-
-  @Schema(description = "crit ", example = "The crit (critical) Claim indicates that extensions to "
-      + "the set of Claims specified for use in this type of JWT")
-  private List<String> crit;
 
   @Schema(description = "ecLocation - location where the actual entity statement is placed. Expressed as a url. "
       + "Ex https://my.company.se/entitystatement")

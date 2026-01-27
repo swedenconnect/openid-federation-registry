@@ -244,6 +244,7 @@ public class EntityConfigController {
    * @param organizationRecord the organization record
    * @return the created subordinate entity
    */
+  @Deprecated
   @PostMapping("/subordinate")
   @Operation(summary = "Create subordinate entity with auto-generated ID")
   public ResponseEntity<SubordinateEntityDto> createSubordinateEntity(
@@ -261,6 +262,7 @@ public class EntityConfigController {
    * @param organizationRecord the organization record
    * @return the created subordinate entity
    */
+  @Deprecated
   @PostMapping("/subordinate/{id}")
   @Operation(summary = "Create subordinate entity with specified ID")
   public ResponseEntity<SubordinateEntityDto> createSubordinateEntityWithId(
@@ -278,6 +280,7 @@ public class EntityConfigController {
    * @param organizationRecord the organization record
    * @return the updated subordinate entity
    */
+  @Deprecated
   @PutMapping("/subordinate/{id}")
   @Operation(summary = "Update subordinate entity")
   public ResponseEntity<SubordinateEntityDto> updateSubordinateEntity(
@@ -294,6 +297,7 @@ public class EntityConfigController {
    * @param organizationRecord the organization record
    * @return the subordinate entity
    */
+  @Deprecated
   @GetMapping("/subordinate/{id}")
   @Operation(summary = "Get subordinate entity")
   public ResponseEntity<SubordinateEntityDto> getSubordinateEntity(
@@ -309,6 +313,7 @@ public class EntityConfigController {
    * @param organizationRecord the organization record
    * @return empty response
    */
+  @Deprecated
   @DeleteMapping("/subordinate/{id}")
   @Operation(summary = "Delete subordinate entity")
   public ResponseEntity<Void> deleteSubordinateEntity(
