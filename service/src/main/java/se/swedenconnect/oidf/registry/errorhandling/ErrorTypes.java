@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import java.net.URI;
  */
 public enum ErrorTypes {
   INVALID_PARAMETER("https://oidf.swedenconnect.se/error/invalid_parameter"),
-  PARENT_HAS_CHILDREN("https://oidf.swedenconnect.se/error/parent_has_children"),
-  RELATION_NOT_FOUND("https://oidf.swedenconnect.se/error/parent_has_children"),
+  DATA_CONSTRAINT("https://oidf.swedenconnect.se/error/data_constraint"),
+  RELATION_NOT_FOUND("https://oidf.swedenconnect.se/error/realtion_not_found"),
   NOT_FOUND("about:blank"),
   CONFLICT("about:blank"),
   BLANK("about:blank");

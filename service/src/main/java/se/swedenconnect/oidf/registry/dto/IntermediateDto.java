@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -40,6 +41,9 @@ public class IntermediateDto {
 
   @Schema(description = "If this intermediate is active")
   private Boolean active;
+
+  @Schema(description = "List of subordinates for this intermediate")
+  private List<SubordinateDto> subordinates;
 
 }
 

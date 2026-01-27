@@ -33,8 +33,7 @@ import se.swedenconnect.oidf.registry.entity.InstanceEntity;
 import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.repository.InstanceRepository;
-import se.swedenconnect.oidf.registry.repository.PolicyRepository;
-import se.swedenconnect.oidf.registry.repository.ResolverRepository;
+import se.swedenconnect.oidf.registry.repository.SubordinateRepository;
 import se.swedenconnect.oidf.registry.service.NotifyService;
 import se.swedenconnect.oidf.registry.service.OidfApiService;
 import se.swedenconnect.security.credential.PkiCredential;
@@ -61,8 +60,7 @@ import java.util.UUID;
 public class RegistryConfig {
 
   private final InstanceRepository instanceRepository;
-  private final PolicyRepository policyRepository;
-  private final ResolverRepository resolverRepository;
+  private final SubordinateRepository subordinateRepository;
   private final EntityRepository entityRepository;
 
   private final RegistryProperties registryProperties;
@@ -71,20 +69,17 @@ public class RegistryConfig {
    * Constructs a RegistryConfig object, initializing various repositories and services required for the registry
    * configuration.
    *
-   * @param policyRepository a repository for managing policies
+   * @param subordinateRepository a repository for managing policies
    * @param instanceRepository a repository for managing instance data
-   * @param resolverRepository a repository for managing resolvers
    * @param registryProperties the configuration properties for the registry
-   * @param entityRepository entityRepository
+   * @param entityRepository the configuration properties for the entityRepository
    */
-  public RegistryConfig(final PolicyRepository policyRepository,
+  public RegistryConfig(final SubordinateRepository subordinateRepository,
       final InstanceRepository instanceRepository,
-      final ResolverRepository resolverRepository,
-      final EntityRepository entityRepository,
-      final RegistryProperties registryProperties) {
-    this.policyRepository = policyRepository;
+      final RegistryProperties registryProperties,
+      final EntityRepository entityRepository) {
+    this.subordinateRepository = subordinateRepository;
     this.instanceRepository = instanceRepository;
-    this.resolverRepository = resolverRepository;
     this.registryProperties = registryProperties;
     this.entityRepository = entityRepository;
   }
@@ -116,6 +111,7 @@ public class RegistryConfig {
 
     return new OidfApiService(
         jwk,
+        this.subordinateRepository,
         this.entityRepository,
         federationAPIProperties.issuer(),
         this.instanceRepository,

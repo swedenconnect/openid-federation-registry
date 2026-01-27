@@ -439,6 +439,44 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
             .build());
   }
 
+  @Override
+  public void subordinateCreated(final UUID subordinateId, final UUID organizationId,
+      final SubordinateDto oldData, final SubordinateDto newData) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(RegistryAuditEventType.SUBORDINATE_CREATED)
+            .organizationId(organizationId.toString())
+            .extId(subordinateId.toString())
+            .oldData(this.toJson(oldData))
+            .newData(this.toJson(newData))
+            .build());
+  }
+
+  @Override
+  public void subordinateUpdated(final UUID subordinateId, final UUID organizationId,
+      final SubordinateDto oldData, final SubordinateDto newData) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(RegistryAuditEventType.SUBORDINATE_UPDATED)
+            .organizationId(organizationId.toString())
+            .extId(subordinateId.toString())
+            .oldData(this.toJson(oldData))
+            .newData(this.toJson(newData))
+            .build());
+  }
+
+  @Override
+  public void subordinateDeleted(final UUID subordinateId, final UUID organizationId,
+      final SubordinateDto deletedData) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(RegistryAuditEventType.SUBORDINATE_DELETED)
+            .organizationId(organizationId.toString())
+            .extId(subordinateId.toString())
+            .oldData(this.toJson(deletedData))
+            .build());
+  }
+
   /**
    * Emits an audit event to be processed. This method is used to perform specific actions related to an audit event,
    * which may include logging, monitoring, or compliance-related processing.

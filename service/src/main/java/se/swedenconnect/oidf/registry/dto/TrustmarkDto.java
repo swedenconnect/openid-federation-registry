@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,8 @@ public class TrustmarkDto {
   @Schema(description = "Trust mark issuer entity identifier")
   private UUID trustmarkissuerId;
 
-  @Schema(description = "Trust mark entity identifier")
-  private String trustMarkEntityId;
+  @Schema(description = "Trustmark type that is a entityid")
+  private String trustmarkType;
 
   @Schema(description = "Logo URI")
   private String logoUri;

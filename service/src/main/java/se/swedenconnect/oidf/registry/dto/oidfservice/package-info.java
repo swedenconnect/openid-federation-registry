@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 /**
- * Package class for registry records.
+ * OIDF Service data model
  *
- * @author Felix Hellman
+ * @author Per Fredrik Plars
  */
-package se.swedenconnect.oidf.registry.federationserviceapi.records;
+package se.swedenconnect.oidf.registry.dto.oidfservice;

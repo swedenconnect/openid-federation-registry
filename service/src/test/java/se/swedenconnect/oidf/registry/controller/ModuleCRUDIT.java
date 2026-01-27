@@ -125,7 +125,7 @@ class ModuleCRUDIT {
     // Step 1: Create FederationEntity
     final UUID entityId = UUID.randomUUID();
     final FederationEntity entityInput = new FederationEntity()
-        .issuer(entityIssuer);
+        .entityIdentifier(entityIssuer);
     this.entitiesApi.createFederationEntityWithId(entityId, entityInput);
 
     // Step 2: Create TrustmarkIssuer on the FederationEntity
@@ -171,7 +171,7 @@ class ModuleCRUDIT {
       final String delegation) {
     final Trustmark input = new Trustmark()
         .trustmarkissuerId(trustmarkIssuerId)
-        .trustMarkEntityId(trustMarkEntityId);
+        .trustmarkType(trustMarkEntityId);
     if (logoUri != null) {
       input.setLogoUri(logoUri);
     }
@@ -200,7 +200,7 @@ class ModuleCRUDIT {
   private UUID createFederationEntity(final String subject, final String issuer) {
     final UUID entityId = UUID.randomUUID();
     final FederationEntity entityInput = new FederationEntity()
-        .issuer(issuer);
+        .entityIdentifier(issuer);
     this.entitiesApi.createFederationEntityWithId(entityId, entityInput);
     return entityId;
   }
@@ -506,7 +506,7 @@ class ModuleCRUDIT {
     assertThat(created).isNotNull();
     assertThat(created.getTrustmarkId()).isNotNull();
     assertThat(created.getTrustmarkissuerId()).isEqualTo(testData.getTrustmarkIssuerId());
-    assertThat(created.getTrustMarkEntityId()).isEqualTo("https://www.pm.se/oidf/trustmark");
+    assertThat(created.getTrustmarkType()).isEqualTo("https://www.pm.se/oidf/trustmark");
     assertThat(created.getLogoUri()).isEqualTo("https://www.pm.se/logo.png");
   }
 
@@ -531,7 +531,7 @@ class ModuleCRUDIT {
     // Assert
     assertThat(created).isNotNull();
     assertThat(created.getTrustmarkId()).isEqualTo(trustmarkId);
-    assertThat(created.getTrustMarkEntityId()).isEqualTo("https://www.pm.se/oidf/trustmark2");
+    assertThat(created.getTrustmarkType()).isEqualTo("https://www.pm.se/oidf/trustmark2");
   }
 
   @Test
@@ -556,7 +556,7 @@ class ModuleCRUDIT {
     // Assert
     assertThat(retrieved).isNotNull();
     assertThat(retrieved.getTrustmarkId()).isEqualTo(trustmarkId);
-    assertThat(retrieved.getTrustMarkEntityId()).isEqualTo("https://www.pm.se/oidf/trustmark3");
+    assertThat(retrieved.getTrustmarkType()).isEqualTo("https://www.pm.se/oidf/trustmark3");
   }
 
   @Test
@@ -577,7 +577,7 @@ class ModuleCRUDIT {
 
     final Trustmark updateInput = new Trustmark()
         .trustmarkissuerId(testData.getTrustmarkIssuerId())
-        .trustMarkEntityId("https://www.pm.se/oidf/trustmark4-updated")
+        .trustmarkType("https://www.pm.se/oidf/trustmark4-updated")
         .logoUri("https://www.pm.se/logo-updated.png")
         .refUri("https://www.pm.se/ref-updated");
 
@@ -586,7 +586,7 @@ class ModuleCRUDIT {
 
     // Assert
     assertThat(updated).isNotNull();
-    assertThat(updated.getTrustMarkEntityId()).isEqualTo("https://www.pm.se/oidf/trustmark4-updated");
+    assertThat(updated.getTrustmarkType()).isEqualTo("https://www.pm.se/oidf/trustmark4-updated");
     assertThat(updated.getLogoUri()).isEqualTo("https://www.pm.se/logo-updated.png");
   }
 

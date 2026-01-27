@@ -122,6 +122,7 @@ public interface EntityConfigService {
    * @param input the subordinate entity data
    * @return the created subordinate entity
    */
+  @Deprecated
   SubordinateEntityDto createSubordinateEntity(OrganizationRecord organizationRecord,
       UUID id, SubordinateEntityDto input);
 
@@ -133,6 +134,7 @@ public interface EntityConfigService {
    * @param input the subordinate entity data
    * @return the updated subordinate entity
    */
+  @Deprecated
   SubordinateEntityDto updateSubordinateEntity(OrganizationRecord organizationRecord,
       UUID id, SubordinateEntityDto input);
 
@@ -143,6 +145,7 @@ public interface EntityConfigService {
    * @param id the entity ID
    * @return the subordinate entity
    */
+  @Deprecated
   SubordinateEntityDto getSubordinateEntity(OrganizationRecord organizationRecord, UUID id);
 
   /**
@@ -151,6 +154,7 @@ public interface EntityConfigService {
    * @param organizationRecord the organization record
    * @param id the entity ID
    */
+  @Deprecated
   void deleteSubordinateEntity(OrganizationRecord organizationRecord, UUID id);
 
   /**

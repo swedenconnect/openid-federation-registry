@@ -76,7 +76,7 @@ public class OidfServiceApiController {
   public String submoduleRecord(@RequestParam(name = "instanceid") final UUID instanceId,
       @RequestParam(name = "plain", defaultValue = "false") final boolean plain) {
 
-    return this.federationApiService.submoduleRecord(instanceId, plain);
+    return this.federationApiService.moduleRecord(instanceId, plain);
   }
 
 }

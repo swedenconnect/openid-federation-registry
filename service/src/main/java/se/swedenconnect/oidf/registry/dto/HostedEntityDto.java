@@ -43,19 +43,21 @@ public class HostedEntityDto {
   @Schema(description = "FederationMetadata")
   private Map<String, Object> metadata;
 
-  @Schema(description = "ecLocation - location where the actual entity statement is placed. Expressed as a url. "
-      + "Ex https://my.company.se/entitystatement")
-  private String ecLocation;
-
-  @Schema(description = "When true, eclocation will be loaded from the hosted entity with the same issuer entityid")
-  private boolean ecLocationAutomaticResolve;
-
   @Schema(description = "Effective EcLocation that is calculated serverside")
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private String effectiveEcLocation;
 
   @Schema(description = "Trustmark sources that can be used to include trustmarks.")
   private List<TrustmarkSourceDto> trustMarkSources;
+
+  @Schema(description = "crit ", example = "The crit (critical) Claim indicates that extensions to "
+      + "the set of Claims specified for use in this type of JWT")
+  private List<String> crit;
+
+  @Schema(description = "authorityhints", example = "An array of strings representing the Entity Identifiers of "
+      + "Intermediate Entities or Trust Anchors that are Immediate Superiors of the Entity. "
+      + "the set of Claims specified for use in this type of JWT")
+  private List<String> authorityhints;
 
 
 }

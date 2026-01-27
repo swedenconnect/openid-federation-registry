@@ -61,5 +61,15 @@ public class SubordinateEntityDto {
       + "the set of Claims specified for use in this type of JWT")
   private List<String> crit;
 
+  @Schema(description = "ecLocation - location where the actual entity statement is placed. Expressed as a url. "
+      + "Ex https://my.company.se/entitystatement")
+  private String ecLocation;
+
+  @Schema(description = "When true, eclocation will be loaded from the hosted entity with the same issuer entityid")
+  private boolean ecLocationAutomaticResolve;
+
+  @Schema(description = "Effective EcLocation that is calculated serverside")
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  private String effectiveEcLocation;
 }
 

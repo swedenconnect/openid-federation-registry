@@ -26,11 +26,14 @@ import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.api.EntitiesApi;
 import se.swedenconnect.oidf.registry.api.ModulesApi;
 import se.swedenconnect.oidf.registry.api.PoliciesApi;
+import se.swedenconnect.oidf.registry.api.SubordinatesApi;
+import se.swedenconnect.oidf.registry.api.model.EntityWithModules;
 import se.swedenconnect.oidf.registry.api.model.FederationEntity;
+import se.swedenconnect.oidf.registry.api.model.FederationEntityWithModules;
 import se.swedenconnect.oidf.registry.api.model.HostedEntity;
 import se.swedenconnect.oidf.registry.api.model.Policy;
 import se.swedenconnect.oidf.registry.api.model.Resolver;
-import se.swedenconnect.oidf.registry.api.model.SubordinateEntity;
+import se.swedenconnect.oidf.registry.api.model.Subordinate;
 import se.swedenconnect.oidf.registry.api.model.TrustAnchor;
 import se.swedenconnect.oidf.registry.api.model.TrustmarkIssuer;
 
@@ -43,7 +46,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.UUID;
+
+import static se.swedenconnect.oidf.registry.entity.EntityKeyType.FEDERATION_ENTITY;
 
 /**
  * oidf-entity-registry
@@ -82,16 +86,23 @@ public class TestDataOperations {
    *
    * @param apiClient the OpenAPI client configured with authentication
    * @param baseUrl the base URL of the API (e.g., "https://localhost:8080")
-   * @return a map containing the created entities and policy IDs
    */
-  public Map<String, UUID> createTestScenarioWithPolicyAndEntities(final ApiClient apiClient, final String baseUrl) {
+  public String createTestScenarioWithPolicyAndEntities(final ApiClient apiClient, final String baseUrl) {
     apiClient.setBasePath(baseUrl);
 
     final PoliciesApi policiesApi = new PoliciesApi(apiClient);
     final EntitiesApi entitiesApi = new EntitiesApi(apiClient);
     final ModulesApi modulesApi = new ModulesApi(apiClient);
+    final SubordinatesApi subordinatesApi = new SubordinatesApi(apiClient);
 
-    final Map<String, UUID> result = new HashMap<>();
+    final List<EntityWithModules> e = entitiesApi.listEntities(FEDERATION_ENTITY.toString(), true);
+    final String taEntityid = "https://www.pm.se/oidf/ta/";
+    if (e.stream()
+        .map(EntityWithModules::getFederationEntity)
+        .map(FederationEntityWithModules::getEntityIdentifier)
+        .anyMatch(s -> s.equals(taEntityid))) {
+      return taEntityid;
+    }
 
     // Step 1: Create a policy
     final Policy policyInput = Policy.builder()
@@ -99,31 +110,28 @@ public class TestDataOperations {
         .policy(Map.of("test", "policy", "version", 1))
         .build();
     final Policy createdPolicy = policiesApi.createPolicy(policyInput);
-    result.put("policyId", createdPolicy.getPolicyId());
     log.info("Created policy with ID: {}", createdPolicy.getPolicyId());
 
     // Step 2: Create first federation entity
-    final FederationEntity firstFederationEntityInput = FederationEntity.builder()
-        .issuer("https://www.pm.se/oidf/ta")
-        .metadata(Map.of("federation_entity", Map.of("organization_name", "Test Organization 1")))
+    final FederationEntity taFederationEntityInput = FederationEntity.builder()
+        .entityIdentifier(taEntityid)
         .build();
-    final FederationEntity firstFederationEntity = entitiesApi.createFederationEntity(firstFederationEntityInput);
-    result.put("firstFederationEntityId", firstFederationEntity.getEntityId());
-    log.info("Created first federation entity with ID: {}", firstFederationEntity.getEntityId());
+
+    final FederationEntity trustAnchorEntity = entitiesApi.createFederationEntity(taFederationEntityInput);
+    log.info("Created first federation entity with ID: {}", trustAnchorEntity.getEntityId());
 
     // Step 3: Add trustanchor module to the first federation entity
     final TrustAnchor trustAnchorInput = TrustAnchor.builder()
-        .entityId(firstFederationEntity.getEntityId())
+        .entityId(trustAnchorEntity.getEntityId())
         .active(true)
         .build();
     final TrustAnchor createdTrustAnchor = modulesApi.createTrustAnchor(trustAnchorInput);
-    result.put("trustAnchorModuleId", createdTrustAnchor.getTrustAnchorId());
     log.info("Created trustanchor module with ID: {} for entity: {}",
-        createdTrustAnchor.getTrustAnchorId(), firstFederationEntity.getIssuer());
+        createdTrustAnchor.getTrustAnchorId(), trustAnchorEntity.getEntityIdentifier());
 
     final Resolver resolverInput = Resolver.builder()
-        .entityId(firstFederationEntity.getEntityId())
-        .trustAnchor(firstFederationEntity.getIssuer())
+        .entityId(trustAnchorEntity.getEntityId())
+        .trustAnchor(trustAnchorEntity.getEntityIdentifier())
         .trustedKeys(genJWKS().toString())
         .resolveResponseDuration("PT1H")
         .stepCachedValueThreshold(10)
@@ -131,19 +139,17 @@ public class TestDataOperations {
         .active(true)
         .build();
     final Resolver createdResolver = modulesApi.createResolver(resolverInput);
-    result.put("resolveModuleId", createdResolver.getResolverId());
     log.info("Created resolver module with ID: {} for entity: {}",
-        createdResolver.getResolverId(), firstFederationEntity.getIssuer());
+        createdResolver.getResolverId(), trustAnchorEntity.getEntityIdentifier());
 
     final TrustmarkIssuer trustmarkIssuerInput = TrustmarkIssuer.builder()
-        .entityId(firstFederationEntity.getEntityId())
+        .entityId(trustAnchorEntity.getEntityId())
         .trustMarkTokenValidityDuration("PT1H")
         .active(true)
         .build();
     final TrustmarkIssuer createdTrustmarkIssuer = modulesApi.createTrustmarkIssuer(trustmarkIssuerInput);
-    result.put("tmiId", createdTrustmarkIssuer.getTrustmarkIssuerId());
     log.info("Created tmi module with ID: {} for entity: {}",
-        createdTrustmarkIssuer.getTrustmarkIssuerId(), firstFederationEntity.getIssuer());
+        createdTrustmarkIssuer.getTrustmarkIssuerId(), trustAnchorEntity.getEntityIdentifier());
 
     // Step 4: Create second federation entity with relying_party metadata
     final Map<String, Object> relyingPartyMetadata = new HashMap<>();
@@ -151,42 +157,39 @@ public class TestDataOperations {
         "client_name", "Test Relying Party",
         "redirect_uris", java.util.List.of("https://rp.test.se/callback")
     ));
-    final FederationEntity secondFederationEntityInput = FederationEntity.builder()
-        .issuer("https://www.pm.se/oidf/relyingparty")
+
+    final HostedEntity secondFederationEntity = entitiesApi.createHostedEntity(HostedEntity.builder()
+        .entityIdentifier("https://www.pm.se/oidf/relyingparty")
         .metadata(relyingPartyMetadata)
-        .build();
-    final FederationEntity secondFederationEntity = entitiesApi.createFederationEntity(secondFederationEntityInput);
-    result.put("secondFederationEntityId", secondFederationEntity.getEntityId());
+        .build());
     log.info("Created second federation entity with ID: {} and relying_party metadata",
         secondFederationEntity.getEntityId());
 
     // Step 5: Create subordinate entity with subject set to first federation entity,
     // issuer set to second federation entity, and the created policy
-    final SubordinateEntity subordinateEntityInput = SubordinateEntity.builder()
-        .subject(firstFederationEntity.getIssuer())
-        .issuer(secondFederationEntity.getIssuer())
+
+    subordinatesApi.createSubordinate(Subordinate.builder()
+        .taImId(createdTrustAnchor.getTrustAnchorId())
+        .entityIdentifier(secondFederationEntity.getEntityIdentifier())
         .policyId(createdPolicy.getPolicyId())
         .jwks(genJWKS().toString())
-        .build();
+        .build());
 
-    final SubordinateEntity createdSubordinateEntity = entitiesApi.createSubordinateEntity(subordinateEntityInput);
-    result.put("subordinateEntityId", createdSubordinateEntity.getEntityId());
+    final HostedEntity hostedPolisen = entitiesApi.createHostedEntity(
+        HostedEntity.builder()
+            .entityIdentifier("https://www.polisen.se/op/sverigeid")
+            .metadata(Map.of("openid_connect", "Polis polis..."))
+            .build());
 
-    final HostedEntity hostedEntityEntityInput = HostedEntity.builder()
-        .entityIdentifier("https://www.polisen.se/op/swerigeid")
+    subordinatesApi.createSubordinate(Subordinate.builder()
+        .taImId(createdTrustAnchor.getTrustAnchorId())
+        .entityIdentifier(hostedPolisen.getEntityIdentifier())
+        .policyId(createdPolicy.getPolicyId())
         .ecLocationAutomaticResolve(true)
-        .build();
+        .jwks(genJWKS().toString())
+        .build());
 
-    final HostedEntity createdHostedEntity = entitiesApi.createHostedEntity(hostedEntityEntityInput);
-    result.put("createdHostedEntityId", createdHostedEntity.getEntityId());
-
-    log.info("Created subordinate entity with ID: {}, subject: {}, issuer: {}, policyId: {}",
-        createdSubordinateEntity.getEntityId(),
-        createdSubordinateEntity.getSubject(),
-        createdSubordinateEntity.getIssuer(),
-        createdPolicy.getPolicyId());
-
-    return result;
+    return taFederationEntityInput.getEntityIdentifier();
   }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.DATA_CONSTRAINT;
 import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.INVALID_PARAMETER;
-import static se.swedenconnect.oidf.registry.errorhandling.ErrorTypes.PARENT_HAS_CHILDREN;
 
 /**
  * Error Handler ControllerAdvice.
@@ -129,10 +129,10 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
    */
   @ExceptionHandler(DataIntegrityViolationException.class)
   public ResponseEntity<Object> handle(final DataIntegrityViolationException e, final WebRequest request) {
-
+    log.info("Data integrity violation exception:" + e.getMessage());
     final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400),
-        "Unable to delete entity, remove children first");
-    problemDetail.setType(PARENT_HAS_CHILDREN.errorURI);
+        "Dataconstraint violation error, consult serverlogs");
+    problemDetail.setType(DATA_CONSTRAINT.errorURI);
 
     return this.handleExceptionInternal(e,
         problemDetail,
