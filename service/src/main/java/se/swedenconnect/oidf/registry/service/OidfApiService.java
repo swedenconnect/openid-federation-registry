@@ -42,8 +42,6 @@ import se.swedenconnect.oidf.registry.entity.ResolverEntity;
 import se.swedenconnect.oidf.registry.entity.SubordinateEntity;
 import se.swedenconnect.oidf.registry.entity.TaImEntity;
 import se.swedenconnect.oidf.registry.entity.TrustmarkIssuerEntity;
-import se.swedenconnect.oidf.registry.errorhandling.ErrorTypes;
-import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.repository.InstanceRepository;
 import se.swedenconnect.oidf.registry.repository.SubordinateRepository;
@@ -83,6 +81,7 @@ public class OidfApiService {
    * @param subordinateRepository EntityRepository
    * @param signKey the JSON Web Key (JWK) used for signing operations
    * @param instanceRepository the repository for managing instances
+   * @param entityRepository the repository for managing entity
    * @param jwkIssuer the issuer associated with the JSON Web Key (JWK)
    * @param jwkExpiryDuration jwkExpiryDuration
    */
@@ -114,7 +113,7 @@ public class OidfApiService {
     Assert.notNull(instanceId, "InstanceId is mandatory");
     final String claimName = "entity_records";
     final String jwt = this.jwtSupport.signJWT(claimName, builder -> builder
-            .claim(claimName, serdeLoader.toJson(this.resolveEntityV2(instanceId)))
+            .claim(claimName, this.serdeLoader.toJson(this.resolveEntityV2(instanceId)))
             .expirationTime(new Date(System.currentTimeMillis() + this.jwkExpiryDuration.toMillis()))
             .issuer(this.jwkIssuer))
         .serialize();
@@ -137,7 +136,7 @@ public class OidfApiService {
     Assert.notNull(instanceId, "instanceId is mandatory");
     final String claimName = "module_records";
     final String jwt = this.jwtSupport.signJWT(claimName, builder -> builder
-            .claim(claimName, serdeLoader.toJson(this.resolveModules(instanceId)))
+            .claim(claimName, this.serdeLoader.toJson(this.resolveModules(instanceId)))
             .expirationTime(new Date(System.currentTimeMillis() + this.jwkExpiryDuration.toMillis()))
             .issuer(this.jwkIssuer))
         .serialize();
@@ -228,13 +227,13 @@ public class OidfApiService {
     //TODO Implement naming constraints
     //sub.setConstraints();
     sub.setEntityIdentifier(this.toEntityid(subDto.getEntityIdentifier()));
-    // if auto resolve is marked true. System tries to get the hosted entity.
+    // if autoresolve is marked true. System tries to get the hosted entity.
     // If not found this subordinate relation is removed since it can not be resolved
     if (subDto.isEcLocationAutomaticResolve()) {
-      return entityRepository.findByOrgNumberAndEntityKeyTypeAndIssuer(
+      return this.entityRepository.findByOrgNumberAndEntityKeyTypeAndIssuer(
               subordinateEntity.getTaIm().getOrganization().getOrgNumber(),
               EntityKeyType.HOSTED_ENTITY,
-              subordinateEntity.getEntityidentifyer())
+              subordinateEntity.getEntityidentifier())
           .map(EntityToDto::toDtoHosted)
           .map(dto -> {
             sub.setOverrideConfigurationLocation(dto.getEffectiveEcLocation());
@@ -269,7 +268,7 @@ public class OidfApiService {
         .stream()
         .map(trustMarkEntity ->
             TrustMarkProperties.builder()
-                .trustMarkId(this.toEntityid(trustMarkEntity.getTrustMarkEntityId()))
+                .trustMarkId(this.toEntityid(trustMarkEntity.getTrustmarkType()))
                 .refUri(trustMarkEntity.getRefUri())
                 .logoUri(trustMarkEntity.getLogoUri())
                 .delegation(new TrustMarkDelegation(trustMarkEntity.getDelegation()))

@@ -21,7 +21,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
-import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.entity.PolicyEntity;
 import se.swedenconnect.oidf.registry.entity.ResolverEntity;
 import se.swedenconnect.oidf.registry.entity.SubordinateEntity;
@@ -423,7 +422,7 @@ public final class EntityToDto {
     final TrustmarkDto dto = new TrustmarkDto();
     dto.setTrustmarkId(trustMarkEntity.getTrustmarkId());
     dto.setTrustmarkissuerId(trustMarkEntity.getTrustmarkIssuer().getTrustmarkIssuerId());
-    dto.setTrustMarkEntityId(trustMarkEntity.getTrustMarkEntityId());
+    dto.setTrustmarkType(trustMarkEntity.getTrustmarkType());
     dto.setLogoUri(trustMarkEntity.getLogoUri());
     dto.setRefUri(trustMarkEntity.getRefUri());
     dto.setDelegation(trustMarkEntity.getDelegation());
@@ -440,7 +439,7 @@ public final class EntityToDto {
     final TrustmarkWithSubjectsDto dto = new TrustmarkWithSubjectsDto();
     dto.setTrustmarkId(trustMarkEntity.getTrustmarkId());
     dto.setTrustmarkissuerId(trustMarkEntity.getTrustmarkIssuer().getTrustmarkIssuerId());
-    dto.setTrustMarkEntityId(trustMarkEntity.getTrustMarkEntityId());
+    dto.setTrustmarkType(trustMarkEntity.getTrustmarkType());
     dto.setLogoUri(trustMarkEntity.getLogoUri());
     dto.setRefUri(trustMarkEntity.getRefUri());
     dto.setDelegation(trustMarkEntity.getDelegation());
@@ -466,7 +465,7 @@ public final class EntityToDto {
     final TrustmarkWithSubjectsDto dto = new TrustmarkWithSubjectsDto();
     dto.setTrustmarkId(trustMarkEntity.getTrustmarkId());
     dto.setTrustmarkissuerId(trustMarkEntity.getTrustmarkIssuer().getTrustmarkIssuerId());
-    dto.setTrustMarkEntityId(trustMarkEntity.getTrustMarkEntityId());
+    dto.setTrustmarkType(trustMarkEntity.getTrustmarkType());
     dto.setLogoUri(trustMarkEntity.getLogoUri());
     dto.setRefUri(trustMarkEntity.getRefUri());
     dto.setDelegation(trustMarkEntity.getDelegation());
@@ -651,7 +650,7 @@ public final class EntityToDto {
     return TrustMarkEntity.builder()
         .trustmarkId(id)
         .trustmarkIssuer(trustmarkIssuerEntity)
-        .trustMarkEntityId(dto.getTrustMarkEntityId())
+        .trustmarkType(dto.getTrustmarkType())
         .logoUri(dto.getLogoUri())
         .refUri(dto.getRefUri())
         .delegation(dto.getDelegation())
@@ -666,7 +665,7 @@ public final class EntityToDto {
    */
   public static void updateEntity(final TrustMarkEntity entity, final TrustmarkDto dto) {
 
-    entity.setTrustMarkEntityId(dto.getTrustMarkEntityId());
+    entity.setTrustmarkType(dto.getTrustmarkType());
     entity.setLogoUri(dto.getLogoUri());
     entity.setRefUri(dto.getRefUri());
     entity.setDelegation(dto.getDelegation());
@@ -842,7 +841,7 @@ public final class EntityToDto {
     }
 
     dto.setJwks(subordinateEntity.getJwks());
-    dto.setEntityIdentifier(subordinateEntity.getEntityidentifyer());
+    dto.setEntityIdentifier(subordinateEntity.getEntityidentifier());
 
     // Convert crit and metadataPolicyCrit from comma-separated strings to lists
     if (subordinateEntity.getCrit() != null && !subordinateEntity.getCrit().isEmpty()) {
@@ -874,7 +873,7 @@ public final class EntityToDto {
     entity.setSubordinateId(id);
     entity.setTaIm(taIm);
     entity.setJwks(dto.getJwks());
-    entity.setEntityidentifyer(dto.getEntityIdentifier());
+    entity.setEntityidentifier(dto.getEntityIdentifier());
 
     // Convert crit and metadataPolicyCrit from lists to comma-separated strings
     if (dto.getCrit() != null && !dto.getCrit().isEmpty()) {
@@ -900,7 +899,7 @@ public final class EntityToDto {
    */
   public static void updateEntity(final SubordinateEntity entity, final SubordinateDto dto) {
     entity.setJwks(dto.getJwks());
-    entity.setEntityidentifyer(dto.getEntityIdentifier());
+    entity.setEntityidentifier(dto.getEntityIdentifier());
 
     // Convert crit and metadataPolicyCrit from lists to comma-separated strings
     if (dto.getCrit() != null && !dto.getCrit().isEmpty()) {

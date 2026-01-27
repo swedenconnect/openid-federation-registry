@@ -22,9 +22,7 @@ import se.swedenconnect.oidf.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.dto.EntityToDto;
 import se.swedenconnect.oidf.registry.dto.SubordinateDto;
-import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
-import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.entity.PolicyEntity;
 import se.swedenconnect.oidf.registry.entity.SubordinateEntity;
 import se.swedenconnect.oidf.registry.entity.TaImEntity;
@@ -36,8 +34,6 @@ import se.swedenconnect.oidf.registry.repository.SubordinateRepository;
 import se.swedenconnect.oidf.registry.repository.TaImRepository;
 import se.swedenconnect.oidf.registry.validation.ValidateDto;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -132,11 +128,11 @@ public class SubordinateServiceImpl implements SubordinateService {
 
     // If automatic resolve is selected, the system try to find a hosted entity. If not an exception is thrown.
     if (input.isEcLocationAutomaticResolve()) {
-      entityRepository.findByOrgNumberAndEntityKeyTypeAndIssuer(taIm.getOrganization().getOrgNumber(),
-              EntityKeyType.HOSTED_ENTITY, subordinateEntity.getEntityidentifyer())
+      this.entityRepository.findByOrgNumberAndEntityKeyTypeAndIssuer(taIm.getOrganization().getOrgNumber(),
+              EntityKeyType.HOSTED_ENTITY, subordinateEntity.getEntityidentifier())
           .orElseThrow(() ->
               new RegistryServerException(ErrorTypes.RELATION_NOT_FOUND,
-                  "No hosted entity found for entityid %s".formatted(subordinateEntity.getEntityidentifyer()))
+                  "No hosted entity found for entityid %s".formatted(subordinateEntity.getEntityidentifier()))
           );
     }
 
@@ -168,11 +164,13 @@ public class SubordinateServiceImpl implements SubordinateService {
       existing.setPolicy(null);
     }
     if (input.isEcLocationAutomaticResolve()) {
-      entityRepository.findByOrgNumberAndEntityKeyTypeAndIssuer(existing.getTaIm().getOrganization().getOrgNumber(),
-              EntityKeyType.HOSTED_ENTITY, existing.getEntityidentifyer())
+      this.entityRepository
+          .findByOrgNumberAndEntityKeyTypeAndIssuer(existing.getTaIm().getOrganization().getOrgNumber(),
+              EntityKeyType.HOSTED_ENTITY, existing.getEntityidentifier())
           .orElseThrow(() ->
               new RegistryServerException(ErrorTypes.RELATION_NOT_FOUND,
-                  "No hosted entity found for entityid %s".formatted(existing.getEntityidentifyer()))
+                  "No hosted entity found for entityid: %s. Subordinatestatement can not be created"
+                      .formatted(existing.getEntityidentifier()))
           );
     }
     this.subordinateRepository.save(existing);

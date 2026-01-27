@@ -1158,7 +1158,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       },
       "put": {
         "tags": [
@@ -1198,7 +1199,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       },
       "post": {
         "tags": [
@@ -1238,7 +1240,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       },
       "delete": {
         "tags": [
@@ -1261,7 +1264,8 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/registry/v1/entities/hosted/{id}": {
@@ -1875,7 +1879,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/registry/v1/entities/hosted": {
@@ -2113,9 +2118,9 @@
             "format": "uuid",
             "description": "Trust mark issuer entity identifier"
           },
-          "trustMarkEntityId": {
+          "trustmarkType": {
             "type": "string",
-            "description": "Trust mark entity identifier"
+            "description": "Trustmark type that is a entityid"
           },
           "logoUri": {
             "type": "string",
@@ -2232,6 +2237,11 @@
           "ecLocationAutomaticResolve": {
             "type": "boolean",
             "description": "When true, eclocation will be loaded from the hosted entity with the same issuer entityid"
+          },
+          "effectiveEcLocation": {
+            "type": "string",
+            "description": "Effective EcLocation that is calculated serverside",
+            "readOnly": true
           }
         }
       },
@@ -2562,9 +2572,9 @@
                 "format": "uuid",
                 "description": "Trust mark issuer entity identifier"
               },
-              "trustMarkEntityId": {
+              "trustmarkType": {
                 "type": "string",
-                "description": "Trust mark entity identifier"
+                "description": "Trustmark type that is a entityid"
               },
               "logoUri": {
                 "type": "string",

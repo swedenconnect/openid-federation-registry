@@ -14,27 +14,9 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.errorhandling;
-
-import java.net.URI;
-
 /**
- * Define error type constants
+ * Classes for ser/dec
  *
  * @author Per Fredrik Plars
  */
-public enum ErrorTypes {
-  INVALID_PARAMETER("https://oidf.swedenconnect.se/error/invalid_parameter"),
-  DATA_CONSTRAINT("https://oidf.swedenconnect.se/error/data_constraint"),
-  RELATION_NOT_FOUND("https://oidf.swedenconnect.se/error/realtion_not_found"),
-  NOT_FOUND("about:blank"),
-  CONFLICT("about:blank"),
-  BLANK("about:blank");
-
-  public final URI errorURI;
-
-  ErrorTypes(final String errorURI) {
-    this.errorURI = URI.create(errorURI);
-  }
-
-}
+package se.swedenconnect.oidf.registry.dto.oidfservice.gsonserde;

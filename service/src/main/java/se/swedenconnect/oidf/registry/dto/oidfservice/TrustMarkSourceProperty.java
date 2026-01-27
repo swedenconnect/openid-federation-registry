@@ -13,28 +13,20 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package se.swedenconnect.oidf.registry.dto.oidfservice;
 
-package se.swedenconnect.oidf.registry.errorhandling;
+import com.nimbusds.jose.shaded.gson.annotations.SerializedName;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 
-import java.net.URI;
+import java.io.Serializable;
 
 /**
- * Define error type constants
+ * Data class for trust mark source.
  *
- * @author Per Fredrik Plars
+ * @param issuer of the trust mark
+ * @param trustMarkType of the trust mark
+ * @author Felix Hellman
  */
-public enum ErrorTypes {
-  INVALID_PARAMETER("https://oidf.swedenconnect.se/error/invalid_parameter"),
-  DATA_CONSTRAINT("https://oidf.swedenconnect.se/error/data_constraint"),
-  RELATION_NOT_FOUND("https://oidf.swedenconnect.se/error/realtion_not_found"),
-  NOT_FOUND("about:blank"),
-  CONFLICT("about:blank"),
-  BLANK("about:blank");
-
-  public final URI errorURI;
-
-  ErrorTypes(final String errorURI) {
-    this.errorURI = URI.create(errorURI);
-  }
-
+public record TrustMarkSourceProperty(@SerializedName("issuer") EntityID issuer,
+    @SerializedName("trust-mark-type") String trustMarkType) implements Serializable {
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,8 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
- *
+ *  limitations under the License.
  */
 package se.swedenconnect.oidf.registry.dto.oidfservice.gsonserde;
 
@@ -82,6 +81,6 @@ public class JWKSSerializer implements JsonDeserializer<JWKSet>, JsonSerializer<
     if (Objects.nonNull(this.referenceSerializer)) {
       this.referenceSerializer.serialize(jwks, type, jsonSerializationContext);
     }
-    return new JsonParser().parse(jwks.toString(true));
+    return JsonParser.parseString(jwks.toString(true));
   }
 }

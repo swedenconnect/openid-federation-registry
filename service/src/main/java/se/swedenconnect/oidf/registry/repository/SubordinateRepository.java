@@ -34,16 +34,16 @@ import java.util.UUID;
 public interface SubordinateRepository extends JpaRepository<SubordinateEntity, UUID> {
 
   /**
-   * Finds subordinate by orgid and entityidentifyer
+   * Finds subordinate by orgid and entityidentifier
    *
    * @param orgNumber Orgnumber
-   * @param entityidentifyer entityidentifyer
+   * @param entityidentifier entityidentifier
    * @return List of SubordinateEntity
    */
   @Query("SELECT s FROM SubordinateEntity s JOIN s.taIm m JOIN m.organization o "
-      + "WHERE o.orgNumber = :orgNumber AND s.entityidentifyer = :entityidentifyer ")
-  Optional<SubordinateEntity> findByOrgNumberAndEntityidentifyer(
-      @Param("orgNumber") String orgNumber, @Param("entityidentifyer") String entityidentifyer);
+      + "WHERE o.orgNumber = :orgNumber AND s.entityidentifier = :entityidentifier ")
+  Optional<SubordinateEntity> findByOrgNumberAndEntityidentifier(
+      @Param("orgNumber") String orgNumber, @Param("entityidentifier") String entityidentifier);
 
 }
 

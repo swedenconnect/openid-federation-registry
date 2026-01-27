@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,8 +62,8 @@ public class TrustMarkEntity extends BaseEntity {
   @OneToMany(mappedBy = "trustMark", cascade = CascadeType.DETACH, orphanRemoval = true, fetch = FetchType.LAZY)
   private List<TrustMarkSubjectEntity> trustmarksubjects;
 
-  @Column(name = "trustmark_entity_id")
-  private String trustMarkEntityId;
+  @Column(name = "trustmark_type")
+  private String trustmarkType;
 
   @Column(name = "logo_uri", length = 512)
   private String logoUri;

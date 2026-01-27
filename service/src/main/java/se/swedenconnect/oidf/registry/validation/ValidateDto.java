@@ -126,7 +126,7 @@ public class ValidateDto {
    */
   public void validate(final TrustmarkDto dto) {
     this.v.required().uuid().build().ifFailThrow("trustmarkissuerId", dto.getTrustmarkissuerId());
-    this.v.required().url().build().ifFailThrow("trustMarkEntityId", dto.getTrustMarkEntityId());
+    this.v.required().url().build().ifFailThrow("trustMarkEntityId", dto.getTrustmarkType());
     this.v.url().build().ifFailThrow("logoUri", dto.getLogoUri());
     this.v.url().build().ifFailThrow("refUri", dto.getRefUri());
     this.v.jwt().build().ifFailThrow("delegation", dto.getDelegation());
@@ -183,7 +183,7 @@ public class ValidateDto {
    */
   public void validate(final SubordinateDto dto) {
     this.v.required().uuid().build().ifFailThrow("taImId", dto.getTaImId());
-    this.v.required().entityid().build().ifFailThrow("entityidentifyer", dto.getEntityIdentifier());
+    this.v.required().entityid().build().ifFailThrow("entityidentifier", dto.getEntityIdentifier());
     this.v.jwks().build().ifFailThrow("jwks", dto.getJwks());
 
     this.v.uuid().build().ifFailThrow("policyid", dto.getPolicyId());

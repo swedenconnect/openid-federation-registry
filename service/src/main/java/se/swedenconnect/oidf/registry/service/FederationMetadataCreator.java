@@ -27,7 +27,6 @@ import se.swedenconnect.oidf.registry.dto.oidfservice.FederationMetadata;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
 import se.swedenconnect.oidf.registry.entity.SubordinateEntity;
-import se.swedenconnect.oidf.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.repository.SubordinateRepository;
 
 import java.util.List;
@@ -79,7 +78,7 @@ public class FederationMetadataCreator {
 
         entityData.setEntityIdentifier(EntityID.parse(dto.getEntityIdentifier()));
         entityData.setMetadata(dto.getMetadata());
-        entityData.setOverrideConfigurationLocation(dto.getEffectiveEcLocation());
+        entityData.setEcLocation(dto.getEffectiveEcLocation());
         entityData.setCrit(dto.getCrit());
         entityData.setTrustMarkSource(entityData.getTrustMarkSource());
         this.authorityHint(entityEntity).map(List::of).ifPresent(entityData::setAuthorityHints);
@@ -145,7 +144,7 @@ public class FederationMetadataCreator {
    * @return Issuer for subordinate statement if there is one.
    */
   private Optional<String> authorityHint(final EntityEntity entity) {
-    return this.subordinateRepository.findByOrgNumberAndEntityidentifyer(entity.getOrganization().getOrgNumber(),
+    return this.subordinateRepository.findByOrgNumberAndEntityidentifier(entity.getOrganization().getOrgNumber(),
             entity.getIssuer()).map(SubordinateEntity::getTaIm)
         .map(taImEntity -> taImEntity.getEntity().getSubject());
 

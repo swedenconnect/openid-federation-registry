@@ -16,7 +16,13 @@
 
 package se.swedenconnect.oidf.registry.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -56,8 +62,8 @@ public class SubordinateEntity extends BaseEntity {
   @Column(name = "jwks", columnDefinition = "TEXT")
   private String jwks;
 
-  @Column(name = "entityidentifyer", length = 255)
-  private String entityidentifyer;
+  @Column(name = "entityidentifier", length = 255)
+  private String entityidentifier;
 
   @Column(name = "crit", columnDefinition = "TEXT")
   private String crit;

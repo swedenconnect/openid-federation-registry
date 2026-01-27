@@ -33,8 +33,6 @@ import se.swedenconnect.oidf.registry.entity.InstanceEntity;
 import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.repository.InstanceRepository;
-import se.swedenconnect.oidf.registry.repository.PolicyRepository;
-import se.swedenconnect.oidf.registry.repository.ResolverRepository;
 import se.swedenconnect.oidf.registry.repository.SubordinateRepository;
 import se.swedenconnect.oidf.registry.service.NotifyService;
 import se.swedenconnect.oidf.registry.service.OidfApiService;
@@ -74,6 +72,7 @@ public class RegistryConfig {
    * @param subordinateRepository a repository for managing policies
    * @param instanceRepository a repository for managing instance data
    * @param registryProperties the configuration properties for the registry
+   * @param entityRepository the configuration properties for the entityRepository
    */
   public RegistryConfig(final SubordinateRepository subordinateRepository,
       final InstanceRepository instanceRepository,

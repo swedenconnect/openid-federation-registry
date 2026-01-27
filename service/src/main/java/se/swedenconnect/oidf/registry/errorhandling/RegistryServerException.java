@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class RegistryServerException extends RuntimeException {
    */
   public int getHttpCode() {
     return switch (this.errorTypes) {
-      case INVALID_PARAMETER, PARENT_HAS_CHILDREN -> 400;
+      case INVALID_PARAMETER, DATA_CONSTRAINT -> 400;
       case NOT_FOUND, RELATION_NOT_FOUND -> 404;
       case CONFLICT -> 409;
       case BLANK -> 500;

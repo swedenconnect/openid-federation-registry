@@ -17,7 +17,6 @@
 package se.swedenconnect.oidf.registry.controller;
 
 import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.shaded.gson.Gson;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
@@ -30,18 +29,11 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.dto.oidfservice.EntityRecord;
 import se.swedenconnect.oidf.registry.dto.oidfservice.ModuleRecord;
-import se.swedenconnect.oidf.registry.dto.oidfservice.ResolverProperties;
 import se.swedenconnect.oidf.registry.dto.oidfservice.TrustAnchorProperties;
 import se.swedenconnect.oidf.registry.dto.oidfservice.gsonserde.JsonRegistryLoader;
-import se.swedenconnect.oidf.registry.federationserviceapi.ModuleResponse;
-import se.swedenconnect.oidf.registry.federationserviceapi.ResolverModuleResponse;
-import se.swedenconnect.oidf.registry.federationserviceapi.TrustAnchorModuleResponse;
-import se.swedenconnect.oidf.registry.federationserviceapi.TrustMarkIssuerModuleResponse;
 import se.swedenconnect.oidf.registry.fixture.FederationAPIOperations;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
 import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
@@ -123,7 +115,7 @@ class OidfServiceApiControllerIT {
     assertEquals("ec_location", polisen.getCrit().getFirst());
     assertNull(polisen.getJwks());
     assertEquals("https://www.pm.se/oidf/www_polisen_se_op_sverigeid/.well-known/openid-federation",
-        polisen.getOverrideConfigurationLocation());
+        polisen.getEcLocation());
     assertEquals("https://www.pm.se/oidf/ta", polisen.getAuthorityHints().getFirst());
 
   }

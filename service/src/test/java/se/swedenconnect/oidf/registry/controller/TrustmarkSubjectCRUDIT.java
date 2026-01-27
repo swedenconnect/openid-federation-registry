@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ class TrustmarkSubjectCRUDIT {
     // Create a hosted entity
     final UUID entityId = UUID.randomUUID();
     final FederationEntity entityInput = new FederationEntity()
-        .entityIdentifier("https://www.pm.se/oidf/tmi-entity");
+        .entityIdentifier("https://www.pm.se/oidf/tmi-entity/" + UUID.randomUUID());
     this.entitiesApi.createFederationEntityWithId(entityId, entityInput);
 
     // Create a TrustmarkIssuer
@@ -113,7 +113,7 @@ class TrustmarkSubjectCRUDIT {
     final UUID trustmarkId = UUID.randomUUID();
     final Trustmark trustmarkInput = new Trustmark()
         .trustmarkissuerId(trustmarkIssuerId)
-        .trustMarkEntityId("https://www.pm.se/oidf/loa3");
+        .trustmarkType("https://www.pm.se/oidf/loa3");
     this.trustmarksApi.createTrustmarkWithId(trustmarkId, trustmarkInput);
     return trustmarkId;
   }
