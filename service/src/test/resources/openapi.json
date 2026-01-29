@@ -1129,145 +1129,6 @@
         }
       }
     },
-    "/registry/v1/entities/subordinate/{id}": {
-      "get": {
-        "tags": [
-          "Entities"
-        ],
-        "summary": "Get subordinate entity",
-        "operationId": "getSubordinateEntity",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/SubordinateEntity"
-                }
-              }
-            }
-          }
-        },
-        "deprecated": true
-      },
-      "put": {
-        "tags": [
-          "Entities"
-        ],
-        "summary": "Update subordinate entity",
-        "operationId": "updateSubordinateEntity",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubordinateEntity"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/SubordinateEntity"
-                }
-              }
-            }
-          }
-        },
-        "deprecated": true
-      },
-      "post": {
-        "tags": [
-          "Entities"
-        ],
-        "summary": "Create subordinate entity with specified ID",
-        "operationId": "createSubordinateEntityWithId",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubordinateEntity"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/SubordinateEntity"
-                }
-              }
-            }
-          }
-        },
-        "deprecated": true
-      },
-      "delete": {
-        "tags": [
-          "Entities"
-        ],
-        "summary": "Delete subordinate entity",
-        "operationId": "deleteSubordinateEntity",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "deprecated": true
-      }
-    },
     "/registry/v1/entities/hosted/{id}": {
       "get": {
         "tags": [
@@ -1851,38 +1712,6 @@
         }
       }
     },
-    "/registry/v1/entities/subordinate": {
-      "post": {
-        "tags": [
-          "Entities"
-        ],
-        "summary": "Create subordinate entity with auto-generated ID",
-        "operationId": "createSubordinateEntity",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubordinateEntity"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/SubordinateEntity"
-                }
-              }
-            }
-          }
-        },
-        "deprecated": true
-      }
-    },
     "/registry/v1/entities/hosted": {
       "post": {
         "tags": [
@@ -2397,69 +2226,6 @@
           }
         }
       },
-      "SubordinateEntity": {
-        "type": "object",
-        "properties": {
-          "entityId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Entity ID",
-            "readOnly": true
-          },
-          "subject": {
-            "type": "string",
-            "description": "Subject (entity identifier)"
-          },
-          "issuer": {
-            "type": "string",
-            "description": "Issuer (entity identifier)"
-          },
-          "jwks": {
-            "type": "string",
-            "description": "JWKS as JSON string"
-          },
-          "policyId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Pointer to the policy used for this subordinate"
-          },
-          "policy": {
-            "type": "object",
-            "additionalProperties": {},
-            "description": "Policy",
-            "readOnly": true
-          },
-          "metadataPolicyCrit": {
-            "type": "array",
-            "description": "metadataPolicyCrit ",
-            "example": "Array of strings specifying critical metadata policy operators",
-            "items": {
-              "type": "string"
-            }
-          },
-          "crit": {
-            "type": "array",
-            "description": "crit ",
-            "example": "The crit (critical) Claim indicates that extensions to the set of Claims specified for use in this type of JWT",
-            "items": {
-              "type": "string"
-            }
-          },
-          "ecLocation": {
-            "type": "string",
-            "description": "ecLocation - location where the actual entity statement is placed. Expressed as a url. Ex https://my.company.se/entitystatement"
-          },
-          "ecLocationAutomaticResolve": {
-            "type": "boolean",
-            "description": "When true, eclocation will be loaded from the hosted entity with the same issuer entityid"
-          },
-          "effectiveEcLocation": {
-            "type": "string",
-            "description": "Effective EcLocation that is calculated serverside",
-            "readOnly": true
-          }
-        }
-      },
       "HostedEntity": {
         "type": "object",
         "properties": {
@@ -2644,10 +2410,6 @@
           "hostedEntity": {
             "$ref": "#/components/schemas/HostedEntity",
             "description": "Hosted entity (if entity type is hosted)"
-          },
-          "subordinateEntity": {
-            "$ref": "#/components/schemas/SubordinateEntity",
-            "description": "Subordinate entity (if entity type is subordinate)"
           }
         }
       },

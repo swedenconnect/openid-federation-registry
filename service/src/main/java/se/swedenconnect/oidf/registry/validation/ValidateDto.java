@@ -55,7 +55,7 @@ public class ValidateDto {
    * @param dto the federation entity DTO
    */
   public void validate(final FederationEntityDto dto) {
-    this.v.startsWith("@{entityprefix}").entityid().build()
+    this.v.required().startsWith("@{entityprefix}").entityid().build()
         .ifFailThrow("entityidentifier", dto.getEntityIdentifier());
     this.v.length(1, 500).build().ifFailThrow("crit", dto.getCrit());
     this.v.url().build().ifFailThrow("crit", dto.getAuthorityhints());
@@ -67,7 +67,7 @@ public class ValidateDto {
    * @param dto the hosted entity DTO
    */
   public void validate(final HostedEntityDto dto) {
-    this.v.entityid().build().ifFailThrow("entityidentifier", dto.getEntityIdentifier());
+    this.v.required().entityid().build().ifFailThrow("entityidentifier", dto.getEntityIdentifier());
     this.v.required().json().build().ifFailThrow("metadata", dto.getMetadata());
     this.v.length(1, 500).build().ifFailThrow("crit", dto.getCrit());
     this.v.url().build().ifFailThrow("authorityhints", dto.getAuthorityhints());
