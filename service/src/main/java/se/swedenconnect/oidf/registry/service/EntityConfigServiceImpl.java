@@ -35,7 +35,6 @@ import se.swedenconnect.oidf.registry.validation.ValidateDto;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Default implementation of {@link EntityConfigService} using JPA entities.
@@ -285,15 +284,25 @@ public class EntityConfigServiceImpl implements EntityConfigService {
    */
   @Override
   @Transactional(readOnly = true)
-  public List<EntityWithModulesDto> listEntities(final OrganizationRecord organizationRecord,
+  public EntityWithModulesDto listEntities(final OrganizationRecord organizationRecord,
       final String type, final boolean includeModules) {
     final EntityKeyType entityKeyType = this.parseEntityType(type);
     final List<EntityEntity> entities = this.entityRepository
         .findByOrgNumberAndOptionalEntityKeyType(organizationRecord.orgNumber(), entityKeyType);
 
-    return entities.stream()
-        .map(entity -> EntityToDto.toEntityWithModulesDto(entity, includeModules))
-        .collect(Collectors.toList());
+    final EntityWithModulesDto dto = new EntityWithModulesDto();
+    dto.setFederationEntity(entities.stream()
+        .filter(entityEntity -> entityEntity.getEntityType().equals(EntityKeyType.FEDERATION_ENTITY))
+        .map(entity -> EntityToDto.toFederationEntity(entity, includeModules))
+        .toList());
+
+    dto.setHostedEntity(entities.stream()
+        .filter(entityEntity -> entityEntity.getEntityType().equals(EntityKeyType.HOSTED_ENTITY))
+        .map(EntityToDto::toDtoHosted)
+        .toList());
+
+    return dto;
+
   }
 
   private EntityKeyType parseEntityType(final String type) {

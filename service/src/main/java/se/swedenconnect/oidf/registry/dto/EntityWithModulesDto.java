@@ -18,6 +18,8 @@ package se.swedenconnect.oidf.registry.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * DTO for Entity with optional modules. Used for listing entities.
  *
@@ -28,9 +30,9 @@ import lombok.Data;
 public class EntityWithModulesDto {
 
   @Schema(description = "Federation entity (if entity type is federation)")
-  private FederationEntityWithModulesDto federationEntity;
+  private List<FederationEntityWithModulesDto> federationEntity;
 
   @Schema(description = "Hosted entity (if entity type is hosted)")
-  private HostedEntityDto hostedEntity;
+  private List<HostedEntityDto> hostedEntity;
 
 }

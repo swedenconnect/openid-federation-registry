@@ -47,27 +47,6 @@ public final class EntityToDto {
   private static final ObjectMapper mapper = new ObjectMapper();
 
   /**
-   * Converts EntityEntity to FederationEntityDto.
-   *
-   * @param entity the entity entity
-   * @param includeModules Will include modules
-   * @return the federation entity DTO
-   */
-  public static EntityWithModulesDto toEntityWithModulesDto(final EntityEntity entity,
-      final boolean includeModules) {
-    final EntityWithModulesDto dto = new EntityWithModulesDto();
-
-    if (entity.getEntityType() == EntityKeyType.FEDERATION_ENTITY) {
-      dto.setFederationEntity(EntityToDto.toFederationEntity(entity, includeModules));
-    }
-    else if (entity.getEntityType() == EntityKeyType.HOSTED_ENTITY) {
-      dto.setHostedEntity(EntityToDto.toDtoHosted(entity));
-    }
-
-    return dto;
-  }
-
-  /**
    * Converts an EntityEntity object to a FederationEntityWithModulesDto object. Transfers relevant properties from the
    * source entity, including entity details and its associated modules and resolvers, into the target DTO.
    *

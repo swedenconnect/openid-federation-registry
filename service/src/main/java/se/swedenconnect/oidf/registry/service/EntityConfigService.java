@@ -22,7 +22,6 @@ import se.swedenconnect.oidf.registry.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.dto.FederationEntityWithModulesDto;
 import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -129,7 +128,7 @@ public interface EntityConfigService {
    * @param includeModules whether to include modules (trustanchor, intermediate, resolver, trustmarkissuer)
    * @return list of entities with optional modules
    */
-  List<EntityWithModulesDto> listEntities(OrganizationRecord organizationRecord,
+  EntityWithModulesDto listEntities(OrganizationRecord organizationRecord,
       String type, boolean includeModules);
 }
 

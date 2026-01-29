@@ -37,7 +37,6 @@ import se.swedenconnect.oidf.registry.dto.FederationEntityWithModulesDto;
 import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.service.EntityConfigService;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -64,7 +63,7 @@ public class EntityConfigController {
   @GetMapping
   @Operation(summary = "List all entities",
       description = "Lists all entities for the organization, optionally filtered by type and with modules included")
-  public ResponseEntity<List<EntityWithModulesDto>> listEntities(
+  public ResponseEntity<EntityWithModulesDto> listEntities(
       @RequestParam(name = "type", required = false) final String type,
       @RequestParam(name = "includemodules", defaultValue = "false") final boolean includeModules,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
