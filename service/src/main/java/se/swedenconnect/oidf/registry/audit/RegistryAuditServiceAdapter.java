@@ -175,44 +175,6 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void subordinateEntityCreated(final UUID entityId, final UUID organizationId,
-      final SubordinateEntityDto oldData, final SubordinateEntityDto newData) {
-    this.emitEvent(
-        FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.SUBORDINATE_ENTITY_CREATED)
-            .organizationId(organizationId.toString())
-            .extId(entityId.toString())
-            .oldData(this.toJson(oldData))
-            .newData(this.toJson(newData))
-            .build());
-  }
-
-  @Override
-  public void subordinateEntityUpdated(final UUID entityId, final UUID organizationId,
-      final SubordinateEntityDto oldData, final SubordinateEntityDto newData) {
-    this.emitEvent(
-        FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.SUBORDINATE_ENTITY_UPDATED)
-            .organizationId(organizationId.toString())
-            .extId(entityId.toString())
-            .oldData(this.toJson(oldData))
-            .newData(this.toJson(newData))
-            .build());
-  }
-
-  @Override
-  public void subordinateEntityDeleted(final UUID entityId, final UUID organizationId,
-      final SubordinateEntityDto deletedData) {
-    this.emitEvent(
-        FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.SUBORDINATE_ENTITY_DELETED)
-            .organizationId(organizationId.toString())
-            .extId(entityId.toString())
-            .oldData(this.toJson(deletedData))
-            .build());
-  }
-
-  @Override
   public void trustAnchorCreated(final UUID moduleId, final UUID organizationId, final TrustAnchorDto oldData,
       final TrustAnchorDto newData) {
     this.emitEvent(

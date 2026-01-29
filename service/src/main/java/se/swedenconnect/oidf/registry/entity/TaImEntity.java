@@ -57,9 +57,9 @@ public class TaImEntity extends BaseEntity {
   @Column(name = "ta_im_id", nullable = false, updatable = false)
   private UUID taImId;
 
-  @Enumerated(EnumType.STRING)
   @NotNull
   @Column(name = "module_type", nullable = false)
+  @Enumerated(EnumType.STRING)
   private Type moduleType;
 
   @ManyToOne(fetch = FetchType.LAZY)

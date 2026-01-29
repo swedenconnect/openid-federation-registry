@@ -14,6 +14,22 @@
  *  limitations under the License.
  */
 
+/*
+ * Copyright 2026 Sweden Connect
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 CREATE TABLE IF NOT EXISTS `organization`
 (
     `organization_id`    uuid         NOT NULL DEFAULT uuid(),
@@ -36,7 +52,6 @@ CREATE TABLE IF NOT EXISTS `entities`
     `entity_id`            uuid         NOT NULL                              DEFAULT uuid(),
     `organization_id`      uuid         NOT NULL,
     `entity_type`          varchar(20)  NOT NULL,
-    `policy_id`            uuid                                               DEFAULT NULL,
     `metadata`             longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Metadata for FederationEntity and HostedEntity' CHECK (json_valid(`metadata`)),
     `jwks`                 text                                               DEFAULT NULL COMMENT 'JWKSet for SubordinateEntity',
     `subject`              varchar(255)                                       DEFAULT NULL COMMENT 'Subject',

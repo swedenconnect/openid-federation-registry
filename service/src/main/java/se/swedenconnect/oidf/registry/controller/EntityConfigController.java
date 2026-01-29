@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import se.swedenconnect.oidf.registry.dto.EntityWithModulesDto;
 import se.swedenconnect.oidf.registry.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.dto.FederationEntityWithModulesDto;
 import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
-import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
 import se.swedenconnect.oidf.registry.service.EntityConfigService;
 
 import java.util.List;
@@ -237,91 +236,6 @@ public class EntityConfigController {
     return ResponseEntity.noContent().build();
   }
 
-  /**
-   * Creates a subordinate entity with auto-generated ID.
-   *
-   * @param body the subordinate entity data
-   * @param organizationRecord the organization record
-   * @return the created subordinate entity
-   */
-  @Deprecated
-  @PostMapping("/subordinate")
-  @Operation(summary = "Create subordinate entity with auto-generated ID")
-  public ResponseEntity<SubordinateEntityDto> createSubordinateEntity(
-      @RequestBody final SubordinateEntityDto body,
-      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    final UUID id = UUID.randomUUID();
-    return ResponseEntity.ok(this.entityConfigService.createSubordinateEntity(organizationRecord, id, body));
-  }
-
-  /**
-   * Creates a subordinate entity with specified ID.
-   *
-   * @param id the subordinate entity ID
-   * @param body the subordinate entity data
-   * @param organizationRecord the organization record
-   * @return the created subordinate entity
-   */
-  @Deprecated
-  @PostMapping("/subordinate/{id}")
-  @Operation(summary = "Create subordinate entity with specified ID")
-  public ResponseEntity<SubordinateEntityDto> createSubordinateEntityWithId(
-      @PathVariable("id") final UUID id,
-      @RequestBody final SubordinateEntityDto body,
-      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    return ResponseEntity.ok(this.entityConfigService.createSubordinateEntity(organizationRecord, id, body));
-  }
-
-  /**
-   * Updates a subordinate entity.
-   *
-   * @param id the subordinate entity ID
-   * @param body the subordinate entity data
-   * @param organizationRecord the organization record
-   * @return the updated subordinate entity
-   */
-  @Deprecated
-  @PutMapping("/subordinate/{id}")
-  @Operation(summary = "Update subordinate entity")
-  public ResponseEntity<SubordinateEntityDto> updateSubordinateEntity(
-      @PathVariable("id") final UUID id,
-      @RequestBody final SubordinateEntityDto body,
-      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    return ResponseEntity.ok(this.entityConfigService.updateSubordinateEntity(organizationRecord, id, body));
-  }
-
-  /**
-   * Gets a subordinate entity by ID.
-   *
-   * @param id the subordinate entity ID
-   * @param organizationRecord the organization record
-   * @return the subordinate entity
-   */
-  @Deprecated
-  @GetMapping("/subordinate/{id}")
-  @Operation(summary = "Get subordinate entity")
-  public ResponseEntity<SubordinateEntityDto> getSubordinateEntity(
-      @PathVariable("id") final UUID id,
-      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    return ResponseEntity.ok(this.entityConfigService.getSubordinateEntity(organizationRecord, id));
-  }
-
-  /**
-   * Deletes a subordinate entity.
-   *
-   * @param id the subordinate entity ID
-   * @param organizationRecord the organization record
-   * @return empty response
-   */
-  @Deprecated
-  @DeleteMapping("/subordinate/{id}")
-  @Operation(summary = "Delete subordinate entity")
-  public ResponseEntity<Void> deleteSubordinateEntity(
-      @PathVariable("id") final UUID id,
-      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    this.entityConfigService.deleteSubordinateEntity(organizationRecord, id);
-    return ResponseEntity.noContent().build();
-  }
 }
 
 

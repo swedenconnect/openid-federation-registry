@@ -197,6 +197,7 @@ public class OidfApiService {
 
     return entities.stream()
         .map(this.entityResponseFormatter::createEntityResponse)
+        .filter(Objects::nonNull)
         .toList();
 
   }

@@ -55,8 +55,10 @@ public class ValidateDto {
    * @param dto the federation entity DTO
    */
   public void validate(final FederationEntityDto dto) {
-    this.v.required().startsWith("@{entityprefix}").entityid().build().ifFailThrow("issuer", dto.getEntityIdentifier());
+    this.v.startsWith("@{entityprefix}").entityid().build()
+        .ifFailThrow("entityidentifier", dto.getEntityIdentifier());
     this.v.length(1, 500).build().ifFailThrow("crit", dto.getCrit());
+    this.v.url().build().ifFailThrow("crit", dto.getAuthorityhints());
   }
 
   /**
@@ -65,21 +67,10 @@ public class ValidateDto {
    * @param dto the hosted entity DTO
    */
   public void validate(final HostedEntityDto dto) {
-    this.v.required().entityid().build().ifFailThrow("entityidentifier", dto.getEntityIdentifier());
+    this.v.entityid().build().ifFailThrow("entityidentifier", dto.getEntityIdentifier());
     this.v.required().json().build().ifFailThrow("metadata", dto.getMetadata());
-  }
-
-  /**
-   * Validates SubordinateEntityDto.
-   *
-   * @param dto the subordinate entity DTO
-   */
-  @Deprecated
-  public void validate(final SubordinateEntityDto dto) {
-    this.v.required().entityid().build().ifFailThrow("subject", dto.getSubject());
-    this.v.required().entityid().build().ifFailThrow("issuer", dto.getIssuer());
-    this.v.required().jwks().build().ifFailThrow("jwks", dto.getJwks());
-    this.v.length(2, 150).build().ifFailThrow("crit", dto.getCrit());
+    this.v.length(1, 500).build().ifFailThrow("crit", dto.getCrit());
+    this.v.url().build().ifFailThrow("authorityhints", dto.getAuthorityhints());
   }
 
   /**
