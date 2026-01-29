@@ -55,7 +55,6 @@ public class ValidateDto {
    * @param dto the federation entity DTO
    */
   public void validate(final FederationEntityDto dto) {
-    this.v.required().startsWith("@{entityprefix}").entityid().build().ifFailThrow("issuer", dto.getEntityIdentifier());
     this.v.length(1, 500).build().ifFailThrow("crit", dto.getCrit());
   }
 
