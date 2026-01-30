@@ -1,7 +1,18 @@
 ![Logo](../docs/images/sweden-connect.png)
+
 # Developer Guide: Entity Registry for OpenID Federation
 
 This document provides instructions on how to set up a development environment for the OpenID Federation Entity Registry application.
+
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Project Structure](#project-structure)
+- [Building the Project](#building-the-project)
+- [Running Locally](#running-locally)
+- [Configuration](#configuration)
+- [Coding Style and Contribution](#coding-style-and-contribution)
+- [Additional Resources](#additional-resources)
 
 ## Prerequisites
 

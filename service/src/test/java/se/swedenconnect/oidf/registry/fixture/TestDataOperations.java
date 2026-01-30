@@ -95,10 +95,9 @@ public class TestDataOperations {
     final ModulesApi modulesApi = new ModulesApi(apiClient);
     final SubordinatesApi subordinatesApi = new SubordinatesApi(apiClient);
 
-    final List<EntityWithModules> e = entitiesApi.listEntities(FEDERATION_ENTITY.toString(), true);
+    final EntityWithModules e = entitiesApi.listEntities(FEDERATION_ENTITY.toString(), true);
     final String taEntityid = "https://www.pm.se/oidf/ta/";
-    if (e.stream()
-        .map(EntityWithModules::getFederationEntity)
+    if (e.getFederationEntity().stream()
         .map(FederationEntityWithModules::getEntityIdentifier)
         .anyMatch(s -> s.equals(taEntityid))) {
       return taEntityid;

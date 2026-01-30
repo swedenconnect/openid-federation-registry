@@ -1,12 +1,21 @@
 ![Logo](docs/images/sweden-connect.png)
 
-# Contributing to the OpenId Federation Services
+# Contributing to the OpenID Federation Entity Registry
 
-The OpenId Federation Services is released under the Apache 2.0 license. If you would like to contribute something or simply want to hack on the code, this document should help you get started.
+The OpenID Federation Entity Registry is released under the Apache 2.0 license. If you would like to contribute
+something or simply want to hack on the code, this document should help you get started.
+
+## Table of Contents
+
+- [Using GitHub Issues](#using-github-issues)
+- [Submitting Pull Requests](#submitting-pull-requests)
+- [Code Style](#code-style)
+
+---
 
 ## Using GitHub Issues
 
-We use [GitHub issues](https://github.com/swedenconnect/openid-federation-registry-admin/issues) to track bugs and enhancements.
+We use [GitHub issues](https://github.com/swedenconnect/oidf-entity-registry/issues) to track bugs and enhancements.
 
 If you are reporting a bug, please assist to speed up problem diagnosis by providing as much information as possible. We will not act on bug reports that only is a screenshot of a web page or something similar.
 
@@ -24,7 +33,8 @@ We are also glad to receive suggestions on enhancements. For these submissions d
 
 - Describe the suggested feature and why you think it should be included in the code.
 
-The OpenId Federation Services repository is intended to be generic OpenId Federation Services, and we will not add features that
+The OpenID Federation Entity Registry repository is intended to be a generic OpenID Federation Entity Registry
+implementation, and we will not add features that
 are not classed as "generic," for example, to provide a specific type of logging.
 
 ## Submitting Pull Requests
@@ -58,13 +68,15 @@ All developers contributing to this project should follow the [Spring Framework 
 
 ### Code Style Templates
 
-- IntelliJ: [code-style/spring-intellij-code-style.xml](https://github.com/swedenconnect/openid-federation-services/blob/main/internal-docs/code-style/intellij.xml)
+-
+IntelliJ: [code-style/spring-intellij-code-style.xml](https://github.com/swedenconnect/openid-federation-commons/blob/main/internal-docs/code-style/intellij.xml)
 
 **Note:** For IntelliJ also make sure to set the editor in "never join already wrapped lines"-mode. See this [article](https://intellij-support.jetbrains.com/hc/en-us/community/posts/360006393539-How-to-prevent-IntelliJ-from-changing-file-formatting-if-lines-meet-hard-wrap-constraints-).
 
 ### Apache v 2.0 License Header
 
-- Intellij: [code-style/intellij-copyright.xml](https://github.com/swedenconnect/openid-federation-services/blob/main/internal-docs/code-style/intellij-copyright.xml)
+-
+IntelliJ: [code-style/intellij-copyright.xml](https://github.com/swedenconnect/openid-federation-commons/blob/main/internal-docs/code-style/intellij-copyright.xml)
 
 Include the following header in all Java files:
 
