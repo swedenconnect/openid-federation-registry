@@ -44,20 +44,22 @@ public class StringListConverter implements AttributeConverter<List<String>, Str
   }
 
   /**
-   * @param attribute
-   * @return
+   * Convert list to string
+   * @param attribute List to be converted to string
+   * @return String value of list
    */
   @Override
-  public String convertToDatabaseColumn(List<String> attribute) {
+  public String convertToDatabaseColumn(final List<String> attribute) {
     return attribute == null ? null : this.writeListJson(attribute);
   }
 
   /**
-   * @param dbData
-   * @return
+   * Convert string to list
+   * @param dbData string data from database
+   * @return List
    */
   @Override
-  public List<String> convertToEntityAttribute(String dbData) {
+  public List<String> convertToEntityAttribute(final String dbData) {
     return dbData == null || dbData.isEmpty()
         ? List.of()
         : this.readListJson(dbData);
@@ -68,7 +70,7 @@ public class StringListConverter implements AttributeConverter<List<String>, Str
       return Collections.emptyList();
     }
     try {
-      return mapper.readValue(jsonStr, new TypeReference<List<String>>() {});
+      return this.mapper.readValue(jsonStr, new TypeReference<List<String>>() {});
     }
     catch (final JsonProcessingException e) {
       throw new IllegalArgumentException("Failed to parse trustMarkSources JSON", e);
@@ -80,7 +82,7 @@ public class StringListConverter implements AttributeConverter<List<String>, Str
       return null;
     }
     try {
-      return mapper.writeValueAsString(sources);
+      return this.mapper.writeValueAsString(sources);
     }
     catch (final JsonProcessingException e) {
       throw new IllegalArgumentException("Failed to serialize trustMarkSources to JSON", e);
