@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.MalformedURLException;
@@ -173,6 +174,7 @@ public class PropertyValidators {
       case JWT -> this.isJWT();
       case MATCHES -> this.validateMatches(conf);
       case DURATION -> this.validateDuration();
+      case OIDFPOLICY -> this.validateOidfPolicy();
 
       case REQUIRED -> (key, value) ->
           this.throwIf(() -> value == null || value.isBlank(),
@@ -470,6 +472,32 @@ public class PropertyValidators {
     };
   }
 
+  /**
+   * Validates that the value is a valid OIDF (OpenID Federation) policy JSON structure using MetadataPolicy.parse()
+   * from Nimbus OIDC SDK.
+   *
+   * @return a PropertyValidator that validates OIDF policy JSON structure
+   */
+  private PropertyValidator validateOidfPolicy() {
+    return (key, value) -> {
+      if (value == null || value.isBlank()) {
+        return;
+      }
+      try {
+        // Use MetadataPolicy.parse() to validate the OIDF policy structure
+        MetadataPolicy.parse(value);
+      }
+      catch (final com.nimbusds.oauth2.sdk.ParseException e) {
+        throw new PropertyValidationFailException(key, value,
+            "Invalid OIDF policy structure: " + e.getMessage());
+      }
+      catch (final Exception e) {
+        throw new PropertyValidationFailException(key, value,
+            "Failed to parse OIDF policy: " + e.getMessage());
+      }
+    };
+  }
+
   private PropertyValidator jwksValidator(final String conf) {
 
     final boolean isPublicCheck = "public".equalsIgnoreCase(conf) || conf.isBlank();
@@ -567,7 +595,8 @@ public class PropertyValidators {
     ALPHANUMERIC,
     NUMBER,
     MIN,
-    MAX
+    MAX,
+    OIDFPOLICY
   }
 
   /**
@@ -831,12 +860,13 @@ public class PropertyValidators {
     }
 
     /**
-     * Creates a validator
+     * Adds an OIDF (OpenID Federation) policy validation rule to the builder.
+     * This validates that the value is a valid OIDF policy JSON structure (a non-empty JSON object).
      *
      * @return the current instance of {@code ValidationStringBuilder} for method chaining
      */
     public ValidationStringBuilder oidfPolicy() {
-      this.builder.append("OIDFPOLICY:").append("| ");
+      this.builder.append("OIDFPOLICY| ");
       return this;
     }
 

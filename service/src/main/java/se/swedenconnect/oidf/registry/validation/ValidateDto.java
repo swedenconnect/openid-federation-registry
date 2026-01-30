@@ -135,7 +135,7 @@ public class ValidateDto {
     if (dto.getPolicy() != null) {
       try {
         final String policyJson = mapper.writeValueAsString(dto.getPolicy());
-        this.v.required().json().build().ifFailThrow("policy", policyJson);
+        this.v.required().oidfPolicy().build().ifFailThrow("policy", policyJson);
       }
       catch (final com.fasterxml.jackson.core.JsonProcessingException e) {
         throw new PropertyValidationFailException("policy", dto.getPolicy().toString(),
