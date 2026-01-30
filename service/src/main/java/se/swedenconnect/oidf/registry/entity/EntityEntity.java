@@ -20,9 +20,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -61,11 +59,6 @@ public class EntityEntity extends BaseEntity {
   @JoinColumn(name = "organization_id", nullable = false)
   private OrganizationEntity organization;
 
-  @Deprecated
-  @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.DETACH)
-  @JoinColumn(name = "policy_id")
-  private PolicyEntity policyEntity;
-
   @OneToOne(mappedBy = "entity", cascade = CascadeType.REMOVE)
   private TaImEntity trustanchorIntermediate;
 
@@ -76,73 +69,32 @@ public class EntityEntity extends BaseEntity {
   private TrustmarkIssuerEntity trustmarkIssuer;
 
   @Column(name = "crit")
-  private String crit;
-
-  @Deprecated
-  @Column(name = "metadata_policy_crit")
-  private String metadataPolicyCrit;
+  @Convert(converter = StringListConverter.class)
+  private List<String> crit;
 
   @Column(name = "ec_location")
-  private String ecLocation;
-
-  @Deprecated
-  @Column(name = "ec_location_automatic")
-  private boolean ecLocationAutomatic;
+  @Convert(converter = StringListConverter.class)
+  private List<String> ecLocation;
 
   @Column(name = "trustmarksources", columnDefinition = "TEXT")
   private String trustmarksources;
 
   @Column(name = "authorityhints", columnDefinition = "TEXT")
-  private String authorityhints;
+  @Convert(converter = StringListConverter.class)
+  private List<String> authorityhints;
 
 
 
-  /**
-   * Sets the critical data by taking a list of strings as input. If the provided list is empty, the critical data is
-   * set to null. Otherwise, the strings in the list are joined into a single comma-separated string.
-   *
-   * @param crit the list of strings to set as critical data
-   */
-  public void setCrit(final List<String> crit) {
-    this.crit = Objects.isNull(crit) || crit.isEmpty() ? null : String.join(",", crit);
-  }
 
   /**
-   * Sets the critical data by taking a list of strings as input. If the provided list is empty, the critical data is
-   * set to null. Otherwise, the strings in the list are joined into a single comma-separated string.
-   *
-   * @param metadataPolicyCrit the list of strings to set as critical data
+   * Test if this entity has modules
+   * @return true it this entity has modules
    */
-  public void setMetadataPolicyCrit(final List<String> metadataPolicyCrit) {
-    this.metadataPolicyCrit =
-        Objects.isNull(metadataPolicyCrit) ||
-            metadataPolicyCrit.isEmpty() ? null : String.join(",", metadataPolicyCrit);
-  }
-
-  /**
-   * Retrieves a list of critical components by splitting the stored string using a comma as a delimiter. If the stored
-   * string is empty, returns null.
-   *
-   * @return a list of critical component strings, or null if no critical components are available
-   */
-  public List<String> getCrit() {
-    if (this.crit == null) {
-      return Collections.emptyList();
+  public boolean hasModules() {
+    if (this.entityType == EntityKeyType.HOSTED_ENTITY) {
+      return false;
     }
-    return this.crit.isEmpty() ? null : List.of(this.crit.split(","));
-  }
-
-  /**
-   * Retrieves a list of critical components by splitting the stored string using a comma as a delimiter. If the stored
-   * string is empty, returns null.
-   *
-   * @return a list of critical component strings, or null if no critical components are available
-   */
-  public List<String> getMetadataPolicyCrit() {
-    if (this.metadataPolicyCrit == null) {
-      return Collections.emptyList();
-    }
-    return this.metadataPolicyCrit.isEmpty() ? null : List.of(this.crit.split(","));
+    return this.trustanchorIntermediate != null || this.resolver != null || this.trustmarkIssuer != null;
   }
 
 }

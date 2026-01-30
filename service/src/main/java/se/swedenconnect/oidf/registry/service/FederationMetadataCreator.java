@@ -16,7 +16,6 @@
 
 package se.swedenconnect.oidf.registry.service;
 
-import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.registry.dto.EntityToDto;
@@ -72,11 +71,11 @@ public class FederationMetadataCreator {
   public EntityRecord createEntityResponse(final EntityEntity entityEntity) {
     final EntityRecord entityData = new EntityRecord();
     final EntityKeyType entityType = entityEntity.getEntityType();
-    try {
-      if (entityType == EntityKeyType.HOSTED_ENTITY) {
-        final HostedEntityDto dto = EntityToDto.toDtoHosted(entityEntity);
 
-        entityData.setEntityIdentifier(EntityID.parse(dto.getEntityIdentifier()));
+      if (entityType == EntityKeyType.HOSTED_ENTITY) {
+
+        final HostedEntityDto dto = EntityToDto.toDtoHosted(entityEntity);
+        entityData.setEntityIdentifier(new EntityID(dto.getEntityIdentifier()));
         entityData.setMetadata(dto.getMetadata());
         entityData.setEcLocation(dto.getEffectiveEcLocation());
         entityData.setCrit(dto.getCrit());
@@ -84,56 +83,20 @@ public class FederationMetadataCreator {
         this.authorityHint(entityEntity).map(List::of).ifPresent(entityData::setAuthorityHints);
         return entityData;
       }
-/*
-    if (entityType == EntityKeyType.SUBORDINATE_ENTITY) {
-      final SubordinateEntityDto dto = EntityToDto.toDtoSubordinate(entityEntity);
-      entityData.subject(dto.getSubject())
-          .issuer(dto.getIssuer())
-          .policyRecord(OidfServiceHostedEntities.Record.PolicyRecord.builder()
-              .policyRecordId(dto.getPolicyId() == null ? null : dto.getPolicyId().toString())
-              .policy(dto.getPolicy() == null ? Map.of() : dto.getPolicy())
-              .build());
-
-      // Looking if there is a hosted entity registered.
-      this.entityRepository.findByOrgNumberAndEntityKeyTypeAndIssuer(entityEntity.getOrganization().getOrgNumber(),
-              EntityKeyType.HOSTED_ENTITY,
-              dto.getSubject())
-          .map(EntityToDto::toDtoHosted)
-          .ifPresent(hostedDto -> {
-            log.debug("When creating subordinatestatement a hosted entity was "
-                    + "found for entityIdentifier: {} and organization: {}",
-                hostedDto.getEntityIdentifier(),
-                entityEntity.getOrganization().getOrgNumber());
-            entityData.overrideConfigurationLocation(hostedDto.getEcLocation());
-          });
-
-
-      if (dto.getJwks() != null && !dto.getJwks().isBlank()) {
-        try {
-          final JWKSet jwkSet = JWKSet.parse(dto.getJwks());
-          entityData.jwks(jwkSet.toJSONObject());
-        }
-        catch (final ParseException e) {
-          throw new IllegalArgumentException("Failed to parse JWKS", e);
-        }
-      }
-      return List.of(entityData.build());
-    }
-*/
       if (entityType == EntityKeyType.FEDERATION_ENTITY) {
+        if (!entityEntity.hasModules()) {
+          return null;
+        }
         final FederationEntityDto dto = EntityToDto.toFederationEntity(entityEntity, false);
-        entityData.setEntityIdentifier(EntityID.parse(dto.getEntityIdentifier()));
+        entityData.setEntityIdentifier(new EntityID(dto.getEntityIdentifier()));
         entityData.setCrit(dto.getCrit());
         entityData.setMetadata(Map.of("federation_entity", this.createFederationMetadata(entityEntity)));
         this.authorityHint(entityEntity).map(List::of).ifPresent(entityData::setAuthorityHints);
         return entityData;
       }
 
-      return entityData;
-    }
-    catch (final ParseException e) {
-      throw new RuntimeException(e);
-    }
+    throw new IllegalArgumentException("Unsupported entity type: " + entityType);
+
   }
 
   /**

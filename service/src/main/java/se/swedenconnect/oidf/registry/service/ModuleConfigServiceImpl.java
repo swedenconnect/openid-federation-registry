@@ -594,7 +594,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     // Add TrustAnchor modules (TaImEntity)
     if (moduleType == null || moduleType == FkKeyType.TRUSTANCHOR) {
       final List<TaImEntity> trustAnchorModules = this.moduleRepository
-          .findByOrgNumberAndOptionalModuleType(organizationRecord.orgNumber(), FkKeyType.TRUSTANCHOR.name());
+          .findByOrgNumberAndOptionalModuleType(organizationRecord.orgNumber(), TaImEntity.Type.TRUSTANCHOR);
       final List<TrustAnchorDto> trustAnchors = trustAnchorModules.stream()
           .map(EntityToDto::toDto)
           .toList();
@@ -604,7 +604,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     // Add Intermediate modules (TaImEntity)
     if (moduleType == null || moduleType == FkKeyType.INTERMEDIATE) {
       final List<TaImEntity> intermediateModules = this.moduleRepository
-          .findByOrgNumberAndOptionalModuleType(organizationRecord.orgNumber(), FkKeyType.INTERMEDIATE.name());
+          .findByOrgNumberAndOptionalModuleType(organizationRecord.orgNumber(), TaImEntity.Type.INTERMEDIATE);
       final List<IntermediateDto> intermediates = intermediateModules.stream()
           .map(EntityToDto::toDtoIntermediate)
           .toList();

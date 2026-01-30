@@ -47,30 +47,6 @@ public final class EntityToDto {
   private static final ObjectMapper mapper = new ObjectMapper();
 
   /**
-   * Converts EntityEntity to FederationEntityDto.
-   *
-   * @param entity the entity entity
-   * @param includeModules Will include modules
-   * @return the federation entity DTO
-   */
-  public static EntityWithModulesDto toEntityWithModulesDto(final EntityEntity entity,
-      final boolean includeModules) {
-    final EntityWithModulesDto dto = new EntityWithModulesDto();
-
-    if (entity.getEntityType() == EntityKeyType.FEDERATION_ENTITY) {
-      dto.setFederationEntity(EntityToDto.toFederationEntity(entity, includeModules));
-    }
-    else if (entity.getEntityType() == EntityKeyType.HOSTED_ENTITY) {
-      dto.setHostedEntity(EntityToDto.toDtoHosted(entity));
-    }
-    else if (entity.getEntityType() == EntityKeyType.SUBORDINATE_ENTITY) {
-      dto.setSubordinateEntity(EntityToDto.toDtoSubordinate(entity));
-    }
-
-    return dto;
-  }
-
-  /**
    * Converts an EntityEntity object to a FederationEntityWithModulesDto object. Transfers relevant properties from the
    * source entity, including entity details and its associated modules and resolvers, into the target DTO.
    *
@@ -83,7 +59,7 @@ public final class EntityToDto {
     final FederationEntityWithModulesDto dto = new FederationEntityWithModulesDto();
     dto.setEntityId(entity.getEntityId());
     dto.setEntityIdentifier(entity.getIssuer());
-    dto.setAuthorityhints(readListJson(entity.getAuthorityhints()));
+    dto.setAuthorityhints(entity.getAuthorityhints());
     dto.setCrit(entity.getCrit());
 
     if (!includeModules) {
@@ -124,7 +100,7 @@ public final class EntityToDto {
     dto.setEntityIdentifier(entityEntity.getIssuer());
     dto.setCrit(Optional.ofNullable(entityEntity.getCrit()).map(ArrayList::new).orElse(new ArrayList<>(1)));
     dto.setTrustMarkSources(readTrustMarkSourcesFromJson(entityEntity.getTrustmarksources()));
-    dto.setAuthorityhints(readListJson(entityEntity.getAuthorityhints()));
+    dto.setAuthorityhints(entityEntity.getAuthorityhints());
 
     // Calculation of ec_location will be made if EntityIdentifier differ from entity prefix.
     // Example EntityIdentifier is set to http://www.telia.com/oidf but the entityprefix is set to http://www.sc.se
@@ -145,19 +121,16 @@ public final class EntityToDto {
    * @param dto the hosted entity DTO
    * @param entityKeyType the entity key type
    * @param organization the organization entity
-   * @param policyEntity the policy entity
    * @return the entity entity
    */
   public static EntityEntity toEntity(final java.util.UUID id,
       final HostedEntityDto dto,
       final EntityKeyType entityKeyType,
-      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization,
-      final PolicyEntity policyEntity) {
+      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization) {
     final EntityEntity entity = new EntityEntity();
     entity.setEntityId(id);
     entity.setEntityType(entityKeyType);
     entity.setOrganization(organization);
-    entity.setPolicyEntity(policyEntity);
     updateEntity(entity, dto);
     return entity;
   }
@@ -186,35 +159,7 @@ public final class EntityToDto {
     entity.setTrustmarksources(writeTrustMarkSourcesToJson(dto.getTrustMarkSources()));
     entity.setMetadata(writeMapToJsonPretty(dto.getMetadata()));
   }
-  /**
-   * Converts EntityEntity to SubordinateEntityDto.
-   *
-   * @param entityEntity the entity entity
-   * @return the subordinate entity DTO
-   */
-  public static SubordinateEntityDto toDtoSubordinate(final EntityEntity entityEntity) {
-    if (entityEntity.getEntityType() != EntityKeyType.SUBORDINATE_ENTITY) {
-      throw new IllegalArgumentException("Entity is not a SubordinateEntity");
-    }
 
-    final SubordinateEntityDto dto = new SubordinateEntityDto();
-    dto.setEntityId(entityEntity.getEntityId());
-    dto.setSubject(entityEntity.getSubject());
-    dto.setIssuer(entityEntity.getIssuer());
-    dto.setJwks(entityEntity.getJwks());
-    Optional.ofNullable(entityEntity.getPolicyEntity())
-        .ifPresent(policyEntity -> dto.setPolicyId(policyEntity.getPolicyId()));
-
-    Optional.ofNullable(entityEntity.getPolicyEntity())
-        .map(PolicyEntity::getPolicy)
-        .map(EntityToDto::readMapFromJson)
-        .ifPresent(dto::setPolicy);
-
-    dto.setCrit(entityEntity.getCrit());
-    dto.setMetadataPolicyCrit(entityEntity.getMetadataPolicyCrit());
-
-    return dto;
-  }
 
   // -------------------------------------------------------------------------
   // Private JSON helper methods
@@ -257,17 +202,7 @@ public final class EntityToDto {
     }
   }
 
-  private static List<String> readListJson(final String jsonStr) {
-    if (jsonStr == null || jsonStr.isBlank()) {
-      return Collections.emptyList();
-    }
-    try {
-      return mapper.readValue(jsonStr, new TypeReference<List<String>>() {});
-    }
-    catch (final JsonProcessingException e) {
-      throw new IllegalArgumentException("Failed to parse trustMarkSources JSON", e);
-    }
-  }
+
 
   private static String writeListJson(final List<String> sources) {
     if (sources == null) {
@@ -501,44 +436,20 @@ public final class EntityToDto {
    * @param dto the federation entity DTO
    * @param entityKeyType the entity key type
    * @param organization the organization entity
-   * @param policyEntity the policy entity
    * @return the entity entity
    */
   public static EntityEntity toEntity(final java.util.UUID id,
       final FederationEntityDto dto,
-      final EntityKeyType entityKeyType,
-      final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization,
-      final PolicyEntity policyEntity) {
-    final EntityEntity entity = new EntityEntity();
-    entity.setEntityId(id);
-    entity.setEntityType(entityKeyType);
-    entity.setOrganization(organization);
-    entity.setPolicyEntity(policyEntity);
-    entity.setIssuer(dto.getEntityIdentifier());
-    entity.setSubject(dto.getEntityIdentifier());
-    entity.setCrit(dto.getCrit());
-    entity.setTrustmarksources(writeListJson(dto.getAuthorityhints()));
-    return entity;
-  }
-
-  /**
-   * Converts SubordinateEntityDto to EntityEntity.
-   *
-   * @param id the entity ID
-   * @param dto the subordinate entity DTO
-   * @param entityKeyType the entity key type
-   * @param organization the organization entity
-   * @return the entity entity
-   */
-  public static EntityEntity toEntity(final java.util.UUID id,
-      final SubordinateEntityDto dto,
       final EntityKeyType entityKeyType,
       final se.swedenconnect.oidf.registry.entity.OrganizationEntity organization) {
     final EntityEntity entity = new EntityEntity();
     entity.setEntityId(id);
     entity.setEntityType(entityKeyType);
     entity.setOrganization(organization);
-    updateEntity(entity, dto);
+    entity.setIssuer(dto.getEntityIdentifier());
+    entity.setSubject(dto.getEntityIdentifier());
+    entity.setCrit(dto.getCrit());
+    entity.setAuthorityhints(dto.getAuthorityhints());
     return entity;
   }
 
@@ -570,24 +481,11 @@ public final class EntityToDto {
     entity.setIssuer(dto.getEntityIdentifier());
     entity.setSubject(dto.getEntityIdentifier());
     entity.setCrit(dto.getCrit());
-    entity.setAuthorityhints(writeListJson(dto.getAuthorityhints()));
+    entity.setAuthorityhints(dto.getAuthorityhints());
   }
 
 
 
-  /**
-   * Updates EntityEntity with SubordinateEntityDto data.
-   *
-   * @param entity the entity entity
-   * @param dto the subordinate entity DTO
-   */
-  public static void updateEntity(final EntityEntity entity, final SubordinateEntityDto dto) {
-    entity.setSubject(dto.getSubject());
-    entity.setIssuer(dto.getIssuer());
-    entity.setJwks(dto.getJwks());
-    entity.setMetadataPolicyCrit(dto.getMetadataPolicyCrit());
-    entity.setCrit(dto.getCrit());
-  }
 
   /**
    * Updates PolicyEntity with PolicyDto data.

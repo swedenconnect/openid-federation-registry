@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public interface TaImRepository extends JpaRepository<TaImEntity, UUID> {
   @Query("SELECT m FROM TaImEntity m JOIN m.organization o "
       + "WHERE o.orgNumber = :orgNumber AND m.moduleType = :moduleType")
   List<TaImEntity> findByOrgNumberAndModuleType(
-      @Param("orgNumber") String orgNumber, @Param("moduleType") String moduleType);
+      @Param("orgNumber") String orgNumber, @Param("moduleType") TaImEntity.Type moduleType);
 
   /**
    * Retrieves a list of TaImEntity objects associated with the specified organization number, optionally filtered by
@@ -86,5 +86,5 @@ public interface TaImRepository extends JpaRepository<TaImEntity, UUID> {
       + "WHERE o.orgNumber = :orgNumber "
       + "AND (:moduleType IS NULL OR m.moduleType = :moduleType)")
   List<TaImEntity> findByOrgNumberAndOptionalModuleType(
-      @Param("orgNumber") String orgNumber, @Param("moduleType") String moduleType);
+      @Param("orgNumber") String orgNumber, @Param("moduleType") TaImEntity.Type moduleType);
 }

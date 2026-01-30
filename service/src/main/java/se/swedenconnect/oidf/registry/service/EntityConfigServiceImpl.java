@@ -25,7 +25,6 @@ import se.swedenconnect.oidf.registry.dto.EntityWithModulesDto;
 import se.swedenconnect.oidf.registry.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.dto.FederationEntityWithModulesDto;
 import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
-import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
 import se.swedenconnect.oidf.registry.entity.EntityEntity;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
 import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
@@ -36,7 +35,6 @@ import se.swedenconnect.oidf.registry.validation.ValidateDto;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Default implementation of {@link EntityConfigService} using JPA entities.
@@ -102,7 +100,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
 
     final OrganizationEntity org = this.resolveOrganization(organizationRecord);
 
-    final EntityEntity entity = EntityToDto.toEntity(id, input, EntityKeyType.FEDERATION_ENTITY, org, null);
+    final EntityEntity entity = EntityToDto.toEntity(id, input, EntityKeyType.FEDERATION_ENTITY, org);
     this.entityRepository.save(entity);
     final FederationEntityDto dto = EntityToDto.toFederationEntity(entity, false);
     this.auditService.federationEntityCreated(id, org.getOrganizationId(),
@@ -193,7 +191,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
 
     final OrganizationEntity org = this.resolveOrganization(organizationRecord);
     final EntityEntity entity = EntityToDto.toEntity(
-        id, input, EntityKeyType.HOSTED_ENTITY, org, null);
+        id, input, EntityKeyType.HOSTED_ENTITY, org);
     entity.setSubject(organizationRecord.entityPrefix());
     this.entityRepository.save(entity);
     final HostedEntityDto dto = EntityToDto.toDtoHosted(entity);
@@ -258,93 +256,6 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     this.auditService.hostedEntityDeleted(id, entity.getOrganization().getOrganizationId(), dto);
   }
 
-  // ---------------------------------------------------------------------------
-  // Subordinate entities
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Creates a subordinate entity.
-   *
-   * @param organizationRecord the organization record
-   * @param id the entity ID
-   * @param input the subordinate entity data
-   * @return the created subordinate entity
-   */
-  @Override
-  @Transactional
-  @Deprecated
-  public SubordinateEntityDto createSubordinateEntity(final OrganizationRecord organizationRecord,
-      final UUID id, final SubordinateEntityDto input) {
-    ValidateDto.init(organizationRecord).validate(input);
-
-    final OrganizationEntity org = this.resolveOrganization(organizationRecord);
-
-    final EntityEntity entity = EntityToDto.toEntity(
-        id, input, EntityKeyType.SUBORDINATE_ENTITY, org);
-
-    org.getPolicies()
-        .stream()
-        .filter(policyEntity -> policyEntity.getPolicyId().equals(input.getPolicyId()))
-        .findFirst()
-        .ifPresent(entity::setPolicyEntity);
-
-    this.entityRepository.save(entity);
-    final SubordinateEntityDto dto = EntityToDto.toDtoSubordinate(entity);
-    this.auditService.subordinateEntityCreated(id, org.getOrganizationId(), null, dto);
-    return dto;
-  }
-
-  /**
-   * Updates a subordinate entity.
-   *
-   * @param organizationRecord the organization record
-   * @param id the entity ID
-   * @param input the subordinate entity data
-   * @return the updated subordinate entity
-   */
-  @Override
-  @Transactional
-  @Deprecated
-  public SubordinateEntityDto updateSubordinateEntity(final OrganizationRecord organizationRecord,
-      final UUID id, final SubordinateEntityDto input) {
-    ValidateDto.init(organizationRecord).validate(input);
-
-    final EntityEntity existing = this.findEntityOrThrow(
-        organizationRecord, id, EntityKeyType.SUBORDINATE_ENTITY);
-    final SubordinateEntityDto oldDto = EntityToDto.toDtoSubordinate(existing);
-
-    EntityToDto.updateEntity(existing, input);
-
-    final OrganizationEntity org = this.resolveOrganization(organizationRecord);
-    org.getPolicies()
-        .stream()
-        .filter(policyEntity -> policyEntity.getPolicyId().equals(input.getPolicyId()))
-        .findFirst()
-        .ifPresent(existing::setPolicyEntity);
-
-    this.entityRepository.save(existing);
-    final SubordinateEntityDto newDto = EntityToDto.toDtoSubordinate(existing);
-    this.auditService.subordinateEntityUpdated(id, existing.getOrganization().getOrganizationId(), oldDto, newDto);
-    return newDto;
-  }
-
-  /**
-   * Gets a subordinate entity by ID.
-   *
-   * @param organizationRecord the organization record
-   * @param id the entity ID
-   * @return the subordinate entity
-   */
-  @Override
-  @Transactional(readOnly = true)
-  @Deprecated
-  public SubordinateEntityDto getSubordinateEntity(final OrganizationRecord organizationRecord,
-      final UUID id) {
-    final EntityEntity entity = this.findEntityOrThrow(
-        organizationRecord, id, EntityKeyType.SUBORDINATE_ENTITY);
-    return EntityToDto.toDtoSubordinate(entity);
-  }
-
   /**
    * Deletes a subordinate entity.
    *
@@ -373,15 +284,25 @@ public class EntityConfigServiceImpl implements EntityConfigService {
    */
   @Override
   @Transactional(readOnly = true)
-  public List<EntityWithModulesDto> listEntities(final OrganizationRecord organizationRecord,
+  public EntityWithModulesDto listEntities(final OrganizationRecord organizationRecord,
       final String type, final boolean includeModules) {
     final EntityKeyType entityKeyType = this.parseEntityType(type);
     final List<EntityEntity> entities = this.entityRepository
         .findByOrgNumberAndOptionalEntityKeyType(organizationRecord.orgNumber(), entityKeyType);
 
-    return entities.stream()
-        .map(entity -> EntityToDto.toEntityWithModulesDto(entity, includeModules))
-        .collect(Collectors.toList());
+    final EntityWithModulesDto dto = new EntityWithModulesDto();
+    dto.setFederationEntity(entities.stream()
+        .filter(entityEntity -> entityEntity.getEntityType().equals(EntityKeyType.FEDERATION_ENTITY))
+        .map(entity -> EntityToDto.toFederationEntity(entity, includeModules))
+        .toList());
+
+    dto.setHostedEntity(entities.stream()
+        .filter(entityEntity -> entityEntity.getEntityType().equals(EntityKeyType.HOSTED_ENTITY))
+        .map(EntityToDto::toDtoHosted)
+        .toList());
+
+    return dto;
+
   }
 
   private EntityKeyType parseEntityType(final String type) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,7 @@ import se.swedenconnect.oidf.registry.dto.EntityWithModulesDto;
 import se.swedenconnect.oidf.registry.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.dto.FederationEntityWithModulesDto;
 import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
-import se.swedenconnect.oidf.registry.dto.SubordinateEntityDto;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -115,46 +113,11 @@ public interface EntityConfigService {
   void deleteHostedEntity(OrganizationRecord organizationRecord, UUID id);
 
   /**
-   * Creates a subordinate entity.
-   *
-   * @param organizationRecord the organization record
-   * @param id the entity ID
-   * @param input the subordinate entity data
-   * @return the created subordinate entity
-   */
-  @Deprecated
-  SubordinateEntityDto createSubordinateEntity(OrganizationRecord organizationRecord,
-      UUID id, SubordinateEntityDto input);
-
-  /**
-   * Updates a subordinate entity.
-   *
-   * @param organizationRecord the organization record
-   * @param id the entity ID
-   * @param input the subordinate entity data
-   * @return the updated subordinate entity
-   */
-  @Deprecated
-  SubordinateEntityDto updateSubordinateEntity(OrganizationRecord organizationRecord,
-      UUID id, SubordinateEntityDto input);
-
-  /**
-   * Gets a subordinate entity by ID.
-   *
-   * @param organizationRecord the organization record
-   * @param id the entity ID
-   * @return the subordinate entity
-   */
-  @Deprecated
-  SubordinateEntityDto getSubordinateEntity(OrganizationRecord organizationRecord, UUID id);
-
-  /**
    * Deletes a subordinate entity.
    *
    * @param organizationRecord the organization record
    * @param id the entity ID
    */
-  @Deprecated
   void deleteSubordinateEntity(OrganizationRecord organizationRecord, UUID id);
 
   /**
@@ -165,7 +128,7 @@ public interface EntityConfigService {
    * @param includeModules whether to include modules (trustanchor, intermediate, resolver, trustmarkissuer)
    * @return list of entities with optional modules
    */
-  List<EntityWithModulesDto> listEntities(OrganizationRecord organizationRecord,
+  EntityWithModulesDto listEntities(OrganizationRecord organizationRecord,
       String type, boolean includeModules);
 }
 

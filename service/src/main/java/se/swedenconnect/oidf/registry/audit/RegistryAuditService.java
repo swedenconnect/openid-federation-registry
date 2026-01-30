@@ -125,36 +125,6 @@ public interface RegistryAuditService {
    */
   void hostedEntityDeleted(UUID entityId, UUID organizationId, HostedEntityDto deletedData);
 
-  /**
-   * Audits the creation of a subordinate entity.
-   *
-   * @param entityId the unique identifier of the entity being created.
-   * @param organizationId the unique identifier of the organization that owns the entity.
-   * @param oldData the previous state of the entity. Typically null during creation.
-   * @param newData the new state of the entity after it has been created.
-   */
-  void subordinateEntityCreated(UUID entityId, UUID organizationId, SubordinateEntityDto oldData,
-      SubordinateEntityDto newData);
-
-  /**
-   * Audits the update operation performed on a subordinate entity.
-   *
-   * @param entityId the unique identifier of the entity being updated.
-   * @param organizationId the unique identifier of the organization that owns the entity.
-   * @param oldData the previous state of the entity before the update.
-   * @param newData the new state of the entity after the update.
-   */
-  void subordinateEntityUpdated(UUID entityId, UUID organizationId, SubordinateEntityDto oldData,
-      SubordinateEntityDto newData);
-
-  /**
-   * Audits the deletion of a subordinate entity.
-   *
-   * @param entityId the unique identifier of the entity being deleted.
-   * @param organizationId the unique identifier of the organization that owns the entity.
-   * @param deletedData the data of the deleted entity.
-   */
-  void subordinateEntityDeleted(UUID entityId, UUID organizationId, SubordinateEntityDto deletedData);
 
   /**
    * Audits the creation of a trust anchor module.

@@ -2,12 +2,29 @@
 
 # Validation
 
+This document describes the validation rules available for validating properties in the OpenID Federation Entity
+Registry Service.
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Validation Rules](#validation-rules)
+- [Combined Validation Examples](#combined-validation-examples)
+
+---
+
+## Overview
+
 Properties can have validation rules applied and combined using pipe ('|') syntax. For example:
-"required|length:2,10|email" means a value must exist, be between 2-10 characters, and be a valid email format.
+`"required|length:2,10|email"` means a value must exist, be between 2-10 characters, and be a valid email format.
 
-Syntax for validator configuration: {rule}:{config}
+### Syntax
 
-## Description of the validation rules
+The syntax for validator configuration is: `{rule}:{config}`
+
+Multiple rules can be combined using the pipe character (`|`).
+
+## Validation Rules
 
 | Rule         | Config         | Description                                                                  | Example           |
 |--------------|----------------|------------------------------------------------------------------------------|-------------------|
@@ -30,7 +47,7 @@ Syntax for validator configuration: {rule}:{config}
 | url          | {no options}   | Validates string is valid URL format                                         | url               |
 | matches      | regex pattern  | Validates string matches specified regex pattern                             | matches:^[A-Z]+$  |
 
-### Examples of combined validation
+## Combined Validation Examples
 
 ```text
 "required|length:3,50|email" - Required email between 3-50 characters

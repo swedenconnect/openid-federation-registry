@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package se.swedenconnect.oidf.registry.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * DTO for Entity with optional modules. Used for listing entities.
  *
@@ -28,11 +30,9 @@ import lombok.Data;
 public class EntityWithModulesDto {
 
   @Schema(description = "Federation entity (if entity type is federation)")
-  private FederationEntityWithModulesDto federationEntity;
+  private List<FederationEntityWithModulesDto> federationEntity;
 
   @Schema(description = "Hosted entity (if entity type is hosted)")
-  private HostedEntityDto hostedEntity;
+  private List<HostedEntityDto> hostedEntity;
 
-  @Schema(description = "Subordinate entity (if entity type is subordinate)")
-  private SubordinateEntityDto subordinateEntity;
 }
