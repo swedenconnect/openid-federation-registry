@@ -245,7 +245,7 @@ public class ValidateDto {
         .ifFailThrow("policy", dto.getPolicy());
 
     if (dto.getPolicy() != null) {
-      validatePolicyJson(dto.getPolicy());
+      this.validatePolicyJson(dto.getPolicy());
     }
   }
 
