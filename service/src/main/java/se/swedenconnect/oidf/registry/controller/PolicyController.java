@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,10 +69,10 @@ public class PolicyController {
    * @param organizationRecord the organization record
    * @return the policy
    */
-  @GetMapping("/{id}")
+  @GetMapping("/{policyId}")
   @Operation(summary = "Get policy by id")
   public ResponseEntity<PolicyDto> getPolicy(
-      @PathVariable("id") final UUID id,
+      @PathVariable("policyId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.policyService.getPolicy(organizationRecord, id));
   }
@@ -101,10 +101,10 @@ public class PolicyController {
    * @param organizationRecord the organization record
    * @return the created policy
    */
-  @PostMapping("/{id}")
+  @PostMapping("/{policyId}")
   @Operation(summary = "Create policy with specified ID")
   public ResponseEntity<PolicyDto> createPolicyWithId(
-      @PathVariable("id") final UUID id,
+      @PathVariable("policyId") final UUID id,
       @RequestBody final PolicyDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.policyService.createPolicy(organizationRecord, id, body));
@@ -118,10 +118,10 @@ public class PolicyController {
    * @param organizationRecord the organization record
    * @return the updated policy
    */
-  @PutMapping("/{id}")
+  @PutMapping("/{policyId}")
   @Operation(summary = "Update policy")
   public ResponseEntity<PolicyDto> updatePolicy(
-      @PathVariable("id") final UUID id,
+      @PathVariable("policyId") final UUID id,
       @RequestBody final PolicyDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.policyService.updatePolicy(organizationRecord, id, body));
@@ -134,10 +134,10 @@ public class PolicyController {
    * @param organizationRecord the organization record
    * @return empty response
    */
-  @DeleteMapping("/{id}")
+  @DeleteMapping("/{policyId}")
   @Operation(summary = "Delete policy")
   public ResponseEntity<Void> deletePolicy(
-      @PathVariable("id") final UUID id,
+      @PathVariable("policyId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     this.policyService.deletePolicy(organizationRecord, id);
     return ResponseEntity.noContent().build();

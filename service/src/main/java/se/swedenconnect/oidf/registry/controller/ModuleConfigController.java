@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,10 +94,10 @@ public class ModuleConfigController {
    * @param organizationRecord the organization record
    * @return the created trust anchor
    */
-  @PostMapping("/trust-anchor/{id}")
+  @PostMapping("/trust-anchor/{trustAnchorId}")
   @Operation(summary = "Create trust anchor with specified ID")
   public ResponseEntity<TrustAnchorDto> createTrustAnchorWithId(
-      @PathVariable("id") final UUID id,
+      @PathVariable("trustAnchorId") final UUID id,
       @RequestBody final TrustAnchorDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.createTrustAnchor(organizationRecord, id, body));
@@ -111,10 +111,10 @@ public class ModuleConfigController {
    * @param organizationRecord the organization record
    * @return the updated trust anchor
    */
-  @PutMapping("/trust-anchor/{id}")
+  @PutMapping("/trust-anchor/{trustAnchorId}")
   @Operation(summary = "Update trust anchor")
   public ResponseEntity<TrustAnchorDto> updateTrustAnchor(
-      @PathVariable("id") final UUID id,
+      @PathVariable("trustAnchorId") final UUID id,
       @RequestBody final TrustAnchorDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.updateTrustAnchor(organizationRecord, id, body));
@@ -127,10 +127,10 @@ public class ModuleConfigController {
    * @param organizationRecord the organization record
    * @return the trust anchor
    */
-  @GetMapping("/trust-anchor/{id}")
+  @GetMapping("/trust-anchor/{trustAnchorId}")
   @Operation(summary = "Get trust anchor")
   public ResponseEntity<TrustAnchorDto> getTrustAnchor(
-      @PathVariable("id") final UUID id,
+      @PathVariable("trustAnchorId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.getTrustAnchor(organizationRecord, id));
   }
@@ -142,10 +142,10 @@ public class ModuleConfigController {
    * @param organizationRecord the organization record
    * @return empty response
    */
-  @DeleteMapping("/trust-anchor/{id}")
+  @DeleteMapping("/trust-anchor/{trustAnchorId}")
   @Operation(summary = "Delete trust anchor")
   public ResponseEntity<Void> deleteTrustAnchor(
-      @PathVariable("id") final UUID id,
+      @PathVariable("trustAnchorId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     this.moduleConfigService.deleteTrustAnchor(organizationRecord, id);
     return ResponseEntity.noContent().build();
@@ -177,10 +177,10 @@ public class ModuleConfigController {
    * @param organizationRecord the organization record
    * @return the created intermediate
    */
-  @PostMapping("/intermediate/{id}")
+  @PostMapping("/intermediate/{intermediateId}")
   @Operation(summary = "Create intermediate with specified ID")
   public ResponseEntity<IntermediateDto> createIntermediateWithId(
-      @PathVariable("id") final UUID id,
+      @PathVariable("intermediateId") final UUID id,
       @RequestBody final IntermediateDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.createIntermediate(organizationRecord, id, body));
@@ -194,10 +194,10 @@ public class ModuleConfigController {
    * @param organizationRecord the organization record
    * @return the updated intermediate
    */
-  @PutMapping("/intermediate/{id}")
+  @PutMapping("/intermediate/{intermediateId}")
   @Operation(summary = "Update intermediate")
   public ResponseEntity<IntermediateDto> updateIntermediate(
-      @PathVariable("id") final UUID id,
+      @PathVariable("intermediateId") final UUID id,
       @RequestBody final IntermediateDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.updateIntermediate(organizationRecord, id, body));
@@ -210,10 +210,10 @@ public class ModuleConfigController {
    * @param organizationRecord the organization record
    * @return the intermediate
    */
-  @GetMapping("/intermediate/{id}")
+  @GetMapping("/intermediate/{intermediateId}")
   @Operation(summary = "Get intermediate")
   public ResponseEntity<IntermediateDto> getIntermediate(
-      @PathVariable("id") final UUID id,
+      @PathVariable("intermediateId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.getIntermediate(organizationRecord, id));
   }
@@ -225,10 +225,10 @@ public class ModuleConfigController {
    * @param organizationRecord the organization record
    * @return empty response
    */
-  @DeleteMapping("/intermediate/{id}")
+  @DeleteMapping("/intermediate/{intermediateId}")
   @Operation(summary = "Delete intermediate")
   public ResponseEntity<Void> deleteIntermediate(
-      @PathVariable("id") final UUID id,
+      @PathVariable("intermediateId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     this.moduleConfigService.deleteIntermediate(organizationRecord, id);
     return ResponseEntity.noContent().build();
@@ -260,10 +260,10 @@ public class ModuleConfigController {
    * @param organizationRecord the organization record
    * @return the created resolver
    */
-  @PostMapping("/resolver/{id}")
+  @PostMapping("/resolver/{resolverId}")
   @Operation(summary = "Create resolver with specified ID")
   public ResponseEntity<ResolverDto> createResolverWithId(
-      @PathVariable("id") final UUID id,
+      @PathVariable("resolverId") final UUID id,
       @RequestBody final ResolverDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.createResolver(organizationRecord, id, body));
@@ -277,10 +277,10 @@ public class ModuleConfigController {
    * @param organizationRecord the organization record
    * @return the updated resolver
    */
-  @PutMapping("/resolver/{id}")
+  @PutMapping("/resolver/{resolverId}")
   @Operation(summary = "Update resolver")
   public ResponseEntity<ResolverDto> updateResolver(
-      @PathVariable("id") final UUID id,
+      @PathVariable("resolverId") final UUID id,
       @RequestBody final ResolverDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.updateResolver(organizationRecord, id, body));
@@ -293,10 +293,10 @@ public class ModuleConfigController {
    * @param organizationRecord the organization record
    * @return the resolver
    */
-  @GetMapping("/resolver/{id}")
+  @GetMapping("/resolver/{resolverId}")
   @Operation(summary = "Get resolver")
   public ResponseEntity<ResolverDto> getResolver(
-      @PathVariable("id") final UUID id,
+      @PathVariable("resolverId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.getResolver(organizationRecord, id));
   }
@@ -308,10 +308,10 @@ public class ModuleConfigController {
    * @param organizationRecord the organization record
    * @return empty response
    */
-  @DeleteMapping("/resolver/{id}")
+  @DeleteMapping("/resolver/{resolverId}")
   @Operation(summary = "Delete resolver")
   public ResponseEntity<Void> deleteResolver(
-      @PathVariable("id") final UUID id,
+      @PathVariable("resolverId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     this.moduleConfigService.deleteResolver(organizationRecord, id);
     return ResponseEntity.noContent().build();
@@ -343,10 +343,10 @@ public class ModuleConfigController {
    * @param organizationRecord the organization record
    * @return the created trust mark issuer
    */
-  @PostMapping("/trustmark-issuer/{id}")
+  @PostMapping("/trustmark-issuer/{trustmarkIssuerId}")
   @Operation(summary = "Create trust mark issuer with specified ID")
   public ResponseEntity<TrustmarkIssuerDto> createTrustmarkIssuerWithId(
-      @PathVariable("id") final UUID id,
+      @PathVariable("trustmarkIssuerId") final UUID id,
       @RequestBody final TrustmarkIssuerDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.createTrustmarkIssuer(organizationRecord, id, body));
@@ -360,10 +360,10 @@ public class ModuleConfigController {
    * @param organizationRecord the organization record
    * @return the updated trust mark issuer
    */
-  @PutMapping("/trustmark-issuer/{id}")
+  @PutMapping("/trustmark-issuer/{trustmarkIssuerId}")
   @Operation(summary = "Update trust mark issuer")
   public ResponseEntity<TrustmarkIssuerDto> updateTrustmarkIssuer(
-      @PathVariable("id") final UUID id,
+      @PathVariable("trustmarkIssuerId") final UUID id,
       @RequestBody final TrustmarkIssuerDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.updateTrustmarkIssuer(organizationRecord, id, body));
@@ -376,10 +376,10 @@ public class ModuleConfigController {
    * @param organizationRecord the organization record
    * @return the trust mark issuer
    */
-  @GetMapping("/trustmark-issuer/{id}")
+  @GetMapping("/trustmark-issuer/{trustmarkIssuerId}")
   @Operation(summary = "Get trust mark issuer")
   public ResponseEntity<TrustmarkIssuerDto> getTrustmarkIssuer(
-      @PathVariable("id") final UUID id,
+      @PathVariable("trustmarkIssuerId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.getTrustmarkIssuer(organizationRecord, id));
   }
@@ -391,10 +391,10 @@ public class ModuleConfigController {
    * @param organizationRecord the organization record
    * @return empty response
    */
-  @DeleteMapping("/trustmark-issuer/{id}")
+  @DeleteMapping("/trustmark-issuer/{trustmarkIssuerId}")
   @Operation(summary = "Delete trust mark issuer")
   public ResponseEntity<Void> deleteTrustmarkIssuer(
-      @PathVariable("id") final UUID id,
+      @PathVariable("trustmarkIssuerId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     this.moduleConfigService.deleteTrustmarkIssuer(organizationRecord, id);
     return ResponseEntity.noContent().build();

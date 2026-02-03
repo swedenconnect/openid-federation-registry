@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,10 +96,10 @@ public class TrustmarkController {
    * @param organizationRecord the organization record
    * @return the created trust mark
    */
-  @PostMapping("/{id}")
+  @PostMapping("/{trustMarkId}")
   @Operation(summary = "Create trust mark with specified ID")
   public ResponseEntity<TrustmarkDto> createTrustmarkWithId(
-      @PathVariable("id") final UUID id,
+      @PathVariable("trustMarkId") final UUID id,
       @RequestBody final TrustmarkDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.createTrustmark(organizationRecord, id, body));
@@ -113,10 +113,10 @@ public class TrustmarkController {
    * @param organizationRecord the organization record
    * @return the updated trust mark
    */
-  @PutMapping("/{id}")
+  @PutMapping("/{trustMarkId}")
   @Operation(summary = "Update trust mark")
   public ResponseEntity<TrustmarkDto> updateTrustmark(
-      @PathVariable("id") final UUID id,
+      @PathVariable("trustMarkId") final UUID id,
       @RequestBody final TrustmarkDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.updateTrustmark(organizationRecord, id, body));
@@ -129,12 +129,27 @@ public class TrustmarkController {
    * @param organizationRecord the organization record
    * @return the trust mark
    */
-  @GetMapping("/{id}")
+  @GetMapping("/{trustMarkId}")
   @Operation(summary = "Get trust mark")
   public ResponseEntity<TrustmarkDto> getTrustmark(
-      @PathVariable("id") final UUID id,
+      @PathVariable("trustMarkId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.getTrustmark(organizationRecord, id));
+  }
+
+  /**
+   * Gets trustmark subjects
+   *
+   * @param trustmarkId the trust mark ID
+   * @param organizationRecord the organization record
+   * @return the trust mark with it subejcts
+   */
+  @GetMapping("/{trustMarkId}/subjects")
+  @Operation(summary = "Get trust mark with there subjects")
+  public ResponseEntity<TrustmarkWithSubjectsDto> getTrustmarkSubjects(
+      @PathVariable("trustMarkId") final UUID trustmarkId,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(this.moduleConfigService.getTrustmarkWithSubjects(organizationRecord, trustmarkId));
   }
 
   /**
@@ -144,10 +159,10 @@ public class TrustmarkController {
    * @param organizationRecord the organization record
    * @return empty response
    */
-  @DeleteMapping("/{id}")
+  @DeleteMapping("/{trustMarkId}")
   @Operation(summary = "Delete trust mark")
   public ResponseEntity<Void> deleteTrustmark(
-      @PathVariable("id") final UUID id,
+      @PathVariable("trustMarkId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     this.moduleConfigService.deleteTrustmark(organizationRecord, id);
     return ResponseEntity.noContent().build();
@@ -179,10 +194,10 @@ public class TrustmarkController {
    * @param organizationRecord the organization record
    * @return the created trust mark subject
    */
-  @PostMapping("/subjects/{id}")
+  @PostMapping("/subjects/{subjectId}")
   @Operation(summary = "Create trust mark subject with specified ID")
   public ResponseEntity<TrustmarkSubjectDto> createTrustmarkSubjectWithId(
-      @PathVariable("id") final UUID id,
+      @PathVariable("subjectId") final UUID id,
       @RequestBody final TrustmarkSubjectDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.trustmarkSubjectService.createTrustmarkSubject(organizationRecord, id, body));
@@ -196,10 +211,10 @@ public class TrustmarkController {
    * @param organizationRecord the organization record
    * @return the updated trust mark subject
    */
-  @PutMapping("/subjects/{id}")
+  @PutMapping("/subjects/{subjectId}")
   @Operation(summary = "Update trust mark subject")
   public ResponseEntity<TrustmarkSubjectDto> updateTrustmarkSubject(
-      @PathVariable("id") final UUID id,
+      @PathVariable("subjectId") final UUID id,
       @RequestBody final TrustmarkSubjectDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.trustmarkSubjectService.updateTrustmarkSubject(organizationRecord, id, body));
@@ -212,10 +227,10 @@ public class TrustmarkController {
    * @param organizationRecord the organization record
    * @return the trust mark subject
    */
-  @GetMapping("/subjects/{id}")
+  @GetMapping("/subjects/{subjectId}")
   @Operation(summary = "Get trust mark subject")
   public ResponseEntity<TrustmarkSubjectDto> getTrustmarkSubject(
-      @PathVariable("id") final UUID id,
+      @PathVariable("subjectId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.trustmarkSubjectService.getTrustmarkSubject(organizationRecord, id));
   }
@@ -227,10 +242,10 @@ public class TrustmarkController {
    * @param organizationRecord the organization record
    * @return empty response
    */
-  @DeleteMapping("/subjects/{id}")
+  @DeleteMapping("/subjects/{subjectId}")
   @Operation(summary = "Delete trust mark subject")
   public ResponseEntity<Void> deleteTrustmarkSubject(
-      @PathVariable("id") final UUID id,
+      @PathVariable("subjectId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     this.trustmarkSubjectService.deleteTrustmarkSubject(organizationRecord, id);
     return ResponseEntity.noContent().build();

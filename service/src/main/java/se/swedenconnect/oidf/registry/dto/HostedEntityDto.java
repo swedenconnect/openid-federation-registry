@@ -37,7 +37,7 @@ public class HostedEntityDto {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private UUID entityId;
 
-  @Schema(description = "EntityId.")
+  @Schema(description = "EntityIdentifier")
   private String entityIdentifier;
 
   @Schema(description = "FederationMetadata")

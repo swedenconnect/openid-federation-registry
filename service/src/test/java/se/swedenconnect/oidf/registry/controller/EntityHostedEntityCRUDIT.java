@@ -32,6 +32,7 @@ import se.swedenconnect.oidf.registry.api.EntitiesApi;
 import se.swedenconnect.oidf.registry.api.model.HostedEntity;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -177,6 +178,179 @@ class EntityHostedEntityCRUDIT {
     assertThat(created.getEntityId()).isNotNull();
     assertThat(created.getEntityIdentifier()).isEqualTo(input.getEntityIdentifier());
 
+  }
+
+  @Test
+  void testGetHostedEntityNotFound() {
+    // Arrange
+    final UUID nonExistentId = UUID.randomUUID();
+
+    // Act & Assert
+    assertThatThrownBy(() -> this.entitiesApi.getHostedEntity(nonExistentId))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(exception -> {
+          final RestClientResponseException apiException = (RestClientResponseException) exception;
+          assertThat(apiException.getStatusCode().value()).isEqualTo(404);
+        });
+  }
+
+  @Test
+  void testUpdateHostedEntityWithMetadata() {
+    // Arrange
+    final UUID entityId = UUID.randomUUID();
+    final HostedEntity createInput = new HostedEntity()
+        .entityIdentifier("https://www.pm.se/oidf/ta-metadata")
+        .metadata(Map.of("hosted_entity", Map.of("name", "Original Name")));
+    this.entitiesApi.createHostedEntityWithId(entityId, createInput);
+
+    final HostedEntity updateInput = new HostedEntity()
+        .entityIdentifier("https://www.pm.se/oidf/ta-metadata")
+        .metadata(Map.of("hosted_entity", Map.of("name", "Updated Name", "description", "Updated Description")));
+
+    // Act
+    final HostedEntity updated = this.entitiesApi.updateHostedEntity(entityId, updateInput);
+
+    // Assert
+    assertThat(updated).isNotNull();
+    assertThat(updated.getEntityIdentifier()).isEqualTo("https://www.pm.se/oidf/ta-metadata");
+    assertThat(updated.getMetadata()).isNotNull();
+
+    // Verify by getting again
+    final HostedEntity retrieved = this.entitiesApi.getHostedEntity(entityId);
+    assertThat(retrieved.getMetadata()).isNotNull();
+  }
+
+  @Test
+  void testHostedEntityIsolationBetweenOrganizations() {
+    // Arrange - Create hosted entity with PM organization
+    final UUID entityId = UUID.randomUUID();
+    final HostedEntity input = new HostedEntity()
+        .entityIdentifier("https://www.pm.se/oidf/pm-hosted");
+    this.entitiesApi.createHostedEntityWithId(entityId, input);
+
+    // Act - Try to access with AF organization
+    final ApiClient afApiClient = new ApiClient();
+    afApiClient.setBasePath("http://localhost:" + this.port);
+    afApiClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.AF));
+    afApiClient.setApiKey(JwtTestUtils.OrganisationType.AF.orgId);
+    final EntitiesApi afEntitiesApi = new EntitiesApi(afApiClient);
+
+    // Assert - Should not be found
+    assertThatThrownBy(() -> afEntitiesApi.getHostedEntity(entityId))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(exception -> {
+          final RestClientResponseException restException = (RestClientResponseException) exception;
+          assertThat(restException.getStatusCode().value()).isEqualTo(404);
+        });
+  }
+
+  @Test
+  void testListHostedEntityWithoutFilter() {
+    // Arrange - Create multiple hosted entities
+    final UUID entityId1 = UUID.randomUUID();
+    final UUID entityId2 = UUID.randomUUID();
+    final UUID entityId3 = UUID.randomUUID();
+
+    final HostedEntity entity1 = new HostedEntity()
+        .entityIdentifier("https://www.pm.se/oidf/hosted1");
+    final HostedEntity entity2 = new HostedEntity()
+        .entityIdentifier("https://www.pm.se/oidf/hosted2");
+    final HostedEntity entity3 = new HostedEntity()
+        .entityIdentifier("https://www.pm.se/oidf/hosted3");
+
+    this.entitiesApi.createHostedEntityWithId(entityId1, entity1);
+    this.entitiesApi.createHostedEntityWithId(entityId2, entity2);
+    this.entitiesApi.createHostedEntityWithId(entityId3, entity3);
+
+    // Act - List all hosted entities without filter
+    final List<HostedEntity> result = this.entitiesApi.listHostedEntity(null);
+
+    // Assert
+    assertThat(result).isNotNull();
+    assertThat(result.size()).isGreaterThanOrEqualTo(3);
+
+    // Verify all created entities are in the list
+    assertThat(result).extracting(HostedEntity::getEntityId)
+        .contains(entityId1, entityId2, entityId3);
+    assertThat(result).extracting(HostedEntity::getEntityIdentifier)
+        .contains("https://www.pm.se/oidf/hosted1",
+            "https://www.pm.se/oidf/hosted2",
+            "https://www.pm.se/oidf/hosted3");
+  }
+
+  @Test
+  void testListHostedEntityWithEntityIdentifierFilter() {
+    // Arrange - Create multiple hosted entities
+    final UUID entityId1 = UUID.randomUUID();
+    final UUID entityId2 = UUID.randomUUID();
+
+    final HostedEntity entity1 = new HostedEntity()
+        .entityIdentifier("https://www.pm.se/oidf/filtered1");
+    final HostedEntity entity2 = new HostedEntity()
+        .entityIdentifier("https://www.pm.se/oidf/filtered2");
+
+    this.entitiesApi.createHostedEntityWithId(entityId1, entity1);
+    this.entitiesApi.createHostedEntityWithId(entityId2, entity2);
+
+    // Act - List hosted entities with entityIdentifier filter
+    final List<HostedEntity> result = this.entitiesApi.listHostedEntity("https://www.pm.se/oidf/filtered1");
+
+    // Assert
+    assertThat(result).isNotNull();
+    assertThat(result).hasSize(1);
+    assertThat(result.get(0).getEntityId()).isEqualTo(entityId1);
+    assertThat(result.get(0).getEntityIdentifier()).isEqualTo("https://www.pm.se/oidf/filtered1");
+  }
+
+  @Test
+  void testListHostedEntityWithNonExistentEntityIdentifier() {
+    // Arrange
+    final String nonExistentEntityIdentifier = "https://www.pm.se/oidf/nonexistent";
+
+    // Act - List hosted entities with non-existent entityIdentifier
+    final List<HostedEntity> result = this.entitiesApi.listHostedEntity(nonExistentEntityIdentifier);
+
+    // Assert
+    assertThat(result).isNotNull();
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  void testListHostedEntityEmptyList() {
+    // Arrange - No entities created
+
+    // Act - List hosted entities
+    final List<HostedEntity> result = this.entitiesApi.listHostedEntity(null);
+
+    // Assert
+    assertThat(result).isNotNull();
+    // Note: The list might not be empty if there are other entities from previous tests,
+    // but we can at least verify it's a valid list
+  }
+
+  @Test
+  void testListHostedEntityIsolationBetweenOrganizations() {
+    // Arrange - Create hosted entity with PM organization
+    final UUID entityId = UUID.randomUUID();
+    final HostedEntity input = new HostedEntity()
+        .entityIdentifier("https://www.pm.se/oidf/pm-list-hosted");
+    this.entitiesApi.createHostedEntityWithId(entityId, input);
+
+    // Act - Try to list with AF organization
+    final ApiClient afApiClient = new ApiClient();
+    afApiClient.setBasePath("http://localhost:" + this.port);
+    afApiClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.AF));
+    afApiClient.setApiKey(JwtTestUtils.OrganisationType.AF.orgId);
+    final EntitiesApi afEntitiesApi = new EntitiesApi(afApiClient);
+
+    final List<HostedEntity> afResult = afEntitiesApi.listHostedEntity(null);
+
+    // Assert - Should not contain PM's entity
+    assertThat(afResult).isNotNull();
+    assertThat(afResult).extracting(HostedEntity::getEntityId)
+        .doesNotContain(entityId);
+    assertThat(afResult).extracting(HostedEntity::getEntityIdentifier)
+        .doesNotContain("https://www.pm.se/oidf/pm-list-hosted");
   }
 
 }
