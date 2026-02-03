@@ -230,7 +230,7 @@ public class EntityConfigController {
   @GetMapping("/hosted")
   @Operation(summary = "List hosted entity")
   public ResponseEntity<List<HostedEntityDto>> listHostedEntity(
-      @RequestParam(name = "entityIdentifier", required = false) String entityIdentifier,
+      @RequestParam(name = "entityIdentifier", required = false) final String entityIdentifier,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.entityConfigService.listHostedEntity(organizationRecord, entityIdentifier));
   }
