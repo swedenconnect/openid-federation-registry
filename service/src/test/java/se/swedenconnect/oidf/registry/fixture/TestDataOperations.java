@@ -21,6 +21,9 @@ import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyUse;
+import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
+import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyViolationException;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.api.EntitiesApi;
@@ -46,6 +49,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 import static se.swedenconnect.oidf.registry.entity.EntityKeyType.FEDERATION_ENTITY;
 
@@ -78,6 +82,38 @@ public class TestDataOperations {
     }
   }
 
+  public static void main(String argv[]) {
+    new TestDataOperations().createPolicy();
+  }
+
+  public Policy createPolicy() {
+    try {
+      final Policy policy = new Policy();
+      policy.setName("test-policy:" + UUID.randomUUID());
+
+      final MetadataPolicy p = MetadataPolicy.parse("""
+           {
+            "openid_relying_party": {
+              "id_token_signed_response_alg": {
+                "default": "ES256",
+                "one_of": ["ES256", "ES384", "ES512"]
+              }
+            }
+          }
+          """);
+
+      policy.setPolicy(p.toJSONObject());
+      return policy;
+    }
+    catch (ParseException e) {
+      throw new RuntimeException(e);
+    }
+    catch (PolicyViolationException e) {
+      throw new RuntimeException(e);
+    }
+
+  }
+
   /**
    * Test method that creates a complete test scenario: 1. Creates a policy 2. Creates a federation entity 3. Adds a
    * trustanchor module to the federation entity 4. Creates another federation entity with relying_party metadata 5.
@@ -104,10 +140,7 @@ public class TestDataOperations {
     }
 
     // Step 1: Create a policy
-    final Policy policyInput = Policy.builder()
-        .name("Test Policy")
-        .policy(Map.of("test", "policy", "version", 1))
-        .build();
+    final Policy policyInput = createPolicy();
     final Policy createdPolicy = policiesApi.createPolicy(policyInput);
     log.info("Created policy with ID: {}", createdPolicy.getPolicyId());
 
