@@ -22,6 +22,7 @@ import se.swedenconnect.oidf.registry.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.dto.FederationEntityWithModulesDto;
 import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -103,6 +104,16 @@ public interface EntityConfigService {
    * @return the hosted entity
    */
   HostedEntityDto getHostedEntity(OrganizationRecord organizationRecord, UUID id);
+
+  /**
+   * List hosted entitys
+   *
+   * @param organizationRecord the organization record
+   * @param entityIdentifier the entity ID
+   * @return the hosted entity
+   */
+  List<HostedEntityDto> listHostedEntity(OrganizationRecord organizationRecord, String entityIdentifier);
+
 
   /**
    * Deletes a hosted entity.

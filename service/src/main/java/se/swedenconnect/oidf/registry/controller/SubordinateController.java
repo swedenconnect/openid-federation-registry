@@ -33,7 +33,6 @@ import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.service.SubordinateService;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -56,10 +55,10 @@ public class SubordinateController {
    * @param organizationRecord the organization record
    * @return the subordinate
    */
-  @GetMapping("/{id}")
+  @GetMapping("/{subordinateId}")
   @Operation(summary = "Get subordinate by id")
   public ResponseEntity<SubordinateDto> getSubordinate(
-      @PathVariable("id") final UUID id,
+      @PathVariable("subordinateId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.subordinateService.getSubordinate(organizationRecord, id));
   }
@@ -87,10 +86,10 @@ public class SubordinateController {
    * @param organizationRecord the organization record
    * @return the created subordinate
    */
-  @PostMapping("/{id}")
+  @PostMapping("/{subordinateId}")
   @Operation(summary = "Create subordinate with specified ID")
   public ResponseEntity<SubordinateDto> createSubordinateWithId(
-      @PathVariable("id") final UUID id,
+      @PathVariable("subordinateId") final UUID id,
       @RequestBody final SubordinateDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.subordinateService.createSubordinateWithId(organizationRecord, id, body));
@@ -104,10 +103,10 @@ public class SubordinateController {
    * @param organizationRecord the organization record
    * @return the updated subordinate
    */
-  @PutMapping("/{id}")
+  @PutMapping("/{subordinateId}")
   @Operation(summary = "Update subordinate")
   public ResponseEntity<SubordinateDto> updateSubordinate(
-      @PathVariable("id") final UUID id,
+      @PathVariable("subordinateId") final UUID id,
       @RequestBody final SubordinateDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.subordinateService.updateSubordinate(organizationRecord, id, body));
@@ -120,10 +119,10 @@ public class SubordinateController {
    * @param organizationRecord the organization record
    * @return empty response
    */
-  @DeleteMapping("/{id}")
+  @DeleteMapping("/{subordinateId}")
   @Operation(summary = "Delete subordinate")
   public ResponseEntity<Void> deleteSubordinate(
-      @PathVariable("id") final UUID id,
+      @PathVariable("subordinateId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     this.subordinateService.deleteSubordinate(organizationRecord, id);
     return ResponseEntity.noContent().build();

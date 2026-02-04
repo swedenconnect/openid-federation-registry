@@ -33,6 +33,7 @@ import se.swedenconnect.oidf.registry.errorhandling.RegistryServerException;
 import se.swedenconnect.oidf.registry.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.validation.ValidateDto;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -238,6 +239,35 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     final EntityEntity entity = this.findEntityOrThrow(
         organizationRecord, id, EntityKeyType.HOSTED_ENTITY);
     return EntityToDto.toDtoHosted(entity);
+  }
+
+  /**
+   * List a hosted entity by ID.
+   *
+   * @param organizationRecord the organization record
+   * @param entityIdentifier the entity ID
+   * @return the hosted entity
+   */
+  @Override
+  @Transactional(readOnly = true)
+  public List<HostedEntityDto> listHostedEntity(final OrganizationRecord organizationRecord,
+      final String entityIdentifier) {
+
+    final List<HostedEntityDto> results = new ArrayList<>();
+    if (entityIdentifier != null && !entityIdentifier.isEmpty()) {
+      this.entityRepository.findByOrgNumberAndEntityKeyTypeAndIssuer(organizationRecord.orgNumber(),
+              EntityKeyType.HOSTED_ENTITY, entityIdentifier).map(EntityToDto::toDtoHosted)
+          .ifPresent(results::add);
+    }
+    else {
+      this.entityRepository.findByOrgNumberAndOptionalEntityKeyType(organizationRecord.orgNumber(),
+              EntityKeyType.HOSTED_ENTITY)
+          .stream()
+          .map(EntityToDto::toDtoHosted)
+          .forEach(results::add);
+    }
+
+    return results;
   }
 
   /**

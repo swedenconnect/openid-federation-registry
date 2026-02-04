@@ -666,6 +666,26 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
         .toList();
   }
 
+  /**
+   * Get trust mark subjects by there trustmarkid
+   *
+   * @param organizationRecord the organization record
+   * @param trustmarkId the trust mark ID
+   * @return the trust mark
+   */
+  @Override
+  @Transactional(readOnly = true)
+  public TrustmarkWithSubjectsDto getTrustmarkWithSubjects(final OrganizationRecord organizationRecord,
+      final UUID trustmarkId) {
+    final TrustMarkEntity entity = this.trustMarkRepository
+        .findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), trustmarkId)
+        .orElseThrow(() -> new RegistryServerException(
+            ErrorTypes.NOT_FOUND, "No trust mark found for id %s".formatted(trustmarkId)));
+
+    return EntityToDto.toDtoWithSubjects(entity);
+  }
+
+
   private FkKeyType parseModuleType(final String type) {
     if (type == null || type.isBlank()) {
       return null;

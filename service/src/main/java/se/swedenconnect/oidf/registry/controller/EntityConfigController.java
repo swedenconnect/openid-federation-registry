@@ -37,6 +37,7 @@ import se.swedenconnect.oidf.registry.dto.FederationEntityWithModulesDto;
 import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.service.EntityConfigService;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -94,10 +95,10 @@ public class EntityConfigController {
    * @param organizationRecord the organization record
    * @return the created federation entity
    */
-  @PostMapping("/federation/{id}")
+  @PostMapping("/federation/{entityId}")
   @Operation(summary = "Create federation entity with specified ID")
   public ResponseEntity<FederationEntityDto> createFederationEntityWithId(
-      @PathVariable("id") final UUID id,
+      @PathVariable("entityId") final UUID id,
       @RequestBody final FederationEntityDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.entityConfigService.createFederationEntity(organizationRecord, id, body));
@@ -111,10 +112,10 @@ public class EntityConfigController {
    * @param organizationRecord the organization record
    * @return the updated federation entity
    */
-  @PutMapping("/federation/{id}")
+  @PutMapping("/federation/{entityId}")
   @Operation(summary = "Update federation entity")
   public ResponseEntity<FederationEntityDto> updateFederationEntity(
-      @PathVariable("id") final UUID id,
+      @PathVariable("entityId") final UUID id,
       @RequestBody final FederationEntityDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.entityConfigService.updateFederationEntity(organizationRecord, id, body));
@@ -129,10 +130,10 @@ public class EntityConfigController {
    * @param organizationRecord the organization context for the request, typically populated internally
    * @return a ResponseEntity containing the federation entity along with its modules if requested
    */
-  @GetMapping("/federation/{id}")
+  @GetMapping("/federation/{entityId}")
   @Operation(summary = "Get federation entity")
   public ResponseEntity<FederationEntityWithModulesDto> getFederationEntity(
-      @PathVariable("id") final UUID id,
+      @PathVariable("entityId") final UUID id,
       @RequestParam(name = "includemodules", defaultValue = "false") final boolean includeModules,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.entityConfigService.getFederationEntity(organizationRecord, id, includeModules));
@@ -145,10 +146,10 @@ public class EntityConfigController {
    * @param organizationRecord the organization record
    * @return empty response
    */
-  @DeleteMapping("/federation/{id}")
+  @DeleteMapping("/federation/{entityId}")
   @Operation(summary = "Delete federation entity")
   public ResponseEntity<Void> deleteFederationEntity(
-      @PathVariable("id") final UUID id,
+      @PathVariable("entityId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     this.entityConfigService.deleteFederationEntity(organizationRecord, id);
     return ResponseEntity.noContent().build();
@@ -178,10 +179,10 @@ public class EntityConfigController {
    * @param organizationRecord the organization record
    * @return the created hosted entity
    */
-  @PostMapping("/hosted/{id}")
+  @PostMapping("/hosted/{entityId}")
   @Operation(summary = "Create hosted entity with specified ID")
   public ResponseEntity<HostedEntityDto> createHostedEntityWithId(
-      @PathVariable("id") final UUID id,
+      @PathVariable("entityId") final UUID id,
       @RequestBody final HostedEntityDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.entityConfigService.createHostedEntity(organizationRecord, id, body));
@@ -195,10 +196,10 @@ public class EntityConfigController {
    * @param organizationRecord the organization record
    * @return the updated hosted entity
    */
-  @PutMapping("/hosted/{id}")
+  @PutMapping("/hosted/{entityId}")
   @Operation(summary = "Update hosted entity")
   public ResponseEntity<HostedEntityDto> updateHostedEntity(
-      @PathVariable("id") final UUID id,
+      @PathVariable("entityId") final UUID id,
       @RequestBody final HostedEntityDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.entityConfigService.updateHostedEntity(organizationRecord, id, body));
@@ -211,12 +212,27 @@ public class EntityConfigController {
    * @param organizationRecord the organization record
    * @return the hosted entity
    */
-  @GetMapping("/hosted/{id}")
+  @GetMapping("/hosted/{entityId}")
   @Operation(summary = "Get hosted entity")
   public ResponseEntity<HostedEntityDto> getHostedEntity(
-      @PathVariable("id") final UUID id,
+      @PathVariable("entityId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.entityConfigService.getHostedEntity(organizationRecord, id));
+  }
+
+  /**
+   * Gets a hosted entity by ID.
+   *
+   * @param entityIdentifier the hosted entity ID
+   * @param organizationRecord the organization record
+   * @return the hosted entity
+   */
+  @GetMapping("/hosted")
+  @Operation(summary = "List hosted entity")
+  public ResponseEntity<List<HostedEntityDto>> listHostedEntity(
+      @RequestParam(name = "entityIdentifier", required = false) final String entityIdentifier,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(this.entityConfigService.listHostedEntity(organizationRecord, entityIdentifier));
   }
 
   /**
@@ -226,10 +242,10 @@ public class EntityConfigController {
    * @param organizationRecord the organization record
    * @return empty response
    */
-  @DeleteMapping("/hosted/{id}")
+  @DeleteMapping("/hosted/{entityId}")
   @Operation(summary = "Delete hosted entity")
   public ResponseEntity<Void> deleteHostedEntity(
-      @PathVariable("id") final UUID id,
+      @PathVariable("entityId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     this.entityConfigService.deleteHostedEntity(organizationRecord, id);
     return ResponseEntity.noContent().build();

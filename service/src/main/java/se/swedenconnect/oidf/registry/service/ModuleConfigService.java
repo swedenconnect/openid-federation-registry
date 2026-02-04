@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -247,6 +247,15 @@ public interface ModuleConfigService {
    * @return list of trustmarks with optionally included trustmark subjects
    */
   List<TrustmarkWithSubjectsDto> listTrustmarks(OrganizationRecord organizationRecord, boolean includeSubjects);
+
+  /**
+   * Get trust mark subjects by there trustmarkid
+   *
+   * @param organizationRecord the organization record
+   * @param trustmarkId the trust mark ID
+   * @return the trust mark
+   */
+  TrustmarkWithSubjectsDto getTrustmarkWithSubjects(OrganizationRecord organizationRecord, UUID trustmarkId);
 }
 
 
