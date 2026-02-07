@@ -23,7 +23,6 @@ import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.dto.EntityToDto;
 import se.swedenconnect.oidf.registry.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
-import se.swedenconnect.oidf.registry.entity.PolicyEntity;
 import se.swedenconnect.oidf.registry.entity.SubordinateEntity;
 import se.swedenconnect.oidf.registry.entity.TaImEntity;
 import se.swedenconnect.oidf.registry.errorhandling.ErrorTypes;
@@ -117,14 +116,17 @@ public class SubordinateServiceImpl implements SubordinateService {
 
     final SubordinateEntity subordinateEntity = EntityToDto.toEntity(id, input, taIm);
 
-    taIm.getOrganization()
-        .getPolicies()
-        .stream()
-        .filter(policyEntity -> policyEntity.getPolicyId().equals(input.getPolicyId()))
-        .findFirst()
-        .ifPresentOrElse(subordinateEntity::setPolicy, () -> {
-          throw new RegistryServerException(ErrorTypes.NOT_FOUND, "No policy found for id %s".formatted(id));
-        });
+    if (input.getPolicyId() != null) {
+      this.policyRepository.findByOrgNumberAndPolicyId(
+              organizationRecord.orgNumber(), input.getPolicyId())
+          .ifPresentOrElse(subordinateEntity::setPolicy, () -> {
+            throw new RegistryServerException(
+                ErrorTypes.NOT_FOUND, "No policy found for id %s".formatted(input.getPolicyId()));
+          });
+    }
+    else {
+      subordinateEntity.setPolicy(null);
+    }
 
     // If automatic resolve is selected, the system try to find a hosted entity. If not an exception is thrown.
     if (input.isEcLocationAutomaticResolve()) {
@@ -154,11 +156,12 @@ public class SubordinateServiceImpl implements SubordinateService {
     EntityToDto.updateEntity(existing, input);
 
     if (input.getPolicyId() != null) {
-      final PolicyEntity policyEntity = this.policyRepository.findByOrgNumberAndPolicyId(
+      this.policyRepository.findByOrgNumberAndPolicyId(
               organizationRecord.orgNumber(), input.getPolicyId())
-          .orElseThrow(() -> new RegistryServerException(
-              ErrorTypes.NOT_FOUND, "No policy found for id %s".formatted(input.getPolicyId())));
-      existing.setPolicy(policyEntity);
+          .ifPresentOrElse(existing::setPolicy, () -> {
+            throw new RegistryServerException(
+                ErrorTypes.NOT_FOUND, "No policy found for id %s".formatted(input.getPolicyId()));
+          });
     }
     else {
       existing.setPolicy(null);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@
 package se.swedenconnect.oidf.registry.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -59,10 +62,13 @@ public class OidfServiceApiController {
    * @param plain whether to return plain JSON
    * @return the entity record
    */
-  @GetMapping(value = "/entity_record", produces = "application/jwt")
-  public String entityRecord(@RequestParam(name = "instanceid") final UUID instanceId,
+  @GetMapping(value = "/entity_record")
+  public ResponseEntity<String> entityRecord(@RequestParam(name = "instanceid") final UUID instanceId,
       @RequestParam(name = "plain", defaultValue = "false") final boolean plain) {
-    return this.federationApiService.entityRecord(instanceId, plain);
+    final String content = this.federationApiService.entityRecord(instanceId, plain);
+    return ResponseEntity.ok()
+        .header(HttpHeaders.CONTENT_TYPE, plain ? MediaType.APPLICATION_JSON_VALUE : "application/jwt")
+        .body(content);
   }
 
   /**
@@ -72,11 +78,16 @@ public class OidfServiceApiController {
    * @param plain whether to return plain JSON
    * @return a signed JWT containing claims for the entity_record
    */
-  @GetMapping(value = "/submodules", produces = "application/jwt")
-  public String submoduleRecord(@RequestParam(name = "instanceid") final UUID instanceId,
+  @GetMapping(value = "/submodules")
+  public ResponseEntity<String> submoduleRecord(@RequestParam(name = "instanceid") final UUID instanceId,
       @RequestParam(name = "plain", defaultValue = "false") final boolean plain) {
 
-    return this.federationApiService.moduleRecord(instanceId, plain);
+    final String content = this.federationApiService.moduleRecord(instanceId, plain);
+    return ResponseEntity.ok()
+        .header(HttpHeaders.CONTENT_TYPE, plain ? MediaType.APPLICATION_JSON_VALUE : "application/jwt")
+        .body(content);
+
+
   }
 
 }
