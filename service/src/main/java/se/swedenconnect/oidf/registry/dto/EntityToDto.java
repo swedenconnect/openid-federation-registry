@@ -110,7 +110,7 @@ public final class EntityToDto {
       dto.getCrit().add("ec_location");
 
     }
-    dto.setMetadata(readMapFromJson(entityEntity.getMetadata()));
+    dto.setMetadata(entityEntity.getMetadata());
     return dto;
   }
 
@@ -157,7 +157,7 @@ public final class EntityToDto {
     entity.setSubject(dto.getEntityIdentifier());
     // Serialize trustMarkSources to JSON string
     entity.setTrustmarksources(writeTrustMarkSourcesToJson(dto.getTrustMarkSources()));
-    entity.setMetadata(writeMapToJsonPretty(dto.getMetadata()));
+    entity.setMetadata(dto.getMetadata());
   }
 
 
@@ -165,23 +165,6 @@ public final class EntityToDto {
   // Private JSON helper methods
   // -------------------------------------------------------------------------
 
-  /**
-   * Reads a Map from JSON string.
-   *
-   * @param jsonStr the JSON string
-   * @return the parsed map, or empty map if jsonStr is null or blank
-   */
-  private static Map<String, Object> readMapFromJson(final String jsonStr) {
-    if (jsonStr == null || jsonStr.isBlank()) {
-      return Collections.emptyMap();
-    }
-    try {
-      return mapper.readValue(jsonStr, new TypeReference<Map<String, Object>>() {});
-    }
-    catch (final JsonProcessingException e) {
-      throw new IllegalArgumentException("Failed to parse JSON", e);
-    }
-  }
 
   /**
    * Reads a List of TrustmarkSourceDto from JSON string.
@@ -202,19 +185,6 @@ public final class EntityToDto {
     }
   }
 
-
-
-  private static String writeListJson(final List<String> sources) {
-    if (sources == null) {
-      return null;
-    }
-    try {
-      return mapper.writeValueAsString(sources);
-    }
-    catch (final JsonProcessingException e) {
-      throw new IllegalArgumentException("Failed to serialize trustMarkSources to JSON", e);
-    }
-  }
   /**
    * Writes a Map to JSON string with pretty printing.
    *
@@ -263,13 +233,7 @@ public final class EntityToDto {
     final PolicyDto dto = new PolicyDto();
     dto.setPolicyId(policyEntity.getPolicyId());
     dto.setName(policyEntity.getName());
-
-    if (policyEntity.getPolicy() != null && !policyEntity.getPolicy().isBlank()) {
-      dto.setPolicy(readMapFromJson(policyEntity.getPolicy()));
-    }
-    else {
-      dto.setPolicy(Collections.emptyMap());
-    }
+    dto.setPolicy(policyEntity.getPolicy());
 
     return dto;
   }
@@ -496,7 +460,7 @@ public final class EntityToDto {
   public static void updateEntity(final PolicyEntity entity, final PolicyDto dto) {
     entity.setName(dto.getName());
     final Map<String, Object> policy = dto.getPolicy() != null ? dto.getPolicy() : Collections.emptyMap();
-    entity.setPolicy(writeMapToJsonPretty(policy));
+    entity.setPolicy(policy);
   }
 
   /**
@@ -732,10 +696,7 @@ public final class EntityToDto {
     if (subordinateEntity.getPolicy() != null) {
       dto.setPolicyId(subordinateEntity.getPolicy().getPolicyId());
       // Set policy as read-only field
-      final String policyJson = subordinateEntity.getPolicy().getPolicy();
-      if (policyJson != null && !policyJson.isBlank()) {
-        dto.setPolicy(readMapFromJson(policyJson));
-      }
+      dto.setPolicy(subordinateEntity.getPolicy().getPolicy());
     }
 
     dto.setJwks(subordinateEntity.getJwks());

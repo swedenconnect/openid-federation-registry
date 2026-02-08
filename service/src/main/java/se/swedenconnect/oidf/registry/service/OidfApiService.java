@@ -208,8 +208,8 @@ public class OidfApiService {
   private TrustAnchorProperties toTaIm(final TaImEntity taImModuleEntity) {
     return TrustAnchorProperties.builder()
         .entityIdentifier(new EntityID(taImModuleEntity.getEntity().getIssuer()))
-        //TODO .trustMarkOwners()
-        //TODO .trustMarkIssuers()
+         //.trustMarkOwners()
+        //.trustMarkIssuers(taImModuleEntity.getTrustMarkIssuers())
         .subordinates(taImModuleEntity.getSubordinates()
             .stream()
             .map(this::toSubordinates)

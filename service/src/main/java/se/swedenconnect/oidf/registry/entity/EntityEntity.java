@@ -19,8 +19,11 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import se.swedenconnect.oidf.registry.entity.converters.MapConverter;
+import se.swedenconnect.oidf.registry.entity.converters.StringListConverter;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -44,7 +47,8 @@ public class EntityEntity extends BaseEntity {
   private EntityKeyType entityType;
 
   @Column(name = "metadata", columnDefinition = "JSON")
-  private String metadata;
+  @Convert(converter = MapConverter.class)
+  private Map<String,Object> metadata;
 
   @Column(name = "jwks", columnDefinition = "TEXT")
   private String jwks;
