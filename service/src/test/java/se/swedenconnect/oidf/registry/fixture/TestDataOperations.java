@@ -47,7 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import static se.swedenconnect.oidf.registry.entity.EntityKeyType.FEDERATION_ENTITY;
+import se.swedenconnect.oidf.registry.entity.model.EntityType;
 
 /**
  * oidf-entity-registry
@@ -95,7 +95,7 @@ public class TestDataOperations {
     final ModulesApi modulesApi = new ModulesApi(apiClient);
     final SubordinatesApi subordinatesApi = new SubordinatesApi(apiClient);
 
-    final EntityWithModules e = entitiesApi.listEntities(FEDERATION_ENTITY.toString(), true);
+    final EntityWithModules e = entitiesApi.listEntities(EntityType.FEDERATION_ENTITY.toString(), true);
     final String taEntityid = "https://www.pm.se/oidf/ta/";
     if (e.getFederationEntity().stream()
         .map(FederationEntityWithModules::getEntityIdentifier)

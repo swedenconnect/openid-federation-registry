@@ -17,16 +17,33 @@
 package se.swedenconnect.oidf.registry.dto;
 
 import org.junit.jupiter.api.Test;
-import se.swedenconnect.oidf.registry.entity.EntityEntity;
-import se.swedenconnect.oidf.registry.entity.EntityKeyType;
-import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
-import se.swedenconnect.oidf.registry.entity.PolicyEntity;
-import se.swedenconnect.oidf.registry.entity.ResolverEntity;
-import se.swedenconnect.oidf.registry.entity.SubordinateEntity;
-import se.swedenconnect.oidf.registry.entity.TaImEntity;
-import se.swedenconnect.oidf.registry.entity.TrustMarkEntity;
-import se.swedenconnect.oidf.registry.entity.TrustMarkSubjectEntity;
-import se.swedenconnect.oidf.registry.entity.TrustmarkIssuerEntity;
+import se.swedenconnect.oidf.registry.entity.mapper.DtoToEntityMapper;
+import se.swedenconnect.oidf.registry.entity.model.EntityType;
+import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
+import se.swedenconnect.oidf.registry.entity.dto.FederationEntityDto;
+import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
+import se.swedenconnect.oidf.registry.organization.model.Organization;
+import se.swedenconnect.oidf.registry.policy.model.Policy;
+import se.swedenconnect.oidf.registry.policy.mapper.DtoToPolicyMapper;
+import se.swedenconnect.oidf.registry.policy.dto.PolicyDto;
+import se.swedenconnect.oidf.registry.module.model.Resolver;
+import se.swedenconnect.oidf.registry.module.mapper.DtoToModuleMapper;
+import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
+import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
+import se.swedenconnect.oidf.registry.module.model.ModuleType;
+import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
+import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
+import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
+import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
+import se.swedenconnect.oidf.registry.subordinate.mapper.DtoToSubordinateMapper;
+import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
+import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
+import se.swedenconnect.oidf.registry.trustmark.mapper.DtoToTrustmarkMapper;
+import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
+import se.swedenconnect.oidf.registry.trustmark.model.TrustMarkSubject;
+import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
+import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSourceDto;
 
 import java.time.OffsetDateTime;
 import java.util.Collections;
@@ -50,12 +67,12 @@ class DtoToEntityMapperTest {
     dto.setEntityIdentifier("https://federation.example.com");
     dto.setCrit(List.of("crit1"));
     dto.setAuthorityhints(List.of("https://ta.example.com"));
-    final OrganizationEntity org = createOrganization();
+    final Organization org = createOrganization();
 
-    final EntityEntity entity = DtoToEntityMapper.toEntity(ID, dto, EntityKeyType.FEDERATION_ENTITY, org);
+    final FederationEntity entity = DtoToEntityMapper.toEntity(ID, dto, EntityType.FEDERATION_ENTITY, org);
 
     assertThat(entity.getEntityId()).isEqualTo(ID);
-    assertThat(entity.getEntityType()).isEqualTo(EntityKeyType.FEDERATION_ENTITY);
+    assertThat(entity.getEntityType()).isEqualTo(EntityType.FEDERATION_ENTITY);
     assertThat(entity.getOrganization()).isEqualTo(org);
     assertThat(entity.getIssuer()).isEqualTo("https://federation.example.com");
     assertThat(entity.getSubject()).isEqualTo("https://federation.example.com");
@@ -72,12 +89,12 @@ class DtoToEntityMapperTest {
     final HostedEntityDto dto = new HostedEntityDto();
     dto.setEntityIdentifier("https://hosted.example.com");
     dto.setMetadata(Map.of("federation_entity", Map.of("name", "test")));
-    final OrganizationEntity org = createOrganization();
+    final Organization org = createOrganization();
 
-    final EntityEntity entity = DtoToEntityMapper.toEntity(ID, dto, EntityKeyType.HOSTED_ENTITY, org);
+    final FederationEntity entity = DtoToEntityMapper.toEntity(ID, dto, EntityType.HOSTED_ENTITY, org);
 
     assertThat(entity.getEntityId()).isEqualTo(ID);
-    assertThat(entity.getEntityType()).isEqualTo(EntityKeyType.HOSTED_ENTITY);
+    assertThat(entity.getEntityType()).isEqualTo(EntityType.HOSTED_ENTITY);
     assertThat(entity.getOrganization()).isEqualTo(org);
     assertThat(entity.getIssuer()).isEqualTo("https://hosted.example.com");
     assertThat(entity.getSubject()).isEqualTo("https://hosted.example.com");
@@ -92,9 +109,9 @@ class DtoToEntityMapperTest {
     source.setTrustMarkIssuer("issuer1");
     source.setTrustmarkId("tm1");
     dto.setTrustMarkSources(List.of(source));
-    final OrganizationEntity org = createOrganization();
+    final Organization org = createOrganization();
 
-    final EntityEntity entity = DtoToEntityMapper.toEntity(ID, dto, EntityKeyType.HOSTED_ENTITY, org);
+    final FederationEntity entity = DtoToEntityMapper.toEntity(ID, dto, EntityType.HOSTED_ENTITY, org);
 
     assertThat(entity.getTrustmarksources()).contains("issuer1");
     assertThat(entity.getTrustmarksources()).contains("tm1");
@@ -109,9 +126,9 @@ class DtoToEntityMapperTest {
     final PolicyDto dto = new PolicyDto();
     dto.setName("test-policy");
     dto.setPolicy(Map.of("key", "value"));
-    final OrganizationEntity org = createOrganization();
+    final Organization org = createOrganization();
 
-    final PolicyEntity entity = DtoToEntityMapper.toEntity(ID, dto, org);
+    final Policy entity = DtoToPolicyMapper.toEntity(ID, dto, org);
 
     assertThat(entity.getPolicyId()).isEqualTo(ID);
     assertThat(entity.getOrganization()).isEqualTo(org);
@@ -124,9 +141,9 @@ class DtoToEntityMapperTest {
     final PolicyDto dto = new PolicyDto();
     dto.setName("empty-policy");
     dto.setPolicy(null);
-    final OrganizationEntity org = createOrganization();
+    final Organization org = createOrganization();
 
-    final PolicyEntity entity = DtoToEntityMapper.toEntity(ID, dto, org);
+    final Policy entity = DtoToPolicyMapper.toEntity(ID, dto, org);
 
     assertThat(entity.getPolicy()).isEmpty();
   }
@@ -140,13 +157,13 @@ class DtoToEntityMapperTest {
     final TrustAnchorDto dto = new TrustAnchorDto();
     dto.setActive(true);
     dto.setTrustMarkIssuers(List.of("issuer1"));
-    final EntityEntity entityEntity = createEntityEntity();
-    final OrganizationEntity org = createOrganization();
+    final FederationEntity entityEntity = createEntityEntity();
+    final Organization org = createOrganization();
 
-    final TaImEntity module = DtoToEntityMapper.toEntity(ID, dto, entityEntity, org);
+    final TrustAnchorIntermediateModule module = DtoToModuleMapper.toEntity(ID, dto, entityEntity, org);
 
     assertThat(module.getTaImId()).isEqualTo(ID);
-    assertThat(module.getModuleType()).isEqualTo(TaImEntity.Type.TRUSTANCHOR);
+    assertThat(module.getModuleType()).isEqualTo(ModuleType.TRUSTANCHOR);
     assertThat(module.getEntity()).isEqualTo(entityEntity);
     assertThat(module.getOrganization()).isEqualTo(org);
     assertThat(module.getActive()).isTrue();
@@ -161,13 +178,13 @@ class DtoToEntityMapperTest {
   void toEntity_intermediateDto() {
     final IntermediateDto dto = new IntermediateDto();
     dto.setActive(true);
-    final EntityEntity entityEntity = createEntityEntity();
-    final OrganizationEntity org = createOrganization();
+    final FederationEntity entityEntity = createEntityEntity();
+    final Organization org = createOrganization();
 
-    final TaImEntity module = DtoToEntityMapper.toEntity(ID, dto, entityEntity, org);
+    final TrustAnchorIntermediateModule module = DtoToModuleMapper.toEntity(ID, dto, entityEntity, org);
 
     assertThat(module.getTaImId()).isEqualTo(ID);
-    assertThat(module.getModuleType()).isEqualTo(TaImEntity.Type.INTERMEDIATE);
+    assertThat(module.getModuleType()).isEqualTo(ModuleType.INTERMEDIATE);
     assertThat(module.getEntity()).isEqualTo(entityEntity);
     assertThat(module.getActive()).isTrue();
   }
@@ -185,9 +202,9 @@ class DtoToEntityMapperTest {
     dto.setTrustedKeys("{\"keys\":[]}");
     dto.setStepRetryDuration("PT10S");
     dto.setStepCachedValueThreshold(5);
-    final EntityEntity entityEntity = createEntityEntity();
+    final FederationEntity entityEntity = createEntityEntity();
 
-    final ResolverEntity entity = DtoToEntityMapper.toEntity(ID, dto, entityEntity);
+    final Resolver entity = DtoToModuleMapper.toEntity(ID, dto, entityEntity);
 
     assertThat(entity.getResolverId()).isEqualTo(ID);
     assertThat(entity.getEntity()).isEqualTo(entityEntity);
@@ -210,11 +227,11 @@ class DtoToEntityMapperTest {
     dto.setLogoUri("https://example.com/logo.png");
     dto.setRefUri("https://example.com/ref");
     dto.setDelegation("delegation-jwt");
-    final TrustmarkIssuerEntity issuer = TrustmarkIssuerEntity.builder()
+    final TrustMarkIssuer issuer = TrustMarkIssuer.builder()
         .trustmarkIssuerId(UUID.randomUUID())
         .build();
 
-    final TrustMarkEntity entity = DtoToEntityMapper.toEntity(ID, dto, issuer);
+    final TrustMark entity = DtoToTrustmarkMapper.toEntity(ID, dto, issuer);
 
     assertThat(entity.getTrustmarkId()).isEqualTo(ID);
     assertThat(entity.getTrustmarkIssuer()).isEqualTo(issuer);
@@ -237,11 +254,11 @@ class DtoToEntityMapperTest {
     dto.setRevoked(false);
     dto.setGranted(granted);
     dto.setExpires(expires);
-    final TrustMarkEntity trustMark = TrustMarkEntity.builder()
+    final TrustMark trustMark = TrustMark.builder()
         .trustmarkId(UUID.randomUUID())
         .build();
 
-    final TrustMarkSubjectEntity entity = DtoToEntityMapper.toEntity(ID, dto, trustMark);
+    final TrustMarkSubject entity = DtoToTrustmarkMapper.toEntity(ID, dto, trustMark);
 
     assertThat(entity.getTrustmarksubjectId()).isEqualTo(ID);
     assertThat(entity.getTrustMark()).isEqualTo(trustMark);
@@ -260,9 +277,9 @@ class DtoToEntityMapperTest {
     final TrustmarkIssuerDto dto = new TrustmarkIssuerDto();
     dto.setActive(true);
     dto.setTrustMarkTokenValidityDuration("PT1H");
-    final EntityEntity entityEntity = createEntityEntity();
+    final FederationEntity entityEntity = createEntityEntity();
 
-    final TrustmarkIssuerEntity entity = DtoToEntityMapper.toEntity(ID, dto, entityEntity);
+    final TrustMarkIssuer entity = DtoToModuleMapper.toEntity(ID, dto, entityEntity);
 
     assertThat(entity.getTrustmarkIssuerId()).isEqualTo(ID);
     assertThat(entity.getEntity()).isEqualTo(entityEntity);
@@ -283,10 +300,10 @@ class DtoToEntityMapperTest {
     dto.setMetadataPolicyCrit(List.of("mpc1", "mpc2"));
     dto.setEcLocation("https://ec.example.com");
     dto.setEcLocationAutomaticResolve(false);
-    final TaImEntity taIm = new TaImEntity();
+    final TrustAnchorIntermediateModule taIm = new TrustAnchorIntermediateModule();
     taIm.setTaImId(UUID.randomUUID());
 
-    final SubordinateEntity entity = DtoToEntityMapper.toEntity(ID, dto, taIm);
+    final Subordinate entity = DtoToSubordinateMapper.toEntity(ID, dto, taIm);
 
     assertThat(entity.getSubordinateId()).isEqualTo(ID);
     assertThat(entity.getTaIm()).isEqualTo(taIm);
@@ -305,10 +322,10 @@ class DtoToEntityMapperTest {
     dto.setEntityIdentifier("https://subordinate.example.com");
     dto.setCrit(null);
     dto.setMetadataPolicyCrit(null);
-    final TaImEntity taIm = new TaImEntity();
+    final TrustAnchorIntermediateModule taIm = new TrustAnchorIntermediateModule();
     taIm.setTaImId(UUID.randomUUID());
 
-    final SubordinateEntity entity = DtoToEntityMapper.toEntity(ID, dto, taIm);
+    final Subordinate entity = DtoToSubordinateMapper.toEntity(ID, dto, taIm);
 
     assertThat(entity.getCrit()).isNull();
     assertThat(entity.getMetadataPolicyCrit()).isNull();
@@ -320,7 +337,7 @@ class DtoToEntityMapperTest {
 
   @Test
   void updateEntity_federationEntityDto() {
-    final EntityEntity entity = new EntityEntity();
+    final FederationEntity entity = new FederationEntity();
     entity.setIssuer("old-issuer");
     final FederationEntityDto dto = new FederationEntityDto();
     dto.setEntityIdentifier("https://new.example.com");
@@ -341,7 +358,7 @@ class DtoToEntityMapperTest {
 
   @Test
   void updateEntity_hostedEntityDto() {
-    final EntityEntity entity = new EntityEntity();
+    final FederationEntity entity = new FederationEntity();
     final HostedEntityDto dto = new HostedEntityDto();
     dto.setEntityIdentifier("https://updated.example.com");
     dto.setMetadata(Map.of("key", "updated"));
@@ -360,7 +377,7 @@ class DtoToEntityMapperTest {
 
   @Test
   void updateEntity_hostedEntityDto_withNullTrustMarkSources() {
-    final EntityEntity entity = new EntityEntity();
+    final FederationEntity entity = new FederationEntity();
     final HostedEntityDto dto = new HostedEntityDto();
     dto.setEntityIdentifier("https://example.com");
     dto.setTrustMarkSources(null);
@@ -376,12 +393,12 @@ class DtoToEntityMapperTest {
 
   @Test
   void updateEntity_policyDto() {
-    final PolicyEntity entity = new PolicyEntity();
+    final Policy entity = new Policy();
     final PolicyDto dto = new PolicyDto();
     dto.setName("updated-name");
     dto.setPolicy(Map.of("rule", "deny"));
 
-    DtoToEntityMapper.updateEntity(entity, dto);
+    DtoToPolicyMapper.updateEntity(entity, dto);
 
     assertThat(entity.getName()).isEqualTo("updated-name");
     assertThat(entity.getPolicy()).containsEntry("rule", "deny");
@@ -389,12 +406,12 @@ class DtoToEntityMapperTest {
 
   @Test
   void updateEntity_policyDto_nullPolicyDefaultsToEmpty() {
-    final PolicyEntity entity = new PolicyEntity();
+    final Policy entity = new Policy();
     final PolicyDto dto = new PolicyDto();
     dto.setName("name");
     dto.setPolicy(null);
 
-    DtoToEntityMapper.updateEntity(entity, dto);
+    DtoToPolicyMapper.updateEntity(entity, dto);
 
     assertThat(entity.getPolicy()).isEmpty();
   }
@@ -405,13 +422,13 @@ class DtoToEntityMapperTest {
 
   @Test
   void updateIntermediate_trustAnchorDto() {
-    final TaImEntity module = new TaImEntity();
+    final TrustAnchorIntermediateModule module = new TrustAnchorIntermediateModule();
     module.setActive(false);
     final TrustAnchorDto dto = new TrustAnchorDto();
     dto.setActive(true);
     dto.setTrustMarkIssuers(List.of("issuer1", "issuer2"));
 
-    DtoToEntityMapper.updateIntermediate(module, dto);
+    DtoToModuleMapper.updateIntermediate(module, dto);
 
     assertThat(module.getActive()).isTrue();
     assertThat(module.getTrustMarkIssuers()).containsExactly("issuer1", "issuer2");
@@ -423,12 +440,12 @@ class DtoToEntityMapperTest {
 
   @Test
   void updateIntermediate_intermediateDto() {
-    final TaImEntity module = new TaImEntity();
+    final TrustAnchorIntermediateModule module = new TrustAnchorIntermediateModule();
     module.setActive(false);
     final IntermediateDto dto = new IntermediateDto();
     dto.setActive(true);
 
-    DtoToEntityMapper.updateIntermediate(module, dto);
+    DtoToModuleMapper.updateIntermediate(module, dto);
 
     assertThat(module.getActive()).isTrue();
   }
@@ -439,7 +456,7 @@ class DtoToEntityMapperTest {
 
   @Test
   void updateEntity_resolverDto() {
-    final ResolverEntity entity = ResolverEntity.builder().build();
+    final Resolver entity = Resolver.builder().build();
     final ResolverDto dto = new ResolverDto();
     dto.setActive(true);
     dto.setResolveResponseDuration("PT60S");
@@ -447,7 +464,7 @@ class DtoToEntityMapperTest {
     dto.setTrustedKeys("{\"keys\":[]}");
     dto.setStepRetryDuration("PT5S");
 
-    DtoToEntityMapper.updateEntity(entity, dto);
+    DtoToModuleMapper.updateEntity(entity, dto);
 
     assertThat(entity.getActive()).isTrue();
     assertThat(entity.getResolveResponseDuration()).isEqualTo("PT60S");
@@ -462,14 +479,14 @@ class DtoToEntityMapperTest {
 
   @Test
   void updateEntity_trustmarkDto() {
-    final TrustMarkEntity entity = TrustMarkEntity.builder().build();
+    final TrustMark entity = TrustMark.builder().build();
     final TrustmarkDto dto = new TrustmarkDto();
     dto.setTrustmarkType("https://example.com/updated-type");
     dto.setLogoUri("https://example.com/new-logo.png");
     dto.setRefUri("https://example.com/new-ref");
     dto.setDelegation("new-delegation");
 
-    DtoToEntityMapper.updateEntity(entity, dto);
+    DtoToTrustmarkMapper.updateEntity(entity, dto);
 
     assertThat(entity.getTrustmarkType()).isEqualTo("https://example.com/updated-type");
     assertThat(entity.getLogoUri()).isEqualTo("https://example.com/new-logo.png");
@@ -483,7 +500,7 @@ class DtoToEntityMapperTest {
 
   @Test
   void updateEntity_trustmarkSubjectDto() {
-    final TrustMarkSubjectEntity entity = TrustMarkSubjectEntity.builder().build();
+    final TrustMarkSubject entity = TrustMarkSubject.builder().build();
     final OffsetDateTime granted = OffsetDateTime.now();
     final OffsetDateTime expires = OffsetDateTime.now().plusYears(1);
     final TrustmarkSubjectDto dto = new TrustmarkSubjectDto();
@@ -492,7 +509,7 @@ class DtoToEntityMapperTest {
     dto.setGranted(granted);
     dto.setExpires(expires);
 
-    DtoToEntityMapper.updateEntity(entity, dto);
+    DtoToTrustmarkMapper.updateEntity(entity, dto);
 
     assertThat(entity.getSubject()).isEqualTo("https://updated-subject.example.com");
     assertThat(entity.getRevoked()).isTrue();
@@ -506,12 +523,12 @@ class DtoToEntityMapperTest {
 
   @Test
   void updateEntity_trustmarkIssuerDto() {
-    final TrustmarkIssuerEntity entity = TrustmarkIssuerEntity.builder().build();
+    final TrustMarkIssuer entity = TrustMarkIssuer.builder().build();
     final TrustmarkIssuerDto dto = new TrustmarkIssuerDto();
     dto.setActive(false);
     dto.setTrustMarkTokenValidityDuration("PT2H");
 
-    DtoToEntityMapper.updateEntity(entity, dto);
+    DtoToModuleMapper.updateEntity(entity, dto);
 
     assertThat(entity.getActive()).isFalse();
     assertThat(entity.getTrustMarkTokenValidityDuration()).isEqualTo("PT2H");
@@ -523,7 +540,7 @@ class DtoToEntityMapperTest {
 
   @Test
   void updateEntity_subordinateDto() {
-    final SubordinateEntity entity = new SubordinateEntity();
+    final Subordinate entity = new Subordinate();
     final SubordinateDto dto = new SubordinateDto();
     dto.setJwks("{\"keys\":[{\"kty\":\"EC\"}]}");
     dto.setEntityIdentifier("https://updated-sub.example.com");
@@ -532,7 +549,7 @@ class DtoToEntityMapperTest {
     dto.setEcLocation("https://new-ec.example.com");
     dto.setEcLocationAutomaticResolve(true);
 
-    DtoToEntityMapper.updateEntity(entity, dto);
+    DtoToSubordinateMapper.updateEntity(entity, dto);
 
     assertThat(entity.getJwks()).isEqualTo("{\"keys\":[{\"kty\":\"EC\"}]}");
     assertThat(entity.getEntityidentifier()).isEqualTo("https://updated-sub.example.com");
@@ -544,7 +561,7 @@ class DtoToEntityMapperTest {
 
   @Test
   void updateEntity_subordinateDto_clearsNullCrit() {
-    final SubordinateEntity entity = new SubordinateEntity();
+    final Subordinate entity = new Subordinate();
     entity.setCrit("old-crit");
     entity.setMetadataPolicyCrit("old-mpc");
     final SubordinateDto dto = new SubordinateDto();
@@ -553,7 +570,7 @@ class DtoToEntityMapperTest {
     dto.setCrit(null);
     dto.setMetadataPolicyCrit(null);
 
-    DtoToEntityMapper.updateEntity(entity, dto);
+    DtoToSubordinateMapper.updateEntity(entity, dto);
 
     assertThat(entity.getCrit()).isNull();
     assertThat(entity.getMetadataPolicyCrit()).isNull();
@@ -561,7 +578,7 @@ class DtoToEntityMapperTest {
 
   @Test
   void updateEntity_subordinateDto_clearsEmptyCrit() {
-    final SubordinateEntity entity = new SubordinateEntity();
+    final Subordinate entity = new Subordinate();
     entity.setCrit("old-crit");
     entity.setMetadataPolicyCrit("old-mpc");
     final SubordinateDto dto = new SubordinateDto();
@@ -570,7 +587,7 @@ class DtoToEntityMapperTest {
     dto.setCrit(Collections.emptyList());
     dto.setMetadataPolicyCrit(Collections.emptyList());
 
-    DtoToEntityMapper.updateEntity(entity, dto);
+    DtoToSubordinateMapper.updateEntity(entity, dto);
 
     assertThat(entity.getCrit()).isNull();
     assertThat(entity.getMetadataPolicyCrit()).isNull();
@@ -580,18 +597,18 @@ class DtoToEntityMapperTest {
   // Test helpers
   // -------------------------------------------------------------------------
 
-  private static OrganizationEntity createOrganization() {
-    final OrganizationEntity org = new OrganizationEntity();
+  private static Organization createOrganization() {
+    final Organization org = new Organization();
     org.setOrganizationId(UUID.randomUUID());
     org.setOrgNumber("555555-5555");
     org.setOrgName("Test Organization");
     return org;
   }
 
-  private static EntityEntity createEntityEntity() {
-    final EntityEntity entity = new EntityEntity();
+  private static FederationEntity createEntityEntity() {
+    final FederationEntity entity = new FederationEntity();
     entity.setEntityId(UUID.randomUUID());
-    entity.setEntityType(EntityKeyType.FEDERATION_ENTITY);
+    entity.setEntityType(EntityType.FEDERATION_ENTITY);
     entity.setIssuer("https://entity.example.com");
     entity.setSubject("https://entity.example.com");
     return entity;
