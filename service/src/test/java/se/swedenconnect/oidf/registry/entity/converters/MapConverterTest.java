@@ -73,8 +73,7 @@ class MapConverterTest {
     final Map<String, Object> result = this.converter.convertToEntityAttribute(json);
 
     assertThat(result.get("outer")).isInstanceOf(Map.class);
-    assertThat(result.get("list")).isInstanceOf(List.class);
-    assertThat((List<?>) result.get("list")).containsExactly(1, 2, 3);
+    assertThat(result).extracting("list").asList().containsExactly(1, 2, 3);
   }
 
   @Test
