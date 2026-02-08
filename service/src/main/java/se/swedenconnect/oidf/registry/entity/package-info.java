@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 /**
- * JPA Entity Classes
+ * Entity bounded context (FederationEntity, HostedEntity)
  *
  * @author Per Fredrik Plars
  */

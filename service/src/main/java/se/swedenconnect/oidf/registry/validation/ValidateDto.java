@@ -18,8 +18,17 @@ package se.swedenconnect.oidf.registry.validation;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
-import se.swedenconnect.oidf.registry.dto.*;
+import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.entity.dto.FederationEntityDto;
+import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
+import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
+import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
+import se.swedenconnect.oidf.registry.policy.dto.PolicyDto;
+import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
+import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
+import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
 
 import java.util.Objects;
 

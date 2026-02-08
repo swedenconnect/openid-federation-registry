@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.registry.entity.converters;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import se.swedenconnect.oidf.registry.infrastructure.persistence.MapConverter;
 
 import java.util.LinkedHashMap;
 import java.util.List;
