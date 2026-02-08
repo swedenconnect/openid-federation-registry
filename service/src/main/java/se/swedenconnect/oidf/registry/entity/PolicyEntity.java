@@ -16,6 +16,7 @@
 package se.swedenconnect.oidf.registry.entity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -25,7 +26,9 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.FilterDef;
 import org.hibernate.annotations.ParamDef;
+import se.swedenconnect.oidf.registry.entity.converters.MapConverter;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -56,7 +59,8 @@ public class PolicyEntity extends BaseEntity {
   private String name;
 
   @Column(name = "policy", nullable = false)
-  private String policy;
+  @Convert(converter = MapConverter.class)
+  private Map<String,Object> policy;
 
 }
 

@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.entity;
+package se.swedenconnect.oidf.registry.entity.converters;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -23,15 +23,15 @@ import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Map;
 
 /**
- * JPA Converter to handle list data
+ * JPA Converter to handle Map and convert it to json
  *
  * @author Per Fredrik Plars
  */
 @Converter
-public class StringListConverter implements AttributeConverter<List<String>, String> {
+public class MapConverter implements AttributeConverter<Map<String,Object>, String> {
   final ObjectMapper mapper;
 
   /**
@@ -39,7 +39,7 @@ public class StringListConverter implements AttributeConverter<List<String>, Str
    *
    * @param objectMapper mapper to convert values
    */
-  public StringListConverter(final ObjectMapper objectMapper) {
+  public MapConverter(final ObjectMapper objectMapper) {
     this.mapper = objectMapper;
   }
 
@@ -49,8 +49,8 @@ public class StringListConverter implements AttributeConverter<List<String>, Str
    * @return String value of list
    */
   @Override
-  public String convertToDatabaseColumn(final List<String> attribute) {
-    return attribute == null ? null : this.writeListJson(attribute);
+  public String convertToDatabaseColumn(final Map<String,Object> attribute) {
+    return attribute == null ? null : this.writeMapToJsonPretty(attribute);
   }
 
   /**
@@ -59,33 +59,42 @@ public class StringListConverter implements AttributeConverter<List<String>, Str
    * @return List
    */
   @Override
-  public List<String> convertToEntityAttribute(final String dbData) {
+  public Map<String,Object> convertToEntityAttribute(final String dbData) {
     return dbData == null || dbData.isEmpty()
-        ? List.of()
-        : this.readListJson(dbData);
+        ? Map.of()
+        : this.readMapFromJson(dbData);
   }
 
-  private List<String> readListJson(final String jsonStr) {
-    if (jsonStr == null || jsonStr.isBlank()) {
-      return Collections.emptyList();
-    }
-    try {
-      return this.mapper.readValue(jsonStr, new TypeReference<List<String>>() {});
-    }
-    catch (final JsonProcessingException e) {
-      throw new IllegalArgumentException("Failed to parse trustMarkSources JSON", e);
-    }
-  }
-
-  private String writeListJson(final List<String> sources) {
-    if (sources == null) {
+  /**
+   * Writes a Map to JSON string with pretty printing.
+   *
+   * @param map the map to serialize
+   * @return the JSON string representation with pretty printing
+   * @throws IllegalArgumentException if JSON serialization fails
+   */
+  private  String writeMapToJsonPretty(final Map<String, Object> map) {
+    if (map == null) {
       return null;
     }
     try {
-      return this.mapper.writeValueAsString(sources);
+      return this.mapper.writerWithDefaultPrettyPrinter().writeValueAsString(map);
     }
     catch (final JsonProcessingException e) {
-      throw new IllegalArgumentException("Failed to serialize trustMarkSources to JSON", e);
+      throw new IllegalArgumentException("Failed to serialize map to JSON", e);
     }
   }
+
+  private  Map<String, Object> readMapFromJson(final String jsonStr) {
+    if (jsonStr == null || jsonStr.isBlank()) {
+      return Collections.emptyMap();
+    }
+    try {
+      return this.mapper.readValue(jsonStr, new TypeReference<Map<String, Object>>() {});
+    }
+    catch (final JsonProcessingException e) {
+      throw new IllegalArgumentException("Failed to parse JSON", e);
+    }
+  }
+
+
 }

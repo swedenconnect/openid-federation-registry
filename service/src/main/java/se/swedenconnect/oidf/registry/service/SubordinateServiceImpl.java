@@ -20,10 +20,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
-import se.swedenconnect.oidf.registry.dto.EntityToDto;
+import se.swedenconnect.oidf.registry.dto.DtoToEntityMapper;
+import se.swedenconnect.oidf.registry.dto.EntityToDtoMapper;
 import se.swedenconnect.oidf.registry.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
-import se.swedenconnect.oidf.registry.entity.PolicyEntity;
 import se.swedenconnect.oidf.registry.entity.SubordinateEntity;
 import se.swedenconnect.oidf.registry.entity.TaImEntity;
 import se.swedenconnect.oidf.registry.errorhandling.ErrorTypes;
@@ -72,7 +72,7 @@ public class SubordinateServiceImpl implements SubordinateService {
   }
 
   private static SubordinateDto toDto(final SubordinateEntity entity) {
-    return EntityToDto.toDto(entity);
+    return EntityToDtoMapper.toDto(entity);
   }
 
   private TaImEntity findTaImOrThrow(final OrganizationRecord organizationRecord, final UUID taImId) {
@@ -115,16 +115,19 @@ public class SubordinateServiceImpl implements SubordinateService {
 
     final TaImEntity taIm = this.findTaImOrThrow(organizationRecord, input.getTaImId());
 
-    final SubordinateEntity subordinateEntity = EntityToDto.toEntity(id, input, taIm);
+    final SubordinateEntity subordinateEntity = DtoToEntityMapper.toEntity(id, input, taIm);
 
-    taIm.getOrganization()
-        .getPolicies()
-        .stream()
-        .filter(policyEntity -> policyEntity.getPolicyId().equals(input.getPolicyId()))
-        .findFirst()
-        .ifPresentOrElse(subordinateEntity::setPolicy, () -> {
-          throw new RegistryServerException(ErrorTypes.NOT_FOUND, "No policy found for id %s".formatted(id));
-        });
+    if (input.getPolicyId() != null) {
+      this.policyRepository.findByOrgNumberAndPolicyId(
+              organizationRecord.orgNumber(), input.getPolicyId())
+          .ifPresentOrElse(subordinateEntity::setPolicy, () -> {
+            throw new RegistryServerException(
+                ErrorTypes.NOT_FOUND, "No policy found for id %s".formatted(input.getPolicyId()));
+          });
+    }
+    else {
+      subordinateEntity.setPolicy(null);
+    }
 
     // If automatic resolve is selected, the system try to find a hosted entity. If not an exception is thrown.
     if (input.isEcLocationAutomaticResolve()) {
@@ -151,14 +154,15 @@ public class SubordinateServiceImpl implements SubordinateService {
     final SubordinateEntity existing = this.findSubordinateOrThrow(organizationRecord, id);
     final SubordinateDto oldDto = toDto(existing);
 
-    EntityToDto.updateEntity(existing, input);
+    DtoToEntityMapper.updateEntity(existing, input);
 
     if (input.getPolicyId() != null) {
-      final PolicyEntity policyEntity = this.policyRepository.findByOrgNumberAndPolicyId(
+      this.policyRepository.findByOrgNumberAndPolicyId(
               organizationRecord.orgNumber(), input.getPolicyId())
-          .orElseThrow(() -> new RegistryServerException(
-              ErrorTypes.NOT_FOUND, "No policy found for id %s".formatted(input.getPolicyId())));
-      existing.setPolicy(policyEntity);
+          .ifPresentOrElse(existing::setPolicy, () -> {
+            throw new RegistryServerException(
+                ErrorTypes.NOT_FOUND, "No policy found for id %s".formatted(input.getPolicyId()));
+          });
     }
     else {
       existing.setPolicy(null);

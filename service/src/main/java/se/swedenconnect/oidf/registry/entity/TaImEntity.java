@@ -20,11 +20,10 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import se.swedenconnect.oidf.registry.entity.converters.StringListConverter;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -79,32 +78,8 @@ public class TaImEntity extends BaseEntity {
   private Boolean active;
 
   @Column(name = "trust_mark_issuers")
-  private String trustMarkIssuers;
-
-  /**
-   * Retrieves a list of trust mark issuers by splitting the stored string of trust mark issuers using a comma as a
-   * delimiter. If the stored string is empty, returns null.
-   *
-   * @return a list of trust mark issuer strings, or null if no trust mark issuers are available
-   */
-  public List<String> getTrustMarkIssuers() {
-    if (this.trustMarkIssuers == null) {
-      return Collections.emptyList();
-    }
-    return this.trustMarkIssuers.isEmpty() ? null : List.of(this.trustMarkIssuers.split(","));
-  }
-
-  /**
-   * Sets the trust mark issuers for the system. The provided list of issuer names is processed and stored as a
-   * comma-separated string. If the provided list is empty, the internal value is set to null.
-   *
-   * @param trustMarkIssuers a list of trust mark issuer names to be stored. If the list is empty, the value will be
-   *     set to null.
-   */
-  public void setTrustMarkIssuers(final List<String> trustMarkIssuers) {
-    this.trustMarkIssuers = Objects.isNull(trustMarkIssuers) ||
-        trustMarkIssuers.isEmpty() ? null : String.join(",", trustMarkIssuers);
-  }
+  @Convert(converter = StringListConverter.class)
+  private List<String> trustMarkIssuers;
 
   /**
    * Determines whether the module is of the specified types. Compares the module's type against the provided array of

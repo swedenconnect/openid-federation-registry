@@ -18,7 +18,7 @@ package se.swedenconnect.oidf.registry.service;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
-import se.swedenconnect.oidf.registry.dto.EntityToDto;
+import se.swedenconnect.oidf.registry.dto.EntityToDtoMapper;
 import se.swedenconnect.oidf.registry.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.dto.oidfservice.EntityRecord;
@@ -74,7 +74,7 @@ public class FederationMetadataCreator {
 
       if (entityType == EntityKeyType.HOSTED_ENTITY) {
 
-        final HostedEntityDto dto = EntityToDto.toDtoHosted(entityEntity);
+        final HostedEntityDto dto = EntityToDtoMapper.toDtoHosted(entityEntity);
         entityData.setEntityIdentifier(new EntityID(dto.getEntityIdentifier()));
         entityData.setMetadata(dto.getMetadata());
         entityData.setEcLocation(dto.getEffectiveEcLocation());
@@ -87,7 +87,7 @@ public class FederationMetadataCreator {
         if (!entityEntity.hasModules()) {
           return null;
         }
-        final FederationEntityDto dto = EntityToDto.toFederationEntity(entityEntity, false);
+        final FederationEntityDto dto = EntityToDtoMapper.toFederationEntity(entityEntity, false);
         entityData.setEntityIdentifier(new EntityID(dto.getEntityIdentifier()));
         entityData.setCrit(dto.getCrit());
         entityData.setMetadata(Map.of("federation_entity", this.createFederationMetadata(entityEntity)));

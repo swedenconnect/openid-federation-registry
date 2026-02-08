@@ -20,7 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
-import se.swedenconnect.oidf.registry.dto.EntityToDto;
+import se.swedenconnect.oidf.registry.dto.DtoToEntityMapper;
+import se.swedenconnect.oidf.registry.dto.EntityToDtoMapper;
 import se.swedenconnect.oidf.registry.dto.PolicyDto;
 import se.swedenconnect.oidf.registry.entity.OrganizationEntity;
 import se.swedenconnect.oidf.registry.entity.PolicyEntity;
@@ -72,7 +73,7 @@ public class PolicyServiceImpl implements PolicyService {
   }
 
   private static PolicyDto toDto(final PolicyEntity entity) {
-    return EntityToDto.toDto(entity);
+    return EntityToDtoMapper.toDto(entity);
   }
 
   /**
@@ -118,7 +119,7 @@ public class PolicyServiceImpl implements PolicyService {
       final UUID id, final PolicyDto input) {
     ValidateDto.init(organizationRecord).validate(input);
     final OrganizationEntity org = this.resolveOrganization(organizationRecord);
-    final PolicyEntity entity = EntityToDto.toEntity(id, input, org);
+    final PolicyEntity entity = DtoToEntityMapper.toEntity(id, input, org);
     this.policyRepository.save(entity);
     final PolicyDto dto = toDto(entity);
     this.auditService.policyCreated(id, org.getOrganizationId(), null, dto);
@@ -141,7 +142,7 @@ public class PolicyServiceImpl implements PolicyService {
     final PolicyEntity existing = this.findPolicyOrThrow(organizationRecord, id);
     final PolicyDto oldDto = toDto(existing);
 
-    EntityToDto.updateEntity(existing, input);
+    DtoToEntityMapper.updateEntity(existing, input);
 
     this.policyRepository.save(existing);
     final PolicyDto newDto = toDto(existing);

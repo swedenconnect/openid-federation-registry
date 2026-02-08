@@ -17,14 +17,13 @@ package se.swedenconnect.oidf.registry.service;
 
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.web.server.ResponseStatusException;
-import se.swedenconnect.oidf.registry.dto.EntityToDto;
+import se.swedenconnect.oidf.registry.dto.EntityToDtoMapper;
 import se.swedenconnect.oidf.registry.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.dto.oidfservice.EntityRecord;
 import se.swedenconnect.oidf.registry.dto.oidfservice.ModuleRecord;
@@ -109,18 +108,18 @@ public class OidfApiService {
    */
   @Transactional(readOnly = true)
   public String entityRecord(final UUID instanceId, final boolean plainJson) {
-
     Assert.notNull(instanceId, "InstanceId is mandatory");
+    if (plainJson) {
+      return this.serdeLoader.toJson(this.resolveEntity(instanceId));
+    }
     final String claimName = "entity_records";
     final String jwt = this.jwtSupport.signJWT(claimName, builder -> builder
-            .claim(claimName, this.serdeLoader.toJson(this.resolveEntityV2(instanceId)))
+            .claim(claimName, this.serdeLoader.toJson(this.resolveEntity(instanceId)))
             .expirationTime(new Date(System.currentTimeMillis() + this.jwkExpiryDuration.toMillis()))
             .issuer(this.jwkIssuer))
         .serialize();
     log.debug("trustMarkRecord Signed JWT: {}", jwt);
-    if (plainJson) {
-      return this.jwtSupport.toPrettyJson(jwt);
-    }
+
     return jwt;
   }
 
@@ -134,6 +133,9 @@ public class OidfApiService {
   @Transactional(readOnly = true)
   public String moduleRecord(final UUID instanceId, final boolean plainJson) {
     Assert.notNull(instanceId, "instanceId is mandatory");
+    if (plainJson) {
+      return this.serdeLoader.toJson(this.resolveModules(instanceId));
+    }
     final String claimName = "module_records";
     final String jwt = this.jwtSupport.signJWT(claimName, builder -> builder
             .claim(claimName, this.serdeLoader.toJson(this.resolveModules(instanceId)))
@@ -141,19 +143,17 @@ public class OidfApiService {
             .issuer(this.jwkIssuer))
         .serialize();
     log.debug("Submodule Signed JWT: {}", jwt);
-    if (plainJson) {
-      return this.jwtSupport.toPrettyJson(jwt);
-    }
+
     return jwt;
   }
 
-  private ModuleRecord resolveModules(final UUID instanceid) {
+  private ModuleRecord resolveModules(final UUID instanceId) {
 
     final ModuleRecord subModules = new ModuleRecord();
 
-    final InstanceEntity instanceEntity = this.instanceRepository.findById(instanceid)
+    final InstanceEntity instanceEntity = this.instanceRepository.findById(instanceId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-            "No instance found for:%s".formatted(instanceid)));
+            "No instance found for:%s".formatted(instanceId)));
 
     final List<EntityEntity> entities = instanceEntity.getOrganizations().stream()
         .flatMap(organizationEntity -> organizationEntity.getEntities().stream())
@@ -163,6 +163,7 @@ public class OidfApiService {
     final List<TrustMarkIssuerProperties> tmi = entities.stream()
         .map(EntityEntity::getTrustmarkIssuer)
         .filter(Objects::nonNull)
+        .filter(TrustmarkIssuerEntity::getActive)
         .map(this::toTrustMarkIssuer)
         .toList();
     subModules.setTrustMarkIssuers(tmi);
@@ -170,6 +171,7 @@ public class OidfApiService {
     final List<TrustAnchorProperties> taIm = entities.stream()
         .map(EntityEntity::getTrustanchorIntermediate)
         .filter(Objects::nonNull)
+        .filter(TaImEntity::getActive)
         .map(this::toTaIm)
         .toList();
     subModules.setTrustAnchors(taIm);
@@ -177,6 +179,7 @@ public class OidfApiService {
     final List<ResolverProperties> resolverEntities = entities.stream()
         .map(EntityEntity::getResolver)
         .filter(Objects::nonNull)
+        .filter(ResolverEntity::getActive)
         .map(this::toResolver)
         .toList();
     subModules.setResolvers(resolverEntities);
@@ -184,11 +187,11 @@ public class OidfApiService {
     return subModules;
   }
 
-  private List<EntityRecord> resolveEntityV2(final UUID instanceid) {
+  private List<EntityRecord> resolveEntity(final UUID instanceId) {
 
-    final InstanceEntity instanceEntity = this.instanceRepository.findById(instanceid)
+    final InstanceEntity instanceEntity = this.instanceRepository.findById(instanceId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-            "No instance found for:%s".formatted(instanceid)));
+            "No instance found for:%s".formatted(instanceId)));
 
     final List<EntityEntity> entities = instanceEntity.getOrganizations()
         .stream()
@@ -203,23 +206,21 @@ public class OidfApiService {
   }
 
   private TrustAnchorProperties toTaIm(final TaImEntity taImModuleEntity) {
-    if (taImModuleEntity == null || taImModuleEntity.getActive() == null || !taImModuleEntity.getActive()) {
-      return TrustAnchorProperties.builder().build();
-    }
     return TrustAnchorProperties.builder()
-        .entityIdentifier(this.toEntityid(taImModuleEntity.getEntity().getIssuer()))
-        //TODO .trustMarkOwners()
-        //TODO .trustMarkIssuers()
+        .entityIdentifier(new EntityID(taImModuleEntity.getEntity().getIssuer()))
+         //.trustMarkOwners()
+        //.trustMarkIssuers(taImModuleEntity.getTrustMarkIssuers())
         .subordinates(taImModuleEntity.getSubordinates()
             .stream()
             .map(this::toSubordinates)
-            .filter(Objects::nonNull).toList())
+            .filter(Objects::nonNull)
+            .toList())
         .build();
   }
 
   private TrustAnchorProperties.SubordinateListingProperty toSubordinates(final SubordinateEntity subordinateEntity) {
     final TrustAnchorProperties.SubordinateListingProperty sub = new TrustAnchorProperties.SubordinateListingProperty();
-    final SubordinateDto subDto = EntityToDto.toDto(subordinateEntity);
+    final SubordinateDto subDto = EntityToDtoMapper.toDto(subordinateEntity);
 
     sub.setJwks(this.toJwksSet(subDto.getJwks()));
     sub.setOverrideConfigurationLocation(subDto.getEcLocation());
@@ -227,7 +228,7 @@ public class OidfApiService {
     sub.setCrit(Optional.ofNullable(subDto.getCrit()).orElse(new ArrayList<>(1)));
     //TODO Implement naming constraints
     //sub.setConstraints();
-    sub.setEntityIdentifier(this.toEntityid(subDto.getEntityIdentifier()));
+    sub.setEntityIdentifier(new EntityID(subDto.getEntityIdentifier()));
     // if autoresolve is marked true. System tries to get the hosted entity.
     // If not found this subordinate relation is removed since it can not be resolved
     if (subDto.isEcLocationAutomaticResolve()) {
@@ -235,7 +236,7 @@ public class OidfApiService {
               subordinateEntity.getTaIm().getOrganization().getOrgNumber(),
               EntityKeyType.HOSTED_ENTITY,
               subordinateEntity.getEntityidentifier())
-          .map(EntityToDto::toDtoHosted)
+          .map(EntityToDtoMapper::toDtoHosted)
           .map(dto -> {
             sub.setOverrideConfigurationLocation(dto.getEffectiveEcLocation());
             sub.getCrit().add("ec_location");
@@ -262,17 +263,16 @@ public class OidfApiService {
   }
 
   private TrustMarkIssuerProperties toTrustMarkIssuer(final TrustmarkIssuerEntity tmiModuleEntity) {
-    if (tmiModuleEntity == null || tmiModuleEntity.getActive() == null || !tmiModuleEntity.getActive()) {
-      return TrustMarkIssuerProperties.builder().build();
-    }
     final List<TrustMarkProperties> trustMarks = tmiModuleEntity.getTrustmarks()
         .stream()
         .map(trustMarkEntity ->
             TrustMarkProperties.builder()
-                .trustMarkId(this.toEntityid(trustMarkEntity.getTrustmarkType()))
+                .trustMarkId(new EntityID(trustMarkEntity.getTrustmarkType()))
                 .refUri(trustMarkEntity.getRefUri())
                 .logoUri(trustMarkEntity.getLogoUri())
-                .delegation(new TrustMarkDelegation(trustMarkEntity.getDelegation()))
+                .delegation(Optional.ofNullable(trustMarkEntity.getDelegation())
+                    .map(TrustMarkDelegation::new)
+                    .orElse(null))
                 .trustMarkSubjects(
                     trustMarkEntity.getTrustmarksubjects()
                         .stream()
@@ -289,25 +289,15 @@ public class OidfApiService {
         ).toList();
 
     return TrustMarkIssuerProperties.builder()
-        .entityIdentifier(this.toEntityid(tmiModuleEntity.getEntity().getIssuer()))
+        .entityIdentifier(new EntityID(tmiModuleEntity.getEntity().getIssuer()))
         .trustMarkValidityDuration(this.toDuration(tmiModuleEntity.getTrustMarkTokenValidityDuration()))
         .trustMarks(trustMarks)
         .build();
   }
 
-  private EntityID toEntityid(final String entityId) {
-    try {
-
-      return entityId == null ? null : EntityID.parse(entityId);
-    }
-    catch (final ParseException e) {
-      throw new RuntimeException("Unable to parse entityid", e);
-    }
-  }
 
   private JWKSet toJwksSet(final String jwks) {
     try {
-
       return jwks == null ? null : JWKSet.parse(jwks);
     }
     catch (final java.text.ParseException e) {
