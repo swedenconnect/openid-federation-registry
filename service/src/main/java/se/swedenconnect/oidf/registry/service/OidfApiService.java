@@ -23,7 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.web.server.ResponseStatusException;
-import se.swedenconnect.oidf.registry.dto.EntityToDto;
+import se.swedenconnect.oidf.registry.dto.EntityToDtoMapper;
 import se.swedenconnect.oidf.registry.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.dto.oidfservice.EntityRecord;
 import se.swedenconnect.oidf.registry.dto.oidfservice.ModuleRecord;
@@ -220,7 +220,7 @@ public class OidfApiService {
 
   private TrustAnchorProperties.SubordinateListingProperty toSubordinates(final SubordinateEntity subordinateEntity) {
     final TrustAnchorProperties.SubordinateListingProperty sub = new TrustAnchorProperties.SubordinateListingProperty();
-    final SubordinateDto subDto = EntityToDto.toDto(subordinateEntity);
+    final SubordinateDto subDto = EntityToDtoMapper.toDto(subordinateEntity);
 
     sub.setJwks(this.toJwksSet(subDto.getJwks()));
     sub.setOverrideConfigurationLocation(subDto.getEcLocation());
@@ -236,7 +236,7 @@ public class OidfApiService {
               subordinateEntity.getTaIm().getOrganization().getOrgNumber(),
               EntityKeyType.HOSTED_ENTITY,
               subordinateEntity.getEntityidentifier())
-          .map(EntityToDto::toDtoHosted)
+          .map(EntityToDtoMapper::toDtoHosted)
           .map(dto -> {
             sub.setOverrideConfigurationLocation(dto.getEffectiveEcLocation());
             sub.getCrit().add("ec_location");

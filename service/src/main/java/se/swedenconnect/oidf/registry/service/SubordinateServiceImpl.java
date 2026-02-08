@@ -20,7 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
-import se.swedenconnect.oidf.registry.dto.EntityToDto;
+import se.swedenconnect.oidf.registry.dto.DtoToEntityMapper;
+import se.swedenconnect.oidf.registry.dto.EntityToDtoMapper;
 import se.swedenconnect.oidf.registry.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.entity.EntityKeyType;
 import se.swedenconnect.oidf.registry.entity.SubordinateEntity;
@@ -71,7 +72,7 @@ public class SubordinateServiceImpl implements SubordinateService {
   }
 
   private static SubordinateDto toDto(final SubordinateEntity entity) {
-    return EntityToDto.toDto(entity);
+    return EntityToDtoMapper.toDto(entity);
   }
 
   private TaImEntity findTaImOrThrow(final OrganizationRecord organizationRecord, final UUID taImId) {
@@ -114,7 +115,7 @@ public class SubordinateServiceImpl implements SubordinateService {
 
     final TaImEntity taIm = this.findTaImOrThrow(organizationRecord, input.getTaImId());
 
-    final SubordinateEntity subordinateEntity = EntityToDto.toEntity(id, input, taIm);
+    final SubordinateEntity subordinateEntity = DtoToEntityMapper.toEntity(id, input, taIm);
 
     if (input.getPolicyId() != null) {
       this.policyRepository.findByOrgNumberAndPolicyId(
@@ -153,7 +154,7 @@ public class SubordinateServiceImpl implements SubordinateService {
     final SubordinateEntity existing = this.findSubordinateOrThrow(organizationRecord, id);
     final SubordinateDto oldDto = toDto(existing);
 
-    EntityToDto.updateEntity(existing, input);
+    DtoToEntityMapper.updateEntity(existing, input);
 
     if (input.getPolicyId() != null) {
       this.policyRepository.findByOrgNumberAndPolicyId(
