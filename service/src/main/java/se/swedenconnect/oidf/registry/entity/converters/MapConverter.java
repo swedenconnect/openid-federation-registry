@@ -21,14 +21,12 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
-import se.swedenconnect.oidf.registry.dto.TrustmarkSourceDto;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 /**
- * JPA Converter to handle Map<String,Object>
+ * JPA Converter to handle Map and convert it to json
  *
  * @author Per Fredrik Plars
  */
