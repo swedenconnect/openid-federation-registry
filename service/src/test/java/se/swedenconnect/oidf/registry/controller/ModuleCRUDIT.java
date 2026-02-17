@@ -483,6 +483,45 @@ class ModuleCRUDIT {
         });
   }
 
+  // ========== Cascade Delete Tests ==========
+
+  @Test
+  void testDeleteFederationEntityCascadeDeletesTrustAnchor() {
+    // Arrange - Create a federation entity with a trust anchor module
+    final UUID entityId = this.createFederationEntity(
+        "https://www.pm.se/oidf/cascade-ta-entity",
+        "https://www.pm.se/oidf/cascade-ta-entity");
+
+    final UUID trustAnchorId = UUID.randomUUID();
+    final TrustAnchor taInput = new TrustAnchor()
+        .entityId(entityId)
+        .active(true)
+        .trustMarkIssuers(List.of("https://www.pm.se/oidf/tmi1"));
+    this.modulesApi.createTrustAnchorWithId(trustAnchorId, taInput);
+
+    // Verify both exist
+    assertThat(this.entitiesApi.getFederationEntity(entityId, false)).isNotNull();
+    assertThat(this.modulesApi.getTrustAnchor(trustAnchorId)).isNotNull();
+
+    // Act - Delete the federation entity
+    this.entitiesApi.deleteFederationEntity(entityId);
+
+    // Assert - Both entity and trust anchor should be gone
+    assertThatThrownBy(() -> this.entitiesApi.getFederationEntity(entityId, false))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(exception -> {
+          final RestClientResponseException e = (RestClientResponseException) exception;
+          assertThat(e.getStatusCode().value()).isEqualTo(404);
+        });
+
+    assertThatThrownBy(() -> this.modulesApi.getTrustAnchor(trustAnchorId))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(exception -> {
+          final RestClientResponseException e = (RestClientResponseException) exception;
+          assertThat(e.getStatusCode().value()).isEqualTo(404);
+        });
+  }
+
   // ========== Trustmark Tests ==========
 
   @Test

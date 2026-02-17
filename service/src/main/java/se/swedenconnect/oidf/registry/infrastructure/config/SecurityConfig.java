@@ -25,6 +25,7 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
@@ -33,7 +34,7 @@ import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.auth.RegistryJwtConverter;
 import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 
-import java.util.Collections;
+import java.util.Collection;
 
 /**
  * Security configuration class that defines security-related settings for the application. This class integrates OAuth2
@@ -58,7 +59,6 @@ public class SecurityConfig {
         .csrf(AbstractHttpConfigurer::disable)
 
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/registry/v1/entities/**").authenticated()
             .requestMatchers(HttpMethod.GET, "/registry/v1/entities/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/entity/read")
             .requestMatchers(HttpMethod.POST, "/registry/v1/entities/**")
@@ -68,7 +68,6 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.DELETE, "/registry/v1/entities/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/entity/write")
 
-            .requestMatchers("/registry/v1/modules/**").authenticated()
             .requestMatchers(HttpMethod.GET, "/registry/v1/modules/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/modules/read")
             .requestMatchers(HttpMethod.POST, "/registry/v1/modules/**")
@@ -78,7 +77,6 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.DELETE, "/registry/v1/modules/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/modules/write")
 
-            .requestMatchers("/registry/v1/trustmarks/**").authenticated()
             .requestMatchers(HttpMethod.GET, "/registry/v1/trustmarks/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/trustmarks/read")
             .requestMatchers(HttpMethod.POST, "/registry/v1/trustmarks/**")
@@ -88,7 +86,6 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.DELETE, "/registry/v1/trustmarks/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/trustmarks/write")
 
-            .requestMatchers("/registry/v1/trustmarks/subjects/**").authenticated()
             .requestMatchers(HttpMethod.GET, "/registry/v1/trustmarks/subjects/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/trustmarksubjects/read")
             .requestMatchers(HttpMethod.POST, "/registry/v1/trustmarks/subjects/**")
@@ -99,8 +96,6 @@ public class SecurityConfig {
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/trustmarksubjects/write")
 
 
-
-            .requestMatchers("/registry/v1/policies/**").authenticated()
             .requestMatchers(HttpMethod.GET, "/registry/v1/policies/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/policies/read")
             .requestMatchers(HttpMethod.POST, "/registry/v1/policies/**")
@@ -110,7 +105,6 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.DELETE, "/registry/v1/policies/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/policies/write")
 
-            .requestMatchers("/registry/v1/subordinates/**").authenticated()
             .requestMatchers(HttpMethod.GET, "/registry/v1/subordinates/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/read")
             .requestMatchers(HttpMethod.POST, "/registry/v1/subordinates/**")
@@ -150,11 +144,13 @@ public class SecurityConfig {
      * @param jwt the JWT object representing the JSON Web Token used for authentication and authorization.
      * @param information an instance of OrganizationInformation
      * @param userName to be used JwtAuthenticationToken
+     * @param authorities to be used
      */
     public RegistryClaims(final Jwt jwt,
         final OrganizationInformation information,
-        final String userName) {
-      super(jwt, Collections.emptyList(), userName);
+        final String userName,
+        final Collection<? extends GrantedAuthority> authorities) {
+      super(jwt, authorities, userName);
       this.organizationInformation = information;
     }
 

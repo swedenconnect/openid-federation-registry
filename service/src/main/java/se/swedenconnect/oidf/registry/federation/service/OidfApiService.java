@@ -24,8 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.registry.entity.mapper.EntityToDtoMapper;
-import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateToDtoMapper;
-import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
+import se.swedenconnect.oidf.registry.entity.model.EntityType;
+import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
+import se.swedenconnect.oidf.registry.entity.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.federation.model.EntityRecord;
 import se.swedenconnect.oidf.registry.federation.model.ModuleRecord;
 import se.swedenconnect.oidf.registry.federation.model.ResolverProperties;
@@ -35,17 +36,15 @@ import se.swedenconnect.oidf.registry.federation.model.TrustMarkIssuerProperties
 import se.swedenconnect.oidf.registry.federation.model.TrustMarkProperties;
 import se.swedenconnect.oidf.registry.federation.model.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.registry.federation.serde.JsonRegistryLoader;
-import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
-import se.swedenconnect.oidf.registry.entity.model.EntityType;
-import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.module.model.Resolver;
-import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
-import se.swedenconnect.oidf.registry.entity.repository.EntityRepository;
+import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
+import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
+import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateToDtoMapper;
+import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
-import se.swedenconnect.oidf.registry.federation.service.JWTSupport;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -65,7 +64,6 @@ import java.util.UUID;
 @Slf4j
 public class OidfApiService {
 
-  public static final String TRUST_MARK_SUBJECTS = "trust_mark_subjects";
 
   private final InstanceRepository instanceRepository;
   private final EntityRepository entityRepository;

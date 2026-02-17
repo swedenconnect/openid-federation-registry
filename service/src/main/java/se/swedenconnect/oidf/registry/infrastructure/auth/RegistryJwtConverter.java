@@ -17,10 +17,17 @@ package se.swedenconnect.oidf.registry.infrastructure.auth;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.util.Assert;
 import se.swedenconnect.oidf.registry.infrastructure.config.SecurityConfig;
 import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Jwt converter for extracting relevant claims.
@@ -48,8 +55,20 @@ public class RegistryJwtConverter implements Converter<Jwt, AbstractAuthenticati
     if (username == null) {
       username = jwt.getSubject();
     }
-    final SecurityConfig.RegistryClaims registryClaims = new SecurityConfig.RegistryClaims(jwt, information, username);
+    final Collection<GrantedAuthority> authorities = this.extractAuthorities(jwt);
+    final SecurityConfig.RegistryClaims registryClaims =
+        new SecurityConfig.RegistryClaims(jwt, information, username, authorities);
     registryClaims.setAuthenticated(true);
     return registryClaims;
+  }
+
+  private Collection<GrantedAuthority> extractAuthorities(final Jwt jwt) {
+    final List<String> scopes = jwt.getClaimAsStringList("scope");
+    if (scopes == null || scopes.isEmpty()) {
+      return Collections.emptyList();
+    }
+    return scopes.stream()
+        .map(scope -> new SimpleGrantedAuthority("SCOPE_" + scope))
+        .collect(Collectors.toList());
   }
 }
