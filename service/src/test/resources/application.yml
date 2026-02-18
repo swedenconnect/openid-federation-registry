@@ -3,6 +3,11 @@ logging:
     se:
       swedenconnect:
         oidf: debug
+    org:
+      springframework:
+        web: DEBUG
+        https: DEBUG
+
 
 
 openid:

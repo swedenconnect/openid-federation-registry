@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package se.swedenconnect.oidf.registry.infrastructure.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.boot.actuate.audit.InMemoryAuditEventRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -28,6 +27,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import se.swedenconnect.oidf.registry.infrastructure.audit.AuditEventLogListener;
 import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditEventPublisher;
 import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Optional;
 
@@ -51,7 +51,7 @@ public class AuditingConfig {
     return () -> {
       final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
       if (authentication != null && authentication.isAuthenticated()) {
-        return Optional.of(authentication.getName());
+        return Optional.ofNullable(authentication.getName());
       }
       return Optional.empty();
     };
@@ -64,13 +64,13 @@ public class AuditingConfig {
    *
    * @param publisher the {@link ApplicationEventPublisher} used for publishing audit events.
    * @param currentUser the {@link AuditorAware} implementation to provide information about the current auditor.
-   * @param objectMapper the {@link ObjectMapper} instance for handling JSON serialization and deserialization.
+   * @param objectMapper the {@link JsonMapper} instance for handling JSON serialization and deserialization.
    * @return an instance of {@link RegistryAuditEventPublisher} configured with the provided parameters.
    */
   @Bean
   public RegistryAuditService registryAuditService(final ApplicationEventPublisher publisher,
       final AuditorAware<String> currentUser,
-      final ObjectMapper objectMapper) {
+      final JsonMapper objectMapper) {
     return new RegistryAuditEventPublisher(publisher, currentUser, objectMapper);
   }
 

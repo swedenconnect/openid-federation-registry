@@ -24,11 +24,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.servlet.client.RestTestClient;
 import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.federation.model.EntityRecord;
 import se.swedenconnect.oidf.registry.federation.model.ModuleRecord;
@@ -45,7 +44,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -59,11 +57,12 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 @Slf4j
 @UseMariaDBContainer
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureRestTestClient
 
 class OidfServiceApiControllerIT {
 
   @Autowired
-  private TestRestTemplate restTemplate;
+  private RestTestClient restTestClient;
   @LocalServerPort
   private int port;
 
@@ -166,12 +165,10 @@ class OidfServiceApiControllerIT {
   @DisplayName( "Entity record endpoint without missing instanceId - should return 404")
   void entityRecordNotFound() {
 
-    final ResponseEntity<String> response = this.restTemplate
-        .getForEntity("/api/v1/federationservice/entity_record?instanceid=" + UUID.randomUUID(), String.class);
-    if (response.getStatusCode().isError()) {
-      log.error(response.getBody());
-    }
-    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    this.restTestClient.get()
+        .uri("/api/v1/federationservice/entity_record?instanceid=" + UUID.randomUUID())
+        .exchange()
+        .expectStatus().isNotFound();
 
   }
 
@@ -179,12 +176,10 @@ class OidfServiceApiControllerIT {
   @DisplayName( "Entity record endpoint with missing iss parameter - should return 400")
   void entityRecordBadRequest() {
 
-    final ResponseEntity<String> response = this.restTemplate
-        .getForEntity("/api/v1/federationservice/entity_record?iss=f", String.class);
-    if (response.getStatusCode().isError()) {
-      log.error(response.getBody());
-    }
-    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    this.restTestClient.get()
+        .uri("/api/v1/federationservice/entity_record?iss=f")
+        .exchange()
+        .expectStatus().isBadRequest();
 
   }
 

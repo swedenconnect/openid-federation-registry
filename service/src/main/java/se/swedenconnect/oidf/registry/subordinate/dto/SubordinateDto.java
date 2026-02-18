@@ -65,7 +65,7 @@ public class SubordinateDto {
   private String ecLocation;
 
   @Schema(description = "When true, eclocation will be loaded from the hosted entity with the same issuer entityid")
-  private boolean ecLocationAutomaticResolve;
+  private Boolean ecLocationAutomaticResolve;
 
   @Schema(description = "Effective EcLocation that is calculated serverside")
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)

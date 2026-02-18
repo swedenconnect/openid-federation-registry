@@ -20,6 +20,7 @@ import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -60,7 +61,7 @@ public final class DtoToSubordinateMapper {
     if (!entity.isEcLocationAutomatic()) {
       entity.setEcLocation(dto.getEcLocation());
     }
-    entity.setEcLocationAutomatic(dto.isEcLocationAutomaticResolve());
+    entity.setEcLocationAutomatic(Optional.ofNullable(dto.getEcLocationAutomaticResolve()).orElse(false));
     return entity;
   }
 
@@ -90,6 +91,6 @@ public final class DtoToSubordinateMapper {
     }
 
     entity.setEcLocation(dto.getEcLocation());
-    entity.setEcLocationAutomatic(dto.isEcLocationAutomaticResolve());
+    entity.setEcLocationAutomatic(Optional.ofNullable(dto.getEcLocationAutomaticResolve()).orElse(false));
   }
 }

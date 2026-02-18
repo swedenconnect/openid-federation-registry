@@ -24,7 +24,7 @@ import lombok.Data;
  * @author Per Fredrik Plars
  */
 @Data
-@Schema(name = "TrustmarkSourceDto")
+@Schema(name = "TrustmarkSource")
 public class TrustmarkSourceDto {
 
   @Schema(description = "Trustmark ")

@@ -36,6 +36,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import static se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecordClaimSelector.SELECTED_ORG_NUMBER_HEADER_NAME;
@@ -85,19 +86,19 @@ public class JwtTestUtils {
    */
   public String createJwt(OrganisationType orgType) {
     try {
-      final String scopes = "http://registry.swedenconnect.se/policies/write " +
-          "http://registry.swedenconnect.se/policies/read" +
-          "http://registry.swedenconnect.se/trustmarksubjects/read " +
-          "http://registry.swedenconnect.se/modules/read " +
-          "http://registry.swedenconnect.se/modules/write " +
-          "http://registry.swedenconnect.se/entity/read " +
-          "http://registry.swedenconnect.se/entity/write " +
-          "http://registry.swedenconnect.se/trustmarksubjects/write " +
-          "http://registry.swedenconnect.se/trustmarksubjects/read " +
-          "http://registry.swedenconnect.se/trustmarks/read " +
-          "http://registry.swedenconnect.se/trustmarks/write " +
-          "http://registry.swedenconnect.se/subordinates/read " +
-          "http://registry.swedenconnect.se/subordinates/write ";
+
+      final List scopes = List.of("http://registry.swedenconnect.se/policies/write",
+          "http://registry.swedenconnect.se/policies/read",
+          "http://registry.swedenconnect.se/modules/read",
+          "http://registry.swedenconnect.se/modules/write",
+          "http://registry.swedenconnect.se/entity/hosted/read",
+          "http://registry.swedenconnect.se/entity/hosted/write",
+          "http://registry.swedenconnect.se/trustmarksubjects/write",
+          "http://registry.swedenconnect.se/trustmarksubjects/read",
+          "http://registry.swedenconnect.se/trustmarks/read",
+          "http://registry.swedenconnect.se/trustmarks/write",
+          "http://registry.swedenconnect.se/subordinates/read",
+          "http://registry.swedenconnect.se/subordinates/write");
 
       final JWTClaimsSet claims = new com.nimbusds.jwt.JWTClaimsSet.Builder()
           .subject("test-user-subject")
@@ -107,7 +108,6 @@ public class JwtTestUtils {
           .expirationTime(Date.from(Instant.now().plus(30, ChronoUnit.DAYS)))
           .issuer("http://swedenconnect.se/op")
           .claim("scope", scopes)
-
           .claim("org", Arrays.stream(OrganisationType.values())
               .map(o ->
                   Map.of("orgName", o.name,

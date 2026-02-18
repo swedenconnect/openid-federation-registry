@@ -16,6 +16,7 @@
 
 package se.swedenconnect.oidf.registry.module.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.List;
  * @author Per Fredrik Plars
  */
 @Data
+@Schema(name = "Modules")
 public class ModuleDto {
   private List<TrustAnchorDto> trustAnchors;
   private List<IntermediateDto> intermediates;
