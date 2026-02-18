@@ -89,11 +89,10 @@ public class JwtTestUtils {
 
       final List scopes = List.of("http://registry.swedenconnect.se/policies/write",
           "http://registry.swedenconnect.se/policies/read",
-          "http://registry.swedenconnect.se/trustmarksubjects/read",
           "http://registry.swedenconnect.se/modules/read",
           "http://registry.swedenconnect.se/modules/write",
-          "http://registry.swedenconnect.se/entity/read",
-          "http://registry.swedenconnect.se/entity/write",
+          "http://registry.swedenconnect.se/entity/hosted/read",
+          "http://registry.swedenconnect.se/entity/hosted/write",
           "http://registry.swedenconnect.se/trustmarksubjects/write",
           "http://registry.swedenconnect.se/trustmarksubjects/read",
           "http://registry.swedenconnect.se/trustmarks/read",

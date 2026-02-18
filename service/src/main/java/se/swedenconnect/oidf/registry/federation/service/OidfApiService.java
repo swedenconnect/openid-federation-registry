@@ -231,7 +231,7 @@ public class OidfApiService {
     sub.setEntityIdentifier(new EntityID(subDto.getEntityIdentifier()));
     // if autoresolve is marked true. System tries to get the hosted entity.
     // If not found this subordinate relation is removed since it can not be resolved
-    if (subDto.isEcLocationAutomaticResolve()) {
+    if (subDto.getEcLocationAutomaticResolve()) {
       return this.entityRepository.findByOrgNumberAndEntityKeyTypeAndIssuer(
               subordinateEntity.getTaIm().getOrganization().getOrgNumber(),
               EntityType.HOSTED_ENTITY,

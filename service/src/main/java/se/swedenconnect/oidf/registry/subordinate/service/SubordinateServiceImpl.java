@@ -18,22 +18,23 @@ package se.swedenconnect.oidf.registry.subordinate.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import se.swedenconnect.oidf.registry.entity.model.EntityType;
+import se.swedenconnect.oidf.registry.entity.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecord;
-import se.swedenconnect.oidf.registry.subordinate.mapper.DtoToSubordinateMapper;
-import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateToDtoMapper;
-import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
-import se.swedenconnect.oidf.registry.entity.model.EntityType;
-import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
-import se.swedenconnect.oidf.registry.entity.repository.EntityRepository;
+import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
+import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
+import se.swedenconnect.oidf.registry.module.repository.TaImRepository;
 import se.swedenconnect.oidf.registry.policy.repository.PolicyRepository;
+import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
+import se.swedenconnect.oidf.registry.subordinate.mapper.DtoToSubordinateMapper;
+import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateToDtoMapper;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
-import se.swedenconnect.oidf.registry.module.repository.TaImRepository;
-import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -131,7 +132,7 @@ public class SubordinateServiceImpl implements SubordinateService {
     }
 
     // If automatic resolve is selected, the system try to find a hosted entity. If not an exception is thrown.
-    if (input.isEcLocationAutomaticResolve()) {
+    if (Optional.ofNullable(input.getEcLocationAutomaticResolve()).orElse(false)) {
       this.entityRepository.findByOrgNumberAndEntityKeyTypeAndIssuer(taIm.getOrganization().getOrgNumber(),
               EntityType.HOSTED_ENTITY, subordinateEntity.getEntityidentifier())
           .orElseThrow(() ->
@@ -168,7 +169,7 @@ public class SubordinateServiceImpl implements SubordinateService {
     else {
       existing.setPolicy(null);
     }
-    if (input.isEcLocationAutomaticResolve()) {
+    if (input.getEcLocationAutomaticResolve()) {
       this.entityRepository
           .findByOrgNumberAndEntityKeyTypeAndIssuer(existing.getTaIm().getOrganization().getOrgNumber(),
               EntityType.HOSTED_ENTITY, existing.getEntityidentifier())

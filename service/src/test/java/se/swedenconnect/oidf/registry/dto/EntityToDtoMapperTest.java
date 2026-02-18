@@ -17,33 +17,32 @@
 package se.swedenconnect.oidf.registry.dto;
 
 import org.junit.jupiter.api.Test;
-import se.swedenconnect.oidf.registry.entity.model.EntityType;
-import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
-import se.swedenconnect.oidf.registry.entity.mapper.EntityToDtoMapper;
 import se.swedenconnect.oidf.registry.entity.dto.FederationEntityWithModulesDto;
 import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
-import se.swedenconnect.oidf.registry.module.model.ModuleType;
-import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
-import se.swedenconnect.oidf.registry.module.model.Resolver;
-import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
-import se.swedenconnect.oidf.registry.module.mapper.ModuleToDtoMapper;
-import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.entity.mapper.EntityToDtoMapper;
+import se.swedenconnect.oidf.registry.entity.model.EntityType;
+import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
-import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
-import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateToDtoMapper;
+import se.swedenconnect.oidf.registry.module.mapper.ModuleToDtoMapper;
+import se.swedenconnect.oidf.registry.module.model.ModuleType;
+import se.swedenconnect.oidf.registry.module.model.Resolver;
+import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
+import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
+import se.swedenconnect.oidf.registry.policy.dto.PolicyDto;
+import se.swedenconnect.oidf.registry.policy.mapper.PolicyToDtoMapper;
+import se.swedenconnect.oidf.registry.policy.model.Policy;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
-import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
-import se.swedenconnect.oidf.registry.trustmark.mapper.TrustmarkToDtoMapper;
+import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateToDtoMapper;
+import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkWithSubjectsDto;
 import se.swedenconnect.oidf.registry.trustmark.mapper.TrustmarkToDtoMapper;
+import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
 import se.swedenconnect.oidf.registry.trustmark.model.TrustMarkSubject;
-import se.swedenconnect.oidf.registry.policy.mapper.PolicyToDtoMapper;
-import se.swedenconnect.oidf.registry.policy.dto.PolicyDto;
-import se.swedenconnect.oidf.registry.policy.model.Policy;
 
 import java.time.OffsetDateTime;
 import java.util.Collections;
@@ -467,7 +466,7 @@ class EntityToDtoMapperTest {
     assertThat(dto.getCrit()).containsExactly("crit1", "crit2");
     assertThat(dto.getMetadataPolicyCrit()).containsExactly("mpc1", "mpc2");
     assertThat(dto.getEcLocation()).isEqualTo("https://ec.example.com");
-    assertThat(dto.isEcLocationAutomaticResolve()).isFalse();
+    assertThat(dto.getEcLocationAutomaticResolve()).isFalse();
   }
 
   @Test
