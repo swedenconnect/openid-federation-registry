@@ -16,12 +16,11 @@
 
 package se.swedenconnect.oidf.registry.entity.converters;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.MapConverter;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MapConverterTest {
 
-  private final MapConverter converter = new MapConverter(new ObjectMapper());
+  private final MapConverter converter = new MapConverter(new JsonMapper());
 
   @Test
   void convertToDatabaseColumn_withValues() {
@@ -94,8 +93,8 @@ class MapConverterTest {
   @Test
   void convertToEntityAttribute_withInvalidJson() {
     assertThatThrownBy(() -> this.converter.convertToEntityAttribute("not-json"))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Failed to parse");
+        .isInstanceOf(tools.jackson.core.exc.StreamReadException.class)
+        .hasMessageContaining("Unrecognized token 'not'");
   }
 
   @Test

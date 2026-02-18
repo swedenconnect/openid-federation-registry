@@ -16,9 +16,9 @@
 
 package se.swedenconnect.oidf.registry.entity.converters;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.StringListConverter;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StringListConverterTest {
 
-  private final StringListConverter converter = new StringListConverter(new ObjectMapper());
+  private final StringListConverter converter = new StringListConverter(new JsonMapper());
 
   @Test
   void convertToDatabaseColumn_withValues() {
@@ -81,8 +81,8 @@ class StringListConverterTest {
   @Test
   void convertToEntityAttribute_withInvalidJson() {
     assertThatThrownBy(() -> this.converter.convertToEntityAttribute("not-json"))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Failed to parse");
+        .isInstanceOf(tools.jackson.core.exc.StreamReadException.class)
+        .hasMessageContaining("Unrecognized token 'not'");
   }
 
   @Test
