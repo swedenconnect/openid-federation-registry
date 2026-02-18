@@ -16,11 +16,10 @@
 
 package se.swedenconnect.oidf.registry.infrastructure.persistence;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,14 +31,14 @@ import java.util.List;
  */
 @Converter
 public class StringListConverter implements AttributeConverter<List<String>, String> {
-  final ObjectMapper mapper;
+  final JsonMapper mapper;
 
   /**
    * Constructor
    *
    * @param objectMapper mapper to convert values
    */
-  public StringListConverter(final ObjectMapper objectMapper) {
+  public StringListConverter(final JsonMapper objectMapper) {
     this.mapper = objectMapper;
   }
 
@@ -69,23 +68,13 @@ public class StringListConverter implements AttributeConverter<List<String>, Str
     if (jsonStr == null || jsonStr.isBlank()) {
       return Collections.emptyList();
     }
-    try {
       return this.mapper.readValue(jsonStr, new TypeReference<List<String>>() {});
-    }
-    catch (final JsonProcessingException e) {
-      throw new IllegalArgumentException("Failed to parse trustMarkSources JSON", e);
-    }
   }
 
   private String writeListJson(final List<String> sources) {
     if (sources == null) {
       return null;
     }
-    try {
       return this.mapper.writeValueAsString(sources);
-    }
-    catch (final JsonProcessingException e) {
-      throw new IllegalArgumentException("Failed to serialize trustMarkSources to JSON", e);
-    }
   }
 }

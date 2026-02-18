@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package se.swedenconnect.oidf.registry.infrastructure.audit;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.audit.listener.AuditApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.AuditorAware;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * The RegistryAuditServiceAuditEvent class implements the RegistryAuditService interface to provide audit event logging
@@ -48,7 +48,7 @@ public class RegistryAuditEventPublisher extends RegistryAuditServiceAdapter {
   public RegistryAuditEventPublisher(
       final ApplicationEventPublisher publisher,
       final AuditorAware<String> currentUser,
-      final ObjectMapper mapper) {
+      final JsonMapper mapper) {
     super(mapper);
     this.publisher = publisher;
     this.currentUser = currentUser;

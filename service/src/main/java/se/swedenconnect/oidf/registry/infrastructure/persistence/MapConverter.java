@@ -16,11 +16,10 @@
 
 package se.swedenconnect.oidf.registry.infrastructure.persistence;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Collections;
 import java.util.Map;
@@ -32,14 +31,14 @@ import java.util.Map;
  */
 @Converter
 public class MapConverter implements AttributeConverter<Map<String,Object>, String> {
-  final ObjectMapper mapper;
+  final JsonMapper mapper;
 
   /**
    * Constructor
    *
    * @param objectMapper mapper to convert values
    */
-  public MapConverter(final ObjectMapper objectMapper) {
+  public MapConverter(final JsonMapper objectMapper) {
     this.mapper = objectMapper;
   }
 
@@ -76,24 +75,16 @@ public class MapConverter implements AttributeConverter<Map<String,Object>, Stri
     if (map == null) {
       return null;
     }
-    try {
-      return this.mapper.writerWithDefaultPrettyPrinter().writeValueAsString(map);
-    }
-    catch (final JsonProcessingException e) {
-      throw new IllegalArgumentException("Failed to serialize map to JSON", e);
-    }
+
+    return this.mapper.writerWithDefaultPrettyPrinter().writeValueAsString(map);
+
   }
 
   private  Map<String, Object> readMapFromJson(final String jsonStr) {
     if (jsonStr == null || jsonStr.isBlank()) {
       return Collections.emptyMap();
     }
-    try {
       return this.mapper.readValue(jsonStr, new TypeReference<Map<String, Object>>() {});
-    }
-    catch (final JsonProcessingException e) {
-      throw new IllegalArgumentException("Failed to parse JSON", e);
-    }
   }
 
 

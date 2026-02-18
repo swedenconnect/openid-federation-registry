@@ -15,8 +15,6 @@
  */
 package se.swedenconnect.oidf.registry.infrastructure.audit;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.registry.entity.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
@@ -28,6 +26,7 @@ import se.swedenconnect.oidf.registry.policy.dto.PolicyDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.UUID;
 
@@ -41,16 +40,16 @@ import java.util.UUID;
 @Slf4j
 public abstract class RegistryAuditServiceAdapter implements RegistryAuditService {
 
-  private final ObjectMapper mapper;
+  private final JsonMapper mapper;
 
   /**
    * Constructs a new instance of RegistryAuditServiceAdapter, which adapts the audit functionality by leveraging
    * the provided ObjectMapper.
    *
-   * @param mapper the ObjectMapper instance responsible for handling JSON conversion or serialization processes
+   * @param mapper the JsonMapper instance responsible for handling JSON conversion or serialization processes
    *     required for auditing purposes.
    */
-  public RegistryAuditServiceAdapter(final ObjectMapper mapper) {
+  public RegistryAuditServiceAdapter(final JsonMapper mapper) {
     this.mapper = mapper;
   }
 
@@ -62,7 +61,7 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
    * operations.
    */
   public RegistryAuditServiceAdapter() {
-    this(new ObjectMapper());
+    this(new JsonMapper());
   }
 
   @Override
@@ -467,13 +466,7 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
     if (obj == null) {
       return null;
     }
-    try {
       return this.mapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
-    }
-    catch (final JsonProcessingException e) {
-      log.info("Unable to create json from object.", e);
-      return "<No Json Representation Available>";
-    }
   }
 
 }
