@@ -32,7 +32,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationInformation;
 import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.auth.RegistryJwtConverter;
-import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 
 import java.util.Collection;
 
@@ -139,9 +138,8 @@ public class SecurityConfig {
   }
 
   @Bean
-  Converter<Jwt, AbstractAuthenticationToken> customJwtAuthenticationConverter(
-      final OrganizationService service) {
-    return new RegistryJwtConverter(service);
+  Converter<Jwt, AbstractAuthenticationToken> customJwtAuthenticationConverter() {
+    return new RegistryJwtConverter();
   }
 
   /**
