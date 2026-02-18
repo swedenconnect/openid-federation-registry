@@ -44,7 +44,7 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
 
   /**
    * Constructs a new instance of RegistryAuditServiceAdapter, which adapts the audit functionality by leveraging
-   * the provided ObjectMapper.
+   * the provided JsonMapper.
    *
    * @param mapper the JsonMapper instance responsible for handling JSON conversion or serialization processes
    *     required for auditing purposes.
@@ -54,10 +54,10 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   /**
-   * Constructs an instance of RegistryAuditServiceAdapter with a default {@link ObjectMapper}. This class acts as
+   * Constructs an instance of RegistryAuditServiceAdapter with a default {@link JsonMapper}. This class acts as
    * an adapter for auditing federation registry service events, enabling the logging or processing of such events in a
    * standardized manner. The adapter can facilitate operations such as event serialization and integration with logging
-   * frameworks or monitoring systems. The default constructor initializes the required ObjectMapper for internal
+   * frameworks or monitoring systems. The default constructor initializes the required JsonMapper for internal
    * operations.
    */
   public RegistryAuditServiceAdapter() {
