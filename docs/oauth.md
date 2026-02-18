@@ -14,20 +14,20 @@ specific scopes to be present in the JWT token. Scopes are organized by resource
 
 The following table lists all available OAuth2 scopes and their corresponding API paths and HTTP methods:
 
-| Scope Name                                                 | API Path                              | HTTP Methods            | Description                                  |
-|------------------------------------------------------------|---------------------------------------|-------------------------|----------------------------------------------|
-| `http://registry.swedenconnect.se/entity/read`             | `/registry/v1/entities/**`            | `GET`                   | Read access to entity resources              |
-| `http://registry.swedenconnect.se/entity/write`            | `/registry/v1/entities/**`            | `POST`, `PUT`, `DELETE` | Write access to entity resources             |
-| `http://registry.swedenconnect.se/modules/read`            | `/registry/v1/modules/**`             | `GET`                   | Read access to module resources              |
-| `http://registry.swedenconnect.se/modules/write`           | `/registry/v1/modules/**`             | `POST`, `PUT`, `DELETE` | Write access to module resources             |
-| `http://registry.swedenconnect.se/trustmarks/read`         | `/registry/v1/trustmarks/**`          | `GET`                   | Read access to trust mark resources          |
-| `http://registry.swedenconnect.se/trustmarks/write`        | `/registry/v1/trustmarks/**`          | `POST`, `PUT`, `DELETE` | Write access to trust mark resources         |
-| `http://registry.swedenconnect.se/trustmarksubjects/read`  | `/registry/v1/trustmarks/subjects/**` | `GET`                   | Read access to trust mark subject resources  |
-| `http://registry.swedenconnect.se/trustmarksubjects/write` | `/registry/v1/trustmarks/subjects/**` | `POST`, `PUT`, `DELETE` | Write access to trust mark subject resources |
-| `http://registry.swedenconnect.se/policies/read`           | `/registry/v1/policies/**`            | `GET`                   | Read access to policy resources              |
-| `http://registry.swedenconnect.se/policies/write`          | `/registry/v1/policies/**`            | `POST`, `PUT`, `DELETE` | Write access to policy resources             |
-| `http://registry.swedenconnect.se/subordinates/read`       | `/registry/v1/subordinates/**`        | `GET`                   | Read access to subordinate entity resources  |
-| `http://registry.swedenconnect.se/subordinates/write`      | `/registry/v1/subordinates/**`        | `POST`, `PUT`, `DELETE` | Write access to subordinate entity resources |
+| Scope Name                                                 | API Path                              | HTTP Methods            | Description                                           |
+|------------------------------------------------------------|---------------------------------------|-------------------------|-------------------------------------------------------|
+| `http://registry.swedenconnect.se/entity/hosted/read`      | `/registry/v1/entities/hosted/**`     | `GET`                   | Read access to hosted entity                          |
+| `http://registry.swedenconnect.se/entity/hosted/write`     | `/registry/v1/entities/hosted/**`     | `POST`, `PUT`, `DELETE` | Write access to hosted entity                         |
+| `http://registry.swedenconnect.se/modules/read`            | `/registry/v1/modules/**`             | `GET`                   | Read access to module resources and federation entity |
+| `http://registry.swedenconnect.se/modules/write`           | `/registry/v1/modules/**`             | `POST`, `PUT`, `DELETE` | Write access to module resources                      |
+| `http://registry.swedenconnect.se/trustmarks/read`         | `/registry/v1/trustmarks/**`          | `GET`                   | Read access to trust mark resources                   |
+| `http://registry.swedenconnect.se/trustmarks/write`        | `/registry/v1/trustmarks/**`          | `POST`, `PUT`, `DELETE` | Write access to trust mark resources                  |
+| `http://registry.swedenconnect.se/trustmarksubjects/read`  | `/registry/v1/trustmarks/subjects/**` | `GET`                   | Read access to trust mark subject resources           |
+| `http://registry.swedenconnect.se/trustmarksubjects/write` | `/registry/v1/trustmarks/subjects/**` | `POST`, `PUT`, `DELETE` | Write access to trust mark subject resources          |
+| `http://registry.swedenconnect.se/policies/read`           | `/registry/v1/policies/**`            | `GET`                   | Read access to policy resources                       |
+| `http://registry.swedenconnect.se/policies/write`          | `/registry/v1/policies/**`            | `POST`, `PUT`, `DELETE` | Write access to policy resources                      |
+| `http://registry.swedenconnect.se/subordinates/read`       | `/registry/v1/subordinates/**`        | `GET`                   | Read access to subordinate entity resources           |
+| `http://registry.swedenconnect.se/subordinates/write`      | `/registry/v1/subordinates/**`        | `POST`, `PUT`, `DELETE` | Write access to subordinate entity resources          |
 
 ## Usage
 
