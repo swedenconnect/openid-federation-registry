@@ -17,6 +17,7 @@
 package se.swedenconnect.oidf.registry.subordinate.model;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
@@ -28,10 +29,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
+import se.swedenconnect.oidf.registry.infrastructure.persistence.MapConverter;
+import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.policy.model.Policy;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -51,7 +56,8 @@ import java.util.UUID;
 public class Subordinate extends BaseEntity {
 
   @Id
-  @Column(name = "subordinate_id", nullable = false, updatable = false)
+  @Column(name = "subordinate_id", columnDefinition = "char(36)", nullable = false, updatable = false)
+  @JdbcTypeCode(SqlTypes.CHAR)
   private UUID subordinateId;
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -79,5 +85,9 @@ public class Subordinate extends BaseEntity {
 
   @Column(name = "ec_location_automatic", nullable = false)
   private boolean ecLocationAutomatic;
+
+  @Column(name = "metadata_policy", columnDefinition = "TEXT")
+  @Convert(converter = MapConverter.class)
+  private Map<String, Object> metadataPolicy;
 
 }

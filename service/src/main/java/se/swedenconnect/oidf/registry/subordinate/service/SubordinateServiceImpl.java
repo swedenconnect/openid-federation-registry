@@ -169,7 +169,7 @@ public class SubordinateServiceImpl implements SubordinateService {
     else {
       existing.setPolicy(null);
     }
-    if (input.getEcLocationAutomaticResolve()) {
+    if (Optional.ofNullable(input.getEcLocationAutomaticResolve()).orElse(false)) {
       this.entityRepository
           .findByOrgNumberAndEntityKeyTypeAndIssuer(existing.getTaIm().getOrganization().getOrgNumber(),
               EntityType.HOSTED_ENTITY, existing.getEntityidentifier())

@@ -2132,6 +2132,20 @@
             "type": "string",
             "description": "Effective EcLocation that is calculated serverside",
             "readOnly": true
+          },
+          "metadataPolicy": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Metadata policy for this subordinate statement. Optional. Must be valid JSON if provided.",
+            "example": {
+              "openid_provider": {
+                "subject_types_supported": {
+                  "value": [
+                    "pairwise"
+                  ]
+                }
+              }
+            }
           }
         }
       },

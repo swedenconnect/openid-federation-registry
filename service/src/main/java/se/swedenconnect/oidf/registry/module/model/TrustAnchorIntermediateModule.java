@@ -19,10 +19,12 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
-import se.swedenconnect.oidf.registry.organization.model.Organization;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.StringListConverter;
+import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 
 import java.util.ArrayList;
@@ -42,12 +44,14 @@ import java.util.UUID;
 @Table(name = "TrustanchorIntermediate")
 public class TrustAnchorIntermediateModule extends BaseEntity {
   @Id
-  @Column(name = "ta_im_id", nullable = false, updatable = false)
+  @Column(name = "ta_im_id", columnDefinition = "char(36)", nullable = false)
+  @JdbcTypeCode(SqlTypes.CHAR)
   private UUID taImId;
 
   @NotNull
   @Column(name = "module_type", nullable = false)
   @Enumerated(EnumType.STRING)
+  @JdbcTypeCode(SqlTypes.VARCHAR)
   private ModuleType moduleType;
 
   @ManyToOne(fetch = FetchType.LAZY)

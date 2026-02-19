@@ -18,17 +18,17 @@ package se.swedenconnect.oidf.registry.infrastructure.validation;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecord;
 import se.swedenconnect.oidf.registry.entity.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
+import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
-import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
-import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
-import se.swedenconnect.oidf.registry.policy.dto.PolicyDto;
-import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
+import se.swedenconnect.oidf.registry.policy.dto.PolicyDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
+import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
+import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
 
 import java.util.Objects;
 
@@ -344,6 +344,10 @@ public class ValidateDto {
     this.v.length(MIN_POLICY_CRIT_LENGTH, MAX_POLICY_CRIT_LENGTH)
         .build()
         .ifFailThrow("crit", dto.getCrit());
+
+    this.v.json()
+        .build()
+        .ifFailThrow("metadataPolicy", dto.getMetadataPolicy());
   }
 
   private void validatePolicyJson(final Object policy) {

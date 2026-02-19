@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,12 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.FilterDef;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.ParamDef;
-import se.swedenconnect.oidf.registry.organization.model.Organization;
+import org.hibernate.type.SqlTypes;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.MapConverter;
+import se.swedenconnect.oidf.registry.organization.model.Organization;
 
 import java.util.Map;
 import java.util.UUID;
@@ -47,10 +49,13 @@ import java.util.UUID;
 
 public class Policy extends BaseEntity {
   @Id
-  @Column(name = "policy_id", unique = true, updatable = false, nullable = false)
+  @Column(name = "policy_id", columnDefinition = "char(36)", unique = true, updatable = false, nullable = false)
+  @JdbcTypeCode(SqlTypes.CHAR)
   private UUID policyId;
 
-  @Column(name = "organization_id", insertable = false, updatable = false, nullable = false)
+  @Column(name = "organization_id", columnDefinition = "char(36)", insertable = false,
+      updatable = false, nullable = false)
+  @JdbcTypeCode(SqlTypes.CHAR)
   private UUID organizationId;
 
   @ManyToOne

@@ -61,6 +61,7 @@ public final class SubordinateToDtoMapper {
 
     dto.setEcLocation(subordinate.getEcLocation());
     dto.setEcLocationAutomaticResolve(subordinate.isEcLocationAutomatic());
+    dto.setMetadataPolicy(subordinate.getMetadataPolicy());
 
     return dto;
   }

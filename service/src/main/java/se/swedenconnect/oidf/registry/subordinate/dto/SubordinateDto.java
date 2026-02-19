@@ -70,4 +70,8 @@ public class SubordinateDto {
   @Schema(description = "Effective EcLocation that is calculated serverside")
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private String effectiveEcLocation;
+
+  @Schema(description = "Metadata policy for this subordinate statement. Optional. Must be valid JSON if provided.",
+      example = "{\"openid_provider\": {\"subject_types_supported\": {\"value\": [\"pairwise\"]}}}")
+  private Map<String, Object> metadataPolicy;
 }
