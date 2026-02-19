@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 
 import java.util.UUID;
@@ -46,7 +48,8 @@ import java.util.UUID;
 public class TrustMarkSubject extends BaseEntity {
 
   @Id
-  @Column(name = "trustmarksubject_id", nullable = false, updatable = false)
+  @Column(name = "trustmarksubject_id", columnDefinition = "char(36)", nullable = false, updatable = false)
+  @JdbcTypeCode(SqlTypes.CHAR)
   private UUID trustmarksubjectId;
 
   @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)

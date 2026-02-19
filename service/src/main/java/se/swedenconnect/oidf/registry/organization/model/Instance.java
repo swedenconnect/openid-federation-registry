@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 
 import java.util.Set;
@@ -44,7 +46,8 @@ import java.util.UUID;
 @Table(name = "instance")
 public class Instance extends BaseEntity {
   @Id
-  @Column(name = "instance_id", nullable = false)
+  @Column(name = "instance_id", columnDefinition = "char(36)", nullable = false)
+  @JdbcTypeCode(SqlTypes.CHAR)
   private UUID instanceId;
 
   @Size(max = 255)

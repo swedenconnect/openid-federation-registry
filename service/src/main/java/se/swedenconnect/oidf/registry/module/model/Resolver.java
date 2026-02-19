@@ -29,6 +29,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 
@@ -50,7 +52,8 @@ import java.util.UUID;
 public class Resolver extends BaseEntity {
 
   @Id
-  @Column(name = "resolver_id", nullable = false, updatable = false)
+  @Column(name = "resolver_id", columnDefinition = "char(36)", nullable = false)
+  @JdbcTypeCode(SqlTypes.CHAR)
   private UUID resolverId;
 
   @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.DETACH)

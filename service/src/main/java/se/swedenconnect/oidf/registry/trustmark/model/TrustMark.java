@@ -29,6 +29,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
 
@@ -54,7 +56,8 @@ import java.util.UUID;
 public class TrustMark extends BaseEntity {
 
   @Id
-  @Column(name = "trustmark_id", nullable = false, updatable = false)
+  @Column(name = "trustmark_id", columnDefinition = "char(36)", nullable = false, updatable = false)
+  @JdbcTypeCode(SqlTypes.CHAR)
   private UUID trustmarkId;
 
   @ManyToOne

@@ -62,6 +62,7 @@ public final class DtoToSubordinateMapper {
       entity.setEcLocation(dto.getEcLocation());
     }
     entity.setEcLocationAutomatic(Optional.ofNullable(dto.getEcLocationAutomaticResolve()).orElse(false));
+    entity.setMetadataPolicy(dto.getMetadataPolicy());
     return entity;
   }
 
@@ -92,5 +93,6 @@ public final class DtoToSubordinateMapper {
 
     entity.setEcLocation(dto.getEcLocation());
     entity.setEcLocationAutomatic(Optional.ofNullable(dto.getEcLocationAutomaticResolve()).orElse(false));
+    entity.setMetadataPolicy(dto.getMetadataPolicy());
   }
 }

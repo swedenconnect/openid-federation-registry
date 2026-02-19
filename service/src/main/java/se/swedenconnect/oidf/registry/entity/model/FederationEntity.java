@@ -19,6 +19,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.MapConverter;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.StringListConverter;
@@ -43,11 +45,13 @@ import java.util.UUID;
 @Table(name = "entities")
 public class FederationEntity extends BaseEntity {
   @Id
-  @Column(name = "entity_id", unique = true, updatable = false, nullable = false)
+  @Column(name = "entity_id", columnDefinition = "char(36)", nullable = false)
+  @JdbcTypeCode(SqlTypes.CHAR)
   private UUID entityId;
 
   @Column(name = "entity_type", nullable = false)
   @Enumerated(EnumType.STRING)
+  @JdbcTypeCode(SqlTypes.VARCHAR)
   private EntityType entityType;
 
   @Column(name = "metadata", columnDefinition = "JSON")
