@@ -18,7 +18,11 @@ package se.swedenconnect.oidf.registry.audit;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.audit.AuditEvent;
-import se.swedenconnect.oidf.registry.dto.PolicyDto;
+import se.swedenconnect.oidf.registry.infrastructure.audit.FederationAuditEvent;
+import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditEventType;
+import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditLogger;
+import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
+import se.swedenconnect.oidf.registry.policy.dto.PolicyDto;
 
 import java.util.Stack;
 import java.util.UUID;

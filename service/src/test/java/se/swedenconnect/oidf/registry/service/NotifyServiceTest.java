@@ -30,10 +30,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.web.client.RestClient;
-import se.swedenconnect.oidf.registry.audit.FederationAuditEvent;
-import se.swedenconnect.oidf.registry.audit.RegistryAuditEventType;
-import se.swedenconnect.oidf.registry.config.RegistryProperties;
 import se.swedenconnect.oidf.registry.entity.FkKeyType;
+import se.swedenconnect.oidf.registry.federation.service.NotifyService;
+import se.swedenconnect.oidf.registry.infrastructure.audit.FederationAuditEvent;
+import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditEventType;
+import se.swedenconnect.oidf.registry.infrastructure.config.RegistryProperties;
 
 import java.net.URI;
 import java.util.List;
@@ -93,7 +94,7 @@ class NotifyServiceTest {
   @DisplayName( "Notify service - should reply")
   void testNotifyServiceWithWireMock() throws InterruptedException {
     Stream.generate(() -> FederationAuditEvent.builder()
-            .fkKeyType(FkKeyType.TRUSTMARKSUBJECT)
+            .fkKeyType(FkKeyType.INTERMEDIATE)
             .event(RegistryAuditEventType.OPTIONS_UPDATE)
             .optionId(UUID.randomUUID())
             .organizationId(organizationUUID.toString())

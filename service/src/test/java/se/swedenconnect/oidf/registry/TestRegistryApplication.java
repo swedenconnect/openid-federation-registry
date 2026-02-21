@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import se.swedenconnect.oidf.registry.fixture.TestContainersConfiguration;
  *     href="https://docs.spring.io/spring-boot/reference/features/dev-services.html#features.dev-services.testcontainers.at-development-time">Testcontainers
  *     at development time</a>
  */
+
 public class TestRegistryApplication {
 
   /**

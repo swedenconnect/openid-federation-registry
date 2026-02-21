@@ -18,12 +18,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>se.swedenconnect.oidf</groupId>
-        <artifactId>openid-federation-parent</artifactId>
-        <version>0.5.14</version>
-    </parent>
+
     <artifactId>oidf-entity-registry-parent</artifactId>
+    <groupId>se.swedenconnect.oidf</groupId>
+
     <packaging>pom</packaging>
     <version>${service-revision}</version>
 
@@ -69,11 +67,13 @@
     <properties>
         <!-- Project properties -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>21</java.version>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-
         <service-revision>0.5.10-SNAPSHOT</service-revision>
+        <java.version>25</java.version>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
+        <spring.boot.version>4.0.2</spring.boot.version>
+        <credentials.support.version>2.1.2</credentials.support.version>
+
     </properties>
 
     <repositories>
@@ -98,12 +98,252 @@
     <modules>
         <module>service</module>
     </modules>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>se.swedenconnect.oidf</groupId>
+                <artifactId>client</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>se.swedenconnect.oidf</groupId>
+                <artifactId>hash</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>se.swedenconnect.oidf</groupId>
+                <artifactId>openid-federation-entity-registry-api</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <type>pom</type>
+                <version>${spring.boot.version}</version>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>1.18.42</version>
+            </dependency>
+            <dependency>
+                <groupId>se.swedenconnect.security</groupId>
+                <artifactId>credentials-support</artifactId>
+                <version>${credentials.support.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>se.swedenconnect.security</groupId>
+                <artifactId>credentials-support-nimbus</artifactId>
+                <version>${credentials.support.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>se.swedenconnect.security</groupId>
+                <artifactId>credentials-support-spring-boot-starter</artifactId>
+                <version>${credentials.support.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.nimbusds</groupId>
+                <artifactId>nimbus-jose-jwt</artifactId>
+                <version>10.5</version>
+            </dependency>
+            <dependency>
+                <groupId>com.nimbusds</groupId>
+                <artifactId>oauth2-oidc-sdk</artifactId>
+                <version>11.29.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk18on</artifactId>
+                <version>1.82</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <build>
+
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.15.0</version>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>1.18.42</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <version>3.5.1</version>
+                <configuration>
+                    <from>
+                        <image>amazoncorretto:25</image>
+                    </from>
+                    <to>
+                        <image>ghcr.io/swedenconnect/${project.artifactId}</image>
+                        <tags>
+                            <tag>${project.version}</tag>
+                        </tags>
+                    </to>
+                    <container>
+                        <creationTime>USE_CURRENT_TIMESTAMP</creationTime>
+                        <jvmFlags>
+                            <jvmFlag>-Djava.net.preferIPv4Stack=true</jvmFlag>
+                            <jvmFlag>-Dorg.apache.xml.security.ignoreLineBreaks=true</jvmFlag>
+                        </jvmFlags>
+                        <labels>
+                            <org.opencontainers.image.source>
+                                https://github.com/swedenconnect/openid-federation-services
+                            </org.opencontainers.image.source>
+                            <org.opencontainers.image.description>OpenId Federation Services
+                            </org.opencontainers.image.description>
+                            <org.opencontainers.image.licenses>Apache-2.0</org.opencontainers.image.licenses>
+                        </labels>
+                    </container>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>none</phase>
+                        <id>local</id>
+                        <goals>
+                            <goal>dockerBuild</goal>
+                        </goals>
+                        <configuration>
+                            <to>
+                                <image>local/${project.artifactId}</image>
+                            </to>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-cli</id>
+                        <phase>none</phase>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                        <configuration>
+                            <from>
+                                <platforms>
+                                    <platform>
+                                        <os>linux</os>
+                                        <architecture>amd64</architecture>
+                                    </platform>
+                                    <platform>
+                                        <os>linux</os>
+                                        <architecture>arm64</architecture>
+                                    </platform>
+                                </platforms>
+                            </from>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Style-check -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>10.20.0</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <sourceDirectories>
+                        <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+                    </sourceDirectories>
+                    <checkstyleRules>
+                        <module name="Checker">
+                            <module name="RegexpHeader">
+                                <property name="header" value="/*\n * Copyright (202[4-9]-)?202[4-9] Sweden Connect"/>
+                            </module>
+                            <module name="LineLength">
+                                <property name="max" value="120"/>
+                            </module>
+                            <module name="JavadocPackage"/>
+                            <module name="TreeWalker">
+                                <module name="RequireThis">
+                                    <property name="checkFields" value="true"/>
+                                    <property name="checkMethods" value="true"/>
+                                    <property name="validateOnlyOverlapping" value="false"/>
+                                </module>
+                                <module name="FinalLocalVariable">
+                                    <property name="tokens" value="VARIABLE_DEF,PARAMETER_DEF"/>
+                                </module>
+                                <module name="JavadocType">
+                                    <property name="authorFormat" value="\S"/>
+                                </module>
+                                <module name="MissingJavadocMethod">
+                                    <property name="scope" value="public"/>
+                                </module>
+                                <module name="MissingJavadocType">
+                                    <property name="scope" value="public"/>
+                                </module>
+                                <module name="JavadocMethod">
+                                    <property name="accessModifiers" value="public,package"/>
+                                    <property name="allowMissingParamTags" value="false"/>
+                                    <property name="allowMissingReturnTag" value="false"/>
+                                </module>
+                            </module>
+                        </module>
+                    </checkstyleRules>
+                    <lineLength>120</lineLength>
+                    <logViolationsToConsole>true</logViolationsToConsole>
+                </configuration>
+            </plugin>
+
+            <!-- Compilation -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.4.1</version>
+                <executions>
+                    <execution>
+                        <id>enforce</id>
+                        <configuration>
+                            <rules>
+                                <dependencyConvergence/>
+                                <banDuplicatePomDependencyVersions/>
+                                <requireMavenVersion>
+                                    <version>3.8.8</version>
+                                </requireMavenVersion>
+                                <requireJavaVersion>
+                                    <version>${java.version}</version>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
                 <version>1.1.0</version>
+                <!-- We do not want to force this plugin upon children -->
+                <inherited>false</inherited>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                </configuration>
                 <executions>
                     <execution>
                         <id>flatten</id>
@@ -120,12 +360,123 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+
+            <!-- Test -->
+
+            <plugin>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Code coverage -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.14</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>prepare-agent-integration</id>
+                        <goals>
+                            <goal>prepare-agent-integration</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report-integration</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report-integration</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report-aggregate</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report-aggregate</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>check-coveredratio</id>
+                        <phase>verify</phase>
+                        <configuration>
+                            <haltOnFailure>false</haltOnFailure>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>INSTRUCTION</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.80</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.80</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Artefact-Generation -->
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.10.1</version>
                 <configuration>
-                    <updatePomFile>true</updatePomFile>
-                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                    <doclint>all,-missing</doclint>
+                    <doctitle>OpenId Federation Parent - ${project.version}</doctitle>
+                    <windowtitle>OpenId Federation Parent - ${project.version}</windowtitle>
+                    <links>
+                        <link>https://docs.spring.io/spring-framework/docs/current/javadoc-api/</link>
+                        <link>https://docs.spring.io/spring-boot/api/java/</link>
+                        <link>https://docs.swedenconnect.se/credentials-support/apidoc/</link>
+                        <link>https://www.javadoc.io/doc/javax.servlet/javax.servlet-api/3.1.0/</link>
+                        <link>https://www.javadoc.io/doc/com.fasterxml.jackson.core/jackson-core/2.17.1/</link>
+                        <link>https://www.javadoc.io/doc/com.fasterxml.jackson.core/jackson-databind/2.17.1/</link>
+                    </links>
+                    <detectJavaApiLink>true</detectJavaApiLink>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>3.4.5</version>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring.boot.version}</version>
             </plugin>
         </plugins>
     </build>
-
 </project>

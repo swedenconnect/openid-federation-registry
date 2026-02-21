@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,15 +19,11 @@ package se.swedenconnect.oidf.registry.fixture;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.servlet.client.RestTestClient;
 
 import java.text.ParseException;
 import java.util.Objects;
 import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Helper class for calling the Federation API.
@@ -37,10 +33,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 public class FederationAPIOperations {
 
-  private final TestRestTemplate restTemplate;
+  private final RestTestClient restTestClient;
 
-  public FederationAPIOperations(TestRestTemplate restTemplate) {
-    this.restTemplate = restTemplate;
+  public FederationAPIOperations(RestTestClient restTestClient) {
+    this.restTestClient = restTestClient;
   }
 
   public SignedJWT callSubmodule(UUID instanceId) throws ParseException {
@@ -53,15 +49,14 @@ public class FederationAPIOperations {
 
   private @NotNull SignedJWT getSignedJWT(final String action, final UUID instanceId) throws ParseException {
 
-    final ResponseEntity<String> fedRes = this.restTemplate
-        .getForEntity("/api/v1/federationservice/%s?instanceid=%s"
-            .formatted(action, instanceId), String.class);
+    final String body = this.restTestClient.get()
+        .uri("/api/v1/federationservice/%s?instanceid=%s".formatted(action, instanceId))
+        .exchange()
+        .expectStatus().isOk()
+        .expectBody(String.class)
+        .returnResult()
+        .getResponseBody();
 
-    if (fedRes.getStatusCode().isError()) {
-      log.error(fedRes.getBody());
-    }
-    assertThat(HttpStatus.OK).isEqualTo(fedRes.getStatusCode());
-
-    return SignedJWT.parse(Objects.requireNonNull(fedRes.getBody()));
+    return SignedJWT.parse(Objects.requireNonNull(body));
   }
 }

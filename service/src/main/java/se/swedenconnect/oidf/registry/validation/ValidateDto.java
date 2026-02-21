@@ -16,9 +16,21 @@
 
 package se.swedenconnect.oidf.registry.validation;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import se.swedenconnect.oidf.registry.auth.OrganizationRecord;
-import se.swedenconnect.oidf.registry.dto.*;
+import se.swedenconnect.oidf.registry.entity.dto.FederationEntityDto;
+import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
+import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
+import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
+import se.swedenconnect.oidf.registry.policy.dto.PolicyDto;
+import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
+import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
+import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
+
+import java.util.Objects;
 
 /**
  * Validator for DTO objects using PropertyValidators framework.
@@ -26,8 +38,14 @@ import se.swedenconnect.oidf.registry.dto.*;
  * @author Per Fredrik Plars
  */
 public class ValidateDto {
+  private static final ObjectMapper MAPPER = new ObjectMapper();
+  private static final int MIN_CRIT_LENGTH = 1;
+  private static final int MAX_CRIT_LENGTH = 500;
+  private static final int MIN_POLICY_CRIT_LENGTH = 2;
+  private static final int MAX_POLICY_CRIT_LENGTH = 150;
+  private static final String ENTITY_PREFIX = "@{entityprefix}";
+
   private final PropertyValidators.ValidationStringBuilder v;
-  private static final ObjectMapper mapper = new ObjectMapper();
 
   /**
    * Constructor.
@@ -53,94 +71,190 @@ public class ValidateDto {
    * Validates FederationEntityDto.
    *
    * @param dto the federation entity DTO
+   * @throws PropertyValidationFailException if validation fails
    */
   public void validate(final FederationEntityDto dto) {
-    this.v.required().startsWith("@{entityprefix}").entityid().build()
-        .ifFailThrow("entityidentifier", dto.getEntityIdentifier());
-    this.v.length(1, 500).build().ifFailThrow("crit", dto.getCrit());
-    this.v.url().build().ifFailThrow("crit", dto.getAuthorityhints());
+    Objects.requireNonNull(dto, "FederationEntityDto cannot be null");
+
+    this.v.required()
+        .startsWith(ENTITY_PREFIX)
+        .entityid()
+        .build()
+        .ifFailThrow("entityIdentifier", dto.getEntityIdentifier());
+
+    this.v.length(MIN_CRIT_LENGTH, MAX_CRIT_LENGTH)
+        .build()
+        .ifFailThrow("crit", dto.getCrit());
+
+    this.v.url()
+        .build()
+        .ifFailThrow("authorityHints", dto.getAuthorityhints());
   }
 
   /**
    * Validates HostedEntityDto.
    *
    * @param dto the hosted entity DTO
+   * @throws PropertyValidationFailException if validation fails
    */
   public void validate(final HostedEntityDto dto) {
-    this.v.required().entityid().build().ifFailThrow("entityidentifier", dto.getEntityIdentifier());
-    this.v.required().json().build().ifFailThrow("metadata", dto.getMetadata());
-    this.v.length(1, 500).build().ifFailThrow("crit", dto.getCrit());
-    this.v.url().build().ifFailThrow("authorityhints", dto.getAuthorityhints());
+    Objects.requireNonNull(dto, "HostedEntityDto cannot be null");
+
+    this.v.required()
+        .entityid()
+        .build()
+        .ifFailThrow("entityIdentifier", dto.getEntityIdentifier());
+
+    this.v.required()
+        .json()
+        .build()
+        .ifFailThrow("metadata", dto.getMetadata());
+
+    this.v.length(MIN_CRIT_LENGTH, MAX_CRIT_LENGTH)
+        .build()
+        .ifFailThrow("crit", dto.getCrit());
+
+    this.v.url()
+        .build()
+        .ifFailThrow("authorityHints", dto.getAuthorityhints());
   }
 
   /**
    * Validates ResolverDto.
    *
    * @param dto the resolver DTO
+   * @throws PropertyValidationFailException if validation fails
    */
   public void validate(final ResolverDto dto) {
-    this.v.required().uuid().build().ifFailThrow("entityId", dto.getEntityId());
-    this.v.required().build().ifFailThrow("active", dto.getActive());
-    this.v.required().duration().build().ifFailThrow("resolveResponseDuration", dto.getResolveResponseDuration());
-    this.v.required().entityid().build().ifFailThrow("trustAnchor", dto.getTrustAnchor());
-    this.v.required().required().jwks().build().ifFailThrow("trustedKeys", dto.getTrustedKeys());
-    this.v.required().required().duration().build().ifFailThrow("stepRetryDuration", dto.getStepRetryDuration());
-    this.v.required().required().build().ifFailThrow("stepCachedValueThreshold", dto.getStepCachedValueThreshold());
+    Objects.requireNonNull(dto, "ResolverDto cannot be null");
+
+    this.v.required()
+        .uuid()
+        .build()
+        .ifFailThrow("entityId", dto.getEntityId());
+
+    this.v.required()
+        .build()
+        .ifFailThrow("active", dto.getActive());
+
+    this.v.required()
+        .duration()
+        .build()
+        .ifFailThrow("resolveResponseDuration", dto.getResolveResponseDuration());
+
+    this.v.required()
+        .entityid()
+        .build()
+        .ifFailThrow("trustAnchor", dto.getTrustAnchor());
+
+    this.v.required()
+        .jwks()
+        .build()
+        .ifFailThrow("trustedKeys", dto.getTrustedKeys());
+
+    this.v.required()
+        .duration()
+        .build()
+        .ifFailThrow("stepRetryDuration", dto.getStepRetryDuration());
+
+    this.v.required()
+        .build()
+        .ifFailThrow("stepCachedValueThreshold", dto.getStepCachedValueThreshold());
   }
 
   /**
    * Validates TrustAnchorDto.
    *
    * @param dto the trust anchor DTO
+   * @throws PropertyValidationFailException if validation fails
    */
   public void validate(final TrustAnchorDto dto) {
-    this.v.required().uuid().build().ifFailThrow("entityId", dto.getEntityId());
-    this.v.required().build().ifFailThrow("active", dto.getActive());
-    this.v.entityid().build().ifFailThrow("trustmarkissuers", dto.getTrustMarkIssuers());
+    Objects.requireNonNull(dto, "TrustAnchorDto cannot be null");
 
+    this.v.required()
+        .uuid()
+        .build()
+        .ifFailThrow("entityId", dto.getEntityId());
+
+    this.v.required()
+        .build()
+        .ifFailThrow("active", dto.getActive());
+
+    this.v.entityid()
+        .build()
+        .ifFailThrow("trustMarkIssuers", dto.getTrustMarkIssuers());
   }
 
   /**
    * Validates IntermediateDto.
    *
    * @param dto the intermediate DTO
+   * @throws PropertyValidationFailException if validation fails
    */
   public void validate(final IntermediateDto dto) {
-    this.v.required().uuid().build().ifFailThrow("entityId", dto.getEntityId());
-    this.v.required().build().ifFailThrow("active", dto.getActive());
+    Objects.requireNonNull(dto, "IntermediateDto cannot be null");
+
+    this.v.required()
+        .uuid()
+        .build()
+        .ifFailThrow("entityId", dto.getEntityId());
+
+    this.v.required()
+        .build()
+        .ifFailThrow("active", dto.getActive());
   }
 
   /**
    * Validates TrustmarkDto.
    *
    * @param dto the trustmark DTO
+   * @throws PropertyValidationFailException if validation fails
    */
   public void validate(final TrustmarkDto dto) {
-    this.v.required().uuid().build().ifFailThrow("trustmarkissuerId", dto.getTrustmarkissuerId());
-    this.v.required().url().build().ifFailThrow("trustMarkEntityId", dto.getTrustmarkType());
-    this.v.url().build().ifFailThrow("logoUri", dto.getLogoUri());
-    this.v.url().build().ifFailThrow("refUri", dto.getRefUri());
-    this.v.jwt().build().ifFailThrow("delegation", dto.getDelegation());
+    Objects.requireNonNull(dto, "TrustmarkDto cannot be null");
+
+    this.v.required()
+        .uuid()
+        .build()
+        .ifFailThrow("trustmarkIssuerId", dto.getTrustmarkissuerId());
+
+    this.v.required()
+        .url()
+        .build()
+        .ifFailThrow("trustmarkType", dto.getTrustmarkType());
+
+    this.v.url()
+        .build()
+        .ifFailThrow("logoUri", dto.getLogoUri());
+
+    this.v.url()
+        .build()
+        .ifFailThrow("refUri", dto.getRefUri());
+
+    this.v.jwt()
+        .build()
+        .ifFailThrow("delegation", dto.getDelegation());
   }
 
   /**
    * Validates PolicyDto.
    *
    * @param dto the policy DTO
+   * @throws PropertyValidationFailException if validation fails
    */
   public void validate(final PolicyDto dto) {
-    this.v.required().build().ifFailThrow("name", dto.getName());
-    this.v.required().build().ifFailThrow("policy", dto.getPolicy());
+    Objects.requireNonNull(dto, "PolicyDto cannot be null");
+
+    this.v.required()
+        .build()
+        .ifFailThrow("name", dto.getName());
+
+    this.v.required()
+        .build()
+        .ifFailThrow("policy", dto.getPolicy());
 
     if (dto.getPolicy() != null) {
-      try {
-        final String policyJson = mapper.writeValueAsString(dto.getPolicy());
-        this.v.required().oidfPolicy().build().ifFailThrow("policy", policyJson);
-      }
-      catch (final com.fasterxml.jackson.core.JsonProcessingException e) {
-        throw new PropertyValidationFailException("policy", dto.getPolicy().toString(),
-            "Invalid JSON format: " + e.getMessage());
-      }
+      this.validatePolicyJson(dto.getPolicy());
     }
   }
 
@@ -148,40 +262,102 @@ public class ValidateDto {
    * Validates TrustmarkSubjectDto.
    *
    * @param dto the trustmark subject DTO
+   * @throws PropertyValidationFailException if validation fails
    */
   public void validate(final TrustmarkSubjectDto dto) {
-    this.v.required().uuid().build().ifFailThrow("trustmarkId", dto.getTrustmarkId());
-    this.v.required().entityid().build().ifFailThrow("subject", dto.getSubject());
-    this.v.required().build().ifFailThrow("revoked", dto.getRevoked());
+    Objects.requireNonNull(dto, "TrustmarkSubjectDto cannot be null");
+
+    this.v.required()
+        .uuid()
+        .build()
+        .ifFailThrow("trustmarkId", dto.getTrustmarkId());
+
+    this.v.required()
+        .entityid()
+        .build()
+        .ifFailThrow("subject", dto.getSubject());
+
+    this.v.required()
+        .build()
+        .ifFailThrow("revoked", dto.getRevoked());
   }
 
   /**
    * Validates TrustmarkIssuerDto.
    *
    * @param dto the trustmark issuer DTO
+   * @throws PropertyValidationFailException if validation fails
    */
   public void validate(final TrustmarkIssuerDto dto) {
-    this.v.required().uuid().build().ifFailThrow("entityId", dto.getEntityId());
-    this.v.required().build().ifFailThrow("active", dto.getActive());
-    this.v.required().duration().build().ifFailThrow("trustMarkTokenValidityDuration",
-        dto.getTrustMarkTokenValidityDuration());
+    Objects.requireNonNull(dto, "TrustmarkIssuerDto cannot be null");
+
+    this.v.required()
+        .uuid()
+        .build()
+        .ifFailThrow("entityId", dto.getEntityId());
+
+    this.v.required()
+        .build()
+        .ifFailThrow("active", dto.getActive());
+
+    this.v.required()
+        .duration()
+        .build()
+        .ifFailThrow("trustMarkTokenValidityDuration", dto.getTrustMarkTokenValidityDuration());
   }
 
   /**
    * Validates SubordinateDto.
    *
    * @param dto the subordinate DTO
+   * @throws PropertyValidationFailException if validation fails
    */
   public void validate(final SubordinateDto dto) {
-    this.v.required().uuid().build().ifFailThrow("taImId", dto.getTaImId());
-    this.v.required().entityid().build().ifFailThrow("entityidentifier", dto.getEntityIdentifier());
-    this.v.jwks().build().ifFailThrow("jwks", dto.getJwks());
+    Objects.requireNonNull(dto, "SubordinateDto cannot be null");
 
-    this.v.uuid().build().ifFailThrow("policyid", dto.getPolicyId());
-    this.v.url().build().ifFailThrow("eclocation", dto.getEcLocation());
-    this.v.length(2, 150).build().ifFailThrow("metadatapolicycrit", dto.getMetadataPolicyCrit());
-    this.v.length(2, 150).build().ifFailThrow("crit", dto.getCrit());
+    this.v.required()
+        .uuid()
+        .build()
+        .ifFailThrow("taImId", dto.getTaImId());
 
+    this.v.required()
+        .entityid()
+        .build()
+        .ifFailThrow("entityIdentifier", dto.getEntityIdentifier());
+
+    this.v.jwks()
+        .build()
+        .ifFailThrow("jwks", dto.getJwks());
+
+    this.v.uuid()
+        .build()
+        .ifFailThrow("policyId", dto.getPolicyId());
+
+    this.v.url()
+        .build()
+        .ifFailThrow("ecLocation", dto.getEcLocation());
+
+    this.v.length(MIN_POLICY_CRIT_LENGTH, MAX_POLICY_CRIT_LENGTH)
+        .build()
+        .ifFailThrow("metadataPolicyCrit", dto.getMetadataPolicyCrit());
+
+    this.v.length(MIN_POLICY_CRIT_LENGTH, MAX_POLICY_CRIT_LENGTH)
+        .build()
+        .ifFailThrow("crit", dto.getCrit());
+  }
+
+  private void validatePolicyJson(final Object policy) {
+    try {
+      final String policyJson = MAPPER.writeValueAsString(policy);
+      this.v.required()
+          .json()
+          .build()
+          .ifFailThrow("policy", policyJson);
+    }
+    catch (final JsonProcessingException e) {
+      throw new PropertyValidationFailException("policy", policy.toString(),
+          "Invalid JSON format: " + e.getMessage());
+    }
   }
 }
 
