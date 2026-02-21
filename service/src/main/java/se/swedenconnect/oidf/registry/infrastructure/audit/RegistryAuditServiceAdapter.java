@@ -65,11 +65,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void policyCreated(final UUID policyId, final UUID organizationId, final PolicyDto oldData,
-      final PolicyDto newData) {
+  public void policyCreated(final UUID policyId, final UUID instanceId, final UUID organizationId,
+      final PolicyDto oldData, final PolicyDto newData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.POLICY_CREATED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(policyId.toString())
             .oldData(this.toJson(oldData))
@@ -78,11 +79,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void policyUpdated(final UUID policyId, final UUID organizationId, final PolicyDto oldData,
-      final PolicyDto newData) {
+  public void policyUpdated(final UUID policyId, final UUID instanceId, final UUID organizationId,
+      final PolicyDto oldData, final PolicyDto newData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.POLICY_UPDATED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(policyId.toString())
             .oldData(this.toJson(oldData))
@@ -91,10 +93,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void policyDeleted(final UUID policyId, final UUID organizationId, final PolicyDto deletedData) {
+  public void policyDeleted(final UUID policyId, final UUID instanceId, final UUID organizationId,
+      final PolicyDto deletedData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.POLICY_DELETED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(policyId.toString())
             .oldData(this.toJson(deletedData))
@@ -102,55 +106,53 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void federationEntityCreated(final UUID entityId, final UUID organizationId, final String issuer,
-      final String subject, final FederationEntityDto oldData, final FederationEntityDto newData) {
+  public void federationEntityCreated(final UUID entityId, final UUID instanceId, final UUID organizationId,
+      final String issuer, final String subject, final FederationEntityDto oldData, final FederationEntityDto newData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.FEDERATION_ENTITY_CREATED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(entityId.toString())
-            .issuer(issuer)
-            .subject(subject)
             .oldData(this.toJson(oldData))
             .newData(this.toJson(newData))
             .build());
   }
 
   @Override
-  public void federationEntityUpdated(final UUID entityId, final UUID organizationId, final String issuer,
-      final String subject, final FederationEntityDto oldData, final FederationEntityDto newData) {
+  public void federationEntityUpdated(final UUID entityId, final UUID instanceId, final UUID organizationId,
+      final String issuer, final String subject, final FederationEntityDto oldData, final FederationEntityDto newData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.FEDERATION_ENTITY_UPDATED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(entityId.toString())
-            .issuer(issuer)
-            .subject(subject)
             .oldData(this.toJson(oldData))
             .newData(this.toJson(newData))
             .build());
   }
 
   @Override
-  public void federationEntityDeleted(final UUID entityId, final UUID organizationId, final String issuer,
-      final String subject, final FederationEntityDto deletedData) {
+  public void federationEntityDeleted(final UUID entityId, final UUID instanceId, final UUID organizationId,
+      final String issuer, final String subject, final FederationEntityDto deletedData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.FEDERATION_ENTITY_DELETED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(entityId.toString())
-            .issuer(issuer)
-            .subject(subject)
             .oldData(this.toJson(deletedData))
             .build());
   }
 
   @Override
-  public void hostedEntityCreated(final UUID entityId, final UUID organizationId, final HostedEntityDto oldData,
-      final HostedEntityDto newData) {
+  public void hostedEntityCreated(final UUID entityId, final UUID instanceId, final UUID organizationId,
+      final HostedEntityDto oldData, final HostedEntityDto newData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.HOSTED_ENTITY_CREATED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(entityId.toString())
             .oldData(this.toJson(oldData))
@@ -159,11 +161,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void hostedEntityUpdated(final UUID entityId, final UUID organizationId, final HostedEntityDto oldData,
-      final HostedEntityDto newData) {
+  public void hostedEntityUpdated(final UUID entityId, final UUID instanceId, final UUID organizationId,
+      final HostedEntityDto oldData, final HostedEntityDto newData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.HOSTED_ENTITY_UPDATED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(entityId.toString())
             .oldData(this.toJson(oldData))
@@ -172,10 +175,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void hostedEntityDeleted(final UUID entityId, final UUID organizationId, final HostedEntityDto deletedData) {
+  public void hostedEntityDeleted(final UUID entityId, final UUID instanceId, final UUID organizationId,
+      final HostedEntityDto deletedData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.HOSTED_ENTITY_DELETED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(entityId.toString())
             .oldData(this.toJson(deletedData))
@@ -183,11 +188,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void trustAnchorCreated(final UUID moduleId, final UUID organizationId, final TrustAnchorDto oldData,
-      final TrustAnchorDto newData) {
+  public void trustAnchorCreated(final UUID moduleId, final UUID instanceId, final UUID organizationId,
+      final TrustAnchorDto oldData, final TrustAnchorDto newData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.TRUST_ANCHOR_CREATED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(moduleId.toString())
             .oldData(this.toJson(oldData))
@@ -196,11 +202,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void trustAnchorUpdated(final UUID moduleId, final UUID organizationId, final TrustAnchorDto oldData,
-      final TrustAnchorDto newData) {
+  public void trustAnchorUpdated(final UUID moduleId, final UUID instanceId, final UUID organizationId,
+      final TrustAnchorDto oldData, final TrustAnchorDto newData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.TRUST_ANCHOR_UPDATED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(moduleId.toString())
             .oldData(this.toJson(oldData))
@@ -209,10 +216,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void trustAnchorDeleted(final UUID moduleId, final UUID organizationId, final TrustAnchorDto deletedData) {
+  public void trustAnchorDeleted(final UUID moduleId, final UUID instanceId, final UUID organizationId,
+      final TrustAnchorDto deletedData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.TRUST_ANCHOR_DELETED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(moduleId.toString())
             .oldData(this.toJson(deletedData))
@@ -220,11 +229,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void intermediateCreated(final UUID moduleId, final UUID organizationId, final IntermediateDto oldData,
-      final IntermediateDto newData) {
+  public void intermediateCreated(final UUID moduleId, final UUID instanceId, final UUID organizationId,
+      final IntermediateDto oldData, final IntermediateDto newData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.INTERMEDIATE_CREATED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(moduleId.toString())
             .oldData(this.toJson(oldData))
@@ -233,11 +243,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void intermediateUpdated(final UUID moduleId, final UUID organizationId, final IntermediateDto oldData,
-      final IntermediateDto newData) {
+  public void intermediateUpdated(final UUID moduleId, final UUID instanceId, final UUID organizationId,
+      final IntermediateDto oldData, final IntermediateDto newData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.INTERMEDIATE_UPDATED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(moduleId.toString())
             .oldData(this.toJson(oldData))
@@ -246,10 +257,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void intermediateDeleted(final UUID moduleId, final UUID organizationId, final IntermediateDto deletedData) {
+  public void intermediateDeleted(final UUID moduleId, final UUID instanceId, final UUID organizationId,
+      final IntermediateDto deletedData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.INTERMEDIATE_DELETED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(moduleId.toString())
             .oldData(this.toJson(deletedData))
@@ -257,11 +270,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void resolverCreated(final UUID moduleId, final UUID organizationId, final ResolverDto oldData,
-      final ResolverDto newData) {
+  public void resolverCreated(final UUID moduleId, final UUID instanceId, final UUID organizationId,
+      final ResolverDto oldData, final ResolverDto newData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.RESOLVER_CREATED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(moduleId.toString())
             .oldData(this.toJson(oldData))
@@ -270,11 +284,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void resolverUpdated(final UUID moduleId, final UUID organizationId, final ResolverDto oldData,
-      final ResolverDto newData) {
+  public void resolverUpdated(final UUID moduleId, final UUID instanceId, final UUID organizationId,
+      final ResolverDto oldData, final ResolverDto newData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.RESOLVER_UPDATED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(moduleId.toString())
             .oldData(this.toJson(oldData))
@@ -283,10 +298,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void resolverDeleted(final UUID moduleId, final UUID organizationId, final ResolverDto deletedData) {
+  public void resolverDeleted(final UUID moduleId, final UUID instanceId, final UUID organizationId,
+      final ResolverDto deletedData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.RESOLVER_DELETED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(moduleId.toString())
             .oldData(this.toJson(deletedData))
@@ -294,11 +311,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void trustmarkCreated(final UUID trustmarkId, final UUID organizationId, final TrustmarkDto oldData,
-      final TrustmarkDto newData) {
+  public void trustmarkCreated(final UUID trustmarkId, final UUID instanceId, final UUID organizationId,
+      final TrustmarkDto oldData, final TrustmarkDto newData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.TRUSTMARK_CREATED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(trustmarkId.toString())
             .oldData(this.toJson(oldData))
@@ -307,11 +325,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void trustmarkUpdated(final UUID trustmarkId, final UUID organizationId, final TrustmarkDto oldData,
-      final TrustmarkDto newData) {
+  public void trustmarkUpdated(final UUID trustmarkId, final UUID instanceId, final UUID organizationId,
+      final TrustmarkDto oldData, final TrustmarkDto newData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.TRUSTMARK_UPDATED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(trustmarkId.toString())
             .oldData(this.toJson(oldData))
@@ -320,10 +339,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void trustmarkDeleted(final UUID trustmarkId, final UUID organizationId, final TrustmarkDto deletedData) {
+  public void trustmarkDeleted(final UUID trustmarkId, final UUID instanceId, final UUID organizationId,
+      final TrustmarkDto deletedData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.TRUSTMARK_DELETED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(trustmarkId.toString())
             .oldData(this.toJson(deletedData))
@@ -331,52 +352,53 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void trustmarkSubjectCreated(final UUID trustmarkSubjectId, final UUID trustmarkId, final UUID organizationId,
-      final TrustmarkSubjectDto oldData, final TrustmarkSubjectDto newData) {
+  public void trustmarkSubjectCreated(final UUID trustmarkSubjectId, final UUID instanceId, final UUID trustmarkId,
+      final UUID organizationId, final TrustmarkSubjectDto oldData, final TrustmarkSubjectDto newData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.TRUSTMARK_SUBJECT_CREATED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(trustmarkSubjectId.toString())
-            .trustMarkId(trustmarkId.toString())
             .oldData(this.toJson(oldData))
             .newData(this.toJson(newData))
             .build());
   }
 
   @Override
-  public void trustmarkSubjectUpdated(final UUID trustmarkSubjectId, final UUID trustmarkId, final UUID organizationId,
-      final TrustmarkSubjectDto oldData, final TrustmarkSubjectDto newData) {
+  public void trustmarkSubjectUpdated(final UUID trustmarkSubjectId, final UUID instanceId, final UUID trustmarkId,
+      final UUID organizationId, final TrustmarkSubjectDto oldData, final TrustmarkSubjectDto newData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.TRUSTMARK_SUBJECT_UPDATED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(trustmarkSubjectId.toString())
-            .trustMarkId(trustmarkId.toString())
             .oldData(this.toJson(oldData))
             .newData(this.toJson(newData))
             .build());
   }
 
   @Override
-  public void trustmarkSubjectDeleted(final UUID trustmarkSubjectId, final UUID trustmarkId, final UUID organizationId,
-      final TrustmarkSubjectDto deletedData) {
+  public void trustmarkSubjectDeleted(final UUID trustmarkSubjectId, final UUID instanceId, final UUID trustmarkId,
+      final UUID organizationId, final TrustmarkSubjectDto deletedData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.TRUSTMARK_SUBJECT_DELETED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(trustmarkSubjectId.toString())
-            .trustMarkId(trustmarkId.toString())
             .oldData(this.toJson(deletedData))
             .build());
   }
 
   @Override
-  public void trustmarkIssuerCreated(final UUID trustmarkIssuerId, final UUID organizationId,
+  public void trustmarkIssuerCreated(final UUID trustmarkIssuerId, final UUID instanceId, final UUID organizationId,
       final TrustmarkIssuerDto oldData, final TrustmarkIssuerDto newData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.TRUSTMARK_ISSUER_CREATED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(trustmarkIssuerId.toString())
             .oldData(this.toJson(oldData))
@@ -385,11 +407,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void trustmarkIssuerUpdated(final UUID trustmarkIssuerId, final UUID organizationId,
+  public void trustmarkIssuerUpdated(final UUID trustmarkIssuerId, final UUID instanceId, final UUID organizationId,
       final TrustmarkIssuerDto oldData, final TrustmarkIssuerDto newData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.TRUSTMARK_ISSUER_UPDATED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(trustmarkIssuerId.toString())
             .oldData(this.toJson(oldData))
@@ -398,11 +421,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void trustmarkIssuerDeleted(final UUID trustmarkIssuerId, final UUID organizationId,
+  public void trustmarkIssuerDeleted(final UUID trustmarkIssuerId, final UUID instanceId, final UUID organizationId,
       final TrustmarkIssuerDto deletedData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.TRUSTMARK_ISSUER_DELETED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(trustmarkIssuerId.toString())
             .oldData(this.toJson(deletedData))
@@ -410,11 +434,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void subordinateCreated(final UUID subordinateId, final UUID organizationId,
+  public void subordinateCreated(final UUID subordinateId, final UUID instanceId, final UUID organizationId,
       final SubordinateDto oldData, final SubordinateDto newData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.SUBORDINATE_CREATED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(subordinateId.toString())
             .oldData(this.toJson(oldData))
@@ -423,11 +448,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void subordinateUpdated(final UUID subordinateId, final UUID organizationId,
+  public void subordinateUpdated(final UUID subordinateId, final UUID instanceId, final UUID organizationId,
       final SubordinateDto oldData, final SubordinateDto newData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.SUBORDINATE_UPDATED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(subordinateId.toString())
             .oldData(this.toJson(oldData))
@@ -436,11 +462,12 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void subordinateDeleted(final UUID subordinateId, final UUID organizationId,
+  public void subordinateDeleted(final UUID subordinateId, final UUID instanceId, final UUID organizationId,
       final SubordinateDto deletedData) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.SUBORDINATE_DELETED)
+            .instanceId(instanceId.toString())
             .organizationId(organizationId.toString())
             .extId(subordinateId.toString())
             .oldData(this.toJson(deletedData))

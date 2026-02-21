@@ -20,16 +20,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecord;
-import se.swedenconnect.oidf.registry.trustmark.mapper.DtoToTrustmarkMapper;
-import se.swedenconnect.oidf.registry.trustmark.mapper.TrustmarkToDtoMapper;
-import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
-import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
-import se.swedenconnect.oidf.registry.trustmark.model.TrustMarkSubject;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
+import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
+import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
+import se.swedenconnect.oidf.registry.trustmark.mapper.DtoToTrustmarkMapper;
+import se.swedenconnect.oidf.registry.trustmark.mapper.TrustmarkToDtoMapper;
+import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
+import se.swedenconnect.oidf.registry.trustmark.model.TrustMarkSubject;
 import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
 import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkSubjectRepository;
-import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
 
 import java.util.UUID;
 
@@ -96,7 +96,9 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
 
     this.trustMarkSubjectRepository.save(entity);
     final TrustmarkSubjectDto dto = TrustmarkToDtoMapper.toDto(entity);
-    this.auditService.trustmarkSubjectCreated(id, trustmarkId,
+    this.auditService.trustmarkSubjectCreated(id,
+        trustMarkEntity.getTrustmarkIssuer().getEntity().getOrganization().getInstance().getInstanceId(),
+        trustmarkId,
         trustMarkEntity.getTrustmarkIssuer().getEntity().getOrganization().getOrganizationId(), null, dto);
     return dto;
   }
@@ -123,7 +125,9 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
 
     this.trustMarkSubjectRepository.save(existing);
     final TrustmarkSubjectDto newDto = TrustmarkToDtoMapper.toDto(existing);
-    this.auditService.trustmarkSubjectUpdated(id, trustmarkId,
+    this.auditService.trustmarkSubjectUpdated(id,
+        existing.getTrustMark().getTrustmarkIssuer().getEntity().getOrganization().getInstance().getInstanceId(),
+        trustmarkId,
         existing.getTrustMark().getTrustmarkIssuer().getEntity().getOrganization().getOrganizationId(), oldDto,
         newDto);
     return newDto;
@@ -156,7 +160,9 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
     final TrustmarkSubjectDto dto = TrustmarkToDtoMapper.toDto(entity);
     final UUID trustmarkId = entity.getTrustMark().getTrustmarkId();
     this.trustMarkSubjectRepository.delete(entity);
-    this.auditService.trustmarkSubjectDeleted(id, trustmarkId,
+    this.auditService.trustmarkSubjectDeleted(id,
+        entity.getTrustMark().getTrustmarkIssuer().getEntity().getOrganization().getInstance().getInstanceId(),
+        trustmarkId,
         entity.getTrustMark().getTrustmarkIssuer().getEntity().getOrganization().getOrganizationId(), dto);
   }
 }

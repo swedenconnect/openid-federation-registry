@@ -77,10 +77,9 @@ public class NotifyService {
    */
   @EventListener
   public void onAuditEvent(final FederationAuditEvent event) {
-    if (event.getFkKeyType() != null) {
-
+    log.debug("Received FederationAuditEvent: {}", event);
       this.notificationEndPoints.stream()
-          .filter(np -> np.instanceId().toString().equals(event.getOrganizationId()))
+          .filter(np -> np.instanceId().toString().equals(event.getInstanceId()))
           .forEach(endpoint -> {
             this.executorService.submit(() -> {
               try {
@@ -92,8 +91,6 @@ public class NotifyService {
               }
             });
           });
-
-    }
   }
 
   protected void callNotifyEndpoint(final URI endpoint, final String payload) {
@@ -112,9 +109,8 @@ public class NotifyService {
 
   protected String createPayLoad(final FederationAuditEvent event) {
     final Map<String, Object> data = Map.of("action", event.getEvent(),
-        "eventtype", event.getFkKeyType(),
-        "id", event.getOptionId(),
-        "uri", "/api/v1/options/%s/%s".formatted(event.getFkKeyType(), event.getOptionId()));
+        "eventtype", event.getEvent(),
+        "id", event.getExtId());
     return this.jwtSupport.signJWT("notification",
             builder -> builder.claim("notification", data))
         .serialize();

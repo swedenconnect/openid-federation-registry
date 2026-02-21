@@ -20,16 +20,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecord;
-import se.swedenconnect.oidf.registry.policy.mapper.DtoToPolicyMapper;
-import se.swedenconnect.oidf.registry.policy.mapper.PolicyToDtoMapper;
-import se.swedenconnect.oidf.registry.policy.dto.PolicyDto;
-import se.swedenconnect.oidf.registry.organization.model.Organization;
-import se.swedenconnect.oidf.registry.policy.model.Policy;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
-import se.swedenconnect.oidf.registry.policy.repository.PolicyRepository;
-import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
+import se.swedenconnect.oidf.registry.organization.model.Organization;
+import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
+import se.swedenconnect.oidf.registry.policy.dto.PolicyDto;
+import se.swedenconnect.oidf.registry.policy.mapper.DtoToPolicyMapper;
+import se.swedenconnect.oidf.registry.policy.mapper.PolicyToDtoMapper;
+import se.swedenconnect.oidf.registry.policy.model.Policy;
+import se.swedenconnect.oidf.registry.policy.repository.PolicyRepository;
 
 import java.util.List;
 import java.util.UUID;
@@ -123,7 +123,7 @@ public class PolicyServiceImpl implements PolicyService {
     final Policy entity = DtoToPolicyMapper.toEntity(id, input, org);
     this.policyRepository.save(entity);
     final PolicyDto dto = toDto(entity);
-    this.auditService.policyCreated(id, org.getOrganizationId(), null, dto);
+    this.auditService.policyCreated(id, org.getInstance().getInstanceId(), org.getOrganizationId(), null, dto);
     return dto;
   }
 
@@ -147,7 +147,8 @@ public class PolicyServiceImpl implements PolicyService {
 
     this.policyRepository.save(existing);
     final PolicyDto newDto = toDto(existing);
-    this.auditService.policyUpdated(id, existing.getOrganizationId(), oldDto, newDto);
+    this.auditService.policyUpdated(id, existing.getOrganization().getInstance().getInstanceId(),
+        existing.getOrganizationId(), oldDto, newDto);
     return newDto;
   }
 
@@ -163,7 +164,8 @@ public class PolicyServiceImpl implements PolicyService {
     final Policy entity = this.findPolicyOrThrow(organizationRecord, id);
     final PolicyDto dto = toDto(entity);
     this.policyRepository.delete(entity);
-    this.auditService.policyDeleted(id, entity.getOrganizationId(), dto);
+    this.auditService.policyDeleted(id, entity.getOrganization().getInstance().getInstanceId(),
+        entity.getOrganizationId(), dto);
   }
 
   /**

@@ -61,7 +61,6 @@ class SubordinateCRUDIT {
   @Container
   @ServiceConnection
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
-  //public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:10.11");
 
   @LocalServerPort
   private int port;
@@ -121,6 +120,7 @@ class SubordinateCRUDIT {
   @Test
   @DisplayName("Create subordinate without metadataPolicy stores null")
   void createSubordinateWithoutSubordinatePolicyStoresNull() {
+
     final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-policy-null");
 
     final Subordinate created = this.subordinatesApi.createSubordinate(new Subordinate()

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,7 @@ package se.swedenconnect.oidf.registry.infrastructure.audit;
  * @author Per Fredrik Plars
  */
 public enum RegistryAuditEventType {
-  OPTIONS_CREATED,
-  OPTIONS_UPDATE,
-  OPTIONS_DELETED,
+
   POLICY_CREATED,
   POLICY_UPDATED,
   POLICY_DELETED,
