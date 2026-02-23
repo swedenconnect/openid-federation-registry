@@ -16,8 +16,7 @@
 
 package se.swedenconnect.oidf.registry.infrastructure.validation;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import se.swedenconnect.oidf.registry.entity.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecord;
@@ -29,6 +28,11 @@ import se.swedenconnect.oidf.registry.policy.dto.PolicyDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
+import se.swedenconnect.oidf.registry.validation.PropertyValidationFailException;
+import se.swedenconnect.oidf.registry.validation.PropertyValidators;
+import se.swedenconnect.oidf.registry.validation.VariableValueResolver;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Objects;
 
@@ -38,14 +42,14 @@ import java.util.Objects;
  * @author Per Fredrik Plars
  */
 public class ValidateDto {
-  private static final ObjectMapper MAPPER = new ObjectMapper();
+  private static final JsonMapper MAPPER = new JsonMapper();
   private static final int MIN_CRIT_LENGTH = 1;
   private static final int MAX_CRIT_LENGTH = 500;
   private static final int MIN_POLICY_CRIT_LENGTH = 2;
   private static final int MAX_POLICY_CRIT_LENGTH = 150;
   private static final String ENTITY_PREFIX = "@{entityprefix}";
 
-  private final PropertyValidators.ValidationStringBuilder v;
+  private final PropertyValidators.ValidationBuilder v;
 
   /**
    * Constructor.
@@ -250,6 +254,7 @@ public class ValidateDto {
         .ifFailThrow("name", dto.getName());
 
     this.v.required()
+        .oidfPolicy()
         .build()
         .ifFailThrow("policy", dto.getPolicy());
 
@@ -329,10 +334,6 @@ public class ValidateDto {
         .build()
         .ifFailThrow("jwks", dto.getJwks());
 
-    this.v.uuid()
-        .build()
-        .ifFailThrow("policyId", dto.getPolicyId());
-
     this.v.url()
         .build()
         .ifFailThrow("ecLocation", dto.getEcLocation());
@@ -345,7 +346,7 @@ public class ValidateDto {
         .build()
         .ifFailThrow("crit", dto.getCrit());
 
-    this.v.json()
+    this.v.oidfPolicy()
         .build()
         .ifFailThrow("metadataPolicy", dto.getMetadataPolicy());
   }
@@ -358,7 +359,7 @@ public class ValidateDto {
           .build()
           .ifFailThrow("policy", policyJson);
     }
-    catch (final JsonProcessingException e) {
+    catch (final JacksonException e) {
       throw new PropertyValidationFailException("policy", policy.toString(),
           "Invalid JSON format: " + e.getMessage());
     }

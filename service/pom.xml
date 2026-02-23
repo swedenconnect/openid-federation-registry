@@ -202,7 +202,7 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/test/resources/openapi.json</inputSpec>
+                            <inputSpec>${project.basedir}/api/openapi.json</inputSpec>
                             <generatorName>java</generatorName>
                             <generateApis>true</generateApis>
                             <generateModels>true</generateModels>

@@ -16,49 +16,35 @@
 
 package se.swedenconnect.oidf.registry.validation;
 
-import java.util.ArrayList;
-import java.util.List;
+
 
 /**
- * oidf-entity-registry
+ * Status class for validations
  *
  * @author Per Fredrik Plars
  */
-public class ValidationSuccess {
-  List<ValidationStatus> status;
+public interface ValidationStatus {
 
-  public ValidationSuccess(List<ValidationStatus> status) {
-    this.status = status;
-  }
+  /**
+   * Field name that the status is connected to
+   *
+   * @return String
+   */
+  String getFieldName();
 
-  public static ValidationSuccess ok(final String filedName, final String validatorName) {
-    return new ValidationSuccess(List.of(new ValidationStatus(filedName, validatorName,"validated ok")));
-  }
+  /**
+   * String that represents the rules used to validate.
+   *
+   * @return String in the format of min(34).max(111)
+   */
+  String getValidationRule();
 
-  public static ValidationSuccess ok(final String filedName, final String validatorName,final String msg) {
-    return new ValidationSuccess(List.of(new ValidationStatus(filedName, validatorName,msg)));
-  }
+  /**
+   * A message that reflects the validation result
+   *
+   * @return ok if the validaton was ok.
+   */
+  String getValidationMessage();
 
-  public static ValidationSuccess err(final String filedName,
-      final String validatorName,
-    final String inputValue,
-    final String validationFailMessage) {
-
-
-    return new ValidationSuccess(List.of(new ValidationStatus(filedName, validatorName,msg)));
-/*
-    super("Key:'%s' - '%s' Original value: '%s'".formatted(filedName, validationFailMessage, inputValue));
-      this.validationFailMessage = validationFailMessage;
-      this.filedName = filedName;
-      this.inputValue = inputValue;
-    }
-  */
-  }
-  public static ValidationSuccess noEval(final String key, final String validatorName) {
-    return new ValidationSuccess(List.of(new ValidationStatus(key, validatorName,"not evaluated")));
-  }
-
-
-  public record ValidationStatus(String key, String validatorName, String msg ){}
 
 }

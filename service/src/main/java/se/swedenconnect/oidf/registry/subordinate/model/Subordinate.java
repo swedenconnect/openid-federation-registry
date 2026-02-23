@@ -64,6 +64,7 @@ public class Subordinate extends BaseEntity {
   @JoinColumn(name = "ta_im_id", nullable = false)
   private TrustAnchorIntermediateModule taIm;
 
+  @Deprecated
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "policy_id")
   private Policy policy;

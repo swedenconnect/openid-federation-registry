@@ -22,6 +22,7 @@ import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.entity.mapper.EntityToDtoMapper;
 import se.swedenconnect.oidf.registry.entity.model.EntityType;
 import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
+import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
 import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
@@ -474,15 +475,10 @@ class EntityToDtoMapperTest {
     final FederationEntity entity = createFederationEntity();
     final TrustAnchorIntermediateModule taIm = createTaImEntity(entity, ModuleType.TRUSTANCHOR);
     final Subordinate sub = createSubordinateEntity(taIm);
-    final Policy policy = new Policy();
-    policy.setPolicyId(UUID.randomUUID());
-    policy.setPolicy(Map.of("rule", "allow"));
-    sub.setPolicy(policy);
 
     final SubordinateDto dto = SubordinateToDtoMapper.toDto(sub);
 
-    assertThat(dto.getPolicyId()).isEqualTo(policy.getPolicyId());
-    assertThat(dto.getPolicy()).containsEntry("rule", "allow");
+    assertThat(dto.getMetadataPolicy()).isEqualTo(sub.getMetadataPolicy());
   }
 
   @Test
@@ -546,6 +542,7 @@ class EntityToDtoMapperTest {
     sub.setMetadataPolicyCrit("mpc1,mpc2");
     sub.setEcLocation("https://ec.example.com");
     sub.setEcLocationAutomatic(false);
+    sub.setMetadataPolicy(new TestDataOperations().createPolicy().getPolicy());
     return sub;
   }
 

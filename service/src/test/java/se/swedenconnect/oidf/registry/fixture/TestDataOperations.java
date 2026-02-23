@@ -21,9 +21,6 @@ import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyUse;
-import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
-import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyViolationException;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.api.EntitiesApi;
@@ -86,31 +83,19 @@ public class TestDataOperations {
   }
 
   public Policy createPolicy() {
-    try {
       final Policy policy = new Policy();
       policy.setName("test-policy:" + UUID.randomUUID());
-
-      final MetadataPolicy p = MetadataPolicy.parse("""
-           {
-            "openid_relying_party": {
-              "id_token_signed_response_alg": {
-                "default": "ES256",
-                "one_of": ["ES256", "ES384", "ES512"]
-              }
-            }
-          }
-          """);
-
-      policy.setPolicy(p.toJSONObject());
+    final Map<String, Object> p = Map.of("metadata_policy",
+        Map.of(
+            "openid_relying_party", Map.of(
+                "id_token_signed_response_alg", Map.of(
+                    "default", "ES256",
+                    "one_of", List.of("ES256", "ES384", "ES512")
+                )
+            )
+        ));
+    policy.setPolicy(p);
       return policy;
-    }
-    catch (ParseException e) {
-      throw new RuntimeException(e);
-    }
-    catch (PolicyViolationException e) {
-      throw new RuntimeException(e);
-    }
-
   }
 
   /**
@@ -203,6 +188,7 @@ public class TestDataOperations {
         .taImId(createdTrustAnchor.getTrustAnchorId())
         .entityIdentifier(secondFederationEntity.getEntityIdentifier())
         .policyId(createdPolicy.getPolicyId())
+        .metadataPolicy(policyInput.getPolicy())
         .jwks(genJWKS().toString())
         .build());
 

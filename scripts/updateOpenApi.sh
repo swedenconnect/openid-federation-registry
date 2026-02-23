@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright 2025 Sweden Connect
+# Copyright 2026 Sweden Connect
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 # Define the URL and output file
 URL="http://localhost:8010/v3/api-docs"
-OUTPUT_FILE="../service/src/test/resources/openapi.json"
+OUTPUT_FILE="../service/api/openapi.json"
 
 # Use curl to fetch the URL and save it to the file
 curl -s "$URL" -o "$OUTPUT_FILE"

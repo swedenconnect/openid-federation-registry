@@ -40,13 +40,6 @@ public final class SubordinateToDtoMapper {
     final SubordinateDto dto = new SubordinateDto();
     dto.setSubordinateId(subordinate.getSubordinateId());
     dto.setTaImId(subordinate.getTaIm().getTaImId());
-
-    if (subordinate.getPolicy() != null) {
-      dto.setPolicyId(subordinate.getPolicy().getPolicyId());
-      // Set policy as read-only field
-      dto.setPolicy(subordinate.getPolicy().getPolicy());
-    }
-
     dto.setJwks(subordinate.getJwks());
     dto.setEntityIdentifier(subordinate.getEntityidentifier());
 

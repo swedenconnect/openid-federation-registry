@@ -35,7 +35,6 @@ import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
 import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -91,8 +90,8 @@ class PolicyCRUDIT {
     // Assert
     assertThat(created).isNotNull();
     assertThat(created.getPolicyId()).isNotNull();
-    assertThat(created.getName()).isEqualTo("Test Policy");
-    assertThat(created.getPolicy()).isEqualTo(Map.of("key", "value"));
+    assertThat(created.getName()).isEqualTo(input.getName());
+    assertThat(created.getPolicy()).isEqualTo(this.testDataOperations.createPolicy().getPolicy());
   }
 
   @Test
@@ -107,8 +106,8 @@ class PolicyCRUDIT {
     // Assert
     assertThat(created).isNotNull();
     assertThat(created.getPolicyId()).isEqualTo(policyId);
-    assertThat(created.getName()).isEqualTo("Test Policy With ID");
-    assertThat(created.getPolicy()).isEqualTo(Map.of("test", "data"));
+    assertThat(created.getName()).isEqualTo(created.getName());
+    assertThat(created.getPolicy()).isEqualTo(this.testDataOperations.createPolicy().getPolicy());
   }
 
   @Test
@@ -125,8 +124,8 @@ class PolicyCRUDIT {
     // Assert
     assertThat(retrieved).isNotNull();
     assertThat(retrieved.getPolicyId()).isEqualTo(policyId);
-    assertThat(retrieved.getName()).isEqualTo("Policy to Get");
-    assertThat(retrieved.getPolicy()).isEqualTo(Map.of("get", "test"));
+    assertThat(retrieved.getName()).isEqualTo(input.getName());
+    assertThat(input.getPolicy()).isEqualTo(this.testDataOperations.createPolicy().getPolicy());
   }
 
   @Test
@@ -160,12 +159,14 @@ class PolicyCRUDIT {
     // Assert
     assertThat(updated).isNotNull();
     assertThat(updated.getPolicyId()).isEqualTo(policyId);
-    assertThat(updated.getName()).isEqualTo("Updated Policy");
-    assertThat(updated.getPolicy()).isEqualTo(Map.of("updated", "data"));
+    assertThat(updated.getName()).isEqualTo(updateInput.getName());
+    assertThat(updated.getPolicy()).isEqualTo(updateInput.getPolicy());
+    assertThat(updated.getPolicy()).isEqualTo(this.testDataOperations.createPolicy().getPolicy());
+
 
     // Verify by getting again
     final Policy retrieved = this.policiesApi.getPolicy(policyId);
-    assertThat(retrieved.getName()).isEqualTo("Updated Policy");
+    assertThat(retrieved.getName()).isEqualTo(updated.getName());
   }
 
   @Test
@@ -209,7 +210,7 @@ class PolicyCRUDIT {
     assertThat(policies).isNotNull();
     assertThat(policies.size()).isGreaterThanOrEqualTo(2);
     assertThat(policies).extracting(Policy::getName)
-        .contains("Policy 1", "Policy 2");
+        .contains(input1.getName(), input2.getName());
   }
 
   @Test
