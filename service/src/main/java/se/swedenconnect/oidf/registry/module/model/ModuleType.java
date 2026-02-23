@@ -20,8 +20,7 @@ package se.swedenconnect.oidf.registry.module.model;
  * Enum representing the type of a module in the system. Used to categorize modules into specific roles or
  * functionalities.
  *
- * INTERMEDIATE - Represents an intermediate module, typically used for subordinate purposes within a trust
- * hierarchy.
+ * INTERMEDIATE - Represents an intermediate module, typically used for subordinate purposes within a trust hierarchy.
  *
  * TRUSTANCHOR - Represents a trust anchor module, a root entity within a trust hierarchy.
  *

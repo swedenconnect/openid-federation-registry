@@ -37,9 +37,9 @@ public class PingHttpValidator implements PropertyValidatorPlugin {
   private static final Deque<Long> requestTimestamps = new ArrayDeque<>();
 
   @Override
-  public void validate(final String key, final String value) {
+  public ValidationStatus validate(final String key, final String value) {
     if (value == null || value.isBlank()) {
-      return;
+      return ValidationStatusImpl.noEval(key, this.name());
     }
 
     final URL url;
@@ -87,6 +87,7 @@ public class PingHttpValidator implements PropertyValidatorPlugin {
         connection.disconnect();
       }
     }
+    return ValidationStatusImpl.ok(key, this.name());
   }
 
   private synchronized void rateLimit() throws PropertyValidationFailException {

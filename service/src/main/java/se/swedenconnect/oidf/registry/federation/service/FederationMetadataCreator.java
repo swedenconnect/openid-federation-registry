@@ -18,13 +18,13 @@ package se.swedenconnect.oidf.registry.federation.service;
 
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
-import se.swedenconnect.oidf.registry.entity.mapper.EntityToDtoMapper;
 import se.swedenconnect.oidf.registry.entity.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
+import se.swedenconnect.oidf.registry.entity.mapper.EntityToDtoMapper;
+import se.swedenconnect.oidf.registry.entity.model.EntityType;
+import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.federation.model.EntityRecord;
 import se.swedenconnect.oidf.registry.federation.model.FederationMetadata;
-import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
-import se.swedenconnect.oidf.registry.entity.model.EntityType;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
 
@@ -72,9 +72,9 @@ public class FederationMetadataCreator {
     final EntityRecord entityData = new EntityRecord();
     final EntityType entityType = entityEntity.getEntityType();
 
-      if (entityType == EntityType.HOSTED_ENTITY) {
+    if (entityType == EntityType.HOSTED_ENTITY) {
 
-        final HostedEntityDto dto = EntityToDtoMapper.toDtoHosted(entityEntity);
+      final HostedEntityDto dto = EntityToDtoMapper.toDtoHosted(entityEntity);
         entityData.setEntityIdentifier(new EntityID(dto.getEntityIdentifier()));
         entityData.setMetadata(dto.getMetadata());
         entityData.setEcLocation(dto.getEffectiveEcLocation());
@@ -83,11 +83,11 @@ public class FederationMetadataCreator {
         this.authorityHint(entityEntity).map(List::of).ifPresent(entityData::setAuthorityHints);
         return entityData;
       }
-      if (entityType == EntityType.FEDERATION_ENTITY) {
+    if (entityType == EntityType.FEDERATION_ENTITY) {
         if (!entityEntity.hasModules()) {
           return null;
         }
-        final FederationEntityDto dto = EntityToDtoMapper.toFederationEntity(entityEntity, false);
+      final FederationEntityDto dto = EntityToDtoMapper.toFederationEntity(entityEntity, false);
         entityData.setEntityIdentifier(new EntityID(dto.getEntityIdentifier()));
         entityData.setCrit(dto.getCrit());
         entityData.setMetadata(Map.of("federation_entity", this.createFederationMetadata(entityEntity)));

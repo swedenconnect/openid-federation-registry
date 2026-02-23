@@ -41,9 +41,6 @@ public class SubordinateDto {
   @Schema(description = "TaIm ID that this subordinate belongs to")
   private UUID taImId;
 
-  @Schema(description = "Policy ID", example = "Optional policy reference")
-  private UUID policyId;
-
   @Schema(description = "JWKSet for Subordinate", example = "JSON Web Key Set as string")
   private String jwks;
 
@@ -55,10 +52,6 @@ public class SubordinateDto {
 
   @Schema(description = "List of metadata_policy_crit", example = "[\"operator1\", \"operator2\"]")
   private List<String> metadataPolicyCrit;
-
-  @Schema(description = "Policy", accessMode = Schema.AccessMode.READ_ONLY)
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private Map<String, Object> policy;
 
   @Schema(description = "ecLocation - location where the actual entity statement is placed. Expressed as a url. "
       + "Ex https://my.company.se/entitystatement")

@@ -30,7 +30,7 @@ import java.util.Map;
  * @author Per Fredrik Plars
  */
 @Converter
-public class MapConverter implements AttributeConverter<Map<String,Object>, String> {
+public class MapConverter implements AttributeConverter<Map<String, Object>, String> {
   final JsonMapper mapper;
 
   /**
@@ -44,21 +44,23 @@ public class MapConverter implements AttributeConverter<Map<String,Object>, Stri
 
   /**
    * Convert list to string
+   *
    * @param attribute List to be converted to string
    * @return String value of list
    */
   @Override
-  public String convertToDatabaseColumn(final Map<String,Object> attribute) {
+  public String convertToDatabaseColumn(final Map<String, Object> attribute) {
     return attribute == null ? null : this.writeMapToJsonPretty(attribute);
   }
 
   /**
    * Convert string to list
+   *
    * @param dbData string data from database
    * @return List
    */
   @Override
-  public Map<String,Object> convertToEntityAttribute(final String dbData) {
+  public Map<String, Object> convertToEntityAttribute(final String dbData) {
     return dbData == null || dbData.isEmpty()
         ? Map.of()
         : this.readMapFromJson(dbData);
@@ -71,7 +73,7 @@ public class MapConverter implements AttributeConverter<Map<String,Object>, Stri
    * @return the JSON string representation with pretty printing
    * @throws IllegalArgumentException if JSON serialization fails
    */
-  private  String writeMapToJsonPretty(final Map<String, Object> map) {
+  private String writeMapToJsonPretty(final Map<String, Object> map) {
     if (map == null) {
       return null;
     }
@@ -80,12 +82,11 @@ public class MapConverter implements AttributeConverter<Map<String,Object>, Stri
 
   }
 
-  private  Map<String, Object> readMapFromJson(final String jsonStr) {
+  private Map<String, Object> readMapFromJson(final String jsonStr) {
     if (jsonStr == null || jsonStr.isBlank()) {
       return Collections.emptyMap();
     }
-      return this.mapper.readValue(jsonStr, new TypeReference<Map<String, Object>>() {});
+    return this.mapper.readValue(jsonStr, new TypeReference<Map<String, Object>>() {});
   }
-
 
 }

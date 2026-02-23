@@ -17,7 +17,6 @@
 package se.swedenconnect.oidf.registry.module.mapper;
 
 import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
-import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
@@ -26,6 +25,7 @@ import se.swedenconnect.oidf.registry.module.model.ModuleType;
 import se.swedenconnect.oidf.registry.module.model.Resolver;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
+import se.swedenconnect.oidf.registry.organization.model.Organization;
 
 import java.util.UUID;
 

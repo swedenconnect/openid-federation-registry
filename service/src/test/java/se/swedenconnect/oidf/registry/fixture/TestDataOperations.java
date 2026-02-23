@@ -36,6 +36,7 @@ import se.swedenconnect.oidf.registry.api.model.Resolver;
 import se.swedenconnect.oidf.registry.api.model.Subordinate;
 import se.swedenconnect.oidf.registry.api.model.TrustAnchor;
 import se.swedenconnect.oidf.registry.api.model.TrustmarkIssuer;
+import se.swedenconnect.oidf.registry.entity.model.EntityType;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
@@ -46,8 +47,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
-import se.swedenconnect.oidf.registry.entity.model.EntityType;
+import java.util.UUID;
 
 /**
  * oidf-entity-registry
@@ -78,6 +78,26 @@ public class TestDataOperations {
     }
   }
 
+  public static void main(String argv[]) {
+    new TestDataOperations().createPolicy();
+  }
+
+  public Policy createPolicy() {
+      final Policy policy = new Policy();
+      policy.setName("test-policy:" + UUID.randomUUID());
+    final Map<String, Object> p = Map.of("metadata_policy",
+        Map.of(
+            "openid_relying_party", Map.of(
+                "id_token_signed_response_alg", Map.of(
+                    "default", "ES256",
+                    "one_of", List.of("ES256", "ES384", "ES512")
+                )
+            )
+        ));
+    policy.setPolicy(p);
+      return policy;
+  }
+
   /**
    * Test method that creates a complete test scenario: 1. Creates a policy 2. Creates a federation entity 3. Adds a
    * trustanchor module to the federation entity 4. Creates another federation entity with relying_party metadata 5.
@@ -104,10 +124,7 @@ public class TestDataOperations {
     }
 
     // Step 1: Create a policy
-    final Policy policyInput = Policy.builder()
-        .name("Test Policy")
-        .policy(Map.of("test", "policy", "version", 1))
-        .build();
+    final Policy policyInput = createPolicy();
     final Policy createdPolicy = policiesApi.createPolicy(policyInput);
     log.info("Created policy with ID: {}", createdPolicy.getPolicyId());
 
@@ -171,6 +188,7 @@ public class TestDataOperations {
         .taImId(createdTrustAnchor.getTrustAnchorId())
         .entityIdentifier(secondFederationEntity.getEntityIdentifier())
         .policyId(createdPolicy.getPolicyId())
+        .metadataPolicy(policyInput.getPolicy())
         .jwks(genJWKS().toString())
         .build());
 

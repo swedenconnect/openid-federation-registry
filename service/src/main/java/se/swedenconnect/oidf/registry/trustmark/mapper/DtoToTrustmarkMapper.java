@@ -16,11 +16,11 @@
 
 package se.swedenconnect.oidf.registry.trustmark.mapper;
 
+import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
 import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
 import se.swedenconnect.oidf.registry.trustmark.model.TrustMarkSubject;
-import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
 
 import java.util.UUID;
 

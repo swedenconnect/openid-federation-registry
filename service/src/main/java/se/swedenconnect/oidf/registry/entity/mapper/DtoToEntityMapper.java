@@ -24,7 +24,6 @@ import se.swedenconnect.oidf.registry.entity.model.EntityType;
 import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 

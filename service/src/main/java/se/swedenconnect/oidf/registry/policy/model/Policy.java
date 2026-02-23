@@ -67,6 +67,6 @@ public class Policy extends BaseEntity {
 
   @Column(name = "policy", nullable = false)
   @Convert(converter = MapConverter.class)
-  private Map<String,Object> policy;
+  private Map<String, Object> policy;
 
 }

@@ -69,8 +69,7 @@ public interface TaImRepository extends JpaRepository<TrustAnchorIntermediateMod
    *
    * @param orgNumber the organization number to filter by.
    * @param moduleType the type of module to filter by.
-   * @return a list of TrustAnchorIntermediateModule objects matching the specified organization number and module
-   *     type.
+   * @return a list of TrustAnchorIntermediateModule objects matching the specified organization number and module type.
    */
   @Query("SELECT m FROM TrustAnchorIntermediateModule m JOIN m.organization o "
       + "WHERE o.orgNumber = :orgNumber AND m.moduleType = :moduleType")

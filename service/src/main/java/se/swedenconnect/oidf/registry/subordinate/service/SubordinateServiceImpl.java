@@ -119,18 +119,6 @@ public class SubordinateServiceImpl implements SubordinateService {
 
     final Subordinate subordinateEntity = DtoToSubordinateMapper.toEntity(id, input, taIm);
 
-    if (input.getPolicyId() != null) {
-      this.policyRepository.findByOrgNumberAndPolicyId(
-              organizationRecord.orgNumber(), input.getPolicyId())
-          .ifPresentOrElse(subordinateEntity::setPolicy, () -> {
-            throw new RegistryServerException(
-                ErrorTypes.NOT_FOUND, "No policy found for id %s".formatted(input.getPolicyId()));
-          });
-    }
-    else {
-      subordinateEntity.setPolicy(null);
-    }
-
     // If automatic resolve is selected, the system try to find a hosted entity. If not an exception is thrown.
     if (Optional.ofNullable(input.getEcLocationAutomaticResolve()).orElse(false)) {
       this.entityRepository.findByOrgNumberAndEntityKeyTypeAndIssuer(taIm.getOrganization().getOrgNumber(),
@@ -159,17 +147,6 @@ public class SubordinateServiceImpl implements SubordinateService {
 
     DtoToSubordinateMapper.updateEntity(existing, input);
 
-    if (input.getPolicyId() != null) {
-      this.policyRepository.findByOrgNumberAndPolicyId(
-              organizationRecord.orgNumber(), input.getPolicyId())
-          .ifPresentOrElse(existing::setPolicy, () -> {
-            throw new RegistryServerException(
-                ErrorTypes.NOT_FOUND, "No policy found for id %s".formatted(input.getPolicyId()));
-          });
-    }
-    else {
-      existing.setPolicy(null);
-    }
     if (Optional.ofNullable(input.getEcLocationAutomaticResolve()).orElse(false)) {
       this.entityRepository
           .findByOrgNumberAndEntityKeyTypeAndIssuer(existing.getTaIm().getOrganization().getOrgNumber(),

@@ -102,9 +102,9 @@ class SubordinateCRUDIT {
   @DisplayName("Create subordinate with metadataPolicy stores the JSON field")
   void createSubordinateWithSubordinatePolicyStoresJson() {
     final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-policy-create");
-    final Map<String, Object> policy = Map.of(
+    final Map<String, Object> policy = Map.of("metadata_policy", Map.of(
         "openid_provider", Map.of(
-            "subject_types_supported", Map.of("value", List.of("pairwise"))));
+            "subject_types_supported", Map.of("value", List.of("pairwise")))));
 
     final Subordinate created = this.subordinatesApi.createSubordinate(new Subordinate()
         .taImId(trustAnchorId)
@@ -135,9 +135,9 @@ class SubordinateCRUDIT {
   @DisplayName("Get subordinate returns stored metadataPolicy")
   void getSubordinateReturnsSubordinatePolicy() {
     final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-policy-get");
-    final Map<String, Object> policy = Map.of(
+    final Map<String, Object> policy = Map.of("metadata_policy", Map.of(
         "federation_entity", Map.of(
-            "organization_name", Map.of("value", "Test Org")));
+            "organization_name", Map.of("value", "Test Org"))));
 
     final UUID subordinateId = UUID.randomUUID();
     this.subordinatesApi.createSubordinateWithId(subordinateId, new Subordinate()
@@ -155,12 +155,12 @@ class SubordinateCRUDIT {
   @DisplayName("Update subordinate sets a new metadataPolicy")
   void updateSubordinateSetsNewSubordinatePolicy() {
     final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-policy-update");
-    final Map<String, Object> initialPolicy = Map.of(
+    final Map<String, Object> initialPolicy = Map.of("metadata_policy", Map.of(
         "openid_provider", Map.of(
-            "subject_types_supported", Map.of("value", List.of("public"))));
-    final Map<String, Object> updatedPolicy = Map.of(
+            "subject_types_supported", Map.of("value", List.of("public")))));
+    final Map<String, Object> updatedPolicy = Map.of("metadata_policy", Map.of(
         "openid_provider", Map.of(
-            "subject_types_supported", Map.of("value", List.of("pairwise"))));
+            "subject_types_supported", Map.of("value", List.of("pairwise")))));
 
     final UUID subordinateId = UUID.randomUUID();
     this.subordinatesApi.createSubordinateWithId(subordinateId, new Subordinate()
@@ -182,9 +182,9 @@ class SubordinateCRUDIT {
   @DisplayName("Update subordinate clears metadataPolicy when set to null")
   void updateSubordinateClearsSubordinatePolicy() {
     final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-policy-clear");
-    final Map<String, Object> policy = Map.of(
+    final Map<String, Object> policy = Map.of("metadata_policy", Map.of(
         "openid_provider", Map.of(
-            "subject_types_supported", Map.of("value", List.of("public"))));
+            "subject_types_supported", Map.of("value", List.of("public")))));
 
     final UUID subordinateId = UUID.randomUUID();
     this.subordinatesApi.createSubordinateWithId(subordinateId, new Subordinate()
@@ -206,13 +206,15 @@ class SubordinateCRUDIT {
   @DisplayName("Delete subordinate removes it and subsequent get returns 404")
   void deleteSubordinateRemovesIt() {
     final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-policy-delete");
-
+    final Map<String, Object> policy = Map.of("metadata_policy", Map.of(
+        "openid_provider", Map.of(
+            "subject_types_supported", Map.of("value", List.of("public")))));
     final UUID subordinateId = UUID.randomUUID();
     this.subordinatesApi.createSubordinateWithId(subordinateId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/delete")
         .jwks(TestDataOperations.genJWKS().toString())
-        .metadataPolicy(Map.of("test", "value")));
+        .metadataPolicy(policy));
 
     assertThat(this.subordinatesApi.getSubordinate(subordinateId)).isNotNull();
 

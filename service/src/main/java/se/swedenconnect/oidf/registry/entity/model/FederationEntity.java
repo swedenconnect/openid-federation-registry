@@ -56,7 +56,7 @@ public class FederationEntity extends BaseEntity {
 
   @Column(name = "metadata", columnDefinition = "JSON")
   @Convert(converter = MapConverter.class)
-  private Map<String,Object> metadata;
+  private Map<String, Object> metadata;
 
   @Column(name = "jwks", columnDefinition = "TEXT")
   private String jwks;

@@ -14,8 +14,8 @@
  *  limitations under the License.
  */
 /**
- * Package for configuration classes.
+ * Package for DTO validation classes.
  *
- * @author David Goldring
+ * @author Per Fredrik Plars
  */
 package se.swedenconnect.oidf.registry.infrastructure.validation;

@@ -28,7 +28,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.context.request.WebRequest;
-import se.swedenconnect.oidf.registry.infrastructure.error.ErrorHandler;
 
 import java.lang.reflect.Method;
 import java.util.List;

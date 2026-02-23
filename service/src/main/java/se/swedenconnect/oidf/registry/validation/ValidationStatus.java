@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,37 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.infrastructure.validation;
+package se.swedenconnect.oidf.registry.validation;
+
+
 
 /**
- * Interface for custom validators
+ * Status class for validations
  *
  * @author Per Fredrik Plars
  */
-public interface PropertyValidatorPlugin extends PropertyValidator {
+public interface ValidationStatus {
+
   /**
-   * Name of validator
+   * Field name that the status is connected to
    *
-   * @return name of the validator
+   * @return String
    */
-  String name();
+  String getFieldName();
+
+  /**
+   * String that represents the rules used to validate.
+   *
+   * @return String in the format of min(34).max(111)
+   */
+  String getValidationRule();
+
+  /**
+   * A message that reflects the validation result
+   *
+   * @return ok if the validaton was ok.
+   */
+  String getValidationMessage();
+
+
 }

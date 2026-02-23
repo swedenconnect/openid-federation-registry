@@ -19,18 +19,12 @@ package se.swedenconnect.oidf.registry.entity.mapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import se.swedenconnect.oidf.registry.entity.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.entity.dto.FederationEntityWithModulesDto;
 import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.entity.model.EntityType;
 import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
-import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
-import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
-import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.module.mapper.ModuleToDtoMapper;
 import se.swedenconnect.oidf.registry.module.model.ModuleType;
-import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
-import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;

@@ -88,16 +88,16 @@ public class JwtTestUtils {
     try {
 
       final String scopes = Stream.of("http://registry.swedenconnect.se/policies/write",
-          "http://registry.swedenconnect.se/policies/read",
-          "http://registry.swedenconnect.se/modules/read",
-          "http://registry.swedenconnect.se/modules/write",
-          "http://registry.swedenconnect.se/entity/hosted/read",
-          "http://registry.swedenconnect.se/entity/hosted/write",
-          "http://registry.swedenconnect.se/trustmarksubjects/write",
-          "http://registry.swedenconnect.se/trustmarksubjects/read",
-          "http://registry.swedenconnect.se/trustmarks/read",
-          "http://registry.swedenconnect.se/trustmarks/write",
-          "http://registry.swedenconnect.se/subordinates/read",
+              "http://registry.swedenconnect.se/policies/read",
+              "http://registry.swedenconnect.se/modules/read",
+              "http://registry.swedenconnect.se/modules/write",
+              "http://registry.swedenconnect.se/entity/hosted/read",
+              "http://registry.swedenconnect.se/entity/hosted/write",
+              "http://registry.swedenconnect.se/trustmarksubjects/write",
+              "http://registry.swedenconnect.se/trustmarksubjects/read",
+              "http://registry.swedenconnect.se/trustmarks/read",
+              "http://registry.swedenconnect.se/trustmarks/write",
+              "http://registry.swedenconnect.se/subordinates/read",
               "http://registry.swedenconnect.se/subordinates/write")
           .reduce("", (s, s2) -> s + " " + s2);
 

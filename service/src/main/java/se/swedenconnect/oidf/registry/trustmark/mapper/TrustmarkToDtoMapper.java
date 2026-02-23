@@ -66,7 +66,6 @@ public final class TrustmarkToDtoMapper {
     dto.setRefUri(trustMark.getRefUri());
     dto.setDelegation(trustMark.getDelegation());
 
-
     Optional.ofNullable(trustMark.getTrustmarksubjects())
         .map(trustMarkSubjects ->
             trustMarkSubjects.stream().map(TrustmarkToDtoMapper::toDto)
