@@ -22,9 +22,7 @@ package se.swedenconnect.oidf.registry.infrastructure.audit;
  * @author Per Fredrik Plars
  */
 public enum RegistryAuditEventType {
-  OPTIONS_CREATED,
-  OPTIONS_UPDATE,
-  OPTIONS_DELETED,
+
   POLICY_CREATED,
   POLICY_UPDATED,
   POLICY_DELETED,

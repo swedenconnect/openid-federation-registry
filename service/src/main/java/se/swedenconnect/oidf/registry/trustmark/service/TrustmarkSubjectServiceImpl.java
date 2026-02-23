@@ -96,7 +96,9 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
 
     this.trustMarkSubjectRepository.save(entity);
     final TrustmarkSubjectDto dto = TrustmarkToDtoMapper.toDto(entity);
-    this.auditService.trustmarkSubjectCreated(id, trustmarkId,
+    this.auditService.trustmarkSubjectCreated(id,
+        trustMarkEntity.getTrustmarkIssuer().getEntity().getOrganization().getInstance().getInstanceId(),
+        trustmarkId,
         trustMarkEntity.getTrustmarkIssuer().getEntity().getOrganization().getOrganizationId(), null, dto);
     return dto;
   }
@@ -123,7 +125,9 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
 
     this.trustMarkSubjectRepository.save(existing);
     final TrustmarkSubjectDto newDto = TrustmarkToDtoMapper.toDto(existing);
-    this.auditService.trustmarkSubjectUpdated(id, trustmarkId,
+    this.auditService.trustmarkSubjectUpdated(id,
+        existing.getTrustMark().getTrustmarkIssuer().getEntity().getOrganization().getInstance().getInstanceId(),
+        trustmarkId,
         existing.getTrustMark().getTrustmarkIssuer().getEntity().getOrganization().getOrganizationId(), oldDto,
         newDto);
     return newDto;
@@ -156,7 +160,9 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
     final TrustmarkSubjectDto dto = TrustmarkToDtoMapper.toDto(entity);
     final UUID trustmarkId = entity.getTrustMark().getTrustmarkId();
     this.trustMarkSubjectRepository.delete(entity);
-    this.auditService.trustmarkSubjectDeleted(id, trustmarkId,
+    this.auditService.trustmarkSubjectDeleted(id,
+        entity.getTrustMark().getTrustmarkIssuer().getEntity().getOrganization().getInstance().getInstanceId(),
+        trustmarkId,
         entity.getTrustMark().getTrustmarkIssuer().getEntity().getOrganization().getOrganizationId(), dto);
   }
 }

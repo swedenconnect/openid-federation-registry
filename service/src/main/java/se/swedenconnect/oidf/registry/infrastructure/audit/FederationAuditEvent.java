@@ -18,13 +18,11 @@ package se.swedenconnect.oidf.registry.infrastructure.audit;
 import lombok.Builder;
 import lombok.Getter;
 import org.springframework.boot.actuate.audit.AuditEvent;
-import se.swedenconnect.oidf.registry.entity.FkKeyType;
 
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Represents an audit event specific to federation-related actions, capturing details about the event type, issuer,
@@ -39,15 +37,8 @@ import java.util.UUID;
 public class FederationAuditEvent implements Serializable {
   final RegistryAuditEventType event;
   final String organizationId;
-
-  final String issuer;
-  final String subject;
-  final String trustMarkId;
-
-  final FkKeyType fkKeyType;
+  final String instanceId;
   final String extId;
-  final UUID optionId;
-
   final String oldData;
   final String newData;
 
@@ -62,15 +53,12 @@ public class FederationAuditEvent implements Serializable {
    */
   public AuditEvent toAuditEvent(final String principal) {
     final Map<String, Object> data = new HashMap<>();
-    Optional.ofNullable(this.issuer).ifPresent(v -> data.put("issuer", v));
-    Optional.ofNullable(this.subject).ifPresent(v -> data.put("subject", v));
-    Optional.ofNullable(this.trustMarkId).ifPresent(v -> data.put("trustMarkId", v));
     Optional.ofNullable(this.oldData).filter(old -> !old.equals(this.newData))
         .ifPresent(v -> data.put("oldData", v));
     Optional.ofNullable(this.newData).ifPresent(v -> data.put("newData", v));
     Optional.ofNullable(this.extId).ifPresent(v -> data.put("extId", v));
-    Optional.ofNullable(this.fkKeyType).ifPresent(v -> data.put("optionType", v));
     Optional.ofNullable(this.organizationId).ifPresent(v -> data.put("organizationId", v));
+    Optional.ofNullable(this.instanceId).ifPresent(v -> data.put("instanceId", v));
     return new AuditEvent(principal, this.event.name(), data);
   }
 }

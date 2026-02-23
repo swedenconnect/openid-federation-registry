@@ -131,7 +131,8 @@ public class SubordinateServiceImpl implements SubordinateService {
 
     this.subordinateRepository.save(subordinateEntity);
     final SubordinateDto dto = toDto(subordinateEntity);
-    this.auditService.subordinateCreated(id, taIm.getOrganization().getOrganizationId(), null, dto);
+    this.auditService.subordinateCreated(id, taIm.getOrganization().getInstance().getInstanceId(),
+        taIm.getOrganization().getOrganizationId(), null, dto);
     return dto;
   }
 
@@ -158,7 +159,8 @@ public class SubordinateServiceImpl implements SubordinateService {
     }
     this.subordinateRepository.save(existing);
     final SubordinateDto newDto = toDto(existing);
-    this.auditService.subordinateUpdated(id, existing.getTaIm().getOrganization().getOrganizationId(), oldDto, newDto);
+    this.auditService.subordinateUpdated(id, existing.getTaIm().getOrganization().getInstance().getInstanceId(),
+        existing.getTaIm().getOrganization().getOrganizationId(), oldDto, newDto);
     return newDto;
   }
 
@@ -168,6 +170,7 @@ public class SubordinateServiceImpl implements SubordinateService {
     final Subordinate entity = this.findSubordinateOrThrow(organizationRecord, id);
     final SubordinateDto dto = toDto(entity);
     this.subordinateRepository.delete(entity);
-    this.auditService.subordinateDeleted(id, entity.getTaIm().getOrganization().getOrganizationId(), dto);
+    this.auditService.subordinateDeleted(id, entity.getTaIm().getOrganization().getInstance().getInstanceId(),
+        entity.getTaIm().getOrganization().getOrganizationId(), dto);
   }
 }

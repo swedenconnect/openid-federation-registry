@@ -147,7 +147,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
 
     this.moduleRepository.save(module);
     final TrustAnchorDto dto = ModuleToDtoMapper.toDto(module);
-    this.auditService.trustAnchorCreated(id, org.getOrganizationId(), null, dto);
+    this.auditService.trustAnchorCreated(id, org.getInstance().getInstanceId(), org.getOrganizationId(), null, dto);
     return dto;
   }
 
@@ -171,7 +171,8 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     DtoToModuleMapper.updateIntermediate(module, input);
     this.moduleRepository.save(module);
     final TrustAnchorDto newDto = ModuleToDtoMapper.toDto(module);
-    this.auditService.trustAnchorUpdated(id, module.getOrganization().getOrganizationId(), oldDto, newDto);
+    this.auditService.trustAnchorUpdated(id, module.getOrganization().getInstance().getInstanceId(),
+        module.getOrganization().getOrganizationId(), oldDto, newDto);
     return newDto;
   }
 
@@ -202,7 +203,8 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     final TrustAnchorDto dto = ModuleToDtoMapper.toDto(module);
     module.getEntity().setTrustanchorIntermediate(null);
     this.moduleRepository.delete(module);
-    this.auditService.trustAnchorDeleted(id, module.getOrganization().getOrganizationId(), dto);
+    this.auditService.trustAnchorDeleted(id, module.getOrganization().getInstance().getInstanceId(),
+        module.getOrganization().getOrganizationId(), dto);
   }
 
   // ---------------------------------------------------------------------------
@@ -237,7 +239,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
 
     this.moduleRepository.save(module);
     final IntermediateDto dto = ModuleToDtoMapper.toDtoIntermediate(module);
-    this.auditService.intermediateCreated(id, org.getOrganizationId(), null, dto);
+    this.auditService.intermediateCreated(id, org.getInstance().getInstanceId(), org.getOrganizationId(), null, dto);
     return dto;
   }
 
@@ -262,7 +264,8 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     DtoToModuleMapper.updateIntermediate(module, input);
     this.moduleRepository.save(module);
     final IntermediateDto newDto = ModuleToDtoMapper.toDtoIntermediate(module);
-    this.auditService.intermediateUpdated(id, module.getOrganization().getOrganizationId(), oldDto, newDto);
+    this.auditService.intermediateUpdated(id, module.getOrganization().getInstance().getInstanceId(),
+        module.getOrganization().getOrganizationId(), oldDto, newDto);
     return newDto;
   }
 
@@ -294,7 +297,8 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
         this.findModuleOrThrow(organizationRecord, id, ModuleType.INTERMEDIATE);
     final IntermediateDto dto = ModuleToDtoMapper.toDtoIntermediate(module);
     this.moduleRepository.delete(module);
-    this.auditService.intermediateDeleted(id, module.getOrganization().getOrganizationId(), dto);
+    this.auditService.intermediateDeleted(id, module.getOrganization().getInstance().getInstanceId(),
+        module.getOrganization().getOrganizationId(), dto);
   }
 
   // ---------------------------------------------------------------------------
@@ -329,7 +333,8 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
 
     this.resolverRepository.save(entity);
     final ResolverDto dto = ModuleToDtoMapper.toDto(entity);
-    this.auditService.resolverCreated(id, orgId, null, dto);
+    this.auditService.resolverCreated(id, entityEntity.getOrganization().getInstance().getInstanceId(), orgId,
+        null, dto);
     return dto;
   }
 
@@ -353,7 +358,8 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     DtoToModuleMapper.updateEntity(existing, input);
     this.resolverRepository.save(existing);
     final ResolverDto newDto = ModuleToDtoMapper.toDto(existing);
-    this.auditService.resolverUpdated(id, existing.getEntity().getOrganization().getOrganizationId(), oldDto, newDto);
+    this.auditService.resolverUpdated(id, existing.getEntity().getOrganization().getInstance().getInstanceId(),
+        existing.getEntity().getOrganization().getOrganizationId(), oldDto, newDto);
     return newDto;
   }
 
@@ -385,7 +391,8 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     final ResolverDto dto = ModuleToDtoMapper.toDto(entity);
     entity.getEntity().setResolver(null);
     this.resolverRepository.delete(entity);
-    this.auditService.resolverDeleted(id, orgId, dto);
+    this.auditService.resolverDeleted(id, entity.getEntity().getOrganization().getInstance().getInstanceId(),
+        orgId, dto);
   }
 
   // ---------------------------------------------------------------------------
@@ -417,7 +424,8 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     final TrustMark entity = DtoToTrustmarkMapper.toEntity(id, input, issuerModule);
     this.trustMarkRepository.save(entity);
     final TrustmarkDto dto = TrustmarkToDtoMapper.toDto(entity);
-    this.auditService.trustmarkCreated(id, issuerModule.getEntity().getOrganization().getOrganizationId(), null, dto);
+    this.auditService.trustmarkCreated(id, issuerModule.getEntity().getOrganization().getInstance().getInstanceId(),
+        issuerModule.getEntity().getOrganization().getOrganizationId(), null, dto);
     return dto;
   }
 
@@ -445,8 +453,9 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
 
     this.trustMarkRepository.save(existing);
     final TrustmarkDto newDto = TrustmarkToDtoMapper.toDto(existing);
-    this.auditService.trustmarkUpdated(id, existing.getTrustmarkIssuer().getEntity().getOrganization()
-        .getOrganizationId(), oldDto, newDto);
+    this.auditService.trustmarkUpdated(id,
+        existing.getTrustmarkIssuer().getEntity().getOrganization().getInstance().getInstanceId(),
+        existing.getTrustmarkIssuer().getEntity().getOrganization().getOrganizationId(), oldDto, newDto);
     return newDto;
   }
 
@@ -483,8 +492,9 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
             ErrorTypes.NOT_FOUND, "No trust mark found for id %s".formatted(id)));
     final TrustmarkDto dto = TrustmarkToDtoMapper.toDto(entity);
     this.trustMarkRepository.delete(entity);
-    this.auditService.trustmarkDeleted(id, entity.getTrustmarkIssuer().getEntity().getOrganization()
-        .getOrganizationId(), dto);
+    this.auditService.trustmarkDeleted(id,
+        entity.getTrustmarkIssuer().getEntity().getOrganization().getInstance().getInstanceId(),
+        entity.getTrustmarkIssuer().getEntity().getOrganization().getOrganizationId(), dto);
   }
 
   // ---------------------------------------------------------------------------
@@ -512,7 +522,8 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
 
     this.trustmarkIssuerRepository.save(entity);
     final TrustmarkIssuerDto dto = ModuleToDtoMapper.toDto(entity);
-    this.auditService.trustmarkIssuerCreated(id, entityEntity.getOrganization().getOrganizationId(), null, dto);
+    this.auditService.trustmarkIssuerCreated(id, entityEntity.getOrganization().getInstance().getInstanceId(),
+        entityEntity.getOrganization().getOrganizationId(), null, dto);
     return dto;
   }
 
@@ -540,8 +551,8 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
 
     this.trustmarkIssuerRepository.save(existing);
     final TrustmarkIssuerDto newDto = ModuleToDtoMapper.toDto(existing);
-    this.auditService.trustmarkIssuerUpdated(id, existing.getEntity().getOrganization().getOrganizationId(), oldDto,
-        newDto);
+    this.auditService.trustmarkIssuerUpdated(id, existing.getEntity().getOrganization().getInstance().getInstanceId(),
+        existing.getEntity().getOrganization().getOrganizationId(), oldDto, newDto);
     return newDto;
   }
 
@@ -579,7 +590,8 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     final TrustmarkIssuerDto dto = ModuleToDtoMapper.toDto(entity);
     entity.getEntity().setTrustmarkIssuer(null);
     this.trustmarkIssuerRepository.delete(entity);
-    this.auditService.trustmarkIssuerDeleted(id, entity.getEntity().getOrganization().getOrganizationId(), dto);
+    this.auditService.trustmarkIssuerDeleted(id, entity.getEntity().getOrganization().getInstance().getInstanceId(),
+        entity.getEntity().getOrganization().getOrganizationId(), dto);
   }
 
   // ---------------------------------------------------------------------------

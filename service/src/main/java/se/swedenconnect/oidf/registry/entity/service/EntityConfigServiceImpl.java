@@ -107,7 +107,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     final FederationEntity entity = DtoToEntityMapper.toEntity(id, input, EntityType.FEDERATION_ENTITY, org);
     this.entityRepository.save(entity);
     final FederationEntityDto dto = EntityToDtoMapper.toFederationEntity(entity, false);
-    this.auditService.federationEntityCreated(id, org.getOrganizationId(),
+    this.auditService.federationEntityCreated(id, org.getInstance().getInstanceId(), org.getOrganizationId(),
         dto.getEntityIdentifier(), dto.getEntityIdentifier(), null, dto);
     return dto;
   }
@@ -133,9 +133,9 @@ public class EntityConfigServiceImpl implements EntityConfigService {
 
     this.entityRepository.save(existing);
     final FederationEntityDto newDto = EntityToDtoMapper.toFederationEntity(existing, false);
-    this.auditService.federationEntityUpdated(id, existing.getOrganization().getOrganizationId(),
-        newDto.getEntityIdentifier(),
-        newDto.getEntityIdentifier(), oldDto, newDto);
+    this.auditService.federationEntityUpdated(id, existing.getOrganization().getInstance().getInstanceId(),
+        existing.getOrganization().getOrganizationId(),
+        newDto.getEntityIdentifier(), newDto.getEntityIdentifier(), oldDto, newDto);
     return newDto;
   }
 
@@ -170,9 +170,9 @@ public class EntityConfigServiceImpl implements EntityConfigService {
         organizationRecord, id, EntityType.FEDERATION_ENTITY);
     final FederationEntityDto dto = EntityToDtoMapper.toFederationEntity(entity, false);
     this.entityRepository.delete(entity);
-    this.auditService.federationEntityDeleted(id, entity.getOrganization().getOrganizationId(),
-        entity.getIssuer(),
-        dto.getEntityIdentifier(), dto);
+    this.auditService.federationEntityDeleted(id, entity.getOrganization().getInstance().getInstanceId(),
+        entity.getOrganization().getOrganizationId(),
+        entity.getIssuer(), dto.getEntityIdentifier(), dto);
   }
 
   // ---------------------------------------------------------------------------
@@ -199,7 +199,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     entity.setSubject(organizationRecord.entityPrefix());
     this.entityRepository.save(entity);
     final HostedEntityDto dto = EntityToDtoMapper.toDtoHosted(entity);
-    this.auditService.hostedEntityCreated(id, org.getOrganizationId(), null, dto);
+    this.auditService.hostedEntityCreated(id, org.getInstance().getInstanceId(), org.getOrganizationId(), null, dto);
     return dto;
   }
 
@@ -224,7 +224,8 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     existing.setSubject(organizationRecord.entityPrefix());
     this.entityRepository.save(existing);
     final HostedEntityDto newDto = EntityToDtoMapper.toDtoHosted(existing);
-    this.auditService.hostedEntityUpdated(id, existing.getOrganization().getOrganizationId(), oldDto, newDto);
+    this.auditService.hostedEntityUpdated(id, existing.getOrganization().getInstance().getInstanceId(),
+        existing.getOrganization().getOrganizationId(), oldDto, newDto);
     return newDto;
   }
 
@@ -286,7 +287,8 @@ public class EntityConfigServiceImpl implements EntityConfigService {
         organizationRecord, id, EntityType.HOSTED_ENTITY);
     final HostedEntityDto dto = EntityToDtoMapper.toDtoHosted(entity);
     this.entityRepository.delete(entity);
-    this.auditService.hostedEntityDeleted(id, entity.getOrganization().getOrganizationId(), dto);
+    this.auditService.hostedEntityDeleted(id, entity.getOrganization().getInstance().getInstanceId(),
+        entity.getOrganization().getOrganizationId(), dto);
   }
 
   /**

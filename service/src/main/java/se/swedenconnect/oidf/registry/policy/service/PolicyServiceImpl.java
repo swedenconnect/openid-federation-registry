@@ -123,7 +123,7 @@ public class PolicyServiceImpl implements PolicyService {
     final Policy entity = DtoToPolicyMapper.toEntity(id, input, org);
     this.policyRepository.save(entity);
     final PolicyDto dto = toDto(entity);
-    this.auditService.policyCreated(id, org.getOrganizationId(), null, dto);
+    this.auditService.policyCreated(id, org.getInstance().getInstanceId(), org.getOrganizationId(), null, dto);
     return dto;
   }
 
@@ -147,7 +147,8 @@ public class PolicyServiceImpl implements PolicyService {
 
     this.policyRepository.save(existing);
     final PolicyDto newDto = toDto(existing);
-    this.auditService.policyUpdated(id, existing.getOrganizationId(), oldDto, newDto);
+    this.auditService.policyUpdated(id, existing.getOrganization().getInstance().getInstanceId(),
+        existing.getOrganizationId(), oldDto, newDto);
     return newDto;
   }
 
@@ -163,7 +164,8 @@ public class PolicyServiceImpl implements PolicyService {
     final Policy entity = this.findPolicyOrThrow(organizationRecord, id);
     final PolicyDto dto = toDto(entity);
     this.policyRepository.delete(entity);
-    this.auditService.policyDeleted(id, entity.getOrganizationId(), dto);
+    this.auditService.policyDeleted(id, entity.getOrganization().getInstance().getInstanceId(),
+        entity.getOrganizationId(), dto);
   }
 
   /**
