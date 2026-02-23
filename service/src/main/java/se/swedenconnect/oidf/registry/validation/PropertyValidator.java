@@ -16,8 +16,10 @@
 
 package se.swedenconnect.oidf.registry.validation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,7 +31,7 @@ import java.util.Optional;
  * @author Per Fredrik Plars
  */
 public interface PropertyValidator {
-  ObjectMapper mapper = new ObjectMapper();
+  JsonMapper mapper = new JsonMapper();
 
   /**
    * Validates a property based on the provided key and value. The method applies predefined validation rules and throws
@@ -37,9 +39,10 @@ public interface PropertyValidator {
    *
    * @param key the property key to be validated
    * @param value the property value to be validated
+   * @return ValidationStatus Validation result
    * @throws PropertyValidationFailException if the validation for the property fails
    */
-  void validate(String key, String value) throws PropertyValidationFailException;
+  ValidationStatus validate(String key, String value) throws PropertyValidationFailException;
 
   /**
    * Evaluates the validity of a property using its key and value pair by invoking the validation logic. If the
@@ -68,28 +71,32 @@ public interface PropertyValidator {
    *
    * @param key the property key to be validated
    * @param value the property value to be validated, which can be a single object or a list of objects
+   * @return the ValidationStatus result
    * @throws PropertyValidationFailException if the validation for any property fails
    */
-  default void ifFailThrow(String key, Object value) {
-      if (value instanceof final List<?> values) {
-        for (int i = 0; i < values.size(); i++) {
-          this.validate(key + "[" + i + "]", values.get(i) == null ? null : values.get(i).toString());
-        }
-        if (values.isEmpty()) {
-          this.validate(key, null);
-        }
+  default ValidationStatus ifFailThrow(String key, Object value) {
+    if (value instanceof final List<?> values) {
+      final List<ValidationStatus> statuses = new ArrayList<>();
+      for (int i = 0; i < values.size(); i++) {
+        final ValidationStatus status =
+            this.validate(key + "[" + i + "]", values.get(i) == null ? null : values.get(i).toString());
+        statuses.add(status);
       }
-      else if (value instanceof Map<?, ?> values) {
-        try {
-          this.validate(key, mapper.writeValueAsString(values));
-        }
-        catch (final com.fasterxml.jackson.core.JsonProcessingException e) {
-          throw new PropertyValidationFailException(key, values.toString(),
-              "Invalid JSON format: " + e.getMessage());
-        }
+
+      if (values.isEmpty()) {
+        return this.validate(key, null);
       }
-      else {
-        this.validate(key, value == null ? null : value.toString());
+      return new ValidationStatusImpl(statuses);
+    }
+    else if (value instanceof Map<?, ?> values) {
+      try {
+        return this.validate(key, mapper.writeValueAsString(values));
       }
+      catch (final JacksonException e) {
+        throw new PropertyValidationFailException(key, values.toString(),
+            "Invalid JSON format: " + e.getMessage());
+      }
+    }
+    return this.validate(key, value == null ? null : value.toString());
   }
 }

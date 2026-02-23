@@ -16,24 +16,24 @@
 
 package se.swedenconnect.oidf.registry.validation;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
+import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyViolationException;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.text.ParseException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -48,44 +48,17 @@ import java.util.regex.PatternSyntaxException;
 @Slf4j
 public class PropertyValidators {
 
-  public static final ObjectMapper mapper = new ObjectMapper();
-  private final Map<String, PropertyValidator> validatorCache = new HashMap<>();
+  public static final JsonMapper mapper = new JsonMapper();
   private final Map<String, PropertyValidatorPlugin> validatorRegistry = new HashMap<>();
 
   /**
-   * Resolves and constructs a composite PropertyValidator based on the provided configuration string and a variable
-   * value resolver. The method parses the given validator configuration string, initializing and combining multiple
-   * individual validators into a single aggregated validator function.
+   * Creates a new instance of ValidationBuilder initialized with the provided VariableValueResolver.
    *
-   * @param validatorNameSetting the configuration string representing the validators, where individual validators
-   *     are separated by a pipe ('|') character. If null or blank, a no-op validator is returned.
-   * @param variabelResolver the resolver used for resolving dynamic variable values in the configuration string.
-   * @return a PropertyValidator that applies all resolved validation rules in sequence. If the configuration string is
-   *     null or blank, a no-op validator is returned.
+   * @param variabelResolver the resolver to be used for resolving variables in validation strings
+   * @return a new ValidationBuilder instance configured with the specified resolver
    */
-  public PropertyValidator resolveValidator(final String validatorNameSetting,
-      final VariableValueResolver variabelResolver) {
-    log.debug("Resolving validators: {}", validatorNameSetting);
-
-    if (validatorNameSetting == null || validatorNameSetting.isBlank()) {
-      log.debug("No validators found");
-      return (String key, String value) -> {};
-    }
-    if (this.validatorCache.containsKey(validatorNameSetting)) {
-      return this.validatorCache.get(validatorNameSetting);
-    }
-
-    final List<PropertyValidator> validatorsList = Arrays.stream(validatorNameSetting.split("\\| "))
-        .map(s -> this.propertyValidatorCreator(variabelResolver, s))
-        .filter(Objects::nonNull)
-        .toList();
-
-    final PropertyValidator validator = (String key, String value) -> validatorsList
-        .forEach(propertyValidator -> propertyValidator.validate(key, value));
-
-    this.validatorCache.put(validatorNameSetting, validator);
-
-    return validator;
+  public ValidationBuilder builder(final VariableValueResolver variabelResolver) {
+    return new ValidationBuilder(variabelResolver);
   }
 
   /**
@@ -97,177 +70,222 @@ public class PropertyValidators {
     this.validatorRegistry.put(validatorPlugin.name().toUpperCase(), validatorPlugin);
   }
 
-  /**
-   * Creates a new instance of ValidationStringBuilder initialized with the provided VariabelValueResolver.
-   *
-   * @param variabelResolver the resolver to be used for resolving variables in validation strings
-   * @return a new ValidationStringBuilder instance configured with the specified resolver
-   */
-  public ValidationStringBuilder builder(final VariableValueResolver variabelResolver) {
-    return new ValidationStringBuilder(variabelResolver);
+  // ---------------------------------------------------------------------------
+  // No-arg validators — each directly implements PropertyValidator.validate()
+  // and can be used as a method reference (this::validateXxx)
+  // ---------------------------------------------------------------------------
+
+  private ValidationStatus validateDuration(final String key, final String value) {
+    if (value == null || value.isBlank()) {
+      return ValidationStatusImpl.noEval(key, "duration");
+    }
+    try {
+      java.time.Duration.parse(value);
+    }
+    catch (final Exception ex) {
+      throw new PropertyValidationFailException(key, value, "Invalid duration format. "
+          + "Expected ISO-8601 duration (e.g., PT1H30M). Error: " + ex.getMessage());
+    }
+    return ValidationStatusImpl.ok(key, "duration");
   }
 
-  /**
-   * Determines if the specified validator is supported by checking if the provided validator name matches a value in
-   * the {@code ValidationType} enumeration.
-   *
-   * @param validatorNameSetting the name of the validator to check
-   * @return {@code true} if the validator is supported, {@code false} otherwise
-   */
-  public boolean isValidatorSupported(final String validatorNameSetting) {
-    if (validatorNameSetting == null || validatorNameSetting.isBlank()) {
-      return false;
+  private ValidationStatus validateDate(final String key, final String value) {
+    if (value == null || value.isBlank()) {
+      return ValidationStatusImpl.noEval(key, "date");
     }
-    final String[] split = validatorNameSetting.trim().split(":");
-    final String name = split[0].toUpperCase();
     try {
+      java.time.LocalDate.parse(value);
+    }
+    catch (final Exception e) {
+      throw new PropertyValidationFailException(key, value, "Invalid date format. Use YYYY-MM-DD");
+    }
+    return ValidationStatusImpl.ok(key, "date(YYYY-MM-DD)");
+  }
 
-      ValidationType.valueOf(name);
+  private ValidationStatus validateUrl(final String key, final String value) {
+    if (value == null || value.isBlank()) {
+      return ValidationStatusImpl.noEval(key, "url");
+    }
+    try {
+      new URI(value).toURL();
+    }
+    catch (final Exception e) {
+      throw new PropertyValidationFailException(key, value, "Invalid URL format");
+    }
+    return ValidationStatusImpl.ok(key, "url");
+  }
+
+  private ValidationStatus validateEntityID(final String key, final String value) {
+    if (value == null || value.isBlank()) {
+      return ValidationStatusImpl.noEval(key, "entityid");
+    }
+    try {
+      final URL url = URI.create(value).toURL();
+      this.throwIf(() -> url.getRef() != null && !url.getRef().isBlank(),
+          key, "No fragments is allowed in entityID.", url.toString());
+      this.throwIf(() -> url.getQuery() != null && !url.getQuery().isBlank(),
+          key, "No query parameters allowed in entityID", value);
+      this.throwIf(() -> !url.getProtocol().equalsIgnoreCase("https"),
+          key, "EntityId has to use https protocol", value);
+    }
+    catch (final IllegalArgumentException | MalformedURLException e) {
+      throw new PropertyValidationFailException(key, value, "Invalid entityid format: " + e.getMessage());
+    }
+    return ValidationStatusImpl.ok(key, "entityid");
+  }
+
+  private ValidationStatus validateUUID(final String key, final String value) {
+    if (value == null || value.isBlank()) {
+      return ValidationStatusImpl.noEval(key, "uuid");
+    }
+    try {
+      UUID.fromString(value);
     }
     catch (final IllegalArgumentException e) {
-      return this.validatorRegistry.containsKey(name);
+      throw new PropertyValidationFailException(key, value, "Invalid UUID format");
     }
-    return true;
+    return ValidationStatusImpl.ok(key, "uuid");
+  }
+
+  private ValidationStatus validateJson(final String key, final String value) {
+    if (value == null || value.isBlank()) {
+      return ValidationStatusImpl.noEval(key, "json");
+    }
+    try {
+      mapper.readValue(value, new TypeReference<Map<String, Object>>() {});
+    }
+    catch (final Exception e) {
+      throw new PropertyValidationFailException(key, value, "Value is not a valid JSON: " + e.getMessage());
+    }
+    return ValidationStatusImpl.ok(key, "json");
+  }
+
+  private ValidationStatus validateJWK(final String key, final String value) {
+    if (value == null || value.isBlank()) {
+      return ValidationStatusImpl.noEval(key, "jwk");
+    }
+    try {
+      JWK.parse(value);
+    }
+    catch (final ParseException e) {
+      throw new PropertyValidationFailException(key, value, "Value is not a valid JWK: " + e.getMessage());
+    }
+    return ValidationStatusImpl.ok(key, "jwk");
+  }
+
+  private ValidationStatus validateJWT(final String key, final String value) {
+    if (value == null || value.isBlank()) {
+      return ValidationStatusImpl.noEval(key, "jwt");
+    }
+    try {
+      final SignedJWT jwt = SignedJWT.parse(value);
+      this.throwIf(() -> jwt == null, key, "Unable to parse JWT value");
+      this.throwIf(() -> jwt.getHeader().toJSONObject() == null, key, "Unable to parse JWT header");
+      this.throwIf(() -> jwt.getPayload().toJSONObject() == null, key, "Unable to parse JWT payload");
+      this.throwIf(() -> jwt.getSignature().decode() == null, key, "Unable to parse JWT signature");
+    }
+    catch (final ParseException e) {
+      throw new PropertyValidationFailException(key, value, "Value is not a valid JWT: " + e.getMessage());
+    }
+    return ValidationStatusImpl.ok(key, "jwt");
   }
 
   /**
-   * Creates and returns a PropertyValidator based on the provided validator name and configuration. The
-   * validatorNameSetting parameter specifies the type of validator and its configuration, typically in the format
-   * "validatorName:configuration".
-   *
-   * @param validatorNameSetting the type and configuration of the desired validator
-   * @return the created PropertyValidator instance for the specified type and configuration
-   * @throws IllegalArgumentException if the validator type specified in validatorNameSetting is unknown
+   * Validates that the value is a valid OIDF (OpenID Federation) policy JSON structure using MetadataPolicy.parse()
+   * from Nimbus OIDC SDK.
    */
-  protected PropertyValidator propertyValidatorCreator(final VariableValueResolver variabelResolver,
-      final String validatorNameSetting) {
-    log.debug("Creating validator: {}", validatorNameSetting);
-    final String[] split = validatorNameSetting.trim().split(":", 2);
-    final String name = split[0];
-    final String conf = variabelResolver.insertTemplateValues(split.length > 1 ? split[1] : "");
-
-    final ValidationType validationType;
-    try {
-      validationType = ValidationType.valueOf(name.toUpperCase());
+  private ValidationStatus validateOidfPolicy(final String key, final String value) {
+    if (value == null || value.isBlank()) {
+      return ValidationStatusImpl.noEval(key, "oidfpolicy");
     }
-    catch (final IllegalArgumentException e) {
-      if (this.validatorRegistry.containsKey(name)) {
-        return this.validatorRegistry.get(name);
-      }
-      throw new IllegalArgumentException("Unknown validator: " + name, e);
+    final JsonNode node = mapper.readTree(value);
+    if (node.isEmpty()) {
+      return ValidationStatusImpl.noEval(key, "oidfpolicy");
     }
 
-    return switch (validationType) {
-
-      case UUID -> this.isUUID();
-      case LENGTH -> this.hasLength(conf);
-      case JSON -> this.isJson();
-      case JWKS -> this.jwksValidator(conf);
-      case JWK -> this.isJWK();
-      case ENDS_WITH -> this.validateEndsWith(conf);
-      case STARTS_WITH -> this.validateStartsWith(conf);
-      case CONTAINS -> this.validateContains(conf);
-      case DATE -> this.validateDate();
-      case BETWEEN -> this.validateBetween(conf);
-      case URL -> this.validateUrl();
-      case ENTITYID -> this.validateEntityID();
-      case JWT -> this.isJWT();
-      case MATCHES -> this.validateMatches(conf);
-      case DURATION -> this.validateDuration();
-      case OIDFPOLICY -> this.validateOidfPolicy();
-
-      case REQUIRED -> (key, value) ->
-          this.throwIf(() -> value == null || value.isBlank(),
-              key, "Field is required");
-
-      case EMAIL -> (key, value) ->
-          this.throwIf(() -> value != null && !value.isBlank() &&
-                  !value.matches("^[A-Za-z0-9+_.-]+@(.+)$"),
-              key, "Invalid email format", value);
-
-      case ALPHA -> (key, value) ->
-          this.throwIf(() -> value != null && !value.isBlank() &&
-                  !value.matches("^[A-Za-z]+$"),
-              key, "Must contain only letters", value);
-
-      case ALPHANUMERIC -> (key, value) ->
-          this.throwIf(() -> value != null && !value.isBlank() &&
-                  !value.matches("^[A-Za-z0-9]+$"),
-              key, "Must contain only letters and numbers", value);
-
-      case NUMBER -> (key, value) ->
-          this.throwIf(() -> value != null && !value.isBlank() &&
-                  !value.matches("^-?\\d*\\.?\\d+$"),
-              key, "Must be a number", value);
-
-      case MIN -> (String key, String value) -> this.throwIf(() -> value != null &&
-              !value.isBlank() && Double.parseDouble(value) < Double.parseDouble(conf),
-          key, "Value has to be greater than %s".formatted(conf), value);
-
-      case MAX -> (String key, String value) -> this.throwIf(() -> value != null &&
-              !value.isBlank() && Double.parseDouble(value) > Double.parseDouble(conf),
-          key, "Value has to be less than %s".formatted(conf), value);
-
-      default -> null;
-    };
-  }
-
-  private PropertyValidator validateDuration() {
-    return (key, value) -> {
-      if (value == null || value.isBlank()) {
-        return;
-      }
+    final String rootNodeName = "metadata_policy";
+    final JsonNode metadataPolicyNode = node.get(rootNodeName);
+    if (metadataPolicyNode == null) {
+      throw new PropertyValidationFailException(key, value,
+          "Expected a start node of type: " + rootNodeName);
+    }
+    metadataPolicyNode.propertyStream().forEach(s -> {
       try {
-        java.time.Duration.parse(value); // Parses ISO-8601 duration format
+        MetadataPolicy.parse(s.getValue().toPrettyString());
       }
-      catch (final Exception ex) {
-        throw new PropertyValidationFailException(key, value, "Invalid duration format. "
-            + "Expected ISO-8601 duration (e.g., PT1H30M). Error: " + ex.getMessage());
+      catch (com.nimbusds.oauth2.sdk.ParseException | PolicyViolationException e) {
+        throw new PropertyValidationFailException(
+            key + "." + rootNodeName + "." + s.getKey() + "."
+                + s.getValue().propertyNames().stream().findFirst().orElse("<novalue>"),
+            value,
+            "Invalid OIDF metadata policy structure: " + e.getMessage());
       }
-    };
+    });
+    return ValidationStatusImpl.ok(key, "oidfpolicy");
   }
+
+  private ValidationStatus validateRequired(final String key, final String value) {
+    this.throwIf(() -> value == null || value.isBlank(), key, "Field is required");
+    return ValidationStatusImpl.ok(key, "required");
+  }
+
+  private ValidationStatus validateEmail(final String key, final String value) {
+    this.throwIf(() -> value != null && !value.isBlank() && !value.matches("^[A-Za-z0-9+_.-]+@(.+)$"),
+        key, "Invalid email format", value);
+    return ValidationStatusImpl.ok(key, "email");
+  }
+
+  private ValidationStatus validateAlpha(final String key, final String value) {
+    this.throwIf(() -> value != null && !value.isBlank() && !value.matches("^[A-Za-z]+$"),
+        key, "Must contain only letters", value);
+    return ValidationStatusImpl.ok(key, "alpha");
+  }
+
+  private ValidationStatus validateAlphanumeric(final String key, final String value) {
+    this.throwIf(() -> value != null && !value.isBlank() && !value.matches("^[A-Za-z0-9]+$"),
+        key, "Must contain only letters and numbers", value);
+    return ValidationStatusImpl.ok(key, "alphanumeric");
+  }
+
+  private ValidationStatus validateNumber(final String key, final String value) {
+    this.throwIf(() -> value != null && !value.isBlank() && !value.matches("^-?\\d*\\.?\\d+$"),
+        key, "Must be a number", value);
+    return ValidationStatusImpl.ok(key, "number");
+  }
+
+  // ---------------------------------------------------------------------------
+  // Parameterized validators — factory methods that close over configuration
+  // ---------------------------------------------------------------------------
 
   private PropertyValidator validateEndsWith(final String suffix) {
     if (suffix == null || suffix.isBlank()) {
       throw new IllegalArgumentException("ends_with validator requires a suffix");
     }
-    return (key, value) -> this.throwIf(
-        () -> !value.isBlank() && !value.endsWith(suffix),
-        key, "Must end with: " + suffix
-    );
+    return (key, value) -> {
+      this.throwIf(() -> !value.isBlank() && !value.endsWith(suffix), key, "Must end with: " + suffix);
+      return ValidationStatusImpl.ok(key, "endsWith(%s)".formatted(suffix));
+    };
   }
 
   private PropertyValidator validateStartsWith(final String prefix) {
     if (prefix == null || prefix.isBlank()) {
       throw new IllegalArgumentException("starts_with validator requires a prefix");
     }
-    return (key, value) -> this.throwIf(
-        () -> !value.isBlank() && !value.startsWith(prefix),
-        key, "Must start with: " + prefix, value
-    );
+    return (key, value) -> {
+      this.throwIf(() -> !value.isBlank() && !value.startsWith(prefix), key,
+          "Must start with: " + prefix, value);
+      return ValidationStatusImpl.ok(key, "startsWith(%s)".formatted(prefix));
+    };
   }
 
   private PropertyValidator validateContains(final String substring) {
     if (substring == null || substring.isBlank()) {
       throw new IllegalArgumentException("contains validator requires a substring");
     }
-    return (key, value) -> this.throwIf(
-        () -> !value.isBlank() && !value.contains(substring),
-        key, "Must contain: " + substring, value
-    );
-  }
-
-  private PropertyValidator validateDate() {
     return (key, value) -> {
-      if (value == null || value.isBlank()) {
-        return;
-      }
-      try {
-        java.time.LocalDate.parse(value);
-      }
-      catch (final Exception e) {
-        throw new PropertyValidationFailException(key, value, "Invalid date format. Use YYYY-MM-DD");
-      }
+      this.throwIf(() -> !value.isBlank() && !value.contains(substring), key, "Must contain: " + substring, value);
+      return ValidationStatusImpl.ok(key, "contains(%s)".formatted(substring));
+
     };
   }
 
@@ -284,71 +302,19 @@ public class PropertyValidators {
       final double max = Double.parseDouble(parts[1]);
       return (key, value) -> {
         if (value == null || value.isBlank()) {
-          return;
+          return ValidationStatusImpl.noEval(key, "between");
         }
         final double number = Double.parseDouble(value);
-        this.throwIf(
-            () -> number < min || number > max,
-            key, "Value must be between %s and %s".formatted(min, max)
-        );
+        this.throwIf(() -> number < min || number > max,
+            key, "Value must be between %s and %s".formatted(min, max));
+        return ValidationStatusImpl.ok(key, "between(%s,%s)".formatted(min,max));
+
+
       };
     }
     catch (final NumberFormatException e) {
       throw new IllegalArgumentException("between validator requires numeric values");
     }
-  }
-
-  private PropertyValidator validateUrl() {
-    return (key, value) -> {
-      if (value == null || value.isBlank()) {
-        return;
-      }
-      try {
-        new URI(value).toURL();
-      }
-      catch (final Exception e) {
-        throw new PropertyValidationFailException(key, value, "Invalid URL format");
-      }
-    };
-  }
-
-  private PropertyValidator validateEntityID() {
-    return (key, value) -> {
-      if (value == null || value.isBlank()) {
-        return;
-      }
-
-      try {
-        final URL url = URI.create(value).toURL();
-
-        this.throwIf(() -> url.getRef() != null && !url.getRef().isBlank(),
-            key, "No fragments is allowed in entityID.", url.toString());
-
-        this.throwIf(() -> url.getQuery() != null && !url.getQuery().isBlank(),
-            key, "No query parameters allowed in entityID", value);
-
-        this.throwIf(() -> !url.getProtocol().equalsIgnoreCase("https"),
-            key, "EntityId has to use https protocol", value);
-      }
-      catch (final IllegalArgumentException | MalformedURLException e) {
-        throw new PropertyValidationFailException(key, value, "Invalid entityid format: " + e.getMessage());
-      }
-
-    };
-  }
-
-  private PropertyValidator isUUID() {
-    return (key, value) -> {
-      if (value == null || value.isBlank()) {
-        return;
-      }
-      try {
-        UUID.fromString(value);
-      }
-      catch (final IllegalArgumentException e) {
-        throw new PropertyValidationFailException(key, value, "Invalid UUID format");
-      }
-    };
   }
 
   private PropertyValidator validateMatches(final String regex) {
@@ -357,10 +323,11 @@ public class PropertyValidators {
     }
     try {
       final Pattern pattern = Pattern.compile(regex);
-      return (key, value) -> this.throwIf(
-          () -> !value.isBlank() && !pattern.matcher(value).matches(),
-          key, "Value does not match required pattern: " + regex, value
-      );
+      return (key, value) -> {
+        this.throwIf(() -> !value.isBlank() && !pattern.matcher(value).matches(),
+            key, "Value does not match required pattern: " + regex, value);
+        return ValidationStatusImpl.ok(key, "matches(%s)".formatted(regex));
+      };
     }
     catch (final PatternSyntaxException e) {
       throw new IllegalArgumentException("Invalid regex pattern: " + e.getMessage());
@@ -371,12 +338,10 @@ public class PropertyValidators {
     final int[] limits = this.validateLengthConfiguration(conf);
     final int minLength = limits[0];
     final int maxLength = limits[1];
-
     return (key, value) -> {
       if (value == null || value.isBlank()) {
-        return;
+        return ValidationStatusImpl.noEval(key, "length");
       }
-
       final int length = value.length();
       if (length < minLength) {
         throw new PropertyValidationFailException(key,
@@ -386,148 +351,33 @@ public class PropertyValidators {
         throw new PropertyValidationFailException(key,
             "Value cannot be longer than %d characters".formatted(maxLength), value);
       }
+      return ValidationStatusImpl.ok(key, "length(%s)".formatted(conf));
+
     };
   }
 
-  private int[] validateLengthConfiguration(final String conf) {
-    if (conf == null || conf.isBlank()) {
-      throw new IllegalArgumentException("Length validator requires configuration in format 'min,max'");
-    }
-
-    final String[] limits = conf.split(",");
-    if (limits.length != 2) {
-      throw new IllegalArgumentException(
-          "Invalid length validator configuration. Expected format 'min,max', got: '%s'"
-              .formatted(conf));
-    }
-
-    try {
-      final int minLength = Integer.parseInt(limits[0]);
-      final int maxLength = Integer.parseInt(limits[1]);
-
-      if (minLength < 0 || maxLength < 0) {
-        throw new IllegalArgumentException(
-            "Length limits cannot be negative. Got min: %d, max: %d"
-                .formatted(minLength, maxLength));
-      }
-
-      if (minLength > maxLength) {
-        throw new IllegalArgumentException(
-            "Minimum length cannot be greater than maximum length. Got min: %d, max: %d"
-                .formatted(minLength, maxLength));
-      }
-
-      return new int[] { minLength, maxLength };
-    }
-    catch (final NumberFormatException e) {
-      throw new IllegalArgumentException(
-          "Invalid length validator configuration. Both values must be integers, got: '%s'"
-              .formatted(conf));
-    }
-  }
-
-  private PropertyValidator isJson() {
-    return (key, value) -> {
-      if (value == null || value.isBlank()) {
-        return;
-      }
-      try {
-        mapper.readValue(value, new TypeReference<Map<String, Object>>() {});
-      }
-      catch (final Exception e) {
-        throw new PropertyValidationFailException(key, value, "Value is not a valid JSON: " + e.getMessage());
-      }
-    };
-  }
-
-  private PropertyValidator isJWK() {
-    return (key, value) -> {
-      if (value == null || value.isBlank()) {
-        return;
-      }
-      try {
-        JWK.parse(value);
-      }
-      catch (final ParseException e) {
-        throw new PropertyValidationFailException(key, value, "Value is not a valid JWK: " + e.getMessage());
-      }
-    };
-  }
-
-  private PropertyValidator isJWT() {
-    return (key, value) -> {
-      if (value == null || value.isBlank()) {
-        return;
-      }
-      try {
-        final SignedJWT jwt = SignedJWT.parse(value);
-        this.throwIf(() -> jwt == null, key, "Unable to parse JWT value");
-        this.throwIf(() -> jwt.getHeader().toJSONObject() == null, key, "Unable to parse JWT header");
-        this.throwIf(() -> jwt.getPayload().toJSONObject() == null, key, "Unable to parse JWT payload");
-        this.throwIf(() -> jwt.getSignature().decode() == null, key, "Unable to parse JWT signature");
-      }
-      catch (final ParseException e) {
-        throw new PropertyValidationFailException(key, value, "Value is not a valid JWT: " + e.getMessage());
-      }
-    };
-  }
-
-  /**
-   * Validates that the value is a valid OIDF (OpenID Federation) policy JSON structure using MetadataPolicy.parse()
-   * from Nimbus OIDC SDK.
-   *
-   * @return a PropertyValidator that validates OIDF policy JSON structure
-   */
-  private PropertyValidator validateOidfPolicy() {
-    return (key, value) -> {
-      if (value == null || value.isBlank()) {
-        return;
-      }
-      try {
-        // Use MetadataPolicy.parse() to validate the OIDF policy structure
-        MetadataPolicy.parse(value);
-      }
-      catch (final com.nimbusds.oauth2.sdk.ParseException e) {
-        throw new PropertyValidationFailException(key, value,
-            "Invalid OIDF policy structure: " + e.getMessage());
-      }
-      catch (final Exception e) {
-        throw new PropertyValidationFailException(key, value,
-            "Failed to parse OIDF policy: " + e.getMessage());
-      }
-    };
-  }
-
-  private PropertyValidator jwksValidator(final String conf) {
-
+  private PropertyValidator validateJwks(final String conf) {
     final boolean isPublicCheck = "public".equalsIgnoreCase(conf) || conf.isBlank();
     final boolean hasKidCheck = "kid".equalsIgnoreCase(conf) || conf.isBlank();
     final boolean hasKeysCheck = "req".equalsIgnoreCase(conf) || conf.isBlank();
-
     return (key, value) -> {
+      if (value == null || value.isBlank()) {
+        return ValidationStatusImpl.noEval(key, "jwks");
+      }
       try {
-        if (value == null || value.isBlank()) {
-          return;
-        }
         final JsonNode node = mapper.readTree(value);
         final JsonNode keys = node.get("keys");
-
-        if (hasKeysCheck && (keys == null || !keys.elements().hasNext())) {
+        if (hasKeysCheck && (keys == null || !keys.iterator().hasNext())) {
           throw new PropertyValidationFailException(key, value, "keys element is expected");
         }
-
         if (!keys.isArray()) {
           throw new PropertyValidationFailException(key, value, "keys element is expected to be an array");
         }
-
         final Map<String, Object> kidDuplicateCheck = new HashMap<>();
-
-        keys.elements().forEachRemaining(keyNode -> {
-
+        keys.iterator().forEachRemaining(keyNode -> {
           if (hasKidCheck && !keyNode.hasNonNull("kid")) {
             throw new PropertyValidationFailException(key, value, "No kid defined in key element. This is required.");
           }
-
           if (!isPublicCheck) {
             return;
           }
@@ -535,25 +385,73 @@ public class PropertyValidators {
           if (kidDuplicateCheck.put(kid, "true") != null) {
             throw new PropertyValidationFailException(key, kid, "Kid is duplicated.");
           }
-
           try {
             final JWK jwk = JWK.parse(keyNode.toString());
             if (jwk.isPrivate()) {
               throw new PropertyValidationFailException(key, value, "Keys are expected to be public. But is private. ");
             }
-
           }
           catch (final ParseException e) {
             throw new PropertyValidationFailException(key, value, "Unable to parse key element. " + e.getMessage());
           }
-
         });
       }
-      catch (final JsonProcessingException e) {
+      catch (final JacksonException e) {
         throw new PropertyValidationFailException(key, value, "Value is not a valid JSON. " + e.getMessage());
       }
-
+      return ValidationStatusImpl.ok(key, "jwks(%s)".formatted(conf));
     };
+  }
+
+  private PropertyValidator validateMin(final String conf) {
+    return (key, value) -> {
+      this.throwIf(() -> value != null && !value.isBlank() && Double.parseDouble(value) < Double.parseDouble(conf),
+          key, "Value has to be greater than %s".formatted(conf), value);
+      return ValidationStatusImpl.ok(key, "min(%s)".formatted(conf));
+    };
+  }
+
+  private PropertyValidator validateMax(final String conf) {
+    return (key, value) -> {
+      this.throwIf(() -> value != null && !value.isBlank() && Double.parseDouble(value) > Double.parseDouble(conf),
+          key, "Value has to be less than %s".formatted(conf), value);
+      return ValidationStatusImpl.ok(key, "max(%s)".formatted(conf));
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+
+  private int[] validateLengthConfiguration(final String conf) {
+    if (conf == null || conf.isBlank()) {
+      throw new IllegalArgumentException("Length validator requires configuration in format 'min,max'");
+    }
+    final String[] limits = conf.split(",");
+    if (limits.length != 2) {
+      throw new IllegalArgumentException(
+          "Invalid length validator configuration. Expected format 'min,max', got: '%s'"
+              .formatted(conf));
+    }
+    try {
+      final int minLength = Integer.parseInt(limits[0]);
+      final int maxLength = Integer.parseInt(limits[1]);
+      if (minLength < 0 || maxLength < 0) {
+        throw new IllegalArgumentException(
+            "Length limits cannot be negative. Got min: %d, max: %d".formatted(minLength, maxLength));
+      }
+      if (minLength > maxLength) {
+        throw new IllegalArgumentException(
+            "Minimum length cannot be greater than maximum length. Got min: %d, max: %d"
+                .formatted(minLength, maxLength));
+      }
+      return new int[] { minLength, maxLength };
+    }
+    catch (final NumberFormatException e) {
+      throw new IllegalArgumentException(
+          "Invalid length validator configuration. Both values must be integers, got: '%s'"
+              .formatted(conf));
+    }
   }
 
   private void throwIf(final Supplier<Boolean> predicate, final String keyName, final String failMessage) {
@@ -569,320 +467,301 @@ public class PropertyValidators {
     }
   }
 
-  /**
-   * This enumeration defines various types of validation rules that can be applied to data properties. Each constant
-   * represents a specific validation method or criteria used to ensure the integrity and correctness of data values.
-   */
-  public enum ValidationType {
-    UUID,
-    LENGTH,
-    JSON,
-    JWKS,
-    JWK,
-    ENDS_WITH,
-    STARTS_WITH,
-    CONTAINS,
-    DATE,
-    BETWEEN,
-    URL,
-    ENTITYID,
-    JWT,
-    MATCHES,
-    DURATION,
-    REQUIRED,
-    EMAIL,
-    ALPHA,
-    ALPHANUMERIC,
-    NUMBER,
-    MIN,
-    MAX,
-    OIDFPOLICY
-  }
+  // ---------------------------------------------------------------------------
+  // Builder
+  // ---------------------------------------------------------------------------
 
   /**
-   * A builder class for constructing validation rules used in property validation logic. This class enables method
-   * chaining to define various constraints and rules, which will be combined into a final validation rule string.
+   * A builder class for constructing a composite {@link PropertyValidator} by chaining validation rules. Each method
+   * adds a validator directly to an internal list; {@link #build()} composes them without any string round-trip.
    */
-  public class ValidationStringBuilder {
+  public class ValidationBuilder {
 
     final VariableValueResolver variabelResolver;
-    private final StringBuilder builder;
+    private final List<PropertyValidator> validators = new ArrayList<>();
 
-    // Private constructor to enforce the builder pattern
-    private ValidationStringBuilder(final VariableValueResolver variabelResolver) {
-      this.builder = new StringBuilder();
+    private ValidationBuilder(final VariableValueResolver variabelResolver) {
       this.variabelResolver = variabelResolver;
     }
 
+    private void addValidator(final PropertyValidator validator) {
+      this.validators.add(validator);
+    }
+
+
     /**
-     * Static method to initialize the builder.
+     * Adds a UUID validation rule.
      *
-     * @return a new instance of ValidationStringBuilder
+     * @return this builder
      */
-    public ValidationStringBuilder uuid() {
-      this.builder.append("UUID| ");
+    public ValidationBuilder uuid() {
+      this.addValidator(PropertyValidators.this::validateUUID);
       return this;
     }
 
     /**
-     * Adds a length validation rule with the specified minimum and maximum lengths to the builder.
+     * Adds a length validation rule with the specified minimum and maximum lengths.
      *
-     * @param min the minimum allowable length for validation
-     * @param max the maximum allowable length for validation
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @param min the minimum allowable length
+     * @param max the maximum allowable length
+     * @return this builder
      */
-    public ValidationStringBuilder length(final int min, final int max) {
-      this.builder.append("LENGTH:").append(min).append(",").append(max).append("| ");
+    public ValidationBuilder length(final int min, final int max) {
+      this.addValidator(PropertyValidators.this.hasLength(min + "," + max));
       return this;
     }
 
     /**
-     * Creates a validator
+     * Adds a JSON validation rule.
      *
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @return this builder
      */
-    public ValidationStringBuilder json() {
-      this.builder.append("JSON| ");
+    public ValidationBuilder json() {
+      this.addValidator(PropertyValidators.this::validateJson);
       return this;
     }
 
     /**
-     * Creates a validator
+     * Adds a JWKS (JSON Web Key Set) validation rule.
      *
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @return this builder
      */
-    public ValidationStringBuilder jwks() {
-      this.builder.append("JWKS| ");
+    public ValidationBuilder jwks() {
+      this.addValidator(PropertyValidators.this.validateJwks(""));
       return this;
     }
 
     /**
-     * Creates a validator
+     * Adds a JWK (JSON Web Key) validation rule.
      *
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @return this builder
      */
-    public ValidationStringBuilder jwk() {
-      this.builder.append("JWK| ");
+    public ValidationBuilder jwk() {
+      this.addValidator(PropertyValidators.this::validateJWK);
       return this;
     }
 
     /**
-     * Adds an "ends with" validation rule to the builder using the specified suffix. This rule ensures that the value
-     * being validated must end with the given suffix.
+     * Adds an "ends with" validation rule using the specified suffix.
      *
-     * @param suffix the suffix that the value must end with for validation
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @param suffix the required suffix
+     * @return this builder
      */
-    public ValidationStringBuilder endsWith(final String suffix) {
-      this.builder.append("ENDS_WITH:").append(suffix).append("| ");
+    public ValidationBuilder endsWith(final String suffix) {
+      this.addValidator(PropertyValidators.this.validateEndsWith(this.variabelResolver.insertTemplateValues(suffix)));
       return this;
     }
 
     /**
-     * Adds a "starts with" validation rule to the builder using the specified prefix. This rule ensures that the value
-     * being validated must start with the given prefix.
+     * Adds a "starts with" validation rule using the specified prefix.
      *
-     * @param prefix the prefix that the value must start with for validation
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @param prefix the required prefix
+     * @return this builder
      */
-    public ValidationStringBuilder startsWith(final String prefix) {
-      this.builder.append("STARTS_WITH:").append(prefix).append("| ");
+    public ValidationBuilder startsWith(final String prefix) {
+      this.addValidator(PropertyValidators.this.validateStartsWith(this.variabelResolver.insertTemplateValues(prefix)));
       return this;
     }
 
     /**
-     * Adds a "contains" validation rule to the builder using the specified substring. This rule ensures that the value
-     * being validated must contain the given substring.
+     * Adds a "contains" validation rule using the specified substring.
      *
-     * @param substring the substring that must be present in the value for validation
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @param substring the required substring
+     * @return this builder
      */
-    public ValidationStringBuilder contains(final String substring) {
-      this.builder.append("CONTAINS:").append(substring).append("| ");
+    public ValidationBuilder contains(final String substring) {
+      this.addValidator(PropertyValidators.this.validateContains(
+          this.variabelResolver.insertTemplateValues(substring)));
       return this;
     }
 
     /**
-     * Creates a validator
+     * Adds a date validation rule.
      *
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @return this builder
      */
-    public ValidationStringBuilder date() {
-      this.builder.append("DATE| ");
+    public ValidationBuilder date() {
+      this.addValidator(PropertyValidators.this::validateDate);
       return this;
     }
 
     /**
-     * Adds a "between" validation rule to the builder using the specified minimum and maximum values. This rule ensures
-     * that the value being validated falls within the specified range, inclusive.
+     * Adds a "between" validation rule enforcing an inclusive numeric range.
      *
-     * @param min the minimum allowable value for the validation
-     * @param max the maximum allowable value for the validation
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @param min the minimum allowable value
+     * @param max the maximum allowable value
+     * @return this builder
      */
-    public ValidationStringBuilder between(final int min, final int max) {
-      this.builder.append("BETWEEN:").append(min).append(",").append(max).append("| ");
+    public ValidationBuilder between(final int min, final int max) {
+      this.addValidator(PropertyValidators.this.validateBetween(min + "," + max));
       return this;
     }
 
     /**
-     * Creates a validator
+     * Adds a URL validation rule.
      *
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @return this builder
      */
-    public ValidationStringBuilder url() {
-      this.builder.append("URL| ");
+    public ValidationBuilder url() {
+      this.addValidator(PropertyValidators.this::validateUrl);
       return this;
     }
 
     /**
-     * Creates a validator
+     * Adds an entity identifier (entity ID) validation rule.
      *
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @return this builder
      */
-    public ValidationStringBuilder entityid() {
-      this.builder.append("ENTITYID| ");
+    public ValidationBuilder entityid() {
+      this.addValidator(PropertyValidators.this::validateEntityID);
       return this;
     }
 
     /**
-     * Creates a validator
+     * Adds a JWT validation rule.
      *
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @return this builder
      */
-    public ValidationStringBuilder jwt() {
-      this.builder.append("JWT| ");
+    public ValidationBuilder jwt() {
+      this.addValidator(PropertyValidators.this::validateJWT);
       return this;
     }
 
     /**
-     * Adds a "matches" validation rule to the builder using the specified regular expression. This rule ensures that
-     * the value being validated must match the given regex pattern.
+     * Adds a regex match validation rule.
      *
-     * @param regex the regular expression that the value must match for validation
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @param regex the pattern the value must match
+     * @return this builder
      */
-    public ValidationStringBuilder matches(final String regex) {
-      this.builder.append("MATCHES:").append(regex).append("| ");
+    public ValidationBuilder matches(final String regex) {
+      this.addValidator(PropertyValidators.this.validateMatches(this.variabelResolver.insertTemplateValues(regex)));
       return this;
     }
 
     /**
-     * Creates a validator
+     * Adds a duration validation rule.
      *
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @return this builder
      */
-    public ValidationStringBuilder duration() {
-      this.builder.append("DURATION| ");
+    public ValidationBuilder duration() {
+      this.addValidator(PropertyValidators.this::validateDuration);
       return this;
     }
 
     /**
-     * Creates a validator
+     * Adds a required (non-null, non-blank) validation rule.
      *
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @return this builder
      */
-    public ValidationStringBuilder required() {
-      this.builder.append("REQUIRED| ");
+    public ValidationBuilder required() {
+      this.addValidator(PropertyValidators.this::validateRequired);
       return this;
     }
 
     /**
-     * Creates a validator
+     * Adds an email address validation rule.
      *
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @return this builder
      */
-    public ValidationStringBuilder email() {
-      this.builder.append("EMAIL| ");
+    public ValidationBuilder email() {
+      this.addValidator(PropertyValidators.this::validateEmail);
       return this;
     }
 
     /**
-     * Creates a validator
+     * Adds an alphabetic characters only validation rule.
      *
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @return this builder
      */
-    public ValidationStringBuilder alpha() {
-      this.builder.append("ALPHA| ");
+    public ValidationBuilder alpha() {
+      this.addValidator(PropertyValidators.this::validateAlpha);
       return this;
     }
 
     /**
-     * Creates a validator
+     * Adds an alphanumeric characters only validation rule.
      *
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @return this builder
      */
-    public ValidationStringBuilder alphanumeric() {
-      this.builder.append("ALPHANUMERIC| ");
+    public ValidationBuilder alphanumeric() {
+      this.addValidator(PropertyValidators.this::validateAlphanumeric);
       return this;
     }
 
     /**
-     * Creates a validator
+     * Adds a numeric value validation rule.
      *
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @return this builder
      */
-    public ValidationStringBuilder number() {
-      this.builder.append("NUMBER| ");
+    public ValidationBuilder number() {
+      this.addValidator(PropertyValidators.this::validateNumber);
       return this;
     }
 
     /**
-     * Adds a minimum value validation rule to the builder.
+     * Adds a minimum value validation rule.
      *
-     * @param min the minimum allowable value for validation
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @param min the minimum allowable value
+     * @return this builder
      */
-    public ValidationStringBuilder min(final int min) {
-      this.builder.append("MIN:").append(min).append("| ");
+    public ValidationBuilder min(final int min) {
+      this.addValidator(PropertyValidators.this.validateMin(String.valueOf(min)));
       return this;
     }
 
     /**
-     * Adds a maximum value validation rule to the builder.
+     * Adds a maximum value validation rule.
      *
-     * @param max the maximum allowable value for validation
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @param max the maximum allowable value
+     * @return this builder
      */
-    public ValidationStringBuilder max(final int max) {
-      this.builder.append("MAX:").append(max).append("| ");
+    public ValidationBuilder max(final int max) {
+      this.addValidator(PropertyValidators.this.validateMax(String.valueOf(max)));
       return this;
     }
 
     /**
-     * Creates a validator
+     * Adds a ping validation rule resolved from the plugin registry at validation time.
      *
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @return this builder
      */
-    public ValidationStringBuilder ping() {
-      this.builder.append("PING:").append("| ");
+    public ValidationBuilder ping() {
+      this.addValidator((key, value) -> {
+        final PropertyValidator pv = PropertyValidators.this.validatorRegistry.get("PING");
+        if (pv != null) {
+          return pv.validate(key, value);
+        }
+        return ValidationStatusImpl.noEval(key, "ping");
+      });
       return this;
     }
 
     /**
-     * Adds an OIDF (OpenID Federation) policy validation rule to the builder.
-     * This validates that the value is a valid OIDF policy JSON structure (a non-empty JSON object).
+     * Adds an OIDF (OpenID Federation) policy validation rule.
      *
-     * @return the current instance of {@code ValidationStringBuilder} for method chaining
+     * @return this builder
      */
-    public ValidationStringBuilder oidfPolicy() {
-      this.builder.append("OIDFPOLICY| ");
+    public ValidationBuilder oidfPolicy() {
+      this.addValidator(PropertyValidators.this::validateOidfPolicy);
       return this;
     }
 
     /**
-     * Builds the final validation string and trims any trailing separator.
+     * Composes all accumulated validators into a single {@link PropertyValidator}. The returned validator collects
+     * {@link ValidationStatus} results from each rule and aggregates their statuses.
      *
-     * @return the constructed validation string
+     * @return a composite validator that runs each added rule in order
      */
     public PropertyValidator build() {
-      // Remove the trailing pipe character if it exists
-      if (!this.builder.isEmpty() && this.builder.charAt(this.builder.length() - 1) == '|') {
-        this.builder.setLength(this.builder.length() - 2);
-      }
-      final String builderResult = this.builder.toString();
-      this.builder.setLength(0);
-      return PropertyValidators.this.resolveValidator(builderResult, this.variabelResolver);
+      final List<PropertyValidator> snapshot = List.copyOf(this.validators);
+      this.validators.clear();
+      return (key, value) -> {
+        final List<ValidationStatus> statuses = new ArrayList<>(snapshot.size());
+        for (final PropertyValidator v : snapshot) {
+          statuses.add(v.validate(key, value));
+        }
+        return new ValidationStatusImpl(statuses);
+      };
     }
   }
 
