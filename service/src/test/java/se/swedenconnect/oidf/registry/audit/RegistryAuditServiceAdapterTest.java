@@ -18,7 +18,11 @@ package se.swedenconnect.oidf.registry.audit;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.audit.AuditEvent;
-import se.swedenconnect.oidf.registry.dto.PolicyDto;
+import se.swedenconnect.oidf.registry.infrastructure.audit.FederationAuditEvent;
+import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditEventType;
+import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditLogger;
+import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
+import se.swedenconnect.oidf.registry.policy.dto.PolicyDto;
 
 import java.util.Stack;
 import java.util.UUID;
@@ -47,11 +51,12 @@ class RegistryAuditServiceAdapterTest {
     };
 
     final UUID policyId = UUID.randomUUID();
+    final UUID instanceId = UUID.randomUUID();
     final UUID organizationId = UUID.randomUUID();
     final PolicyDto newData = new PolicyDto();
     newData.setPolicyId(policyId);
     newData.setName("Test Policy");
-    auditService.policyCreated(policyId, organizationId, null, newData);
+    auditService.policyCreated(policyId, instanceId, organizationId, null, newData);
     assertEquals(stack.peek().getType(), RegistryAuditEventType.POLICY_CREATED.name());
     assertNull(stack.peek().getData().get("oldData"));
     assertNotNull(stack.peek().getData().get("newData"));
@@ -73,6 +78,7 @@ class RegistryAuditServiceAdapterTest {
     };
 
     final UUID policyId = UUID.randomUUID();
+    final UUID instanceId = UUID.randomUUID();
     final UUID organizationId = UUID.randomUUID();
     final PolicyDto oldData = new PolicyDto();
     oldData.setPolicyId(policyId);
@@ -80,7 +86,7 @@ class RegistryAuditServiceAdapterTest {
     final PolicyDto newData = new PolicyDto();
     newData.setPolicyId(policyId);
     newData.setName("New Policy");
-    auditService.policyUpdated(policyId, organizationId, oldData, newData);
+    auditService.policyUpdated(policyId, instanceId, organizationId, oldData, newData);
     assertEquals(stack.peek().getType(), RegistryAuditEventType.POLICY_UPDATED.name());
     assertNotNull(stack.peek().getData().get("oldData"));
     assertNotNull(stack.peek().getData().get("newData"));
@@ -102,11 +108,12 @@ class RegistryAuditServiceAdapterTest {
     };
 
     final UUID policyId = UUID.randomUUID();
+    final UUID instanceId = UUID.randomUUID();
     final UUID organizationId = UUID.randomUUID();
     final PolicyDto deletedData = new PolicyDto();
     deletedData.setPolicyId(policyId);
     deletedData.setName("Deleted Policy");
-    auditService.policyDeleted(policyId, organizationId, deletedData);
+    auditService.policyDeleted(policyId, instanceId, organizationId, deletedData);
     assertEquals(stack.peek().getType(), RegistryAuditEventType.POLICY_DELETED.name());
     assertNotNull(stack.peek().getData().get("oldData"));
     assertNull(stack.peek().getData().get("newData"));

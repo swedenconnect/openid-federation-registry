@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,9 @@
 
 package se.swedenconnect.oidf.registry.fixture;
 
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.web.client.RestTemplateCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
+import org.springframework.test.web.servlet.client.RestTestClient;
 
 /**
  * Configuration class for Spring beans used in testing scenarios.
@@ -31,23 +29,13 @@ import org.springframework.http.HttpHeaders;
 public class SpringTestConfiguration {
 
   @Bean
-  RestTemplateCustomizer restTemplateCustomizer(final JwtTestUtils jwtTestUtils) {
-    return restTemplate -> restTemplate.getInterceptors()
-        .add((request, body, execution) -> {
-          final String token = jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.PM);
-          request.getHeaders().add(HttpHeaders.AUTHORIZATION, "Bearer " + token);
-          return execution.execute(request, body);
-        });
-  }
-
-  @Bean
   TestDataOperations testDataOperations() {
     return new TestDataOperations();
   }
 
   @Bean
-  FederationAPIOperations testFederationAPIOperations(TestRestTemplate restTemplate) {
-    return new FederationAPIOperations(restTemplate);
+  FederationAPIOperations testFederationAPIOperations(RestTestClient restTestClient) {
+    return new FederationAPIOperations(restTestClient);
   }
 
 }

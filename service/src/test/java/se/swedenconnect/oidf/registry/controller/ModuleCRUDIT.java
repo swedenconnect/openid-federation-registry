@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
@@ -53,6 +54,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
+@AutoConfigureRestTestClient
+
 class ModuleCRUDIT {
 
   @Container
@@ -480,6 +483,45 @@ class ModuleCRUDIT {
         .satisfies(exception -> {
           final RestClientResponseException apiException = (RestClientResponseException) exception;
           assertThat(apiException.getStatusCode().value()).isEqualTo(404);
+        });
+  }
+
+  // ========== Cascade Delete Tests ==========
+
+  @Test
+  void testDeleteFederationEntityCascadeDeletesTrustAnchor() {
+    // Arrange - Create a federation entity with a trust anchor module
+    final UUID entityId = this.createFederationEntity(
+        "https://www.pm.se/oidf/cascade-ta-entity",
+        "https://www.pm.se/oidf/cascade-ta-entity");
+
+    final UUID trustAnchorId = UUID.randomUUID();
+    final TrustAnchor taInput = new TrustAnchor()
+        .entityId(entityId)
+        .active(true)
+        .trustMarkIssuers(List.of("https://www.pm.se/oidf/tmi1"));
+    this.modulesApi.createTrustAnchorWithId(trustAnchorId, taInput);
+
+    // Verify both exist
+    assertThat(this.entitiesApi.getFederationEntity(entityId, false)).isNotNull();
+    assertThat(this.modulesApi.getTrustAnchor(trustAnchorId)).isNotNull();
+
+    // Act - Delete the federation entity
+    this.entitiesApi.deleteFederationEntity(entityId);
+
+    // Assert - Both entity and trust anchor should be gone
+    assertThatThrownBy(() -> this.entitiesApi.getFederationEntity(entityId, false))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(exception -> {
+          final RestClientResponseException e = (RestClientResponseException) exception;
+          assertThat(e.getStatusCode().value()).isEqualTo(404);
+        });
+
+    assertThatThrownBy(() -> this.modulesApi.getTrustAnchor(trustAnchorId))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(exception -> {
+          final RestClientResponseException e = (RestClientResponseException) exception;
+          assertThat(e.getStatusCode().value()).isEqualTo(404);
         });
   }
 

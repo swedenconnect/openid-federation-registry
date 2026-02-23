@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Sweden Connect
+ * Copyright 2026 Sweden Connect
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,13 @@
 package se.swedenconnect.oidf.registry.entity;
 
 /**
- * Enumeration representing the types of foreign keys (FkKeyType) used within the system.
+ * Enum representing different module types in the federation registry.
  *
  * @author Per Fredrik Plars
  */
 public enum FkKeyType {
-  RESOLVER,
-  INTERMEDIATE,
   TRUSTANCHOR,
-  TRUSTMARKISSUER,
-  TRUSTMARKSUBJECT,
-  TRUSTMARK,
-  POLICIES,
-  FEDERATION_ENTITY,
-  SUBORDINATE_ENTITY,
-  HOSTED_ENTITY
+  INTERMEDIATE,
+  RESOLVER,
+  TRUSTMARKISSUER
 }

@@ -30,13 +30,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.web.client.RestClient;
-import se.swedenconnect.oidf.registry.audit.FederationAuditEvent;
-import se.swedenconnect.oidf.registry.audit.RegistryAuditEventType;
-import se.swedenconnect.oidf.registry.config.RegistryProperties;
-import se.swedenconnect.oidf.registry.entity.FkKeyType;
+import se.swedenconnect.oidf.registry.federation.service.NotifyService;
+import se.swedenconnect.oidf.registry.infrastructure.audit.FederationAuditEvent;
+import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditEventType;
+import se.swedenconnect.oidf.registry.infrastructure.config.RegistryProperties;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -54,6 +55,7 @@ class NotifyServiceTest {
       .options(options().dynamicPort())
       .build();
   final UUID organizationUUID = UUID.randomUUID();
+  final UUID instanceUUID = UUID.randomUUID();
   private NotifyService notifyService;
 
   @BeforeEach
@@ -67,19 +69,19 @@ class NotifyServiceTest {
         List.of(
             new RegistryProperties.FederationAPIProperties.NotificationProperties(
                 URI.create(wireMockExtension.baseUrl() + "/test1"),
-                organizationUUID),
+                instanceUUID),
             new RegistryProperties.FederationAPIProperties.NotificationProperties(
                 URI.create(wireMockExtension.baseUrl() + "/test2"),
-                organizationUUID),
+                instanceUUID),
             new RegistryProperties.FederationAPIProperties.NotificationProperties(
                 URI.create(wireMockExtension.baseUrl() + "/test3"),
-                organizationUUID),
+                instanceUUID),
             new RegistryProperties.FederationAPIProperties.NotificationProperties(
                 URI.create(wireMockExtension.baseUrl() + "/test4"),
-                organizationUUID),
+                instanceUUID),
             new RegistryProperties.FederationAPIProperties.NotificationProperties(
                 URI.create(wireMockExtension.baseUrl() + "/test5"),
-                organizationUUID)
+                instanceUUID)
         ),
         rsaJWK
     );
@@ -89,16 +91,22 @@ class NotifyServiceTest {
         .willReturn(WireMock.aResponse().withStatus(200))); // Respond with 200 OK
   }
 
+  private RegistryAuditEventType getAuditEventType() {
+    final int length = RegistryAuditEventType.values().length;
+    final int random = new Random().nextInt(length);
+    return RegistryAuditEventType.values()[random];
+  }
+
   @Test
   @DisplayName( "Notify service - should reply")
   void testNotifyServiceWithWireMock() throws InterruptedException {
     Stream.generate(() -> FederationAuditEvent.builder()
-            .fkKeyType(FkKeyType.TRUSTMARKSUBJECT)
-            .event(RegistryAuditEventType.OPTIONS_UPDATE)
-            .optionId(UUID.randomUUID())
+            .event(getAuditEventType())
+            .extId(new Random().nextInt(1000) + "")
             .organizationId(organizationUUID.toString())
+            .instanceId(instanceUUID.toString())
             .build())
-        .limit(10)
+        .limit(50)
         .forEach(notifyService::onAuditEvent);
 
     for (int i = 0; i < 5; i++) {

@@ -3,6 +3,12 @@ logging:
     se:
       swedenconnect:
         oidf: debug
+    org:
+      springframework:
+        web: DEBUG
+        https: DEBUG
+      hibernate.SQL: DEBUG
+      hibernate.orm.jdbc.bind: TRACE
 
 
 openid:

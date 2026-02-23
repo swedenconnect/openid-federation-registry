@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
@@ -35,9 +36,11 @@ import se.swedenconnect.oidf.registry.api.model.FederationEntity;
 import se.swedenconnect.oidf.registry.api.model.Trustmark;
 import se.swedenconnect.oidf.registry.api.model.TrustmarkIssuer;
 import se.swedenconnect.oidf.registry.api.model.TrustmarkSubject;
+import se.swedenconnect.oidf.registry.api.model.TrustmarkWithSubjects;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,6 +54,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @Slf4j
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
+@AutoConfigureRestTestClient
+
 class TrustmarkSubjectCRUDIT {
 
   @Container
@@ -302,6 +307,135 @@ class TrustmarkSubjectCRUDIT {
 
     // Assert - Should not be found
     assertThatThrownBy(() -> trApi.getTrustmarkSubject(subjectId))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(exception -> {
+          final RestClientResponseException restException = (RestClientResponseException) exception;
+          assertThat(restException.getStatusCode().value()).isEqualTo(404);
+        });
+  }
+
+  @Test
+  void testGetTrustmarkSubjects() {
+    // Arrange - Create trustmark with subjects
+    final UUID trustmarkId = this.createTrustmark();
+    final UUID subjectId1 = UUID.randomUUID();
+    final UUID subjectId2 = UUID.randomUUID();
+
+    final TrustmarkSubject subject1 = new TrustmarkSubject()
+        .trustmarkId(trustmarkId)
+        .subject("https://www.pm.se/oidf/subject1")
+        .revoked(false)
+        .granted(OffsetDateTime.parse("2025-01-01T00:00:00+01:00"))
+        .expires(OffsetDateTime.parse("2026-01-01T00:00:00+01:00"));
+
+    final TrustmarkSubject subject2 = new TrustmarkSubject()
+        .trustmarkId(trustmarkId)
+        .subject("https://www.pm.se/oidf/subject2")
+        .revoked(true)
+        .granted(OffsetDateTime.parse("2025-02-01T00:00:00+01:00"))
+        .expires(OffsetDateTime.parse("2026-02-01T00:00:00+01:00"));
+
+    this.trustmarksApi.createTrustmarkSubjectWithId(subjectId1, subject1);
+    this.trustmarksApi.createTrustmarkSubjectWithId(subjectId2, subject2);
+
+    // Act
+    final TrustmarkWithSubjects result = this.trustmarksApi.getTrustmarkSubjects(trustmarkId);
+
+    // Assert
+    assertThat(result).isNotNull();
+    assertThat(result.getTrustmarkId()).isEqualTo(trustmarkId);
+    assertThat(result.getTrustmarkSubjects()).isNotNull();
+    assertThat(result.getTrustmarkSubjects()).hasSize(2);
+
+    // Verify subjects are included
+    final List<TrustmarkSubject> subjects = result.getTrustmarkSubjects();
+    assertThat(subjects).extracting(TrustmarkSubject::getTrustmarksubjectId)
+        .containsExactlyInAnyOrder(subjectId1, subjectId2);
+    assertThat(subjects).extracting(TrustmarkSubject::getSubject)
+        .containsExactlyInAnyOrder("https://www.pm.se/oidf/subject1", "https://www.pm.se/oidf/subject2");
+  }
+
+  @Test
+  void testGetTrustmarkSubjectsWithNoSubjects() {
+    // Arrange - Create trustmark without subjects
+    final UUID trustmarkId = this.createTrustmark();
+
+    // Act
+    final TrustmarkWithSubjects result = this.trustmarksApi.getTrustmarkSubjects(trustmarkId);
+
+    // Assert
+    assertThat(result).isNotNull();
+    assertThat(result.getTrustmarkId()).isEqualTo(trustmarkId);
+    assertThat(result.getTrustmarkSubjects()).isNotNull();
+    assertThat(result.getTrustmarkSubjects()).isEmpty();
+  }
+
+  @Test
+  void testGetTrustmarkSubjectsWithMultipleSubjects() {
+    // Arrange - Create trustmark with multiple subjects
+    final UUID trustmarkId = this.createTrustmark();
+
+    // Create 5 subjects
+    for (int i = 1; i <= 5; i++) {
+      final UUID subjectId = UUID.randomUUID();
+      final String day = String.format("%02d", i);
+      final TrustmarkSubject subject = new TrustmarkSubject()
+          .trustmarkId(trustmarkId)
+          .subject("https://www.pm.se/oidf/subject" + i)
+          .revoked(i % 2 == 0)
+          .granted(OffsetDateTime.parse("2025-01-" + day + "T00:00:00+01:00"))
+          .expires(OffsetDateTime.parse("2026-01-" + day + "T00:00:00+01:00"));
+      this.trustmarksApi.createTrustmarkSubjectWithId(subjectId, subject);
+    }
+
+    // Act
+    final TrustmarkWithSubjects result = this.trustmarksApi.getTrustmarkSubjects(trustmarkId);
+
+    // Assert
+    assertThat(result).isNotNull();
+    assertThat(result.getTrustmarkId()).isEqualTo(trustmarkId);
+    assertThat(result.getTrustmarkSubjects()).isNotNull();
+    assertThat(result.getTrustmarkSubjects()).hasSize(5);
+
+    // Verify all subjects have correct trustmarkId
+    assertThat(result.getTrustmarkSubjects())
+        .allMatch(subject -> trustmarkId.equals(subject.getTrustmarkId()));
+  }
+
+  @Test
+  void testGetTrustmarkSubjectsNotFound() {
+    // Arrange
+    final UUID nonExistentTrustmarkId = UUID.randomUUID();
+
+    // Act & Assert
+    assertThatThrownBy(() -> this.trustmarksApi.getTrustmarkSubjects(nonExistentTrustmarkId))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(exception -> {
+          final RestClientResponseException apiException = (RestClientResponseException) exception;
+          assertThat(apiException.getStatusCode().value()).isEqualTo(404);
+        });
+  }
+
+  @Test
+  void testGetTrustmarkSubjectsIsolationBetweenOrganizations() {
+    // Arrange - Create trustmark with subject using PM organization
+    final UUID trustmarkId = this.createTrustmark();
+    final UUID subjectId = UUID.randomUUID();
+    final TrustmarkSubject input = new TrustmarkSubject()
+        .trustmarkId(trustmarkId)
+        .subject("https://www.pm.se/oidf/pm-subject")
+        .revoked(false);
+    this.trustmarksApi.createTrustmarkSubjectWithId(subjectId, input);
+
+    // Act - Try to access with AF organization
+    final ApiClient afApiClient = new ApiClient();
+    afApiClient.setBasePath("http://localhost:" + this.port);
+    afApiClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.AF));
+    afApiClient.setApiKey(JwtTestUtils.OrganisationType.AF.orgId);
+    final TrustmarksApi afTrustmarksApi = new TrustmarksApi(afApiClient);
+
+    // Assert - Should not be found
+    assertThatThrownBy(() -> afTrustmarksApi.getTrustmarkSubjects(trustmarkId))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(exception -> {
           final RestClientResponseException restException = (RestClientResponseException) exception;
