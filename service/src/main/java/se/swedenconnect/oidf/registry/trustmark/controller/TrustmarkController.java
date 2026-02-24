@@ -67,7 +67,8 @@ public class TrustmarkController {
   public ResponseEntity<List<TrustmarkWithSubjectsDto>> listTrustmarks(
       @RequestParam(name = "includeSubjects", required = false, defaultValue = "false") final boolean includeSubjects,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    return ResponseEntity.ok(this.moduleConfigService.listTrustmarks(organizationRecord, includeSubjects));
+    return ResponseEntity.ok(
+        this.moduleConfigService.listTrustmarks(organizationRecord, null, includeSubjects));
   }
 
   // Trustmark

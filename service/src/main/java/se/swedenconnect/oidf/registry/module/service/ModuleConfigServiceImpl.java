@@ -664,18 +664,18 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Override
   @Transactional(readOnly = true)
   public List<TrustmarkWithSubjectsDto> listTrustmarks(final OrganizationRecord organizationRecord,
-      final boolean includeSubjects) {
+      final UUID trustmarkIssuerId, final boolean includeSubjects) {
     final List<TrustMark> trustMarkEntities;
 
     if (includeSubjects) {
       // Fetch trustmarks with subjects using FETCH JOIN
       trustMarkEntities = this.trustMarkRepository
-          .findByOrgNumberWithSubjects(organizationRecord.orgNumber());
+          .findByOrgNumberWithSubjects(organizationRecord.orgNumber(), trustmarkIssuerId);
     }
     else {
       // Fetch trustmarks without subjects
       trustMarkEntities = this.trustMarkRepository
-          .findByOrgNumber(organizationRecord.orgNumber());
+          .findByOrgNumber(organizationRecord.orgNumber(), trustmarkIssuerId);
     }
 
     // Convert to DTOs - always use TrustmarkWithSubjectsDto, but only populate subjects if requested

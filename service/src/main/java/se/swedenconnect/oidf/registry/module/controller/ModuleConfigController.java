@@ -37,7 +37,9 @@ import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.module.service.ModuleConfigService;
+import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkWithSubjectsDto;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -382,6 +384,23 @@ public class ModuleConfigController {
       @PathVariable("trustmarkIssuerId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.getTrustmarkIssuer(organizationRecord, id));
+  }
+
+  /**
+   * Gets a trust mark issuer by ID.
+   *
+   * @param trustmarkIssuerId the trust mark issuer ID
+   * @param organizationRecord the organization record
+   * @return the trust mark issuer
+   */
+  @GetMapping("/trustmark-issuer/{trustmarkIssuerId}/trustmarks")
+  @Operation(summary = "Get trust mark issuer")
+  public ResponseEntity<List<TrustmarkWithSubjectsDto>> getTrustmarks(
+      @PathVariable("trustmarkIssuerId") final UUID trustmarkIssuerId,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(
+        this.moduleConfigService.listTrustmarks(organizationRecord, trustmarkIssuerId,
+            false));
   }
 
   /**

@@ -187,7 +187,6 @@ public class TestDataOperations {
     subordinatesApi.createSubordinate(Subordinate.builder()
         .taImId(createdTrustAnchor.getTrustAnchorId())
         .entityIdentifier(secondFederationEntity.getEntityIdentifier())
-        .policyId(createdPolicy.getPolicyId())
         .metadataPolicy(policyInput.getPolicy())
         .jwks(genJWKS().toString())
         .build());
@@ -201,7 +200,6 @@ public class TestDataOperations {
     subordinatesApi.createSubordinate(Subordinate.builder()
         .taImId(createdTrustAnchor.getTrustAnchorId())
         .entityIdentifier(hostedPolisen.getEntityIdentifier())
-        .policyId(createdPolicy.getPolicyId())
         .ecLocationAutomaticResolve(true)
         .jwks(genJWKS().toString())
         .build());

@@ -244,9 +244,11 @@ public interface ModuleConfigService {
    *
    * @param organizationRecord the organization record
    * @param includeSubjects if true, includes trustmark subjects in the response
+   * @param trustmarkIssuerID  optional trustmarkIssuerID
    * @return list of trustmarks with optionally included trustmark subjects
    */
-  List<TrustmarkWithSubjectsDto> listTrustmarks(OrganizationRecord organizationRecord, boolean includeSubjects);
+  List<TrustmarkWithSubjectsDto> listTrustmarks(OrganizationRecord organizationRecord,
+      UUID trustmarkIssuerID, boolean includeSubjects);
 
   /**
    * Get trust mark subjects by there trustmarkid
