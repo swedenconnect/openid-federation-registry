@@ -146,7 +146,7 @@ class TrustmarkIssuerCRUDIT {
 
   @Test
   void getTrustmarksOnTrustmarkIssuer() {
-    final UUID entityId = this.createFederationEntity("https://www.pm.se/oidf/tmi-get");
+    final UUID entityId = this.createFederationEntity("https://www.pm.se/oidf/tmi-listtms");
     final UUID issuerId = UUID.randomUUID();
     final UUID trustmarkId = UUID.randomUUID();
 
@@ -169,7 +169,7 @@ class TrustmarkIssuerCRUDIT {
 
   @Test
   void updateTrustmarkIssuer() {
-    final UUID entityId = this.createFederationEntity("https://www.pm.se/oidf/tmi-update");
+    final UUID entityId = this.createFederationEntity("https://www.pm.se/oidf/tmi-updates");
     final UUID issuerId = UUID.randomUUID();
 
     this.modulesApi.createTrustmarkIssuerWithId(issuerId, new TrustmarkIssuer()
