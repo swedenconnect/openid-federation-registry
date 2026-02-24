@@ -1,1 +1,2587 @@
-{"openapi":"3.1.0","info":{"title":"OpenID Federation Entity Registry API","description":"REST API for managing OpenID Federation entities, policies, modules, and trust marks. This API provides endpoints for creating, reading, updating, and deleting federation entities, policies, trust anchors, resolvers, trust marks, and trust mark subjects.","contact":{"name":"Sweden Connect","url":"https://www.swedenconnect.se","email":"support@swedenconnect.se"},"license":{"name":"Apache 2.0","url":"https://www.apache.org/licenses/LICENSE-2.0.html"},"version":"0.5.10-SNAPSHOT"},"servers":[{"url":"http://localhost:8010","description":"Generated server url"}],"security":[{"bearerAuth":[],"selectedOrgNumber":[]}],"tags":[{"name":"Policies","description":"CRUD for metadata policies"},{"name":"Modules","description":"CRUD for federation modules"},{"name":"Subordinates","description":"CRUD for subordinates"},{"name":"Entities","description":"CRUD for federation, hosted and subordinate entities"},{"name":"Trustmarks","description":"CRUD for trustmarks and trust mark subjects"}],"paths":{"/registry/v1/trustmarks/{trustMarkId}":{"get":{"tags":["Trustmarks"],"summary":"Get trust mark","operationId":"getTrustmark","parameters":[{"name":"trustMarkId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Trustmark"}}}}}},"put":{"tags":["Trustmarks"],"summary":"Update trust mark","operationId":"updateTrustmark","parameters":[{"name":"trustMarkId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Trustmark"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Trustmark"}}}}}},"post":{"tags":["Trustmarks"],"summary":"Create trust mark with specified ID","operationId":"createTrustmarkWithId","parameters":[{"name":"trustMarkId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Trustmark"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Trustmark"}}}}}},"delete":{"tags":["Trustmarks"],"summary":"Delete trust mark","operationId":"deleteTrustmark","parameters":[{"name":"trustMarkId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK"}}}},"/registry/v1/trustmarks/subjects/{subjectId}":{"get":{"tags":["Trustmarks"],"summary":"Get trust mark subject","operationId":"getTrustmarkSubject","parameters":[{"name":"subjectId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/TrustmarkSubject"}}}}}},"put":{"tags":["Trustmarks"],"summary":"Update trust mark subject","operationId":"updateTrustmarkSubject","parameters":[{"name":"subjectId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/TrustmarkSubject"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/TrustmarkSubject"}}}}}},"post":{"tags":["Trustmarks"],"summary":"Create trust mark subject with specified ID","operationId":"createTrustmarkSubjectWithId","parameters":[{"name":"subjectId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/TrustmarkSubject"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/TrustmarkSubject"}}}}}},"delete":{"tags":["Trustmarks"],"summary":"Delete trust mark subject","operationId":"deleteTrustmarkSubject","parameters":[{"name":"subjectId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK"}}}},"/registry/v1/subordinates/{subordinateId}":{"get":{"tags":["Subordinates"],"summary":"Get subordinate by id","operationId":"getSubordinate","parameters":[{"name":"subordinateId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Subordinate"}}}}}},"put":{"tags":["Subordinates"],"summary":"Update subordinate","operationId":"updateSubordinate","parameters":[{"name":"subordinateId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Subordinate"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Subordinate"}}}}}},"post":{"tags":["Subordinates"],"summary":"Create subordinate with specified ID","operationId":"createSubordinateWithId","parameters":[{"name":"subordinateId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Subordinate"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Subordinate"}}}}}},"delete":{"tags":["Subordinates"],"summary":"Delete subordinate","operationId":"deleteSubordinate","parameters":[{"name":"subordinateId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK"}}}},"/registry/v1/policies/{policyId}":{"get":{"tags":["Policies"],"summary":"Get policy by id","operationId":"getPolicy","parameters":[{"name":"policyId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Policy"}}}}}},"put":{"tags":["Policies"],"summary":"Update policy","operationId":"updatePolicy","parameters":[{"name":"policyId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Policy"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Policy"}}}}}},"post":{"tags":["Policies"],"summary":"Create policy with specified ID","operationId":"createPolicyWithId","parameters":[{"name":"policyId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Policy"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Policy"}}}}}},"delete":{"tags":["Policies"],"summary":"Delete policy","operationId":"deletePolicy","parameters":[{"name":"policyId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK"}}}},"/registry/v1/modules/trustmark-issuer/{trustmarkIssuerId}":{"get":{"tags":["Modules"],"summary":"Get trust mark issuer","operationId":"getTrustmarkIssuer","parameters":[{"name":"trustmarkIssuerId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/TrustmarkIssuer"}}}}}},"put":{"tags":["Modules"],"summary":"Update trust mark issuer","operationId":"updateTrustmarkIssuer","parameters":[{"name":"trustmarkIssuerId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/TrustmarkIssuer"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/TrustmarkIssuer"}}}}}},"post":{"tags":["Modules"],"summary":"Create trust mark issuer with specified ID","operationId":"createTrustmarkIssuerWithId","parameters":[{"name":"trustmarkIssuerId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/TrustmarkIssuer"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/TrustmarkIssuer"}}}}}},"delete":{"tags":["Modules"],"summary":"Delete trust mark issuer","operationId":"deleteTrustmarkIssuer","parameters":[{"name":"trustmarkIssuerId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK"}}}},"/registry/v1/modules/trust-anchor/{trustAnchorId}":{"get":{"tags":["Modules"],"summary":"Get trust anchor","operationId":"getTrustAnchor","parameters":[{"name":"trustAnchorId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/TrustAnchor"}}}}}},"put":{"tags":["Modules"],"summary":"Update trust anchor","operationId":"updateTrustAnchor","parameters":[{"name":"trustAnchorId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/TrustAnchor"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/TrustAnchor"}}}}}},"post":{"tags":["Modules"],"summary":"Create trust anchor with specified ID","operationId":"createTrustAnchorWithId","parameters":[{"name":"trustAnchorId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/TrustAnchor"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/TrustAnchor"}}}}}},"delete":{"tags":["Modules"],"summary":"Delete trust anchor","operationId":"deleteTrustAnchor","parameters":[{"name":"trustAnchorId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK"}}}},"/registry/v1/modules/resolver/{resolverId}":{"get":{"tags":["Modules"],"summary":"Get resolver","operationId":"getResolver","parameters":[{"name":"resolverId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Resolver"}}}}}},"put":{"tags":["Modules"],"summary":"Update resolver","operationId":"updateResolver","parameters":[{"name":"resolverId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Resolver"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Resolver"}}}}}},"post":{"tags":["Modules"],"summary":"Create resolver with specified ID","operationId":"createResolverWithId","parameters":[{"name":"resolverId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Resolver"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Resolver"}}}}}},"delete":{"tags":["Modules"],"summary":"Delete resolver","operationId":"deleteResolver","parameters":[{"name":"resolverId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK"}}}},"/registry/v1/modules/intermediate/{intermediateId}":{"get":{"tags":["Modules"],"summary":"Get intermediate","operationId":"getIntermediate","parameters":[{"name":"intermediateId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Intermediate"}}}}}},"put":{"tags":["Modules"],"summary":"Update intermediate","operationId":"updateIntermediate","parameters":[{"name":"intermediateId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Intermediate"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Intermediate"}}}}}},"post":{"tags":["Modules"],"summary":"Create intermediate with specified ID","operationId":"createIntermediateWithId","parameters":[{"name":"intermediateId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Intermediate"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Intermediate"}}}}}},"delete":{"tags":["Modules"],"summary":"Delete intermediate","operationId":"deleteIntermediate","parameters":[{"name":"intermediateId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK"}}}},"/registry/v1/entities/hosted/{entityId}":{"get":{"tags":["Entities"],"summary":"Get hosted entity","operationId":"getHostedEntity","parameters":[{"name":"entityId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/HostedEntity"}}}}}},"put":{"tags":["Entities"],"summary":"Update hosted entity","operationId":"updateHostedEntity","parameters":[{"name":"entityId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/HostedEntity"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/HostedEntity"}}}}}},"post":{"tags":["Entities"],"summary":"Create hosted entity with specified ID","operationId":"createHostedEntityWithId","parameters":[{"name":"entityId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/HostedEntity"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/HostedEntity"}}}}}},"delete":{"tags":["Entities"],"summary":"Delete hosted entity","operationId":"deleteHostedEntity","parameters":[{"name":"entityId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK"}}}},"/registry/v1/entities/federation/{entityId}":{"get":{"tags":["Entities"],"summary":"Get federation entity","operationId":"getFederationEntity","parameters":[{"name":"entityId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"includemodules","in":"query","required":false,"schema":{"type":"boolean","default":false}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/FederationEntityWithModules"}}}}}},"put":{"tags":["Entities"],"summary":"Update federation entity","operationId":"updateFederationEntity","parameters":[{"name":"entityId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/FederationEntity"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/FederationEntity"}}}}}},"post":{"tags":["Entities"],"summary":"Create federation entity with specified ID","operationId":"createFederationEntityWithId","parameters":[{"name":"entityId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/FederationEntity"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/FederationEntity"}}}}}},"delete":{"tags":["Entities"],"summary":"Delete federation entity","operationId":"deleteFederationEntity","parameters":[{"name":"entityId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK"}}}},"/registry/v1/trustmarks":{"get":{"tags":["Trustmarks"],"summary":"List all trustmarks","description":"Lists all trustmarks for the organization, optionally including trustmark subjects","operationId":"listTrustmarks","parameters":[{"name":"includeSubjects","in":"query","required":false,"schema":{"type":"boolean","default":false}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/TrustmarkWithSubjects"}}}}}}},"post":{"tags":["Trustmarks"],"summary":"Create trust mark with auto-generated ID","operationId":"createTrustmark","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Trustmark"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Trustmark"}}}}}}},"/registry/v1/trustmarks/subjects":{"post":{"tags":["Trustmarks"],"summary":"Create trust mark subject with auto-generated ID","operationId":"createTrustmarkSubject","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/TrustmarkSubject"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/TrustmarkSubject"}}}}}}},"/registry/v1/subordinates/":{"post":{"tags":["Subordinates"],"summary":"Create subordinate with auto-generated ID","operationId":"createSubordinate","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Subordinate"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Subordinate"}}}}}}},"/registry/v1/policies":{"get":{"tags":["Policies"],"summary":"List all policies","operationId":"listPolicies","responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Policy"}}}}}}},"post":{"tags":["Policies"],"summary":"Create policy with auto-generated ID","operationId":"createPolicy","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Policy"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Policy"}}}}}}},"/registry/v1/modules/trustmark-issuer":{"post":{"tags":["Modules"],"summary":"Create trust mark issuer with auto-generated ID","operationId":"createTrustmarkIssuer","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/TrustmarkIssuer"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/TrustmarkIssuer"}}}}}}},"/registry/v1/modules/trust-anchor":{"post":{"tags":["Modules"],"summary":"Create trust anchor with auto-generated ID","operationId":"createTrustAnchor","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/TrustAnchor"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/TrustAnchor"}}}}}}},"/registry/v1/modules/resolver":{"post":{"tags":["Modules"],"summary":"Create resolver with auto-generated ID","operationId":"createResolver","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Resolver"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Resolver"}}}}}}},"/registry/v1/modules/intermediate":{"post":{"tags":["Modules"],"summary":"Create intermediate with auto-generated ID","operationId":"createIntermediate","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Intermediate"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Intermediate"}}}}}}},"/registry/v1/entities/hosted":{"get":{"tags":["Entities"],"summary":"List hosted entity","operationId":"listHostedEntity","parameters":[{"name":"entityIdentifier","in":"query","required":false,"schema":{"type":"string"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/HostedEntity"}}}}}}},"post":{"tags":["Entities"],"summary":"Create hosted entity with auto-generated ID","operationId":"createHostedEntity","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/HostedEntity"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/HostedEntity"}}}}}}},"/registry/v1/entities/federation":{"post":{"tags":["Entities"],"summary":"Create federation entity with auto-generated ID","operationId":"createFederationEntity","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/FederationEntity"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/FederationEntity"}}}}}}},"/registry/v1/trustmarks/{trustMarkId}/subjects":{"get":{"tags":["Trustmarks"],"summary":"Get trust mark with there subjects","operationId":"getTrustmarkSubjects","parameters":[{"name":"trustMarkId","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/TrustmarkWithSubjects"}}}}}}},"/registry/v1/modules":{"get":{"tags":["Modules"],"summary":"List all modules","description":"Lists all modules for the organization, optionally filtered by type","operationId":"listModules","parameters":[{"name":"type","in":"query","required":false,"schema":{"type":"string"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Modules"}}}}}}},"/registry/v1/entities":{"get":{"tags":["Entities"],"summary":"List all entities","description":"Lists all entities for the organization, optionally filtered by type and with modules included","operationId":"listEntities","parameters":[{"name":"type","in":"query","required":false,"schema":{"type":"string"}},{"name":"includemodules","in":"query","required":false,"schema":{"type":"boolean","default":false}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/EntityWithModules"}}}}}}},"/api/v1/federationservice/submodules":{"get":{"tags":["oidf-service-api-controller"],"operationId":"submoduleRecord","parameters":[{"name":"instanceid","in":"query","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"plain","in":"query","required":false,"schema":{"type":"boolean","default":false}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"string"}}}}}}},"/api/v1/federationservice/entity_record":{"get":{"tags":["oidf-service-api-controller"],"operationId":"entityRecord","parameters":[{"name":"instanceid","in":"query","required":true,"schema":{"type":"string","format":"uuid"}},{"name":"plain","in":"query","required":false,"schema":{"type":"boolean","default":false}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"string"}}}}}}}},"components":{"schemas":{"Trustmark":{"type":"object","properties":{"trustmarkId":{"type":"string","format":"uuid","description":"Trustmark ID","readOnly":true},"trustmarkissuerId":{"type":"string","format":"uuid","description":"Trust mark issuer entity identifier"},"trustmarkType":{"type":"string","description":"Trustmark type that is a entityid"},"logoUri":{"type":"string","description":"Logo URI"},"refUri":{"type":"string","description":"Reference URI"},"delegation":{"type":"string","description":"Delegation JWT"}}},"TrustmarkSubject":{"type":"object","properties":{"trustmarksubjectId":{"type":"string","format":"uuid","description":"Trustmark subject ID","readOnly":true},"trustmarkId":{"type":"string","format":"uuid","description":"Trustmarkid that this subject belongs to"},"subject":{"type":"string","description":"Subject entity id"},"revoked":{"type":"boolean","description":"If the trust mark is revoked for this subject"},"granted":{"type":"string","format":"date-time","description":"Granted time in ISO-8601-format with offset, ex. 2025-03-12T14:37:00Z","example":"2025-03-12T14:37:00Z"},"expires":{"type":"string","format":"date-time","description":"Expires time in ISO-8601-format with offset, ex. 2025-03-12T14:37:00Z","example":"2025-03-12T14:37:00Z"}}},"Subordinate":{"type":"object","properties":{"subordinateId":{"type":"string","format":"uuid","description":"Subordinate ID","readOnly":true},"taImId":{"type":"string","format":"uuid","description":"TaIm ID that this subordinate belongs to"},"policyId":{"type":"string","format":"uuid","description":"Policy ID","example":"Optional policy reference"},"jwks":{"type":"string","description":"JWKSet for Subordinate","example":"JSON Web Key Set as string"},"entityIdentifier":{"type":"string","description":"Subject (entity identifier)","example":"https://subordinate.example.se"},"crit":{"type":"array","description":"List of crit claims","example":["claim1","claim2"],"items":{"type":"string"}},"metadataPolicyCrit":{"type":"array","description":"List of metadata_policy_crit","example":["operator1","operator2"],"items":{"type":"string"}},"policy":{"type":"object","additionalProperties":{},"description":"Policy","readOnly":true},"ecLocation":{"type":"string","description":"ecLocation - location where the actual entity statement is placed. Expressed as a url. Ex https://my.company.se/entitystatement"},"ecLocationAutomaticResolve":{"type":"boolean","description":"When true, eclocation will be loaded from the hosted entity with the same issuer entityid"},"effectiveEcLocation":{"type":"string","description":"Effective EcLocation that is calculated serverside","readOnly":true},"metadataPolicy":{"type":"object","additionalProperties":{},"description":"Metadata policy for this subordinate statement. Optional. Must be valid JSON if provided.","example":{"openid_provider":{"subject_types_supported":{"value":["pairwise"]}}}}}},"Policy":{"type":"object","properties":{"policyId":{"type":"string","format":"uuid","description":"Policy ID","readOnly":true},"name":{"type":"string","description":"Policy name","example":"Default OIDC RP policy"},"policy":{"type":"object","additionalProperties":{},"description":"JSON policy document"}}},"TrustmarkIssuer":{"type":"object","properties":{"trustmarkIssuerId":{"type":"string","format":"uuid","description":"Trustmark issuer ID","readOnly":true},"entityId":{"type":"string","format":"uuid","description":"Entity identifier that this trustmark issuer belongs to"},"active":{"type":"boolean","description":"If this trustmark issuer is active"},"trustMarkTokenValidityDuration":{"type":"string","description":"Trust mark token validity duration (ISO-8601 duration, e.g. PT1H)"}},"required":["active","entityId","trustMarkTokenValidityDuration"]},"TrustAnchor":{"type":"object","properties":{"trustAnchorId":{"type":"string","format":"uuid","description":"TaIm ID","readOnly":true},"entityId":{"type":"string","format":"uuid","description":"Entity identifier that this trust anchor belongs to. "},"active":{"type":"boolean","description":"If this trust anchor is active"},"trustMarkIssuers":{"type":"array","description":"Entity identifiers for trust mark issuers","items":{"type":"string"}},"subordinates":{"type":"array","description":"List of subordinates for this trust anchor","items":{"$ref":"#/components/schemas/Subordinate"}}}},"Resolver":{"type":"object","properties":{"resolverId":{"type":"string","format":"uuid","description":"Resolver ID","readOnly":true},"entityId":{"type":"string","format":"uuid","description":"Entity identifier that this module belongs to"},"active":{"type":"boolean","description":"If this resolver instance is active"},"resolveResponseDuration":{"type":"string","description":"Response duration (ISO-8601 duration, e.g. PT1H)"},"trustAnchor":{"type":"string","description":"Trust anchor entityId that this resolver is connected to"},"trustedKeys":{"type":"string","description":"Trusted keys as JWKS JSON of the trust anchor"},"stepRetryDuration":{"type":"string","description":"Step retry duration (ISO-8601 duration, e.g. PT1H)"},"stepCachedValueThreshold":{"type":"integer","format":"int32","description":"Step Cached Value Threshold"}}},"Intermediate":{"type":"object","properties":{"intermediateId":{"type":"string","format":"uuid","description":"TaIm ID","readOnly":true},"entityId":{"type":"string","format":"uuid","description":"Entity identifier that this trust anchor belongs to. "},"active":{"type":"boolean","description":"If this intermediate is active"},"subordinates":{"type":"array","description":"List of subordinates for this intermediate","items":{"$ref":"#/components/schemas/Subordinate"}}}},"HostedEntity":{"type":"object","properties":{"entityId":{"type":"string","format":"uuid","description":"Entity ID","readOnly":true},"entityIdentifier":{"type":"string","description":"EntityIdentifier"},"metadata":{"type":"object","additionalProperties":{},"description":"FederationMetadata"},"effectiveEcLocation":{"type":"string","description":"Effective EcLocation that is calculated serverside","readOnly":true},"trustMarkSources":{"type":"array","description":"Trustmark sources that can be used to include trustmarks.","items":{"$ref":"#/components/schemas/TrustmarkSource"}},"crit":{"type":"array","description":"crit ","example":"The crit (critical) Claim indicates that extensions to the set of Claims specified for use in this type of JWT","items":{"type":"string"}},"authorityhints":{"type":"array","description":"authorityhints","example":"An array of strings representing the Entity Identifiers of Intermediate Entities or Trust Anchors that are Immediate Superiors of the Entity. the set of Claims specified for use in this type of JWT","items":{"type":"string"}}}},"TrustmarkSource":{"type":"object","properties":{"trustMarkIssuer":{"type":"string","description":"Trustmark "},"trustmarkId":{"type":"string","description":"Id of the trustmark to be included (entity identifier)"}}},"FederationEntity":{"type":"object","properties":{"entityId":{"type":"string","format":"uuid","description":"Entity ID","readOnly":true},"entityIdentifier":{"type":"string","description":"EntityIdentifier","example":"https://ta.example.se/ta"},"crit":{"type":"array","description":"crit ","example":"The crit (critical) Claim indicates that extensions to the set of Claims specified for use in this type of JWT","items":{"type":"string"}},"authorityhints":{"type":"array","description":"authorityhints","example":"An array of strings representing the Entity Identifiers of Intermediate Entities or Trust Anchors that are Immediate Superiors of the Entity. the set of Claims specified for use in this type of JWT","items":{"type":"string"}}}},"TrustmarkWithSubjects":{"allOf":[{"$ref":"#/components/schemas/Trustmark"},{"type":"object","properties":{"trustmarkId":{"type":"string","format":"uuid","description":"Trustmark ID","readOnly":true},"trustmarkissuerId":{"type":"string","format":"uuid","description":"Trust mark issuer entity identifier"},"trustmarkType":{"type":"string","description":"Trustmark type that is a entityid"},"logoUri":{"type":"string","description":"Logo URI"},"refUri":{"type":"string","description":"Reference URI"},"delegation":{"type":"string","description":"Delegation JWT"},"trustmarkSubjects":{"type":"array","description":"List of trustmark subjects associated with this trustmark","items":{"$ref":"#/components/schemas/TrustmarkSubject"}}}}],"description":"Trustmark with associated trustmark subjects"},"Modules":{"type":"object","properties":{"trustAnchors":{"type":"array","items":{"$ref":"#/components/schemas/TrustAnchor"}},"intermediates":{"type":"array","items":{"$ref":"#/components/schemas/Intermediate"}},"resolvers":{"type":"array","items":{"$ref":"#/components/schemas/Resolver"}},"trustmarkIssuers":{"type":"array","items":{"$ref":"#/components/schemas/TrustmarkIssuer"}}}},"EntityWithModules":{"type":"object","properties":{"federationEntity":{"type":"array","description":"Federation entity (if entity type is federation)","items":{"$ref":"#/components/schemas/FederationEntityWithModules"}},"hostedEntity":{"type":"array","description":"Hosted entity (if entity type is hosted)","items":{"$ref":"#/components/schemas/HostedEntity"}}}},"FederationEntityWithModules":{"allOf":[{"$ref":"#/components/schemas/FederationEntity"},{"type":"object","properties":{"entityId":{"type":"string","format":"uuid","description":"Entity ID","readOnly":true},"entityIdentifier":{"type":"string","description":"EntityIdentifier","example":"https://ta.example.se/ta"},"crit":{"type":"array","description":"crit ","example":"The crit (critical) Claim indicates that extensions to the set of Claims specified for use in this type of JWT","items":{"type":"string"}},"authorityhints":{"type":"array","description":"authorityhints","example":"An array of strings representing the Entity Identifiers of Intermediate Entities or Trust Anchors that are Immediate Superiors of the Entity. the set of Claims specified for use in this type of JWT","items":{"type":"string"}},"trustAnchor":{"$ref":"#/components/schemas/TrustAnchor","description":"Trust anchor module (if exists on federation entity)"},"intermediate":{"$ref":"#/components/schemas/Intermediate","description":"Intermediate module (if exists on federation entity)"},"resolver":{"$ref":"#/components/schemas/Resolver","description":"Resolver module (if exists on entity)"},"trustmarkIssuer":{"$ref":"#/components/schemas/TrustmarkIssuer","description":"Trustmark issuer module (if exists on entity)"}}}],"description":"Extended federation entity including modules"}},"securitySchemes":{"bearerAuth":{"type":"http","description":"JWT token obtained from authentication endpoint","scheme":"bearer","bearerFormat":"JWT"},"selectedOrgNumber":{"type":"apiKey","description":"Organization number to use for the request. Enter your organization number here.","name":"selected-org-number","in":"header"}}}}
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenID Federation Entity Registry API",
+    "description": "REST API for managing OpenID Federation entities, policies, modules, and trust marks. This API provides endpoints for creating, reading, updating, and deleting federation entities, policies, trust anchors, resolvers, trust marks, and trust mark subjects.",
+    "contact": {
+      "name": "Sweden Connect",
+      "url": "https://www.swedenconnect.se",
+      "email": "support@swedenconnect.se"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "0.5.10-SNAPSHOT"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8010",
+      "description": "Generated server url"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": [],
+      "selectedOrgNumber": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Policies",
+      "description": "CRUD for metadata policies"
+    },
+    {
+      "name": "Modules",
+      "description": "CRUD for federation modules"
+    },
+    {
+      "name": "Subordinates",
+      "description": "CRUD for subordinates"
+    },
+    {
+      "name": "Entities",
+      "description": "CRUD for federation, hosted and subordinate entities"
+    },
+    {
+      "name": "Trustmarks",
+      "description": "CRUD for trustmarks and trust mark subjects"
+    }
+  ],
+  "paths": {
+    "/registry/v1/trustmarks/{trustMarkId}": {
+      "get": {
+        "tags": [
+          "Trustmarks"
+        ],
+        "summary": "Get trust mark",
+        "operationId": "getTrustmark",
+        "parameters": [
+          {
+            "name": "trustMarkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Trustmark"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Trustmarks"
+        ],
+        "summary": "Update trust mark",
+        "operationId": "updateTrustmark",
+        "parameters": [
+          {
+            "name": "trustMarkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Trustmark"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Trustmark"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Trustmarks"
+        ],
+        "summary": "Create trust mark with specified ID",
+        "operationId": "createTrustmarkWithId",
+        "parameters": [
+          {
+            "name": "trustMarkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Trustmark"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Trustmark"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Trustmarks"
+        ],
+        "summary": "Delete trust mark",
+        "operationId": "deleteTrustmark",
+        "parameters": [
+          {
+            "name": "trustMarkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/registry/v1/trustmarks/subjects/{subjectId}": {
+      "get": {
+        "tags": [
+          "Trustmarks"
+        ],
+        "summary": "Get trust mark subject",
+        "operationId": "getTrustmarkSubject",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrustmarkSubject"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Trustmarks"
+        ],
+        "summary": "Update trust mark subject",
+        "operationId": "updateTrustmarkSubject",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrustmarkSubject"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrustmarkSubject"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Trustmarks"
+        ],
+        "summary": "Create trust mark subject with specified ID",
+        "operationId": "createTrustmarkSubjectWithId",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrustmarkSubject"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrustmarkSubject"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Trustmarks"
+        ],
+        "summary": "Delete trust mark subject",
+        "operationId": "deleteTrustmarkSubject",
+        "parameters": [
+          {
+            "name": "subjectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/registry/v1/subordinates/{subordinateId}": {
+      "get": {
+        "tags": [
+          "Subordinates"
+        ],
+        "summary": "Get subordinate by id",
+        "operationId": "getSubordinate",
+        "parameters": [
+          {
+            "name": "subordinateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subordinate"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Subordinates"
+        ],
+        "summary": "Update subordinate",
+        "operationId": "updateSubordinate",
+        "parameters": [
+          {
+            "name": "subordinateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Subordinate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subordinate"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Subordinates"
+        ],
+        "summary": "Create subordinate with specified ID",
+        "operationId": "createSubordinateWithId",
+        "parameters": [
+          {
+            "name": "subordinateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Subordinate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subordinate"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Subordinates"
+        ],
+        "summary": "Delete subordinate",
+        "operationId": "deleteSubordinate",
+        "parameters": [
+          {
+            "name": "subordinateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/registry/v1/policies/{policyId}": {
+      "get": {
+        "tags": [
+          "Policies"
+        ],
+        "summary": "Get policy by id",
+        "operationId": "getPolicy",
+        "parameters": [
+          {
+            "name": "policyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Policy"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Policies"
+        ],
+        "summary": "Update policy",
+        "operationId": "updatePolicy",
+        "parameters": [
+          {
+            "name": "policyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Policy"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Policy"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Policies"
+        ],
+        "summary": "Create policy with specified ID",
+        "operationId": "createPolicyWithId",
+        "parameters": [
+          {
+            "name": "policyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Policy"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Policy"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Policies"
+        ],
+        "summary": "Delete policy",
+        "operationId": "deletePolicy",
+        "parameters": [
+          {
+            "name": "policyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/registry/v1/modules/trustmark-issuer/{trustmarkIssuerId}": {
+      "get": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Get trust mark issuer",
+        "operationId": "getTrustmarkIssuer",
+        "parameters": [
+          {
+            "name": "trustmarkIssuerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrustmarkIssuer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Update trust mark issuer",
+        "operationId": "updateTrustmarkIssuer",
+        "parameters": [
+          {
+            "name": "trustmarkIssuerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrustmarkIssuer"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrustmarkIssuer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Create trust mark issuer with specified ID",
+        "operationId": "createTrustmarkIssuerWithId",
+        "parameters": [
+          {
+            "name": "trustmarkIssuerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrustmarkIssuer"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrustmarkIssuer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Delete trust mark issuer",
+        "operationId": "deleteTrustmarkIssuer",
+        "parameters": [
+          {
+            "name": "trustmarkIssuerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/registry/v1/modules/trust-anchor/{trustAnchorId}": {
+      "get": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Get trust anchor",
+        "operationId": "getTrustAnchor",
+        "parameters": [
+          {
+            "name": "trustAnchorId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrustAnchor"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Update trust anchor",
+        "operationId": "updateTrustAnchor",
+        "parameters": [
+          {
+            "name": "trustAnchorId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrustAnchor"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrustAnchor"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Create trust anchor with specified ID",
+        "operationId": "createTrustAnchorWithId",
+        "parameters": [
+          {
+            "name": "trustAnchorId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrustAnchor"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrustAnchor"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Delete trust anchor",
+        "operationId": "deleteTrustAnchor",
+        "parameters": [
+          {
+            "name": "trustAnchorId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/registry/v1/modules/resolver/{resolverId}": {
+      "get": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Get resolver",
+        "operationId": "getResolver",
+        "parameters": [
+          {
+            "name": "resolverId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resolver"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Update resolver",
+        "operationId": "updateResolver",
+        "parameters": [
+          {
+            "name": "resolverId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Resolver"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resolver"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Create resolver with specified ID",
+        "operationId": "createResolverWithId",
+        "parameters": [
+          {
+            "name": "resolverId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Resolver"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resolver"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Delete resolver",
+        "operationId": "deleteResolver",
+        "parameters": [
+          {
+            "name": "resolverId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/registry/v1/modules/intermediate/{intermediateId}": {
+      "get": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Get intermediate",
+        "operationId": "getIntermediate",
+        "parameters": [
+          {
+            "name": "intermediateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Intermediate"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Update intermediate",
+        "operationId": "updateIntermediate",
+        "parameters": [
+          {
+            "name": "intermediateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Intermediate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Intermediate"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Create intermediate with specified ID",
+        "operationId": "createIntermediateWithId",
+        "parameters": [
+          {
+            "name": "intermediateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Intermediate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Intermediate"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Delete intermediate",
+        "operationId": "deleteIntermediate",
+        "parameters": [
+          {
+            "name": "intermediateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/registry/v1/entities/hosted/{entityId}": {
+      "get": {
+        "tags": [
+          "Entities"
+        ],
+        "summary": "Get hosted entity",
+        "operationId": "getHostedEntity",
+        "parameters": [
+          {
+            "name": "entityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HostedEntity"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Entities"
+        ],
+        "summary": "Update hosted entity",
+        "operationId": "updateHostedEntity",
+        "parameters": [
+          {
+            "name": "entityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HostedEntity"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HostedEntity"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Entities"
+        ],
+        "summary": "Create hosted entity with specified ID",
+        "operationId": "createHostedEntityWithId",
+        "parameters": [
+          {
+            "name": "entityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HostedEntity"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HostedEntity"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Entities"
+        ],
+        "summary": "Delete hosted entity",
+        "operationId": "deleteHostedEntity",
+        "parameters": [
+          {
+            "name": "entityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/registry/v1/entities/federation/{entityId}": {
+      "get": {
+        "tags": [
+          "Entities"
+        ],
+        "summary": "Get federation entity",
+        "operationId": "getFederationEntity",
+        "parameters": [
+          {
+            "name": "entityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "includemodules",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FederationEntityWithModules"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Entities"
+        ],
+        "summary": "Update federation entity",
+        "operationId": "updateFederationEntity",
+        "parameters": [
+          {
+            "name": "entityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FederationEntity"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FederationEntity"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Entities"
+        ],
+        "summary": "Create federation entity with specified ID",
+        "operationId": "createFederationEntityWithId",
+        "parameters": [
+          {
+            "name": "entityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FederationEntity"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FederationEntity"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Entities"
+        ],
+        "summary": "Delete federation entity",
+        "operationId": "deleteFederationEntity",
+        "parameters": [
+          {
+            "name": "entityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/registry/v1/trustmarks": {
+      "get": {
+        "tags": [
+          "Trustmarks"
+        ],
+        "summary": "List all trustmarks",
+        "description": "Lists all trustmarks for the organization, optionally including trustmark subjects",
+        "operationId": "listTrustmarks",
+        "parameters": [
+          {
+            "name": "includeSubjects",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TrustmarkWithSubjects"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Trustmarks"
+        ],
+        "summary": "Create trust mark with auto-generated ID",
+        "operationId": "createTrustmark",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Trustmark"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Trustmark"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/v1/trustmarks/subjects": {
+      "post": {
+        "tags": [
+          "Trustmarks"
+        ],
+        "summary": "Create trust mark subject with auto-generated ID",
+        "operationId": "createTrustmarkSubject",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrustmarkSubject"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrustmarkSubject"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/v1/subordinates/": {
+      "post": {
+        "tags": [
+          "Subordinates"
+        ],
+        "summary": "Create subordinate with auto-generated ID",
+        "operationId": "createSubordinate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Subordinate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subordinate"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/v1/policies": {
+      "get": {
+        "tags": [
+          "Policies"
+        ],
+        "summary": "List all policies",
+        "operationId": "listPolicies",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Policy"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Policies"
+        ],
+        "summary": "Create policy with auto-generated ID",
+        "operationId": "createPolicy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Policy"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Policy"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/v1/modules/trustmark-issuer": {
+      "post": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Create trust mark issuer with auto-generated ID",
+        "operationId": "createTrustmarkIssuer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrustmarkIssuer"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrustmarkIssuer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/v1/modules/trust-anchor": {
+      "post": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Create trust anchor with auto-generated ID",
+        "operationId": "createTrustAnchor",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrustAnchor"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrustAnchor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/v1/modules/resolver": {
+      "post": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Create resolver with auto-generated ID",
+        "operationId": "createResolver",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Resolver"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resolver"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/v1/modules/intermediate": {
+      "post": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Create intermediate with auto-generated ID",
+        "operationId": "createIntermediate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Intermediate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Intermediate"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/v1/entities/hosted": {
+      "get": {
+        "tags": [
+          "Entities"
+        ],
+        "summary": "List hosted entity",
+        "operationId": "listHostedEntity",
+        "parameters": [
+          {
+            "name": "entityIdentifier",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HostedEntity"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Entities"
+        ],
+        "summary": "Create hosted entity with auto-generated ID",
+        "operationId": "createHostedEntity",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HostedEntity"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HostedEntity"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/v1/entities/federation": {
+      "post": {
+        "tags": [
+          "Entities"
+        ],
+        "summary": "Create federation entity with auto-generated ID",
+        "operationId": "createFederationEntity",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FederationEntity"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FederationEntity"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/v1/trustmarks/{trustMarkId}/subjects": {
+      "get": {
+        "tags": [
+          "Trustmarks"
+        ],
+        "summary": "Get trust mark with there subjects",
+        "operationId": "getTrustmarkSubjects",
+        "parameters": [
+          {
+            "name": "trustMarkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrustmarkWithSubjects"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/v1/modules": {
+      "get": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "List all modules",
+        "description": "Lists all modules for the organization, optionally filtered by type",
+        "operationId": "listModules",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Modules"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/v1/modules/trustmark-issuer/{trustmarkIssuerId}/trustmarks": {
+      "get": {
+        "tags": [
+          "Modules"
+        ],
+        "summary": "Get trust mark issuer",
+        "operationId": "getTrustmarks",
+        "parameters": [
+          {
+            "name": "trustmarkIssuerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TrustmarkWithSubjects"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/v1/entities": {
+      "get": {
+        "tags": [
+          "Entities"
+        ],
+        "summary": "List all entities",
+        "description": "Lists all entities for the organization, optionally filtered by type and with modules included",
+        "operationId": "listEntities",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includemodules",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityWithModules"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/federationservice/submodules": {
+      "get": {
+        "tags": [
+          "oidf-service-api-controller"
+        ],
+        "operationId": "submoduleRecord",
+        "parameters": [
+          {
+            "name": "instanceid",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "plain",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/federationservice/entity_record": {
+      "get": {
+        "tags": [
+          "oidf-service-api-controller"
+        ],
+        "operationId": "entityRecord",
+        "parameters": [
+          {
+            "name": "instanceid",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "plain",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Trustmark": {
+        "type": "object",
+        "properties": {
+          "trustmarkId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Trustmark ID",
+            "readOnly": true
+          },
+          "trustmarkissuerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Trust mark issuer entity identifier"
+          },
+          "trustmarkType": {
+            "type": "string",
+            "description": "Trustmark type that is a entityid"
+          },
+          "logoUri": {
+            "type": "string",
+            "description": "Logo URI"
+          },
+          "refUri": {
+            "type": "string",
+            "description": "Reference URI"
+          },
+          "delegation": {
+            "type": "string",
+            "description": "Delegation JWT"
+          }
+        }
+      },
+      "TrustmarkSubject": {
+        "type": "object",
+        "properties": {
+          "trustmarksubjectId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Trustmark subject ID",
+            "readOnly": true
+          },
+          "trustmarkId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Trustmarkid that this subject belongs to"
+          },
+          "subject": {
+            "type": "string",
+            "description": "Subject entity id"
+          },
+          "revoked": {
+            "type": "boolean",
+            "description": "If the trust mark is revoked for this subject"
+          },
+          "granted": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Granted time in ISO-8601-format with offset, ex. 2025-03-12T14:37:00Z",
+            "example": "2025-03-12T14:37:00Z"
+          },
+          "expires": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Expires time in ISO-8601-format with offset, ex. 2025-03-12T14:37:00Z",
+            "example": "2025-03-12T14:37:00Z"
+          }
+        }
+      },
+      "Subordinate": {
+        "type": "object",
+        "properties": {
+          "subordinateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Subordinate ID",
+            "readOnly": true
+          },
+          "taImId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "TaIm ID that this subordinate belongs to"
+          },
+          "jwks": {
+            "type": "string",
+            "description": "JWKSet for Subordinate",
+            "example": "JSON Web Key Set as string"
+          },
+          "entityIdentifier": {
+            "type": "string",
+            "description": "Subject (entity identifier)",
+            "example": "https://subordinate.example.se"
+          },
+          "crit": {
+            "type": "array",
+            "description": "List of crit claims",
+            "example": [
+              "claim1",
+              "claim2"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "metadataPolicyCrit": {
+            "type": "array",
+            "description": "List of metadata_policy_crit",
+            "example": [
+              "operator1",
+              "operator2"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "ecLocation": {
+            "type": "string",
+            "description": "ecLocation - location where the actual entity statement is placed. Expressed as a url. Ex https://my.company.se/entitystatement"
+          },
+          "ecLocationAutomaticResolve": {
+            "type": "boolean",
+            "description": "When true, eclocation will be loaded from the hosted entity with the same issuer entityid"
+          },
+          "effectiveEcLocation": {
+            "type": "string",
+            "description": "Effective EcLocation that is calculated serverside",
+            "readOnly": true
+          },
+          "metadataPolicy": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Metadata policy for this subordinate statement. Optional. Must be valid JSON if provided.",
+            "example": {
+              "openid_provider": {
+                "subject_types_supported": {
+                  "value": [
+                    "pairwise"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "Policy": {
+        "type": "object",
+        "properties": {
+          "policyId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Policy ID",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "description": "Policy name",
+            "example": "Default OIDC RP policy"
+          },
+          "policy": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "JSON policy document"
+          }
+        }
+      },
+      "TrustmarkIssuer": {
+        "type": "object",
+        "properties": {
+          "trustmarkIssuerId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Trustmark issuer ID",
+            "readOnly": true
+          },
+          "entityId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity identifier that this trustmark issuer belongs to"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "If this trustmark issuer is active"
+          },
+          "trustMarkTokenValidityDuration": {
+            "type": "string",
+            "description": "Trust mark token validity duration (ISO-8601 duration, e.g. PT1H)"
+          }
+        },
+        "required": [
+          "active",
+          "entityId",
+          "trustMarkTokenValidityDuration"
+        ]
+      },
+      "TrustAnchor": {
+        "type": "object",
+        "properties": {
+          "trustAnchorId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "TaIm ID",
+            "readOnly": true
+          },
+          "entityId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity identifier that this trust anchor belongs to. "
+          },
+          "active": {
+            "type": "boolean",
+            "description": "If this trust anchor is active"
+          },
+          "trustMarkIssuers": {
+            "type": "array",
+            "description": "Entity identifiers for trust mark issuers",
+            "items": {
+              "type": "string"
+            }
+          },
+          "subordinates": {
+            "type": "array",
+            "description": "List of subordinates for this trust anchor",
+            "items": {
+              "$ref": "#/components/schemas/Subordinate"
+            }
+          }
+        }
+      },
+      "Resolver": {
+        "type": "object",
+        "properties": {
+          "resolverId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Resolver ID",
+            "readOnly": true
+          },
+          "entityId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity identifier that this module belongs to"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "If this resolver instance is active"
+          },
+          "resolveResponseDuration": {
+            "type": "string",
+            "description": "Response duration (ISO-8601 duration, e.g. PT1H)"
+          },
+          "trustAnchor": {
+            "type": "string",
+            "description": "Trust anchor entityId that this resolver is connected to"
+          },
+          "trustedKeys": {
+            "type": "string",
+            "description": "Trusted keys as JWKS JSON of the trust anchor"
+          },
+          "stepRetryDuration": {
+            "type": "string",
+            "description": "Step retry duration (ISO-8601 duration, e.g. PT1H)"
+          },
+          "stepCachedValueThreshold": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Step Cached Value Threshold"
+          }
+        }
+      },
+      "Intermediate": {
+        "type": "object",
+        "properties": {
+          "intermediateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "TaIm ID",
+            "readOnly": true
+          },
+          "entityId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity identifier that this trust anchor belongs to. "
+          },
+          "active": {
+            "type": "boolean",
+            "description": "If this intermediate is active"
+          },
+          "subordinates": {
+            "type": "array",
+            "description": "List of subordinates for this intermediate",
+            "items": {
+              "$ref": "#/components/schemas/Subordinate"
+            }
+          }
+        }
+      },
+      "HostedEntity": {
+        "type": "object",
+        "properties": {
+          "entityId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity ID",
+            "readOnly": true
+          },
+          "entityIdentifier": {
+            "type": "string",
+            "description": "EntityIdentifier"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "FederationMetadata"
+          },
+          "effectiveEcLocation": {
+            "type": "string",
+            "description": "Effective EcLocation that is calculated serverside",
+            "readOnly": true
+          },
+          "trustMarkSources": {
+            "type": "array",
+            "description": "Trustmark sources that can be used to include trustmarks.",
+            "items": {
+              "$ref": "#/components/schemas/TrustmarkSource"
+            }
+          },
+          "crit": {
+            "type": "array",
+            "description": "crit ",
+            "example": "The crit (critical) Claim indicates that extensions to the set of Claims specified for use in this type of JWT",
+            "items": {
+              "type": "string"
+            }
+          },
+          "authorityhints": {
+            "type": "array",
+            "description": "authorityhints",
+            "example": "An array of strings representing the Entity Identifiers of Intermediate Entities or Trust Anchors that are Immediate Superiors of the Entity. the set of Claims specified for use in this type of JWT",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "TrustmarkSource": {
+        "type": "object",
+        "properties": {
+          "trustMarkIssuer": {
+            "type": "string",
+            "description": "Trustmark "
+          },
+          "trustmarkId": {
+            "type": "string",
+            "description": "Id of the trustmark to be included (entity identifier)"
+          }
+        }
+      },
+      "FederationEntity": {
+        "type": "object",
+        "properties": {
+          "entityId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Entity ID",
+            "readOnly": true
+          },
+          "entityIdentifier": {
+            "type": "string",
+            "description": "EntityIdentifier",
+            "example": "https://ta.example.se/ta"
+          },
+          "crit": {
+            "type": "array",
+            "description": "crit ",
+            "example": "The crit (critical) Claim indicates that extensions to the set of Claims specified for use in this type of JWT",
+            "items": {
+              "type": "string"
+            }
+          },
+          "authorityhints": {
+            "type": "array",
+            "description": "authorityhints",
+            "example": "An array of strings representing the Entity Identifiers of Intermediate Entities or Trust Anchors that are Immediate Superiors of the Entity. the set of Claims specified for use in this type of JWT",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "TrustmarkWithSubjects": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Trustmark"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "trustmarkId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Trustmark ID",
+                "readOnly": true
+              },
+              "trustmarkissuerId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Trust mark issuer entity identifier"
+              },
+              "trustmarkType": {
+                "type": "string",
+                "description": "Trustmark type that is a entityid"
+              },
+              "logoUri": {
+                "type": "string",
+                "description": "Logo URI"
+              },
+              "refUri": {
+                "type": "string",
+                "description": "Reference URI"
+              },
+              "delegation": {
+                "type": "string",
+                "description": "Delegation JWT"
+              },
+              "trustmarkSubjects": {
+                "type": "array",
+                "description": "List of trustmark subjects associated with this trustmark",
+                "items": {
+                  "$ref": "#/components/schemas/TrustmarkSubject"
+                }
+              }
+            }
+          }
+        ],
+        "description": "Trustmark with associated trustmark subjects"
+      },
+      "Modules": {
+        "type": "object",
+        "properties": {
+          "trustAnchors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrustAnchor"
+            }
+          },
+          "intermediates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Intermediate"
+            }
+          },
+          "resolvers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Resolver"
+            }
+          },
+          "trustmarkIssuers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrustmarkIssuer"
+            }
+          }
+        }
+      },
+      "EntityWithModules": {
+        "type": "object",
+        "properties": {
+          "federationEntity": {
+            "type": "array",
+            "description": "Federation entity (if entity type is federation)",
+            "items": {
+              "$ref": "#/components/schemas/FederationEntityWithModules"
+            }
+          },
+          "hostedEntity": {
+            "type": "array",
+            "description": "Hosted entity (if entity type is hosted)",
+            "items": {
+              "$ref": "#/components/schemas/HostedEntity"
+            }
+          }
+        }
+      },
+      "FederationEntityWithModules": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/FederationEntity"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entityId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Entity ID",
+                "readOnly": true
+              },
+              "entityIdentifier": {
+                "type": "string",
+                "description": "EntityIdentifier",
+                "example": "https://ta.example.se/ta"
+              },
+              "crit": {
+                "type": "array",
+                "description": "crit ",
+                "example": "The crit (critical) Claim indicates that extensions to the set of Claims specified for use in this type of JWT",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "authorityhints": {
+                "type": "array",
+                "description": "authorityhints",
+                "example": "An array of strings representing the Entity Identifiers of Intermediate Entities or Trust Anchors that are Immediate Superiors of the Entity. the set of Claims specified for use in this type of JWT",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "trustAnchor": {
+                "$ref": "#/components/schemas/TrustAnchor",
+                "description": "Trust anchor module (if exists on federation entity)"
+              },
+              "intermediate": {
+                "$ref": "#/components/schemas/Intermediate",
+                "description": "Intermediate module (if exists on federation entity)"
+              },
+              "resolver": {
+                "$ref": "#/components/schemas/Resolver",
+                "description": "Resolver module (if exists on entity)"
+              },
+              "trustmarkIssuer": {
+                "$ref": "#/components/schemas/TrustmarkIssuer",
+                "description": "Trustmark issuer module (if exists on entity)"
+              }
+            }
+          }
+        ],
+        "description": "Extended federation entity including modules"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "description": "JWT token obtained from authentication endpoint",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "selectedOrgNumber": {
+        "type": "apiKey",
+        "description": "Organization number to use for the request. Enter your organization number here.",
+        "name": "selected-org-number",
+        "in": "header"
+      }
+    }
+  }
+}
