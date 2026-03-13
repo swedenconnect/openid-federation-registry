@@ -35,8 +35,8 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public final class TrustMarkProperties {
-  @SerializedName("trust-mark-id")
-  private EntityID trustMarkId;
+  @SerializedName("trust-mark-type")
+  private EntityID trustMarkType;
   @SerializedName("logo-uri")
   private String logoUri;
   @SerializedName("ref-uri")
@@ -53,6 +53,6 @@ public final class TrustMarkProperties {
    */
   @PostConstruct
   public void validate() throws IllegalArgumentException {
-    FederationAssert.assertNotEmpty(this.trustMarkId, "TrustMarkId is expected");
+    FederationAssert.assertNotEmpty(this.getTrustMarkType(), "TrustMarkId is expected");
   }
 }

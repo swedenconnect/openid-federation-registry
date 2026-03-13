@@ -267,7 +267,7 @@ public class OidfApiService {
         .stream()
         .map(trustMarkEntity ->
             TrustMarkProperties.builder()
-                .trustMarkId(new EntityID(trustMarkEntity.getTrustmarkType()))
+                .trustMarkType(new EntityID(trustMarkEntity.getTrustmarkType()))
                 .refUri(trustMarkEntity.getRefUri())
                 .logoUri(trustMarkEntity.getLogoUri())
                 .delegation(Optional.ofNullable(trustMarkEntity.getDelegation())
