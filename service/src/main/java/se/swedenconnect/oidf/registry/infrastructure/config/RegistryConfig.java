@@ -18,6 +18,15 @@ package se.swedenconnect.oidf.registry.infrastructure.config;
 import com.nimbusds.jose.jwk.JWK;
 import io.micrometer.observation.ObservationRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.impl.routing.DefaultRoutePlanner;
+import org.apache.hc.client5.http.ssl.ClientTlsStrategyBuilder;
+import org.apache.hc.client5.http.ssl.TlsSocketStrategy;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;
@@ -26,6 +35,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.util.Assert;
 import org.springframework.web.client.RestClient;
@@ -41,6 +51,9 @@ import se.swedenconnect.security.credential.bundle.CredentialBundles;
 import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
 
 import javax.net.ssl.SSLContext;
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.net.http.HttpClient;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -48,6 +61,7 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 /**
  * A Spring configuration class that defines beans for different implementations of the EntityService interface.
@@ -216,6 +230,117 @@ public class RegistryConfig {
     else {
       log.info("No trust bundle alias found, using plain http connector");
     }
+  }
+
+  @Bean
+  RestClient jwksLoaderRestClient(final RegistryProperties properties,
+      final SslBundles ssl,
+      final ObservationRegistry observationRegistry) throws NoSuchAlgorithmException, KeyManagementException {
+
+    final HttpClientBuilder httpClientBuilder = HttpClients.custom()
+        .disableRedirectHandling()
+        .setDefaultRequestConfig(RequestConfig.custom()
+            .setResponseTimeout(Timeout.ofSeconds(5))
+            .build())
+
+        .setRoutePlanner((host, context) -> {
+
+          if (host == null) {
+            throw new SecurityException("Host is missing");
+          }
+
+          try {
+            final InetAddress addr = InetAddress.getByName(host.getHostName());
+
+            final RegistryProperties.EntityConfigurationLoader jwksLoaderConf = properties.entityConfigurationLoader();
+
+            if (jwksLoaderConf == null || !properties.entityConfigurationLoader().isEnabled()) {
+              throw new SecurityException("JWKS loader is not enabled");
+            }
+
+            if (!"https".equalsIgnoreCase(host.getSchemeName())) {
+              throw new SecurityException("Only HTTPS is allowed, got: " + host.getSchemeName());
+            }
+
+            if (!jwksLoaderConf.isEnableLocalIpAdressRanges() && (
+                addr.isAnyLocalAddress() ||
+                    addr.isLoopbackAddress() ||
+                    addr.isSiteLocalAddress())) {
+              throw new SecurityException("Blocked internal address");
+            }
+
+            if (addr instanceof Inet6Address ipv6Addr) {
+              final byte[] ipv6 = ipv6Addr.getAddress();
+              if (!jwksLoaderConf.isEnableLocalIpAdressRanges() && (ipv6[0] & 0xFE) == 0xFC) {
+                throw new SecurityException("Blocked internal address");
+              }
+            }
+
+            Optional.ofNullable(jwksLoaderConf.getBlockHostname())
+                .ifPresent(block -> block.forEach(regex -> {
+                  if (Pattern.compile(regex).matcher(host.getHostName()).find()) {
+                    throw new SecurityException("Match in block list: " + host.getHostName() + "->" + regex);
+                  }
+                  else {
+                    log.debug("No block match for hostname: {} {}", host.getHostName(), regex);
+                  }
+                }));
+            return new DefaultRoutePlanner(null).determineRoute(host, context);
+          }
+          catch (final UnknownHostException e) {
+            throw new SecurityException("UnknownHostException", e);
+          }
+
+        });
+
+    Optional.ofNullable(properties.entityConfigurationLoader())
+        .filter(RegistryProperties.EntityConfigurationLoader::isDisableSystemProperties)
+        .ifPresent(aBoolean -> httpClientBuilder.useSystemProperties());
+
+    final PoolingHttpClientConnectionManagerBuilder cm =
+        PoolingHttpClientConnectionManagerBuilder.create()
+            .setMaxConnTotal(5)
+            .setMaxConnPerRoute(1)
+            .setDefaultConnectionConfig(ConnectionConfig.custom()
+                .setConnectTimeout(Timeout.ofSeconds(2))
+                .build());
+
+    final String trustBundleAlias = Optional.ofNullable(properties.entityConfigurationLoader())
+        .map(RegistryProperties.EntityConfigurationLoader::getTrustBundleAlias)
+        .orElse(null);
+
+    this.getSSLTrustContext(ssl, trustBundleAlias).ifPresentOrElse(sslContext -> {
+      final TlsSocketStrategy tlsStrategy = ClientTlsStrategyBuilder.create()
+          .setSslContext(sslContext)
+          .buildClassic();
+      cm.setTlsSocketStrategy(tlsStrategy);
+    }, () -> {
+      cm.setTlsSocketStrategy(ClientTlsStrategyBuilder.create().buildClassic());
+    });
+
+    httpClientBuilder.setConnectionManager(cm.build());
+    return RestClient.builder()
+        .observationRegistry(observationRegistry)
+        .requestFactory(new HttpComponentsClientHttpRequestFactory(httpClientBuilder.build()))
+        .build();
+  }
+
+  private Optional<SSLContext> getSSLTrustContext(
+      final SslBundles ssl,
+      final String trustBundleAlias) throws NoSuchAlgorithmException, KeyManagementException {
+    if (trustBundleAlias != null && !trustBundleAlias.isBlank()) {
+      final SSLContext sslContext = SSLContext.getInstance("TLS");
+      final SslBundle bundle = ssl.getBundle(trustBundleAlias);
+      Assert.notNull(bundle, "No spring.ssl.bundle found for alias:'%s'".formatted(trustBundleAlias));
+      sslContext.init(null, bundle.getManagers().getTrustManagerFactory().getTrustManagers(),
+          new java.security.SecureRandom());
+      return Optional.of(sslContext);
+
+    }
+    else {
+      log.info("No trust bundle alias found, using plain http connector");
+    }
+    return Optional.empty();
   }
 
   /**

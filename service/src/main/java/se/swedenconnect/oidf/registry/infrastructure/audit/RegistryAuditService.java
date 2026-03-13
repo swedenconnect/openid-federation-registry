@@ -15,6 +15,7 @@
  */
 package se.swedenconnect.oidf.registry.infrastructure.audit;
 
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import se.swedenconnect.oidf.registry.entity.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
@@ -386,4 +387,11 @@ public interface RegistryAuditService {
    * @param deletedData the data of the deleted subordinate.
    */
   void subordinateDeleted(UUID subordinateId, UUID instanceId, UUID organizationId, SubordinateDto deletedData);
+
+  /**
+   * Trigger when a jwks resolve is made
+   *
+   * @param entityId EntityId for this entityconfiguration
+   */
+  void resolveJwks(EntityID entityId);
 }
