@@ -15,6 +15,7 @@
  */
 package se.swedenconnect.oidf.registry.infrastructure.audit;
 
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.registry.entity.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
@@ -471,6 +472,15 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
             .organizationId(organizationId.toString())
             .extId(subordinateId.toString())
             .oldData(this.toJson(deletedData))
+            .build());
+  }
+
+  @Override
+  public void resolveJwks(final EntityID entityId) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(RegistryAuditEventType.RESOLVED_ENTITY_CONFIGURATION)
+            .extId(entityId.toString())
             .build());
   }
 

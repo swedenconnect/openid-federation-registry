@@ -16,23 +16,31 @@
 package se.swedenconnect.oidf.registry.infrastructure.config;
 
 import jakarta.annotation.PostConstruct;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.Assert;
 
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * Properties for RegistryService
  *
  * @param federationServiceApi federation API settings.
  * @param instances InstanceProperties that is managed by this registry
+ * @param entityConfigurationLoader EntityConfigurationLoader configuration
  * @author Per Fredrik Plars
  */
 @ConfigurationProperties("openid.federation.registry")
-public record RegistryProperties(FederationAPIProperties federationServiceApi, List<InstanceProperties> instances) {
+public record RegistryProperties(FederationAPIProperties federationServiceApi,
+    List<InstanceProperties> instances,
+    EntityConfigurationLoader entityConfigurationLoader) {
 
   /**
    * Validates the registry properties to ensure all required fields are properly configured.
@@ -156,5 +164,52 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi, L
       }
 
     }
+  }
+
+  /**
+   * JwksLoader configuration
+   */
+  @Getter
+  @Setter
+  public static class EntityConfigurationLoader {
+    /**
+     * Specifies the alias of the trust bundle to use for securing HTTPS connections when doing calls to load
+     * entityconfiguration
+     */
+    private String trustBundleAlias;
+    /**
+     * Enable the ability to load JWKS from an entitystatement
+     */
+    private boolean enabled;
+    /**
+     * By default, no local ip address ranges can be resolved. Note: setting this to true will open a security issue,
+     * users of the system can do internal network calls.
+     */
+    private boolean enableLocalIpAdressRanges;
+    /**
+     * By default, system properties are used to configure the REST client used for outgoing calls. This is convenient
+     * when setting up proxy servers, etc.
+     */
+    private boolean disableSystemProperties;
+
+    /**
+     * Regxexp block list, if entityid matches this list of regexp request is denied
+     */
+    private List<String> blockHostname;
+
+    void validate() {
+      Optional.ofNullable(this.blockHostname).ifPresent(block -> block.forEach(regex -> {
+        try {
+          Pattern.compile(regex);
+        }
+        catch (final PatternSyntaxException e) {
+          throw new IllegalArgumentException(
+              "Invalid regex in block list: " + regex, e
+          );
+        }
+      }));
+
+    }
+
   }
 }

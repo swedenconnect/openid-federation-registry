@@ -25,6 +25,7 @@ import se.swedenconnect.oidf.registry.entity.model.EntityType;
 import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.federation.model.EntityRecord;
 import se.swedenconnect.oidf.registry.federation.model.FederationMetadata;
+import se.swedenconnect.oidf.registry.federation.model.TrustMarkSourceProperty;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
 
@@ -79,7 +80,10 @@ public class FederationMetadataCreator {
         entityData.setMetadata(dto.getMetadata());
         entityData.setEcLocation(dto.getEffectiveEcLocation());
         entityData.setCrit(dto.getCrit());
-        entityData.setTrustMarkSource(entityData.getTrustMarkSource());
+      entityData.setTrustMarkSource(dto.getTrustMarkSources().stream()
+          .map(trustmarkSourceDto ->
+              new TrustMarkSourceProperty(new EntityID(trustmarkSourceDto.getTrustMarkIssuer()),
+                  trustmarkSourceDto.getTrustmarkId())).toList());
         this.authorityHint(entityEntity).map(List::of).ifPresent(entityData::setAuthorityHints);
         return entityData;
       }
