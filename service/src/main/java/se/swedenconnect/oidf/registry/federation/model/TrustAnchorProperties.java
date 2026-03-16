@@ -106,7 +106,7 @@ public class TrustAnchorProperties {
     private List<String> metadataPolicyCrit;
     @SerializedName("entity-identifier")
     private EntityID entityIdentifier;
-    @SerializedName("override-configuration-location")
+    @SerializedName("ec-location")
     private String overrideConfigurationLocation;
     @SerializedName("policy")
     private PolicyRecord policy;
