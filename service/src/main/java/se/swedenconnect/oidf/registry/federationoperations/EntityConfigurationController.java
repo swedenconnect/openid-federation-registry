@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.registry.frontendsupport;
+package se.swedenconnect.oidf.registry.federationoperations;
 
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
@@ -27,18 +27,19 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
+import se.swedenconnect.oidf.registry.federationoperations.dto.EntityConfigurationPingDto;
 
 import java.util.Map;
 
 /**
- * Controller that supports frontend with different operations
+ * Controller that handle operations on the entitystatmend for a specific entityid
  *
  * @author Per Fredrik Plars
  */
 @Slf4j
 @RestController
-@RequestMapping("/admin/support")
-public class FrontendSupportController {
+@RequestMapping("/registry/v1/entityconfiguration")
+public class EntityConfigurationController {
 
   final OidfServiceIntegration oidfServiceIntegration;
 
@@ -47,7 +48,7 @@ public class FrontendSupportController {
    *
    * @param oidfServiceIntegration OIDF integration
    */
-  public FrontendSupportController(final OidfServiceIntegration oidfServiceIntegration) {
+  public EntityConfigurationController(final OidfServiceIntegration oidfServiceIntegration) {
     this.oidfServiceIntegration = oidfServiceIntegration;
   }
 
@@ -90,4 +91,49 @@ public class FrontendSupportController {
     }
 
   }
+
+  /**
+   * Endpoint that controls if entityconfiguration is accessible
+   *
+   * @param entityId EntityId that will be used to resolve JWKS
+   * @return JWKS
+   */
+  @PostMapping(path = "/ping")
+  public EntityConfigurationPingDto pingEntityConfiguration(
+      @RequestBody final String entityId) {
+    log.debug("Start loading entity configuration for entityid: {}", entityId);
+    final EntityConfigurationPingDto response = new EntityConfigurationPingDto();
+    try {
+      final EntityStatement entityConfiguration =
+          this.oidfServiceIntegration.entityConfiguration(EntityID.parse(entityId));
+      final EntityStatementClaimsSet claimsSet = entityConfiguration.getClaimsSet();
+      if (claimsSet == null) {
+        throw new IllegalArgumentException("Entity configuration is missing claims");
+      }
+      response.setEntityConfigurationAccessible(true);
+      return response;
+    }
+    catch (final ParseException e) {
+      response.setErrorMessage("Invalid entity ID: " + entityId);
+      response.setEntityConfigurationAccessible(false);
+      return response;
+
+    }
+    catch (final HttpClientErrorException | HttpServerErrorException e) {
+      log.info("Error loading jwks from entitystatement {}", entityId, e);
+
+      response.setErrorMessage("Unable to get entity configuration, "
+          + "target server gave httpStatus:" + e.getStatusCode());
+      response.setEntityConfigurationAccessible(false);
+      return response;
+    }
+    catch (final SecurityException | ResourceAccessException e) {
+      log.info("Error loading entity configuration {}", entityId, e);
+      response.setErrorMessage("Unable to get entity configuration.");
+      response.setEntityConfigurationAccessible(false);
+      return response;
+    }
+
+  }
+
 }

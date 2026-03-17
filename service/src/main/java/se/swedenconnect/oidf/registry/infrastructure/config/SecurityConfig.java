@@ -127,6 +127,15 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.DELETE, "/registry/v1/subordinates/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/write")
 
+            .requestMatchers(HttpMethod.GET, "/registry/v1/entityconfiguration/**")
+            .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/read")
+            .requestMatchers(HttpMethod.POST, "/registry/v1/entityconfiguration/**")
+            .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/write")
+
+
+
+
+
             .requestMatchers(HttpMethod.GET, "/api/v1/federationservice/**").permitAll()
             .requestMatchers(HttpMethod.OPTIONS).permitAll()
             .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()

@@ -19,7 +19,7 @@
  * @author Per Fredrik Plars
  */
 @NonNullApi
-package se.swedenconnect.oidf.registry.frontendsupport;
+package se.swedenconnect.oidf.registry.federationoperations;
 
 import org.springframework.lang.NonNullApi;
 
