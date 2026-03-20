@@ -17,6 +17,7 @@ package se.swedenconnect.oidf.registry.guioperations.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import se.swedenconnect.oidf.registry.guioperations.dto.UserInfoResponse;
 import se.swedenconnect.oidf.registry.infrastructure.auth.AuthConstants;
 import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationInformation;
 import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationInformationFactory;
@@ -44,7 +46,6 @@ import java.util.Optional;
 @RequestMapping("/userinfo")
 public class UserInfoController {
 
-  public static final String SELECTED_ORG_SESSION_ATTRIBUTE = "selected-org-number";
 
   /**
    * Retrieves the orgInfo of the currently authenticated OpenID Connect (OIDC) user. If the user is not authenticated
@@ -58,7 +59,7 @@ public class UserInfoController {
   public ResponseEntity<UserInfoResponse> getCurrentUser(final HttpServletRequest request) {
     final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     if (authentication == null || !(authentication.getPrincipal() instanceof final OidcUser oidcUser)) {
-      return ResponseEntity.ok(UserInfoResponse.builder().build());
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
     return this.handleOrganizationRealm(oidcUser, request);
   }
@@ -84,7 +85,7 @@ public class UserInfoController {
               .anyMatch(org -> org.orgNumber().equals(orgNumber));
 
       if (selectedOrgNumberExists) {
-        request.getSession().setAttribute(SELECTED_ORG_SESSION_ATTRIBUTE, orgNumber);
+        request.getSession().setAttribute(AuthConstants.SELECTED_ORG_NUMBER_ATTRIBUTE, orgNumber);
       }
     }
   }

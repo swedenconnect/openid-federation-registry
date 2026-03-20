@@ -24,6 +24,7 @@
       <v-card-actions class="justify-center">
         <v-btn
             color="primary"
+            variant="flat"
             size="large"
             @click="login"
         >

@@ -72,7 +72,7 @@ public class SecurityConfig {
                   log.error("Authentication failed", exception);
                   response.sendRedirect("/?errorMsg=backend.login.failed");
                 })
-                .
+
             // This will be used to mapp the authority to Malids authorication setup.
             //.userInfoEndpoint(uuid ->
             //    uuid.userAuthoritiesMapper(authorities ->
@@ -169,8 +169,8 @@ public class SecurityConfig {
 
             .requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**")
             .authenticated()
-            .requestMatchers(HttpMethod.GET, "/userinfo/**").authenticated()
-            .requestMatchers(HttpMethod.PUT, "/userinfo/**").authenticated()
+            .requestMatchers(HttpMethod.GET, "/userinfo").authenticated()
+            .requestMatchers(HttpMethod.PUT, "/userinfo").authenticated()
 
             .anyRequest().denyAll()
         );

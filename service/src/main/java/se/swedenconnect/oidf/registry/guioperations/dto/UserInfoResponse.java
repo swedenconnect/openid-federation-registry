@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.registry.guioperations.controller;
+package se.swedenconnect.oidf.registry.guioperations.dto;
 
 import lombok.Builder;
 import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationInformation;

@@ -18,15 +18,13 @@ import {ref} from "vue";
 import {useFetch} from "./fetch";
 import {useErrorStore} from "@/stores/errorStore";
 
-const _errorPrefix = 'general.error';
-
 function _errorMap(error) {
     if (error.includes("Value is not a valid JSON.")) {
-        return `${_errorPrefix}.invalid-json`;
+        return 'Invalid JSON format.';
     } else if (error.includes("invalid")) {
-        return `${_errorPrefix}.invalid`;
+        return 'Invalid request.';
     }
-    return `${_errorPrefix}.unknown-error`;
+    return 'An unexpected error occurred.';
 }
 
 export function useRequest(logError = true) {
@@ -45,12 +43,14 @@ export function useRequest(logError = true) {
         try {
             return await fetchData(path, payload, method);
         } catch (err) {
+            console.log(err);
             let errorMessage = 'Unknown error';
             if (err instanceof Error) {
                 errorMessage = errorInterpreter.value(err.message);
                 // Also set in error store for global display
-                if (err.message.includes('unauthorized')) {
-                    errorStore.setError('Unauthorized. Please login.');
+                if (status.value === 401) {
+                    console.info("401 redirects to login — no error banner");
+                    return;
                 } else if (err.message.includes('Failed to fetch')) {
                     errorStore.setError('Failed to connect to server. Please check your connection.');
                 } else {
@@ -66,7 +66,7 @@ export function useRequest(logError = true) {
             }
             error.value = errorMessage;
             if (logError) {
-                console.error(error.value);
+                console.error(err);
             }
         } finally {
             loading.value = false;

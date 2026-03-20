@@ -91,6 +91,19 @@
               :disabled="saving"
           />
 
+          <v-textarea
+              v-model="metadataPolicy"
+              label="Metadata Policy"
+              :rules="[rules.json]"
+              :disabled="saving"
+              :rows="5"
+              auto-grow
+              hint="Metadata policy for this subordinate statement (optional, JSON)"
+              persistent-hint
+              class="mb-4"
+              style="font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;"
+          ></v-textarea>
+
           <ListField
               v-model="crit"
               label="Crit"
@@ -177,6 +190,7 @@ const policyId = ref(null);
 const jwks = ref('');
 const metadataPolicyCrit = ref([]);
 const crit = ref([]);
+const metadataPolicy = ref('');
 const ecLocation = ref('');
 const ecLocationAutomaticResolve = ref(false);
 const effectiveEcLocation = ref('');
@@ -239,6 +253,9 @@ async function loadSubordinate() {
         : (response.jwks ? JSON.stringify(response.jwks, null, 2) : '');
     metadataPolicyCrit.value = response.metadataPolicyCrit || [];
     crit.value = response.crit || [];
+    metadataPolicy.value = response.metadataPolicy
+        ? JSON.stringify(response.metadataPolicy, null, 2)
+        : '';
     ecLocation.value = response.ecLocation || '';
     ecLocationAutomaticResolve.value = response.ecLocationAutomaticResolve || false;
     effectiveEcLocation.value = response.effectiveEcLocation || '';
@@ -267,6 +284,9 @@ async function submitForm() {
           : [],
       ecLocation: ecLocation.value || null,
       ecLocationAutomaticResolve: ecLocationAutomaticResolve.value || false,
+      metadataPolicy: metadataPolicy.value && metadataPolicy.value.trim()
+          ? JSON.parse(metadataPolicy.value)
+          : null,
     };
 
     if (policyId.value) {
