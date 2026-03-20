@@ -9,4 +9,5 @@ jobs:
     secrets: inherit
     with:
       service-path: service
+      frontend-path: frontend
       revision-property: service-revision
