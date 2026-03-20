@@ -25,6 +25,7 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import se.swedenconnect.oidf.registry.infrastructure.auth.AuthConstants;
 
 /**
  * Configuration class for OpenAPI/Swagger documentation.
@@ -64,7 +65,7 @@ public class OpenApiConfig {
             .addSecuritySchemes("selectedOrgNumber", new SecurityScheme()
                 .type(SecurityScheme.Type.APIKEY)
                 .in(SecurityScheme.In.HEADER)
-                .name("selected-org-number")
+                .name(AuthConstants.SELECTED_ORG_NUMBER_ATTRIBUTE)
                 .description("Organization number to use for the request. Enter your organization number here.")))
         .addSecurityItem(new SecurityRequirement().addList("bearerAuth").addList("selectedOrgNumber"));
   }

@@ -1712,6 +1712,67 @@
         }
       }
     },
+    "/registry/v1/entityconfiguration/ping": {
+      "post": {
+        "tags": [
+          "entity-configuration-controller"
+        ],
+        "operationId": "pingEntityConfiguration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityConfigurationPingDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/v1/entityconfiguration/jwks": {
+      "post": {
+        "tags": [
+          "entity-configuration-controller"
+        ],
+        "operationId": "loadJwksFromEntityConfiguration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/registry/v1/entities/hosted": {
       "get": {
         "tags": [
@@ -2414,6 +2475,19 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "EntityConfigurationPingDto": {
+        "type": "object",
+        "properties": {
+          "errorMessage": {
+            "type": "string",
+            "description": "Error message explaining way entityconfiguration was not accessable",
+            "example": "Remote server reply 404 NotFound"
+          },
+          "entityConfigurationAccessible": {
+            "type": "boolean"
           }
         }
       },

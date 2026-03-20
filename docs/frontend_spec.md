@@ -24,6 +24,25 @@ Vuetify components to ensure consistency, accessibility, and maintainability.
 
 **Icon Library**: Material Design Icons (MDI) via `@mdi/js` for SVG icons.
 
+Color Tokens
+
+- --ink: #1a1a1a (primary text, near-black)
+- --muted: #5c5c5c (secondary text, hints)
+- --brand-sage: #4a6741 (primary brand, nav active states, primary buttons)
+- --brand-sage-light: #f0f4ee (sage tint for surfaces, backgrounds)
+- --brand-rose: #b86a5e (accent, highlights, badges)
+- --brand-rose-light: #f9ecea (rose tint surface)
+- --surface: #ffffff
+- --surface-alt: #f5f5f3 (warm off-white for subtle sections)
+- --border: #d6d6d2 (neutral warm-gray border)
+- --sweden-blue: #005b99 (Swedish federation/trust context accents)
+- --sweden-yellow: #f0c30f (Swedish federation accents)
+
+Status palette
+- Green (approved/complete): bg #e8f2e6, text #2d6b28, border #b3d4ae
+- Amber (pending/warning): bg #fdf3de, text #7a4f00, border #e8c96a
+- Red (error/rejected): bg #fdecea, text #8c2020, border #e8b4b0
+- Gray (locked/disabled): bg #f0f0ee, text #666663, border #d0d0cc
 ### Form Validation and API Integration
 
 All forms must follow the **OpenAPI specification** from the backend API. The backend provides an OpenAPI
@@ -61,6 +80,15 @@ Topbar has navigation buttons Entity, Policy located to the left.
 - Name of the selected organization shall be displayed in the topbar centered
 - Organization dropdown menu should be placed in the top bar to the right (if multiple organizations)
 - Logout button is placed to the very right
+
+
+- Left: logomark + "Sweden Connect OIDF Portal" wordmark (--brand-sage, semibold)
+- Center (authenticated pages only): current org name (semibold, --ink)
+- Right: org selector dropdown (authenticated) + "SV | EN" language toggle
+- Below logo row: horizontal nav links (medium weight, --muted; active link underlined
+  in --brand-sage)
+- Below nav (multi-step pages only): step breadcrumb trail with › separators
+-
 
 ## Footer
 

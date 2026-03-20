@@ -17,8 +17,10 @@ package se.swedenconnect.oidf.registry.infrastructure.config;
 
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -45,17 +47,45 @@ import java.util.Collection;
  */
 @Configuration
 @EnableWebSecurity
+@Slf4j
 public class SecurityConfig {
 
+  /**
+   * Security filter chain for REST API endpoints. Uses JWT Bearer token authentication (OAuth2 Resource Server).
+   * Stateless — no HTTP session is created.
+   */
   @Bean
-  SecurityFilterChain securityFilterChain(final HttpSecurity http,
-      final Converter<Jwt, AbstractAuthenticationToken> customJwtAuthenticationConverter) throws Exception {
+  @Order(1)
+  SecurityFilterChain apiSecurityFilterChain(final HttpSecurity http,
+      final Converter<Jwt, AbstractAuthenticationToken> customJwtAuthenticationConverter) {
     http
         .oauth2ResourceServer(oauth2 -> oauth2
             .jwt(jwtConfigurer ->
                 jwtConfigurer.jwtAuthenticationConverter(customJwtAuthenticationConverter))
         )
         .csrf(AbstractHttpConfigurer::disable)
+
+        .oauth2Login(login -> login
+                .loginPage("/")
+                .defaultSuccessUrl("/", true)
+                .failureHandler((request, response, exception) -> {
+                  log.error("Authentication failed", exception);
+                  response.sendRedirect("/?errorMsg=backend.login.failed");
+                })
+                .
+            // This will be used to mapp the authority to Malids authorication setup.
+            //.userInfoEndpoint(uuid ->
+            //    uuid.userAuthoritiesMapper(authorities ->
+            //        authorities.stream().toList()))
+
+        )
+        .logout(logout -> logout
+            .logoutUrl("/logout")
+            .logoutSuccessUrl("/")
+            .clearAuthentication(true)
+            .invalidateHttpSession(true)
+            .deleteCookies("JSESSIONID", "SESSION")
+        )
 
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(HttpMethod.GET, "/registry/v1/entities/hosted/**")
@@ -108,7 +138,6 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.DELETE, "/registry/v1/trustmarks/subjects/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/trustmarksubjects/write")
 
-
             .requestMatchers(HttpMethod.GET, "/registry/v1/policies/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/policies/read")
             .requestMatchers(HttpMethod.POST, "/registry/v1/policies/**")
@@ -132,15 +161,17 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, "/registry/v1/entityconfiguration/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/write")
 
-
-
-
-
             .requestMatchers(HttpMethod.GET, "/api/v1/federationservice/**").permitAll()
             .requestMatchers(HttpMethod.OPTIONS).permitAll()
             .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
-            .requestMatchers(HttpMethod.GET, "/swagger-ui.html",
-                "/swagger-ui/**", "/v3/api-docs/**", "/*").permitAll()
+            .requestMatchers(HttpMethod.GET, "/assets/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/*").permitAll()
+
+            .requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**")
+            .authenticated()
+            .requestMatchers(HttpMethod.GET, "/userinfo/**").authenticated()
+            .requestMatchers(HttpMethod.PUT, "/userinfo/**").authenticated()
+
             .anyRequest().denyAll()
         );
     return http.build();

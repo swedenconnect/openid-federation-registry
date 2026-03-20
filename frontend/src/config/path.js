@@ -24,12 +24,11 @@ function getAbsolutePath(path) {
     return '/' + path;
 }
 
-export const adminAuthenticatePath = getAbsolutePath('authenticate?reg=entity-registry&continue=/');
-export const adminPath = getAbsolutePath('api/v1/entities');
-export const policiesPath = getAbsolutePath('api/v1/policies');
-export const adminUserApiPath = getAbsolutePath('');
+export const adminAuthenticatePath = getAbsolutePath('authenticate?reg=oidf-admin&continue=/');
+export const adminPath = getAbsolutePath('registry/v1/entities');
+export const policiesPath = getAbsolutePath('registry/v1/policies');
 export const userInfoPath = getAbsolutePath('userinfo');
-export const trustmarksPath = getAbsolutePath('api/v1/trustmarks');
-export const trustmarksListingPath = (trustmarkIssuerID) => getAbsolutePath(`api/v1/modules/trustmark-issuer/${trustmarkIssuerID}/trustmarks`);
-export const trustmarkSubjectsPath = getAbsolutePath('api/v1/trustmarks/subjects');
+export const trustmarksPath = getAbsolutePath('registry/v1/trustmarks');
+export const trustmarksListingPath = (trustmarkIssuerID) => getAbsolutePath(`registry/v1/modules/trustmark-issuer/${trustmarkIssuerID}/trustmarks`);
+export const trustmarkSubjectsPath = getAbsolutePath('registry/v1/trustmarks/subjects');
 export const logoutPath = getAbsolutePath('logout');

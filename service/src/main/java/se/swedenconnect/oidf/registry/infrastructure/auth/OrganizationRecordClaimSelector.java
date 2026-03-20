@@ -17,6 +17,7 @@ package se.swedenconnect.oidf.registry.infrastructure.auth;
 
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -36,7 +37,6 @@ import java.util.Optional;
  */
 @Slf4j
 public class OrganizationRecordClaimSelector implements HandlerMethodArgumentResolver {
-  public final static String SELECTED_ORG_NUMBER_HEADER_NAME = "selected-org-number";
 
   /**
    * Determines whether this resolver supports the given method parameter.
@@ -69,13 +69,22 @@ public class OrganizationRecordClaimSelector implements HandlerMethodArgumentRes
       final WebDataBinderFactory binderFactory) {
 
     final HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
-    final String selectedOrgNumber = Objects.requireNonNull(request).getHeader(SELECTED_ORG_NUMBER_HEADER_NAME);
+    String selectedOrgNumber = Objects.requireNonNull(request).getHeader(AuthConstants.SELECTED_ORG_NUMBER_ATTRIBUTE);
+    log.debug("Selected organization number from header: {}", selectedOrgNumber);
+    if (selectedOrgNumber == null) {
+      final HttpSession session = request.getSession(false);
+      selectedOrgNumber = Optional.ofNullable(session)
+          .map(httpSession -> httpSession.getAttribute(AuthConstants.SELECTED_ORG_NUMBER_ATTRIBUTE))
+          .map(String.class::cast)
+          .orElse(null);
+      log.debug("Selected organization number from session: {}", selectedOrgNumber);
+    }
     final Object authentication = SecurityContextHolder.getContext().getAuthentication();
     if (authentication instanceof SecurityConfig.RegistryClaims registryClaims) {
       return Optional.ofNullable(selectedOrgNumber)
           .map(registryClaims::getOrganizationRecordByOrgNumber)
           .orElseThrow(
-              () -> new IllegalArgumentException("Header:  " + SELECTED_ORG_NUMBER_HEADER_NAME +
+              () -> new IllegalArgumentException("Header:  " + AuthConstants.SELECTED_ORG_NUMBER_ATTRIBUTE +
                   " missing or have a value that does not match claim in jwt"));
     }
     else {
