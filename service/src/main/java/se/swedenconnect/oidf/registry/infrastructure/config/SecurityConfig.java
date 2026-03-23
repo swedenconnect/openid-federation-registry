@@ -28,6 +28,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
+import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -51,7 +53,13 @@ public class SecurityConfig {
 
   @Bean
   @Order(1)
-  SecurityFilterChain apiSecurityFilterChain(final HttpSecurity http, final OidcUserService oidcUserService) {
+  SecurityFilterChain apiSecurityFilterChain(final HttpSecurity http, final OidcUserService oidcUserService,
+      final ClientRegistrationRepository clientRegistrationRepository) {
+
+    final OidcClientInitiatedLogoutSuccessHandler logoutSuccessHandler =
+        new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
+    logoutSuccessHandler.setPostLogoutRedirectUri("{baseUrl}/");
+
     http
         .oauth2ResourceServer(oauth2 -> oauth2
             .jwt(jwtConfigurer ->
@@ -64,7 +72,7 @@ public class SecurityConfig {
                 .defaultSuccessUrl("/", true)
                 .failureHandler((request, response, exception) -> {
                   log.error("Authentication failed", exception);
-                  response.sendRedirect("/?errorcode=backend.login.failed");
+                  response.sendRedirect("/login?errorcode=backend.login.failed");
                 })
             .userInfoEndpoint(userInfo -> userInfo
                 .oidcUserService(oidcUserService)
@@ -72,8 +80,7 @@ public class SecurityConfig {
         )
         .logout(logout -> logout
             .logoutUrl("/logout")
-            .logoutSuccessUrl("/")
-            //.addLogoutHandler(new OidcBackChannelLogoutHandler())
+            .logoutSuccessHandler(logoutSuccessHandler)
             .clearAuthentication(true)
             .invalidateHttpSession(true)
             .deleteCookies("JSESSIONID", "SESSION")
@@ -153,6 +160,7 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, "/registry/v1/entityconfiguration/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/write")
 
+            .requestMatchers(HttpMethod.GET, "/logout/frontchannel").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/v1/federationservice/**").permitAll()
             .requestMatchers(HttpMethod.OPTIONS).permitAll()
             .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()

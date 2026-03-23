@@ -19,6 +19,14 @@
     <v-card class="pa-8 text-center" min-width="400">
       <v-card-title class="text-h4 mb-4">OpenID Federation - Administration</v-card-title>
       <v-card-text class="mb-4">
+        <v-alert
+            v-if="errorMessage"
+            type="error"
+            variant="tonal"
+            class="mb-4 text-left"
+        >
+          {{ errorMessage }}
+        </v-alert>
         <p>Please log in to continue.</p>
       </v-card-text>
       <v-card-actions class="justify-center">
@@ -36,7 +44,20 @@
 </template>
 
 <script setup>
+import {computed} from 'vue';
+import {useRoute} from 'vue-router';
 import {adminAuthenticatePath} from '@/config/path';
+
+const ERROR_MESSAGES = {
+  'backend.login.failed': 'Login failed. Please try again or contact support if the problem persists.',
+};
+
+const route = useRoute();
+const errorMessage = computed(() => {
+  const code = route.query.errorcode;
+  if (!code) return null;
+  return ERROR_MESSAGES[code] ?? `Login error: ${code}`;
+});
 
 function login() {
   globalThis.location.href = adminAuthenticatePath;

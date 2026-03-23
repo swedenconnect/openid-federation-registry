@@ -24,8 +24,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.view.RedirectView;
 
-import static se.swedenconnect.oidf.registry.infrastructure.auth.AuthConstants.POST_LOGOUT_TARGET_ATTRIBUTE;
-
 /**
  * Controller for selecting authentication.
  *
@@ -80,26 +78,5 @@ public class AuthenticationRedirectController {
     return new RedirectView(redirect.toString());
   }
 
-  /**
-   * Handles the post-logout redirection logic. Determines the appropriate redirection target based on a session-stored
-   * attribute and redirects the user accordingly.
-   *
-   * @param request the HTTP servlet request, which may contain a session with an attribute "post-logout-target"
-   *     specifying a relative path to redirect to after logout.
-   * @return a {@code RedirectView} to the resolved redirection target. If no valid target is set in the session,
-   *     defaults to "/"
-   */
-  @GetMapping("/logout/final")
-  RedirectView postLogout(final HttpServletRequest request) {
-    final Object saved = request.getSession(false) != null ?
-        request.getSession(false).getAttribute(POST_LOGOUT_TARGET_ATTRIBUTE) : null;
 
-    final String target = (saved instanceof String s && s.startsWith("/")) ? s : "/";
-
-    if (request.getSession(false) != null) {
-      request.getSession(false).removeAttribute(POST_LOGOUT_TARGET_ATTRIBUTE);
-    }
-
-    return new RedirectView(target);
-  }
 }
