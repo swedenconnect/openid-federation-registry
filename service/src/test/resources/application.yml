@@ -51,6 +51,23 @@ spring:
         jwt:
           public-key-location: classpath:public_auth_cert.pem
           audiences: account
+
+      client:
+        registration:
+          entity-registry:
+            client-id: oidf-entity-registry
+            client-secret: BWiMNP3JefVDlUH0Re9MB2ULFPmfRtSR
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            authorization-grant-type: authorization_code
+            scope:
+              - openid
+            provider: keycloak
+        provider:
+          keycloak:
+            authorization-uri: "http://localhost:1987/realms/oidfrealm/protocol/openid-connect/auth"
+            token-uri: "http://localhost:1987/realms/oidfrealm/protocol/openid-connect/token"
+            jwk-set-uri: "http://localhost:1987/realms/oidfrealm/protocol/openid-connect/certs"
+
   jpa:
     show-sql: false
 
