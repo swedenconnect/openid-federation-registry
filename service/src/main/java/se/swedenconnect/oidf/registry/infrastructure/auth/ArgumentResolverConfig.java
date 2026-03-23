@@ -27,7 +27,7 @@ import java.util.List;
  * @author Felix Hellman
  */
 @Configuration
-public class ArgumentResolverConfiguration implements WebMvcConfigurer {
+public class ArgumentResolverConfig implements WebMvcConfigurer {
   /**
    * Adds custom argument resolvers to the list of resolvers.
    *

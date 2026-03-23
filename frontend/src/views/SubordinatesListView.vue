@@ -141,6 +141,7 @@ import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
+import {intermediateModulePath, subordinatePath, trustAnchorModulePath} from '@/config/path';
 
 const route = useRoute();
 const router = useRouter();
@@ -182,9 +183,9 @@ async function loadSubordinates() {
 
   let modulePath = null;
   if (moduleType.value === 'trustanchor') {
-    modulePath = `/api/v1/modules/trust-anchor/${taImId.value}`;
+    modulePath = trustAnchorModulePath(taImId.value);
   } else if (moduleType.value === 'intermediate') {
-    modulePath = `/api/v1/modules/intermediate/${taImId.value}`;
+    modulePath = intermediateModulePath(taImId.value);
   }
 
   if (!modulePath) {
@@ -239,7 +240,7 @@ async function deleteSubordinate() {
       return;
     }
 
-    await requestDelete(`/api/v1/subordinates/${subordinateId}`);
+    await requestDelete(subordinatePath(subordinateId));
 
     if (ok.value) {
       deleteDialog.value = false;

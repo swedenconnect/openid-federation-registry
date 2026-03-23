@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.registry.infrastructure.auth;
+package se.swedenconnect.oidf.registry.infrastructure.auth.oauth;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.util.Assert;
-import se.swedenconnect.oidf.registry.infrastructure.config.SecurityConfig;
+import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationInformation;
+import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationInformationFactory;
 
 /**
  * Jwt converter for extracting relevant claims.
@@ -47,7 +48,7 @@ public class RegistryJwtConverter implements Converter<Jwt, AbstractAuthenticati
       username = jwt.getSubject();
     }
 
-    final SecurityConfig.RegistryClaims registryClaims = new SecurityConfig.RegistryClaims(
+    final RegistryClaims registryClaims = new RegistryClaims(
         jwt,
         information,
         username,

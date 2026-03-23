@@ -179,7 +179,7 @@ import {computed, onMounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
-import {adminPath} from '@/config/path';
+import {adminPath, federationEntityPath, hostedEntityPath} from '@/config/path';
 
 const router = useRouter();
 const {requestGet, requestDelete, loading, error, ok} = useRequest();
@@ -368,8 +368,8 @@ async function deleteEntity() {
     }
 
     const endpoint = entityType === 'federation'
-        ? `/api/v1/entities/federation/${entityId}`
-        : `/api/v1/entities/hosted/${entityId}`;
+        ? federationEntityPath(entityId)
+        : hostedEntityPath(entityId);
 
     await requestDelete(endpoint);
 

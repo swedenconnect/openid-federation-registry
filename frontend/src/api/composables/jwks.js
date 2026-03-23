@@ -18,6 +18,7 @@ import {ref} from "vue";
 import {useErrorStore} from "@/stores/errorStore";
 import {useAuthorizationStatusStore} from "@/authorization/stores/authorizationStatusStore";
 import router from "@/router";
+import {jwksSupportPath} from "@/config/path";
 
 export function useLoadJwks() {
     const errorStore = useErrorStore();
@@ -34,7 +35,7 @@ export function useLoadJwks() {
 
         try {
             // Make POST request with plain text body
-            const response = await fetch('/admin/support/jwks', {
+            const response = await fetch(jwksSupportPath, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {

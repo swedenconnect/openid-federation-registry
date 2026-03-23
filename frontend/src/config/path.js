@@ -32,3 +32,18 @@ export const trustmarksPath = getAbsolutePath('registry/v1/trustmarks');
 export const trustmarksListingPath = (trustmarkIssuerID) => getAbsolutePath(`registry/v1/modules/trustmark-issuer/${trustmarkIssuerID}/trustmarks`);
 export const trustmarkSubjectsPath = getAbsolutePath('registry/v1/trustmarks/subjects');
 export const logoutPath = getAbsolutePath('logout');
+
+export const federationEntitiesPath = getAbsolutePath('registry/v1/entities/federation');
+export const federationEntityPath = (id) => getAbsolutePath(`registry/v1/entities/federation/${id}`);
+export const hostedEntitiesPath = getAbsolutePath('registry/v1/entities/hosted');
+export const hostedEntityPath = (id) => getAbsolutePath(`registry/v1/entities/hosted/${id}`);
+
+export const trustAnchorModulePath = (id) => getAbsolutePath(`registry/v1/modules/trust-anchor/${id}`);
+export const intermediateModulePath = (id) => getAbsolutePath(`registry/v1/modules/intermediate/${id}`);
+export const resolverModulePath = (id) => getAbsolutePath(`registry/v1/modules/resolver/${id}`);
+export const trustmarkIssuerModulePath = (id) => getAbsolutePath(`registry/v1/modules/trustmark-issuer/${id}`);
+
+export const subordinatesPath = getAbsolutePath('registry/v1/subordinates');
+export const subordinatePath = (id) => getAbsolutePath(`registry/v1/subordinates/${id}`);
+
+export const jwksSupportPath = getAbsolutePath('registry/v1/entityconfiguration/jwks');

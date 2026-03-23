@@ -96,6 +96,7 @@ import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import TrustmarkSourcesField from '@/components/TrustmarkSourcesField.vue';
+import {hostedEntitiesPath, hostedEntityPath} from '@/config/path';
 
 const route = useRoute();
 const router = useRouter();
@@ -127,7 +128,7 @@ const rules = {
 async function loadEntity() {
   errorStore.clearError();
   entityId.value = route.params.id;
-  const response = await requestGet(`/api/v1/entities/hosted/${entityId.value}`);
+  const response = await requestGet(hostedEntityPath(entityId.value));
   if (response) {
     entityIdentifier.value = response.entityIdentifier || '';
     metadata.value = JSON.stringify(response.metadata || {}, null, 2);
@@ -159,9 +160,9 @@ async function saveEntity() {
     };
 
     if (isEdit.value) {
-      await requestPut(`/api/v1/entities/hosted/${entityId.value}`, entityData);
+      await requestPut(hostedEntityPath(entityId.value), entityData);
     } else {
-      await requestPost('/api/v1/entities/hosted', entityData);
+      await requestPost(hostedEntitiesPath, entityData);
     }
 
     if (ok.value) {

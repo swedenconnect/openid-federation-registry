@@ -170,7 +170,7 @@ import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useLoadJwks} from '@/api/composables/jwks';
-import {policiesPath} from '@/config/path';
+import {policiesPath, subordinatePath, subordinatesPath} from '@/config/path';
 import ListField from '@/components/ListField.vue';
 
 const route = useRoute();
@@ -243,7 +243,7 @@ async function loadSubordinate() {
   errorStore.clearError();
   subordinateId.value = route.params.id;
 
-  const response = await requestGet(`/api/v1/subordinates/${subordinateId.value}`);
+  const response = await requestGet(subordinatePath(subordinateId.value));
   if (response) {
     taImIdValue.value = response.taImId || taImId.value || null;
     entityIdentifier.value = response.entityIdentifier || '';
@@ -294,9 +294,9 @@ async function submitForm() {
     }
 
     if (isEdit.value) {
-      await requestPut(`/api/v1/subordinates/${subordinateId.value}`, subordinateData);
+      await requestPut(subordinatePath(subordinateId.value), subordinateData);
     } else {
-      await requestPost('/api/v1/subordinates/', subordinateData);
+      await requestPost(subordinatesPath, subordinateData);
     }
 
     if (ok.value) {

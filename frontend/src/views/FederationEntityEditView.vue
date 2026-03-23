@@ -412,6 +412,13 @@ import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import ListField from '@/components/ListField.vue';
+import {
+  federationEntityPath,
+  intermediateModulePath,
+  resolverModulePath,
+  trustAnchorModulePath,
+  trustmarkIssuerModulePath,
+} from '@/config/path';
 
 const route = useRoute();
 const router = useRouter();
@@ -474,7 +481,7 @@ const rules = {
 async function loadEntity() {
   errorStore.clearError();
   entityId.value = route.params.id;
-  const response = await requestGet(`/api/v1/entities/federation/${entityId.value}?includemodules=true`);
+  const response = await requestGet(`${federationEntityPath(entityId.value)}?includemodules=true`);
   if (response) {
     // Response can be FederationEntityWithModules or FederationEntity
     const entity = response.federationEntity || response;
@@ -532,7 +539,7 @@ async function saveEntity() {
       crit: crit.value.filter(c => c && c.trim() !== ''),
     };
 
-    await requestPut(`/api/v1/entities/federation/${entityId.value}`, entityData);
+    await requestPut(federationEntityPath(entityId.value), entityData);
 
     if (ok.value) {
       // Reload to get updated data
@@ -580,11 +587,11 @@ async function saveModule(moduleType) {
           trustMarkIssuers: module.trustMarkIssuers.filter(s => s && s.trim() !== ''),
         };
         if (module.id) {
-          endpoint = `/api/v1/modules/trust-anchor/${module.id}`;
+          endpoint = trustAnchorModulePath(module.id);
           await requestPut(endpoint, moduleData);
         } else {
           const moduleId = crypto.randomUUID();
-          endpoint = `/api/v1/modules/trust-anchor/${moduleId}`;
+          endpoint = trustAnchorModulePath(moduleId);
           await requestPost(endpoint, moduleData);
           if (ok.value) {
             module.id = moduleId;
@@ -598,11 +605,11 @@ async function saveModule(moduleType) {
           active: module.active,
         };
         if (module.id) {
-          endpoint = `/api/v1/modules/intermediate/${module.id}`;
+          endpoint = intermediateModulePath(module.id);
           await requestPut(endpoint, moduleData);
         } else {
           const moduleId = crypto.randomUUID();
-          endpoint = `/api/v1/modules/intermediate/${moduleId}`;
+          endpoint = intermediateModulePath(moduleId);
           await requestPost(endpoint, moduleData);
           if (ok.value) {
             module.id = moduleId;
@@ -623,11 +630,11 @@ async function saveModule(moduleType) {
           stepCachedValueThreshold: module.stepCachedValueThreshold ?? null,
         };
         if (module.id) {
-          endpoint = `/api/v1/modules/resolver/${module.id}`;
+          endpoint = resolverModulePath(module.id);
           await requestPut(endpoint, moduleData);
         } else {
           const moduleId = crypto.randomUUID();
-          endpoint = `/api/v1/modules/resolver/${moduleId}`;
+          endpoint = resolverModulePath(moduleId);
           await requestPost(endpoint, moduleData);
           if (ok.value) {
             module.id = moduleId;
@@ -642,11 +649,11 @@ async function saveModule(moduleType) {
           trustMarkTokenValidityDuration: module.trustMarkTokenValidityDuration,
         };
         if (module.id) {
-          endpoint = `/api/v1/modules/trustmark-issuer/${module.id}`;
+          endpoint = trustmarkIssuerModulePath(module.id);
           await requestPut(endpoint, moduleData);
         } else {
           const moduleId = crypto.randomUUID();
-          endpoint = `/api/v1/modules/trustmark-issuer/${moduleId}`;
+          endpoint = trustmarkIssuerModulePath(moduleId);
           await requestPost(endpoint, moduleData);
           if (ok.value) {
             module.id = moduleId;
@@ -690,16 +697,16 @@ async function confirmDeleteModule() {
     let endpoint;
     switch (moduleType) {
       case 'trustanchor':
-        endpoint = `/api/v1/modules/trust-anchor/${module.id}`;
+        endpoint = trustAnchorModulePath(module.id);
         break;
       case 'intermediate':
-        endpoint = `/api/v1/modules/intermediate/${module.id}`;
+        endpoint = intermediateModulePath(module.id);
         break;
       case 'resolver':
-        endpoint = `/api/v1/modules/resolver/${module.id}`;
+        endpoint = resolverModulePath(module.id);
         break;
       case 'trustmarkissuer':
-        endpoint = `/api/v1/modules/trustmark-issuer/${module.id}`;
+        endpoint = trustmarkIssuerModulePath(module.id);
         break;
     }
 

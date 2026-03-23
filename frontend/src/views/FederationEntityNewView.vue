@@ -72,6 +72,7 @@ import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
 import ListField from '@/components/ListField.vue';
+import {federationEntitiesPath} from '@/config/path';
 
 const router = useRouter();
 const {requestPost, ok} = useRequest();
@@ -100,7 +101,7 @@ async function saveEntity() {
       crit: crit.value.filter(c => c && c.trim() !== ''),
     };
 
-    await requestPost('/api/v1/entities/federation', entityData);
+    await requestPost(federationEntitiesPath, entityData);
 
     // Check if request was successful
     if (ok.value) {
