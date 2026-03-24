@@ -30,7 +30,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.web.client.RestClient;
-import se.swedenconnect.oidf.registry.federation.service.NotifyService;
+import se.swedenconnect.oidf.registry.federationservice.service.NotifyService;
 import se.swedenconnect.oidf.registry.infrastructure.audit.FederationAuditEvent;
 import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditEventType;
 import se.swedenconnect.oidf.registry.infrastructure.config.RegistryProperties;

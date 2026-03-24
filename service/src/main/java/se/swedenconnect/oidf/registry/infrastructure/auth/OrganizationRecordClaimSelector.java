@@ -17,14 +17,17 @@ package se.swedenconnect.oidf.registry.infrastructure.auth;
 
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
-import se.swedenconnect.oidf.registry.infrastructure.config.SecurityConfig;
+import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryClaims;
+import se.swedenconnect.oidf.registry.infrastructure.auth.oauthclient.RegistryOidcUser;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -36,7 +39,6 @@ import java.util.Optional;
  */
 @Slf4j
 public class OrganizationRecordClaimSelector implements HandlerMethodArgumentResolver {
-  public final static String SELECTED_ORG_NUMBER_HEADER_NAME = "selected-org-number";
 
   /**
    * Determines whether this resolver supports the given method parameter.
@@ -46,9 +48,7 @@ public class OrganizationRecordClaimSelector implements HandlerMethodArgumentRes
    */
   @Override
   public boolean supportsParameter(final MethodParameter parameter) {
-    return parameter.getParameterType().equals(OrganizationRecord.class) &&
-        SecurityContextHolder.getContext().getAuthentication() instanceof
-            SecurityConfig.RegistryClaims;
+    return parameter.getParameterType().equals(OrganizationRecord.class);
   }
 
   /**
@@ -69,14 +69,37 @@ public class OrganizationRecordClaimSelector implements HandlerMethodArgumentRes
       final WebDataBinderFactory binderFactory) {
 
     final HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
-    final String selectedOrgNumber = Objects.requireNonNull(request).getHeader(SELECTED_ORG_NUMBER_HEADER_NAME);
+
     final Object authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication instanceof SecurityConfig.RegistryClaims registryClaims) {
-      return Optional.ofNullable(selectedOrgNumber)
+    if (authentication instanceof RegistryClaims registryClaims) {
+      final String selectedOrgNumberFromHeader =
+          Objects.requireNonNull(request).getHeader(AuthConstants.SELECTED_ORG_NUMBER_ATTRIBUTE);
+      log.debug("Selected organization number from header: {}", selectedOrgNumberFromHeader);
+
+      return Optional.ofNullable(selectedOrgNumberFromHeader)
           .map(registryClaims::getOrganizationRecordByOrgNumber)
           .orElseThrow(
-              () -> new IllegalArgumentException("Header:  " + SELECTED_ORG_NUMBER_HEADER_NAME +
+              () -> new IllegalArgumentException("Header:  " + AuthConstants.SELECTED_ORG_NUMBER_ATTRIBUTE +
                   " missing or have a value that does not match claim in jwt"));
+    }
+    else if (authentication instanceof OAuth2AuthenticationToken auth2AuthenticationToken) {
+      final HttpSession session = request.getSession();
+      final String selectedOrgNumberFromSession = Optional.ofNullable(session)
+          .map(httpSession -> httpSession.getAttribute(AuthConstants.SELECTED_ORG_NUMBER_ATTRIBUTE))
+          .map(String.class::cast)
+          .orElse(null);
+
+      if (auth2AuthenticationToken.getPrincipal() instanceof RegistryOidcUser oidcUser) {
+        final OrganizationRecord or = oidcUser.getOrganizationRecordByOrgNumber(selectedOrgNumberFromSession);
+        session.setAttribute(AuthConstants.SELECTED_ORG_NUMBER_ATTRIBUTE, or.orgNumber());
+        log.debug("Selected organization number from session:'{}' SelectedOrgInfo:'{}'",
+            selectedOrgNumberFromSession,
+            or.orgNumber());
+        return or;
+      }
+
+      throw new IllegalArgumentException("Wrong authentication class, check supportsParameter method.");
+
     }
     else {
       throw new IllegalArgumentException("Wrong authentication class, check supportsParameter method.");

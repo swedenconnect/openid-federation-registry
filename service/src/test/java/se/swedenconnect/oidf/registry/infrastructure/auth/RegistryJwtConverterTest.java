@@ -20,7 +20,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
-import se.swedenconnect.oidf.registry.infrastructure.config.SecurityConfig;
+import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryClaims;
+import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryJwtConverter;
 
 import java.time.Instant;
 import java.util.List;
@@ -138,8 +139,8 @@ class RegistryJwtConverterTest {
 
     final AbstractAuthenticationToken token = converter.convert(jwt);
 
-    assertThat(token).isInstanceOf(SecurityConfig.RegistryClaims.class);
-    final SecurityConfig.RegistryClaims claims = (SecurityConfig.RegistryClaims) token;
+    assertThat(token).isInstanceOf(RegistryClaims.class);
+    final RegistryClaims claims = (RegistryClaims) token;
     assertThat(claims.getOrganizationInformation().organizations()).hasSize(1);
     assertThat(claims.getOrganizationInformation().organizations().getFirst().orgNumber()).isEqualTo("55555");
   }
@@ -159,7 +160,7 @@ class RegistryJwtConverterTest {
         .claim("scope", List.of("read"))
         .build();
 
-    final SecurityConfig.RegistryClaims claims = (SecurityConfig.RegistryClaims) converter.convert(jwt);
+    final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
 
     assertThat(claims.getOrganizationInformation().organizations())
         .extracting(OrganizationRecord::orgNumber)
@@ -171,7 +172,7 @@ class RegistryJwtConverterTest {
   void getOrganizationRecordByOrgNumberReturnsMatch() {
     final Jwt jwt = buildJwt(Map.of("scope", List.of("read"), "preferred_username", "alice"));
 
-    final SecurityConfig.RegistryClaims claims = (SecurityConfig.RegistryClaims) converter.convert(jwt);
+    final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
 
     assertThat(claims.getOrganizationRecordByOrgNumber("55555").orgName())
         .isEqualTo("Pensionsmyndigheten");
@@ -182,7 +183,7 @@ class RegistryJwtConverterTest {
   void getOrganizationRecordByOrgNumberThrowsWhenNotFound() {
     final Jwt jwt = buildJwt(Map.of("scope", List.of("read"), "preferred_username", "alice"));
 
-    final SecurityConfig.RegistryClaims claims = (SecurityConfig.RegistryClaims) converter.convert(jwt);
+    final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
 
     assertThatThrownBy(() -> claims.getOrganizationRecordByOrgNumber("99999"))
         .isInstanceOf(NoSuchElementException.class);

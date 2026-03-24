@@ -21,6 +21,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
+import se.swedenconnect.oidf.registry.infrastructure.auth.AuthConstants;
 import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecord;
 
 import java.io.IOException;
@@ -39,7 +40,6 @@ import java.util.Date;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecordClaimSelector.SELECTED_ORG_NUMBER_HEADER_NAME;
 
 /**
  * Utility class for generating and signing JSON Web Tokens (JWTs) for testing purposes.
@@ -61,7 +61,7 @@ public class JwtTestUtils {
 
   public void setAuthHeaders(OrganisationType organizationType, HttpHeaders headers) {
     headers.set("Authorization", "Bearer " + this.createJwt(organizationType));
-    headers.set(SELECTED_ORG_NUMBER_HEADER_NAME, organizationType.orgId);
+    headers.set(AuthConstants.SELECTED_ORG_NUMBER_ATTRIBUTE, organizationType.orgId);
   }
 
 

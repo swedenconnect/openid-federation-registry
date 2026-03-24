@@ -1,0 +1,188 @@
+<!--
+  - Copyright 2026 Sweden Connect
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  -  limitations under the License.
+  -->
+
+<template>
+  <div>
+    <v-card v-if="isEdit && loading">
+      <v-card-text>
+        <div class="text-center py-12">
+          <v-progress-circular
+              indeterminate
+              color="primary"
+              size="64"
+          ></v-progress-circular>
+          <p class="mt-4 text-grey">Loading entity...</p>
+        </div>
+      </v-card-text>
+    </v-card>
+
+    <v-card v-else>
+      <v-card-title>
+        <h2>{{ isEdit ? 'Edit Hosted Entity' : 'Create Hosted Entity' }}</h2>
+      </v-card-title>
+      <v-card-text>
+        <v-form ref="form" @submit.prevent="saveEntity">
+          <v-text-field
+              v-model="entityIdentifier"
+              label="Entity Identifier"
+              :rules="[rules.required]"
+              :disabled="saving"
+              required
+              hint="The entity identifier (entity ID)"
+              persistent-hint
+              class="mb-4"
+          ></v-text-field>
+
+          <v-textarea
+              v-model="metadata"
+              label="Metadata"
+              :rules="[rules.required, rules.json]"
+              :disabled="saving"
+              :rows="10"
+              auto-grow
+              required
+              hint="Metadata as JSON"
+              persistent-hint
+              class="mb-4"
+              style="font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;"
+          ></v-textarea>
+
+          <TrustmarkSourcesField
+              v-model="trustmarkSources"
+              :disabled="saving"
+          />
+
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn
+                color="grey"
+                variant="text"
+                @click="cancel"
+                :disabled="saving"
+            >
+              Cancel
+            </v-btn>
+            <v-btn
+                color="primary"
+                type="submit"
+                :loading="saving"
+                :disabled="saving"
+            >
+              {{ isEdit ? 'Save' : 'Create' }}
+            </v-btn>
+          </v-card-actions>
+        </v-form>
+      </v-card-text>
+    </v-card>
+  </div>
+</template>
+
+<script setup>
+import {computed, onMounted, ref} from 'vue';
+import {useRoute, useRouter} from 'vue-router';
+import {useRequest} from '@/api/composables/request';
+import {useErrorStore} from '@/stores/errorStore';
+import TrustmarkSourcesField from '@/components/TrustmarkSourcesField.vue';
+import {hostedEntitiesPath, hostedEntityPath} from '@/config/path';
+
+const route = useRoute();
+const router = useRouter();
+const {requestGet, requestPost, requestPut, loading, ok} = useRequest();
+const errorStore = useErrorStore();
+
+const form = ref(null);
+const saving = ref(false);
+const entityId = ref(null);
+const entityIdentifier = ref('');
+const metadata = ref('{}');
+const trustmarkSources = ref([]);
+
+const isEdit = computed(() => !!route.params.id);
+
+const rules = {
+  required: (value) => !!value || 'This field is required.',
+  json: (value) => {
+    if (!value) return true;
+    try {
+      JSON.parse(value);
+      return true;
+    } catch (e) {
+      return 'Invalid JSON format.';
+    }
+  },
+};
+
+async function loadEntity() {
+  errorStore.clearError();
+  entityId.value = route.params.id;
+  const response = await requestGet(hostedEntityPath(entityId.value));
+  if (response) {
+    entityIdentifier.value = response.entityIdentifier || '';
+    metadata.value = JSON.stringify(response.metadata || {}, null, 2);
+    trustmarkSources.value = response.trustMarkSources || response.trustmarkSources || [];
+  }
+}
+
+async function saveEntity() {
+  const {valid} = await form.value.validate();
+  if (!valid) return;
+
+  saving.value = true;
+  errorStore.clearError();
+
+  try {
+    let parsedMetadata;
+    try {
+      parsedMetadata = JSON.parse(metadata.value);
+    } catch (e) {
+      errorStore.setError('Invalid JSON in metadata field');
+      saving.value = false;
+      return;
+    }
+
+    const entityData = {
+      entityIdentifier: entityIdentifier.value,
+      metadata: parsedMetadata,
+      trustMarkSources: trustmarkSources.value.filter(s => s.trustMarkIssuer || s.trustmarkId),
+    };
+
+    if (isEdit.value) {
+      await requestPut(hostedEntityPath(entityId.value), entityData);
+    } else {
+      await requestPost(hostedEntitiesPath, entityData);
+    }
+
+    if (ok.value) {
+      router.push('/');
+    }
+  } catch (error) {
+    console.error('Error saving hosted entity:', error);
+  } finally {
+    saving.value = false;
+  }
+}
+
+function cancel() {
+  router.push('/');
+}
+
+onMounted(() => {
+  errorStore.clearError();
+  if (isEdit.value) {
+    loadEntity();
+  }
+});
+</script>

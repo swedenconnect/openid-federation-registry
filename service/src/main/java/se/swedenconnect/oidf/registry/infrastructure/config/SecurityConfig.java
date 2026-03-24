@@ -15,25 +15,27 @@
  */
 package se.swedenconnect.oidf.registry.infrastructure.config;
 
-import lombok.Getter;
-import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
+import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
-import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationInformation;
-import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecord;
-import se.swedenconnect.oidf.registry.infrastructure.auth.RegistryJwtConverter;
-
-import java.util.Collection;
+import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryJwtConverter;
+import se.swedenconnect.oidf.registry.infrastructure.auth.oauthclient.RegistryOidcUser;
 
 /**
  * Security configuration class that defines security-related settings for the application. This class integrates OAuth2
@@ -45,17 +47,44 @@ import java.util.Collection;
  */
 @Configuration
 @EnableWebSecurity
+@Slf4j
 public class SecurityConfig {
 
+
   @Bean
-  SecurityFilterChain securityFilterChain(final HttpSecurity http,
-      final Converter<Jwt, AbstractAuthenticationToken> customJwtAuthenticationConverter) throws Exception {
+  @Order(1)
+  SecurityFilterChain apiSecurityFilterChain(final HttpSecurity http, final OidcUserService oidcUserService,
+      final ClientRegistrationRepository clientRegistrationRepository) {
+
+    final OidcClientInitiatedLogoutSuccessHandler logoutSuccessHandler =
+        new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
+    logoutSuccessHandler.setPostLogoutRedirectUri("{baseUrl}/");
+
     http
         .oauth2ResourceServer(oauth2 -> oauth2
             .jwt(jwtConfigurer ->
-                jwtConfigurer.jwtAuthenticationConverter(customJwtAuthenticationConverter))
+                jwtConfigurer.jwtAuthenticationConverter(this.customJwtAuthenticationConverter()))
         )
         .csrf(AbstractHttpConfigurer::disable)
+
+        .oauth2Login(login -> login
+                .loginPage("/")
+                .defaultSuccessUrl("/", true)
+                .failureHandler((request, response, exception) -> {
+                  log.error("Authentication failed", exception);
+                  response.sendRedirect("/login?errorcode=backend.login.failed");
+                })
+            .userInfoEndpoint(userInfo -> userInfo
+                .oidcUserService(oidcUserService)
+            )
+        )
+        .logout(logout -> logout
+            .logoutUrl("/logout")
+            .logoutSuccessHandler(logoutSuccessHandler)
+            .clearAuthentication(true)
+            .invalidateHttpSession(true)
+            .deleteCookies("JSESSIONID", "SESSION")
+        )
 
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(HttpMethod.GET, "/registry/v1/entities/hosted/**")
@@ -108,7 +137,6 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.DELETE, "/registry/v1/trustmarks/subjects/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/trustmarksubjects/write")
 
-
             .requestMatchers(HttpMethod.GET, "/registry/v1/policies/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/policies/read")
             .requestMatchers(HttpMethod.POST, "/registry/v1/policies/**")
@@ -127,11 +155,23 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.DELETE, "/registry/v1/subordinates/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/write")
 
+            .requestMatchers(HttpMethod.GET, "/registry/v1/entityconfiguration/**")
+            .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/read")
+            .requestMatchers(HttpMethod.POST, "/registry/v1/entityconfiguration/**")
+            .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/write")
+
+            .requestMatchers(HttpMethod.GET, "/logout/frontchannel").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/v1/federationservice/**").permitAll()
             .requestMatchers(HttpMethod.OPTIONS).permitAll()
             .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
-            .requestMatchers(HttpMethod.GET, "/swagger-ui.html",
-                "/swagger-ui/**", "/v3/api-docs/**", "/*").permitAll()
+            .requestMatchers(HttpMethod.GET, "/assets/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/*").permitAll()
+
+            .requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**")
+            .authenticated()
+            .requestMatchers(HttpMethod.GET, "/userinfo").authenticated()
+            .requestMatchers(HttpMethod.PUT, "/userinfo").authenticated()
+
             .anyRequest().denyAll()
         );
     return http.build();
@@ -142,45 +182,14 @@ public class SecurityConfig {
     return new RegistryJwtConverter();
   }
 
-  /**
-   * The RegistryClaims class extends JwtAuthenticationToken and provides additional information about the authenticated
-   * client, including the associated organization and domain prefix.
-   */
-  @Getter
-  public static class RegistryClaims extends JwtAuthenticationToken {
-    private final OrganizationInformation organizationInformation;
-
-    /**
-     * Constructs a new instance of the RegistryClaims class.
-     *
-     * @param jwt the JWT object representing the JSON Web Token used for authentication and authorization.
-     * @param information an instance of OrganizationInformation
-     * @param userName to be used JwtAuthenticationToken
-     * @param authorities to be used
-     */
-    public RegistryClaims(final Jwt jwt,
-        final OrganizationInformation information,
-        final String userName,
-        final Collection<? extends GrantedAuthority> authorities) {
-      super(jwt, authorities, userName);
-      this.organizationInformation = information;
-    }
-
-    /**
-     * Retrieves an {@link OrganizationRecord} that matches the given organization number from the list of available
-     * organizations. If no matching record is found, an exception is thrown.
-     *
-     * @param orgNumber the unique identifier of the organization for which the record is to be retrieved
-     * @return the {@link OrganizationRecord} corresponding to the specified organization number
-     */
-    public OrganizationRecord getOrganizationRecordByOrgNumber(@NonNull final String orgNumber) {
-      return this.organizationInformation
-          .organizations()
-          .stream()
-          .filter(e -> e.orgNumber().equals(orgNumber))
-          .findFirst()
-          .orElseThrow();
-    }
+  @Bean
+  @Primary
+  OidcUserService oidcUserService() {
+    return new OidcUserService() {
+      public OidcUser loadUser(final OidcUserRequest userRequest) throws OAuth2AuthenticationException {
+        return new RegistryOidcUser(super.loadUser(userRequest));
+      }
+    };
   }
 
 }

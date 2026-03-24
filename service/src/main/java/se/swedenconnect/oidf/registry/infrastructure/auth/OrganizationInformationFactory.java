@@ -15,6 +15,8 @@
  */
 package se.swedenconnect.oidf.registry.infrastructure.auth;
 
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +28,16 @@ import java.util.Optional;
  * @author Felix Hellman
  */
 public class OrganizationInformationFactory {
+
+  /**
+   * @param user to get orgInfo from
+   * @return org info about user
+   */
+  public static OrganizationInformation getInformation(final OidcUser user) {
+    return OrganizationInformationFactory.getInformation(user.getClaims());
+  }
+
+
   /**
    * @param claims claims from a user
    * @return org info about user
