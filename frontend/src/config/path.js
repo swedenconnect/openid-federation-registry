@@ -14,14 +14,28 @@
  *  limitations under the License.
  */
 
-// Helper function to ensure absolute paths
-function getAbsolutePath(path) {
-    // If path already starts with /, return as is
-    if (path.startsWith('/')) {
-        return path;
+// Read base path from the same element that the router uses (#base-href-id),
+// falling back to import.meta.env.BASE_URL and then '/'.
+function resolveBase() {
+    const el = document.getElementById('base-href-id');
+    if (el) {
+        const href = el.getAttribute('href');
+        if (href) {
+            return href.endsWith('/') ? href.slice(0, -1) : href;
+        }
     }
-    // Otherwise, ensure it starts with /
-    return '/' + path;
+    const envBase = import.meta.env.BASE_URL;
+    if (envBase && envBase !== '/') {
+        return envBase.endsWith('/') ? envBase.slice(0, -1) : envBase;
+    }
+    return '';
+}
+
+const base = resolveBase();
+
+function getAbsolutePath(path) {
+    const normalized = path.startsWith('/') ? path : '/' + path;
+    return base + normalized;
 }
 
 export const adminAuthenticatePath = getAbsolutePath('authenticate?reg=oidf-admin&continue=/');
