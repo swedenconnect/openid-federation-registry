@@ -56,6 +56,7 @@
           <v-card-actions class="px-0">
             <v-spacer></v-spacer>
             <v-btn
+                id="btn-cancel"
                 color="grey"
                 variant="text"
                 @click="cancel"
@@ -64,6 +65,7 @@
               Cancel
             </v-btn>
             <v-btn
+                id="btn-save-entity"
                 color="primary"
                 type="submit"
                 :loading="saving"
@@ -127,6 +129,7 @@
                   <v-spacer></v-spacer>
                   <v-btn
                       v-if="modules.trustanchor.id"
+                      id="btn-delete-trustanchor"
                       color="error"
                       variant="text"
                       @click="deleteModule('trustanchor')"
@@ -137,6 +140,7 @@
                     Delete
                   </v-btn>
                   <v-btn
+                      id="btn-save-trustanchor"
                       color="primary"
                       @click="saveModule('trustanchor')"
                       :loading="savingModule === 'trustanchor'"
@@ -184,6 +188,7 @@
                   <v-spacer></v-spacer>
                   <v-btn
                       v-if="modules.intermediate.id"
+                      id="btn-delete-intermediate"
                       color="error"
                       variant="text"
                       @click="deleteModule('intermediate')"
@@ -194,6 +199,7 @@
                     Delete
                   </v-btn>
                   <v-btn
+                      id="btn-save-intermediate"
                       color="primary"
                       @click="saveModule('intermediate')"
                       :loading="savingModule === 'intermediate'"
@@ -285,6 +291,7 @@
                   <v-spacer></v-spacer>
                   <v-btn
                       v-if="modules.resolver.id"
+                      id="btn-delete-resolver"
                       color="error"
                       variant="text"
                       @click="deleteModule('resolver')"
@@ -295,6 +302,7 @@
                     Delete
                   </v-btn>
                   <v-btn
+                      id="btn-save-resolver"
                       color="primary"
                       @click="saveModule('resolver')"
                       :loading="savingModule === 'resolver'"
@@ -350,6 +358,7 @@
                   <v-spacer></v-spacer>
                   <v-btn
                       v-if="modules.trustmarkissuer.id"
+                      id="btn-delete-trustmarkissuer"
                       color="error"
                       variant="text"
                       @click="deleteModule('trustmarkissuer')"
@@ -360,6 +369,7 @@
                     Delete
                   </v-btn>
                   <v-btn
+                      id="btn-save-trustmarkissuer"
                       color="primary"
                       @click="saveModule('trustmarkissuer')"
                       :loading="savingModule === 'trustmarkissuer'"
@@ -385,6 +395,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn
+              id="btn-delete-module-cancel"
               color="grey"
               variant="text"
               @click="deleteDialog = false"
@@ -393,6 +404,7 @@
             Cancel
           </v-btn>
           <v-btn
+              id="btn-delete-module-confirm"
               color="error"
               @click="confirmDeleteModule"
               :loading="deletingModule"

@@ -58,6 +58,7 @@
       ></v-select>
 
       <v-btn
+          id="btn-logout"
           v-if="userStore.isAuthorized"
           color="primary"
           variant="text"
@@ -66,6 +67,7 @@
         Logout
       </v-btn>
       <v-btn
+          id="btn-login"
           v-else
           color="primary"
           variant="flat"

@@ -78,6 +78,7 @@
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn
+                id="btn-cancel"
                 color="grey"
                 variant="text"
                 @click="cancel"
@@ -86,6 +87,7 @@
               Cancel
             </v-btn>
             <v-btn
+                id="btn-save"
                 color="primary"
                 type="submit"
                 :loading="saving"

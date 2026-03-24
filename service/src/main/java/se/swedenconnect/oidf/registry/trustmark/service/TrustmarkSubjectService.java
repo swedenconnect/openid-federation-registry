@@ -16,7 +16,7 @@
 
 package se.swedenconnect.oidf.registry.trustmark.service;
 
-import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
 
 import java.util.UUID;

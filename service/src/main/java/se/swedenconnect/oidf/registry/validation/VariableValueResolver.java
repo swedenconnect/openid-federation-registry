@@ -16,7 +16,7 @@
 
 package se.swedenconnect.oidf.registry.validation;
 
-import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 
 import java.util.Map;
 import java.util.function.Function;

@@ -23,6 +23,7 @@
       </div>
       <div>
         <v-btn
+            id="btn-add-trustmark-subject"
             color="primary"
             @click="addSubject"
             class="mr-2"
@@ -30,6 +31,7 @@
           Add Trustmark Subject
         </v-btn>
         <v-btn
+            id="btn-back"
             color="grey"
             @click="goBack"
         >
@@ -64,6 +66,7 @@
           <td>{{ subject.subject || 'N/A' }}</td>
           <td class="text-right">
             <v-btn
+                :id="'btn-edit-subject-' + subject.trustmarksubjectId"
                 color="primary"
                 variant="text"
                 size="small"
@@ -73,6 +76,7 @@
               Edit
             </v-btn>
             <v-btn
+                :id="'btn-delete-subject-' + subject.trustmarksubjectId"
                 color="error"
                 variant="text"
                 size="small"
@@ -104,6 +108,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn
+              id="btn-delete-subject-cancel"
               color="grey"
               variant="text"
               @click="deleteDialog = false"
@@ -112,6 +117,7 @@
             Cancel
           </v-btn>
           <v-btn
+              id="btn-delete-subject-confirm"
               color="error"
               @click="deleteSubject"
               :loading="deleting"

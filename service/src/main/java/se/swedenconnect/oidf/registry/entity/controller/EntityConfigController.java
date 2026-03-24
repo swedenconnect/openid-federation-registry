@@ -35,7 +35,7 @@ import se.swedenconnect.oidf.registry.entity.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.entity.dto.FederationEntityWithModulesDto;
 import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.entity.service.EntityConfigService;
-import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 
 import java.util.List;
 import java.util.UUID;

@@ -20,6 +20,7 @@
       <h2>Entities</h2>
       <div class="d-flex gap-2">
         <v-btn
+            id="btn-add-federation-entity"
             color="primary"
             @click="addFederationEntity"
             class="mr-2"
@@ -27,6 +28,7 @@
           Add Federation Entity
         </v-btn>
         <v-btn
+            id="btn-add-hosted-entity"
             color="primary"
             @click="addHostedEntity"
         >
@@ -72,6 +74,7 @@
             <div v-if="getEntityType(entity) === 'federation'" class="d-flex gap-2 flex-wrap">
               <v-btn
                   v-if="hasModule(entity, 'trustanchor')"
+                  :id="'btn-module-trustanchor-' + index"
                   color="secondary"
                   variant="outlined"
                   size="small"
@@ -81,6 +84,7 @@
               </v-btn>
               <v-btn
                   v-if="hasModule(entity, 'intermediate')"
+                  :id="'btn-module-intermediate-' + index"
                   color="secondary"
                   variant="outlined"
                   size="small"
@@ -90,6 +94,7 @@
               </v-btn>
               <v-btn
                   v-if="hasModule(entity, 'resolver')"
+                  :id="'btn-module-resolver-' + index"
                   color="secondary"
                   variant="outlined"
                   size="small"
@@ -99,6 +104,7 @@
               </v-btn>
               <v-btn
                   v-if="hasModule(entity, 'trustmarkissuer')"
+                  :id="'btn-module-trustmarkissuer-' + index"
                   color="secondary"
                   variant="outlined"
                   size="small"
@@ -112,6 +118,7 @@
           <td class="text-right">
             <v-btn
                 v-if="getEntityType(entity) === 'federation' || getEntityType(entity) === 'hosted'"
+                :id="'btn-edit-entity-' + index"
                 color="primary"
                 variant="text"
                 size="small"
@@ -122,6 +129,7 @@
             </v-btn>
             <v-btn
                 v-if="getEntityType(entity) === 'federation' || getEntityType(entity) === 'hosted'"
+                :id="'btn-delete-entity-' + index"
                 color="error"
                 variant="text"
                 size="small"
@@ -153,6 +161,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn
+              id="btn-delete-entity-cancel"
               color="grey"
               variant="text"
               @click="deleteDialog = false"
@@ -161,6 +170,7 @@
             Cancel
           </v-btn>
           <v-btn
+              id="btn-delete-entity-confirm"
               color="error"
               @click="deleteEntity"
               :loading="deleting"

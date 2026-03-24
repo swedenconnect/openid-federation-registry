@@ -31,6 +31,7 @@
       </v-card-text>
       <v-card-actions class="justify-center">
         <v-btn
+            id="btn-login"
             color="primary"
             variant="flat"
             size="large"

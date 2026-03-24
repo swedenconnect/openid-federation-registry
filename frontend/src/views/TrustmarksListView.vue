@@ -20,6 +20,7 @@
       <h2>Trustmarks</h2>
       <div>
         <v-btn
+            id="btn-add-trustmark"
             color="primary"
             @click="addTrustmark"
             class="mr-2"
@@ -27,6 +28,7 @@
           Add Trustmark
         </v-btn>
         <v-btn
+            id="btn-back"
             color="grey"
             @click="goBack"
         >
@@ -61,6 +63,7 @@
           <td>{{ trustmark.trustmarkType || 'N/A' }}</td>
           <td class="text-right">
             <v-btn
+                :id="'btn-edit-trustmark-' + trustmark.trustmarkId"
                 color="primary"
                 variant="text"
                 size="small"
@@ -70,6 +73,7 @@
               Edit
             </v-btn>
             <v-btn
+                :id="'btn-subjects-trustmark-' + trustmark.trustmarkId"
                 color="secondary"
                 variant="text"
                 size="small"
@@ -79,6 +83,7 @@
               Subjects
             </v-btn>
             <v-btn
+                :id="'btn-delete-trustmark-' + trustmark.trustmarkId"
                 color="error"
                 variant="text"
                 size="small"
@@ -110,6 +115,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn
+              id="btn-delete-trustmark-cancel"
               color="grey"
               variant="text"
               @click="deleteDialog = false"
@@ -118,6 +124,7 @@
             Cancel
           </v-btn>
           <v-btn
+              id="btn-delete-trustmark-confirm"
               color="error"
               @click="deleteTrustmark"
               :loading="deleting"

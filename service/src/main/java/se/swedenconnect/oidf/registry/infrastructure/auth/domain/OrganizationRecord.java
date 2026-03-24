@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.registry.infrastructure.auth;
-
-import java.util.List;
+package se.swedenconnect.oidf.registry.infrastructure.auth.domain;
 
 /**
- * Container for {@link OrganizationRecord}'s
+ * Organizational orgInfo about a specific org.
  *
- * @param organizations
+ * @param orgNumber Organization Number
+ * @param orgName OrganizationName
+ * @param entityPrefix EntityPrefix ex https://www.digg.se/oidf/
  * @author Felix Hellman
  */
-public record OrganizationInformation(List<OrganizationRecord> organizations) {
-
+public record OrganizationRecord(String orgNumber, String orgName, String entityPrefix) {
 }
-

@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryClaims;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryJwtConverter;
 
