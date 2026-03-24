@@ -20,9 +20,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
-import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationInformation;
 import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationInformationFactory;
-import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationInformation;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 
 import java.io.Serializable;
 import java.util.Collection;

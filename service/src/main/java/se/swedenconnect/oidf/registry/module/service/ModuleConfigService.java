@@ -16,7 +16,7 @@
 
 package se.swedenconnect.oidf.registry.module.service;
 
-import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ModuleDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;

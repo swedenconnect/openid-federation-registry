@@ -46,7 +46,7 @@ The service uses a **MariaDB** database for robust and persistent storage, enabl
 
 ### Prerequisites
 
-- Java SDK 21 or later
+- Java SDK 25
 - Maven 3.6.3 or later
 - Docker and Docker Compose (for local development)
 - MariaDB database

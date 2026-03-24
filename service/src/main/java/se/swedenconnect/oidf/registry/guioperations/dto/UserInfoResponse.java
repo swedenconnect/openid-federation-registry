@@ -16,7 +16,7 @@
 package se.swedenconnect.oidf.registry.guioperations.dto;
 
 import lombok.Builder;
-import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationInformation;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationInformation;
 
 /**
  * Represents a response containing details about a user.

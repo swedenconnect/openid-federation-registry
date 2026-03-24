@@ -29,9 +29,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.registry.guioperations.dto.UserInfoResponse;
 import se.swedenconnect.oidf.registry.infrastructure.auth.AuthConstants;
-import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationInformation;
 import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationInformationFactory;
-import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationInformation;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 
 import java.util.Optional;
 

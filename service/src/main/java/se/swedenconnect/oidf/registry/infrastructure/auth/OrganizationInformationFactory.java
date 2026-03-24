@@ -16,6 +16,8 @@
 package se.swedenconnect.oidf.registry.infrastructure.auth;
 
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationInformation;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -19,6 +19,7 @@
     <div class="d-flex justify-space-between align-center mb-4">
       <h2>Policies</h2>
       <v-btn
+          id="btn-add-policy"
           color="primary"
           @click="addPolicy"
       >
@@ -52,6 +53,7 @@
           <td>{{ policy.name || 'Unnamed Policy' }}</td>
           <td class="text-right">
             <v-btn
+                :id="'btn-edit-policy-' + policy.policyId"
                 color="primary"
                 variant="text"
                 size="small"
@@ -61,6 +63,7 @@
               Edit
             </v-btn>
             <v-btn
+                :id="'btn-delete-policy-' + policy.policyId"
                 color="error"
                 variant="text"
                 size="small"
@@ -92,6 +95,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn
+              id="btn-delete-policy-cancel"
               color="grey"
               variant="text"
               @click="deleteDialog = false"
@@ -100,6 +104,7 @@
             Cancel
           </v-btn>
           <v-btn
+              id="btn-delete-policy-confirm"
               color="error"
               @click="deletePolicy"
               :loading="deleting"

@@ -20,8 +20,8 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.util.Assert;
-import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationInformation;
 import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationInformationFactory;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationInformation;
 
 /**
  * Jwt converter for extracting relevant claims.

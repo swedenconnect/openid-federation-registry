@@ -20,6 +20,7 @@
       <h2>Subordinates</h2>
       <div>
         <v-btn
+            id="btn-add-subordinate"
             color="primary"
             @click="addSubordinate"
             class="mr-2"
@@ -27,6 +28,7 @@
           Add Subordinate
         </v-btn>
         <v-btn
+            id="btn-back"
             color="grey"
             @click="goBack"
         >
@@ -74,6 +76,7 @@
           </td>
           <td class="text-right">
             <v-btn
+                :id="'btn-edit-subordinate-' + subordinate.subordinateId"
                 color="primary"
                 variant="text"
                 size="small"
@@ -83,6 +86,7 @@
               Edit
             </v-btn>
             <v-btn
+                :id="'btn-delete-subordinate-' + subordinate.subordinateId"
                 color="error"
                 variant="text"
                 size="small"
@@ -114,6 +118,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn
+              id="btn-delete-subordinate-cancel"
               color="grey"
               variant="text"
               @click="deleteDialog = false"
@@ -122,6 +127,7 @@
             Cancel
           </v-btn>
           <v-btn
+              id="btn-delete-subordinate-confirm"
               color="error"
               @click="deleteSubordinate"
               :loading="deleting"

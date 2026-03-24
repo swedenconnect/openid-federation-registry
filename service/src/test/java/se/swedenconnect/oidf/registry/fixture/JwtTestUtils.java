@@ -22,7 +22,7 @@ import com.nimbusds.jwt.SignedJWT;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.registry.infrastructure.auth.AuthConstants;
-import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationRecord;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 
 import java.io.IOException;
 import java.io.InputStream;
