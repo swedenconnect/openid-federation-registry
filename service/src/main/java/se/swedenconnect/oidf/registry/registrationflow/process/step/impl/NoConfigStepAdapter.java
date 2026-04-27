@@ -15,29 +15,17 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow.process.step.impl;
 
-import org.springframework.stereotype.Component;
-import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
-import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
-import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
 
-import java.io.Serializable;
-import java.util.Map;
+import java.util.List;
 
 /**
  * Validates RP metadata against a configured validation profile.
  *
  * @author Per Fredrik Plars
  */
-@Component
-public class PolicyCreationStep implements Step<NoConfig> {
-
-  @Override
-  public StepResult execute(final ProcessContext ctx, final NoConfig config) {
-    final Serializable o = ctx.getRequired(ContextKey.ENTITY_CONFIGURATION_METADATA);
-
-    return StepResult.success();
-  }
+public abstract class NoConfigStepAdapter implements Step {
 
   @Override
   public String getName() {
@@ -50,9 +38,7 @@ public class PolicyCreationStep implements Step<NoConfig> {
   }
 
   @Override
-  public NoConfig getConfig() {
-    return null;
+  public List<StepConfigurationValue> getStepConfigurationValues() {
+    return List.of();
   }
-
-
 }

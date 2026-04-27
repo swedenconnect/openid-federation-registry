@@ -19,28 +19,26 @@ import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 
+import java.io.Serializable;
+
 /**
- * Binds a {@link Step} to its typed configuration so that the {@link ProcessEngine}
- * can handle heterogeneous step definitions without knowing the concrete config type.
+ * Binds a {@link Step} to its typed configuration so that the {@link ProcessEngine} can handle heterogeneous step
+ * definitions without knowing the concrete config type.
  *
- * @param <C> the configuration type
  * @author Per Fredrik Plars
  */
-public record StepDefinition<C extends StepConfig>(Step<C> step, C config) {
+public record StepDefinition(Step step, StepConfig config) implements Serializable {
 
   public StepResult run(final ProcessContext ctx) {
     return step.execute(ctx, config);
   }
 
   public String name() {
-    return step.stepName(config);
-  }
-
-  public boolean failOnError() {
-    return config.isFailOnError();
+    return step.getName();
   }
 
   public boolean enabled() {
-    return config.isEnabled();
+    return true;
   }
+
 }

@@ -34,10 +34,10 @@ public class ProcessEngine {
 
   private static final Logger log = LoggerFactory.getLogger(ProcessEngine.class);
 
-  public ProcessReport run(final List<StepDefinition<?>> steps, final ProcessContext ctx) {
+  public ProcessReport run(final List<StepDefinition> steps, final ProcessContext ctx) {
     final List<StepExecutionRecord> records = new ArrayList<>();
 
-    for (final StepDefinition<?> def : steps) {
+    for (final StepDefinition def : steps) {
       if (!def.enabled()) {
         log.debug("Skipping step: {}", def.name());
         continue;
@@ -47,9 +47,9 @@ public class ProcessEngine {
       final StepResult result = def.run(ctx);
       records.add(new StepExecutionRecord(def.name(), result));
 
-      if (result.status() == StepStatus.FAILURE && def.failOnError()) {
+      if (result.status() == StepStatus.FAILURE) {
         log.error("Step {} failed — aborting pipeline", def.name());
-        return ProcessReport.aborted(records);
+        return ProcessReport.skipped(records);
       }
     }
 

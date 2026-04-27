@@ -14,8 +14,8 @@
  *  limitations under the License.
  */
 /**
- * Sweden Connect Entity Registry for OpenID Federation
+ * Registration flow
  *
- * @author David Goldring
+ * @author Per Fredrik Plars
  */
-package se.swedenconnect.oidf.registry;
+package se.swedenconnect.oidf.registry.registrationflow;

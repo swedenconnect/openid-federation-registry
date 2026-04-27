@@ -17,8 +17,10 @@ package se.swedenconnect.oidf.registry.registrationflow.process.step.impl;
 
 import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
-import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
+
+import java.util.UUID;
 
 /**
  * Validates RP metadata against a configured validation profile.
@@ -26,12 +28,19 @@ import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
  * @author Per Fredrik Plars
  */
 @Component
-public class PolicyCreationStep implements Step<RpMetadataValidationConfig> {
+public class TrustMarkApprovalStep extends NoConfigStepAdapter {
 
   @Override
-  public StepResult execute(final ProcessContext ctx, final RpMetadataValidationConfig config) {
-    // Store into database and wait for approval
-
+  public StepResult execute(final ProcessContext ctx, final StepConfig config) {
+    config.getBoolean("enabled");
+    // Check the rules and se if the trustmark can be created automaticly.
+    //ctx.getRequired();
     return StepResult.success();
   }
+
+  @Override
+  public UUID getStepId() {
+    return UUID.fromString("09EAB589-D0BD-41F6-9ED4-F4419899F747");
+  }
+
 }

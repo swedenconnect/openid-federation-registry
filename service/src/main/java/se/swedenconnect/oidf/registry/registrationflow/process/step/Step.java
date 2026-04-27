@@ -17,17 +17,27 @@ package se.swedenconnect.oidf.registry.registrationflow.process.step;
 
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 
+import java.util.List;
+import java.util.UUID;
+
 /**
  * A single unit of work in a processing pipeline.
  *
- * @param <C> the configuration type for this step
  * @author Per Fredrik Plars
  */
-public interface Step<C extends StepConfig> {
+public interface Step {
 
-  StepResult execute(ProcessContext ctx, C config);
+  StepResult execute(ProcessContext ctx, StepConfig config);
 
-  default String stepName(final C config) {
-    return config.getName() != null ? config.getName() : getClass().getSimpleName();
+  UUID getStepId();
+
+  default String getName() {
+    return getClass().getSimpleName();
   }
+
+  default String getDescription() {
+    return "<NoDescription defined>";
+  }
+
+  abstract List<StepConfigurationValue> getStepConfigurationValues();
 }

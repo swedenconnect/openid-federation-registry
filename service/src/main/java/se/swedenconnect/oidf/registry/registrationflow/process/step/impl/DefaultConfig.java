@@ -20,18 +20,25 @@ import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigur
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Configuration with no configuration
  *
  * @author Per Fredrik Plars
  */
-public class NoConfig extends StepConfig {
+public class DefaultConfig extends StepConfig {
+
+  public DefaultConfig(final Map<String, Object> dataValues) {
+    super(dataValues);
+  }
 
   @Override
   public List<StepConfigurationValue> getStepConfigurationValues() {
-    return List.of(new StepConfigurationValue("limit",
-        StepConfigurationValue.DATA_TYPE.INT,"There is always a limit.  ",null));
+    return List.of(new StepConfigurationValue("enabled",
+        StepConfigurationValue.DATA_TYPE.BOOLEAN, "If this step should be enable or not", null));
+  }
+
+  public boolean isEnabled() {
+    return super.getBoolean("enabled");
   }
 }

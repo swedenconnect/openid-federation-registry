@@ -16,8 +16,10 @@
 package se.swedenconnect.oidf.registry.registrationflow.process.step.impl;
 
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Configuration for {@link RpMetadataValidationStep}.
@@ -30,27 +32,28 @@ public class RpMetadataValidationConfig extends StepConfig {
   private List<String> requiredScopes = List.of();
   private boolean strictAcrValues = false;
 
-  public String getValidationProfileId() {
-    return validationProfileId;
+  public RpMetadataValidationConfig(final Map<String, Object> dataValues) {
+    super(dataValues);
   }
 
-  public void setValidationProfileId(final String validationProfileId) {
-    this.validationProfileId = validationProfileId;
+  public String getValidationProfileId() {
+    return super.getString("validationProfileId");
   }
 
   public List<String> getRequiredScopes() {
-    return requiredScopes;
+    return super.getList("requiredScopes");
   }
 
-  public void setRequiredScopes(final List<String> requiredScopes) {
-    this.requiredScopes = requiredScopes;
+  public Boolean isStrictAcrValues() {
+    return super.getBoolean("isstrictAcrValues");
   }
 
-  public boolean isStrictAcrValues() {
-    return strictAcrValues;
+  @Override
+  public List<StepConfigurationValue> getStepConfigurationValues() {
+    return List.of(
+        new StepConfigurationValue("validationProfileId", StepConfigurationValue.DATA_TYPE.STRING, "Demo value", null),
+        new StepConfigurationValue("requiredScopes", StepConfigurationValue.DATA_TYPE.LIST, "DemoValue", null),
+        new StepConfigurationValue("isstrictAcrValues", StepConfigurationValue.DATA_TYPE.BOOLEAN, "DemoValue", null));
   }
 
-  public void setStrictAcrValues(final boolean strictAcrValues) {
-    this.strictAcrValues = strictAcrValues;
-  }
 }

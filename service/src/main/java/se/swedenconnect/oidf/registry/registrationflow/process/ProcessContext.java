@@ -17,6 +17,7 @@ package se.swedenconnect.oidf.registry.registrationflow.process;
 
 import se.swedenconnect.oidf.registry.registrationflow.process.step.MissingContextValueException;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -30,16 +31,16 @@ public class ProcessContext {
 
   private final Map<String, Object> data = new HashMap<>();
 
-  public <T> void put(final String key, final T value) {
+  public <T extends Serializable> void put(final String key, final T value) {
     data.put(key, value);
   }
 
   @SuppressWarnings("unchecked")
-  public <T> Optional<T> get(final String key) {
+  public <T extends Serializable> Optional<T> get(final String key) {
     return Optional.ofNullable((T) data.get(key));
   }
 
-  public <T> T getRequired(final String key) {
+  public <T extends Serializable> T getRequired(final String key) {
     return this.<T>get(key)
         .orElseThrow(() -> new MissingContextValueException(key));
   }

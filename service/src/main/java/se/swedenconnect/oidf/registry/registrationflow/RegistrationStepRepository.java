@@ -15,13 +15,13 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import se.swedenconnect.oidf.registry.registrationflow.process.StepDefinition;
-import se.swedenconnect.oidf.registry.registrationflow.process.step.impl.RpMetadataValidationConfig;
-import se.swedenconnect.oidf.registry.registrationflow.process.step.impl.RpMetadataValidationStep;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Defines the ordered pipeline of registration flow steps.
@@ -29,18 +29,38 @@ import java.util.List;
  * @author Per Fredrik Plars
  */
 @Configuration
-public class RegistrationFlowConfiguration {
+public class RegistrationStepRepository {
 
-  @Bean
-  public List<StepDefinition<?>> registrationFlowSteps(
-      final RpMetadataValidationStep rpMetadataValidationStep) {
+  final List<Step> definedSteps;
 
-    final RpMetadataValidationConfig validationConfig = new RpMetadataValidationConfig();
-    validationConfig.setName("RP Metadata Validation");
-    validationConfig.setFailOnError(true);
+  /**
+   * Creating a repository of all the defined steps
+   *
+   * @param definedStep All the steps created in Spring
+   */
+  public RegistrationStepRepository(final Step... definedStep) {
+    this.definedSteps = List.of(definedStep);
+  }
 
-    return List.of(
-        new StepDefinition<>(rpMetadataValidationStep, validationConfig)
-    );
+  /**
+   * Getting step by name
+   *
+   * @param id Id of step
+   * @return Optional Step
+   */
+  public Optional<Step> findStepById(final UUID id) {
+    if (id == null) {
+      return Optional.empty();
+    }
+    return definedSteps.stream().filter(step -> step.getStepId().equals(id)).findFirst();
+  }
+
+  /**
+   * Getting a list of defined steps
+   *
+   * @return Defined steps
+   */
+  public List<Step> getDefinedSteps() {
+    return Collections.unmodifiableList(definedSteps);
   }
 }

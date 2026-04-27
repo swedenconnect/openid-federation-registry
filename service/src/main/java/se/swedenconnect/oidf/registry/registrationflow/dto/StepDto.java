@@ -23,7 +23,7 @@ import java.util.UUID;
  *
  * @author Per Fredrik Plars
  */
-public record StepInfoDto(
+public record StepDto(
     UUID stepId,
     String name,
     String description,

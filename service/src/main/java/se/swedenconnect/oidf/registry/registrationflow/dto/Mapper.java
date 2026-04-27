@@ -16,37 +16,49 @@
 
 package se.swedenconnect.oidf.registry.registrationflow.dto;
 
-import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
+import se.swedenconnect.oidf.registry.registrationflow.RegistrationStepRepository;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessFlow;
+import se.swedenconnect.oidf.registry.registrationflow.process.StepDefinition;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * oidf-entity-registry
  *
  * @author Per Fredrik Plars
  */
-public class DtoToModelMapper {
+public class Mapper {
 
-  public static RegistrationFlow convert(final RegistrationFlowDto dto) {
+  public static ProcessFlow toDomain(final RegistrationFlowDto dto,
+      final RegistrationStepRepository registrationStepRepository) {
 
-    final RegistrationFlow registrationFlow = new RegistrationFlow();
-    registrationFlow.setFlowId(dto.flowId());
-    registrationFlow.setName(dto.name());
-    registrationFlow.setDescription(dto.description());
-
-    final ProcessFlow processFlow = dto.steps()
+    final List<StepDefinition> steps = dto.steps()
         .stream()
         .map(stepInfoDto ->
-            new ProcessFlow(stepInfoDto.stepId(),
-                stepInfoDto
-                    .config()
-                    .stream()
-                    .map(configValueDto ->)
-                    .toList()))
+            new StepDefinition(registrationStepRepository.findStepById(stepInfoDto.stepId()).orElseThrow(),
+                toStepConfig(stepInfoDto.config())))
         .toList();
 
-    //registrationFlow.setFlowDefinition(dto.steps());
+    return new ProcessFlow(dto.flowId(), dto.name(), dto.description(), steps);
+  }
 
-    return registrationFlow;
+  private static StepConfig toStepConfig(List<ConfigValueDto> configValueDtos) {
+    final Map<String, Object> stepConfig = new HashMap<>();
+    configValueDtos.forEach(configValueDto ->
+    {
+      stepConfig.put(configValueDto.key(), configValueDto.value());
+    });
+
+    return new StepConfig(stepConfig) {
+      @Override
+      public List<StepConfigurationValue> getStepConfigurationValues() {
+        return List.of();
+      }
+    };
   }
 
 }

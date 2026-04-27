@@ -16,7 +16,6 @@
 package se.swedenconnect.oidf.registry.registrationflow.dto;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -24,10 +23,10 @@ import java.util.UUID;
  *
  * @author Per Fredrik Plars
  */
-public record FlowDto(
+public record RegistrationFlowDto(
     UUID flowId,
     String name,
     String description,
-    List<StepInfoDto> steps
+    List<StepDto> steps
 ) {
 }

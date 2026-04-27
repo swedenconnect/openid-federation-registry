@@ -15,10 +15,17 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow.process.step.impl;
 
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
 import org.springframework.stereotype.Component;
+import se.swedenconnect.oidf.registry.guioperations.OidfServiceIntegration;
+import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
-import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
+
+import java.util.UUID;
 
 /**
  * Validates RP metadata against a configured validation profile.
@@ -26,14 +33,39 @@ import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
  * @author Per Fredrik Plars
  */
 @Component
-public class TrustMarkApprovalStep implements Step<RpMetadataValidationConfig> {
+public class LoadEntityConfigurationStep extends NoConfigStepAdapter {
+
+  OidfServiceIntegration oidfServiceIntegration;
+
+  /**
+   *
+   * @param oidfServiceIntegration
+   */
+  public LoadEntityConfigurationStep(final OidfServiceIntegration oidfServiceIntegration) {
+    super();
+    this.oidfServiceIntegration = oidfServiceIntegration;
+  }
 
   @Override
-  public StepResult execute(final ProcessContext ctx, final RpMetadataValidationConfig config) {
-    // Check the rules and se if the trustmark can be created automaticly.
+  public String getDescription() {
+    return "From a entityid entityconfiguration is loaded. Signature is validated";
+  }
 
-    ctx.getRequired()
+  @Override
+  public StepResult execute(final ProcessContext ctx, final StepConfig config) {
+    final EntityID entityId = ctx.getRequired(ContextKey.ENTITY_ID);
+    final EntityStatement entityStatement = oidfServiceIntegration.entityConfiguration(entityId);
+
+    final EntityStatementClaimsSet entityStatementClaimsSet = entityStatement.getClaimsSet();
+    ctx.put(ContextKey.ENTITY_CONFIGURATION_METADATA, "METADATA");
+    ctx.put(ContextKey.ENTITY_CONFIGURATION_JWKS, "JWKS");
 
     return StepResult.success();
   }
+
+  @Override
+  public UUID getStepId() {
+    return UUID.fromString("A00BCEAD-ECD9-4EB4-8A7B-481D928B2CC9");
+  }
+
 }

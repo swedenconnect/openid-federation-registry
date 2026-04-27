@@ -14,8 +14,8 @@
  *  limitations under the License.
  */
 /**
- * Registration flow
+ * Process engine
  *
  * @author Per Fredrik Plars
  */
-package se.swedenconnect.oidf.registry.registrationflow;
+package se.swedenconnect.oidf.registry.registrationflow.process;

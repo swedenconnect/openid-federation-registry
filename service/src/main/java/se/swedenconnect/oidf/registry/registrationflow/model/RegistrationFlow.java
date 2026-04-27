@@ -19,9 +19,9 @@ package se.swedenconnect.oidf.registry.registrationflow.model;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
@@ -34,8 +34,10 @@ import org.hibernate.type.SqlTypes;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.MapConverter;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
-import se.swedenconnect.oidf.registry.policy.model.Policy;
+import se.swedenconnect.oidf.registry.organization.model.Organization;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -52,43 +54,29 @@ import java.util.UUID;
 @Entity
 @NoArgsConstructor
 @SuperBuilder
-@Table(name = "flow")
-public class Flow extends BaseEntity {
+@Table(name = "registration_flow")
+public class RegistrationFlow extends BaseEntity {
 
   @Id
   @Column(name = "flow_id", columnDefinition = "char(36)", nullable = false, updatable = false)
   @JdbcTypeCode(SqlTypes.CHAR)
   private UUID flowId;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "ta_im_id", nullable = false)
-  private TrustAnchorIntermediateModule taIm;
+  @ManyToOne
+  @JoinColumn(name = "organization_id")
+  private Organization organization;
 
-  @Deprecated
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "policy_id")
-  private Policy policy;
+  @Column(name = "name", length = 255)
+  private String name;
 
-  @Column(name = "jwks", columnDefinition = "TEXT")
-  private String jwks;
+  @Column(name = "description", length = 255)
+  private String description;
 
-  @Column(name = "entityidentifier", length = 255)
-  private String entityidentifier;
-
-  @Column(name = "crit", columnDefinition = "TEXT")
-  private String crit;
-
-  @Column(name = "metadata_policy_crit", columnDefinition = "TEXT")
-  private String metadataPolicyCrit;
-
-  @Column(name = "ec_location", length = 255)
-  private String ecLocation;
-
-  @Column(name = "ec_location_automatic", nullable = false)
-  private boolean ecLocationAutomatic;
-
-  @Column(name = "metadata_policy", columnDefinition = "TEXT")
+  @Column(name = "flowDefinition", columnDefinition = "TEXT")
   @Convert(converter = MapConverter.class)
-  private Map<String, Object> metadataPolicy;
+  private Map<String, Object> flowDefinition;
+
+  @ManyToMany(mappedBy = "flows")
+  private List<TrustAnchorIntermediateModule> intermediates = new ArrayList<>();
 
 }

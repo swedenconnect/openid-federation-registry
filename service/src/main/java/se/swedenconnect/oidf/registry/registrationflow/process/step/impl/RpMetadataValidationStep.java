@@ -17,15 +17,10 @@ package se.swedenconnect.oidf.registry.registrationflow.process.step.impl;
 
 import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
-import se.swedenconnect.oidf.registry.registrationflow.process.step.Severity;
-import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
-import se.swedenconnect.oidf.registry.registrationflow.process.step.StepIssue;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
-import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
-import se.swedenconnect.oidf.registry.registrationflow.process.EntityMetadata;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.UUID;
 
 /**
  * Validates RP metadata against a configured validation profile.
@@ -33,28 +28,17 @@ import java.util.List;
  * @author Per Fredrik Plars
  */
 @Component
-public class RpMetadataValidationStep implements Step<RpMetadataValidationConfig> {
+public class RpMetadataValidationStep extends NoConfigStepAdapter {
+
+
 
   @Override
-  public StepResult execute(final ProcessContext ctx, final RpMetadataValidationConfig config) {
-    final EntityMetadata metadata = ctx.getRequired(ContextKey.ENTITY_METADATA);
+  public StepResult execute(final ProcessContext ctx, final StepConfig config) {
+    return null;
+  }
 
-    final List<StepIssue> issues = new ArrayList<>();
-
-    if (metadata.scopes() == null || metadata.scopes().isEmpty()) {
-      issues.add(new StepIssue("scopes", "Scopes are missing", Severity.ERROR));
-    }
-
-    if (!config.getRequiredScopes().isEmpty() && metadata.scopes() != null) {
-      config.getRequiredScopes().stream()
-          .filter(required -> !metadata.scopes().contains(required))
-          .forEach(missing -> issues.add(
-              new StepIssue("scopes", "Required scope missing: " + missing, Severity.ERROR)));
-    }
-
-    if (!issues.isEmpty()) {
-      return StepResult.failure("Metadata validation failed", issues);
-    }
-    return StepResult.success();
+  @Override
+  public UUID getStepId() {
+    return UUID.fromString("B39C5E4E-12AB-4598-9D7B-54B76E62BCC9");
   }
 }

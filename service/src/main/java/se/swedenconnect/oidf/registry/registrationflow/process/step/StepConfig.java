@@ -15,6 +15,10 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow.process.step;
 
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Base configuration for all pipeline steps.
  * <p>
@@ -22,33 +26,33 @@ package se.swedenconnect.oidf.registry.registrationflow.process.step;
  *
  * @author Per Fredrik Plars
  */
-public abstract class StepConfig {
+public abstract class StepConfig implements Serializable {
 
-  private String name;
-  private boolean failOnError = true;
-  private boolean enabled = true;
+  final Map<String, Object> dataValues;
 
-  public String getName() {
-    return name;
+  public StepConfig(final Map<String, Object> dataValues) {
+    this.dataValues = dataValues;
   }
 
-  public void setName(final String name) {
-    this.name = name;
+  public Object getValue(String name) {
+    return this.dataValues.get(name);
   }
 
-  public boolean isFailOnError() {
-    return failOnError;
+  public Boolean getBoolean(String name) {
+    return Boolean.parseBoolean(this.dataValues.get(name).toString());
   }
 
-  public void setFailOnError(final boolean failOnError) {
-    this.failOnError = failOnError;
+  public String getString(String name) {
+    return this.dataValues.get(name).toString();
   }
 
-  public boolean isEnabled() {
-    return enabled;
+  public int getInt(String name) {
+    return Integer.parseInt(this.dataValues.get(name).toString());
   }
 
-  public void setEnabled(final boolean enabled) {
-    this.enabled = enabled;
+  public List<String> getList(String name) {
+    return (List<String>) this.dataValues.get(name);
   }
+
+  public abstract List<StepConfigurationValue> getStepConfigurationValues();
 }

@@ -14,35 +14,21 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.subordinate.repository;
+package se.swedenconnect.oidf.registry.registrationflow.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
+import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
 
-import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Repository interface for managing Subordinate.
+ * Repository interface for managing refistrationflows.
  *
  * @author Per Fredrik Plars
  */
 @Repository
-public interface SubordinateRepository extends JpaRepository<Subordinate, UUID> {
+public interface FlowRepository extends JpaRepository<RegistrationFlow, UUID> {
 
-  /**
-   * Finds subordinate by orgid and entityidentifier
-   *
-   * @param orgNumber Orgnumber
-   * @param entityidentifier entityidentifier
-   * @return List of Subordinate
-   */
-  @Query("SELECT s FROM Flow s JOIN s.taIm m JOIN m.organization o "
-      + "WHERE o.orgNumber = :orgNumber AND s.entityidentifier = :entityidentifier ")
-  Optional<Subordinate> findByOrgNumberAndEntityidentifier(
-      @Param("orgNumber") String orgNumber, @Param("entityidentifier") String entityidentifier);
 
 }

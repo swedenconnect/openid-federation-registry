@@ -17,15 +17,21 @@ package se.swedenconnect.oidf.registry.registrationflow.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import se.swedenconnect.oidf.registry.registrationflow.dto.StepInfoDto;
-import se.swedenconnect.oidf.registry.registrationflow.process.StepDefinition;
+import se.swedenconnect.oidf.registry.registrationflow.RegistrationFlowService;
+import se.swedenconnect.oidf.registry.registrationflow.dto.RegistrationFlowDto;
+import se.swedenconnect.oidf.registry.registrationflow.dto.StepDto;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Exposes the configured registration flow pipeline.
@@ -33,23 +39,75 @@ import java.util.List;
  * @author Per Fredrik Plars
  */
 @RestController
-@RequestMapping("/registration-flow")
+@RequestMapping("/registration-flow/v1")
 @Tag(name = "Registration Flow", description = "Configured pipeline steps for entity registration")
 public class RegistrationFlowController {
 
-  private final List<StepDefinition<?>> steps;
+  private final RegistrationFlowService registrationFlowService;
 
   public RegistrationFlowController(
-      @Qualifier("registrationFlowSteps") final List<StepDefinition<?>> steps) {
-    this.steps = steps;
+      final RegistrationFlowService registrationFlowService) {
+    this.registrationFlowService = registrationFlowService;
   }
 
   @GetMapping("/steps")
   @Operation(summary = "List all configured pipeline steps with their settings")
-  public ResponseEntity<List<StepInfoDto>> getSteps() {
-    final List<StepInfoDto> result = steps.stream()
-        .map(def -> new StepInfoDto(def.name(), def.failOnError(), def.enabled(), def.config()))
-        .toList();
-    return ResponseEntity.ok(result);
+  public ResponseEntity<List<StepDto>> getSteps() {
+    return ResponseEntity.ok(registrationFlowService.getDefineSteps());
   }
+
+  @PostMapping("/flow")
+  @Operation(summary = "Create a new flow")
+  public ResponseEntity<RegistrationFlowDto> createFlow(final RegistrationFlowDto registrationFlowDto) {
+    return ResponseEntity.ok(
+        this.registrationFlowService.createRegistrationFlow(registrationFlowDto, UUID.randomUUID()));
+  }
+
+  @PostMapping("/flow/{flowid}")
+  @Operation(summary = "Create a new flow with a specified id")
+  public ResponseEntity<RegistrationFlowDto> createFlowWithId(@PathVariable("flowid") final UUID id,
+      final RegistrationFlowDto registrationFlowDto) {
+
+    return ResponseEntity.ok().build();
+  }
+
+  @PutMapping("/flow/{flowid}")
+  @Operation(summary = "Update a registration flow")
+  public ResponseEntity<RegistrationFlowDto> updateFlow(@PathVariable("flowid") final UUID id,
+      final RegistrationFlowDto registrationFlowDto) {
+
+    return ResponseEntity.ok().build();
+  }
+
+  @DeleteMapping("/flow/{flowid}")
+  @Operation(summary = "Update a registration flow")
+  public ResponseEntity<RegistrationFlowDto> deleteFlow(@PathVariable("flowid") final UUID id) {
+    return ResponseEntity.ok().build();
+  }
+
+  @GetMapping("/intermediate/{taImId}/flows")
+  @Operation(summary = "List flows assigned to an intermediate")
+  public ResponseEntity<List<RegistrationFlowDto>> getFlowsForIntermediate(
+      @PathVariable final UUID taImId) {
+    return ResponseEntity.ok(registrationFlowService.getFlowsForIntermediate(taImId));
+  }
+
+  @PutMapping("/intermediate/{taImId}/flows")
+  @Operation(summary = "Set (replace) the flows assigned to an intermediate")
+  public ResponseEntity<Void> setFlowsForIntermediate(
+      @PathVariable final UUID taImId,
+      @RequestBody final List<UUID> flowIds) {
+    registrationFlowService.setFlowsForIntermediate(taImId, flowIds);
+    return ResponseEntity.noContent().build();
+  }
+
+  @DeleteMapping("/intermediate/{taImId}/flows/{flowId}")
+  @Operation(summary = "Remove a specific flow from an intermediate")
+  public ResponseEntity<Void> removeFlowFromIntermediate(
+      @PathVariable final UUID taImId,
+      @PathVariable final UUID flowId) {
+    registrationFlowService.removeFlowFromIntermediate(taImId, flowId);
+    return ResponseEntity.noContent().build();
+  }
+
 }

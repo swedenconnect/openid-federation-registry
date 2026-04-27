@@ -17,15 +17,12 @@ package se.swedenconnect.oidf.registry.registrationflow.process.step.impl;
 
 import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
-import se.swedenconnect.oidf.registry.registrationflow.process.EntityMetadata;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
-import se.swedenconnect.oidf.registry.registrationflow.process.step.Severity;
-import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
-import se.swedenconnect.oidf.registry.registrationflow.process.step.StepIssue;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.Serializable;
+import java.util.UUID;
 
 /**
  * Validates RP metadata against a configured validation profile.
@@ -33,12 +30,18 @@ import java.util.List;
  * @author Per Fredrik Plars
  */
 @Component
-public class ManualValidation implements Step<RpMetadataValidationConfig> {
+public class PolicyCreationStep extends NoConfigStepAdapter {
+
 
   @Override
-  public StepResult execute(final ProcessContext ctx, final RpMetadataValidationConfig config) {
-    // Store into database and wait for approval
-
+  public StepResult execute(final ProcessContext ctx, final StepConfig config) {
+    final Serializable o = ctx.getRequired(ContextKey.ENTITY_CONFIGURATION_METADATA);
     return StepResult.success();
   }
+
+  @Override
+  public UUID getStepId() {
+    return UUID.fromString("FCF26DE1-93BF-4B80-A5E5-F4C88BDFFFEA");
+  }
+
 }

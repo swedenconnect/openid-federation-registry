@@ -18,4 +18,4 @@
  *
  * @author Per Fredrik Plars
  */
-package se.swedenconnect.oidf.registry.subordinate.repository;
+package se.swedenconnect.oidf.registry.registrationflow.repository;

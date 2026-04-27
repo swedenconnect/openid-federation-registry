@@ -15,15 +15,27 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow.dto;
 
+import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
+
 /**
  * Response DTO for a single pipeline step — its name, base settings and full configuration.
  *
  * @author Per Fredrik Plars
  */
-public record StepInfoDto(
-    String name,
-    boolean failOnError,
-    boolean enabled,
-    Object config
+public record ConfigValueDto(
+    String key,
+    String description,
+    String value,
+    String type,
+    Object defaultValue
 ) {
+
+  public static ConfigValueDto create(StepConfigurationValue stepConfigurationValue) {
+    return new ConfigValueDto(stepConfigurationValue.name(),
+        stepConfigurationValue.description(),
+        null,
+        stepConfigurationValue.dataType().toString(),
+        stepConfigurationValue.defaultValue());
+  }
+
 }

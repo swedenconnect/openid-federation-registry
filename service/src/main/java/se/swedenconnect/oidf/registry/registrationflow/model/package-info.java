@@ -14,8 +14,8 @@
  *  limitations under the License.
  */
 /**
- * Subordinate domain model classes
+ * Flow definitions
  *
  * @author Per Fredrik Plars
  */
-package se.swedenconnect.oidf.registry.subordinate.model;
+package se.swedenconnect.oidf.registry.registrationflow.model;
