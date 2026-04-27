@@ -32,9 +32,6 @@ import se.swedenconnect.oidf.registry.module.model.Resolver;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
-import se.swedenconnect.oidf.registry.policy.dto.PolicyDto;
-import se.swedenconnect.oidf.registry.policy.mapper.DtoToPolicyMapper;
-import se.swedenconnect.oidf.registry.policy.model.Policy;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.subordinate.mapper.DtoToSubordinateMapper;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
@@ -117,36 +114,8 @@ class DtoToEntityMapperTest {
     assertThat(entity.getTrustmarksources()).contains("tm1");
   }
 
-  // -------------------------------------------------------------------------
-  // toEntity — PolicyDto
-  // -------------------------------------------------------------------------
 
-  @Test
-  void toEntity_policyDto() {
-    final PolicyDto dto = new PolicyDto();
-    dto.setName("test-policy");
-    dto.setPolicy(Map.of("key", "value"));
-    final Organization org = createOrganization();
 
-    final Policy entity = DtoToPolicyMapper.toEntity(ID, dto, org);
-
-    assertThat(entity.getPolicyId()).isEqualTo(ID);
-    assertThat(entity.getOrganization()).isEqualTo(org);
-    assertThat(entity.getName()).isEqualTo("test-policy");
-    assertThat(entity.getPolicy()).containsEntry("key", "value");
-  }
-
-  @Test
-  void toEntity_policyDto_withNullPolicy() {
-    final PolicyDto dto = new PolicyDto();
-    dto.setName("empty-policy");
-    dto.setPolicy(null);
-    final Organization org = createOrganization();
-
-    final Policy entity = DtoToPolicyMapper.toEntity(ID, dto, org);
-
-    assertThat(entity.getPolicy()).isEmpty();
-  }
 
   // -------------------------------------------------------------------------
   // toEntity — TrustAnchorDto
@@ -387,34 +356,7 @@ class DtoToEntityMapperTest {
     assertThat(entity.getTrustmarksources()).isNull();
   }
 
-  // -------------------------------------------------------------------------
-  // updateEntity — PolicyDto
-  // -------------------------------------------------------------------------
 
-  @Test
-  void updateEntity_policyDto() {
-    final Policy entity = new Policy();
-    final PolicyDto dto = new PolicyDto();
-    dto.setName("updated-name");
-    dto.setPolicy(Map.of("rule", "deny"));
-
-    DtoToPolicyMapper.updateEntity(entity, dto);
-
-    assertThat(entity.getName()).isEqualTo("updated-name");
-    assertThat(entity.getPolicy()).containsEntry("rule", "deny");
-  }
-
-  @Test
-  void updateEntity_policyDto_nullPolicyDefaultsToEmpty() {
-    final Policy entity = new Policy();
-    final PolicyDto dto = new PolicyDto();
-    dto.setName("name");
-    dto.setPolicy(null);
-
-    DtoToPolicyMapper.updateEntity(entity, dto);
-
-    assertThat(entity.getPolicy()).isEmpty();
-  }
 
   // -------------------------------------------------------------------------
   // updateIntermediate — TrustAnchorDto

@@ -62,7 +62,7 @@ public class EntityRecord implements Serializable {
   private Map<String, Object> metadata;
   @SerializedName("trust-mark-source")
   private List<TrustMarkSourceProperty> trustMarkSource;
-  @SerializedName("ec-location")
+  @SerializedName("virtual-entity-id")
   private String ecLocation;
   @SerializedName("authority-hints")
   private List<String> authorityHints;

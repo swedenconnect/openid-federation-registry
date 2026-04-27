@@ -27,12 +27,15 @@ import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerExcepti
 import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.module.repository.TaImRepository;
-import se.swedenconnect.oidf.registry.policy.repository.PolicyRepository;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.subordinate.mapper.DtoToSubordinateMapper;
 import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateToDtoMapper;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -47,33 +50,55 @@ public class SubordinateServiceImpl implements SubordinateService {
 
   private final SubordinateRepository subordinateRepository;
   private final TaImRepository taImRepository;
-  private final PolicyRepository policyRepository;
   private final EntityRepository entityRepository;
   private final RegistryAuditService auditService;
+  private final JsonMapper objectMapper;
 
   /**
    * Constructor.
    *
    * @param subordinateRepository the subordinate repository
    * @param taImRepository the TaIm repository
-   * @param policyRepository the policy repository
    * @param entityRepository the organization service
    * @param auditService the audit service
+   * @param objectMapper the object mapper
    */
   public SubordinateServiceImpl(final SubordinateRepository subordinateRepository,
       final TaImRepository taImRepository,
-      final PolicyRepository policyRepository,
       final EntityRepository entityRepository,
-      final RegistryAuditService auditService) {
+      final RegistryAuditService auditService,
+      final JsonMapper objectMapper) {
     this.subordinateRepository = subordinateRepository;
     this.taImRepository = taImRepository;
-    this.policyRepository = policyRepository;
     this.entityRepository = entityRepository;
     this.auditService = auditService;
+    this.objectMapper = objectMapper;
   }
 
   private static SubordinateDto toDto(final Subordinate entity) {
     return SubordinateToDtoMapper.toDto(entity);
+  }
+
+  private String stripIatAndExp(final String jwks) {
+    if (jwks == null) {
+      return null;
+    }
+    try {
+      final JsonNode root =  this.objectMapper.readTree(jwks);
+      final JsonNode keysNode = root.get("keys");
+      if (keysNode instanceof ArrayNode keys) {
+        for (final JsonNode keyNode : keys) {
+          if (keyNode instanceof ObjectNode key) {
+            key.remove("iat");
+            key.remove("exp");
+          }
+        }
+      }
+      return this.objectMapper.writeValueAsString(root);
+    }
+    catch (final Exception e) {
+      return jwks;
+    }
   }
 
   private TrustAnchorIntermediateModule findTaImOrThrow(final OrganizationRecord organizationRecord,
@@ -113,6 +138,7 @@ public class SubordinateServiceImpl implements SubordinateService {
   @Transactional
   public SubordinateDto createSubordinateWithId(final OrganizationRecord organizationRecord, final UUID id,
       final SubordinateDto input) {
+    input.setJwks(this.stripIatAndExp(input.getJwks()));
     ValidateDto.init(organizationRecord).validate(input);
 
     final TrustAnchorIntermediateModule taIm = this.findTaImOrThrow(organizationRecord, input.getTaImId());
@@ -140,6 +166,7 @@ public class SubordinateServiceImpl implements SubordinateService {
   @Transactional
   public SubordinateDto updateSubordinate(final OrganizationRecord organizationRecord, final UUID id,
       final SubordinateDto input) {
+    input.setJwks(this.stripIatAndExp(input.getJwks()));
     ValidateDto.init(organizationRecord).validate(input);
 
     final Subordinate existing = this.findSubordinateOrThrow(organizationRecord, id);

@@ -46,19 +46,6 @@
               class="mb-4"
           ></v-text-field>
 
-          <v-select
-              v-model="policyId"
-              :items="policyOptions"
-              item-title="name"
-              item-value="policyId"
-              label="Policy"
-              :disabled="saving"
-              hint="Policy (UUID)"
-              persistent-hint
-              clearable
-              class="mb-4"
-          ></v-select>
-
           <v-textarea
               v-model="jwks"
               label="JWKS (Public Keys)"
@@ -173,7 +160,7 @@ import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useLoadJwks} from '@/api/composables/jwks';
-import {policiesPath, subordinatePath, subordinatesPath} from '@/config/path';
+import {subordinatePath, subordinatesPath} from '@/config/path';
 import ListField from '@/components/ListField.vue';
 
 const route = useRoute();
@@ -184,12 +171,10 @@ const {loadJwks: loadJwksFromApi, loading: loadingJwks} = useLoadJwks();
 
 const form = ref(null);
 const saving = ref(false);
-const policies = ref([]);
 
 const subordinateId = ref(null);
 const taImIdValue = ref(null);
 const entityIdentifier = ref('');
-const policyId = ref(null);
 const jwks = ref('');
 const metadataPolicyCrit = ref([]);
 const crit = ref([]);
@@ -202,13 +187,6 @@ const isEdit = computed(() => !!route.params.id);
 const entityId = computed(() => route.params.entityId);
 const moduleType = computed(() => route.params.moduleType);
 const taImId = computed(() => route.query.taImId || null);
-
-const policyOptions = computed(() => {
-  return policies.value.map(p => ({
-    name: p.name || 'Unnamed Policy',
-    policyId: p.policyId,
-  }));
-});
 
 const rules = {
   required: (value) => {
@@ -228,13 +206,6 @@ const rules = {
   },
 };
 
-async function loadPolicies() {
-  const response = await requestGet(policiesPath);
-  if (response && Array.isArray(response)) {
-    policies.value = response;
-  }
-}
-
 async function loadJwks() {
   const jwksData = await loadJwksFromApi(entityIdentifier.value);
   if (jwksData) {
@@ -250,7 +221,6 @@ async function loadSubordinate() {
   if (response) {
     taImIdValue.value = response.taImId || taImId.value || null;
     entityIdentifier.value = response.entityIdentifier || '';
-    policyId.value = response.policyId || null;
     jwks.value = typeof response.jwks === 'string'
         ? response.jwks
         : (response.jwks ? JSON.stringify(response.jwks, null, 2) : '');
@@ -292,10 +262,6 @@ async function submitForm() {
           : null,
     };
 
-    if (policyId.value) {
-      subordinateData.policyId = policyId.value;
-    }
-
     if (isEdit.value) {
       await requestPut(subordinatePath(subordinateId.value), subordinateData);
     } else {
@@ -324,7 +290,6 @@ function cancel() {
 
 onMounted(() => {
   errorStore.clearError();
-  loadPolicies();
   if (isEdit.value) {
     loadSubordinate();
   }

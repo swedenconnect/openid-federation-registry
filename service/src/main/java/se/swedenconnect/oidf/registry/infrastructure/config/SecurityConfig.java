@@ -167,6 +167,9 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.GET, "/assets/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/*").permitAll()
 
+            //Temporary
+            .requestMatchers(HttpMethod.GET, "/registration-flow/v1/*").permitAll()
+
             .requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**")
             .authenticated()
             .requestMatchers(HttpMethod.GET, "/userinfo").authenticated()

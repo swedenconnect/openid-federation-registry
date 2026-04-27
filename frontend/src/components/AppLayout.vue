@@ -79,7 +79,7 @@
       <template #extension>
         <nav v-if="userStore.isAuthorized" class="nav-bar">
           <RouterLink to="/" class="nav-link" :class="{ active: isEntityRoute }">Entity</RouterLink>
-          <RouterLink to="/policies" class="nav-link" :class="{ active: isPolicyRoute }">Policy</RouterLink>
+          <a :href="swaggerUiPath" rel="noopener" class="nav-link" target="_blank">API</a>
         </nav>
       </template>
     </v-app-bar>
@@ -114,14 +114,13 @@ import {computed, onBeforeMount} from 'vue';
 import {RouterLink, RouterView, useRoute} from 'vue-router';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
-import {adminAuthenticatePath, logoutPath} from '@/config/path';
+import {adminAuthenticatePath, logoutPath, swaggerUiPath} from '@/config/path';
 
 const route = useRoute();
 const errorStore = useErrorStore();
 const userStore = useUserStore();
 
 const isEntityRoute = computed(() => route.path === '/');
-const isPolicyRoute = computed(() => route.path.startsWith('/policies'));
 
 const errorMessage = computed(() => errorStore.message);
 
@@ -206,5 +205,17 @@ onBeforeMount(async () => {
 .nav-link.active {
   color: #4a6741;
   border-bottom-color: #4a6741;
+}
+
+.nav-section-label {
+  display: flex;
+  align-items: center;
+  padding: 0 8px 0 24px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9e9e9e;
+  cursor: default;
 }
 </style>

@@ -40,7 +40,7 @@ import java.util.regex.PatternSyntaxException;
 @ConfigurationProperties("openid.federation.registry")
 public record RegistryProperties(FederationAPIProperties federationServiceApi,
     List<InstanceProperties> instances,
-    EntityConfigurationLoader entityConfigurationLoader) {
+    EntityConfigurationLoaderProperties entityConfigurationLoader) {
 
   /**
    * Validates the registry properties to ensure all required fields are properly configured.
@@ -63,6 +63,8 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
 
     Assert.isTrue(this.instances.stream().filter(InstanceProperties::useForDefaultAssignment).count() <= 1,
         "openid.federation.registry.instances[].useForDefaultAssignment shall only be set for one instance");
+
+    Optional.ofNullable(this.entityConfigurationLoader).ifPresent(EntityConfigurationLoaderProperties::validate);
   }
 
   /**
@@ -171,7 +173,7 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
    */
   @Getter
   @Setter
-  public static class EntityConfigurationLoader {
+  public static class EntityConfigurationLoaderProperties {
     /**
      * Specifies the alias of the trust bundle to use for securing HTTPS connections when doing calls to load
      * entityconfiguration

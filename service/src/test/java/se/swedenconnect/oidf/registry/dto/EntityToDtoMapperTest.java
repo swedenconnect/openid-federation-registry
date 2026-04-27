@@ -32,9 +32,6 @@ import se.swedenconnect.oidf.registry.module.model.ModuleType;
 import se.swedenconnect.oidf.registry.module.model.Resolver;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
-import se.swedenconnect.oidf.registry.policy.dto.PolicyDto;
-import se.swedenconnect.oidf.registry.policy.mapper.PolicyToDtoMapper;
-import se.swedenconnect.oidf.registry.policy.model.Policy;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateToDtoMapper;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
@@ -207,23 +204,7 @@ class EntityToDtoMapperTest {
     assertThat(dto.getTrustMarkSources()).isEmpty();
   }
 
-  // -------------------------------------------------------------------------
-  // toDto(PolicyEntity)
-  // -------------------------------------------------------------------------
 
-  @Test
-  void toDto_policy() {
-    final Policy policyEntity = new Policy();
-    policyEntity.setPolicyId(UUID.randomUUID());
-    policyEntity.setName("test-policy");
-    policyEntity.setPolicy(Map.of("key", "value"));
-
-    final PolicyDto dto = PolicyToDtoMapper.toDto(policyEntity);
-
-    assertThat(dto.getPolicyId()).isEqualTo(policyEntity.getPolicyId());
-    assertThat(dto.getName()).isEqualTo("test-policy");
-    assertThat(dto.getPolicy()).containsEntry("key", "value");
-  }
 
   // -------------------------------------------------------------------------
   // toDto(TaImEntity) — TrustAnchor

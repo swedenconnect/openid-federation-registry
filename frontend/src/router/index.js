@@ -17,8 +17,6 @@
 import {createRouter, createWebHistory} from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import LoginView from '../views/LoginView.vue';
-import PolicyListView from '../views/PolicyListView.vue';
-import PolicyFormView from '../views/PolicyFormView.vue';
 import HostedEntityFormView from '../views/HostedEntityFormView.vue';
 import FederationEntityNewView from '../views/FederationEntityNewView.vue';
 import FederationEntityEditView from '../views/FederationEntityEditView.vue';
@@ -117,21 +115,6 @@ const router = createRouter({
             path: '/entities/:entityId/modules/trustmarkissuer/trustmarks/:trustmarkId/subjects/:id/edit',
             name: 'trustmark-subject-edit',
             component: TrustmarkSubjectFormView,
-        },
-        {
-            path: '/policies',
-            name: 'policies',
-            component: PolicyListView,
-        },
-        {
-            path: '/policies/new',
-            name: 'policy-new',
-            component: PolicyFormView,
-        },
-        {
-            path: '/policies/:id/edit',
-            name: 'policy-edit',
-            component: PolicyFormView,
         },
     ],
 });

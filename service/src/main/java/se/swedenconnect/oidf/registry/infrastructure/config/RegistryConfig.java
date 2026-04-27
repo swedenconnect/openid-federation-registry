@@ -252,7 +252,7 @@ public class RegistryConfig {
           try {
             final InetAddress addr = InetAddress.getByName(host.getHostName());
 
-            final RegistryProperties.EntityConfigurationLoader jwksLoaderConf = properties.entityConfigurationLoader();
+            final RegistryProperties.EntityConfigurationLoaderProperties jwksLoaderConf = properties.entityConfigurationLoader();
 
             if (jwksLoaderConf == null || !properties.entityConfigurationLoader().isEnabled()) {
               throw new SecurityException("JWKS loader is not enabled");
@@ -294,7 +294,7 @@ public class RegistryConfig {
         });
 
     Optional.ofNullable(properties.entityConfigurationLoader())
-        .filter(RegistryProperties.EntityConfigurationLoader::isDisableSystemProperties)
+        .filter(RegistryProperties.EntityConfigurationLoaderProperties::isDisableSystemProperties)
         .ifPresent(aBoolean -> httpClientBuilder.useSystemProperties());
 
     final PoolingHttpClientConnectionManagerBuilder cm =
@@ -306,7 +306,7 @@ public class RegistryConfig {
                 .build());
 
     final String trustBundleAlias = Optional.ofNullable(properties.entityConfigurationLoader())
-        .map(RegistryProperties.EntityConfigurationLoader::getTrustBundleAlias)
+        .map(RegistryProperties.EntityConfigurationLoaderProperties::getTrustBundleAlias)
         .orElse(null);
 
     this.getSSLTrustContext(ssl, trustBundleAlias).ifPresentOrElse(sslContext -> {
@@ -361,7 +361,7 @@ public class RegistryConfig {
 
     final JwkTransformerFunction function = new JwkTransformerFunction();
     if ("serial".equalsIgnoreCase(federationApiProperties.kidAlgorithm())) {
-      function.setKeyIdFunction(pkiCredential ->
+      function.withKeyIdFunction(pkiCredential ->
           Objects.requireNonNull(pkiCredential.getCertificate())
               .getSerialNumber().toString(10));
     }

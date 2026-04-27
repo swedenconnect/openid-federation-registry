@@ -22,7 +22,6 @@ import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
-import se.swedenconnect.oidf.registry.policy.dto.PolicyDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
@@ -38,38 +37,6 @@ import java.util.UUID;
  * @author Per Fredrik Plars
  */
 public interface RegistryAuditService {
-
-  /**
-   * Audits the creation of a policy.
-   *
-   * @param policyId the unique identifier of the policy being created.
-   * @param instanceId the unique identifier of the instance that owns the organization.
-   * @param organizationId the unique identifier of the organization that owns the policy.
-   * @param oldData the previous state of the policy. Typically null during creation.
-   * @param newData the new state of the policy after it has been created.
-   */
-  void policyCreated(UUID policyId, UUID instanceId, UUID organizationId, PolicyDto oldData, PolicyDto newData);
-
-  /**
-   * Audits the update operation performed on a policy.
-   *
-   * @param policyId the unique identifier of the policy being updated.
-   * @param instanceId the unique identifier of the instance that owns the organization.
-   * @param organizationId the unique identifier of the organization that owns the policy.
-   * @param oldData the previous state of the policy before the update.
-   * @param newData the new state of the policy after the update.
-   */
-  void policyUpdated(UUID policyId, UUID instanceId, UUID organizationId, PolicyDto oldData, PolicyDto newData);
-
-  /**
-   * Audits the deletion of a policy.
-   *
-   * @param policyId the unique identifier of the policy being deleted.
-   * @param instanceId the unique identifier of the instance that owns the organization.
-   * @param organizationId the unique identifier of the organization that owns the policy.
-   * @param deletedData the data of the deleted policy.
-   */
-  void policyDeleted(UUID policyId, UUID instanceId, UUID organizationId, PolicyDto deletedData);
 
   /**
    * Audits the creation of a federation entity.

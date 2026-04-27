@@ -29,6 +29,7 @@ import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.entity.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.federationservice.model.EntityRecord;
 import se.swedenconnect.oidf.registry.federationservice.model.ModuleRecord;
+import se.swedenconnect.oidf.registry.federationservice.model.PolicyRecord;
 import se.swedenconnect.oidf.registry.federationservice.model.ResolverProperties;
 import se.swedenconnect.oidf.registry.federationservice.model.TrustAnchorProperties;
 import se.swedenconnect.oidf.registry.federationservice.model.TrustMarkDelegation;
@@ -222,6 +223,7 @@ public class OidfApiService {
     final TrustAnchorProperties.SubordinateListingProperty sub = new TrustAnchorProperties.SubordinateListingProperty();
     final SubordinateDto subDto = SubordinateToDtoMapper.toDto(subordinateEntity);
 
+    sub.setPolicy(new PolicyRecord(subDto.getSubordinateId().toString(),subDto.getMetadataPolicy()));
     sub.setJwks(this.toJwksSet(subDto.getJwks()));
     sub.setOverrideConfigurationLocation(subDto.getEcLocation());
     sub.setMetadataPolicyCrit(subDto.getMetadataPolicyCrit());

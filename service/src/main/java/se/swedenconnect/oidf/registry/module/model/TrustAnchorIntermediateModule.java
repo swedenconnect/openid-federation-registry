@@ -25,6 +25,7 @@ import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.StringListConverter;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
+import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 
 import java.util.ArrayList;
@@ -64,6 +65,14 @@ public class TrustAnchorIntermediateModule extends BaseEntity {
 
   @OneToMany(mappedBy = "taIm", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<Subordinate> subordinates = new ArrayList<>();
+
+  @ManyToMany
+  @JoinTable(
+      name = "intermediate_flow",
+      joinColumns = @JoinColumn(name = "ta_im_id"),
+      inverseJoinColumns = @JoinColumn(name = "flow_id")
+  )
+  private List<RegistrationFlow> flows = new ArrayList<>();
 
   // Columns for module data (used by TrustAnchor, Resolver, TrustmarkIssuer)
 
