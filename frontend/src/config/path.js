@@ -57,7 +57,7 @@ export const intermediateModulePath = (id) => getAbsolutePath(`registry/v1/modul
 export const resolverModulePath = (id) => getAbsolutePath(`registry/v1/modules/resolver/${id}`);
 export const trustmarkIssuerModulePath = (id) => getAbsolutePath(`registry/v1/modules/trustmark-issuer/${id}`);
 
-export const subordinatesPath = getAbsolutePath('registry/v1/subordinates');
+export const subordinatesPath = getAbsolutePath('registry/v1/subordinates/');
 export const subordinatePath = (id) => getAbsolutePath(`registry/v1/subordinates/${id}`);
 
 export const jwksSupportPath = getAbsolutePath('registry/v1/entityconfiguration/jwks');
