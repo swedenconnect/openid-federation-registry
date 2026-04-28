@@ -31,15 +31,37 @@ public class ProcessContext {
 
   private final Map<String, Object> data = new HashMap<>();
 
+  /**
+   * Stores a value in the context under the given key.
+   *
+   * @param <T> value type
+   * @param key context key
+   * @param value value to store
+   */
   public <T extends Serializable> void put(final String key, final T value) {
-    data.put(key, value);
+    this.data.put(key, value);
   }
 
+  /**
+   * Returns the value for the given key, or empty if absent.
+   *
+   * @param <T> value type
+   * @param key context key
+   * @return optional value
+   */
   @SuppressWarnings("unchecked")
   public <T extends Serializable> Optional<T> get(final String key) {
-    return Optional.ofNullable((T) data.get(key));
+    return Optional.ofNullable((T) this.data.get(key));
   }
 
+  /**
+   * Returns the value for the given key, throwing if absent.
+   *
+   * @param <T> value type
+   * @param key context key
+   * @return the value
+   * @throws MissingContextValueException if the key is not present
+   */
   public <T extends Serializable> T getRequired(final String key) {
     return this.<T>get(key)
         .orElseThrow(() -> new MissingContextValueException(key));

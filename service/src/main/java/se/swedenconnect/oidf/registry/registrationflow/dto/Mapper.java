@@ -33,6 +33,13 @@ import java.util.Map;
  */
 public class Mapper {
 
+  /**
+   * Maps a {@link RegistrationFlowDto} to a domain {@link ProcessFlow}.
+   *
+   * @param dto the source DTO
+   * @param registrationStepRepository repository used to resolve step references
+   * @return domain process flow
+   */
   public static ProcessFlow toDomain(final RegistrationFlowDto dto,
       final RegistrationStepRepository registrationStepRepository) {
 
@@ -46,7 +53,7 @@ public class Mapper {
     return new ProcessFlow(dto.flowId(), dto.name(), dto.description(), steps);
   }
 
-  private static StepConfig toStepConfig(List<ConfigValueDto> configValueDtos) {
+  private static StepConfig toStepConfig(final List<ConfigValueDto> configValueDtos) {
     final Map<String, Object> stepConfig = new HashMap<>();
     configValueDtos.forEach(configValueDto ->
     {

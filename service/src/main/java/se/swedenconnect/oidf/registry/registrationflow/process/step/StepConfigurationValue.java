@@ -17,13 +17,21 @@
 package se.swedenconnect.oidf.registry.registrationflow.process.step;
 
 /**
- * oidf-entity-registry
+ * Describes a single configurable value for a pipeline step.
  *
+ * @param name the configuration key name
+ * @param dataType the expected data type
+ * @param description human-readable description of this value
+ * @param defaultValue optional default value
  * @author Per Fredrik Plars
  */
 public record StepConfigurationValue(String name,
     DATA_TYPE dataType,
     String description,
     Object defaultValue) {
+
+  /**
+   * Supported data types for step configuration values.
+   */
   public enum DATA_TYPE {STRING, INT, BOOLEAN, NUMERIC, LIST}
 }

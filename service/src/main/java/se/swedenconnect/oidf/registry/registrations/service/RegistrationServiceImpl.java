@@ -15,8 +15,6 @@
  */
 package se.swedenconnect.oidf.registry.registrations.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,8 +33,6 @@ import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowRepository;
 import se.swedenconnect.oidf.registry.registrations.dto.FedRegStatus;
 import se.swedenconnect.oidf.registry.registrations.dto.FlowDto;
-import se.swedenconnect.oidf.registry.registrations.dto.HostedRequestDto;
-import se.swedenconnect.oidf.registry.registrations.dto.HostedUpdateDto;
 import se.swedenconnect.oidf.registry.registrations.dto.JoinDto;
 import se.swedenconnect.oidf.registry.registrations.dto.JoinRequestDto;
 import se.swedenconnect.oidf.registry.registrations.dto.TrustmarkRequestDto;
@@ -70,6 +66,16 @@ public class RegistrationServiceImpl implements RegistrationService {
   private final SubordinateService subordinateService;
   private final JsonMapper objectMapper;
 
+  /**
+   * Constructs a new RegistrationServiceImpl.
+   *
+   * @param flowRepository repository for registration flows
+   * @param registrationRepository repository for registration records
+   * @param registrationFlowService service for managing registration flows
+   * @param processEngine engine that executes the pipeline
+   * @param subordinateService service for subordinate statement management
+   * @param objectMapper JSON mapper
+   */
   public RegistrationServiceImpl(final FlowRepository flowRepository,
       final RegistrationRepository registrationRepository,
       final RegistrationFlowService registrationFlowService,

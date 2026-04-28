@@ -252,7 +252,8 @@ public class RegistryConfig {
           try {
             final InetAddress addr = InetAddress.getByName(host.getHostName());
 
-            final RegistryProperties.EntityConfigurationLoaderProperties jwksLoaderConf = properties.entityConfigurationLoader();
+            final RegistryProperties.EntityConfigurationLoaderProperties jwksLoaderConf =
+                properties.entityConfigurationLoader();
 
             if (jwksLoaderConf == null || !properties.entityConfigurationLoader().isEnabled()) {
               throw new SecurityException("JWKS loader is not enabled");

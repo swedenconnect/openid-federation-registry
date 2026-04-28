@@ -53,6 +53,12 @@ public class RegistrationAdminController {
 
   private final RegistrationRepository registrationRepository;
 
+  /**
+   * Lists pending registrations for an intermediate.
+   *
+   * @param taimId the intermediate ID to filter by
+   * @return list of pending registration DTOs
+   */
   @GetMapping
   @Operation(summary = "List pending registrations for an intermediate")
   public ResponseEntity<List<RegistrationDto>> listPending(
@@ -65,6 +71,12 @@ public class RegistrationAdminController {
     return ResponseEntity.ok(result);
   }
 
+  /**
+   * Counts unhandled PENDING registrations for an intermediate.
+   *
+   * @param taimId the intermediate ID
+   * @return map containing the count
+   */
   @GetMapping("/count")
   @Operation(summary = "Count unhandled PENDING registrations for an intermediate (badge)")
   public ResponseEntity<Map<String, Long>> countPending(
@@ -73,6 +85,13 @@ public class RegistrationAdminController {
     return ResponseEntity.ok(Map.of("count", count));
   }
 
+  /**
+   * Rejects a pending registration request.
+   *
+   * @param id the registration ID
+   * @param body map containing the rejectionReason
+   * @return the updated registration DTO
+   */
   @PostMapping("/{id}/reject")
   @Operation(summary = "Reject a pending registration request")
   public ResponseEntity<RegistrationDto> reject(

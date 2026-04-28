@@ -48,12 +48,23 @@ public class RegistrationController {
 
   private final RegistrationService registrationService;
 
+  /**
+   * Lists all join records.
+   *
+   * @return list of join DTOs
+   */
   @GetMapping
   @Operation(summary = "List all join records")
   public ResponseEntity<List<JoinDto>> listJoins() {
     return ResponseEntity.ok(this.registrationService.listJoins());
   }
 
+  /**
+   * Creates a join application with an auto-generated ID.
+   *
+   * @param body the join request
+   * @return the created join DTO
+   */
   @PostMapping("/")
   @Operation(summary = "Create a join application with auto-generated ID")
   public ResponseEntity<JoinDto> createJoin(
@@ -61,6 +72,13 @@ public class RegistrationController {
     return ResponseEntity.status(201).body(this.registrationService.createJoin(body));
   }
 
+  /**
+   * Creates a join application with a specified ID.
+   *
+   * @param joinId the join ID to use
+   * @param body the join request
+   * @return the created join DTO
+   */
   @PostMapping("/{joinId}")
   @Operation(summary = "Create a join application with specified ID")
   public ResponseEntity<JoinDto> createJoinWithId(
@@ -69,6 +87,12 @@ public class RegistrationController {
     return ResponseEntity.status(201).body(this.registrationService.createJoinWithId(joinId, body));
   }
 
+  /**
+   * Removes a join record.
+   *
+   * @param joinId the ID of the join record to remove
+   * @return no-content response
+   */
   @DeleteMapping("/{joinId}")
   @Operation(summary = "Remove a join record")
   public ResponseEntity<Void> deleteJoin(
@@ -77,7 +101,11 @@ public class RegistrationController {
     return ResponseEntity.noContent().build();
   }
 
-
+  /**
+   * Lists all available registration flows.
+   *
+   * @return list of flow DTOs
+   */
   @GetMapping("/flows")
   @Operation(summary = "List all available registration flows")
   public ResponseEntity<List<FlowDto>> listFlows() {

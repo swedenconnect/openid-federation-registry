@@ -52,7 +52,7 @@ public class RegistrationStepRepository {
     if (id == null) {
       return Optional.empty();
     }
-    return definedSteps.stream().filter(step -> step.getStepId().equals(id)).findFirst();
+    return this.definedSteps.stream().filter(step -> step.getStepId().equals(id)).findFirst();
   }
 
   /**
@@ -61,6 +61,6 @@ public class RegistrationStepRepository {
    * @return Defined steps
    */
   public List<Step> getDefinedSteps() {
-    return Collections.unmodifiableList(definedSteps);
+    return Collections.unmodifiableList(this.definedSteps);
   }
 }

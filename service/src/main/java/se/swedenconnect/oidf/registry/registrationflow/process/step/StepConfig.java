@@ -30,29 +30,69 @@ public abstract class StepConfig implements Serializable {
 
   final Map<String, Object> dataValues;
 
+  /**
+   * Constructs a StepConfig with the given data values.
+   *
+   * @param dataValues map of configuration key-value pairs
+   */
   public StepConfig(final Map<String, Object> dataValues) {
     this.dataValues = dataValues;
   }
 
-  public Object getValue(String name) {
+  /**
+   * Returns the raw value for the given key.
+   *
+   * @param name configuration key
+   * @return raw value
+   */
+  public Object getValue(final String name) {
     return this.dataValues.get(name);
   }
 
-  public Boolean getBoolean(String name) {
+  /**
+   * Returns the boolean value for the given key.
+   *
+   * @param name configuration key
+   * @return parsed boolean value
+   */
+  public Boolean getBoolean(final String name) {
     return Boolean.parseBoolean(this.dataValues.get(name).toString());
   }
 
-  public String getString(String name) {
+  /**
+   * Returns the string value for the given key.
+   *
+   * @param name configuration key
+   * @return string value
+   */
+  public String getString(final String name) {
     return this.dataValues.get(name).toString();
   }
 
-  public int getInt(String name) {
+  /**
+   * Returns the integer value for the given key.
+   *
+   * @param name configuration key
+   * @return parsed integer value
+   */
+  public int getInt(final String name) {
     return Integer.parseInt(this.dataValues.get(name).toString());
   }
 
-  public List<String> getList(String name) {
+  /**
+   * Returns the list value for the given key.
+   *
+   * @param name configuration key
+   * @return list of strings
+   */
+  public List<String> getList(final String name) {
     return (List<String>) this.dataValues.get(name);
   }
 
+  /**
+   * Returns all declared configuration values for this step.
+   *
+   * @return list of configuration value descriptors
+   */
   public abstract List<StepConfigurationValue> getStepConfigurationValues();
 }

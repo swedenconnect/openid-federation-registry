@@ -34,6 +34,13 @@ public class ProcessEngine {
 
   private static final Logger log = LoggerFactory.getLogger(ProcessEngine.class);
 
+  /**
+   * Executes the pipeline sequentially, stopping on the first failure.
+   *
+   * @param steps ordered list of step definitions
+   * @param ctx shared pipeline context
+   * @return aggregated report
+   */
   public ProcessReport run(final List<StepDefinition> steps, final ProcessContext ctx) {
     final List<StepExecutionRecord> records = new ArrayList<>();
 

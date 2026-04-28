@@ -22,20 +22,39 @@ import java.util.List;
 /**
  * Aggregated report for a complete pipeline run.
  *
+ * @param status overall pipeline status
+ * @param steps ordered list of step execution records
  * @author Per Fredrik Plars
  */
 public record ProcessReport(ProcessStatus status, List<StepExecutionRecord> steps) {
 
+  /**
+   * Creates a report for a fully completed pipeline.
+   *
+   * @param steps step execution records
+   * @return completed report
+   */
   public static ProcessReport completed(final List<StepExecutionRecord> steps) {
     return new ProcessReport(ProcessStatus.COMPLETED, List.copyOf(steps));
   }
 
+  /**
+   * Creates a report for a pipeline that was skipped after a step failure.
+   *
+   * @param steps step execution records up to the failure
+   * @return skipped report
+   */
   public static ProcessReport skipped(final List<StepExecutionRecord> steps) {
     return new ProcessReport(ProcessStatus.SKIPPED, List.copyOf(steps));
   }
 
+  /**
+   * Returns true if the pipeline completed without any step failures.
+   *
+   * @return true if successful
+   */
   public boolean isSuccessful() {
-    return status == ProcessStatus.COMPLETED
-        && steps.stream().noneMatch(r -> r.result().status() == StepStatus.FAILURE);
+    return this.status == ProcessStatus.COMPLETED
+        && this.steps.stream().noneMatch(r -> r.result().status() == StepStatus.FAILURE);
   }
 }

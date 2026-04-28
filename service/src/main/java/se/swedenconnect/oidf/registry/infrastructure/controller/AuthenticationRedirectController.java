@@ -15,6 +15,7 @@
  */
 package se.swedenconnect.oidf.registry.infrastructure.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -29,6 +30,7 @@ import org.springframework.web.servlet.view.RedirectView;
  *
  * @author Felix Hellman
  */
+@Hidden
 @Slf4j
 @RestController
 public class AuthenticationRedirectController {

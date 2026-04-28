@@ -18,6 +18,9 @@ package se.swedenconnect.oidf.registry.registrationflow.process.step;
 /**
  * A single validation issue reported by a pipeline step.
  *
+ * @param field the field that caused the issue
+ * @param message human-readable description of the issue
+ * @param severity how severe the issue is
  * @author Per Fredrik Plars
  */
 public record StepIssue(String field, String message, Severity severity) {

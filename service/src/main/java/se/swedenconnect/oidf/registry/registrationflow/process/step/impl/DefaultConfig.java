@@ -28,6 +28,11 @@ import java.util.Map;
  */
 public class DefaultConfig extends StepConfig {
 
+  /**
+   * Constructs a DefaultConfig with the given data values.
+   *
+   * @param dataValues map of configuration key-value pairs
+   */
   public DefaultConfig(final Map<String, Object> dataValues) {
     super(dataValues);
   }
@@ -38,6 +43,11 @@ public class DefaultConfig extends StepConfig {
         StepConfigurationValue.DATA_TYPE.BOOLEAN, "If this step should be enable or not", null));
   }
 
+  /**
+   * Returns whether this step is enabled.
+   *
+   * @return true if enabled
+   */
   public boolean isEnabled() {
     return super.getBoolean("enabled");
   }

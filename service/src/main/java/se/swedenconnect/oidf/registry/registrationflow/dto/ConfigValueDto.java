@@ -18,8 +18,13 @@ package se.swedenconnect.oidf.registry.registrationflow.dto;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
 
 /**
- * Response DTO for a single pipeline step — its name, base settings and full configuration.
+ * Response DTO for a single pipeline step configuration value.
  *
+ * @param key the configuration key
+ * @param description human-readable description
+ * @param value the current value
+ * @param type the data type
+ * @param defaultValue the default value
  * @author Per Fredrik Plars
  */
 public record ConfigValueDto(
@@ -30,7 +35,13 @@ public record ConfigValueDto(
     Object defaultValue
 ) {
 
-  public static ConfigValueDto create(StepConfigurationValue stepConfigurationValue) {
+  /**
+   * Creates a {@code ConfigValueDto} from a {@link StepConfigurationValue}.
+   *
+   * @param stepConfigurationValue the source configuration value
+   * @return mapped DTO
+   */
+  public static ConfigValueDto create(final StepConfigurationValue stepConfigurationValue) {
     return new ConfigValueDto(stepConfigurationValue.name(),
         stepConfigurationValue.description(),
         null,

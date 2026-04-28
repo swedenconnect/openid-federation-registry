@@ -22,6 +22,11 @@ package se.swedenconnect.oidf.registry.registrationflow.process.step;
  */
 public class MissingContextValueException extends RuntimeException {
 
+  /**
+   * Constructs a new exception for the given missing key.
+   *
+   * @param key the context key that was not found
+   */
   public MissingContextValueException(final String key) {
     super("Required context value missing for key: " + key);
   }

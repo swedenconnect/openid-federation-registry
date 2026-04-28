@@ -52,6 +52,14 @@ public class ManualValidationStep extends NoConfigStepAdapter {
   private final FlowRepository flowRepository;
   private final JsonMapper objectMapper;
 
+  /**
+   * Constructs a new ManualValidationStep.
+   *
+   * @param registrationRepository repository for persisting registrations
+   * @param taImRepository repository for trust anchor intermediates
+   * @param flowRepository repository for registration flows
+   * @param objectMapper JSON mapper
+   */
   public ManualValidationStep(final RegistrationRepository registrationRepository,
       final TaImRepository taImRepository,
       final FlowRepository flowRepository,

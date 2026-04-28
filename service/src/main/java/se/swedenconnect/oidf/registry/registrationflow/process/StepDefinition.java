@@ -25,18 +25,36 @@ import java.io.Serializable;
  * Binds a {@link Step} to its typed configuration so that the {@link ProcessEngine} can handle heterogeneous step
  * definitions without knowing the concrete config type.
  *
+ * @param step the pipeline step to execute
+ * @param config the step-specific configuration
  * @author Per Fredrik Plars
  */
 public record StepDefinition(Step step, StepConfig config) implements Serializable {
 
+  /**
+   * Executes the step against the given context.
+   *
+   * @param ctx shared pipeline context
+   * @return execution result
+   */
   public StepResult run(final ProcessContext ctx) {
-    return step.execute(ctx, config);
+    return this.step.execute(ctx, this.config);
   }
 
+  /**
+   * Returns the display name of the step.
+   *
+   * @return step name
+   */
   public String name() {
-    return step.getName();
+    return this.step.getName();
   }
 
+  /**
+   * Returns whether this step is enabled.
+   *
+   * @return true if enabled
+   */
   public boolean enabled() {
     return true;
   }

@@ -17,6 +17,7 @@ package se.swedenconnect.oidf.registry.registrations.model;
 
 /**
  * @deprecated Replaced by {@link RegistrationStatus}.
+ * @author Per Fredrik Plars
  */
 @Deprecated
 enum PendingSubordinateStatus {

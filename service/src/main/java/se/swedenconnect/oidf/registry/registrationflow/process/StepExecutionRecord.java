@@ -20,6 +20,8 @@ import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 /**
  * Immutable record of one step's execution outcome within a {@link ProcessReport}.
  *
+ * @param stepName display name of the step
+ * @param result the step's execution result
  * @author Per Fredrik Plars
  */
 public record StepExecutionRecord(String stepName, StepResult result) {

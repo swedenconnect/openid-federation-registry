@@ -20,6 +20,8 @@ import java.util.List;
 /**
  * Minimal representation of an entity's metadata used during pipeline processing.
  *
+ * @param entityId the entity identifier
+ * @param scopes the scopes declared by the entity
  * @author Per Fredrik Plars
  */
 public record EntityMetadata(String entityId, List<String> scopes) {

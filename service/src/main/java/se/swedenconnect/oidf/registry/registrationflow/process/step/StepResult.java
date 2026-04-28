@@ -20,18 +20,40 @@ import java.util.List;
 /**
  * Outcome returned by a pipeline step after execution.
  *
+ * @param status execution outcome
+ * @param message optional human-readable summary
+ * @param issues list of validation issues found
  * @author Per Fredrik Plars
  */
 public record StepResult(StepStatus status, String message, List<StepIssue> issues) {
 
+  /**
+   * Creates a successful result with no issues.
+   *
+   * @return successful StepResult
+   */
   public static StepResult success() {
     return new StepResult(StepStatus.SUCCESS, null, List.of());
   }
 
+  /**
+   * Creates a warning result.
+   *
+   * @param message human-readable summary
+   * @param issues list of issues
+   * @return warning StepResult
+   */
   public static StepResult warning(final String message, final List<StepIssue> issues) {
     return new StepResult(StepStatus.WARNING, message, List.copyOf(issues));
   }
 
+  /**
+   * Creates a failure result.
+   *
+   * @param message human-readable summary
+   * @param issues list of issues
+   * @return failure StepResult
+   */
   public static StepResult failure(final String message, final List<StepIssue> issues) {
     return new StepResult(StepStatus.FAILURE, message, List.copyOf(issues));
   }

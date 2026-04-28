@@ -37,10 +37,18 @@ public class RegistrationCleanupJob {
 
   private final RegistrationRepository registrationRepository;
 
+  /**
+   * Constructs the cleanup job.
+   *
+   * @param registrationRepository repository for registration entities
+   */
   public RegistrationCleanupJob(final RegistrationRepository registrationRepository) {
     this.registrationRepository = registrationRepository;
   }
 
+  /**
+   * Deletes REJECTED registration records older than 30 days.
+   */
   @Scheduled(cron = "0 0 2 * * *")
   @Transactional
   public void deleteExpiredRejections() {

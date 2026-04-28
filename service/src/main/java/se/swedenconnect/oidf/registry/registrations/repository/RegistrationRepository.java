@@ -31,11 +31,38 @@ import java.util.UUID;
  */
 public interface RegistrationRepository extends JpaRepository<Registration, UUID> {
 
+  /**
+   * Finds a registration by entity ID and status.
+   *
+   * @param entityId the entity identifier
+   * @param status the registration status
+   * @return optional registration
+   */
   Optional<Registration> findByEntityIdAndStatus(String entityId, RegistrationStatus status);
 
+  /**
+   * Finds all registrations for an intermediate with the given status.
+   *
+   * @param taimId the intermediate ID
+   * @param status the registration status
+   * @return list of matching registrations
+   */
   List<Registration> findByTaIm_TaImIdAndStatus(UUID taimId, RegistrationStatus status);
 
+  /**
+   * Counts registrations for an intermediate with the given status.
+   *
+   * @param taimId the intermediate ID
+   * @param status the registration status
+   * @return count of matching registrations
+   */
   long countByTaIm_TaImIdAndStatus(UUID taimId, RegistrationStatus status);
 
+  /**
+   * Deletes registrations with the given status created before the given date.
+   *
+   * @param status the registration status
+   * @param before the cutoff date
+   */
   void deleteByStatusAndCreatedDateBefore(RegistrationStatus status, LocalDateTime before);
 }

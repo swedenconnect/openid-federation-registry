@@ -32,18 +32,38 @@ public class RpMetadataValidationConfig extends StepConfig {
   private List<String> requiredScopes = List.of();
   private boolean strictAcrValues = false;
 
+  /**
+   * Constructs a new RpMetadataValidationConfig.
+   *
+   * @param dataValues map of configuration key-value pairs
+   */
   public RpMetadataValidationConfig(final Map<String, Object> dataValues) {
     super(dataValues);
   }
 
+  /**
+   * Returns the validation profile ID.
+   *
+   * @return validation profile ID
+   */
   public String getValidationProfileId() {
     return super.getString("validationProfileId");
   }
 
+  /**
+   * Returns the list of required scopes.
+   *
+   * @return required scopes
+   */
   public List<String> getRequiredScopes() {
     return super.getList("requiredScopes");
   }
 
+  /**
+   * Returns whether strict ACR values validation is enabled.
+   *
+   * @return true if strict ACR values is enabled
+   */
   public Boolean isStrictAcrValues() {
     return super.getBoolean("isstrictAcrValues");
   }

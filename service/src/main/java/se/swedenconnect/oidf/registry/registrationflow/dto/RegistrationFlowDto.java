@@ -19,8 +19,12 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Defines a complete execution flow
+ * Defines a complete execution flow.
  *
+ * @param flowId unique flow identifier
+ * @param name display name
+ * @param description human-readable description
+ * @param steps ordered list of step definitions
  * @author Per Fredrik Plars
  */
 public record RegistrationFlowDto(

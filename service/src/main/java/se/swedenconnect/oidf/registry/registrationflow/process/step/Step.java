@@ -27,17 +27,44 @@ import java.util.UUID;
  */
 public interface Step {
 
+  /**
+   * Executes this step against the shared pipeline context.
+   *
+   * @param ctx shared pipeline context
+   * @param config step-specific configuration
+   * @return execution result
+   */
   StepResult execute(ProcessContext ctx, StepConfig config);
 
+  /**
+   * Returns the unique ID of this step.
+   *
+   * @return step UUID
+   */
   UUID getStepId();
 
+  /**
+   * Returns the display name of this step.
+   *
+   * @return step name
+   */
   default String getName() {
     return getClass().getSimpleName();
   }
 
+  /**
+   * Returns a human-readable description of what this step does.
+   *
+   * @return step description
+   */
   default String getDescription() {
     return "<NoDescription defined>";
   }
 
-  abstract List<StepConfigurationValue> getStepConfigurationValues();
+  /**
+   * Returns all declared configuration values for this step.
+   *
+   * @return list of configuration value descriptors
+   */
+  List<StepConfigurationValue> getStepConfigurationValues();
 }

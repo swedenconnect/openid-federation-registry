@@ -21,6 +21,10 @@ import java.util.UUID;
 /**
  * Response DTO for a single pipeline step — its name, base settings and full configuration.
  *
+ * @param stepId unique step identifier
+ * @param name display name
+ * @param description human-readable description
+ * @param config list of configurable values for this step
  * @author Per Fredrik Plars
  */
 public record StepDto(
