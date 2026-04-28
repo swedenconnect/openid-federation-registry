@@ -76,7 +76,7 @@ public class RegistrationAdminController {
   @PostMapping("/{id}/reject")
   @Operation(summary = "Reject a pending registration request")
   public ResponseEntity<RegistrationDto> reject(
-      @Parameter(description = "Registration ID") @PathVariable final UUID id,
+      @Parameter(description = "Registration ID") @PathVariable("id") final UUID id,
       @RequestBody final Map<String, String> body) {
     final Registration reg = this.registrationRepository.findById(id)
         .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Registration not found: " + id));

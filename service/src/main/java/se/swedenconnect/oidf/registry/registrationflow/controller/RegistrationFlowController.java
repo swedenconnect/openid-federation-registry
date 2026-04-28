@@ -88,14 +88,14 @@ public class RegistrationFlowController {
   @GetMapping("/intermediate/{taImId}/flows")
   @Operation(summary = "List flows assigned to an intermediate")
   public ResponseEntity<List<RegistrationFlowDto>> getFlowsForIntermediate(
-      @PathVariable final UUID taImId) {
+      @PathVariable("taImId") final UUID taImId) {
     return ResponseEntity.ok(registrationFlowService.getFlowsForIntermediate(taImId));
   }
 
   @PutMapping("/intermediate/{taImId}/flows")
   @Operation(summary = "Set (replace) the flows assigned to an intermediate")
   public ResponseEntity<Void> setFlowsForIntermediate(
-      @PathVariable final UUID taImId,
+      @PathVariable("taImId") final UUID taImId,
       @RequestBody final List<UUID> flowIds) {
     registrationFlowService.setFlowsForIntermediate(taImId, flowIds);
     return ResponseEntity.noContent().build();
@@ -104,8 +104,8 @@ public class RegistrationFlowController {
   @DeleteMapping("/intermediate/{taImId}/flows/{flowId}")
   @Operation(summary = "Remove a specific flow from an intermediate")
   public ResponseEntity<Void> removeFlowFromIntermediate(
-      @PathVariable final UUID taImId,
-      @PathVariable final UUID flowId) {
+      @PathVariable("taImId") final UUID taImId,
+      @PathVariable("flowId") final UUID flowId) {
     registrationFlowService.removeFlowFromIntermediate(taImId, flowId);
     return ResponseEntity.noContent().build();
   }

@@ -16,7 +16,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8010",
+      "url": "https://registry.local.swedenconnect.se",
       "description": "Generated server url"
     }
   ],
@@ -28,8 +28,16 @@
   ],
   "tags": [
     {
-      "name": "Policies",
-      "description": "CRUD for metadata policies"
+      "name": "Pending registrations",
+      "description": "Operator view of incoming registration requests"
+    },
+    {
+      "name": "Registration Flow",
+      "description": "Configured pipeline steps for entity registration"
+    },
+    {
+      "name": "Join",
+      "description": "Apply to and manage federation membership"
     },
     {
       "name": "Modules",
@@ -49,6 +57,47 @@
     }
   ],
   "paths": {
+    "/userinfo": {
+      "get": {
+        "tags": [
+          "user-info-controller"
+        ],
+        "operationId": "getCurrentUser",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfoResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "user-info-controller"
+        ],
+        "operationId": "selectOrganization",
+        "parameters": [
+          {
+            "name": "orgNumber",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/registry/v1/trustmarks/{trustMarkId}": {
       "get": {
         "tags": [
@@ -439,141 +488,6 @@
         "parameters": [
           {
             "name": "subordinateId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/registry/v1/policies/{policyId}": {
-      "get": {
-        "tags": [
-          "Policies"
-        ],
-        "summary": "Get policy by id",
-        "operationId": "getPolicy",
-        "parameters": [
-          {
-            "name": "policyId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Policy"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Policies"
-        ],
-        "summary": "Update policy",
-        "operationId": "updatePolicy",
-        "parameters": [
-          {
-            "name": "policyId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Policy"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Policy"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Policies"
-        ],
-        "summary": "Create policy with specified ID",
-        "operationId": "createPolicyWithId",
-        "parameters": [
-          {
-            "name": "policyId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Policy"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Policy"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Policies"
-        ],
-        "summary": "Delete policy",
-        "operationId": "deletePolicy",
-        "parameters": [
-          {
-            "name": "policyId",
             "in": "path",
             "required": true,
             "schema": {
@@ -1408,6 +1322,186 @@
         }
       }
     },
+    "/registration-flow/v1/intermediate/{taImId}/flows": {
+      "get": {
+        "tags": [
+          "Registration Flow"
+        ],
+        "summary": "List flows assigned to an intermediate",
+        "operationId": "getFlowsForIntermediate",
+        "parameters": [
+          {
+            "name": "taImId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RegistrationFlowDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Registration Flow"
+        ],
+        "summary": "Set (replace) the flows assigned to an intermediate",
+        "operationId": "setFlowsForIntermediate",
+        "parameters": [
+          {
+            "name": "taImId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/registration-flow/v1/flow/{flowid}": {
+      "put": {
+        "tags": [
+          "Registration Flow"
+        ],
+        "summary": "Update a registration flow",
+        "operationId": "updateFlow",
+        "parameters": [
+          {
+            "name": "flowid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "arg1",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/RegistrationFlowDto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationFlowDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Registration Flow"
+        ],
+        "summary": "Create a new flow with a specified id",
+        "operationId": "createFlowWithId",
+        "parameters": [
+          {
+            "name": "flowid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "arg1",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/RegistrationFlowDto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationFlowDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Registration Flow"
+        ],
+        "summary": "Update a registration flow",
+        "operationId": "deleteFlow",
+        "parameters": [
+          {
+            "name": "flowid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationFlowDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/registry/v1/trustmarks": {
       "get": {
         "tags": [
@@ -1528,59 +1622,6 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/Subordinate"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/registry/v1/policies": {
-      "get": {
-        "tags": [
-          "Policies"
-        ],
-        "summary": "List all policies",
-        "operationId": "listPolicies",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Policy"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Policies"
-        ],
-        "summary": "Create policy with auto-generated ID",
-        "operationId": "createPolicy",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Policy"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Policy"
                 }
               }
             }
@@ -1867,6 +1908,180 @@
         }
       }
     },
+    "/registration/{joinId}": {
+      "post": {
+        "tags": [
+          "Join"
+        ],
+        "summary": "Create a join application with specified ID",
+        "operationId": "createJoinWithId",
+        "parameters": [
+          {
+            "name": "joinId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Join"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Join"
+        ],
+        "summary": "Remove a join record",
+        "operationId": "deleteJoin",
+        "parameters": [
+          {
+            "name": "joinId",
+            "in": "path",
+            "description": "ID of the join record to remove",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/registration/admin/{id}/reject": {
+      "post": {
+        "tags": [
+          "Pending registrations"
+        ],
+        "summary": "Reject a pending registration request",
+        "operationId": "reject",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Registration ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Registration"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration/": {
+      "post": {
+        "tags": [
+          "Join"
+        ],
+        "summary": "Create a join application with auto-generated ID",
+        "operationId": "createJoin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Join"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-flow/v1/flow": {
+      "post": {
+        "tags": [
+          "Registration Flow"
+        ],
+        "summary": "Create a new flow",
+        "operationId": "createFlow",
+        "parameters": [
+          {
+            "name": "arg0",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/RegistrationFlowDto"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationFlowDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/registry/v1/trustmarks/{trustMarkId}/subjects": {
       "get": {
         "tags": [
@@ -2007,6 +2222,171 @@
         }
       }
     },
+    "/registration": {
+      "get": {
+        "tags": [
+          "Join"
+        ],
+        "summary": "List all join records",
+        "operationId": "listJoins",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Join"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration/flows": {
+      "get": {
+        "tags": [
+          "Join"
+        ],
+        "summary": "List all available registration flows",
+        "operationId": "listFlows",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Flow"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration/admin": {
+      "get": {
+        "tags": [
+          "Pending registrations"
+        ],
+        "summary": "List pending registrations for an intermediate",
+        "operationId": "listPending",
+        "parameters": [
+          {
+            "name": "arg0",
+            "in": "query",
+            "description": "Filter by intermediate ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Registration"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration/admin/count": {
+      "get": {
+        "tags": [
+          "Pending registrations"
+        ],
+        "summary": "Count unhandled PENDING registrations for an intermediate (badge)",
+        "operationId": "countPending",
+        "parameters": [
+          {
+            "name": "arg0",
+            "in": "query",
+            "description": "Intermediate ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-flow/v1/steps": {
+      "get": {
+        "tags": [
+          "Registration Flow"
+        ],
+        "summary": "List all configured pipeline steps with their settings",
+        "operationId": "getSteps",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StepDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/authenticate": {
+      "get": {
+        "tags": [
+          "authentication-redirect-controller"
+        ],
+        "operationId": "getRedirect",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RedirectView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/federationservice/submodules": {
       "get": {
         "tags": [
@@ -2083,6 +2463,60 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "index-controller"
+        ],
+        "operationId": "baseIndexTemplate",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-flow/v1/intermediate/{taImId}/flows/{flowId}": {
+      "delete": {
+        "tags": [
+          "Registration Flow"
+        ],
+        "summary": "Remove a specific flow from an intermediate",
+        "operationId": "removeFlowFromIntermediate",
+        "parameters": [
+          {
+            "name": "taImId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "flowId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -2230,27 +2664,6 @@
                 }
               }
             }
-          }
-        }
-      },
-      "Policy": {
-        "type": "object",
-        "properties": {
-          "policyId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Policy ID",
-            "readOnly": true
-          },
-          "name": {
-            "type": "string",
-            "description": "Policy name",
-            "example": "Default OIDC RP policy"
-          },
-          "policy": {
-            "type": "object",
-            "additionalProperties": {},
-            "description": "JSON policy document"
           }
         }
       },
@@ -2478,6 +2891,66 @@
           }
         }
       },
+      "ConfigValueDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "defaultValue": {}
+        }
+      },
+      "RegistrationFlowDto": {
+        "type": "object",
+        "properties": {
+          "flowId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StepDto"
+            }
+          }
+        }
+      },
+      "StepDto": {
+        "type": "object",
+        "properties": {
+          "stepId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "config": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConfigValueDto"
+            }
+          }
+        }
+      },
       "EntityConfigurationPingDto": {
         "type": "object",
         "properties": {
@@ -2488,6 +2961,253 @@
           },
           "entityConfigurationAccessible": {
             "type": "boolean"
+          }
+        }
+      },
+      "JoinRequest": {
+        "type": "object",
+        "properties": {
+          "entityId": {
+            "type": "string",
+            "description": "Entity identifier (URI) of the entity applying to join",
+            "example": "https://example.com/entity"
+          },
+          "registrationFlowId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the registration flow (linked to an intermediate)",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "trustmarks": {
+            "type": "array",
+            "description": "Trustmarks requested as part of this join application",
+            "items": {
+              "$ref": "#/components/schemas/TrustmarkRequest"
+            }
+          }
+        }
+      },
+      "TrustmarkRequest": {
+        "type": "object",
+        "properties": {
+          "trustmarkType": {
+            "type": "string",
+            "description": "Trustmark type identifier (URI)",
+            "example": "https://trust.example.com/tm/loa3"
+          },
+          "trustmarkIssuer": {
+            "type": "string",
+            "description": "Entity identifier of the trustmark issuer",
+            "example": "https://issuer.example.com"
+          }
+        }
+      },
+      "Join": {
+        "type": "object",
+        "properties": {
+          "joinId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Join ID",
+            "readOnly": true
+          },
+          "entityId": {
+            "type": "string",
+            "description": "Entity identifier (URI)",
+            "example": "https://example.com/entity"
+          },
+          "registrationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the registration flow this entity joined through"
+          },
+          "tags": {
+            "type": "array",
+            "description": "Tags describing the entity type, e.g. OIDC, SAML, RP, OP, IDP, SP",
+            "example": [
+              "OIDC",
+              "RP"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "isHosted": {
+            "type": "boolean",
+            "description": "True if the entity's metadata is hosted in this registry"
+          },
+          "hostedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the hosted entity record, present when isHosted is true",
+            "readOnly": true
+          },
+          "statusFedreg": {
+            "type": "string",
+            "description": "Current federation registration status",
+            "enum": [
+              "REGISTERED",
+              "ONGOING",
+              "DENY"
+            ]
+          },
+          "statusTrustmarks": {
+            "type": "array",
+            "description": "Trustmark status per requested trustmark",
+            "items": {
+              "$ref": "#/components/schemas/TrustmarkStatus"
+            }
+          },
+          "rejectionReason": {
+            "type": "string",
+            "description": "Reason for rejection, present when status_fedreg is DENY",
+            "readOnly": true
+          }
+        }
+      },
+      "TrustmarkStatus": {
+        "type": "object",
+        "properties": {
+          "trustmarkId": {
+            "type": "string",
+            "description": "Trustmark type identifier (URI)",
+            "example": "https://trust.example.com/tm/loa3"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of this trustmark",
+            "enum": [
+              "OK",
+              "PENDING",
+              "REVOKED",
+              "EXPIRED"
+            ]
+          }
+        }
+      },
+      "Registration": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Registration ID",
+            "readOnly": true
+          },
+          "taimId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Intermediate (TaIm) this registration belongs to"
+          },
+          "registrationFlowId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Registration flow used for this request"
+          },
+          "entityId": {
+            "type": "string",
+            "description": "Entity identifier of the applicant",
+            "example": "https://example.com/entity"
+          },
+          "jwks": {
+            "type": "string",
+            "description": "JWKS snapshot from entity configuration at time of registration"
+          },
+          "metadata": {
+            "type": "string",
+            "description": "Entity configuration metadata snapshot"
+          },
+          "metadataPolicy": {
+            "type": "string",
+            "description": "Proposed metadata_policy generated by PolicyCreationStep"
+          },
+          "trustmarksRequested": {
+            "type": "string",
+            "description": "Trustmarks requested in the application"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the registration request",
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the request was reviewed by an operator",
+            "readOnly": true
+          },
+          "reviewedBy": {
+            "type": "string",
+            "description": "Identity of the operator who reviewed the request",
+            "readOnly": true
+          },
+          "rejectionReason": {
+            "type": "string",
+            "description": "Reason provided by the operator when rejecting the request"
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this registration was created",
+            "readOnly": true
+          }
+        }
+      },
+      "OrganizationInformation": {
+        "type": "object",
+        "properties": {
+          "organizations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationRecord"
+            }
+          }
+        }
+      },
+      "OrganizationRecord": {
+        "type": "object",
+        "properties": {
+          "orgNumber": {
+            "type": "string"
+          },
+          "orgName": {
+            "type": "string"
+          },
+          "entityPrefix": {
+            "type": "string"
+          }
+        }
+      },
+      "UserInfoResponse": {
+        "type": "object",
+        "properties": {
+          "userName": {
+            "type": "string"
+          },
+          "givenName": {
+            "type": "string"
+          },
+          "familyName": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "orgNumber": {
+            "type": "string"
+          },
+          "orgName": {
+            "type": "string"
+          },
+          "entityPrefix": {
+            "type": "string"
+          },
+          "orgInfo": {
+            "$ref": "#/components/schemas/OrganizationInformation"
           }
         }
       },
@@ -2641,6 +3361,952 @@
           }
         ],
         "description": "Extended federation entity including modules"
+      },
+      "Flow": {
+        "type": "object",
+        "properties": {
+          "registrationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Registration flow ID (linked to an intermediate)",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "type": {
+            "type": "string",
+            "description": "Protocol/entity type for this flow",
+            "example": "OIDC-OP"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable name of the flow",
+            "example": "Sweden Connect QA"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the flow and its purpose",
+            "example": "QA-miljÃ¶ fÃ¶r Sweden Connect"
+          }
+        }
+      },
+      "ApplicationContext": {
+        "type": "object",
+        "properties": {
+          "applicationName": {
+            "type": "string"
+          },
+          "startupDate": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "autowireCapableBeanFactory": {
+            "$ref": "#/components/schemas/AutowireCapableBeanFactory"
+          },
+          "parent": {
+            "$ref": "#/components/schemas/ApplicationContext"
+          },
+          "id": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "environment": {
+            "$ref": "#/components/schemas/Environment"
+          },
+          "beanDefinitionCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "beanDefinitionNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "parentBeanFactory": {
+            "$ref": "#/components/schemas/BeanFactory"
+          },
+          "classLoader": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "registeredAsParallelCapable": {
+                "type": "boolean"
+              },
+              "parent": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "registeredAsParallelCapable": {
+                    "type": "boolean"
+                  },
+                  "unnamedModule": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "descriptor": {
+                        "type": "object",
+                        "properties": {
+                          "open": {
+                            "type": "boolean"
+                          },
+                          "automatic": {
+                            "type": "boolean"
+                          }
+                        }
+                      },
+                      "named": {
+                        "type": "boolean"
+                      },
+                      "annotations": {
+                        "type": "array",
+                        "items": {}
+                      },
+                      "declaredAnnotations": {
+                        "type": "array",
+                        "items": {}
+                      },
+                      "packages": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "uniqueItems": true
+                      },
+                      "nativeAccessEnabled": {
+                        "type": "boolean"
+                      },
+                      "layer": {}
+                    }
+                  },
+                  "definedPackages": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "sealed": {
+                          "type": "boolean"
+                        },
+                        "annotations": {
+                          "type": "array",
+                          "items": {}
+                        },
+                        "declaredAnnotations": {
+                          "type": "array",
+                          "items": {}
+                        },
+                        "specificationTitle": {
+                          "type": "string"
+                        },
+                        "specificationVersion": {
+                          "type": "string"
+                        },
+                        "specificationVendor": {
+                          "type": "string"
+                        },
+                        "implementationTitle": {
+                          "type": "string"
+                        },
+                        "implementationVersion": {
+                          "type": "string"
+                        },
+                        "implementationVendor": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "defaultAssertionStatus": {
+                    "type": "boolean",
+                    "writeOnly": true
+                  }
+                }
+              },
+              "unnamedModule": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "descriptor": {
+                    "type": "object",
+                    "properties": {
+                      "open": {
+                        "type": "boolean"
+                      },
+                      "automatic": {
+                        "type": "boolean"
+                      }
+                    }
+                  },
+                  "named": {
+                    "type": "boolean"
+                  },
+                  "annotations": {
+                    "type": "array",
+                    "items": {}
+                  },
+                  "declaredAnnotations": {
+                    "type": "array",
+                    "items": {}
+                  },
+                  "packages": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "uniqueItems": true
+                  },
+                  "nativeAccessEnabled": {
+                    "type": "boolean"
+                  },
+                  "layer": {}
+                }
+              },
+              "definedPackages": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "sealed": {
+                      "type": "boolean"
+                    },
+                    "annotations": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "declaredAnnotations": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "specificationTitle": {
+                      "type": "string"
+                    },
+                    "specificationVersion": {
+                      "type": "string"
+                    },
+                    "specificationVendor": {
+                      "type": "string"
+                    },
+                    "implementationTitle": {
+                      "type": "string"
+                    },
+                    "implementationVersion": {
+                      "type": "string"
+                    },
+                    "implementationVendor": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "defaultAssertionStatus": {
+                "type": "boolean",
+                "writeOnly": true
+              }
+            }
+          }
+        }
+      },
+      "AutowireCapableBeanFactory": {},
+      "BeanFactory": {},
+      "DefaultHttpStatusCode": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/HttpStatusCode"
+          }
+        ]
+      },
+      "Environment": {
+        "type": "object",
+        "properties": {
+          "activeProfiles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "defaultProfiles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "FilterRegistration": {
+        "type": "object",
+        "properties": {
+          "servletNameMappings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "urlPatternMappings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "initParameters": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "className": {
+            "type": "string"
+          }
+        }
+      },
+      "HttpStatus": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/HttpStatusCode"
+          }
+        ],
+        "enum": [
+          "100 CONTINUE",
+          "101 SWITCHING_PROTOCOLS",
+          "102 PROCESSING",
+          "103 EARLY_HINTS",
+          "200 OK",
+          "201 CREATED",
+          "202 ACCEPTED",
+          "203 NON_AUTHORITATIVE_INFORMATION",
+          "204 NO_CONTENT",
+          "205 RESET_CONTENT",
+          "206 PARTIAL_CONTENT",
+          "207 MULTI_STATUS",
+          "208 ALREADY_REPORTED",
+          "226 IM_USED",
+          "300 MULTIPLE_CHOICES",
+          "301 MOVED_PERMANENTLY",
+          "302 FOUND",
+          "303 SEE_OTHER",
+          "304 NOT_MODIFIED",
+          "307 TEMPORARY_REDIRECT",
+          "308 PERMANENT_REDIRECT",
+          "400 BAD_REQUEST",
+          "401 UNAUTHORIZED",
+          "402 PAYMENT_REQUIRED",
+          "403 FORBIDDEN",
+          "404 NOT_FOUND",
+          "405 METHOD_NOT_ALLOWED",
+          "406 NOT_ACCEPTABLE",
+          "407 PROXY_AUTHENTICATION_REQUIRED",
+          "408 REQUEST_TIMEOUT",
+          "409 CONFLICT",
+          "410 GONE",
+          "411 LENGTH_REQUIRED",
+          "412 PRECONDITION_FAILED",
+          "413 CONTENT_TOO_LARGE",
+          "413 PAYLOAD_TOO_LARGE",
+          "414 URI_TOO_LONG",
+          "415 UNSUPPORTED_MEDIA_TYPE",
+          "416 REQUESTED_RANGE_NOT_SATISFIABLE",
+          "417 EXPECTATION_FAILED",
+          "418 I_AM_A_TEAPOT",
+          "421 MISDIRECTED_REQUEST",
+          "422 UNPROCESSABLE_CONTENT",
+          "422 UNPROCESSABLE_ENTITY",
+          "423 LOCKED",
+          "424 FAILED_DEPENDENCY",
+          "425 TOO_EARLY",
+          "426 UPGRADE_REQUIRED",
+          "428 PRECONDITION_REQUIRED",
+          "429 TOO_MANY_REQUESTS",
+          "431 REQUEST_HEADER_FIELDS_TOO_LARGE",
+          "451 UNAVAILABLE_FOR_LEGAL_REASONS",
+          "500 INTERNAL_SERVER_ERROR",
+          "501 NOT_IMPLEMENTED",
+          "502 BAD_GATEWAY",
+          "503 SERVICE_UNAVAILABLE",
+          "504 GATEWAY_TIMEOUT",
+          "505 HTTP_VERSION_NOT_SUPPORTED",
+          "506 VARIANT_ALSO_NEGOTIATES",
+          "507 INSUFFICIENT_STORAGE",
+          "508 LOOP_DETECTED",
+          "509 BANDWIDTH_LIMIT_EXCEEDED",
+          "510 NOT_EXTENDED",
+          "511 NETWORK_AUTHENTICATION_REQUIRED"
+        ]
+      },
+      "HttpStatusCode": {
+        "type": "object",
+        "properties": {
+          "is1xxInformational": {
+            "type": "boolean"
+          },
+          "is2xxSuccessful": {
+            "type": "boolean"
+          },
+          "is3xxRedirection": {
+            "type": "boolean"
+          },
+          "is5xxServerError": {
+            "type": "boolean"
+          },
+          "is4xxClientError": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": "boolean"
+          }
+        }
+      },
+      "JspConfigDescriptor": {
+        "type": "object",
+        "properties": {
+          "taglibs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaglibDescriptor"
+            }
+          },
+          "jspPropertyGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JspPropertyGroupDescriptor"
+            }
+          }
+        }
+      },
+      "JspPropertyGroupDescriptor": {
+        "type": "object",
+        "properties": {
+          "urlPatterns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "elIgnored": {
+            "type": "string"
+          },
+          "pageEncoding": {
+            "type": "string"
+          },
+          "isXml": {
+            "type": "string"
+          },
+          "includePreludes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "includeCodas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "errorOnELNotFound": {
+            "type": "string"
+          },
+          "scriptingInvalid": {
+            "type": "string"
+          },
+          "deferredSyntaxAllowedAsLiteral": {
+            "type": "string"
+          },
+          "trimDirectiveWhitespaces": {
+            "type": "string"
+          },
+          "errorOnUndeclaredNamespace": {
+            "type": "string"
+          },
+          "defaultContentType": {
+            "type": "string"
+          },
+          "buffer": {
+            "type": "string"
+          }
+        }
+      },
+      "RedirectView": {
+        "type": "object",
+        "properties": {
+          "applicationContext": {
+            "$ref": "#/components/schemas/ApplicationContext"
+          },
+          "servletContext": {
+            "$ref": "#/components/schemas/ServletContext",
+            "writeOnly": true
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "requestContextAttribute": {
+            "type": "string"
+          },
+          "staticAttributes": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "exposePathVariables": {
+            "type": "boolean"
+          },
+          "exposeContextBeansAsAttributes": {
+            "type": "boolean",
+            "writeOnly": true
+          },
+          "exposedContextBeanNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "writeOnly": true
+          },
+          "beanName": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "contextRelative": {
+            "type": "boolean",
+            "writeOnly": true
+          },
+          "http10Compatible": {
+            "type": "boolean",
+            "writeOnly": true
+          },
+          "exposeModelAttributes": {
+            "type": "boolean",
+            "writeOnly": true
+          },
+          "encodingScheme": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "statusCode": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DefaultHttpStatusCode"
+              },
+              {
+                "$ref": "#/components/schemas/HttpStatus"
+              }
+            ],
+            "writeOnly": true
+          },
+          "expandUriTemplateVariables": {
+            "type": "boolean",
+            "writeOnly": true
+          },
+          "propagateQueryParams": {
+            "type": "boolean",
+            "writeOnly": true
+          },
+          "hosts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "redirectView": {
+            "type": "boolean"
+          },
+          "propagateQueryProperties": {
+            "type": "boolean"
+          },
+          "attributes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "writeOnly": true
+          },
+          "attributesMap": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "attributesCSV": {
+            "type": "string",
+            "writeOnly": true
+          }
+        }
+      },
+      "ServletContext": {
+        "type": "object",
+        "properties": {
+          "serverInfo": {
+            "type": "string"
+          },
+          "sessionTimeout": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "contextPath": {
+            "type": "string"
+          },
+          "attributeNames": {},
+          "requestCharacterEncoding": {
+            "type": "string"
+          },
+          "responseCharacterEncoding": {
+            "type": "string"
+          },
+          "effectiveMajorVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "effectiveMinorVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "servletContextName": {
+            "type": "string"
+          },
+          "servletRegistrations": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ServletRegistration"
+            }
+          },
+          "filterRegistrations": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FilterRegistration"
+            }
+          },
+          "defaultSessionTrackingModes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "COOKIE",
+                "URL",
+                "SSL"
+              ]
+            },
+            "uniqueItems": true
+          },
+          "effectiveSessionTrackingModes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "COOKIE",
+                "URL",
+                "SSL"
+              ]
+            },
+            "uniqueItems": true
+          },
+          "jspConfigDescriptor": {
+            "$ref": "#/components/schemas/JspConfigDescriptor"
+          },
+          "sessionTrackingModes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "COOKIE",
+                "URL",
+                "SSL"
+              ]
+            },
+            "uniqueItems": true,
+            "writeOnly": true
+          },
+          "sessionCookieConfig": {
+            "$ref": "#/components/schemas/SessionCookieConfig"
+          },
+          "virtualServerName": {
+            "type": "string"
+          },
+          "initParameterNames": {},
+          "classLoader": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "registeredAsParallelCapable": {
+                "type": "boolean"
+              },
+              "parent": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "registeredAsParallelCapable": {
+                    "type": "boolean"
+                  },
+                  "unnamedModule": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "descriptor": {
+                        "type": "object",
+                        "properties": {
+                          "open": {
+                            "type": "boolean"
+                          },
+                          "automatic": {
+                            "type": "boolean"
+                          }
+                        }
+                      },
+                      "named": {
+                        "type": "boolean"
+                      },
+                      "annotations": {
+                        "type": "array",
+                        "items": {}
+                      },
+                      "declaredAnnotations": {
+                        "type": "array",
+                        "items": {}
+                      },
+                      "packages": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "uniqueItems": true
+                      },
+                      "nativeAccessEnabled": {
+                        "type": "boolean"
+                      },
+                      "layer": {}
+                    }
+                  },
+                  "definedPackages": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "sealed": {
+                          "type": "boolean"
+                        },
+                        "annotations": {
+                          "type": "array",
+                          "items": {}
+                        },
+                        "declaredAnnotations": {
+                          "type": "array",
+                          "items": {}
+                        },
+                        "specificationTitle": {
+                          "type": "string"
+                        },
+                        "specificationVersion": {
+                          "type": "string"
+                        },
+                        "specificationVendor": {
+                          "type": "string"
+                        },
+                        "implementationTitle": {
+                          "type": "string"
+                        },
+                        "implementationVersion": {
+                          "type": "string"
+                        },
+                        "implementationVendor": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "defaultAssertionStatus": {
+                    "type": "boolean",
+                    "writeOnly": true
+                  }
+                }
+              },
+              "unnamedModule": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "descriptor": {
+                    "type": "object",
+                    "properties": {
+                      "open": {
+                        "type": "boolean"
+                      },
+                      "automatic": {
+                        "type": "boolean"
+                      }
+                    }
+                  },
+                  "named": {
+                    "type": "boolean"
+                  },
+                  "annotations": {
+                    "type": "array",
+                    "items": {}
+                  },
+                  "declaredAnnotations": {
+                    "type": "array",
+                    "items": {}
+                  },
+                  "packages": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "uniqueItems": true
+                  },
+                  "nativeAccessEnabled": {
+                    "type": "boolean"
+                  },
+                  "layer": {}
+                }
+              },
+              "definedPackages": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "sealed": {
+                      "type": "boolean"
+                    },
+                    "annotations": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "declaredAnnotations": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "specificationTitle": {
+                      "type": "string"
+                    },
+                    "specificationVersion": {
+                      "type": "string"
+                    },
+                    "specificationVendor": {
+                      "type": "string"
+                    },
+                    "implementationTitle": {
+                      "type": "string"
+                    },
+                    "implementationVersion": {
+                      "type": "string"
+                    },
+                    "implementationVendor": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "defaultAssertionStatus": {
+                "type": "boolean",
+                "writeOnly": true
+              }
+            }
+          },
+          "majorVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "minorVersion": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ServletRegistration": {
+        "type": "object",
+        "properties": {
+          "runAsRole": {
+            "type": "string"
+          },
+          "mappings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "initParameters": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "className": {
+            "type": "string"
+          }
+        }
+      },
+      "SessionCookieConfig": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "maxAge": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "httpOnly": {
+            "type": "boolean"
+          },
+          "path": {
+            "type": "string"
+          },
+          "secure": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "attributes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "comment": {
+            "type": "string",
+            "deprecated": true
+          }
+        }
+      },
+      "TaglibDescriptor": {
+        "type": "object",
+        "properties": {
+          "taglibURI": {
+            "type": "string"
+          },
+          "taglibLocation": {
+            "type": "string"
+          }
+        }
       }
     },
     "securitySchemes": {

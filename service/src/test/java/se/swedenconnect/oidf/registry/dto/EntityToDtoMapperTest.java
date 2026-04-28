@@ -523,7 +523,7 @@ class EntityToDtoMapperTest {
     sub.setMetadataPolicyCrit("mpc1,mpc2");
     sub.setEcLocation("https://ec.example.com");
     sub.setEcLocationAutomatic(false);
-    sub.setMetadataPolicy(new TestDataOperations().createPolicy().getPolicy());
+    sub.setMetadataPolicy(new TestDataOperations().createPolicy());
     return sub;
   }
 

@@ -25,13 +25,11 @@ import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.api.EntitiesApi;
 import se.swedenconnect.oidf.registry.api.ModulesApi;
-import se.swedenconnect.oidf.registry.api.PoliciesApi;
 import se.swedenconnect.oidf.registry.api.SubordinatesApi;
 import se.swedenconnect.oidf.registry.api.model.EntityWithModules;
 import se.swedenconnect.oidf.registry.api.model.FederationEntity;
 import se.swedenconnect.oidf.registry.api.model.FederationEntityWithModules;
 import se.swedenconnect.oidf.registry.api.model.HostedEntity;
-import se.swedenconnect.oidf.registry.api.model.Policy;
 import se.swedenconnect.oidf.registry.api.model.Resolver;
 import se.swedenconnect.oidf.registry.api.model.Subordinate;
 import se.swedenconnect.oidf.registry.api.model.TrustAnchor;
@@ -47,7 +45,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.UUID;
 
 /**
  * oidf-entity-registry
@@ -82,9 +79,7 @@ public class TestDataOperations {
     new TestDataOperations().createPolicy();
   }
 
-  public Policy createPolicy() {
-      final Policy policy = new Policy();
-      policy.setName("test-policy:" + UUID.randomUUID());
+  public Map<String, Object> createPolicy() {
     final Map<String, Object> p = Map.of("metadata_policy",
         Map.of(
             "openid_relying_party", Map.of(
@@ -94,8 +89,7 @@ public class TestDataOperations {
                 )
             )
         ));
-    policy.setPolicy(p);
-      return policy;
+    return p;
   }
 
   /**
@@ -110,7 +104,6 @@ public class TestDataOperations {
   public String createTestScenarioWithPolicyAndEntities(final ApiClient apiClient, final String baseUrl) {
     apiClient.setBasePath(baseUrl);
 
-    final PoliciesApi policiesApi = new PoliciesApi(apiClient);
     final EntitiesApi entitiesApi = new EntitiesApi(apiClient);
     final ModulesApi modulesApi = new ModulesApi(apiClient);
     final SubordinatesApi subordinatesApi = new SubordinatesApi(apiClient);
@@ -123,10 +116,6 @@ public class TestDataOperations {
       return taEntityid;
     }
 
-    // Step 1: Create a policy
-    final Policy policyInput = createPolicy();
-    final Policy createdPolicy = policiesApi.createPolicy(policyInput);
-    log.info("Created policy with ID: {}", createdPolicy.getPolicyId());
 
     // Step 2: Create first federation entity
     final FederationEntity taFederationEntityInput = FederationEntity.builder()
@@ -187,7 +176,7 @@ public class TestDataOperations {
     subordinatesApi.createSubordinate(Subordinate.builder()
         .taImId(createdTrustAnchor.getTrustAnchorId())
         .entityIdentifier(secondFederationEntity.getEntityIdentifier())
-        .metadataPolicy(policyInput.getPolicy())
+        .metadataPolicy(this.createPolicy())
         .jwks(genJWKS().toString())
         .build());
 
