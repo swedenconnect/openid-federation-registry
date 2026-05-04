@@ -18,12 +18,11 @@
 -- If ManualValidationStep is part of the flow the request lands here with status PENDING
 -- for operator review. Automatic flows also land here, immediately set to APPROVED.
 CREATE TABLE `registrations` (
-    `id`                   uuid         NOT NULL,
+    `registration_id`      uuid         NOT NULL,
     `taim_id`              uuid         NOT NULL,
     `registration_flow_id` uuid         NOT NULL,
     `entity_id`            varchar(255) NOT NULL,
     `jwks`                 TEXT,
-    `metadata`             TEXT,
     `metadata_policy`      TEXT,
     `trustmarks_requested` TEXT,
     `status`               varchar(20)  NOT NULL DEFAULT 'PENDING',
@@ -34,7 +33,7 @@ CREATE TABLE `registrations` (
     `last_modified_date`   datetime     NOT NULL,
     `created_by`           varchar(255),
     `last_modified_by`     varchar(255),
-    PRIMARY KEY (`id`),
+    PRIMARY KEY (`registration_id`),
     CONSTRAINT `fk_reg_intermediate`
         FOREIGN KEY (`taim_id`) REFERENCES `trustanchor_intermediate` (`ta_im_id`),
     CONSTRAINT `fk_reg_flow`

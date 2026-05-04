@@ -62,3 +62,12 @@ export const subordinatePath = (id) => getAbsolutePath(`registry/v1/subordinates
 export const jwksSupportPath = getAbsolutePath('registry/v1/entityconfiguration/jwks');
 
 export const swaggerUiPath = getAbsolutePath('swagger-ui.html');
+
+export const registrationFlowsPath = getAbsolutePath('registration-flow/v1/flows');
+export const registrationFlowPath = (id) => getAbsolutePath(`registration-flow/v1/flow/${id}`);
+export const registrationFlowCreatePath = getAbsolutePath('registration-flow/v1/flow');
+export const registrationFlowStepsPath = getAbsolutePath('registration-flow/v1/steps');
+
+export const intermediateFlowAssignmentsPath = (taImId) => getAbsolutePath(`registration-flow/v1/intermediate/${taImId}/assignments`);
+export const intermediateFlowAssignPath = (taImId) => getAbsolutePath(`registration-flow/v1/intermediate/${taImId}/assign`);
+export const intermediateFlowUnassignPath = (taImId, assignId) => getAbsolutePath(`registration-flow/v1/intermediate/${taImId}/assign/${assignId}`);

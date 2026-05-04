@@ -14,13 +14,19 @@
  *  limitations under the License.
  */
 
--- Join table linking intermediates to registration flows (many-to-many).
-CREATE TABLE `intermediate_flow` (
-    `ta_im_id` uuid NOT NULL,
-    `flow_id`   uuid NOT NULL,
-    PRIMARY KEY (`ta_im_id`, `flow_id`),
-    CONSTRAINT `fk_if_intermediate`
+-- Join table linking intermediates to registration flows.
+CREATE TABLE `registration_flow_assignment` (
+    `assign_id`          uuid         NOT NULL,
+    `ta_im_id`           uuid         NOT NULL,
+    `flow_id`            uuid         NOT NULL,
+    `created_date`       DATETIME     NOT NULL,
+    `last_modified_date` DATETIME     NOT NULL,
+    `created_by`         VARCHAR(255) DEFAULT NULL,
+    `last_modified_by`   VARCHAR(255) DEFAULT NULL,
+    PRIMARY KEY (`assign_id`),
+    UNIQUE KEY `uq_rfa_intermediate_flow` (`ta_im_id`, `flow_id`),
+    CONSTRAINT `fk_rfa_intermediate`
         FOREIGN KEY (`ta_im_id`) REFERENCES `trustanchor_intermediate` (`ta_im_id`),
-    CONSTRAINT `fk_if_flow`
+    CONSTRAINT `fk_rfa_flow`
         FOREIGN KEY (`flow_id`) REFERENCES `registration_flow` (`flow_id`)
 );

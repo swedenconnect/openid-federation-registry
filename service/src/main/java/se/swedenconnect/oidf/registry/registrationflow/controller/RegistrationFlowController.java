@@ -16,7 +16,9 @@
 package se.swedenconnect.oidf.registry.registrationflow.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,7 +28,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.registrationflow.RegistrationFlowService;
+import se.swedenconnect.oidf.registry.registrationflow.dto.AssignFlowRequest;
+import se.swedenconnect.oidf.registry.registrationflow.dto.AssignFlowResponse;
+import se.swedenconnect.oidf.registry.registrationflow.dto.FlowSummaryDto;
+import se.swedenconnect.oidf.registry.registrationflow.dto.IntermediateFlowAssignmentDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.RegistrationFlowDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.StepDto;
 
@@ -50,9 +57,21 @@ public class RegistrationFlowController {
    *
    * @param registrationFlowService the service handling flow operations
    */
-  public RegistrationFlowController(
-      final RegistrationFlowService registrationFlowService) {
+  public RegistrationFlowController(final RegistrationFlowService registrationFlowService) {
     this.registrationFlowService = registrationFlowService;
+  }
+
+  /**
+   * Lists all registration flows owned by the calling organization.
+   *
+   * @param organizationRecord the calling organization
+   * @return list of flow summaries
+   */
+  @GetMapping("/flows")
+  @Operation(summary = "List all registration flows")
+  public ResponseEntity<List<FlowSummaryDto>> listFlows(
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(this.registrationFlowService.listFlows(organizationRecord));
   }
 
   /**
@@ -67,16 +86,34 @@ public class RegistrationFlowController {
   }
 
   /**
+   * Returns a single registration flow by ID. The flow must belong to the calling organization.
+   *
+   * @param flowId the flow ID
+   * @param organizationRecord the calling organization
+   * @return the flow DTO
+   */
+  @GetMapping("/flow/{flowId}")
+  @Operation(summary = "Get a registration flow by ID")
+  public ResponseEntity<RegistrationFlowDto> getFlow(
+      @PathVariable("flowId") final UUID flowId,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(this.registrationFlowService.getRegistrationFlow(organizationRecord, flowId));
+  }
+
+  /**
    * Creates a new registration flow with an auto-generated ID.
    *
    * @param registrationFlowDto the flow definition
+   * @param organizationRecord the calling organization
    * @return the created flow DTO
    */
   @PostMapping("/flow")
   @Operation(summary = "Create a new flow")
-  public ResponseEntity<RegistrationFlowDto> createFlow(final RegistrationFlowDto registrationFlowDto) {
+  public ResponseEntity<RegistrationFlowDto> createFlow(
+      @RequestBody final RegistrationFlowDto registrationFlowDto,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(
-        this.registrationFlowService.createRegistrationFlow(registrationFlowDto, UUID.randomUUID()));
+        this.registrationFlowService.createRegistrationFlow(organizationRecord, registrationFlowDto, UUID.randomUUID()));
   }
 
   /**
@@ -84,85 +121,117 @@ public class RegistrationFlowController {
    *
    * @param id the flow ID to use
    * @param registrationFlowDto the flow definition
+   * @param organizationRecord the calling organization
    * @return the created flow DTO
    */
   @PostMapping("/flow/{flowid}")
   @Operation(summary = "Create a new flow with a specified id")
-  public ResponseEntity<RegistrationFlowDto> createFlowWithId(@PathVariable("flowid") final UUID id,
-      final RegistrationFlowDto registrationFlowDto) {
-
-    return ResponseEntity.ok().build();
+  public ResponseEntity<RegistrationFlowDto> createFlowWithId(
+      @PathVariable("flowid") final UUID id,
+      @RequestBody final RegistrationFlowDto registrationFlowDto,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(
+        this.registrationFlowService.createRegistrationFlow(organizationRecord, registrationFlowDto, id));
   }
 
   /**
-   * Updates a registration flow.
+   * Updates a registration flow. The flow must belong to the calling organization.
    *
    * @param id the flow ID
    * @param registrationFlowDto the updated flow definition
+   * @param organizationRecord the calling organization
    * @return the updated flow DTO
    */
   @PutMapping("/flow/{flowid}")
   @Operation(summary = "Update a registration flow")
-  public ResponseEntity<RegistrationFlowDto> updateFlow(@PathVariable("flowid") final UUID id,
-      final RegistrationFlowDto registrationFlowDto) {
-
-    return ResponseEntity.ok().build();
+  public ResponseEntity<RegistrationFlowDto> updateFlow(
+      @PathVariable("flowid") final UUID id,
+      @RequestBody final RegistrationFlowDto registrationFlowDto,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(
+        this.registrationFlowService.updateRegistrationFlow(organizationRecord, id, registrationFlowDto));
   }
 
   /**
-   * Deletes a registration flow.
+   * Deletes a registration flow. The flow must belong to the calling organization.
    *
    * @param id the flow ID to delete
-   * @return empty response
+   * @param organizationRecord the calling organization
+   * @return no-content response
    */
   @DeleteMapping("/flow/{flowid}")
-  @Operation(summary = "Update a registration flow")
-  public ResponseEntity<RegistrationFlowDto> deleteFlow(@PathVariable("flowid") final UUID id) {
-    return ResponseEntity.ok().build();
+  @Operation(summary = "Delete a registration flow")
+  public ResponseEntity<Void> deleteFlow(
+      @PathVariable("flowid") final UUID id,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    this.registrationFlowService.deleteRegistrationFlow(organizationRecord, id);
+    return ResponseEntity.noContent().build();
   }
 
   /**
    * Lists flows assigned to an intermediate.
    *
    * @param taImId the intermediate ID
+   * @param organizationRecord the calling organization
    * @return list of flow DTOs
    */
   @GetMapping("/intermediate/{taImId}/flows")
   @Operation(summary = "List flows assigned to an intermediate")
   public ResponseEntity<List<RegistrationFlowDto>> getFlowsForIntermediate(
-      @PathVariable("taImId") final UUID taImId) {
+      @PathVariable("taImId") final UUID taImId,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.registrationFlowService.getFlowsForIntermediate(taImId));
   }
 
   /**
-   * Sets (replaces) the flows assigned to an intermediate.
+   * Returns all flow assignments for an intermediate, including assign IDs for unassign calls.
    *
    * @param taImId the intermediate ID
-   * @param flowIds IDs of flows to assign
-   * @return no-content response
+   * @param organizationRecord the calling organization
+   * @return list of assignment summaries
    */
-  @PutMapping("/intermediate/{taImId}/flows")
-  @Operation(summary = "Set (replace) the flows assigned to an intermediate")
-  public ResponseEntity<Void> setFlowsForIntermediate(
+  @GetMapping("/intermediate/{taImId}/assignments")
+  @Operation(summary = "List flow assignments for an intermediate (includes assignId)")
+  public ResponseEntity<List<IntermediateFlowAssignmentDto>> getFlowAssignments(
       @PathVariable("taImId") final UUID taImId,
-      @RequestBody final List<UUID> flowIds) {
-    this.registrationFlowService.setFlowsForIntermediate(taImId, flowIds);
-    return ResponseEntity.noContent().build();
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(this.registrationFlowService.getFlowAssignmentsForIntermediate(taImId));
   }
 
   /**
-   * Removes a specific flow from an intermediate.
+   * Assigns a flow to an intermediate. Idempotent: if the flow is already assigned the existing
+   * assignment ID is returned.
    *
    * @param taImId the intermediate ID
-   * @param flowId the flow ID to remove
+   * @param request body containing the flow ID to assign
+   * @param organizationRecord the calling organization
+   * @return 201 Created with the assignment ID
+   */
+  @PostMapping("/intermediate/{taImId}/assign")
+  @Operation(summary = "Assign a flow to an intermediate")
+  public ResponseEntity<AssignFlowResponse> assignFlow(
+      @PathVariable("taImId") final UUID taImId,
+      @RequestBody final AssignFlowRequest request,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(this.registrationFlowService.assignFlow(taImId, request.flowId()));
+  }
+
+  /**
+   * Removes a flow assignment from an intermediate.
+   *
+   * @param taImId the intermediate ID
+   * @param assignId the assignment ID to remove
+   * @param organizationRecord the calling organization
    * @return no-content response
    */
-  @DeleteMapping("/intermediate/{taImId}/flows/{flowId}")
-  @Operation(summary = "Remove a specific flow from an intermediate")
-  public ResponseEntity<Void> removeFlowFromIntermediate(
+  @DeleteMapping("/intermediate/{taImId}/assign/{assignId}")
+  @Operation(summary = "Remove a flow assignment from an intermediate")
+  public ResponseEntity<Void> unassignFlow(
       @PathVariable("taImId") final UUID taImId,
-      @PathVariable("flowId") final UUID flowId) {
-    this.registrationFlowService.removeFlowFromIntermediate(taImId, flowId);
+      @PathVariable("assignId") final UUID assignId,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    this.registrationFlowService.unassignFlow(taImId, assignId);
     return ResponseEntity.noContent().build();
   }
 

@@ -16,28 +16,18 @@
 package se.swedenconnect.oidf.registry.registrations.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-
-import java.util.List;
-import java.util.UUID;
 
 /**
- * Request body for applying to join the federation.
+ * Request body for rejecting a pending registration.
  *
+ * @param rejectionReason human-readable explanation shown to the applicant
  * @author Per Fredrik Plars
  */
-@Data
-@Schema(name = "JoinRequest")
-public class JoinRequestDto {
+@Schema(name = "RejectRegistrationRequest")
+public record RejectRegistrationDto(
 
-  @Schema(description = "Entity identifier (URI) of the entity applying to join",
-      example = "https://example.com/entity")
-  private String entityId;
-
-  @Schema(description = "Assignment ID linking a registration flow to an intermediate",
-      example = "550e8400-e29b-41d4-a716-446655440000")
-  private UUID registrationAssignId;
-
-  @Schema(description = "Trustmarks requested as part of this join application")
-  private List<TrustmarkRequestDto> trustmarks;
+    @Schema(description = "Human-readable explanation shown to the applicant",
+        example = "Entity configuration could not be fetched from the provided entity ID.")
+    String rejectionReason
+) {
 }

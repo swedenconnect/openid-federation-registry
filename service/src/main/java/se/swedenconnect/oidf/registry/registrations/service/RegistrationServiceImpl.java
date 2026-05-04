@@ -30,6 +30,7 @@ import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessEngine;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessFlow;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
+import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowRepository;
 import se.swedenconnect.oidf.registry.registrations.dto.FedRegStatus;
 import se.swedenconnect.oidf.registry.registrations.dto.FlowDto;
@@ -60,6 +61,7 @@ public class RegistrationServiceImpl implements RegistrationService {
       UUID.fromString("B292AA20-0F6A-4362-830F-B22AC36B76ED");
 
   private final FlowRepository flowRepository;
+  private final FlowAssignmentRepository flowAssignmentRepository;
   private final RegistrationRepository registrationRepository;
   private final RegistrationFlowService registrationFlowService;
   private final ProcessEngine processEngine;
@@ -70,6 +72,7 @@ public class RegistrationServiceImpl implements RegistrationService {
    * Constructs a new RegistrationServiceImpl.
    *
    * @param flowRepository repository for registration flows
+   * @param flowAssignmentRepository repository for flow assignments
    * @param registrationRepository repository for registration records
    * @param registrationFlowService service for managing registration flows
    * @param processEngine engine that executes the pipeline
@@ -77,12 +80,14 @@ public class RegistrationServiceImpl implements RegistrationService {
    * @param objectMapper JSON mapper
    */
   public RegistrationServiceImpl(final FlowRepository flowRepository,
+      final FlowAssignmentRepository flowAssignmentRepository,
       final RegistrationRepository registrationRepository,
       final RegistrationFlowService registrationFlowService,
       final ProcessEngine processEngine,
       final SubordinateService subordinateService,
       final JsonMapper objectMapper) {
     this.flowRepository = flowRepository;
+    this.flowAssignmentRepository = flowAssignmentRepository;
     this.registrationRepository = registrationRepository;
     this.registrationFlowService = registrationFlowService;
     this.processEngine = processEngine;
@@ -99,14 +104,12 @@ public class RegistrationServiceImpl implements RegistrationService {
   @Override
   @Transactional
   public JoinDto createJoinWithId(final UUID joinId, final JoinRequestDto request) {
-    final RegistrationFlow flow = this.flowRepository.findById(request.getRegistrationFlowId())
+    final var assignment = this.flowAssignmentRepository.findById(request.getRegistrationAssignId())
         .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
-            "Registration flow not found: %s".formatted(request.getRegistrationFlowId())));
+            "Assignment not found: %s".formatted(request.getRegistrationAssignId())));
 
-    final TrustAnchorIntermediateModule taIm = flow.getIntermediates().stream()
-        .findFirst()
-        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
-            "No intermediate linked to flow: %s".formatted(flow.getFlowId())));
+    final RegistrationFlow flow = assignment.getRegistrationFlow();
+    final TrustAnchorIntermediateModule taIm = assignment.getTaIm();
 
     final ProcessFlow processFlow = this.registrationFlowService.buildProcessFlow(flow.getFlowId());
 
@@ -198,12 +201,12 @@ public class RegistrationServiceImpl implements RegistrationService {
   private Registration createApprovedRecord(final UUID id, final JoinRequestDto request,
       final TrustAnchorIntermediateModule taIm, final RegistrationFlow flow, final ProcessContext ctx) {
     final Registration reg = new Registration();
-    reg.setId(id);
+    reg.setRegistrationId(id);
     reg.setTaIm(taIm);
     reg.setRegistrationFlow(flow);
     reg.setEntityId(request.getEntityId());
     reg.setJwks(ctx.<String>get(ContextKey.ENTITY_CONFIGURATION_JWKS).orElse(null));
-    reg.setMetadata(ctx.<String>get(ContextKey.ENTITY_CONFIGURATION_METADATA).orElse(null));
+    //reg.setMetadata(ctx.<String>get(ContextKey.ENTITY_CONFIGURATION_METADATA).orElse(null));
     reg.setMetadataPolicy(ctx.<String>get(ContextKey.METADATA_POLICY).orElse(null));
     reg.setTrustmarksRequested(this.serializeTrustmarks(request.getTrustmarks()));
     reg.setStatus(RegistrationStatus.APPROVED);
@@ -227,7 +230,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
   private static JoinDto toJoinDto(final Registration reg) {
     final JoinDto dto = new JoinDto();
-    dto.setJoinId(reg.getId());
+    dto.setJoinId(reg.getRegistrationId());
     dto.setEntityId(reg.getEntityId());
     dto.setRegistrationId(reg.getRegistrationFlow().getFlowId());
     dto.setStatusFedreg(switch (reg.getStatus()) {
@@ -235,7 +238,7 @@ public class RegistrationServiceImpl implements RegistrationService {
       case PENDING -> FedRegStatus.ONGOING;
       case REJECTED -> FedRegStatus.DENY;
     });
-    dto.setRejectionReason(reg.getRejectionReason());
+    dto.setRejectionReason(reg.getRejectionReason().toString());
     return dto;
   }
 }

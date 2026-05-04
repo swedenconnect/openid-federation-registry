@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import se.swedenconnect.oidf.registry.registrations.dto.RejectRegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
@@ -96,14 +97,14 @@ public class RegistrationAdminController {
   @Operation(summary = "Reject a pending registration request")
   public ResponseEntity<RegistrationDto> reject(
       @Parameter(description = "Registration ID") @PathVariable("id") final UUID id,
-      @RequestBody final Map<String, String> body) {
+      @RequestBody final RejectRegistrationDto body) {
     final Registration reg = this.registrationRepository.findById(id)
         .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Registration not found: " + id));
     if (reg.getStatus() != RegistrationStatus.PENDING) {
       return ResponseEntity.unprocessableEntity().build();
     }
     reg.setStatus(RegistrationStatus.REJECTED);
-    reg.setRejectionReason(body.get("rejectionReason"));
+    reg.setRejectionReason(RegistrationStatus.valueOf(body.rejectionReason()));
     reg.setReviewedAt(LocalDateTime.now());
     this.registrationRepository.save(reg);
     return ResponseEntity.ok(toDto(reg));
@@ -111,18 +112,17 @@ public class RegistrationAdminController {
 
   private static RegistrationDto toDto(final Registration reg) {
     final RegistrationDto dto = new RegistrationDto();
-    dto.setId(reg.getId());
+    dto.setId(reg.getRegistrationId());
     dto.setTaimId(reg.getTaIm().getTaImId());
     dto.setRegistrationFlowId(reg.getRegistrationFlow().getFlowId());
     dto.setEntityId(reg.getEntityId());
     dto.setJwks(reg.getJwks());
-    dto.setMetadata(reg.getMetadata());
     dto.setMetadataPolicy(reg.getMetadataPolicy());
     dto.setTrustmarksRequested(reg.getTrustmarksRequested());
     dto.setStatus(reg.getStatus());
     dto.setReviewedAt(reg.getReviewedAt());
     dto.setReviewedBy(reg.getReviewedBy());
-    dto.setRejectionReason(reg.getRejectionReason());
+    dto.setRejectionReason(reg.getRejectionReason().toString());
     dto.setCreatedDate(reg.getCreatedDate());
     return dto;
   }

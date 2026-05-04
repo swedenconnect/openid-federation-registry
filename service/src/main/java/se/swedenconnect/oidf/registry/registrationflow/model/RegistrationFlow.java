@@ -16,14 +16,7 @@
 
 package se.swedenconnect.oidf.registry.registrationflow.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -32,13 +25,11 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
-import se.swedenconnect.oidf.registry.infrastructure.persistence.MapConverter;
-import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
+import se.swedenconnect.oidf.registry.infrastructure.persistence.JsonConverter;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
+import tools.jackson.databind.json.JsonMapper;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -73,10 +64,14 @@ public class RegistrationFlow extends BaseEntity {
   private String description;
 
   @Column(name = "flowDefinition", columnDefinition = "TEXT")
-  @Convert(converter = MapConverter.class)
-  private Map<String, Object> flowDefinition;
+  @Convert(converter = RegistrationFlow.StepConverter.class)
+  private List<StepModel> flowDefinition;
 
-  @ManyToMany(mappedBy = "flows")
-  private List<TrustAnchorIntermediateModule> intermediates = new ArrayList<>();
+  @Converter
+  public static class StepConverter extends JsonConverter<List<StepModel>> {
+    public StepConverter(final JsonMapper mapper) {
+      super(mapper, new tools.jackson.core.type.TypeReference<List<StepModel>>() {});
+    }
+  }
 
 }

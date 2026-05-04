@@ -13,12 +13,24 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.registry.registrations.model;
+package se.swedenconnect.oidf.registry.registrationflow.domain;
+
+import se.swedenconnect.oidf.registry.registrationflow.dto.ConfigValueDto;
+
+import java.util.List;
+import java.util.UUID;
 
 /**
- * @deprecated Replaced by {@link RegistrationStatus}.
+ * Response DTO for a single pipeline step — its name, base settings and full configuration.
+ *
+ * @param stepId unique step identifier
+ * @param name display name
+ * @param description human-readable description
+ * @param config list of configurable values for this step
  * @author Per Fredrik Plars
  */
-@Deprecated
-enum PendingSubordinateStatus {
+public record Step(
+    UUID stepId,
+    List<ConfigValue> config
+) {
 }
