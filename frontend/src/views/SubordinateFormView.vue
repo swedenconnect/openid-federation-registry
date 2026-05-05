@@ -59,7 +59,9 @@
               class="mb-4"
               style="font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;"
           ></v-textarea>
-
+          <div v-if="jwksLoadedFrom" class="text-body-2 text-medium-emphasis mb-4">
+            JWKS was loaded from url: {{ jwksLoadedFrom }}
+          </div>
           <v-btn
               id="btn-load-jwks"
               color="secondary"
@@ -67,10 +69,11 @@
               :disabled="!entityIdentifier || !entityIdentifier.trim() || loadingJwks || saving"
               :loading="loadingJwks"
               @click="loadJwks"
-              class="mb-4"
+              class="mb-2"
           >
             Load JWKS
           </v-btn>
+
 
           <ListField
               v-model="metadataPolicyCrit"
@@ -151,6 +154,28 @@
         </v-form>
       </v-card-text>
     </v-card>
+
+    <v-dialog v-model="jwksPickerDialog" max-width="640" scrollable>
+      <v-card>
+        <v-card-title>Select Entity</v-card-title>
+        <v-card-text>
+          <v-list lines="two">
+            <v-list-item
+                v-for="item in jwksPickerItems"
+                :key="item.entityId"
+                :title="item.entityId"
+                :subtitle="item.ecLocation"
+                style="cursor: pointer"
+                @click="applyJwksResult(item)"
+            ></v-list-item>
+          </v-list>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn variant="text" @click="jwksPickerDialog = false">Cancel</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -182,6 +207,9 @@ const metadataPolicy = ref('');
 const ecLocation = ref('');
 const ecLocationAutomaticResolve = ref(false);
 const effectiveEcLocation = ref('');
+const jwksLoadedFrom = ref('');
+const jwksPickerDialog = ref(false);
+const jwksPickerItems = ref([]);
 
 const isEdit = computed(() => !!route.params.id);
 const entityId = computed(() => route.params.entityId);
@@ -206,10 +234,20 @@ const rules = {
   },
 };
 
+function applyJwksResult(item) {
+  jwks.value = item.jwks ? JSON.stringify(item.jwks, null, 2) : '';
+  jwksLoadedFrom.value = item.ecLocation || '';
+  jwksPickerDialog.value = false;
+}
+
 async function loadJwks() {
-  const jwksData = await loadJwksFromApi(entityIdentifier.value);
-  if (jwksData) {
-    jwks.value = JSON.stringify(jwksData, null, 2);
+  const result = await loadJwksFromApi(entityIdentifier.value);
+  if (!result || !Array.isArray(result) || result.length === 0) return;
+  if (result.length === 1) {
+    applyJwksResult(result[0]);
+  } else {
+    jwksPickerItems.value = result;
+    jwksPickerDialog.value = true;
   }
 }
 
@@ -221,9 +259,7 @@ async function loadSubordinate() {
   if (response) {
     taImIdValue.value = response.taImId || taImId.value || null;
     entityIdentifier.value = response.entityIdentifier || '';
-    jwks.value = typeof response.jwks === 'string'
-        ? response.jwks
-        : (response.jwks ? JSON.stringify(response.jwks, null, 2) : '');
+    jwks.value = response.jwks ? JSON.stringify(response.jwks, null, 2) : '';
     metadataPolicyCrit.value = response.metadataPolicyCrit || [];
     crit.value = response.crit || [];
     metadataPolicy.value = response.metadataPolicy
@@ -245,9 +281,7 @@ async function submitForm() {
   try {
     const subordinateData = {
       taImId: taImIdValue.value || taImId.value || null,
-      jwks: typeof jwks.value === 'string'
-          ? jwks.value
-          : (jwks.value ? JSON.stringify(jwks.value) : ''),
+      jwks: jwks.value && jwks.value.trim() ? JSON.parse(jwks.value) : null,
       entityIdentifier: entityIdentifier.value || '',
       crit: Array.isArray(crit.value)
           ? crit.value.filter(c => c && (typeof c === 'string' ? c.trim() !== '' : true))

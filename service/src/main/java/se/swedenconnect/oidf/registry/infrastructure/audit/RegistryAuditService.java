@@ -26,6 +26,8 @@ import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
 
+import java.net.URI;
+import java.net.URL;
 import java.util.UUID;
 
 /**
@@ -356,9 +358,9 @@ public interface RegistryAuditService {
   void subordinateDeleted(UUID subordinateId, UUID instanceId, UUID organizationId, SubordinateDto deletedData);
 
   /**
-   * Trigger when a jwks resolve is made
+   * Trigger when a entity configuration resolve is made
    *
-   * @param entityId EntityId for this entityconfiguration
+   * @param entityConfigurationLocation URL for this entityconfiguration
    */
-  void resolveJwks(EntityID entityId);
+  void resolveJwks(URI entityConfigurationLocation);
 }

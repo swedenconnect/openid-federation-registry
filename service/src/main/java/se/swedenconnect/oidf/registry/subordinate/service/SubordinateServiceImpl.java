@@ -16,6 +16,7 @@
 
 package se.swedenconnect.oidf.registry.subordinate.service;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.entity.model.EntityType;
@@ -24,6 +25,7 @@ import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
+import se.swedenconnect.oidf.registry.infrastructure.validation.CleanInput;
 import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.module.repository.TaImRepository;
@@ -32,11 +34,6 @@ import se.swedenconnect.oidf.registry.subordinate.mapper.DtoToSubordinateMapper;
 import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateToDtoMapper;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
-import tools.jackson.databind.node.ArrayNode;
-import tools.jackson.databind.node.ObjectNode;
-
 import java.util.Optional;
 import java.util.UUID;
 
@@ -52,7 +49,6 @@ public class SubordinateServiceImpl implements SubordinateService {
   private final TaImRepository taImRepository;
   private final EntityRepository entityRepository;
   private final RegistryAuditService auditService;
-  private final JsonMapper objectMapper;
 
   /**
    * Constructor.
@@ -61,44 +57,19 @@ public class SubordinateServiceImpl implements SubordinateService {
    * @param taImRepository the TaIm repository
    * @param entityRepository the organization service
    * @param auditService the audit service
-   * @param objectMapper the object mapper
    */
   public SubordinateServiceImpl(final SubordinateRepository subordinateRepository,
       final TaImRepository taImRepository,
       final EntityRepository entityRepository,
-      final RegistryAuditService auditService,
-      final JsonMapper objectMapper) {
+      final RegistryAuditService auditService) {
     this.subordinateRepository = subordinateRepository;
     this.taImRepository = taImRepository;
     this.entityRepository = entityRepository;
     this.auditService = auditService;
-    this.objectMapper = objectMapper;
   }
 
   private static SubordinateDto toDto(final Subordinate entity) {
     return SubordinateToDtoMapper.toDto(entity);
-  }
-
-  private String stripIatAndExp(final String jwks) {
-    if (jwks == null) {
-      return null;
-    }
-    try {
-      final JsonNode root =  this.objectMapper.readTree(jwks);
-      final JsonNode keysNode = root.get("keys");
-      if (keysNode instanceof ArrayNode keys) {
-        for (final JsonNode keyNode : keys) {
-          if (keyNode instanceof ObjectNode key) {
-            key.remove("iat");
-            key.remove("exp");
-          }
-        }
-      }
-      return this.objectMapper.writeValueAsString(root);
-    }
-    catch (final Exception e) {
-      return jwks;
-    }
   }
 
   private TrustAnchorIntermediateModule findTaImOrThrow(final OrganizationRecord organizationRecord,
@@ -137,8 +108,8 @@ public class SubordinateServiceImpl implements SubordinateService {
   @Override
   @Transactional
   public SubordinateDto createSubordinateWithId(final OrganizationRecord organizationRecord, final UUID id,
-      final SubordinateDto input) {
-    input.setJwks(this.stripIatAndExp(input.getJwks()));
+      final SubordinateDto rawInput) {
+    final SubordinateDto input = CleanInput.clean(rawInput);
     ValidateDto.init(organizationRecord).validate(input);
 
     final TrustAnchorIntermediateModule taIm = this.findTaImOrThrow(organizationRecord, input.getTaImId());
@@ -155,7 +126,14 @@ public class SubordinateServiceImpl implements SubordinateService {
           );
     }
 
-    this.subordinateRepository.save(subordinateEntity);
+    try {
+      this.subordinateRepository.save(subordinateEntity);
+    }
+    catch (final DataIntegrityViolationException e) {
+      throw new RegistryServerException(ErrorTypes.CONFLICT,
+          "A subordinate with entityIdentifier '%s' already exists for this intermediate"
+              .formatted(subordinateEntity.getEntityidentifier()));
+    }
     final SubordinateDto dto = toDto(subordinateEntity);
     this.auditService.subordinateCreated(id, taIm.getOrganization().getInstance().getInstanceId(),
         taIm.getOrganization().getOrganizationId(), null, dto);
@@ -165,8 +143,8 @@ public class SubordinateServiceImpl implements SubordinateService {
   @Override
   @Transactional
   public SubordinateDto updateSubordinate(final OrganizationRecord organizationRecord, final UUID id,
-      final SubordinateDto input) {
-    input.setJwks(this.stripIatAndExp(input.getJwks()));
+      final SubordinateDto rawInput) {
+    final SubordinateDto input = CleanInput.clean(rawInput);
     ValidateDto.init(organizationRecord).validate(input);
 
     final Subordinate existing = this.findSubordinateOrThrow(organizationRecord, id);
@@ -184,7 +162,14 @@ public class SubordinateServiceImpl implements SubordinateService {
                       .formatted(existing.getEntityidentifier()))
           );
     }
-    this.subordinateRepository.save(existing);
+    try {
+      this.subordinateRepository.save(existing);
+    }
+    catch (final DataIntegrityViolationException e) {
+      throw new RegistryServerException(ErrorTypes.CONFLICT,
+          "A subordinate with entityIdentifier '%s' already exists for this intermediate"
+              .formatted(existing.getEntityidentifier()));
+    }
     final SubordinateDto newDto = toDto(existing);
     this.auditService.subordinateUpdated(id, existing.getTaIm().getOrganization().getInstance().getInstanceId(),
         existing.getTaIm().getOrganization().getOrganizationId(), oldDto, newDto);

@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.registry.module.model;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
@@ -33,7 +34,9 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
+import se.swedenconnect.oidf.registry.infrastructure.persistence.MapConverter;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -70,7 +73,8 @@ public class Resolver extends BaseEntity {
   private String trustAnchor;
 
   @Column(name = "trusted_keys", columnDefinition = "TEXT", nullable = false)
-  private String trustedKeys;
+  @Convert(converter = MapConverter.class)
+  private Map<String,Object> trustedKeys;
 
   @Column(name = "step_retry_duration", nullable = false)
   private String stepRetryDuration;

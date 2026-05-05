@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.registry.registrationflow.domain;
-
-import se.swedenconnect.oidf.registry.registrationflow.dto.ConfigValueDto;
+package se.swedenconnect.oidf.registry.registrationflow.model;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,14 +21,12 @@ import java.util.UUID;
 /**
  * Response DTO for a single pipeline step — its name, base settings and full configuration.
  *
- * @param stepId unique step identifier
- * @param name display name
- * @param description human-readable description
+ * @param stepId unique step identifier that points to the predefined step
  * @param config list of configurable values for this step
  * @author Per Fredrik Plars
  */
-public record Step(
+public record StepModel(
     UUID stepId,
-    List<ConfigValue> config
+    List<ConfigValueModel> config
 ) {
 }

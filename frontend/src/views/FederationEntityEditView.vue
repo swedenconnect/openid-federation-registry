@@ -595,7 +595,7 @@ async function loadEntity() {
         active: response.resolver.active !== false,
         resolveResponseDuration: response.resolver.resolveResponseDuration || 'PT1H',
         trustAnchor: response.resolver.trustAnchor || '',
-        trustedKeys: response.resolver.trustedKeys || '',
+        trustedKeys: response.resolver.trustedKeys ? JSON.stringify(response.resolver.trustedKeys, null, 2) : '',
         stepRetryDuration: response.resolver.stepRetryDuration || 'PT1M',
         stepCachedValueThreshold: response.resolver.stepCachedValueThreshold ?? null,
       };
@@ -750,9 +750,7 @@ async function saveModule(moduleType) {
           active: module.active,
           resolveResponseDuration: module.resolveResponseDuration,
           trustAnchor: module.trustAnchor,
-          trustedKeys: typeof module.trustedKeys === 'string'
-              ? module.trustedKeys
-              : JSON.stringify(module.trustedKeys),
+          trustedKeys: module.trustedKeys && module.trustedKeys.trim() ? JSON.parse(module.trustedKeys) : null,
           stepRetryDuration: module.stepRetryDuration,
           stepCachedValueThreshold: module.stepCachedValueThreshold ?? null,
         };

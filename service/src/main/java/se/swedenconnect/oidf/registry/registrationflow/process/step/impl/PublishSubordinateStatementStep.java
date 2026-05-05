@@ -21,7 +21,9 @@ import se.swedenconnect.oidf.registry.module.repository.TaImRepository;
 import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowRepository;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
@@ -45,7 +47,7 @@ import java.util.UUID;
  * @author Per Fredrik Plars
  */
 @Component
-public class ManualValidationStep extends NoConfigStepAdapter {
+public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
 
   private final RegistrationRepository registrationRepository;
   private final TaImRepository taImRepository;
@@ -60,7 +62,7 @@ public class ManualValidationStep extends NoConfigStepAdapter {
    * @param flowRepository repository for registration flows
    * @param objectMapper JSON mapper
    */
-  public ManualValidationStep(final RegistrationRepository registrationRepository,
+  public PublishSubordinateStatementStep(final RegistrationRepository registrationRepository,
       final TaImRepository taImRepository,
       final FlowRepository flowRepository,
       final JsonMapper objectMapper) {
@@ -93,7 +95,6 @@ public class ManualValidationStep extends NoConfigStepAdapter {
     if (existing.isPresent()) {
       final Registration reg = existing.get();
       reg.setJwks(jwks);
-      reg.setMetadata(metadata);
       reg.setMetadataPolicy(metadataPolicy);
       reg.setTrustmarksRequested(trustmarks);
       this.registrationRepository.save(reg);
@@ -106,12 +107,11 @@ public class ManualValidationStep extends NoConfigStepAdapter {
         .orElseThrow(() -> new IllegalStateException("RegistrationFlow not found: " + flowId));
 
     final Registration registration = new Registration();
-    registration.setId(UUID.randomUUID());
+    registration.setRegistrationId(UUID.randomUUID());
     registration.setTaIm(taIm);
     registration.setRegistrationFlow(flow);
     registration.setEntityId(entityId);
     registration.setJwks(jwks);
-    registration.setMetadata(metadata);
     registration.setMetadataPolicy(metadataPolicy);
     registration.setTrustmarksRequested(trustmarks);
     registration.setStatus(RegistrationStatus.PENDING);
@@ -123,5 +123,17 @@ public class ManualValidationStep extends NoConfigStepAdapter {
   @Override
   public UUID getStepId() {
     return UUID.fromString("B292AA20-0F6A-4362-830F-B22AC36B76ED");
+  }
+
+  @Override
+  public String getDescription() {
+    return "This step will create a subordinate statement for this a EntityId. Require JWKS and entityid";
+  }
+
+  @Override
+  public List<StepConfigurationValue> getStepConfigurationValues() {
+    return List.of(new StepConfigurationValue("manualreview",
+        StepConfigurationValue.DATA_TYPE.BOOLEAN,
+        "If true this request is redirected to a manual approval flow","false"));
   }
 }

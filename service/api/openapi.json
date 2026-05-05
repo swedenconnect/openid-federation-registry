@@ -1475,7 +1475,7 @@
         "tags": [
           "Registration Flow"
         ],
-        "summary": "Update a registration flow",
+        "summary": "Delete a registration flow",
         "operationId": "deleteFlow",
         "parameters": [
           {
@@ -1490,14 +1490,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/RegistrationFlowDto"
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       }
@@ -2360,6 +2353,62 @@
                   "items": {
                     "$ref": "#/components/schemas/StepDto"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-flow/v1/flows": {
+      "get": {
+        "tags": [
+          "Registration Flow"
+        ],
+        "summary": "List all registration flows",
+        "operationId": "listFlows_1",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FlowSummaryDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-flow/v1/flow/{flowId}": {
+      "get": {
+        "tags": [
+          "Registration Flow"
+        ],
+        "summary": "Get a registration flow by ID",
+        "operationId": "getFlow",
+        "parameters": [
+          {
+            "name": "flowId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationFlowDto"
                 }
               }
             }
@@ -3365,6 +3414,21 @@
             "type": "string",
             "description": "Description of the flow and its purpose",
             "example": "QA-miljÃ¶ fÃ¶r Sweden Connect"
+          }
+        }
+      },
+      "FlowSummaryDto": {
+        "type": "object",
+        "properties": {
+          "flowId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
           }
         }
       }

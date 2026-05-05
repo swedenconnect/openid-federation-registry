@@ -57,9 +57,9 @@ import java.util.UUID;
 public class Registration extends BaseEntity {
 
   @Id
-  @Column(name = "id", columnDefinition = "char(36)", nullable = false, updatable = false)
+  @Column(name = "registration_id", columnDefinition = "char(36)", nullable = false, updatable = false)
   @JdbcTypeCode(SqlTypes.CHAR)
-  private UUID id;
+  private UUID registrationId;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "taim_id", nullable = false)
@@ -74,9 +74,6 @@ public class Registration extends BaseEntity {
 
   @Column(name = "jwks", columnDefinition = "TEXT")
   private String jwks;
-
-  @Column(name = "metadata", columnDefinition = "TEXT")
-  private String metadata;
 
   @Column(name = "metadata_policy", columnDefinition = "TEXT")
   private String metadataPolicy;
@@ -95,5 +92,5 @@ public class Registration extends BaseEntity {
   private String reviewedBy;
 
   @Column(name = "rejection_reason", columnDefinition = "TEXT")
-  private String rejectionReason;
+  private RegistrationStatus rejectionReason;
 }

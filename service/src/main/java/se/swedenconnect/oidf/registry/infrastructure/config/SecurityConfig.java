@@ -160,6 +160,15 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, "/registry/v1/entityconfiguration/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/write")
 
+            .requestMatchers(HttpMethod.GET, "/registration-flow/v1/**")
+            .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/read")
+            .requestMatchers(HttpMethod.POST, "/registration-flow/v1/**")
+            .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/write")
+            .requestMatchers(HttpMethod.PUT, "/registration-flow/v1/**")
+            .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/write")
+            .requestMatchers(HttpMethod.DELETE, "/registration-flow/v1/**")
+            .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/write")
+
             .requestMatchers(HttpMethod.GET, "/logout/frontchannel").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/v1/federationservice/**").permitAll()
             .requestMatchers(HttpMethod.OPTIONS).permitAll()

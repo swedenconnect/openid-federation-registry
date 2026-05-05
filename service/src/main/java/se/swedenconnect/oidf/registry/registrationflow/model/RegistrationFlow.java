@@ -67,8 +67,15 @@ public class RegistrationFlow extends BaseEntity {
   @Convert(converter = RegistrationFlow.StepConverter.class)
   private List<StepModel> flowDefinition;
 
+  /** JPA converter for the flow definition list. */
   @Converter
   public static class StepConverter extends JsonConverter<List<StepModel>> {
+
+    /**
+     * Constructor.
+     *
+     * @param mapper the JSON mapper
+     */
     public StepConverter(final JsonMapper mapper) {
       super(mapper, new tools.jackson.core.type.TypeReference<List<StepModel>>() {});
     }

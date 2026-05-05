@@ -18,21 +18,26 @@ package se.swedenconnect.oidf.registry.guioperations.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.util.Map;
+
 /**
- * Ping reply if there is a live entityconfiguration
+ * Reply with the loaded JWKS
  *
  * @author Per Fredrik Plars
  */
 @Data
-@Schema(name = "EntityConfigurationPingDto")
-public class EntityConfigurationPingDto {
+@Schema(name = "JwksLoadedDto")
+public class JwksLoadedDto {
 
-  @Schema(description = "Is EntityConfiguration Accessible", example = "true/false")
-  private boolean isEntityConfigurationAccessible;
+  @Schema(description = "EntityID", example = "https://www.digg.se/mysqrvice")
+  private String entityId;
 
-  @Schema(description = "Error message explaining way entityconfiguration was not accessable",
-      example = "Remote server reply 404 NotFound")
-  private String errorMessage;
+  @Schema(description = "Location from where the entity configuration was loaded from",
+      example = "https://www.digg.se/mysqrvice/.well-known/openid-federation")
+  private String ecLocation;
+
+  @Schema(description = "Jwks that is extracted from entity statement")
+  private Map<String,Object> jwks;
 
 }
 

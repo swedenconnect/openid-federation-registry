@@ -54,7 +54,7 @@ public class LoadEntityConfigurationStep extends NoConfigStepAdapter {
   @Override
   public StepResult execute(final ProcessContext ctx, final StepConfig config) {
     final EntityID entityId = ctx.getRequired(ContextKey.ENTITY_ID);
-    final EntityStatement entityStatement = this.oidfServiceIntegration.entityConfiguration(entityId);
+    final EntityStatement entityStatement = this.oidfServiceIntegration.entityConfigurationOnStandardLocation(entityId);
 
     final EntityStatementClaimsSet entityStatementClaimsSet = entityStatement.getClaimsSet();
     ctx.put(ContextKey.ENTITY_CONFIGURATION_METADATA, "METADATA");

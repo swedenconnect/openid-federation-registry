@@ -287,7 +287,8 @@ public class RegistrationFlowService {
         .map(existing -> new AssignFlowResponse(existing.getAssignId()))
         .orElseGet(() -> {
           final TrustAnchorIntermediateModule taIm = this.taImRepository.findById(taImId)
-              .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND, "Intermediate not found: " + taImId));
+              .orElseThrow(() -> new RegistryServerException(
+                  ErrorTypes.NOT_FOUND, "Intermediate not found: " + taImId));
           final RegistrationFlow flow = this.flowRepository.findById(flowId)
               .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND, "Flow not found: " + flowId));
           final FlowAssignment assignment = new FlowAssignment(UUID.randomUUID(), taIm, flow);

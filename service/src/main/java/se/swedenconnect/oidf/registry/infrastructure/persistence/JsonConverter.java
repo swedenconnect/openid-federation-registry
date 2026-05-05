@@ -17,19 +17,25 @@
 package se.swedenconnect.oidf.registry.infrastructure.persistence;
 
 import jakarta.persistence.AttributeConverter;
+import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Abstract base class for JPA converters that serialize a typed object as JSON text.
  *
- * <p>Subclasses supply the target type via the constructor, keeping serialization logic
- * in one place while allowing one concrete converter class per entity field.</p>
+ * <p>Use the {@code Class<T>} constructor for simple types and the {@code TypeReference<T>}
+ * constructor for generic types such as {@code List<MyObject>}.</p>
  *
  * <pre>{@code
- * @Converter
+ * // Simple type
  * public class MyObjectConverter extends JsonConverter<MyObject> {
- *   public MyObjectConverter(JsonMapper mapper) {
- *     super(mapper, MyObject.class);
+ *   public MyObjectConverter(JsonMapper mapper) { super(mapper, MyObject.class); }
+ * }
+ *
+ * // Generic type
+ * public class MyListConverter extends JsonConverter<List<MyObject>> {
+ *   public MyListConverter(JsonMapper mapper) {
+ *     super(mapper, new TypeReference<List<MyObject>>() {});
  *   }
  * }
  * }</pre>
@@ -41,9 +47,10 @@ public abstract class JsonConverter<T> implements AttributeConverter<T, String> 
 
   private final JsonMapper mapper;
   private final Class<T> type;
+  private final TypeReference<T> typeReference;
 
   /**
-   * Constructs a converter for the given type.
+   * Constructs a converter for a simple (non-generic) type.
    *
    * @param mapper the JSON mapper
    * @param type the target class to deserialize into
@@ -51,6 +58,19 @@ public abstract class JsonConverter<T> implements AttributeConverter<T, String> 
   protected JsonConverter(final JsonMapper mapper, final Class<T> type) {
     this.mapper = mapper;
     this.type = type;
+    this.typeReference = null;
+  }
+
+  /**
+   * Constructs a converter for a generic type such as {@code List<Foo>}.
+   *
+   * @param mapper the JSON mapper
+   * @param typeReference Jackson type reference capturing the full generic type
+   */
+  protected JsonConverter(final JsonMapper mapper, final TypeReference<T> typeReference) {
+    this.mapper = mapper;
+    this.type = null;
+    this.typeReference = typeReference;
   }
 
   /**
@@ -78,6 +98,9 @@ public abstract class JsonConverter<T> implements AttributeConverter<T, String> 
     if (dbData == null || dbData.isBlank()) {
       return null;
     }
-    return this.mapper.readValue(dbData, this.type);
+    if (this.type != null) {
+      return this.mapper.readValue(dbData, this.type);
+    }
+    return this.mapper.readValue(dbData, this.typeReference);
   }
 }

@@ -28,6 +28,8 @@ import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.net.URI;
+import java.net.URL;
 import java.util.UUID;
 
 /**
@@ -434,11 +436,11 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void resolveJwks(final EntityID entityId) {
+  public void resolveJwks(final URI entityConfigurationLocation) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.RESOLVED_ENTITY_CONFIGURATION)
-            .extId(entityId.toString())
+            .extId(entityConfigurationLocation.toString())
             .build());
   }
 

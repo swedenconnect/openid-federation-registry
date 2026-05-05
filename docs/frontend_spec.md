@@ -81,7 +81,7 @@ Topbar has navigation buttons Entity, Policy located to the left.
 - Organization dropdown menu should be placed in the top bar to the right (if multiple organizations)
 - Logout button is placed to the very right
 
-- Left: logomark + "Sweden Connect OIDF Portal" wordmark (--brand-sage, semibold)
+- Left: logomark + "OpenID Federation Registry" wordmark (--brand-sage, semibold)
 - Center (authenticated pages only): current org name (semibold, --ink)
 - Right: org selector dropdown (authenticated) + "SV | EN" language toggle
 - Below logo row: horizontal nav links (medium weight, --muted; active link underlined

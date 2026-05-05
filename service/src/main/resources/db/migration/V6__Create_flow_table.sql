@@ -20,7 +20,7 @@ CREATE TABLE `registration_flow` (
     `organization_id`    uuid     DEFAULT NULL,
     `name`               VARCHAR(255) DEFAULT NULL,
     `description`        VARCHAR(255) DEFAULT NULL,
-    `flowDefinition`     TEXT         DEFAULT NULL COMMENT 'JSON map representing the flow definition',
+    `flow_definition`     TEXT         DEFAULT NULL COMMENT 'JSON map representing the flow definition',
     `created_date`       DATETIME     NOT NULL,
     `last_modified_date` DATETIME     NOT NULL,
     `created_by`         VARCHAR(255) DEFAULT NULL,

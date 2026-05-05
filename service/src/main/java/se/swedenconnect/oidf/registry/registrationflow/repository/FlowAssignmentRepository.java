@@ -29,9 +29,29 @@ import java.util.UUID;
  */
 public interface FlowAssignmentRepository extends JpaRepository<FlowAssignment, UUID> {
 
+  /**
+   * Find all assignments for a given intermediate module.
+   *
+   * @param taImId the intermediate module ID
+   * @return list of assignments
+   */
   List<FlowAssignment> findByTaImTaImId(UUID taImId);
 
+  /**
+   * Find an assignment by its assign ID and intermediate module ID.
+   *
+   * @param assignId the assignment ID
+   * @param taImId the intermediate module ID
+   * @return the assignment if found
+   */
   Optional<FlowAssignment> findByAssignIdAndTaImTaImId(UUID assignId, UUID taImId);
 
+  /**
+   * Find an existing assignment for a given intermediate and flow combination.
+   *
+   * @param taImId the intermediate module ID
+   * @param flowId the registration flow ID
+   * @return the assignment if found
+   */
   Optional<FlowAssignment> findByTaImTaImIdAndRegistrationFlowFlowId(UUID taImId, UUID flowId);
 }

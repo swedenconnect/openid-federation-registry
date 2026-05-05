@@ -114,6 +114,14 @@ public interface EntityConfigService {
    */
   List<HostedEntityDto> listHostedEntity(OrganizationRecord organizationRecord, String entityIdentifier);
 
+  /**
+   * Lists hosted entities by entityIdentifier across all organizations.
+   *
+   * @param entityIdentifier the entity identifier to filter by, or {@code null}/empty to return all
+   * @return matching hosted entity DTOs
+   */
+  List<HostedEntityDto> listHostedEntity(String entityIdentifier);
+
 
   /**
    * Deletes a hosted entity.

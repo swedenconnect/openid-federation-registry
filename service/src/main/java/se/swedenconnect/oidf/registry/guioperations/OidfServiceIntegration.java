@@ -69,22 +69,27 @@ public class OidfServiceIntegration {
   }
 
   /**
-   * Configures and retrieves an entity statement for the provided EntityID.
+   * Configures and retrieves an entity statement for the provided EntityID. On the standard location.
    *
    * @param entityId the entity ID used to construct the URI for the entity statement.
    * @return an EntityStatement object containing the configured entity statement.
    */
-  public EntityStatement entityConfiguration(final EntityID entityId) {
-    this.auditLogger.resolveJwks(entityId);
+  public EntityStatement entityConfigurationOnStandardLocation(final EntityID entityId) {
     final UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUri(entityId.toURI())
         .path("/.well-known/openid-federation");
     final URI uri = uriBuilder.build().toUri();
     return this.callEntityStatement(uri);
   }
 
-  private EntityStatement callEntityStatement(final URI uri) {
-
-    log.debug("Getting entityStatement from: {}", uri);
+  /**
+   * Configures and retrieves an entity statement for the provided EntityID.
+   *
+   * @param uri URI for the entity statement.
+   * @return an EntityStatement object containing the configured entity statement.
+   */
+  public EntityStatement callEntityStatement(final URI uri) {
+    this.auditLogger.resolveJwks(uri);
+    log.debug("Loading entityStatement from: {}", uri);
     try {
       final ResponseEntity<String> response = this.restClient.get()
           .uri(uri)

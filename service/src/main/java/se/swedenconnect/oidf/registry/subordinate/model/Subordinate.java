@@ -63,7 +63,8 @@ public class Subordinate extends BaseEntity {
   private TrustAnchorIntermediateModule taIm;
 
   @Column(name = "jwks", columnDefinition = "TEXT")
-  private String jwks;
+  @Convert(converter = MapConverter.class)
+  private Map<String, Object> jwks;
 
   @Column(name = "entityidentifier", length = 255)
   private String entityidentifier;

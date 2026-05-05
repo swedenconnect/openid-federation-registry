@@ -113,7 +113,8 @@ public class RegistrationFlowController {
       @RequestBody final RegistrationFlowDto registrationFlowDto,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(
-        this.registrationFlowService.createRegistrationFlow(organizationRecord, registrationFlowDto, UUID.randomUUID()));
+        this.registrationFlowService.createRegistrationFlow(
+            organizationRecord, registrationFlowDto, UUID.randomUUID()));
   }
 
   /**

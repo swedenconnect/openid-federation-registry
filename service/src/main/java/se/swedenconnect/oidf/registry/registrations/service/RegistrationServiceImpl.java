@@ -188,7 +188,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     final SubordinateDto sub = new SubordinateDto();
     sub.setEntityIdentifier(entityId);
     sub.setTaImId(taIm.getTaImId());
-    sub.setJwks(jwks);
+    sub.setJwks(this.deserializePolicy(jwks));
     sub.setMetadataPolicy(this.deserializePolicy(metadataPolicyJson));
 
     final OrganizationRecord orgRecord = new OrganizationRecord(

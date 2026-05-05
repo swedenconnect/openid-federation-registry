@@ -274,6 +274,18 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     return results;
   }
 
+  @Override
+  @Transactional(readOnly = true)
+  public List<HostedEntityDto> listHostedEntity(final String entityIdentifier) {
+    final String issuerFilter = (entityIdentifier != null && !entityIdentifier.isEmpty())
+        ? entityIdentifier : null;
+    return this.entityRepository
+        .findByEntityTypeAndOptionalIssuer(EntityType.HOSTED_ENTITY, issuerFilter)
+        .stream()
+        .map(EntityToDtoMapper::toDtoHosted)
+        .toList();
+  }
+
   /**
    * Deletes a hosted entity.
    *

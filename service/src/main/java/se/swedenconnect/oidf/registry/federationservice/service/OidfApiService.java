@@ -53,6 +53,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -298,7 +299,7 @@ public class OidfApiService {
   }
 
 
-  private JWKSet toJwksSet(final String jwks) {
+  private JWKSet toJwksSet(final Map<String,Object> jwks) {
     try {
       return jwks == null ? null : JWKSet.parse(jwks);
     }

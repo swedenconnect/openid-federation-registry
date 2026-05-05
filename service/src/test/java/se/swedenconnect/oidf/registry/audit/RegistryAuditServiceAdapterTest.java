@@ -17,7 +17,6 @@
 package se.swedenconnect.oidf.registry.audit;
 
 import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import se.swedenconnect.oidf.registry.infrastructure.audit.FederationAuditEvent;
@@ -25,8 +24,9 @@ import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditEventTyp
 import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditLogger;
 import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
 
+import java.net.URI;
 import java.util.Stack;
-import java.util.UUID;
+
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -51,7 +51,7 @@ class RegistryAuditServiceAdapterTest {
       }
     };
 
-    auditService.resolveJwks(EntityID.parse("https://plars.org/papartner"));
+    auditService.resolveJwks(URI.create("https://plars.org/papartner"));
 
     assertEquals(stack.peek().getType(), RegistryAuditEventType.RESOLVED_ENTITY_CONFIGURATION.name());
     assertNull(stack.peek().getData().get("oldData"));

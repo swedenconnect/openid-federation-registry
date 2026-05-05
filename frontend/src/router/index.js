@@ -26,6 +26,8 @@ import TrustmarksListView from '../views/TrustmarksListView.vue';
 import TrustmarkFormView from '../views/TrustmarkFormView.vue';
 import TrustmarkSubjectsListView from '../views/TrustmarkSubjectsListView.vue';
 import TrustmarkSubjectFormView from '../views/TrustmarkSubjectFormView.vue';
+import RegistrationFlowsListView from '../views/RegistrationFlowsListView.vue';
+import RegistrationFlowFormView from '../views/RegistrationFlowFormView.vue';
 import {useAuthorizationStatusStore} from '@/authorization/stores/authorizationStatusStore';
 
 let base = import.meta.env.BASE_URL;
@@ -115,6 +117,21 @@ const router = createRouter({
             path: '/entities/:entityId/modules/trustmarkissuer/trustmarks/:trustmarkId/subjects/:id/edit',
             name: 'trustmark-subject-edit',
             component: TrustmarkSubjectFormView,
+        },
+        {
+            path: '/registration-flows',
+            name: 'registration-flows-list',
+            component: RegistrationFlowsListView,
+        },
+        {
+            path: '/registration-flows/new',
+            name: 'registration-flow-new',
+            component: RegistrationFlowFormView,
+        },
+        {
+            path: '/registration-flows/:id/edit',
+            name: 'registration-flow-edit',
+            component: RegistrationFlowFormView,
         },
     ],
 });

@@ -105,4 +105,18 @@ public interface EntityRepository extends JpaRepository<FederationEntity, UUID> 
   List<FederationEntity> findByOrgNumberAndOptionalEntityKeyType(
       @Param("orgNumber") String orgNumber,
       @Param("entityType") EntityType entityType);
+
+  /**
+   * Finds hosted entities by entity type and optional issuer (entityIdentifier), across all organizations.
+   *
+   * @param entityType the entity type to filter by
+   * @param issuer the issuer to filter by, or {@code null} to return all of the given type
+   * @return matching entities
+   */
+  @Query("SELECT e FROM FederationEntity e JOIN fetch e.organization o "
+      + "WHERE e.entityType = :entityType "
+      + "AND (:issuer IS NULL OR e.issuer = :issuer)")
+  List<FederationEntity> findByEntityTypeAndOptionalIssuer(
+      @Param("entityType") EntityType entityType,
+      @Param("issuer") String issuer);
 }

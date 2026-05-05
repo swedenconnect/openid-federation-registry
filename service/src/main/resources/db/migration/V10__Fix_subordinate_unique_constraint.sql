@@ -11,20 +11,12 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- *  limitations under the License.
+ * limitations under the License.
  */
-package se.swedenconnect.oidf.registry.registrationflow.model;
 
-/**
- * Response DTO for a single pipeline step configuration value.
- *
- * @param key the configuration key
- * @param value the current value
- * @author Per Fredrik Plars
- */
-public record ConfigValueModel(
-    String key,
-    String value
-) {
-
-}
+-- The old constraint (subordinate_id, entityidentifier) was effectively a no-op since
+-- subordinate_id is the primary key. Replace it with the intended constraint that prevents
+-- duplicate entityidentifier values under the same intermediate/trustanchor.
+ALTER TABLE `subordinate`
+    DROP INDEX `uk_subordinate_id_entityidentifier`,
+    ADD CONSTRAINT `uq_subordinate_taim_entityidentifier` UNIQUE (`ta_im_id`, `entityidentifier`);

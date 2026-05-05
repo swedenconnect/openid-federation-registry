@@ -41,8 +41,8 @@ public class SubordinateDto {
   @Schema(description = "TaIm ID that this subordinate belongs to")
   private UUID taImId;
 
-  @Schema(description = "JWKSet for Subordinate", example = "JSON Web Key Set as string")
-  private String jwks;
+  @Schema(description = "JWKSet for Subordinate", example = "JSON Web Key Set")
+  private Map<String, Object> jwks;
 
   @Schema(description = "Subject (entity identifier)", example = "https://subordinate.example.se")
   private String entityIdentifier;
