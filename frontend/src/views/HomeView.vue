@@ -323,9 +323,7 @@ function viewModule(entity, moduleType) {
       }
     }
 
-    const queryParams = new URLSearchParams({
-      issuer: entityIdentifier,
-    });
+    const queryParams = new URLSearchParams();
     if (taImId) {
       queryParams.set('taImId', taImId);
     }

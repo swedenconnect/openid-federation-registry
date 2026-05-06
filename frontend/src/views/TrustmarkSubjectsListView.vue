@@ -17,10 +17,7 @@
 <template>
   <div>
     <div class="d-flex justify-space-between align-center mb-4">
-      <div>
-        <h2>Trustmark Subjects</h2>
-        <div v-if="trustmarkType" class="text-subtitle-1 text-grey">{{ trustmarkType }}</div>
-      </div>
+      <h2>Trustmark Subjects</h2>
       <div>
         <v-btn
             id="btn-add-trustmark-subject"
@@ -39,6 +36,21 @@
         </v-btn>
       </div>
     </div>
+
+    <v-card v-if="entityIdentifier || trustmarkType" variant="tonal" color="primary" class="mb-4">
+      <v-card-text class="py-2">
+        <div v-if="entityIdentifier" class="d-flex align-center">
+          <v-icon class="mr-2">mdi-certificate-outline</v-icon>
+          <span class="text-caption text-uppercase font-weight-medium mr-3">Trustmark Issuer</span>
+          <span class="text-body-2">{{ entityIdentifier }}</span>
+        </div>
+        <div v-if="trustmarkType" class="d-flex align-center" :class="{ 'mt-1': entityIdentifier }">
+          <v-icon class="mr-2">mdi-tag-outline</v-icon>
+          <span class="text-caption text-uppercase font-weight-medium mr-3">Trustmark Type</span>
+          <span class="text-body-2">{{ trustmarkType }}</span>
+        </div>
+      </v-card-text>
+    </v-card>
 
     <v-card v-if="loading">
       <v-card-text>
@@ -136,7 +148,7 @@ import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
-import {trustmarksPath, trustmarkSubjectsPath} from '@/config/path';
+import {federationEntityPath, trustmarksPath, trustmarkSubjectsPath} from '@/config/path';
 
 const route = useRoute();
 const router = useRouter();
@@ -144,7 +156,8 @@ const {requestGet, requestDelete, loading, ok} = useRequest();
 const errorStore = useErrorStore();
 
 const subjects = ref([]);
-const trustmarkType = ref('');
+const entityIdentifier = ref(null);
+const trustmarkType = ref(null);
 const deleteDialog = ref(false);
 const deleting = ref(false);
 const subjectToDelete = ref(null);
@@ -179,7 +192,7 @@ async function loadSubjects() {
   const response = await requestGet(`${trustmarksPath}/${trustmarkId.value}/subjects`);
 
   if (response) {
-    trustmarkType.value = response.trustmarkType || '';
+    trustmarkType.value = response.trustmarkType || null;
     subjects.value = response.trustmarkSubjects && Array.isArray(response.trustmarkSubjects)
         ? response.trustmarkSubjects
         : [];
@@ -236,7 +249,16 @@ function goBack() {
   router.push(`/entities/${entityId.value}/modules/trustmarkissuer/trustmarks?${params.toString()}`);
 }
 
+async function loadEntityIdentifier() {
+  if (!entityId.value) return;
+  const response = await requestGet(federationEntityPath(entityId.value));
+  if (response) {
+    entityIdentifier.value = response.entityIdentifier || response.federationEntity?.entityIdentifier || null;
+  }
+}
+
 onMounted(() => {
+  loadEntityIdentifier();
   loadSubjects();
 });
 </script>
