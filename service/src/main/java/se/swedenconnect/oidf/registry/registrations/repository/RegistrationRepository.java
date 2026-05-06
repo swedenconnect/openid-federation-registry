@@ -47,7 +47,7 @@ public interface RegistrationRepository extends JpaRepository<Registration, UUID
    * @param status the registration status
    * @return list of matching registrations
    */
-  List<Registration> findByTaIm_TaImIdAndStatus(UUID taimId, RegistrationStatus status);
+  List<Registration> findByFlowAssignment_TaIm_TaImIdAndStatus(UUID taimId, RegistrationStatus status);
 
   /**
    * Counts registrations for an intermediate with the given status.
@@ -56,7 +56,7 @@ public interface RegistrationRepository extends JpaRepository<Registration, UUID
    * @param status the registration status
    * @return count of matching registrations
    */
-  long countByTaIm_TaImIdAndStatus(UUID taimId, RegistrationStatus status);
+  long countByFlowAssignment_TaIm_TaImIdAndStatus(UUID taimId, RegistrationStatus status);
 
   /**
    * Deletes registrations with the given status created before the given date.

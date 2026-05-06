@@ -24,6 +24,7 @@ import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.registrationflow.RegistrationFlowService;
+import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
 import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
@@ -31,12 +32,11 @@ import se.swedenconnect.oidf.registry.registrationflow.process.ProcessEngine;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessFlow;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
-import se.swedenconnect.oidf.registry.registrationflow.repository.FlowRepository;
 import se.swedenconnect.oidf.registry.registrations.dto.FedRegStatus;
-import se.swedenconnect.oidf.registry.registrations.dto.FlowDto;
-import se.swedenconnect.oidf.registry.registrations.dto.JoinDto;
-import se.swedenconnect.oidf.registry.registrations.dto.JoinRequestDto;
-import se.swedenconnect.oidf.registry.registrations.dto.TrustmarkRequestDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationFlowDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestStatusDto;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
@@ -56,11 +56,6 @@ import java.util.UUID;
 @Service
 public class RegistrationServiceImpl implements RegistrationService {
 
-  /** Step ID for ManualValidationStep — used to detect manual flows. */
-  private static final UUID MANUAL_VALIDATION_STEP_ID =
-      UUID.fromString("B292AA20-0F6A-4362-830F-B22AC36B76ED");
-
-  private final FlowRepository flowRepository;
   private final FlowAssignmentRepository flowAssignmentRepository;
   private final RegistrationRepository registrationRepository;
   private final RegistrationFlowService registrationFlowService;
@@ -71,7 +66,6 @@ public class RegistrationServiceImpl implements RegistrationService {
   /**
    * Constructs a new RegistrationServiceImpl.
    *
-   * @param flowRepository repository for registration flows
    * @param flowAssignmentRepository repository for flow assignments
    * @param registrationRepository repository for registration records
    * @param registrationFlowService service for managing registration flows
@@ -79,14 +73,12 @@ public class RegistrationServiceImpl implements RegistrationService {
    * @param subordinateService service for subordinate statement management
    * @param objectMapper JSON mapper
    */
-  public RegistrationServiceImpl(final FlowRepository flowRepository,
-      final FlowAssignmentRepository flowAssignmentRepository,
+  public RegistrationServiceImpl(final FlowAssignmentRepository flowAssignmentRepository,
       final RegistrationRepository registrationRepository,
       final RegistrationFlowService registrationFlowService,
       final ProcessEngine processEngine,
       final SubordinateService subordinateService,
       final JsonMapper objectMapper) {
-    this.flowRepository = flowRepository;
     this.flowAssignmentRepository = flowAssignmentRepository;
     this.registrationRepository = registrationRepository;
     this.registrationFlowService = registrationFlowService;
@@ -95,62 +87,23 @@ public class RegistrationServiceImpl implements RegistrationService {
     this.objectMapper = objectMapper;
   }
 
+
+
   @Override
   @Transactional
-  public JoinDto createJoin(final JoinRequestDto request) {
-    return this.createJoinWithId(UUID.randomUUID(), request);
+  public RegistrationRequestStatusDto createRegistrationRequestWithId(final OrganizationRecord organizationRecord,
+      final UUID joinId, final RegistrationRequestDto request) {
+
+    this.processEngine.register(request);
+    return  new RegistrationRequestStatusDto();
   }
 
   @Override
   @Transactional
-  public JoinDto createJoinWithId(final UUID joinId, final JoinRequestDto request) {
-    final var assignment = this.flowAssignmentRepository.findById(request.getRegistrationAssignId())
+  public void deleteRegistrationRequest(final OrganizationRecord organizationRecord, final UUID registrationId) {
+    final Registration reg = this.registrationRepository.findById(registrationId)
         .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
-            "Assignment not found: %s".formatted(request.getRegistrationAssignId())));
-
-    final RegistrationFlow flow = assignment.getRegistrationFlow();
-    final TrustAnchorIntermediateModule taIm = assignment.getTaIm();
-
-    final ProcessFlow processFlow = this.registrationFlowService.buildProcessFlow(flow.getFlowId());
-
-    final boolean isManualFlow = processFlow.getProcessFlow().stream()
-        .anyMatch(s -> MANUAL_VALIDATION_STEP_ID.equals(s.step().getStepId()));
-
-    final ProcessContext ctx = new ProcessContext();
-    ctx.put(ContextKey.ENTITY_ID, request.getEntityId());
-    ctx.put(ContextKey.TAIM_ID, taIm.getTaImId());
-    ctx.put(ContextKey.REGISTRATION_FLOW_ID, flow.getFlowId());
-    ctx.put(ContextKey.TRUSTMARKS_REQUESTED, this.serializeTrustmarks(request.getTrustmarks()));
-
-    final ProcessReport report = this.processEngine.run(processFlow.getProcessFlow(), ctx);
-
-    if (!report.isSuccessful()) {
-      final String reason = report.steps().getLast().result().message();
-      if (reason != null && reason.contains("already registered")) {
-        throw new ResponseStatusException(HttpStatus.CONFLICT, reason);
-      }
-      throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-          "Registration flow failed: " + reason);
-    }
-
-    if (isManualFlow) {
-      final Registration reg = this.registrationRepository
-          .findByEntityIdAndStatus(request.getEntityId(), RegistrationStatus.PENDING)
-          .orElseThrow(() -> new IllegalStateException("ManualValidationStep did not persist registration"));
-      return toJoinDto(reg);
-    }
-
-    this.autoCreateSubordinate(ctx, taIm);
-    final Registration reg = this.createApprovedRecord(joinId, request, taIm, flow, ctx);
-    return toJoinDto(reg);
-  }
-
-  @Override
-  @Transactional
-  public void deleteJoin(final UUID joinId) {
-    final Registration reg = this.registrationRepository.findById(joinId)
-        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
-            "Registration not found: %s".formatted(joinId)));
+            "Registration not found: %s".formatted(registrationId)));
     if (reg.getStatus() == RegistrationStatus.APPROVED) {
       throw new RegistryServerException(ErrorTypes.CONFLICT,
           "Cannot delete an approved registration — remove the subordinate statement first.");
@@ -160,85 +113,49 @@ public class RegistrationServiceImpl implements RegistrationService {
 
   @Override
   @Transactional(readOnly = true)
-  public List<JoinDto> listJoins() {
+  public List<RegistrationDto> listRegistrations(final OrganizationRecord organizationRecord) {
+    //TODO this is not the right way to handle organizations
     return this.registrationRepository.findAll().stream()
+        .filter(reg -> reg.getFlowAssignment().getTaIm().getOrganization().getOrgNumber()
+            .equals(organizationRecord.orgNumber()))
         .map(RegistrationServiceImpl::toJoinDto)
         .toList();
   }
 
   @Override
   @Transactional(readOnly = true)
-  public List<FlowDto> listFlows() {
-    return this.flowRepository.findAll().stream()
-        .map(f -> {
-          final FlowDto dto = new FlowDto();
-          dto.setRegistrationId(f.getFlowId());
-          dto.setName(f.getName());
-          dto.setDescription(f.getDescription());
+  public List<RegistrationFlowDto> listRegistrationFlows(final OrganizationRecord organizationRecord) {
+    return this.flowAssignmentRepository.findAll()
+        .stream()
+        .map(flowAssignment -> {
+          final RegistrationFlow registrationFlow = flowAssignment.getRegistrationFlow();
+          final TrustAnchorIntermediateModule intermediate = flowAssignment.getTaIm();
+
+          final RegistrationFlowDto dto = new RegistrationFlowDto();
+          dto.setJoinId(flowAssignment.getAssignId());
+          dto.setName(registrationFlow.getName());
+          dto.setDescription(registrationFlow.getDescription());
+          dto.setIntermidiateEntityId(intermediate.getEntity().getSubject());
           return dto;
         })
         .toList();
   }
 
-  private void autoCreateSubordinate(final ProcessContext ctx, final TrustAnchorIntermediateModule taIm) {
-    final String entityId = ctx.getRequired(ContextKey.ENTITY_ID);
-    final String jwks = ctx.<String>get(ContextKey.ENTITY_CONFIGURATION_JWKS).orElse(null);
-    final String metadataPolicyJson = ctx.<String>get(ContextKey.METADATA_POLICY).orElse(null);
 
-    final SubordinateDto sub = new SubordinateDto();
-    sub.setEntityIdentifier(entityId);
-    sub.setTaImId(taIm.getTaImId());
-    sub.setJwks(this.deserializePolicy(jwks));
-    sub.setMetadataPolicy(this.deserializePolicy(metadataPolicyJson));
-
-    final OrganizationRecord orgRecord = new OrganizationRecord(
-        taIm.getOrganization().getOrgNumber(),
-        taIm.getOrganization().getOrgName(),
-        "");
-    this.subordinateService.createSubordinate(orgRecord, sub);
-  }
-
-  private Registration createApprovedRecord(final UUID id, final JoinRequestDto request,
-      final TrustAnchorIntermediateModule taIm, final RegistrationFlow flow, final ProcessContext ctx) {
-    final Registration reg = new Registration();
-    reg.setRegistrationId(id);
-    reg.setTaIm(taIm);
-    reg.setRegistrationFlow(flow);
-    reg.setEntityId(request.getEntityId());
-    reg.setJwks(ctx.<String>get(ContextKey.ENTITY_CONFIGURATION_JWKS).orElse(null));
-    //reg.setMetadata(ctx.<String>get(ContextKey.ENTITY_CONFIGURATION_METADATA).orElse(null));
-    reg.setMetadataPolicy(ctx.<String>get(ContextKey.METADATA_POLICY).orElse(null));
-    reg.setTrustmarksRequested(this.serializeTrustmarks(request.getTrustmarks()));
-    reg.setStatus(RegistrationStatus.APPROVED);
-    return this.registrationRepository.save(reg);
-  }
-
-  private String serializeTrustmarks(final List<TrustmarkRequestDto> trustmarks) {
-    if (trustmarks == null || trustmarks.isEmpty()) {
-      return null;
-    }
-      return this.objectMapper.writeValueAsString(trustmarks);
-  }
-
-  @SuppressWarnings("unchecked")
-  private Map<String, Object> deserializePolicy(final String json) {
-    if (json == null || json.isBlank()) {
-      return null;
-    }
-      return this.objectMapper.readValue(json, Map.class);
-  }
-
-  private static JoinDto toJoinDto(final Registration reg) {
-    final JoinDto dto = new JoinDto();
-    dto.setJoinId(reg.getRegistrationId());
+  private static RegistrationDto toJoinDto(final Registration reg) {
+    final RegistrationDto dto = new RegistrationDto();
+    dto.setJoinId(reg.getFlowAssignment().getAssignId());
     dto.setEntityId(reg.getEntityId());
-    dto.setRegistrationId(reg.getRegistrationFlow().getFlowId());
+    dto.setIntermediateEntityId(reg.getFlowAssignment().getTaIm().getEntity().getSubject());
+    dto.setRegistrationId(reg.getRegistrationId());
     dto.setStatusFedreg(switch (reg.getStatus()) {
-      case APPROVED -> FedRegStatus.REGISTERED;
-      case PENDING -> FedRegStatus.ONGOING;
-      case REJECTED -> FedRegStatus.DENY;
+      case APPROVED -> FedRegStatus.APPROVED;
+      case PENDING -> FedRegStatus.PENDING;
+      case REJECTED -> FedRegStatus.REJECTED;
     });
-    dto.setRejectionReason(reg.getRejectionReason().toString());
+    if (reg.getRejectionReason() != null) {
+      dto.setRejectionReason(reg.getRejectionReason().toString());
+    }
     return dto;
   }
 }

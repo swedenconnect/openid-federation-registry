@@ -43,7 +43,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/registration")
-@Tag(name = "Join", description = "Apply to and manage federation membership")
+@Tag(name = "FederationRegistration", description = "Apply to and manage federation membership")
 public class RegistrationController {
 
   private final RegistrationService registrationService;

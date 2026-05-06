@@ -15,15 +15,7 @@
  */
 package se.swedenconnect.oidf.registry.registrations.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -32,10 +24,13 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
-import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
-import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
+import se.swedenconnect.oidf.registry.infrastructure.persistence.MapConverter;
+import se.swedenconnect.oidf.registry.infrastructure.persistence.StringListConverter;
+import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -62,24 +57,23 @@ public class Registration extends BaseEntity {
   private UUID registrationId;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "taim_id", nullable = false)
-  private TrustAnchorIntermediateModule taIm;
-
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "registration_flow_id", nullable = false)
-  private RegistrationFlow registrationFlow;
+  @JoinColumn(name = "assign_id", nullable = false)
+  private FlowAssignment flowAssignment;
 
   @Column(name = "entity_id", length = 255, nullable = false)
   private String entityId;
 
   @Column(name = "jwks", columnDefinition = "TEXT")
-  private String jwks;
+  @Convert(converter = MapConverter.class)
+  private Map<String,Object> jwks;
 
   @Column(name = "metadata_policy", columnDefinition = "TEXT")
-  private String metadataPolicy;
+  @Convert(converter = MapConverter.class)
+  private Map<String,Object> metadataPolicy;
 
   @Column(name = "trustmarks_requested", columnDefinition = "TEXT")
-  private String trustmarksRequested;
+  @Convert(converter = StringListConverter.class)
+  private List<String> trustmarksRequested;
 
   @Enumerated(EnumType.STRING)
   @Column(name = "status", length = 20, nullable = false)

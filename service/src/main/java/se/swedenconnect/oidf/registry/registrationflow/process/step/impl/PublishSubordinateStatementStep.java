@@ -16,22 +16,21 @@
 package se.swedenconnect.oidf.registry.registrationflow.process.step.impl;
 
 import org.springframework.stereotype.Component;
-import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
-import se.swedenconnect.oidf.registry.module.repository.TaImRepository;
-import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
+import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
-import se.swedenconnect.oidf.registry.registrationflow.repository.FlowRepository;
+import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -50,25 +49,21 @@ import java.util.UUID;
 public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
 
   private final RegistrationRepository registrationRepository;
-  private final TaImRepository taImRepository;
-  private final FlowRepository flowRepository;
+  private final FlowAssignmentRepository flowAssignmentRepository;
   private final JsonMapper objectMapper;
 
   /**
    * Constructs a new ManualValidationStep.
    *
    * @param registrationRepository repository for persisting registrations
-   * @param taImRepository repository for trust anchor intermediates
-   * @param flowRepository repository for registration flows
+   * @param flowAssignmentRepository repository for flow assignments
    * @param objectMapper JSON mapper
    */
   public PublishSubordinateStatementStep(final RegistrationRepository registrationRepository,
-      final TaImRepository taImRepository,
-      final FlowRepository flowRepository,
+      final FlowAssignmentRepository flowAssignmentRepository,
       final JsonMapper objectMapper) {
     this.registrationRepository = registrationRepository;
-    this.taImRepository = taImRepository;
-    this.flowRepository = flowRepository;
+    this.flowAssignmentRepository = flowAssignmentRepository;
     this.objectMapper = objectMapper;
   }
 
@@ -94,26 +89,25 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
 
     if (existing.isPresent()) {
       final Registration reg = existing.get();
-      reg.setJwks(jwks);
-      reg.setMetadataPolicy(metadataPolicy);
-      reg.setTrustmarksRequested(trustmarks);
+      //reg.setJwks(dockjwks);
+      //reg.setMetadataPolicy(metadataPolicy);
+      //reg.setTrustmarksRequested(trustmarks);
       this.registrationRepository.save(reg);
       return StepResult.success();
     }
 
-    final TrustAnchorIntermediateModule taIm = this.taImRepository.findById(taimId)
-        .orElseThrow(() -> new IllegalStateException("TaIm not found: " + taimId));
-    final RegistrationFlow flow = this.flowRepository.findById(flowId)
-        .orElseThrow(() -> new IllegalStateException("RegistrationFlow not found: " + flowId));
+    final FlowAssignment assignment = this.flowAssignmentRepository
+        .findByTaImTaImIdAndRegistrationFlowFlowId(taimId, flowId)
+        .orElseThrow(() -> new IllegalStateException(
+            "FlowAssignment not found for taim=%s flow=%s".formatted(taimId, flowId)));
 
     final Registration registration = new Registration();
     registration.setRegistrationId(UUID.randomUUID());
-    registration.setTaIm(taIm);
-    registration.setRegistrationFlow(flow);
+    registration.setFlowAssignment(assignment);
     registration.setEntityId(entityId);
-    registration.setJwks(jwks);
-    registration.setMetadataPolicy(metadataPolicy);
-    registration.setTrustmarksRequested(trustmarks);
+    //registration.setJwks(jwks);
+    //registration.setMetadataPolicy(metadataPolicy);
+    //registration.setTrustmarksRequested(trustmarks);
     registration.setStatus(RegistrationStatus.PENDING);
 
     this.registrationRepository.save(registration);

@@ -18,28 +18,29 @@ package se.swedenconnect.oidf.registry.registrations.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
- * Request body for creating a hosted entity.
+ * Represents a registration request visible to an operator.
  *
  * @author Per Fredrik Plars
  */
 @Data
-@Schema(name = "HostedRequest")
-public class HostedRequestDto {
+@Schema(name = "RegistrationRequest")
+public class RegistrationRequestDto {
 
-  @Schema(description = "Hosted entity ID", accessMode = Schema.AccessMode.READ_ONLY)
+  @Schema(description = "JoinId - Id for the join flow to register on", accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private UUID hostedId;
+  private UUID joinId;
 
-  @Schema(description = "Entity identifier (URI) of the entity to host",
-      example = "https://example.com/entity")
+  @Schema(description = "Entity identifier of the applicant", example = "https://example.com/entity")
   private String entityId;
 
-  @Schema(description = "Metadata in OIDF format, keyed by metadata type",
-      example = "{\"openid_relying_party\": {}}")
-  private Map<String, Object> metadata;
+  @Schema(description = "Trustmarks requested in the application")
+  private List<String> trustmarksRequested;
+
 }

@@ -27,8 +27,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import se.swedenconnect.oidf.registry.registrations.dto.RejectRegistrationDto;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RejectRegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
@@ -48,8 +49,8 @@ import java.util.UUID;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/registration/admin")
-@Tag(name = "Pending registrations", description = "Operator view of incoming registration requests")
+@RequestMapping("/registration-admin/v1/")
+@Tag(name = "RegistrationAdmin", description = "Operator view of incoming registration requests")
 public class RegistrationAdminController {
 
   private final RegistrationRepository registrationRepository;
@@ -57,15 +58,17 @@ public class RegistrationAdminController {
   /**
    * Lists pending registrations for an intermediate.
    *
+   * @param organizationRecord the calling organization
    * @param taimId the intermediate ID to filter by
    * @return list of pending registration DTOs
    */
   @GetMapping
   @Operation(summary = "List pending registrations for an intermediate")
   public ResponseEntity<List<RegistrationDto>> listPending(
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord,
       @Parameter(description = "Filter by intermediate ID") @RequestParam final UUID taimId) {
     final List<RegistrationDto> result = this.registrationRepository
-        .findByTaIm_TaImIdAndStatus(taimId, RegistrationStatus.PENDING)
+        .findByFlowAssignment_TaIm_TaImIdAndStatus(taimId, RegistrationStatus.PENDING)
         .stream()
         .map(RegistrationAdminController::toDto)
         .toList();
@@ -75,27 +78,32 @@ public class RegistrationAdminController {
   /**
    * Counts unhandled PENDING registrations for an intermediate.
    *
+   * @param organizationRecord the calling organization
    * @param taimId the intermediate ID
    * @return map containing the count
    */
   @GetMapping("/count")
   @Operation(summary = "Count unhandled PENDING registrations for an intermediate (badge)")
   public ResponseEntity<Map<String, Long>> countPending(
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord,
       @Parameter(description = "Intermediate ID") @RequestParam final UUID taimId) {
-    final long count = this.registrationRepository.countByTaIm_TaImIdAndStatus(taimId, RegistrationStatus.PENDING);
+    final long count = this.registrationRepository
+        .countByFlowAssignment_TaIm_TaImIdAndStatus(taimId, RegistrationStatus.PENDING);
     return ResponseEntity.ok(Map.of("count", count));
   }
 
   /**
    * Rejects a pending registration request.
    *
+   * @param organizationRecord the calling organization
    * @param id the registration ID
-   * @param body map containing the rejectionReason
+   * @param body the rejection details
    * @return the updated registration DTO
    */
   @PostMapping("/{id}/reject")
   @Operation(summary = "Reject a pending registration request")
   public ResponseEntity<RegistrationDto> reject(
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord,
       @Parameter(description = "Registration ID") @PathVariable("id") final UUID id,
       @RequestBody final RejectRegistrationDto body) {
     final Registration reg = this.registrationRepository.findById(id)
@@ -112,18 +120,9 @@ public class RegistrationAdminController {
 
   private static RegistrationDto toDto(final Registration reg) {
     final RegistrationDto dto = new RegistrationDto();
-    dto.setId(reg.getRegistrationId());
-    dto.setTaimId(reg.getTaIm().getTaImId());
-    dto.setRegistrationFlowId(reg.getRegistrationFlow().getFlowId());
     dto.setEntityId(reg.getEntityId());
-    dto.setJwks(reg.getJwks());
-    dto.setMetadataPolicy(reg.getMetadataPolicy());
-    dto.setTrustmarksRequested(reg.getTrustmarksRequested());
-    dto.setStatus(reg.getStatus());
-    dto.setReviewedAt(reg.getReviewedAt());
-    dto.setReviewedBy(reg.getReviewedBy());
+    dto.setIntermediateEntityId(reg.getFlowAssignment().getTaIm().getEntity().getSubject());
     dto.setRejectionReason(reg.getRejectionReason().toString());
-    dto.setCreatedDate(reg.getCreatedDate());
     return dto;
   }
 }
