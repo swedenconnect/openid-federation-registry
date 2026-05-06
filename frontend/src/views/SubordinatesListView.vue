@@ -37,6 +37,19 @@
       </div>
     </div>
 
+    <v-card v-if="entityIdentifier" variant="tonal" color="primary" class="mb-4">
+      <v-card-text class="d-flex align-center py-2">
+        <v-icon class="mr-2">{{
+            moduleType === 'trustanchor' ? 'mdi-shield-check' : 'mdi-transit-connection-variant'
+          }}
+        </v-icon>
+        <span class="text-caption text-uppercase font-weight-medium mr-3">{{
+            moduleType === 'trustanchor' ? 'Trust Anchor' : 'Intermediate'
+          }}</span>
+        <span class="text-body-2">{{ entityIdentifier }}</span>
+      </v-card-text>
+    </v-card>
+
     <v-card v-if="loading">
       <v-card-text>
         <div class="text-center py-12">
@@ -147,7 +160,7 @@ import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
-import {intermediateModulePath, subordinatePath, trustAnchorModulePath} from '@/config/path';
+import {federationEntityPath, intermediateModulePath, subordinatePath, trustAnchorModulePath} from '@/config/path';
 
 const route = useRoute();
 const router = useRouter();
@@ -156,6 +169,7 @@ const errorStore = useErrorStore();
 const userStore = useUserStore();
 
 const subordinates = ref([]);
+const entityIdentifier = ref(null);
 const deleteDialog = ref(false);
 const deleting = ref(false);
 const subordinateToDelete = ref(null);
@@ -264,7 +278,16 @@ function goBack() {
   router.push('/');
 }
 
+async function loadEntityIdentifier() {
+  if (!entityId.value) return;
+  const response = await requestGet(federationEntityPath(entityId.value));
+  if (response) {
+    entityIdentifier.value = response.entityIdentifier || response.federationEntity?.entityIdentifier || null;
+  }
+}
+
 onMounted(() => {
+  loadEntityIdentifier();
   loadSubordinates();
 });
 </script>

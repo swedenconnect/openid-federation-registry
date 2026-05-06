@@ -37,6 +37,14 @@
       </div>
     </div>
 
+    <v-card v-if="entityIdentifier" variant="tonal" color="primary" class="mb-4">
+      <v-card-text class="d-flex align-center py-2">
+        <v-icon class="mr-2">mdi-certificate-outline</v-icon>
+        <span class="text-caption text-uppercase font-weight-medium mr-3">Trustmark Issuer</span>
+        <span class="text-body-2">{{ entityIdentifier }}</span>
+      </v-card-text>
+    </v-card>
+
     <v-card v-if="loading">
       <v-card-text>
         <div class="text-center py-12">
@@ -143,7 +151,7 @@ import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
-import {trustmarksListingPath, trustmarksPath} from '@/config/path';
+import {federationEntityPath, trustmarksListingPath, trustmarksPath} from '@/config/path';
 
 const route = useRoute();
 const router = useRouter();
@@ -151,6 +159,7 @@ const {requestGet, requestDelete, loading, ok} = useRequest();
 const errorStore = useErrorStore();
 
 const trustmarks = ref([]);
+const entityIdentifier = ref(null);
 const deleteDialog = ref(false);
 const deleting = ref(false);
 const trustmarkToDelete = ref(null);
@@ -240,7 +249,16 @@ function goBack() {
   router.push('/');
 }
 
+async function loadEntityIdentifier() {
+  if (!entityId.value) return;
+  const response = await requestGet(federationEntityPath(entityId.value));
+  if (response) {
+    entityIdentifier.value = response.entityIdentifier || response.federationEntity?.entityIdentifier || null;
+  }
+}
+
 onMounted(() => {
+  loadEntityIdentifier();
   loadTrustmarks();
 });
 </script>
