@@ -26,15 +26,15 @@ import java.util.UUID;
  * @author Per Fredrik Plars
  */
 @Data
-@Schema(name = "Flow")
-public class FlowDto {
+@Schema(name = "RegistrationFlow")
+public class RegistrationFlowDto {
 
-  @Schema(description = "Registration flow ID (linked to an intermediate)",
+  @Schema(description = "ID to be used when making a join request to this registrationflow",
       example = "550e8400-e29b-41d4-a716-446655440000")
-  private UUID registrationId;
+  private UUID joinId;
 
-  @Schema(description = "Protocol/entity type for this flow", example = "OIDC-OP")
-  private String type;
+  @Schema(description = "Intermidiate EntityID", example = "https://fed.swedenconnect.se/im")
+  private String intermidiateEntityId;
 
   @Schema(description = "Human-readable name of the flow", example = "Sweden Connect QA")
   private String name;

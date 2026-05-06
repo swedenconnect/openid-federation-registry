@@ -27,20 +27,19 @@ import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule
 import se.swedenconnect.oidf.registry.module.repository.TaImRepository;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
+import se.swedenconnect.oidf.registry.registrationflow.dto.AssignFlowResponse;
 import se.swedenconnect.oidf.registry.registrationflow.dto.ConfigValueDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.FlowSummaryDto;
+import se.swedenconnect.oidf.registry.registrationflow.dto.IntermediateFlowAssignmentDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.Mapper;
 import se.swedenconnect.oidf.registry.registrationflow.dto.RegistrationFlowDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.StepDto;
-import se.swedenconnect.oidf.registry.registrationflow.dto.AssignFlowResponse;
-import se.swedenconnect.oidf.registry.registrationflow.dto.IntermediateFlowAssignmentDto;
 import se.swedenconnect.oidf.registry.registrationflow.model.ConfigValueModel;
 import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
 import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
 import se.swedenconnect.oidf.registry.registrationflow.model.StepModel;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessFlow;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
-import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowRepository;
 import tools.jackson.databind.json.JsonMapper;
@@ -247,6 +246,7 @@ public class RegistrationFlowService {
    * @param taImId the intermediate ID
    * @return list of flow DTOs
    */
+  @Transactional
   public List<RegistrationFlowDto> getFlowsForIntermediate(final UUID taImId) {
     return this.flowAssignmentRepository.findByTaImTaImId(taImId).stream()
         .map(a -> {
@@ -263,6 +263,7 @@ public class RegistrationFlowService {
    * @param taImId the intermediate ID
    * @return list of assignment summaries
    */
+  @Transactional
   public List<IntermediateFlowAssignmentDto> getFlowAssignmentsForIntermediate(final UUID taImId) {
     return this.flowAssignmentRepository.findByTaImTaImId(taImId).stream()
         .map(a -> {

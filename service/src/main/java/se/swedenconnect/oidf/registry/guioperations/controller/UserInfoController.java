@@ -15,6 +15,7 @@
  */
 package se.swedenconnect.oidf.registry.guioperations.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -43,6 +44,7 @@ import java.util.Optional;
  */
 @Slf4j
 @RestController
+@Hidden
 @RequestMapping("/userinfo")
 public class UserInfoController {
 

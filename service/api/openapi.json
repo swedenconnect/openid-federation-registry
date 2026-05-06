@@ -28,16 +28,16 @@
   ],
   "tags": [
     {
+      "name": "FederationRegistration",
+      "description": "Apply to and manage federation membership"
+    },
+    {
       "name": "Pending registrations",
       "description": "Operator view of incoming registration requests"
     },
     {
       "name": "Registration Flow",
       "description": "Configured pipeline steps for entity registration"
-    },
-    {
-      "name": "Join",
-      "description": "Apply to and manage federation membership"
     },
     {
       "name": "Modules",
@@ -57,47 +57,6 @@
     }
   ],
   "paths": {
-    "/userinfo": {
-      "get": {
-        "tags": [
-          "user-info-controller"
-        ],
-        "operationId": "getCurrentUser",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserInfoResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "user-info-controller"
-        ],
-        "operationId": "selectOrganization",
-        "parameters": [
-          {
-            "name": "orgNumber",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
     "/registry/v1/trustmarks/{trustMarkId}": {
       "get": {
         "tags": [
@@ -1322,78 +1281,6 @@
         }
       }
     },
-    "/registration-flow/v1/intermediate/{taImId}/flows": {
-      "get": {
-        "tags": [
-          "Registration Flow"
-        ],
-        "summary": "List flows assigned to an intermediate",
-        "operationId": "getFlowsForIntermediate",
-        "parameters": [
-          {
-            "name": "taImId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RegistrationFlowDto"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Registration Flow"
-        ],
-        "summary": "Set (replace) the flows assigned to an intermediate",
-        "operationId": "setFlowsForIntermediate",
-        "parameters": [
-          {
-            "name": "taImId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "format": "uuid"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
     "/registration-flow/v1/flow/{flowid}": {
       "put": {
         "tags": [
@@ -1410,16 +1297,18 @@
               "type": "string",
               "format": "uuid"
             }
-          },
-          {
-            "name": "arg1",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/RegistrationFlowDto"
-            }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationFlowDto"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -1448,16 +1337,18 @@
               "type": "string",
               "format": "uuid"
             }
-          },
-          {
-            "name": "arg1",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/RegistrationFlowDto"
-            }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationFlowDto"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -1798,8 +1689,10 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": {}
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/JwksLoadedDto"
+                  }
                 }
               }
             }
@@ -1904,7 +1797,7 @@
     "/registration/{joinId}": {
       "post": {
         "tags": [
-          "Join"
+          "FederationRegistration"
         ],
         "summary": "Create a join application with specified ID",
         "operationId": "createJoinWithId",
@@ -1923,7 +1816,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/JoinRequest"
+                "$ref": "#/components/schemas/RegistrationRequest"
               }
             }
           },
@@ -1935,7 +1828,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Join"
+                  "$ref": "#/components/schemas/RegistrationRequest"
                 }
               }
             }
@@ -1944,7 +1837,7 @@
       },
       "delete": {
         "tags": [
-          "Join"
+          "FederationRegistration"
         ],
         "summary": "Remove a join record",
         "operationId": "deleteJoin",
@@ -1990,10 +1883,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string"
-                }
+                "$ref": "#/components/schemas/RejectRegistrationRequest"
               }
             }
           },
@@ -2005,7 +1895,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Registration"
+                  "$ref": "#/components/schemas/RegistrationRequest"
                 }
               }
             }
@@ -2016,15 +1906,15 @@
     "/registration/": {
       "post": {
         "tags": [
-          "Join"
+          "FederationRegistration"
         ],
         "summary": "Create a join application with auto-generated ID",
-        "operationId": "createJoin",
+        "operationId": "createRegistration",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/JoinRequest"
+                "$ref": "#/components/schemas/RegistrationRequest"
               }
             }
           },
@@ -2036,7 +1926,49 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/Join"
+                  "$ref": "#/components/schemas/RegistrationRequest"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-flow/v1/intermediate/{taImId}/assign": {
+      "post": {
+        "tags": [
+          "Registration Flow"
+        ],
+        "summary": "Assign a flow to an intermediate",
+        "operationId": "assignFlow",
+        "parameters": [
+          {
+            "name": "taImId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignFlowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignFlowResponse"
                 }
               }
             }
@@ -2051,16 +1983,16 @@
         ],
         "summary": "Create a new flow",
         "operationId": "createFlow",
-        "parameters": [
-          {
-            "name": "arg0",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/RegistrationFlowDto"
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationFlowDto"
+              }
             }
-          }
-        ],
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -2218,70 +2150,10 @@
     "/registration": {
       "get": {
         "tags": [
-          "Join"
+          "FederationRegistration"
         ],
-        "summary": "List all join records",
-        "operationId": "listJoins",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Join"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/registration/flows": {
-      "get": {
-        "tags": [
-          "Join"
-        ],
-        "summary": "List all available registration flows",
-        "operationId": "listFlows",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Flow"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/registration/admin": {
-      "get": {
-        "tags": [
-          "Pending registrations"
-        ],
-        "summary": "List pending registrations for an intermediate",
-        "operationId": "listPending",
-        "parameters": [
-          {
-            "name": "arg0",
-            "in": "query",
-            "description": "Filter by intermediate ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
+        "summary": "List all registration records for your organization",
+        "operationId": "listRegistrations",
         "responses": {
           "200": {
             "description": "OK",
@@ -2299,6 +2171,66 @@
         }
       }
     },
+    "/registration/flows": {
+      "get": {
+        "tags": [
+          "FederationRegistration"
+        ],
+        "summary": "List all available registration flows",
+        "operationId": "listFlows",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RegistrationFlow"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration/admin": {
+      "get": {
+        "tags": [
+          "Pending registrations"
+        ],
+        "summary": "List pending registrations for an intermediate",
+        "operationId": "listPending",
+        "parameters": [
+          {
+            "name": "arg1",
+            "in": "query",
+            "description": "Filter by intermediate ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RegistrationRequest"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/registration/admin/count": {
       "get": {
         "tags": [
@@ -2308,7 +2240,7 @@
         "operationId": "countPending",
         "parameters": [
           {
-            "name": "arg0",
+            "name": "arg1",
             "in": "query",
             "description": "Intermediate ID",
             "required": true,
@@ -2352,6 +2284,76 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/StepDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-flow/v1/intermediate/{taImId}/flows": {
+      "get": {
+        "tags": [
+          "Registration Flow"
+        ],
+        "summary": "List flows assigned to an intermediate",
+        "operationId": "getFlowsForIntermediate",
+        "parameters": [
+          {
+            "name": "taImId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RegistrationFlowDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-flow/v1/intermediate/{taImId}/assignments": {
+      "get": {
+        "tags": [
+          "Registration Flow"
+        ],
+        "summary": "List flow assignments for an intermediate (includes assignId)",
+        "operationId": "getFlowAssignments",
+        "parameters": [
+          {
+            "name": "taImId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IntermediateFlowAssignmentDto"
                   }
                 }
               }
@@ -2496,33 +2498,13 @@
         }
       }
     },
-    "/": {
-      "get": {
-        "tags": [
-          "index-controller"
-        ],
-        "operationId": "baseIndexTemplate",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/registration-flow/v1/intermediate/{taImId}/flows/{flowId}": {
+    "/registration-flow/v1/intermediate/{taImId}/assign/{assignId}": {
       "delete": {
         "tags": [
           "Registration Flow"
         ],
-        "summary": "Remove a specific flow from an intermediate",
-        "operationId": "removeFlowFromIntermediate",
+        "summary": "Remove a flow assignment from an intermediate",
+        "operationId": "unassignFlow",
         "parameters": [
           {
             "name": "taImId",
@@ -2534,7 +2516,7 @@
             }
           },
           {
-            "name": "flowId",
+            "name": "assignId",
             "in": "path",
             "required": true,
             "schema": {
@@ -2636,9 +2618,10 @@
             "description": "TaIm ID that this subordinate belongs to"
           },
           "jwks": {
-            "type": "string",
+            "type": "object",
+            "additionalProperties": {},
             "description": "JWKSet for Subordinate",
-            "example": "JSON Web Key Set as string"
+            "example": "JSON Web Key Set"
           },
           "entityIdentifier": {
             "type": "string",
@@ -2786,7 +2769,8 @@
             "description": "Trust anchor entityId that this resolver is connected to"
           },
           "trustedKeys": {
-            "type": "string",
+            "type": "object",
+            "additionalProperties": {},
             "description": "Trusted keys as JWKS JSON of the trust anchor"
           },
           "stepRetryDuration": {
@@ -2993,128 +2977,27 @@
           }
         }
       },
-      "JoinRequest": {
+      "JwksLoadedDto": {
         "type": "object",
         "properties": {
           "entityId": {
             "type": "string",
-            "description": "Entity identifier (URI) of the entity applying to join",
-            "example": "https://example.com/entity"
+            "description": "EntityID",
+            "example": "https://www.digg.se/mysqrvice"
           },
-          "registrationFlowId": {
+          "ecLocation": {
             "type": "string",
-            "format": "uuid",
-            "description": "ID of the registration flow (linked to an intermediate)",
-            "example": "550e8400-e29b-41d4-a716-446655440000"
+            "description": "Location from where the entity configuration was loaded from",
+            "example": "https://www.digg.se/mysqrvice/.well-known/openid-federation"
           },
-          "trustmarks": {
-            "type": "array",
-            "description": "Trustmarks requested as part of this join application",
-            "items": {
-              "$ref": "#/components/schemas/TrustmarkRequest"
-            }
+          "jwks": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Jwks that is extracted from entity statement"
           }
         }
       },
-      "TrustmarkRequest": {
-        "type": "object",
-        "properties": {
-          "trustmarkType": {
-            "type": "string",
-            "description": "Trustmark type identifier (URI)",
-            "example": "https://trust.example.com/tm/loa3"
-          },
-          "trustmarkIssuer": {
-            "type": "string",
-            "description": "Entity identifier of the trustmark issuer",
-            "example": "https://issuer.example.com"
-          }
-        }
-      },
-      "Join": {
-        "type": "object",
-        "properties": {
-          "joinId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Join ID",
-            "readOnly": true
-          },
-          "entityId": {
-            "type": "string",
-            "description": "Entity identifier (URI)",
-            "example": "https://example.com/entity"
-          },
-          "registrationId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "ID of the registration flow this entity joined through"
-          },
-          "tags": {
-            "type": "array",
-            "description": "Tags describing the entity type, e.g. OIDC, SAML, RP, OP, IDP, SP",
-            "example": [
-              "OIDC",
-              "RP"
-            ],
-            "items": {
-              "type": "string"
-            }
-          },
-          "isHosted": {
-            "type": "boolean",
-            "description": "True if the entity's metadata is hosted in this registry"
-          },
-          "hostedId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "ID of the hosted entity record, present when isHosted is true",
-            "readOnly": true
-          },
-          "statusFedreg": {
-            "type": "string",
-            "description": "Current federation registration status",
-            "enum": [
-              "REGISTERED",
-              "ONGOING",
-              "DENY"
-            ]
-          },
-          "statusTrustmarks": {
-            "type": "array",
-            "description": "Trustmark status per requested trustmark",
-            "items": {
-              "$ref": "#/components/schemas/TrustmarkStatus"
-            }
-          },
-          "rejectionReason": {
-            "type": "string",
-            "description": "Reason for rejection, present when status_fedreg is DENY",
-            "readOnly": true
-          }
-        }
-      },
-      "TrustmarkStatus": {
-        "type": "object",
-        "properties": {
-          "trustmarkId": {
-            "type": "string",
-            "description": "Trustmark type identifier (URI)",
-            "example": "https://trust.example.com/tm/loa3"
-          },
-          "status": {
-            "type": "string",
-            "description": "Current status of this trustmark",
-            "enum": [
-              "OK",
-              "PENDING",
-              "REVOKED",
-              "EXPIRED"
-            ]
-          }
-        }
-      },
-      "Registration": {
+      "RegistrationRequest": {
         "type": "object",
         "properties": {
           "id": {
@@ -3186,57 +3069,31 @@
           }
         }
       },
-      "OrganizationInformation": {
+      "RejectRegistrationRequest": {
         "type": "object",
         "properties": {
-          "organizations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/OrganizationRecord"
-            }
+          "rejectionReason": {
+            "type": "string",
+            "description": "Human-readable explanation shown to the applicant",
+            "example": "Entity configuration could not be fetched from the provided entity ID."
           }
         }
       },
-      "OrganizationRecord": {
+      "AssignFlowRequest": {
         "type": "object",
         "properties": {
-          "orgNumber": {
-            "type": "string"
-          },
-          "orgName": {
-            "type": "string"
-          },
-          "entityPrefix": {
-            "type": "string"
+          "flowId": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },
-      "UserInfoResponse": {
+      "AssignFlowResponse": {
         "type": "object",
         "properties": {
-          "userName": {
-            "type": "string"
-          },
-          "givenName": {
-            "type": "string"
-          },
-          "familyName": {
-            "type": "string"
-          },
-          "fullName": {
-            "type": "string"
-          },
-          "orgNumber": {
-            "type": "string"
-          },
-          "orgName": {
-            "type": "string"
-          },
-          "entityPrefix": {
-            "type": "string"
-          },
-          "orgInfo": {
-            "$ref": "#/components/schemas/OrganizationInformation"
+          "assignId": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },
@@ -3391,13 +3248,96 @@
         ],
         "description": "Extended federation entity including modules"
       },
-      "Flow": {
+      "Registration": {
+        "type": "object",
+        "properties": {
+          "joinId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Join ID",
+            "readOnly": true
+          },
+          "entityId": {
+            "type": "string",
+            "description": "Entity identifier (URI)",
+            "example": "https://example.com/entity"
+          },
+          "registrationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the registration flow this entity joined through"
+          },
+          "tags": {
+            "type": "array",
+            "description": "Tags describing the entity type, e.g. OIDC, SAML, RP, OP, IDP, SP",
+            "example": [
+              "OIDC",
+              "RP"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "isHosted": {
+            "type": "boolean",
+            "description": "True if the entity's metadata is hosted in this registry"
+          },
+          "hostedId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the hosted entity record, present when isHosted is true",
+            "readOnly": true
+          },
+          "statusFedreg": {
+            "type": "string",
+            "description": "Current federation registration status",
+            "enum": [
+              "APPROVED",
+              "ONGOING",
+              "DENY"
+            ]
+          },
+          "statusTrustmarks": {
+            "type": "array",
+            "description": "Trustmark status per requested trustmark",
+            "items": {
+              "$ref": "#/components/schemas/TrustmarkStatus"
+            }
+          },
+          "rejectionReason": {
+            "type": "string",
+            "description": "Reason for rejection, present when status_fedreg is DENY",
+            "readOnly": true
+          }
+        }
+      },
+      "TrustmarkStatus": {
+        "type": "object",
+        "properties": {
+          "trustmarkId": {
+            "type": "string",
+            "description": "Trustmark type identifier (URI)",
+            "example": "https://trust.example.com/tm/loa3"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of this trustmark",
+            "enum": [
+              "OK",
+              "PENDING",
+              "REVOKED",
+              "EXPIRED"
+            ]
+          }
+        }
+      },
+      "RegistrationFlow": {
         "type": "object",
         "properties": {
           "registrationId": {
             "type": "string",
             "format": "uuid",
-            "description": "Registration flow ID (linked to an intermediate)",
+            "description": "Registration ID (linked to an intermediate)",
             "example": "550e8400-e29b-41d4-a716-446655440000"
           },
           "type": {
@@ -3414,6 +3354,25 @@
             "type": "string",
             "description": "Description of the flow and its purpose",
             "example": "QA-miljÃ¶ fÃ¶r Sweden Connect"
+          }
+        }
+      },
+      "IntermediateFlowAssignmentDto": {
+        "type": "object",
+        "properties": {
+          "assignId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "flowId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
           }
         }
       },

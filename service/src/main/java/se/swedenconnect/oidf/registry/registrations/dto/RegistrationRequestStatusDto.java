@@ -18,29 +18,30 @@ package se.swedenconnect.oidf.registry.registrations.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 /**
- * Represents a registration request visible to an operator.
+ * Represents a registration request status
  *
  * @author Per Fredrik Plars
  */
 @Data
-@Schema(name = "RegistrationRequest")
-public class RegistrationRequestDto {
+@Schema(name = "RegistrationRequestStatus")
+public class RegistrationRequestStatusDto {
 
-  @Schema(description = "JoinId - Id for the join flow to register on", accessMode = Schema.AccessMode.READ_ONLY)
+  @Schema(description = "RegistrationID", accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private UUID joinId;
+  private UUID registrationId;
 
   @Schema(description = "Entity identifier of the applicant", example = "https://example.com/entity")
   private String entityId;
 
   @Schema(description = "Trustmarks requested in the application")
   private List<String> trustmarksRequested;
+
+  // TODO, some type of status message from the executed steps.
+  // EntityStatmentLoader:error - Unable to load entitystatement
 
 }

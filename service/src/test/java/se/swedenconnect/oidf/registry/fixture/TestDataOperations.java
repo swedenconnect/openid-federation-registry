@@ -137,7 +137,8 @@ public class TestDataOperations {
     final Resolver resolverInput = Resolver.builder()
         .entityId(trustAnchorEntity.getEntityId())
         .trustAnchor(trustAnchorEntity.getEntityIdentifier())
-        .trustedKeys(genJWKS().toString())
+        .trustedKeys(TestDataOperations.genJWKS().toJSONObject())
+
         .resolveResponseDuration("PT1H")
         .stepCachedValueThreshold(10)
         .stepRetryDuration("PT2M")
@@ -177,7 +178,7 @@ public class TestDataOperations {
         .taImId(createdTrustAnchor.getTrustAnchorId())
         .entityIdentifier(secondFederationEntity.getEntityIdentifier())
         .metadataPolicy(this.createPolicy())
-        .jwks(genJWKS().toString())
+        .jwks(genJWKS().toJSONObject())
         .build());
 
     final HostedEntity hostedPolisen = entitiesApi.createHostedEntity(
@@ -190,7 +191,7 @@ public class TestDataOperations {
         .taImId(createdTrustAnchor.getTrustAnchorId())
         .entityIdentifier(hostedPolisen.getEntityIdentifier())
         .ecLocationAutomaticResolve(true)
-        .jwks(genJWKS().toString())
+        .jwks(genJWKS().toJSONObject())
         .build());
 
     return taFederationEntityInput.getEntityIdentifier();

@@ -87,6 +87,7 @@ public class SecurityConfig {
         )
 
         .authorizeHttpRequests(auth -> auth
+            // Hosted entities
             .requestMatchers(HttpMethod.GET, "/registry/v1/entities/hosted/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/entity/hosted/read")
             .requestMatchers(HttpMethod.POST, "/registry/v1/entities/hosted/**")
@@ -100,7 +101,7 @@ public class SecurityConfig {
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/entity/hosted/read")
             .requestMatchers(HttpMethod.GET, "/registry/v1/entities/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/modules/read")
-
+            // Federation entities
             .requestMatchers(HttpMethod.GET, "/registry/v1/entities/federation/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/modules/read")
             .requestMatchers(HttpMethod.POST, "/registry/v1/entities/federation/**")
@@ -109,7 +110,7 @@ public class SecurityConfig {
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/modules/write")
             .requestMatchers(HttpMethod.DELETE, "/registry/v1/entities/federation/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/modules/write")
-
+            // FederaionModules
             .requestMatchers(HttpMethod.GET, "/registry/v1/modules/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/modules/read")
             .requestMatchers(HttpMethod.POST, "/registry/v1/modules/**")
@@ -118,7 +119,7 @@ public class SecurityConfig {
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/modules/write")
             .requestMatchers(HttpMethod.DELETE, "/registry/v1/modules/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/modules/write")
-
+            // Trustmark
             .requestMatchers(HttpMethod.GET, "/registry/v1/trustmarks/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/trustmarks/read")
             .requestMatchers(HttpMethod.POST, "/registry/v1/trustmarks/**")
@@ -127,7 +128,7 @@ public class SecurityConfig {
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/trustmarks/write")
             .requestMatchers(HttpMethod.DELETE, "/registry/v1/trustmarks/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/trustmarks/write")
-
+            // Trustmark Subjects
             .requestMatchers(HttpMethod.GET, "/registry/v1/trustmarks/subjects/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/trustmarksubjects/read")
             .requestMatchers(HttpMethod.POST, "/registry/v1/trustmarks/subjects/**")
@@ -137,15 +138,7 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.DELETE, "/registry/v1/trustmarks/subjects/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/trustmarksubjects/write")
 
-            .requestMatchers(HttpMethod.GET, "/registry/v1/policies/**")
-            .hasAuthority("SCOPE_http://registry.swedenconnect.se/policies/read")
-            .requestMatchers(HttpMethod.POST, "/registry/v1/policies/**")
-            .hasAuthority("SCOPE_http://registry.swedenconnect.se/policies/write")
-            .requestMatchers(HttpMethod.PUT, "/registry/v1/policies/**")
-            .hasAuthority("SCOPE_http://registry.swedenconnect.se/policies/write")
-            .requestMatchers(HttpMethod.DELETE, "/registry/v1/policies/**")
-            .hasAuthority("SCOPE_http://registry.swedenconnect.se/policies/write")
-
+            // Subordinates
             .requestMatchers(HttpMethod.GET, "/registry/v1/subordinates/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/read")
             .requestMatchers(HttpMethod.POST, "/registry/v1/subordinates/**")
@@ -154,12 +147,12 @@ public class SecurityConfig {
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/write")
             .requestMatchers(HttpMethod.DELETE, "/registry/v1/subordinates/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/write")
-
+            // GUI Services
             .requestMatchers(HttpMethod.GET, "/registry/v1/entityconfiguration/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/read")
             .requestMatchers(HttpMethod.POST, "/registry/v1/entityconfiguration/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/write")
-
+            // Registration-Flows
             .requestMatchers(HttpMethod.GET, "/registration-flow/v1/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/read")
             .requestMatchers(HttpMethod.POST, "/registration-flow/v1/**")
@@ -168,6 +161,26 @@ public class SecurityConfig {
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/write")
             .requestMatchers(HttpMethod.DELETE, "/registration-flow/v1/**")
             .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/write")
+            // Registration
+            .requestMatchers(HttpMethod.GET, "/registration/v1/**")
+            .hasAuthority("SCOPE_http://registry.swedenconnect.se/registration/read")
+            .requestMatchers(HttpMethod.POST, "/registration/v1/**")
+            .hasAuthority("SCOPE_http://registry.swedenconnect.se/registration/write")
+            .requestMatchers(HttpMethod.PUT, "/registration/v1/**")
+            .hasAuthority("SCOPE_http://registry.swedenconnect.se/registration/write")
+            .requestMatchers(HttpMethod.DELETE, "/registration/v1/**")
+            .hasAuthority("SCOPE_http://registry.swedenconnect.se/registration/write")
+
+            // Registration-Admin
+            .requestMatchers(HttpMethod.GET, "/registration-admin/v1/**")
+            .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/read")
+            .requestMatchers(HttpMethod.POST, "/registration-admin/v1/**")
+            .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/write")
+            .requestMatchers(HttpMethod.PUT, "/registration-admin/v1/**")
+            .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/write")
+            .requestMatchers(HttpMethod.DELETE, "/registration-admin/v1/**")
+            .hasAuthority("SCOPE_http://registry.swedenconnect.se/subordinates/write")
+
 
             .requestMatchers(HttpMethod.GET, "/logout/frontchannel").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/v1/federationservice/**").permitAll()
@@ -175,9 +188,6 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/assets/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/*").permitAll()
-
-            //Temporary
-            .requestMatchers(HttpMethod.GET, "/registration-flow/v1/*").permitAll()
 
             .requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**")
             .authenticated()

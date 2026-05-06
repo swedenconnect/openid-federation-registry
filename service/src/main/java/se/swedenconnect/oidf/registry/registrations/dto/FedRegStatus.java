@@ -23,11 +23,12 @@ package se.swedenconnect.oidf.registry.registrations.dto;
 public enum FedRegStatus {
 
   /** Approved and active in the federation. */
-  REGISTERED,
+  APPROVED,
 
   /** Application is under review. */
-  ONGOING,
+  PENDING,
 
-  /** Application was denied. */
-  DENY
+  /** Application was REJECTED. */
+  REJECTED
+
 }

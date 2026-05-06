@@ -38,7 +38,6 @@ import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
 import java.net.URI;
 import java.text.ParseException;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -95,7 +94,10 @@ public class OidfServiceIntegration {
           .uri(uri)
           .retrieve()
           .toEntity(String.class);
-      final String responseBody = Objects.requireNonNull(response.getBody());
+      final String responseBody = response.getBody();
+      if (responseBody == null) {
+        throw new IllegalArgumentException("There is no body in response when loading entity statement from: " + uri);
+      }
       final EntityStatement statement = EntityStatement.parse(responseBody);
 
       final SignedJWT signedJWT = statement.getSignedStatement();

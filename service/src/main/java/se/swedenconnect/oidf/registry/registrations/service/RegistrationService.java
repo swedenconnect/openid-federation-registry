@@ -15,11 +15,11 @@
  */
 package se.swedenconnect.oidf.registry.registrations.service;
 
-import se.swedenconnect.oidf.registry.registrations.dto.FlowDto;
-import se.swedenconnect.oidf.registry.registrations.dto.HostedRequestDto;
-import se.swedenconnect.oidf.registry.registrations.dto.HostedUpdateDto;
-import se.swedenconnect.oidf.registry.registrations.dto.JoinDto;
-import se.swedenconnect.oidf.registry.registrations.dto.JoinRequestDto;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationFlowDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestStatusDto;
 
 import java.util.List;
 import java.util.UUID;
@@ -31,41 +31,40 @@ import java.util.UUID;
  */
 public interface RegistrationService {
 
-  /**
-   * Creates a join application with an auto-generated ID.
-   *
-   * @param request the join request
-   * @return the created join record
-   */
-  JoinDto createJoin(JoinRequestDto request);
+
 
   /**
    * Creates a join application with a specified ID.
    *
-   * @param joinId  the join ID to use
+   * @param organizationRecord the calling organization
+   * @param joinId the join ID to use
    * @param request the join request
    * @return the created join record
    */
-  JoinDto createJoinWithId(UUID joinId, JoinRequestDto request);
+  RegistrationRequestStatusDto createRegistrationRequestWithId(OrganizationRecord organizationRecord, UUID joinId,
+      RegistrationRequestDto request);
 
   /**
    * Removes a join record by ID.
    *
+   * @param organizationRecord the calling organization
    * @param joinId the ID of the join record to remove
    */
-  void deleteJoin(UUID joinId);
+  void deleteRegistrationRequest(OrganizationRecord organizationRecord, UUID joinId);
 
   /**
    * Returns all join records visible to the caller.
    *
+   * @param organizationRecord the calling organization
    * @return list of join records
    */
-  List<JoinDto> listJoins();
+  List<RegistrationDto> listRegistrations(OrganizationRecord organizationRecord);
 
   /**
    * Returns all available registration flows.
    *
+   * @param organizationRecord the calling organization
    * @return list of flows
    */
-  List<FlowDto> listFlows();
+  List<RegistrationFlowDto> listRegistrationFlows(OrganizationRecord organizationRecord);
 }

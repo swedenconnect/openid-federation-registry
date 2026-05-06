@@ -16,6 +16,7 @@
 
 package se.swedenconnect.oidf.registry.guioperations.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.ServletContext;
 import lombok.Getter;
 import org.springframework.core.io.ClassPathResource;
@@ -29,6 +30,7 @@ import java.io.IOException;
  *
  * @author Felix Hellman
  */
+@Hidden
 @RestController
 public class IndexController {
 

@@ -109,7 +109,7 @@ class SubordinateCRUDIT {
     final Subordinate created = this.subordinatesApi.createSubordinate(new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/create")
-        .jwks(TestDataOperations.genJWKS().toString())
+        .jwks(TestDataOperations.genJWKS().toJSONObject())
         .metadataPolicy(policy));
 
     assertThat(created).isNotNull();
@@ -126,7 +126,7 @@ class SubordinateCRUDIT {
     final Subordinate created = this.subordinatesApi.createSubordinate(new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/no-policy")
-        .jwks(TestDataOperations.genJWKS().toString()));
+        .jwks(TestDataOperations.genJWKS().toJSONObject()));
 
     assertThat(created.getMetadataPolicy()).isEqualTo(Collections.emptyMap());
   }
@@ -143,7 +143,7 @@ class SubordinateCRUDIT {
     this.subordinatesApi.createSubordinateWithId(subordinateId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/get")
-        .jwks(TestDataOperations.genJWKS().toString())
+        .jwks(TestDataOperations.genJWKS().toJSONObject())
         .metadataPolicy(policy));
 
     final Subordinate retrieved = this.subordinatesApi.getSubordinate(subordinateId);
@@ -166,13 +166,13 @@ class SubordinateCRUDIT {
     this.subordinatesApi.createSubordinateWithId(subordinateId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/update")
-        .jwks(TestDataOperations.genJWKS().toString())
+        .jwks(TestDataOperations.genJWKS().toJSONObject())
         .metadataPolicy(initialPolicy));
 
     final Subordinate updated = this.subordinatesApi.updateSubordinate(subordinateId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/update")
-        .jwks(TestDataOperations.genJWKS().toString())
+        .jwks(TestDataOperations.genJWKS().toJSONObject())
         .metadataPolicy(updatedPolicy));
 
     assertThat(updated.getMetadataPolicy()).isEqualTo(updatedPolicy);
@@ -190,13 +190,13 @@ class SubordinateCRUDIT {
     this.subordinatesApi.createSubordinateWithId(subordinateId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/clear")
-        .jwks(TestDataOperations.genJWKS().toString())
+        .jwks(TestDataOperations.genJWKS().toJSONObject())
         .metadataPolicy(policy));
 
     final Subordinate updated = this.subordinatesApi.updateSubordinate(subordinateId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/clear")
-        .jwks(TestDataOperations.genJWKS().toString())
+        .jwks(TestDataOperations.genJWKS().toJSONObject())
         .metadataPolicy(null));
 
     assertThat(updated.getMetadataPolicy()).isNull();
@@ -213,7 +213,7 @@ class SubordinateCRUDIT {
     this.subordinatesApi.createSubordinateWithId(subordinateId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/delete")
-        .jwks(TestDataOperations.genJWKS().toString())
+        .jwks(TestDataOperations.genJWKS().toJSONObject())
         .metadataPolicy(policy));
 
     assertThat(this.subordinatesApi.getSubordinate(subordinateId)).isNotNull();

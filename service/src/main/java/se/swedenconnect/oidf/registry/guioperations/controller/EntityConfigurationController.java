@@ -19,6 +19,7 @@ import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,7 +34,6 @@ import se.swedenconnect.oidf.registry.guioperations.dto.EntityConfigurationPingD
 import se.swedenconnect.oidf.registry.guioperations.dto.JwksLoadedDto;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Controller that handle operations on the entitystatmend for a specific entityid
@@ -43,6 +43,7 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/registry/v1/entityconfiguration")
+@Tag(name = "EntityConfigurationController", description = "Loading entity configurations")
 public class EntityConfigurationController {
 
   final OidfServiceIntegration oidfServiceIntegration;

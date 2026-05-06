@@ -16,6 +16,7 @@
 
 package se.swedenconnect.oidf.registry.federationservice.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -36,6 +37,8 @@ import java.util.UUID;
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/federationservice")
+@Tag(name = "OpenID Federation Service API", description = "API that OpenID Federation calls to get "
+    + "configuration for the federation setup")
 public class OidfServiceApiController {
 
   private final OidfApiService federationApiService;
@@ -49,12 +52,6 @@ public class OidfServiceApiController {
     this.federationApiService = federationApiService;
   }
 
-  /**
-   * Getting entity records
-   *
-   * @param instanceId instanceId is mandatory
-   * @return SignedJWT with a claim for entity_record
-   */
   /**
    * Gets entity record.
    *

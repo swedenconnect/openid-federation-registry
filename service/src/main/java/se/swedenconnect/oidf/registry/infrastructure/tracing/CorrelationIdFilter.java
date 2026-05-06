@@ -20,7 +20,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -36,14 +35,15 @@ import java.util.UUID;
  *
  * @author Per Fredrik Plars
  */
-@Component
 public class CorrelationIdFilter extends OncePerRequestFilter {
 
   @Override
   protected void doFilterInternal(final HttpServletRequest request, final HttpServletResponse response,
       final FilterChain filterChain) throws ServletException, IOException {
+    final String correlationId = resolveCorrelationId(request);
     try {
-      CorrelationId.set(resolveCorrelationId(request));
+      CorrelationId.set(correlationId);
+      response.setHeader(CorrelationId.HEADER_NAME, correlationId);
       filterChain.doFilter(request, response);
     }
     finally {

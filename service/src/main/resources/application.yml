@@ -34,6 +34,8 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
 
 logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%X{CorrelationId:--}] [%t] %-40.40logger{39} : %m%n"
   level:
     se:
       swedenconnect:

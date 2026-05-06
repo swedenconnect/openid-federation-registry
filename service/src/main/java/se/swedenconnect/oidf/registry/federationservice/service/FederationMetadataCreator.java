@@ -113,8 +113,10 @@ public class FederationMetadataCreator {
   private Optional<String> authorityHint(final FederationEntity entity) {
     return this.subordinateRepository.findByOrgNumberAndEntityidentifier(entity.getOrganization().getOrgNumber(),
             entity.getIssuer())
+        .stream()
         .map(Subordinate::getTaIm)
-        .map(taImEntity -> taImEntity.getEntity().getSubject());
+        .map(taImEntity -> taImEntity.getEntity().getSubject())
+        .reduce((a, b) -> a + "," + b);
 
   }
 
