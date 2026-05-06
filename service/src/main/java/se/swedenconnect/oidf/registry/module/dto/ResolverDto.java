@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -48,7 +49,7 @@ public class ResolverDto {
   private String trustAnchor;
 
   @Schema(description = "Trusted keys as JWKS JSON of the trust anchor")
-  private String trustedKeys;
+  private Map<String,Object> trustedKeys;
 
   @Schema(description = "Step retry duration (ISO-8601 duration, e.g. PT1H)")
   private String stepRetryDuration;

@@ -33,8 +33,6 @@ import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.module.model.ModuleType;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
-import se.swedenconnect.oidf.registry.policy.model.Policy;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -72,8 +70,6 @@ public class Organization extends BaseEntity {
   @OneToMany(mappedBy = "organization", cascade = CascadeType.DETACH)
   private List<TrustAnchorIntermediateModule> module;
 
-  @OneToMany(mappedBy = "organization", cascade = CascadeType.DETACH)
-  private List<Policy> policies = new ArrayList<>();
 
   @OneToMany(mappedBy = "organization", cascade = CascadeType.DETACH)
   private List<FederationEntity> entities;

@@ -16,16 +16,17 @@
 
 package se.swedenconnect.oidf.registry.audit;
 
+import com.nimbusds.oauth2.sdk.ParseException;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import se.swedenconnect.oidf.registry.infrastructure.audit.FederationAuditEvent;
 import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditEventType;
 import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditLogger;
 import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
-import se.swedenconnect.oidf.registry.policy.dto.PolicyDto;
 
+import java.net.URI;
 import java.util.Stack;
-import java.util.UUID;
+
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -40,7 +41,7 @@ class RegistryAuditServiceAdapterTest {
    */
 
   @Test
-  void policyCreated_shouldEmitEventWithCorrectAttributes() {
+  void jwksCreated_shouldEmitEventWithCorrectAttributes() throws ParseException {
     final Stack<AuditEvent> stack = new Stack<>();
     final RegistryAuditService auditService = new RegistryAuditLogger() {
       @Override
@@ -50,77 +51,14 @@ class RegistryAuditServiceAdapterTest {
       }
     };
 
-    final UUID policyId = UUID.randomUUID();
-    final UUID instanceId = UUID.randomUUID();
-    final UUID organizationId = UUID.randomUUID();
-    final PolicyDto newData = new PolicyDto();
-    newData.setPolicyId(policyId);
-    newData.setName("Test Policy");
-    auditService.policyCreated(policyId, instanceId, organizationId, null, newData);
-    assertEquals(stack.peek().getType(), RegistryAuditEventType.POLICY_CREATED.name());
+    auditService.resolveJwks(URI.create("https://plars.org/papartner"));
+
+    assertEquals(stack.peek().getType(), RegistryAuditEventType.RESOLVED_ENTITY_CONFIGURATION.name());
     assertNull(stack.peek().getData().get("oldData"));
-    assertNotNull(stack.peek().getData().get("newData"));
     assertNotNull(stack.peek().getData().get("extId"));
-    assertEquals(policyId.toString(), stack.peek().getData().get("extId"));
-    assertNotNull(stack.peek().getData().get("organizationId"));
-    assertEquals(organizationId.toString(), stack.peek().getData().get("organizationId"));
+    assertEquals("https://plars.org/papartner", stack.peek().getData().get("extId"));
   }
 
-  @Test
-  void policyUpdated_shouldEmitEventWithCorrectAttributes() {
-    final Stack<AuditEvent> stack = new Stack<>();
-    final RegistryAuditService auditService = new RegistryAuditLogger() {
-      @Override
-      protected void emitEvent(final FederationAuditEvent event) {
-        super.emitEvent(event);
-        stack.push(event.toAuditEvent("<NoPrincipal>"));
-      }
-    };
 
-    final UUID policyId = UUID.randomUUID();
-    final UUID instanceId = UUID.randomUUID();
-    final UUID organizationId = UUID.randomUUID();
-    final PolicyDto oldData = new PolicyDto();
-    oldData.setPolicyId(policyId);
-    oldData.setName("Old Policy");
-    final PolicyDto newData = new PolicyDto();
-    newData.setPolicyId(policyId);
-    newData.setName("New Policy");
-    auditService.policyUpdated(policyId, instanceId, organizationId, oldData, newData);
-    assertEquals(stack.peek().getType(), RegistryAuditEventType.POLICY_UPDATED.name());
-    assertNotNull(stack.peek().getData().get("oldData"));
-    assertNotNull(stack.peek().getData().get("newData"));
-    assertNotNull(stack.peek().getData().get("extId"));
-    assertEquals(policyId.toString(), stack.peek().getData().get("extId"));
-    assertNotNull(stack.peek().getData().get("organizationId"));
-    assertEquals(organizationId.toString(), stack.peek().getData().get("organizationId"));
-  }
-
-  @Test
-  void policyDeleted_shouldEmitEventWithCorrectAttributes() {
-    final Stack<AuditEvent> stack = new Stack<>();
-    final RegistryAuditService auditService = new RegistryAuditLogger() {
-      @Override
-      protected void emitEvent(final FederationAuditEvent event) {
-        super.emitEvent(event);
-        stack.push(event.toAuditEvent("<NoPrincipal>"));
-      }
-    };
-
-    final UUID policyId = UUID.randomUUID();
-    final UUID instanceId = UUID.randomUUID();
-    final UUID organizationId = UUID.randomUUID();
-    final PolicyDto deletedData = new PolicyDto();
-    deletedData.setPolicyId(policyId);
-    deletedData.setName("Deleted Policy");
-    auditService.policyDeleted(policyId, instanceId, organizationId, deletedData);
-    assertEquals(stack.peek().getType(), RegistryAuditEventType.POLICY_DELETED.name());
-    assertNotNull(stack.peek().getData().get("oldData"));
-    assertNull(stack.peek().getData().get("newData"));
-    assertNotNull(stack.peek().getData().get("extId"));
-    assertEquals(policyId.toString(), stack.peek().getData().get("extId"));
-    assertNotNull(stack.peek().getData().get("organizationId"));
-    assertEquals(organizationId.toString(), stack.peek().getData().get("organizationId"));
-  }
 
 }

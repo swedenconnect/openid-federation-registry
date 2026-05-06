@@ -22,7 +22,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -42,7 +42,7 @@ public interface SubordinateRepository extends JpaRepository<Subordinate, UUID> 
    */
   @Query("SELECT s FROM Subordinate s JOIN s.taIm m JOIN m.organization o "
       + "WHERE o.orgNumber = :orgNumber AND s.entityidentifier = :entityidentifier ")
-  Optional<Subordinate> findByOrgNumberAndEntityidentifier(
+  List<Subordinate> findByOrgNumberAndEntityidentifier(
       @Param("orgNumber") String orgNumber, @Param("entityidentifier") String entityidentifier);
 
 }

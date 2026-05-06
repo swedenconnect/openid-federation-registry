@@ -29,6 +29,7 @@ import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.entity.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.federationservice.model.EntityRecord;
 import se.swedenconnect.oidf.registry.federationservice.model.ModuleRecord;
+import se.swedenconnect.oidf.registry.federationservice.model.PolicyRecord;
 import se.swedenconnect.oidf.registry.federationservice.model.ResolverProperties;
 import se.swedenconnect.oidf.registry.federationservice.model.TrustAnchorProperties;
 import se.swedenconnect.oidf.registry.federationservice.model.TrustMarkDelegation;
@@ -52,6 +53,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -222,6 +224,7 @@ public class OidfApiService {
     final TrustAnchorProperties.SubordinateListingProperty sub = new TrustAnchorProperties.SubordinateListingProperty();
     final SubordinateDto subDto = SubordinateToDtoMapper.toDto(subordinateEntity);
 
+    sub.setPolicy(new PolicyRecord(subDto.getSubordinateId().toString(),subDto.getMetadataPolicy()));
     sub.setJwks(this.toJwksSet(subDto.getJwks()));
     sub.setOverrideConfigurationLocation(subDto.getEcLocation());
     sub.setMetadataPolicyCrit(subDto.getMetadataPolicyCrit());
@@ -296,7 +299,7 @@ public class OidfApiService {
   }
 
 
-  private JWKSet toJwksSet(final String jwks) {
+  private JWKSet toJwksSet(final Map<String,Object> jwks) {
     try {
       return jwks == null ? null : JWKSet.parse(jwks);
     }

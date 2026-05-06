@@ -345,7 +345,7 @@ class ModuleCRUDIT {
         .entityId(entityId)
         .active(true)
         .trustAnchor("https://www.pm.se/oidf/ta")
-        .trustedKeys(TestDataOperations.genJWKS().toString())
+        .trustedKeys(TestDataOperations.genJWKS().toJSONObject())
         .stepRetryDuration("PT30M")
         .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT1H");
@@ -374,7 +374,7 @@ class ModuleCRUDIT {
         .entityId(entityId)
         .active(false)
         .trustAnchor("https://www.pm.se/oidf/ta")
-        .trustedKeys(TestDataOperations.genJWKS().toString())
+        .trustedKeys(TestDataOperations.genJWKS().toJSONObject())
         .stepRetryDuration("PT5M")
         .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT2H");
@@ -400,7 +400,7 @@ class ModuleCRUDIT {
         .entityId(entityId)
         .active(true)
         .trustAnchor("https://www.pm.se/oidf/ta")
-        .trustedKeys(TestDataOperations.genJWKS().toString())
+        .trustedKeys(TestDataOperations.genJWKS().toJSONObject())
         .stepRetryDuration("PT5M")
         .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT1H");
@@ -427,7 +427,7 @@ class ModuleCRUDIT {
         .entityId(entityId)
         .active(true)
         .trustAnchor("https://www.pm.se/oidf/ta")
-        .trustedKeys(TestDataOperations.genJWKS().toString())
+        .trustedKeys(TestDataOperations.genJWKS().toJSONObject())
         .stepRetryDuration("PT5M")
         .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT1H");
@@ -437,7 +437,7 @@ class ModuleCRUDIT {
         .entityId(entityId)
         .active(false)
         .trustAnchor("https://www.pm.se/oidf/ta-updated")
-        .trustedKeys(TestDataOperations.genJWKS().toString())
+        .trustedKeys(TestDataOperations.genJWKS().toJSONObject())
         .stepRetryDuration("PT5M")
         .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT3H");
@@ -464,7 +464,7 @@ class ModuleCRUDIT {
         .entityId(entityId)
         .active(true)
         .trustAnchor("https://www.pm.se/oidf/ta")
-        .trustedKeys(TestDataOperations.genJWKS().toString())
+        .trustedKeys(TestDataOperations.genJWKS().toJSONObject())
         .stepRetryDuration("PT5M")
         .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT1H");

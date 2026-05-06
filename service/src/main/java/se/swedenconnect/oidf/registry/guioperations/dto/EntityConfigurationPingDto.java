@@ -19,7 +19,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 /**
- * DTO that enable
+ * Ping reply if there is a live entityconfiguration
  *
  * @author Per Fredrik Plars
  */

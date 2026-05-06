@@ -23,12 +23,13 @@ import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
-import se.swedenconnect.oidf.registry.policy.dto.PolicyDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.net.URI;
+import java.net.URL;
 import java.util.UUID;
 
 /**
@@ -63,47 +64,6 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
    */
   public RegistryAuditServiceAdapter() {
     this(new JsonMapper());
-  }
-
-  @Override
-  public void policyCreated(final UUID policyId, final UUID instanceId, final UUID organizationId,
-      final PolicyDto oldData, final PolicyDto newData) {
-    this.emitEvent(
-        FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.POLICY_CREATED)
-            .instanceId(instanceId.toString())
-            .organizationId(organizationId.toString())
-            .extId(policyId.toString())
-            .oldData(this.toJson(oldData))
-            .newData(this.toJson(newData))
-            .build());
-  }
-
-  @Override
-  public void policyUpdated(final UUID policyId, final UUID instanceId, final UUID organizationId,
-      final PolicyDto oldData, final PolicyDto newData) {
-    this.emitEvent(
-        FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.POLICY_UPDATED)
-            .instanceId(instanceId.toString())
-            .organizationId(organizationId.toString())
-            .extId(policyId.toString())
-            .oldData(this.toJson(oldData))
-            .newData(this.toJson(newData))
-            .build());
-  }
-
-  @Override
-  public void policyDeleted(final UUID policyId, final UUID instanceId, final UUID organizationId,
-      final PolicyDto deletedData) {
-    this.emitEvent(
-        FederationAuditEvent.builder()
-            .event(RegistryAuditEventType.POLICY_DELETED)
-            .instanceId(instanceId.toString())
-            .organizationId(organizationId.toString())
-            .extId(policyId.toString())
-            .oldData(this.toJson(deletedData))
-            .build());
   }
 
   @Override
@@ -476,11 +436,11 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
   }
 
   @Override
-  public void resolveJwks(final EntityID entityId) {
+  public void resolveJwks(final URI entityConfigurationLocation) {
     this.emitEvent(
         FederationAuditEvent.builder()
             .event(RegistryAuditEventType.RESOLVED_ENTITY_CONFIGURATION)
-            .extId(entityId.toString())
+            .extId(entityConfigurationLocation.toString())
             .build());
   }
 

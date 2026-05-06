@@ -184,6 +184,61 @@
                     :disabled="savingModule"
                     class="mb-4"
                 ></v-switch>
+
+                <template v-if="modules.intermediate.id && modules.intermediate.active">
+                  <v-divider class="mb-4"></v-divider>
+                  <div class="text-subtitle-2 mb-2">Registration Flows</div>
+
+                  <div class="d-flex align-center gap-2 mb-3">
+                    <v-select
+                        v-model="selectedFlowToAdd"
+                        :items="availableFlowsForSelect"
+                        item-title="name"
+                        item-value="flowId"
+                        label="Add registration flow"
+                        :disabled="addingFlow || availableFlowsForSelect.length === 0"
+                        clearable
+                        return-object
+                        hide-details
+                        class="flex-grow-1"
+                    ></v-select>
+                    <v-btn
+                        id="btn-assign-flow"
+                        color="primary"
+                        :disabled="!selectedFlowToAdd || addingFlow"
+                        :loading="addingFlow"
+                        @click="assignFlow"
+                    >
+                      Add
+                    </v-btn>
+                  </div>
+
+                  <v-list v-if="assignedFlows.length > 0" density="compact" class="mb-2">
+                    <v-list-item
+                        v-for="assignment in assignedFlows"
+                        :key="assignment.assignId"
+                        :title="assignment.name"
+                        :subtitle="assignment.description"
+                    >
+                      <template #append>
+                        <v-btn
+                            :id="`btn-unassign-flow-${assignment.assignId}`"
+                            icon
+                            size="small"
+                            color="error"
+                            variant="text"
+                            :loading="removingAssignId === assignment.assignId"
+                            :disabled="removingAssignId !== null"
+                            @click="unassignFlow(assignment.assignId)"
+                        >
+                          <v-icon>mdi-close</v-icon>
+                        </v-btn>
+                      </template>
+                    </v-list-item>
+                  </v-list>
+                  <div v-else class="text-body-2 text-medium-emphasis mb-3">No flows assigned.</div>
+                </template>
+
                 <v-card-actions class="px-0">
                   <v-spacer></v-spacer>
                   <v-btn
@@ -426,7 +481,11 @@ import {useErrorStore} from '@/stores/errorStore';
 import ListField from '@/components/ListField.vue';
 import {
   federationEntityPath,
+  intermediateFlowAssignmentsPath,
+  intermediateFlowAssignPath,
+  intermediateFlowUnassignPath,
   intermediateModulePath,
+  registrationFlowsPath,
   resolverModulePath,
   trustAnchorModulePath,
   trustmarkIssuerModulePath,
@@ -447,6 +506,16 @@ const savingModule = ref(null);
 const deletingModule = ref(null);
 const deleteDialog = ref(false);
 const moduleToDelete = ref(null);
+
+const availableFlows = ref([]);
+const assignedFlows = ref([]);
+const selectedFlowToAdd = ref(null);
+const addingFlow = ref(false);
+const removingAssignId = ref(null);
+
+const availableFlowsForSelect = computed(() =>
+    availableFlows.value.filter(f => !assignedFlows.value.some(a => a.flowId === f.flowId))
+);
 
 const deleteModuleType = computed(() => {
   if (!moduleToDelete.value) return '';
@@ -510,10 +579,14 @@ async function loadEntity() {
     }
 
     if (response.intermediate) {
+      const taImId = response.intermediate.intermediateId || response.intermediate.id;
       modules.value.intermediate = {
-        id: response.intermediate.intermediateId || response.intermediate.id,
+        id: taImId,
         active: response.intermediate.active !== false,
       };
+      if (modules.value.intermediate.active) {
+        await loadFlowData(taImId);
+      }
     }
 
     if (response.resolver) {
@@ -522,7 +595,7 @@ async function loadEntity() {
         active: response.resolver.active !== false,
         resolveResponseDuration: response.resolver.resolveResponseDuration || 'PT1H',
         trustAnchor: response.resolver.trustAnchor || '',
-        trustedKeys: response.resolver.trustedKeys || '',
+        trustedKeys: response.resolver.trustedKeys ? JSON.stringify(response.resolver.trustedKeys, null, 2) : '',
         stepRetryDuration: response.resolver.stepRetryDuration || 'PT1M',
         stepCachedValueThreshold: response.resolver.stepCachedValueThreshold ?? null,
       };
@@ -535,6 +608,48 @@ async function loadEntity() {
         trustMarkTokenValidityDuration: response.trustmarkIssuer.trustMarkTokenValidityDuration || 'PT1H',
       };
     }
+  }
+}
+
+async function loadFlowData(taImId) {
+  const [flows, assignments] = await Promise.all([
+    requestGet(registrationFlowsPath),
+    requestGet(intermediateFlowAssignmentsPath(taImId)),
+  ]);
+  availableFlows.value = Array.isArray(flows) ? flows : [];
+  assignedFlows.value = Array.isArray(assignments) ? assignments : [];
+}
+
+async function assignFlow() {
+  if (!selectedFlowToAdd.value) return;
+  addingFlow.value = true;
+  try {
+    const result = await requestPost(intermediateFlowAssignPath(modules.value.intermediate.id), {
+      flowId: selectedFlowToAdd.value.flowId,
+    });
+    if (ok.value && result) {
+      assignedFlows.value.push({
+        assignId: result.assignId,
+        flowId: selectedFlowToAdd.value.flowId,
+        name: selectedFlowToAdd.value.name,
+        description: selectedFlowToAdd.value.description,
+      });
+      selectedFlowToAdd.value = null;
+    }
+  } finally {
+    addingFlow.value = false;
+  }
+}
+
+async function unassignFlow(assignId) {
+  removingAssignId.value = assignId;
+  try {
+    await requestDelete(intermediateFlowUnassignPath(modules.value.intermediate.id, assignId));
+    if (ok.value) {
+      assignedFlows.value = assignedFlows.value.filter(a => a.assignId !== assignId);
+    }
+  } finally {
+    removingAssignId.value = null;
   }
 }
 
@@ -635,9 +750,7 @@ async function saveModule(moduleType) {
           active: module.active,
           resolveResponseDuration: module.resolveResponseDuration,
           trustAnchor: module.trustAnchor,
-          trustedKeys: typeof module.trustedKeys === 'string'
-              ? module.trustedKeys
-              : JSON.stringify(module.trustedKeys),
+          trustedKeys: module.trustedKeys && module.trustedKeys.trim() ? JSON.parse(module.trustedKeys) : null,
           stepRetryDuration: module.stepRetryDuration,
           stepCachedValueThreshold: module.stepCachedValueThreshold ?? null,
         };

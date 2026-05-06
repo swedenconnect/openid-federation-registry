@@ -24,7 +24,8 @@ import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
-import se.swedenconnect.oidf.registry.policy.dto.PolicyDto;
+import se.swedenconnect.oidf.registry.registrationflow.dto.FlowSummaryDto;
+import se.swedenconnect.oidf.registry.registrationflow.dto.RegistrationFlowDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
@@ -69,6 +70,25 @@ public class ValidateDto {
    */
   public static ValidateDto init(final OrganizationRecord organizationRecord) {
     return new ValidateDto(organizationRecord);
+  }
+
+  /**
+   * Validates RegistrationFlowDto. The {@code flowId} field is intentionally not validated here
+   * because it is always assigned server-side.
+   *
+   * @param dto the registration flow DTO
+   * @throws PropertyValidationFailException if validation fails
+   */
+  public void validate(final RegistrationFlowDto dto) {
+    Objects.requireNonNull(dto, "RegistrationFlowDto cannot be null");
+
+    this.v.required()
+        .build()
+        .ifFailThrow("name", dto.name());
+
+    this.v.required()
+        .build()
+        .ifFailThrow("description", dto.description());
   }
 
   /**
@@ -240,28 +260,7 @@ public class ValidateDto {
         .ifFailThrow("delegation", dto.getDelegation());
   }
 
-  /**
-   * Validates PolicyDto.
-   *
-   * @param dto the policy DTO
-   * @throws PropertyValidationFailException if validation fails
-   */
-  public void validate(final PolicyDto dto) {
-    Objects.requireNonNull(dto, "PolicyDto cannot be null");
 
-    this.v.required()
-        .build()
-        .ifFailThrow("name", dto.getName());
-
-    this.v.required()
-        .oidfPolicy()
-        .build()
-        .ifFailThrow("policy", dto.getPolicy());
-
-    if (dto.getPolicy() != null) {
-      this.validatePolicyJson(dto.getPolicy());
-    }
-  }
 
   /**
    * Validates TrustmarkSubjectDto.

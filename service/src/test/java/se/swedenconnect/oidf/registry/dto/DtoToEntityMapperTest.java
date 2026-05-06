@@ -22,6 +22,7 @@ import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.entity.mapper.DtoToEntityMapper;
 import se.swedenconnect.oidf.registry.entity.model.EntityType;
 import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
+import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
 import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
@@ -32,9 +33,6 @@ import se.swedenconnect.oidf.registry.module.model.Resolver;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
-import se.swedenconnect.oidf.registry.policy.dto.PolicyDto;
-import se.swedenconnect.oidf.registry.policy.mapper.DtoToPolicyMapper;
-import se.swedenconnect.oidf.registry.policy.model.Policy;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.subordinate.mapper.DtoToSubordinateMapper;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
@@ -117,36 +115,8 @@ class DtoToEntityMapperTest {
     assertThat(entity.getTrustmarksources()).contains("tm1");
   }
 
-  // -------------------------------------------------------------------------
-  // toEntity — PolicyDto
-  // -------------------------------------------------------------------------
 
-  @Test
-  void toEntity_policyDto() {
-    final PolicyDto dto = new PolicyDto();
-    dto.setName("test-policy");
-    dto.setPolicy(Map.of("key", "value"));
-    final Organization org = createOrganization();
 
-    final Policy entity = DtoToPolicyMapper.toEntity(ID, dto, org);
-
-    assertThat(entity.getPolicyId()).isEqualTo(ID);
-    assertThat(entity.getOrganization()).isEqualTo(org);
-    assertThat(entity.getName()).isEqualTo("test-policy");
-    assertThat(entity.getPolicy()).containsEntry("key", "value");
-  }
-
-  @Test
-  void toEntity_policyDto_withNullPolicy() {
-    final PolicyDto dto = new PolicyDto();
-    dto.setName("empty-policy");
-    dto.setPolicy(null);
-    final Organization org = createOrganization();
-
-    final Policy entity = DtoToPolicyMapper.toEntity(ID, dto, org);
-
-    assertThat(entity.getPolicy()).isEmpty();
-  }
 
   // -------------------------------------------------------------------------
   // toEntity — TrustAnchorDto
@@ -199,7 +169,7 @@ class DtoToEntityMapperTest {
     dto.setActive(true);
     dto.setResolveResponseDuration("PT30S");
     dto.setTrustAnchor("https://ta.example.com");
-    dto.setTrustedKeys("{\"keys\":[]}");
+    dto.setTrustedKeys(TestDataOperations.genJWKS().toJSONObject());
     dto.setStepRetryDuration("PT10S");
     dto.setStepCachedValueThreshold(5);
     final FederationEntity entityEntity = createEntityEntity();
@@ -211,7 +181,7 @@ class DtoToEntityMapperTest {
     assertThat(entity.getActive()).isTrue();
     assertThat(entity.getResolveResponseDuration()).isEqualTo("PT30S");
     assertThat(entity.getTrustAnchor()).isEqualTo("https://ta.example.com");
-    assertThat(entity.getTrustedKeys()).isEqualTo("{\"keys\":[]}");
+    assertThat(entity.getTrustedKeys()).isEqualTo(dto.getTrustedKeys());
     assertThat(entity.getStepRetryDuration()).isEqualTo("PT10S");
     assertThat(entity.getStepCachedValueThreshold()).isEqualTo(5);
   }
@@ -294,7 +264,8 @@ class DtoToEntityMapperTest {
   @Test
   void toEntity_subordinateDto() {
     final SubordinateDto dto = new SubordinateDto();
-    dto.setJwks("{\"keys\":[]}");
+    dto.setJwks(TestDataOperations.genJWKS().toJSONObject());
+
     dto.setEntityIdentifier("https://subordinate.example.com");
     dto.setCrit(List.of("crit1", "crit2"));
     dto.setMetadataPolicyCrit(List.of("mpc1", "mpc2"));
@@ -307,7 +278,7 @@ class DtoToEntityMapperTest {
 
     assertThat(entity.getSubordinateId()).isEqualTo(ID);
     assertThat(entity.getTaIm()).isEqualTo(taIm);
-    assertThat(entity.getJwks()).isEqualTo("{\"keys\":[]}");
+    assertThat(entity.getJwks()).isEqualTo(dto.getJwks());
     assertThat(entity.getEntityidentifier()).isEqualTo("https://subordinate.example.com");
     assertThat(entity.getCrit()).isEqualTo("crit1,crit2");
     assertThat(entity.getMetadataPolicyCrit()).isEqualTo("mpc1,mpc2");
@@ -318,7 +289,7 @@ class DtoToEntityMapperTest {
   @Test
   void toEntity_subordinateDto_withNullCrit() {
     final SubordinateDto dto = new SubordinateDto();
-    dto.setJwks("{\"keys\":[]}");
+    dto.setJwks(TestDataOperations.genJWKS().toJSONObject());
     dto.setEntityIdentifier("https://subordinate.example.com");
     dto.setCrit(null);
     dto.setMetadataPolicyCrit(null);
@@ -387,34 +358,7 @@ class DtoToEntityMapperTest {
     assertThat(entity.getTrustmarksources()).isNull();
   }
 
-  // -------------------------------------------------------------------------
-  // updateEntity — PolicyDto
-  // -------------------------------------------------------------------------
 
-  @Test
-  void updateEntity_policyDto() {
-    final Policy entity = new Policy();
-    final PolicyDto dto = new PolicyDto();
-    dto.setName("updated-name");
-    dto.setPolicy(Map.of("rule", "deny"));
-
-    DtoToPolicyMapper.updateEntity(entity, dto);
-
-    assertThat(entity.getName()).isEqualTo("updated-name");
-    assertThat(entity.getPolicy()).containsEntry("rule", "deny");
-  }
-
-  @Test
-  void updateEntity_policyDto_nullPolicyDefaultsToEmpty() {
-    final Policy entity = new Policy();
-    final PolicyDto dto = new PolicyDto();
-    dto.setName("name");
-    dto.setPolicy(null);
-
-    DtoToPolicyMapper.updateEntity(entity, dto);
-
-    assertThat(entity.getPolicy()).isEmpty();
-  }
 
   // -------------------------------------------------------------------------
   // updateIntermediate — TrustAnchorDto
@@ -461,7 +405,8 @@ class DtoToEntityMapperTest {
     dto.setActive(true);
     dto.setResolveResponseDuration("PT60S");
     dto.setTrustAnchor("https://new-ta.example.com");
-    dto.setTrustedKeys("{\"keys\":[]}");
+    dto.setTrustedKeys(TestDataOperations.genJWKS().toJSONObject());
+
     dto.setStepRetryDuration("PT5S");
 
     DtoToModuleMapper.updateEntity(entity, dto);
@@ -469,7 +414,7 @@ class DtoToEntityMapperTest {
     assertThat(entity.getActive()).isTrue();
     assertThat(entity.getResolveResponseDuration()).isEqualTo("PT60S");
     assertThat(entity.getTrustAnchor()).isEqualTo("https://new-ta.example.com");
-    assertThat(entity.getTrustedKeys()).isEqualTo("{\"keys\":[]}");
+    assertThat(entity.getTrustedKeys()).isEqualTo(dto.getTrustedKeys());
     assertThat(entity.getStepRetryDuration()).isEqualTo("PT5S");
   }
 
@@ -542,7 +487,9 @@ class DtoToEntityMapperTest {
   void updateEntity_subordinateDto() {
     final Subordinate entity = new Subordinate();
     final SubordinateDto dto = new SubordinateDto();
-    dto.setJwks("{\"keys\":[{\"kty\":\"EC\"}]}");
+
+    dto.setJwks(TestDataOperations.genJWKS().toJSONObject());
+
     dto.setEntityIdentifier("https://updated-sub.example.com");
     dto.setCrit(List.of("new-crit"));
     dto.setMetadataPolicyCrit(List.of("new-mpc"));
@@ -551,7 +498,7 @@ class DtoToEntityMapperTest {
 
     DtoToSubordinateMapper.updateEntity(entity, dto);
 
-    assertThat(entity.getJwks()).isEqualTo("{\"keys\":[{\"kty\":\"EC\"}]}");
+    assertThat(entity.getJwks()).isEqualTo(dto.getJwks());
     assertThat(entity.getEntityidentifier()).isEqualTo("https://updated-sub.example.com");
     assertThat(entity.getCrit()).isEqualTo("new-crit");
     assertThat(entity.getMetadataPolicyCrit()).isEqualTo("new-mpc");
@@ -565,7 +512,7 @@ class DtoToEntityMapperTest {
     entity.setCrit("old-crit");
     entity.setMetadataPolicyCrit("old-mpc");
     final SubordinateDto dto = new SubordinateDto();
-    dto.setJwks("{}");
+    dto.setJwks(TestDataOperations.genJWKS().toJSONObject());
     dto.setEntityIdentifier("https://sub.example.com");
     dto.setCrit(null);
     dto.setMetadataPolicyCrit(null);
@@ -582,7 +529,8 @@ class DtoToEntityMapperTest {
     entity.setCrit("old-crit");
     entity.setMetadataPolicyCrit("old-mpc");
     final SubordinateDto dto = new SubordinateDto();
-    dto.setJwks("{}");
+    dto.setJwks(TestDataOperations.genJWKS().toJSONObject());
+
     dto.setEntityIdentifier("https://sub.example.com");
     dto.setCrit(Collections.emptyList());
     dto.setMetadataPolicyCrit(Collections.emptyList());

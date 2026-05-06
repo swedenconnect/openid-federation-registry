@@ -23,9 +23,6 @@ package se.swedenconnect.oidf.registry.infrastructure.audit;
  */
 public enum RegistryAuditEventType {
 
-  POLICY_CREATED,
-  POLICY_UPDATED,
-  POLICY_DELETED,
   FEDERATION_ENTITY_CREATED,
   FEDERATION_ENTITY_UPDATED,
   FEDERATION_ENTITY_DELETED,

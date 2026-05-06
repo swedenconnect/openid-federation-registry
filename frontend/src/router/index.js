@@ -17,8 +17,6 @@
 import {createRouter, createWebHistory} from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import LoginView from '../views/LoginView.vue';
-import PolicyListView from '../views/PolicyListView.vue';
-import PolicyFormView from '../views/PolicyFormView.vue';
 import HostedEntityFormView from '../views/HostedEntityFormView.vue';
 import FederationEntityNewView from '../views/FederationEntityNewView.vue';
 import FederationEntityEditView from '../views/FederationEntityEditView.vue';
@@ -28,6 +26,8 @@ import TrustmarksListView from '../views/TrustmarksListView.vue';
 import TrustmarkFormView from '../views/TrustmarkFormView.vue';
 import TrustmarkSubjectsListView from '../views/TrustmarkSubjectsListView.vue';
 import TrustmarkSubjectFormView from '../views/TrustmarkSubjectFormView.vue';
+import RegistrationFlowsListView from '../views/RegistrationFlowsListView.vue';
+import RegistrationFlowFormView from '../views/RegistrationFlowFormView.vue';
 import {useAuthorizationStatusStore} from '@/authorization/stores/authorizationStatusStore';
 
 let base = import.meta.env.BASE_URL;
@@ -119,19 +119,19 @@ const router = createRouter({
             component: TrustmarkSubjectFormView,
         },
         {
-            path: '/policies',
-            name: 'policies',
-            component: PolicyListView,
+            path: '/registration-flows',
+            name: 'registration-flows-list',
+            component: RegistrationFlowsListView,
         },
         {
-            path: '/policies/new',
-            name: 'policy-new',
-            component: PolicyFormView,
+            path: '/registration-flows/new',
+            name: 'registration-flow-new',
+            component: RegistrationFlowFormView,
         },
         {
-            path: '/policies/:id/edit',
-            name: 'policy-edit',
-            component: PolicyFormView,
+            path: '/registration-flows/:id/edit',
+            name: 'registration-flow-edit',
+            component: RegistrationFlowFormView,
         },
     ],
 });

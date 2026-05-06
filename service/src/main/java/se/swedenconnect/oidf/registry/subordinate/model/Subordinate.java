@@ -34,8 +34,6 @@ import org.hibernate.type.SqlTypes;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.MapConverter;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
-import se.swedenconnect.oidf.registry.policy.model.Policy;
-
 import java.util.Map;
 import java.util.UUID;
 
@@ -64,13 +62,9 @@ public class Subordinate extends BaseEntity {
   @JoinColumn(name = "ta_im_id", nullable = false)
   private TrustAnchorIntermediateModule taIm;
 
-  @Deprecated
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "policy_id")
-  private Policy policy;
-
   @Column(name = "jwks", columnDefinition = "TEXT")
-  private String jwks;
+  @Convert(converter = MapConverter.class)
+  private Map<String, Object> jwks;
 
   @Column(name = "entityidentifier", length = 255)
   private String entityidentifier;

@@ -19,6 +19,7 @@ import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,10 +28,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
+import se.swedenconnect.oidf.registry.guioperations.OidfService;
 import se.swedenconnect.oidf.registry.guioperations.OidfServiceIntegration;
 import se.swedenconnect.oidf.registry.guioperations.dto.EntityConfigurationPingDto;
+import se.swedenconnect.oidf.registry.guioperations.dto.JwksLoadedDto;
 
-import java.util.Map;
+import java.util.List;
 
 /**
  * Controller that handle operations on the entitystatmend for a specific entityid
@@ -40,17 +43,22 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/registry/v1/entityconfiguration")
+@Tag(name = "EntityConfigurationController", description = "Loading entity configurations")
 public class EntityConfigurationController {
 
   final OidfServiceIntegration oidfServiceIntegration;
+  final OidfService oidfService;
 
   /**
    * Constructor
    *
    * @param oidfServiceIntegration OIDF integration
+   * @param oidfService OIDF service
    */
-  public EntityConfigurationController(final OidfServiceIntegration oidfServiceIntegration) {
+  public EntityConfigurationController(final OidfServiceIntegration oidfServiceIntegration,
+      final OidfService oidfService) {
     this.oidfServiceIntegration = oidfServiceIntegration;
+    this.oidfService = oidfService;
   }
 
   /**
@@ -60,21 +68,17 @@ public class EntityConfigurationController {
    * @return JWKS
    */
   @PostMapping(path = "/jwks")
-  public Map<String, Object> loadJwksFromEntityConfiguration(
+  public List<JwksLoadedDto> loadJwksFromEntityConfiguration(
       @RequestBody final String entityId) {
     log.debug("Start loading jwks from entitystatement {}", entityId);
     try {
-      final EntityStatement entityConfiguration =
-          this.oidfServiceIntegration.entityConfiguration(EntityID.parse(entityId));
-      final EntityStatementClaimsSet claimsSet = entityConfiguration.getClaimsSet();
-      if (claimsSet == null) {
-        throw new IllegalArgumentException("Entity configuration is missing claims");
+      final List<JwksLoadedDto> jwks = this.oidfService.resolveEntityStatement(EntityID.parse(entityId));
+
+      if (jwks.isEmpty()) {
+        throw new IllegalArgumentException("There is no jwks for entity id " + entityId);
       }
 
-      if (claimsSet.getJWKSet() == null) {
-        throw new IllegalArgumentException("Entity configuration is missing jwks");
-      }
-      return claimsSet.getJWKSet().toJSONObject();
+      return jwks;
     }
     catch (final ParseException e) {
       throw new IllegalArgumentException("Invalid entity ID: " + entityId, e);
@@ -106,7 +110,7 @@ public class EntityConfigurationController {
     final EntityConfigurationPingDto response = new EntityConfigurationPingDto();
     try {
       final EntityStatement entityConfiguration =
-          this.oidfServiceIntegration.entityConfiguration(EntityID.parse(entityId));
+          this.oidfServiceIntegration.entityConfigurationOnStandardLocation(EntityID.parse(entityId));
       final EntityStatementClaimsSet claimsSet = entityConfiguration.getClaimsSet();
       if (claimsSet == null) {
         throw new IllegalArgumentException("Entity configuration is missing claims");

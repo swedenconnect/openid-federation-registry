@@ -30,11 +30,13 @@ import org.apache.hc.core5.util.Timeout;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.Ordered;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.util.Assert;
@@ -42,6 +44,7 @@ import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.registry.entity.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.federationservice.service.NotifyService;
 import se.swedenconnect.oidf.registry.federationservice.service.OidfApiService;
+import se.swedenconnect.oidf.registry.infrastructure.tracing.CorrelationIdFilter;
 import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
@@ -105,6 +108,19 @@ public class RegistryConfig {
     return entity.getOrganizations()
         .stream()
         .noneMatch(o -> o.getOrgNumber().equals(org_nr));
+  }
+
+  /**
+   * Registers {@link CorrelationIdFilter} first in the filter chain.
+   *
+   * @return the filter registration bean
+   */
+  @Bean
+  public FilterRegistrationBean<CorrelationIdFilter> correlationIdFilter() {
+    final FilterRegistrationBean<CorrelationIdFilter> bean = new FilterRegistrationBean<>(new CorrelationIdFilter());
+    bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
+    bean.addUrlPatterns("/*");
+    return bean;
   }
 
   /**
@@ -252,7 +268,8 @@ public class RegistryConfig {
           try {
             final InetAddress addr = InetAddress.getByName(host.getHostName());
 
-            final RegistryProperties.EntityConfigurationLoader jwksLoaderConf = properties.entityConfigurationLoader();
+            final RegistryProperties.EntityConfigurationLoaderProperties jwksLoaderConf =
+                properties.entityConfigurationLoader();
 
             if (jwksLoaderConf == null || !properties.entityConfigurationLoader().isEnabled()) {
               throw new SecurityException("JWKS loader is not enabled");
@@ -294,7 +311,7 @@ public class RegistryConfig {
         });
 
     Optional.ofNullable(properties.entityConfigurationLoader())
-        .filter(RegistryProperties.EntityConfigurationLoader::isDisableSystemProperties)
+        .filter(RegistryProperties.EntityConfigurationLoaderProperties::isDisableSystemProperties)
         .ifPresent(aBoolean -> httpClientBuilder.useSystemProperties());
 
     final PoolingHttpClientConnectionManagerBuilder cm =
@@ -306,7 +323,7 @@ public class RegistryConfig {
                 .build());
 
     final String trustBundleAlias = Optional.ofNullable(properties.entityConfigurationLoader())
-        .map(RegistryProperties.EntityConfigurationLoader::getTrustBundleAlias)
+        .map(RegistryProperties.EntityConfigurationLoaderProperties::getTrustBundleAlias)
         .orElse(null);
 
     this.getSSLTrustContext(ssl, trustBundleAlias).ifPresentOrElse(sslContext -> {
@@ -361,7 +378,7 @@ public class RegistryConfig {
 
     final JwkTransformerFunction function = new JwkTransformerFunction();
     if ("serial".equalsIgnoreCase(federationApiProperties.kidAlgorithm())) {
-      function.setKeyIdFunction(pkiCredential ->
+      function.withKeyIdFunction(pkiCredential ->
           Objects.requireNonNull(pkiCredential.getCertificate())
               .getSerialNumber().toString(10));
     }

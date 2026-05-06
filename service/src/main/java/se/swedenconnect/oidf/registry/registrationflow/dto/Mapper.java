@@ -1,0 +1,136 @@
+/*
+ * Copyright 2026 Sweden Connect
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package se.swedenconnect.oidf.registry.registrationflow.dto;
+
+import se.swedenconnect.oidf.registry.organization.model.Organization;
+import se.swedenconnect.oidf.registry.registrationflow.RegistrationStepRepository;
+import se.swedenconnect.oidf.registry.registrationflow.model.ConfigValueModel;
+import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
+import se.swedenconnect.oidf.registry.registrationflow.model.StepModel;
+import se.swedenconnect.oidf.registry.registrationflow.process.ProcessFlow;
+import se.swedenconnect.oidf.registry.registrationflow.process.StepDefinition;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ * oidf-entity-registry
+ *
+ * @author Per Fredrik Plars
+ */
+public class Mapper {
+
+  /**
+   * Maps a {@link RegistrationFlowDto} to a domain {@link ProcessFlow}.
+   *
+   * @param dto the source DTO
+   * @param registrationStepRepository repository used to resolve step references
+   * @return domain process flow
+   */
+  public static ProcessFlow toProcessFlow(final RegistrationFlowDto dto,
+      final RegistrationStepRepository registrationStepRepository) {
+
+    final List<StepDefinition> steps = Optional.ofNullable(dto.steps()).orElse(new ArrayList<>(0))
+        .stream()
+        .map(stepInfoDto ->
+            new StepDefinition(registrationStepRepository.findStepById(stepInfoDto.stepId()).orElseThrow(),
+                toStepConfig(stepInfoDto.config())))
+        .toList();
+
+    return new ProcessFlow(dto.flowId(), dto.name(), dto.description(), steps);
+  }
+
+  /**
+   * Maps a {@link RegistrationFlowDto} with an explicit flow ID to a {@link RegistrationFlow} entity.
+   *
+   * @param dto the source DTO
+   * @param flowId the ID to assign; overrides any ID already present in the DTO
+   * @param organization the owning organization
+   * @param registrationStepRepository repository used to resolve step references
+   * @return the mapped entity
+   */
+  public static RegistrationFlow toModel(final RegistrationFlowDto dto, final UUID flowId,
+      final Organization organization, final RegistrationStepRepository registrationStepRepository) {
+
+    final List<StepModel> stepModels = Optional.ofNullable(dto.steps()).orElse(List.of())
+        .stream()
+        .map(s -> new StepModel(s.stepId(),
+            Optional.ofNullable(s.config()).orElse(List.of()).stream()
+                .map(c -> new ConfigValueModel(c.key(), c.value()))
+                .toList()))
+        .toList();
+
+    final RegistrationFlow registrationFlow = new RegistrationFlow();
+    registrationFlow.setFlowId(flowId);
+    registrationFlow.setOrganization(organization);
+    registrationFlow.setName(dto.name());
+    registrationFlow.setDescription(dto.description());
+    registrationFlow.setFlowDefinition(stepModels);
+
+    return registrationFlow;
+  }
+
+
+  /**
+   * Applies updated fields from a DTO onto an existing {@link RegistrationFlow} entity.
+   *
+   * @param existing the entity already loaded from the database
+   * @param dto the updated DTO
+   * @param registrationStepRepository repository used to resolve step references
+   * @return the updated entity (same instance as {@code existing})
+   */
+  public static RegistrationFlow applyUpdate(final RegistrationFlow existing, final RegistrationFlowDto dto,
+      final RegistrationStepRepository registrationStepRepository) {
+
+    final List<StepModel> stepModels = Optional.ofNullable(dto.steps()).orElse(List.of())
+        .stream()
+        .map(s -> new StepModel(s.stepId(),
+            Optional.ofNullable(s.config()).orElse(List.of()).stream()
+                .map(c -> new ConfigValueModel(c.key(), c.value()))
+                .toList()))
+        .toList();
+
+    existing.setName(dto.name());
+    existing.setDescription(dto.description());
+    existing.setFlowDefinition(stepModels);
+
+    return existing;
+  }
+
+  private static StepConfig toStepConfig(final List<ConfigValueDto> configValueDtos) {
+    final Map<String, Object> stepConfig = new HashMap<>();
+    configValueDtos.forEach(configValueDto ->
+    {
+      stepConfig.put(configValueDto.key(), configValueDto.value());
+    });
+
+    return new StepConfig(stepConfig) {
+      @Override
+      public List<StepConfigurationValue> getStepConfigurationValues() {
+        return List.of();
+      }
+    };
+  }
+
+}
