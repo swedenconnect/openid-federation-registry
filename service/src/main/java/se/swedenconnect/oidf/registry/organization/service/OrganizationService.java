@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.registry.organization.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
@@ -36,49 +37,48 @@ import java.util.UUID;
 @Slf4j
 public class OrganizationService {
   final OrganizationRepository organizationRepository;
-  final InstanceRepository instanceRepository;
+  final InstancePlacementService instancePlacementService;
 
   /**
    * Constructs an instance of OrganizationService, initializing the organization and instance repositories required
    * for operations related to organizations and their instances in the registry service.
    *
    * @param organizationRepository the repository responsible for managing organization entities
-   * @param instanceRepository the repository responsible for managing instance entities
+   * @param instancePlacementService the repository responsible for managing instance entities
    */
   public OrganizationService(final OrganizationRepository organizationRepository,
-      final InstanceRepository instanceRepository) {
+      final InstancePlacementService instancePlacementService) {
     this.organizationRepository = organizationRepository;
-    this.instanceRepository = instanceRepository;
+    this.instancePlacementService = instancePlacementService;
   }
 
   /**
    * Finds an existing organization entity by its organization number, or creates a new one if it does not exist. If a
    * new organization is created, it is assigned to the default assignment instance and saved to the repository.
    *
-   * @param orgNumber the organization number used to search for an existing organization
-   * @param orgName the name of the organization to be created if no existing organization is found
+   * @param organizationRecord the organization record used to search for or create an organization
    * @return the existing or newly created {@link Organization}
    * @throws RuntimeException if no default assignment instance is configured
    */
 
-  public synchronized Organization findCreate(final String orgNumber, final String orgName) {
+  public synchronized Organization findCreate(final OrganizationRecord organizationRecord) {
 
-    return this.organizationRepository.findByOrgNumber(orgNumber).or(() -> {
+    return this.organizationRepository.findByOrgNumber(organizationRecord.orgNumber()).or(() -> {
 
-      final Instance instanceEntity = this.instanceRepository.findByUseForDefaultAssignment(true)
+      final Instance instanceEntity = this.instancePlacementService.resolveInstance(organizationRecord)
           .orElseThrow(() ->
-              new IllegalArgumentException("There is no default assignment instance configured. "
-                  + "Review the configuration"));
+              new IllegalArgumentException("No instance was found for the given matcher config"));
 
       final Organization org = new Organization();
       org.setOrganizationId(UUID.randomUUID());
-      org.setOrgNumber(orgNumber);
-      org.setOrgName(orgName);
-      org.setCreatedBy("Registry Service");
+      org.setOrgNumber(organizationRecord.orgNumber());
+      org.setOrgName(organizationRecord.orgName());
+      org.setCreatedBy("Created by Registry Service");
       org.setLastModifiedBy(org.getCreatedBy());
       org.setInstance(instanceEntity);
       this.organizationRepository.save(org);
-      log.info("Creating a new organization. {}-{}-{}", org.getOrganizationId(), org.getOrgName(), org.getOrgNumber());
+      log.info("Creating a new organization. {}-{}-{} assigning instance to id:{} ",
+          org.getOrganizationId(), org.getOrgName(), org.getOrgNumber());
       return Optional.of(org);
 
     }).orElseThrow();

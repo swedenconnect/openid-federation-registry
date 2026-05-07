@@ -61,8 +61,12 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
 
     this.instances.forEach(InstanceProperties::validate);
 
-    Assert.isTrue(this.instances.stream().filter(InstanceProperties::useForDefaultAssignment).count() <= 1,
-        "openid.federation.registry.instances[].useForDefaultAssignment shall only be set for one instance");
+    Assert.isTrue(this.instances.stream()
+            .map(InstanceProperties::matchers)
+            .filter(InstanceMatcherProperties::useForDefaultAssignment)
+            .count() <= 1,
+        "openid.federation.registry.instances[].matchers.useForDefaultAssignment "
+            + "shall only be set for one instance");
 
     Optional.ofNullable(this.entityConfigurationLoader).ifPresent(EntityConfigurationLoaderProperties::validate);
   }
@@ -144,10 +148,11 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
    *
    * @param instanceId the unique identifier for the instance must not be null
    * @param name the name of the instance must not be empty
+   * @param matchers the matcher configuration used to assign organizations to this instance
    */
   public record InstanceProperties(UUID instanceId,
       String name,
-      List<InstanceMatcherProperties> matchers) {
+      InstanceMatcherProperties matchers) {
     /**
      * Validates the instance properties to ensure all required fields are properly configured.
      * Checks that instanceId and name are set. If org_numbers is empty, useForDefaultAssignment must be true.
@@ -156,12 +161,19 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
       Assert.notNull(
           this.instanceId, "Expected openid.federation.registry.instances[].instance_id");
       Assert.hasText(this.name, "Expected openid.federation.registry.instances[].name");
-      Assert.isTrue(this.matchers != null && !this.matchers.isEmpty(), "Expected at least one matcher"
-          + " openid.federation.registry.instances[].matcher");
-      this.matchers.forEach(InstanceMatcherProperties::validate);
+      Assert.isTrue(this.matchers != null, "Expected at least one matcher"
+          + " openid.federation.registry.instances[].matchers");
+      this.matchers.validate();
     }
   }
 
+  /**
+   * Matcher configuration that determines which organizations are assigned to a given instance.
+   *
+   * @param functiongroups list of function group identifiers to match against
+   * @param useForDefaultAssignment true if this instance should receive organizations that match no other instance
+   * @param org_numbers list of organization numbers to match against
+   */
   public record InstanceMatcherProperties(List<String> functiongroups,
       boolean useForDefaultAssignment,
       List<String> org_numbers) {
@@ -171,24 +183,28 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
      */
     public void validate() {
 
-      if (useForDefaultAssignment) {
-        Assert.isTrue(!isEmpty(this.org_numbers),
+      if (this.useForDefaultAssignment) {
+        Assert.isTrue(this.isEmpty(this.org_numbers),
             "If useForDefaultAssignment=true"
-                + "          + \" openid.federation.registry.instances[].matcher.org_numbers can not be set");
+                + " openid.federation.registry.instances[].matcher.org_numbers can not be set");
 
-        Assert.isTrue(!isEmpty(this.functiongroups),
+        Assert.isTrue(this.isEmpty(this.functiongroups),
             "If useForDefaultAssignment=true"
-                + "          + \" openid.federation.registry.instances[].matcher.functiongroups can not be set");
+                + " openid.federation.registry.instances[].matcher.functiongroups can not be set");
       }
 
-      Assert.isTrue(isEmpty(this.org_numbers) && isEmpty(this.functiongroups) && !useForDefaultAssignment,
-          "If useForDefaultAssignment=true or org_numbers or functiongroups is mandatory");
+      final boolean noMatcher = this.isEmpty(this.org_numbers)
+          && this.isEmpty(this.functiongroups)
+          && !this.useForDefaultAssignment;
+      Assert.isTrue(!noMatcher,
+          "One of useForDefaultAssignment, org_numbers, functiongroups needs to exist");
 
     }
 
-    private boolean isEmpty(List<?> list) {
+    private boolean isEmpty(final List<?> list) {
       return list == null || list.isEmpty();
     }
+
   }
 
 

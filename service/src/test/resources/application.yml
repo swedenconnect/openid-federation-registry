@@ -21,22 +21,15 @@ openid:
       instances:
         - instance_id: "123e4567-e89b-12d3-a456-426614174000"
           name: "Swedenconnect"
-          useForDefaultAssignment: true
+          matchers:
+            useForDefaultAssignment: true
         - instance_id: "223e4567-e89b-12d3-a456-426614174001"
           name: "ENA"
-          org_numbers:
-            - "2021002114"
-            - "99999999"
-        - instance_id: "333333-e89b-12d3-a456-4444444444"
-          name: "Swedenconnect Sandbox"
-          defaultBaseUrl: https://dev.swedenconnect.se/sc/${usercontext.orgnumber}
-          matcher:
-            default: "true"
-            org-numbers:
+          matchers:
+            org_numbers:
               - "2021002114"
               - "99999999"
-            functiongroups:
-              - "swedenconnect"
+
 
 credential:
   bundles:

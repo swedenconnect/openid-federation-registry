@@ -58,7 +58,8 @@ public class OrganizationInformationFactory {
                 .map(entry -> new OrganizationRecord(
                     entry.get("orgNumber").toString(),
                     entry.get("orgName").toString(),
-                    entry.get("entity_prefix").toString()
+                    entry.get("entity_prefix").toString(),
+                    null
                 )).toList())
             .orElse(List.of());
 

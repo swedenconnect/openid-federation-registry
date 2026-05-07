@@ -89,8 +89,8 @@ public class RegistrationFlowService {
   }
 
   private Organization resolveOrganization(final OrganizationRecord organizationRecord) {
-    return this.organizationService.findCreate(
-        organizationRecord.orgNumber(), organizationRecord.orgName());
+    return this.organizationService.findCreate(organizationRecord);
+
   }
 
   private RegistrationFlow findOwnedFlowOrThrow(final OrganizationRecord organizationRecord, final UUID flowId) {
@@ -222,9 +222,9 @@ public class RegistrationFlowService {
   /**
    * Trigger registration flow engine
    *
-   * @param organizationRecord
-   * @param registrationRequestDto
-   * @return
+   * @param organizationRecord the organization initiating the registration
+   * @param registrationRequestDto the registration request data
+   * @return join ID string for the created registration flow
    */
   public String executeRegistrationFlow(final OrganizationRecord organizationRecord,
       final RegistrationRequestDto registrationRequestDto) {
