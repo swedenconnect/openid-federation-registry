@@ -144,13 +144,10 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
    *
    * @param instanceId the unique identifier for the instance must not be null
    * @param name the name of the instance must not be empty
-   * @param useForDefaultAssignment flag indicating if this instance should be used for the default assignment
-   * @param org_numbers a list of organizational numbers associated with the instance
    */
   public record InstanceProperties(UUID instanceId,
       String name,
-      boolean useForDefaultAssignment,
-      List<String> org_numbers) {
+      List<InstanceMatcherProperties> matchers) {
     /**
      * Validates the instance properties to ensure all required fields are properly configured.
      * Checks that instanceId and name are set. If org_numbers is empty, useForDefaultAssignment must be true.
@@ -159,14 +156,43 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
       Assert.notNull(
           this.instanceId, "Expected openid.federation.registry.instances[].instance_id");
       Assert.hasText(this.name, "Expected openid.federation.registry.instances[].name");
-
-      if (this.org_numbers == null || this.org_numbers.isEmpty()) {
-        Assert.isTrue(this.useForDefaultAssignment, "If openid.federation.registry.instances[].org_numbers is empty, "
-            + "useForDefaultAssignment must be true");
-      }
-
+      Assert.isTrue(this.matchers != null && !this.matchers.isEmpty(), "Expected at least one matcher"
+          + " openid.federation.registry.instances[].matcher");
+      this.matchers.forEach(InstanceMatcherProperties::validate);
     }
   }
+
+  public record InstanceMatcherProperties(List<String> functiongroups,
+      boolean useForDefaultAssignment,
+      List<String> org_numbers) {
+    /**
+     * Validates the instance properties to ensure all required fields are properly configured. Checks that instanceId
+     * and name are set. If org_numbers is empty, useForDefaultAssignment must be true.
+     */
+    public void validate() {
+
+      if (useForDefaultAssignment) {
+        Assert.isTrue(!isEmpty(this.org_numbers),
+            "If useForDefaultAssignment=true"
+                + "          + \" openid.federation.registry.instances[].matcher.org_numbers can not be set");
+
+        Assert.isTrue(!isEmpty(this.functiongroups),
+            "If useForDefaultAssignment=true"
+                + "          + \" openid.federation.registry.instances[].matcher.functiongroups can not be set");
+      }
+
+      Assert.isTrue(isEmpty(this.org_numbers) && isEmpty(this.functiongroups) && !useForDefaultAssignment,
+          "If useForDefaultAssignment=true or org_numbers or functiongroups is mandatory");
+
+    }
+
+    private boolean isEmpty(List<?> list) {
+      return list == null || list.isEmpty();
+    }
+  }
+
+
+
 
   /**
    * JwksLoader configuration

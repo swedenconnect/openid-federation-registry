@@ -27,6 +27,16 @@ openid:
           org_numbers:
             - "2021002114"
             - "99999999"
+        - instance_id: "333333-e89b-12d3-a456-4444444444"
+          name: "Swedenconnect Sandbox"
+          defaultBaseUrl: https://dev.swedenconnect.se/sc/${usercontext.orgnumber}
+          matcher:
+            default: "true"
+            org-numbers:
+              - "2021002114"
+              - "99999999"
+            functiongroups:
+              - "swedenconnect"
 
 credential:
   bundles:

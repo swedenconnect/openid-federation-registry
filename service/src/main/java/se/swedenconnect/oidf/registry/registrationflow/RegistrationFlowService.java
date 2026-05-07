@@ -17,8 +17,8 @@
 package se.swedenconnect.oidf.registry.registrationflow;
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
@@ -42,6 +42,7 @@ import se.swedenconnect.oidf.registry.registrationflow.process.ProcessFlow;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowRepository;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestDto;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
@@ -219,6 +220,22 @@ public class RegistrationFlowService {
   }
 
   /**
+   * Trigger registration flow engine
+   *
+   * @param organizationRecord
+   * @param registrationRequestDto
+   * @return
+   */
+  public String executeRegistrationFlow(final OrganizationRecord organizationRecord,
+      final RegistrationRequestDto registrationRequestDto) {
+
+    final UUID joinId = registrationRequestDto.getJoinId();
+    this.flowAssignmentRepository.findById(joinId)
+        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND, "Join flow not found"));
+    return null;
+  }
+
+  /**
    * Builds a {@link ProcessFlow} from the stored flow definition for the given ID.
    *
    * @param flowId the flow ID
@@ -233,20 +250,12 @@ public class RegistrationFlowService {
   }
 
   /**
-   * Loads the registration flow with the given ID.
-   *
-   * @param registrationFlowId the flow ID to load
-   */
-  public void loadRegistrationFlow(final UUID registrationFlowId) {
-  }
-
-  /**
    * Returns all flows assigned to the given intermediate.
    *
    * @param taImId the intermediate ID
    * @return list of flow DTOs
    */
-  @Transactional
+  @Transactional(readOnly = true)
   public List<RegistrationFlowDto> getFlowsForIntermediate(final UUID taImId) {
     return this.flowAssignmentRepository.findByTaImTaImId(taImId).stream()
         .map(a -> {
@@ -263,7 +272,7 @@ public class RegistrationFlowService {
    * @param taImId the intermediate ID
    * @return list of assignment summaries
    */
-  @Transactional
+  @Transactional(readOnly = true)
   public List<IntermediateFlowAssignmentDto> getFlowAssignmentsForIntermediate(final UUID taImId) {
     return this.flowAssignmentRepository.findByTaImTaImId(taImId).stream()
         .map(a -> {

@@ -31,9 +31,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
-import se.swedenconnect.oidf.registry.module.model.ModuleType;
-import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
-import java.util.ArrayList;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -62,31 +60,15 @@ public class Organization extends BaseEntity {
   @Column(name = "org_name")
   private String orgName;
 
+  @Size(max = 255)
+  @Column(name = "entityPrefix")
+  private String entityPrefix;
+
   @ManyToOne
   @JoinColumn(name = "instance_id", nullable = false)
   private Instance instance;
 
-  @Deprecated
-  @OneToMany(mappedBy = "organization", cascade = CascadeType.DETACH)
-  private List<TrustAnchorIntermediateModule> module;
-
-
   @OneToMany(mappedBy = "organization", cascade = CascadeType.DETACH)
   private List<FederationEntity> entities;
 
-  /**
-   * Filters and retrieves a list of {@link TrustAnchorIntermediateModule} objects associated with the given module
-   * type.
-   *
-   * @param moduleType the module type used to filter {@link TrustAnchorIntermediateModule} objects based on their
-   *     module type
-   * @return a list of {@link TrustAnchorIntermediateModule} objects where the module type matches the specified module
-   *     type
-   */
-  public List<TrustAnchorIntermediateModule> getModuleByType(final ModuleType moduleType) {
-    return this.module
-        .stream()
-        .filter(moduleEntity -> moduleEntity.getModuleType().equals(moduleType))
-        .toList();
-  }
 }

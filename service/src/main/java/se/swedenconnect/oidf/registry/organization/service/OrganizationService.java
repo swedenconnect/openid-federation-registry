@@ -16,6 +16,7 @@
 
 package se.swedenconnect.oidf.registry.organization.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
@@ -32,6 +33,7 @@ import java.util.UUID;
  * @author Per Fredrik Plars
  */
 @Service
+@Slf4j
 public class OrganizationService {
   final OrganizationRepository organizationRepository;
   final InstanceRepository instanceRepository;
@@ -74,9 +76,9 @@ public class OrganizationService {
       org.setOrgName(orgName);
       org.setCreatedBy("Registry Service");
       org.setLastModifiedBy(org.getCreatedBy());
-      //instanceEntity.addOrganization(org);
       org.setInstance(instanceEntity);
       this.organizationRepository.save(org);
+      log.info("Creating a new organization. {}-{}-{}", org.getOrganizationId(), org.getOrgName(), org.getOrgNumber());
       return Optional.of(org);
 
     }).orElseThrow();
