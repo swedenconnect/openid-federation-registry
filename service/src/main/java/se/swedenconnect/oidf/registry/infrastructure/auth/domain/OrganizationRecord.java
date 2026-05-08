@@ -21,7 +21,8 @@ package se.swedenconnect.oidf.registry.infrastructure.auth.domain;
  * @param orgNumber Organization Number
  * @param orgName OrganizationName
  * @param entityPrefix EntityPrefix ex https://www.digg.se/oidf/
+ * @param functionGroup Optional function group identifier used for instance placement matching
  * @author Felix Hellman
  */
-public record OrganizationRecord(String orgNumber, String orgName, String entityPrefix) {
+public record OrganizationRecord(String orgNumber, String orgName, String entityPrefix,String functionGroup) {
 }

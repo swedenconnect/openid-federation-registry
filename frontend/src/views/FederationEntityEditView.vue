@@ -35,16 +35,23 @@
       </v-card-title>
       <v-card-text>
         <v-form ref="form" @submit.prevent="saveEntity">
-          <v-text-field
-              v-model="entityIdentifier"
-              label="Entity Identifier"
-              :rules="[rules.required]"
-              :disabled="saving"
-              required
-              hint="The entity identifier (entity ID)"
-              persistent-hint
-              class="mb-4"
-          ></v-text-field>
+          <div class="d-flex align-start gap-2 mb-4">
+            <v-text-field
+                v-model="entityIdentifier"
+                label="Entity Identifier"
+                :rules="[rules.required]"
+                :disabled="saving"
+                required
+                hint="The entity identifier (entity ID)"
+                persistent-hint
+                class="flex-grow-1"
+            ></v-text-field>
+            <EntityConfigurationViewer
+                v-if="entityIdentifier"
+                :entity-id="entityIdentifier"
+                class="mt-1"
+            />
+          </div>
 
           <ListField
               v-model="crit"
@@ -325,6 +332,20 @@
                     class="mb-4"
                     style="font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;"
                 ></v-textarea>
+                <div v-if="resolverJwksLoadedFrom" class="text-body-2 text-medium-emphasis mb-2">
+                  JWKS was loaded from url: {{ resolverJwksLoadedFrom }}
+                </div>
+                <v-btn
+                    id="btn-load-resolver-jwks"
+                    color="secondary"
+                    variant="outlined"
+                    :disabled="!modules.resolver.trustAnchor || !modules.resolver.trustAnchor.trim() || loadingResolverJwks || savingModule"
+                    :loading="loadingResolverJwks"
+                    @click="loadResolverJwks"
+                    class="mb-4"
+                >
+                  Load JWKS
+                </v-btn>
                 <v-text-field
                     v-model="modules.resolver.stepRetryDuration"
                     label="Step Retry Duration"
@@ -440,6 +461,29 @@
       </v-card-text>
     </v-card>
 
+    <!-- Resolver JWKS Picker Dialog -->
+    <v-dialog v-model="resolverJwksPickerDialog" max-width="640" scrollable>
+      <v-card>
+        <v-card-title>Select Entity</v-card-title>
+        <v-card-text>
+          <v-list lines="two">
+            <v-list-item
+                v-for="item in resolverJwksPickerItems"
+                :key="item.entityId"
+                :title="item.entityId"
+                :subtitle="item.ecLocation"
+                style="cursor: pointer"
+                @click="applyResolverJwks(item)"
+            ></v-list-item>
+          </v-list>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn variant="text" @click="resolverJwksPickerDialog = false">Cancel</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Delete Confirmation Dialog -->
     <v-dialog v-model="deleteDialog" max-width="500">
       <v-card>
@@ -478,7 +522,9 @@ import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
+import {useLoadJwks} from '@/api/composables/jwks';
 import ListField from '@/components/ListField.vue';
+import EntityConfigurationViewer from '@/components/EntityConfigurationViewer.vue';
 import {
   federationEntityPath,
   intermediateFlowAssignmentsPath,
@@ -495,6 +541,7 @@ const route = useRoute();
 const router = useRouter();
 const {requestGet, requestPut, requestPost, requestDelete, loading, ok} = useRequest();
 const errorStore = useErrorStore();
+const {loadJwks: loadJwksFromApi, loading: loadingResolverJwks} = useLoadJwks();
 
 const form = ref(null);
 const saving = ref(false);
@@ -512,6 +559,10 @@ const assignedFlows = ref([]);
 const selectedFlowToAdd = ref(null);
 const addingFlow = ref(false);
 const removingAssignId = ref(null);
+
+const resolverJwksLoadedFrom = ref('');
+const resolverJwksPickerDialog = ref(false);
+const resolverJwksPickerItems = ref([]);
 
 const availableFlowsForSelect = computed(() =>
     availableFlows.value.filter(f => !assignedFlows.value.some(a => a.flowId === f.flowId))
@@ -558,6 +609,23 @@ const modules = ref({
 const rules = {
   required: (value) => !!value || 'This field is required.',
 };
+
+function applyResolverJwks(item) {
+  modules.value.resolver.trustedKeys = item.jwks ? JSON.stringify(item.jwks, null, 2) : '';
+  resolverJwksLoadedFrom.value = item.ecLocation || '';
+  resolverJwksPickerDialog.value = false;
+}
+
+async function loadResolverJwks() {
+  const result = await loadJwksFromApi(modules.value.resolver.trustAnchor);
+  if (!result || !Array.isArray(result) || result.length === 0) return;
+  if (result.length === 1) {
+    applyResolverJwks(result[0]);
+  } else {
+    resolverJwksPickerItems.value = result;
+    resolverJwksPickerDialog.value = true;
+  }
+}
 
 async function loadEntity() {
   errorStore.clearError();
@@ -885,3 +953,9 @@ onMounted(() => {
   loadEntity();
 });
 </script>
+
+<style scoped>
+.gap-2 {
+  gap: 8px;
+}
+</style>

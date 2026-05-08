@@ -15,16 +15,13 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow.process;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepStatus;
-import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestDto;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Executes a sequential pipeline of {@link StepDefinition} instances against a shared {@link ProcessContext}.
@@ -32,25 +29,8 @@ import java.util.UUID;
  * @author Per Fredrik Plars
  */
 @Component
+@Slf4j
 public class ProcessEngine {
-
-  private static final Logger log = LoggerFactory.getLogger(ProcessEngine.class);
-
-
-  /**
-   * Registers a new registration request by executing the configured process flow.
-   *
-   * @param dto the registration request
-   */
-  public void register(final RegistrationRequestDto dto) {
-    //TODO
-    // In data validation, make sure that the data exist that is expected entityid.
-    // Load assignment, if not found return notfound
-    // Load refistrationflow with its configuration.
-    // Execute the flow.
-    // Collect the info or error messages and convertthem into the right format
-    throw new IllegalArgumentException("Not supported yet.");
-  }
 
   /**
    * Executes the pipeline sequentially, stopping on the first failure.

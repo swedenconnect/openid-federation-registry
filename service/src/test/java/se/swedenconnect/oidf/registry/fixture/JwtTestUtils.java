@@ -151,9 +151,7 @@ public class JwtTestUtils {
 
   }
 
-  public static OrganizationRecord createOrganizationRecord(OrganisationType orgType) {
-    return new OrganizationRecord(orgType.orgId, orgType.name, orgType.domainPrefix);
-  }
+
 
   public enum OrganisationType {
     PM("Pensionsmyndigheten", "55555", "https://www.pm.se/oidf"),

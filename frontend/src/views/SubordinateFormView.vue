@@ -35,16 +35,23 @@
       </v-card-title>
       <v-card-text>
         <v-form ref="form" @submit.prevent="submitForm">
-          <v-text-field
-              v-model="entityIdentifier"
-              label="Entity Identifier (Subject)"
-              :rules="[rules.required]"
-              :disabled="saving"
-              required
-              hint="Subject entity identifier (required, URL)"
-              persistent-hint
-              class="mb-4"
-          ></v-text-field>
+          <div class="d-flex align-start gap-2 mb-4">
+            <v-text-field
+                v-model="entityIdentifier"
+                label="Entity Identifier (Subject)"
+                :rules="[rules.required]"
+                :disabled="saving"
+                required
+                hint="Subject entity identifier (required, URL)"
+                persistent-hint
+                class="flex-grow-1"
+            ></v-text-field>
+            <EntityConfigurationViewer
+                v-if="isEdit && entityIdentifier"
+                :entity-id="entityIdentifier"
+                class="mt-1"
+            />
+          </div>
 
           <v-textarea
               v-model="jwks"
@@ -186,6 +193,7 @@ import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useLoadJwks} from '@/api/composables/jwks';
 import {subordinatePath, subordinatesPath} from '@/config/path';
+import EntityConfigurationViewer from '@/components/EntityConfigurationViewer.vue';
 import ListField from '@/components/ListField.vue';
 
 const route = useRoute();
@@ -329,3 +337,9 @@ onMounted(() => {
   }
 });
 </script>
+
+<style scoped>
+.gap-2 {
+  gap: 8px;
+}
+</style>

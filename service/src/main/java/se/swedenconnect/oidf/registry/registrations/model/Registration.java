@@ -37,7 +37,7 @@ import java.util.UUID;
  * Represents an incoming registration request in the {@code registrations} table.
  * <p>
  * Automatic flows transition directly to {@link RegistrationStatus#APPROVED} once
- * a subordinate statement is created. Manual flows start as {@link RegistrationStatus#PENDING}
+ * a subordinate statement is created. Manual flows start as {@link RegistrationStatus#PENDING_APPROVAL}
  * until an operator reviews them.
  *
  * @author Per Fredrik Plars
@@ -86,5 +86,5 @@ public class Registration extends BaseEntity {
   private String reviewedBy;
 
   @Column(name = "rejection_reason", columnDefinition = "TEXT")
-  private RegistrationStatus rejectionReason;
+  private String rejectionReason;
 }

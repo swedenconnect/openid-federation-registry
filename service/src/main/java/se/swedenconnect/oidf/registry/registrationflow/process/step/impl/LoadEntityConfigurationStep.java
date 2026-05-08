@@ -19,7 +19,8 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
 import org.springframework.stereotype.Component;
-import se.swedenconnect.oidf.registry.guioperations.OidfServiceIntegration;
+import se.swedenconnect.oidf.registry.guioperations.OidfService;
+import se.swedenconnect.oidf.registry.infrastructure.validation.CleanInput;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
@@ -28,22 +29,22 @@ import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 import java.util.UUID;
 
 /**
- * Validates RP metadata against a configured validation profile.
+ * Loading entityconfiguration and jwks
  *
  * @author Per Fredrik Plars
  */
 @Component
 public class LoadEntityConfigurationStep extends NoConfigStepAdapter {
 
-  OidfServiceIntegration oidfServiceIntegration;
+  final OidfService oidfService;
 
   /**
-   *
-   * @param oidfServiceIntegration
+   * Constructor
+   * @param oidfService oidfService used to load entitystatements
    */
-  public LoadEntityConfigurationStep(final OidfServiceIntegration oidfServiceIntegration) {
+  public LoadEntityConfigurationStep(final OidfService oidfService) {
     super();
-    this.oidfServiceIntegration = oidfServiceIntegration;
+    this.oidfService = oidfService;
   }
 
   @Override
@@ -53,14 +54,15 @@ public class LoadEntityConfigurationStep extends NoConfigStepAdapter {
 
   @Override
   public StepResult execute(final ProcessContext ctx, final StepConfig config) {
-    final EntityID entityId = ctx.getRequired(ContextKey.ENTITY_ID);
-    final EntityStatement entityStatement = this.oidfServiceIntegration.entityConfigurationOnStandardLocation(entityId);
+    final String entityId = ctx.getRequired(ContextKey.ENTITY_ID);
+    final EntityStatement entityStatement = this.oidfService.loadEntityStatement(new EntityID(entityId));
 
-    final EntityStatementClaimsSet entityStatementClaimsSet = entityStatement.getClaimsSet();
-    ctx.put(ContextKey.ENTITY_CONFIGURATION_METADATA, "METADATA");
-    ctx.put(ContextKey.ENTITY_CONFIGURATION_JWKS, "JWKS");
+    final EntityStatementClaimsSet esClaimsSet = entityStatement.getClaimsSet();
+    ctx.put(ContextKey.ENTITY_CONFIGURATION_METADATA, esClaimsSet.getJSONObjectClaim("metadata"));
 
-    return StepResult.success();
+    ctx.put(ContextKey.ENTITY_CONFIGURATION_JWKS, CleanInput.removeExpIatNbfFromJwks(esClaimsSet.getJWKSet()));
+
+    return StepResult.success("EntityConfiguration loaded successfully");
   }
 
   @Override

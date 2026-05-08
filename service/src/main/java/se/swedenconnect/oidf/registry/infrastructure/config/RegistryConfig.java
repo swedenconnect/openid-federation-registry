@@ -61,6 +61,7 @@ import java.net.http.HttpClient;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -149,7 +150,6 @@ public class RegistryConfig {
     );
   }
 
-
   /**
    * Creates and configures a {@link NotifyService} instance to handle notifications for the Federation API. This method
    * sets up the notification endpoints and the signing key to secure the communication.
@@ -187,35 +187,42 @@ public class RegistryConfig {
     this.registryProperties.instances()
         .forEach(instance -> {
 
-          final Instance entity = this.instanceRepository.findById(instance.instanceId())
+          final Instance instanceEntity = this.instanceRepository.findById(instance.instanceId())
               .or(() -> {
-                log.debug("Creating new instance entity for instanceId:{}", instance.instanceId());
+                log.debug("Creating new instance instanceEntity for instanceId:{}", instance.instanceId());
                 final Instance newEntity = new Instance();
                 newEntity.setInstanceId(instance.instanceId());
                 newEntity.setName(instance.name());
                 newEntity.setCreatedBy("Registry-Config");
                 newEntity.setLastModifiedBy(newEntity.getCreatedBy());
-                newEntity.setUseForDefaultAssignment(instance.useForDefaultAssignment());
+                //newEntity.setUseForDefaultAssignment(instance.useForDefaultAssignment());
                 return Optional.of(newEntity);
               }).orElseThrow();
 
-          if (instance.org_numbers() != null) {
-            instance.org_numbers()
-                .stream()
-                .filter(org_nr -> hasOrg(org_nr, entity))
-                .map(org_nr -> {
-                  log.debug("Adding organization with org_nr:{} to instanceId:{}", org_nr, instance.instanceId());
-                  final Organization organizationEntity = new Organization();
-                  organizationEntity.setOrganizationId(UUID.randomUUID());
-                  organizationEntity.setOrgNumber(org_nr);
-                  organizationEntity.setInstance(entity);
-                  organizationEntity.setCreatedBy(entity.getCreatedBy());
-                  organizationEntity.setLastModifiedBy(entity.getLastModifiedBy());
-                  return organizationEntity;
-                })
-                .forEach(entity::addOrganization);
-          }
-          this.instanceRepository.saveAndFlush(entity);
+          // Figureout if this instance is the default used for registrations
+          Optional.ofNullable(instance.matchers())
+              .filter(RegistryProperties.InstanceMatcherProperties::useForDefaultAssignment)
+              .ifPresent(i -> instanceEntity.setUseForDefaultAssignment(true));
+
+          Optional.ofNullable(instance.matchers())
+              .map(RegistryProperties.InstanceMatcherProperties::org_numbers)
+              .orElse(Collections.emptyList())
+              .stream()
+              .filter(org_nr -> hasOrg(org_nr, instanceEntity))
+              .map(org_nr -> {
+                log.debug("Adding organization with org_nr:{} to instanceId:{}", org_nr, instance.instanceId());
+                final Organization newOrgEntity = new Organization();
+                newOrgEntity.setOrganizationId(UUID.randomUUID());
+                newOrgEntity.setOrgNumber(org_nr);
+                newOrgEntity.setInstance(instanceEntity);
+                newOrgEntity.setCreatedBy(instanceEntity.getCreatedBy());
+                newOrgEntity.setLastModifiedBy(instanceEntity.getLastModifiedBy());
+                log.info("Creating a new organization with org_nr:{} to instanceId:{}", org_nr, instance.instanceId());
+                return newOrgEntity;
+              })
+              .forEach(instanceEntity::addOrganization);
+
+          this.instanceRepository.saveAndFlush(instanceEntity);
         });
   }
 
@@ -369,7 +376,7 @@ public class RegistryConfig {
    * @throws IllegalStateException if no signing key is found for the specified alias.
    */
   private JWK resolveSigningKey(final Optional<CredentialBundles> credentialBundles,
-                                final RegistryProperties.FederationAPIProperties federationApiProperties) {
+      final RegistryProperties.FederationAPIProperties federationApiProperties) {
     final CredentialBundles bundles = credentialBundles.orElseThrow(() ->
         new IllegalStateException("Missing required 'credential.bundles' configuration."));
 

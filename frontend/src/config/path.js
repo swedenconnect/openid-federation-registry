@@ -60,6 +60,7 @@ export const subordinatesPath = getAbsolutePath('registry/v1/subordinates/');
 export const subordinatePath = (id) => getAbsolutePath(`registry/v1/subordinates/${id}`);
 
 export const jwksSupportPath = getAbsolutePath('registry/v1/entityconfiguration/jwks');
+export const entityConfigurationViewPath = getAbsolutePath('registry/v1/entityconfiguration/view');
 
 export const swaggerUiPath = getAbsolutePath('swagger-ui.html');
 
@@ -71,3 +72,7 @@ export const registrationFlowStepsPath = getAbsolutePath('registration-flow/v1/s
 export const intermediateFlowAssignmentsPath = (taImId) => getAbsolutePath(`registration-flow/v1/intermediate/${taImId}/assignments`);
 export const intermediateFlowAssignPath = (taImId) => getAbsolutePath(`registration-flow/v1/intermediate/${taImId}/assign`);
 export const intermediateFlowUnassignPath = (taImId, assignId) => getAbsolutePath(`registration-flow/v1/intermediate/${taImId}/assign/${assignId}`);
+
+export const registrationAdminPath = getAbsolutePath('registration-admin/v1/');
+export const registrationAdminItemPath = (id) => getAbsolutePath(`registration-admin/v1/${id}`);
+export const registrationAdminRejectPath = (id) => getAbsolutePath(`registration-admin/v1/${id}/reject`);

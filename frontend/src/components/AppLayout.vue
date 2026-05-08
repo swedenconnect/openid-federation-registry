@@ -80,6 +80,7 @@
         <nav v-if="userStore.isAuthorized" class="nav-bar">
           <RouterLink to="/" class="nav-link" :class="{ active: isEntityRoute }">Entity</RouterLink>
           <RouterLink to="/registration-flows" class="nav-link" :class="{ active: isRegistrationFlowsRoute }">Registration Flows</RouterLink>
+          <RouterLink to="/registrations" class="nav-link" :class="{ active: isRegistrationsRoute }">Registrations</RouterLink>
           <a :href="swaggerUiPath" rel="noopener" class="nav-link" target="_blank">API</a>
         </nav>
       </template>
@@ -123,6 +124,7 @@ const userStore = useUserStore();
 
 const isEntityRoute = computed(() => route.path === '/');
 const isRegistrationFlowsRoute = computed(() => route.path.startsWith('/registration-flows'));
+const isRegistrationsRoute = computed(() => route.path.startsWith('/registrations'));
 
 const errorMessage = computed(() => errorStore.message);
 

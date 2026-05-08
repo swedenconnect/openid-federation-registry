@@ -35,6 +35,9 @@ public class RegistrationRequestStatusDto {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private UUID registrationId;
 
+  @Schema(description = "Status on registration", example = "PENDING_APPROVAL")
+  private String status;
+
   @Schema(description = "Entity identifier of the applicant", example = "https://example.com/entity")
   private String entityId;
 

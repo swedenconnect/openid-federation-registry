@@ -61,8 +61,12 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
 
     this.instances.forEach(InstanceProperties::validate);
 
-    Assert.isTrue(this.instances.stream().filter(InstanceProperties::useForDefaultAssignment).count() <= 1,
-        "openid.federation.registry.instances[].useForDefaultAssignment shall only be set for one instance");
+    Assert.isTrue(this.instances.stream()
+            .map(InstanceProperties::matchers)
+            .filter(InstanceMatcherProperties::useForDefaultAssignment)
+            .count() <= 1,
+        "openid.federation.registry.instances[].matchers.useForDefaultAssignment "
+            + "shall only be set for one instance");
 
     Optional.ofNullable(this.entityConfigurationLoader).ifPresent(EntityConfigurationLoaderProperties::validate);
   }
@@ -144,13 +148,11 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
    *
    * @param instanceId the unique identifier for the instance must not be null
    * @param name the name of the instance must not be empty
-   * @param useForDefaultAssignment flag indicating if this instance should be used for the default assignment
-   * @param org_numbers a list of organizational numbers associated with the instance
+   * @param matchers the matcher configuration used to assign organizations to this instance
    */
   public record InstanceProperties(UUID instanceId,
       String name,
-      boolean useForDefaultAssignment,
-      List<String> org_numbers) {
+      InstanceMatcherProperties matchers) {
     /**
      * Validates the instance properties to ensure all required fields are properly configured.
      * Checks that instanceId and name are set. If org_numbers is empty, useForDefaultAssignment must be true.
@@ -159,14 +161,54 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
       Assert.notNull(
           this.instanceId, "Expected openid.federation.registry.instances[].instance_id");
       Assert.hasText(this.name, "Expected openid.federation.registry.instances[].name");
-
-      if (this.org_numbers == null || this.org_numbers.isEmpty()) {
-        Assert.isTrue(this.useForDefaultAssignment, "If openid.federation.registry.instances[].org_numbers is empty, "
-            + "useForDefaultAssignment must be true");
-      }
-
+      Assert.isTrue(this.matchers != null, "Expected at least one matcher"
+          + " openid.federation.registry.instances[].matchers");
+      this.matchers.validate();
     }
   }
+
+  /**
+   * Matcher configuration that determines which organizations are assigned to a given instance.
+   *
+   * @param functiongroups list of function group identifiers to match against
+   * @param useForDefaultAssignment true if this instance should receive organizations that match no other instance
+   * @param org_numbers list of organization numbers to match against
+   */
+  public record InstanceMatcherProperties(List<String> functiongroups,
+      boolean useForDefaultAssignment,
+      List<String> org_numbers) {
+    /**
+     * Validates the instance properties to ensure all required fields are properly configured. Checks that instanceId
+     * and name are set. If org_numbers is empty, useForDefaultAssignment must be true.
+     */
+    public void validate() {
+
+      if (this.useForDefaultAssignment) {
+        Assert.isTrue(this.isEmpty(this.org_numbers),
+            "If useForDefaultAssignment=true"
+                + " openid.federation.registry.instances[].matcher.org_numbers can not be set");
+
+        Assert.isTrue(this.isEmpty(this.functiongroups),
+            "If useForDefaultAssignment=true"
+                + " openid.federation.registry.instances[].matcher.functiongroups can not be set");
+      }
+
+      final boolean noMatcher = this.isEmpty(this.org_numbers)
+          && this.isEmpty(this.functiongroups)
+          && !this.useForDefaultAssignment;
+      Assert.isTrue(!noMatcher,
+          "One of useForDefaultAssignment, org_numbers, functiongroups needs to exist");
+
+    }
+
+    private boolean isEmpty(final List<?> list) {
+      return list == null || list.isEmpty();
+    }
+
+  }
+
+
+
 
   /**
    * JwksLoader configuration

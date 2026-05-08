@@ -60,15 +60,25 @@ public class OidfService {
    * @param entityID the entity ID to resolve
    * @return List of jwks
    */
-  public List<JwksLoadedDto> resolveEntityStatement(final EntityID entityID) {
-    final List<JwksLoadedDto> hostedJwks = this.loadFromHostedEntity(entityID);
+  public List<JwksLoadedDto> loadJwks(final EntityID entityID) {
+    final List<JwksLoadedDto> hostedJwks = this.loadJwksFromHostedEntity(entityID);
     if (hostedJwks.isEmpty()) {
-      return List.of(this.loadFromStandardLocation(entityID));
+      return List.of(this.loadJwksFromStandardLocation(entityID));
     }
     return hostedJwks;
   }
 
-  private List<JwksLoadedDto> loadFromHostedEntity(final EntityID entityID) {
+  /**
+   * Loading entitystatment from standard location. It will verify that JWKS i included and that it is properly signed.
+   *
+   * @param entityID EntityId of the entitystatement to load
+   * @return EntityStatement with all the data needed.
+   */
+  public EntityStatement loadEntityStatement(final EntityID entityID) {
+    return this.oidfServiceIntegration.entityConfigurationOnStandardLocation(entityID);
+  }
+
+  private List<JwksLoadedDto> loadJwksFromHostedEntity(final EntityID entityID) {
     final List<HostedEntityDto> hostedEntityDtos = this.entityConfigService.listHostedEntity(entityID.toString());
     return hostedEntityDtos.stream()
         .filter(hostedEntityDto -> hostedEntityDto.getEffectiveEcLocation() != null)
@@ -76,21 +86,28 @@ public class OidfService {
 
           final String effectiveEcLocation = dto.getEffectiveEcLocation();
           final EntityStatement entityStatement =
-              this.oidfServiceIntegration.callEntityStatement(URI.create(effectiveEcLocation));
+              this.oidfServiceIntegration.callEntityStatementAndVerifyJwks(URI.create(effectiveEcLocation));
           final JwksLoadedDto jwksLoadedDto = new JwksLoadedDto();
           jwksLoadedDto.setEntityId(entityID.toString());
-          jwksLoadedDto.setJwks(this.removeExpIatNbf(entityStatement));
+          jwksLoadedDto.setJwks(this.removeExpIatNbfInJwks(entityStatement));
           jwksLoadedDto.setEcLocation(effectiveEcLocation);
           return jwksLoadedDto;
         }).toList();
   }
 
-  private JwksLoadedDto loadFromStandardLocation(final EntityID entityID) {
+  /**
+   * Loading entitystatement from standard location https://{entityid}/.well-known/openid-federation then extract the
+   * jwks
+   *
+   * @param entityID EntityId used to load entitystatement
+   * @return a representation of the loaded
+   */
+  public JwksLoadedDto loadJwksFromStandardLocation(final EntityID entityID) {
     final UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUri(entityID.toURI())
         .path("/.well-known/openid-federation");
     final URI uri = uriBuilder.build().toUri();
-    final EntityStatement entityStatement = this.oidfServiceIntegration.callEntityStatement(uri);
-    final Map<String, Object> jwks = this.removeExpIatNbf(entityStatement);
+    final EntityStatement entityStatement = this.oidfServiceIntegration.callEntityStatementAndVerifyJwks(uri);
+    final Map<String, Object> jwks = this.removeExpIatNbfInJwks(entityStatement);
     final JwksLoadedDto jwksLoadedDto = new JwksLoadedDto();
     jwksLoadedDto.setEntityId(entityID.toString());
     jwksLoadedDto.setJwks(jwks);
@@ -98,7 +115,7 @@ public class OidfService {
     return jwksLoadedDto;
   }
 
-  private Map<String, Object> removeExpIatNbf(final EntityStatement entityStatement) {
+  private Map<String, Object> removeExpIatNbfInJwks(final EntityStatement entityStatement) {
     final Map<String, Object> jwks = entityStatement.getClaimsSet().getJWKSet().toJSONObject();
     return CleanInput.removeExpIatNbfFromJwks(jwks);
   }

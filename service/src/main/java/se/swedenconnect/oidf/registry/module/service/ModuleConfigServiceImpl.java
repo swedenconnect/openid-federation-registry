@@ -97,8 +97,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   }
 
   private Organization resolveOrganization(final OrganizationRecord organizationRecord) {
-    return this.organizationService.findCreate(
-        organizationRecord.orgNumber(), organizationRecord.orgName());
+    return this.organizationService.findCreate(organizationRecord);
   }
 
   private FederationEntity findFederationEntityOrThrow(final OrganizationRecord organizationRecord,

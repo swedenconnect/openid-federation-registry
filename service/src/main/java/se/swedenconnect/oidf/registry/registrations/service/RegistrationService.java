@@ -41,7 +41,7 @@ public interface RegistrationService {
    * @param request the join request
    * @return the created join record
    */
-  RegistrationRequestStatusDto createRegistrationRequestWithId(OrganizationRecord organizationRecord, UUID joinId,
+  RegistrationRequestStatusDto createRegistrationRequest(OrganizationRecord organizationRecord, UUID joinId,
       RegistrationRequestDto request);
 
   /**

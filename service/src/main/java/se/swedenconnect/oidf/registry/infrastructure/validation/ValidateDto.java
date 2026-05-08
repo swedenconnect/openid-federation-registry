@@ -16,7 +16,6 @@
 
 package se.swedenconnect.oidf.registry.infrastructure.validation;
 
-
 import se.swedenconnect.oidf.registry.entity.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
@@ -24,7 +23,6 @@ import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
-import se.swedenconnect.oidf.registry.registrationflow.dto.FlowSummaryDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.RegistrationFlowDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;

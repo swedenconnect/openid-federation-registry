@@ -16,15 +16,17 @@
 package se.swedenconnect.oidf.registry.registrationflow;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.Assert;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
- * Defines the ordered pipeline of registration flow steps.
+ * Collects all steps and gives a way to access them
  *
  * @author Per Fredrik Plars
  */
@@ -40,10 +42,15 @@ public class RegistrationStepRepository {
    */
   public RegistrationStepRepository(final Step... definedStep) {
     this.definedSteps = List.of(definedStep);
+    Assert.isTrue(this.definedSteps.stream()
+        .map(Step::getStepId)
+        .collect(Collectors.toSet())
+        .size() == this.definedSteps.size(), "StepId has to be unique for all steps");
+
   }
 
   /**
-   * Getting step by name
+   * Getting step by there id
    *
    * @param id Id of step
    * @return Optional Step

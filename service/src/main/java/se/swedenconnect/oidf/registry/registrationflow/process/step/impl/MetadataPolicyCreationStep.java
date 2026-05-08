@@ -15,13 +15,14 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow.process.step.impl;
 
+import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
+import net.minidev.json.JSONObject;
 import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 
-import java.io.Serializable;
 import java.util.UUID;
 
 /**
@@ -30,12 +31,17 @@ import java.util.UUID;
  * @author Per Fredrik Plars
  */
 @Component
-public class PolicyCreationStep extends NoConfigStepAdapter {
+public class MetadataPolicyCreationStep extends NoConfigStepAdapter {
 
 
   @Override
   public StepResult execute(final ProcessContext ctx, final StepConfig config) {
-    final Serializable o = ctx.getRequired(ContextKey.ENTITY_CONFIGURATION_METADATA);
+    final JSONObject o = ctx.getRequired(ContextKey.ENTITY_CONFIGURATION_METADATA, JSONObject.class);
+
+    final MetadataPolicy metadataPolicy = new MetadataPolicy();
+    //TODO generate a policy according to a pre specified template
+    ctx.put(ContextKey.METADATA_POLICY, metadataPolicy.toJSONObject());
+
     return StepResult.success();
   }
 

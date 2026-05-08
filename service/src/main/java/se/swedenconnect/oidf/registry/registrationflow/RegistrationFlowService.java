@@ -16,9 +16,8 @@
 
 package se.swedenconnect.oidf.registry.registrationflow;
 
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
@@ -38,12 +37,18 @@ import se.swedenconnect.oidf.registry.registrationflow.model.ConfigValueModel;
 import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
 import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
 import se.swedenconnect.oidf.registry.registrationflow.model.StepModel;
+import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
+import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
+import se.swedenconnect.oidf.registry.registrationflow.process.ProcessEngine;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessFlow;
+import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.MissingContextValueException;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowRepository;
-import tools.jackson.databind.json.JsonMapper;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestDto;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -63,8 +68,7 @@ public class RegistrationFlowService {
   private final FlowRepository flowRepository;
   private final FlowAssignmentRepository flowAssignmentRepository;
   private final OrganizationService organizationService;
-  private final JsonMapper objectMapper;
-
+  private final ProcessEngine processEngine;
   /**
    * Constructs a new RegistrationFlowService.
    *
@@ -73,23 +77,23 @@ public class RegistrationFlowService {
    * @param flowRepository repository of registration flows
    * @param flowAssignmentRepository repository of flow assignments
    * @param organizationService service for resolving organizations
-   * @param objectMapper JSON mapper for flow definition serialization
+   * @param processEngine engine that handle the processing of a flow
    */
   public RegistrationFlowService(final RegistrationStepRepository registrationStepRepository,
       final TaImRepository taImRepository, final FlowRepository flowRepository,
       final FlowAssignmentRepository flowAssignmentRepository,
-      final OrganizationService organizationService, final JsonMapper objectMapper) {
+      final OrganizationService organizationService, final ProcessEngine processEngine) {
     this.registrationStepRepository = registrationStepRepository;
     this.taImRepository = taImRepository;
     this.flowRepository = flowRepository;
     this.flowAssignmentRepository = flowAssignmentRepository;
     this.organizationService = organizationService;
-    this.objectMapper = objectMapper;
+    this.processEngine = processEngine;
   }
 
   private Organization resolveOrganization(final OrganizationRecord organizationRecord) {
-    return this.organizationService.findCreate(
-        organizationRecord.orgNumber(), organizationRecord.orgName());
+    return this.organizationService.findCreate(organizationRecord);
+
   }
 
   private RegistrationFlow findOwnedFlowOrThrow(final OrganizationRecord organizationRecord, final UUID flowId) {
@@ -219,26 +223,38 @@ public class RegistrationFlowService {
   }
 
   /**
-   * Builds a {@link ProcessFlow} from the stored flow definition for the given ID.
+   * Trigger registration flow engine
    *
-   * @param flowId the flow ID
-   * @return the constructed process flow
+   * @param organizationRecord the organization initiating the registration
+   * @param registrationRequestDto the registration request data
+   * @return join ID string for the created registration flow
    */
-  public ProcessFlow buildProcessFlow(final UUID flowId) {
-    final RegistrationFlow flow = this.flowRepository.findById(flowId)
-        .orElseThrow(() -> new EntityNotFoundException("Flow not found: " + flowId));
-    final RegistrationFlowDto dto = this.objectMapper.convertValue(
-        flow.getFlowDefinition(), RegistrationFlowDto.class);
-    return Mapper.toProcessFlow(dto, this.registrationStepRepository);
+  public ProcessReport executeRegistrationFlow(final OrganizationRecord organizationRecord,
+      final RegistrationRequestDto registrationRequestDto) {
+
+    final UUID joinId = registrationRequestDto.getJoinId();
+    final FlowAssignment flowAssignment = this.flowAssignmentRepository.findById(joinId)
+        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND, "Join flow not found"));
+
+    final RegistrationFlow registrationFlow = flowAssignment.getRegistrationFlow();
+    final ProcessFlow processFlow = Mapper.toProcessFlow(registrationFlow, this.registrationStepRepository);
+
+
+    final ProcessContext processContext = new ProcessContext();
+    processContext.put(ContextKey.ENTITY_ID, registrationRequestDto.getEntityId());
+    processContext.put(ContextKey.TRUSTMARKS_REQUESTED, new ArrayList(registrationRequestDto.getTrustmarksRequested()));
+    processContext.put(ContextKey.TAIM_ID, flowAssignment.getTaIm().getTaImId());
+    processContext.put(ContextKey.JOIN_ID, flowAssignment.getAssignId());
+
+    try {
+      return this.processEngine.run(processFlow.getProcessFlow(), processContext);
+    }
+    catch (final MissingContextValueException e) {
+      throw new RegistryServerException(ErrorTypes.BLANK,"MissingContextValueException in process engine",e);
+    }
+
   }
 
-  /**
-   * Loads the registration flow with the given ID.
-   *
-   * @param registrationFlowId the flow ID to load
-   */
-  public void loadRegistrationFlow(final UUID registrationFlowId) {
-  }
 
   /**
    * Returns all flows assigned to the given intermediate.
@@ -246,7 +262,7 @@ public class RegistrationFlowService {
    * @param taImId the intermediate ID
    * @return list of flow DTOs
    */
-  @Transactional
+  @Transactional(readOnly = true)
   public List<RegistrationFlowDto> getFlowsForIntermediate(final UUID taImId) {
     return this.flowAssignmentRepository.findByTaImTaImId(taImId).stream()
         .map(a -> {
@@ -263,7 +279,7 @@ public class RegistrationFlowService {
    * @param taImId the intermediate ID
    * @return list of assignment summaries
    */
-  @Transactional
+  @Transactional(readOnly = true)
   public List<IntermediateFlowAssignmentDto> getFlowAssignmentsForIntermediate(final UUID taImId) {
     return this.flowAssignmentRepository.findByTaImTaImId(taImId).stream()
         .map(a -> {

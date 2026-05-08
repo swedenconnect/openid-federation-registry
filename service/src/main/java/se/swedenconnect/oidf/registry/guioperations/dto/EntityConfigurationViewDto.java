@@ -13,15 +13,24 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.registry.registrationflow.process;
+package se.swedenconnect.oidf.registry.guioperations.dto;
+
+import lombok.Data;
+
+import java.util.Map;
 
 /**
- * Overall status of a completed pipeline run.
+ * DTO carrying the decoded header and payload of an entity configuration JWT.
+ * The signature is intentionally omitted.
  *
  * @author Per Fredrik Plars
  */
-public enum ProcessStatus {
-  COMPLETED,
-  SKIPPED,
-  FAILED
+@Data
+public class EntityConfigurationViewDto {
+
+  /** JWT header fields (alg, kid, typ, …). */
+  private Map<String, Object> header;
+
+  /** JWT payload / claims (sub, iss, iat, exp, jwks, metadata, …). */
+  private Map<String, Object> payload;
 }
