@@ -27,12 +27,13 @@ public final class ContextKey {
 
   public static final String ENTITY_CONFIGURATION_METADATA = "entity_configuration_metadata";
   public static final String ENTITY_CONFIGURATION_JWKS = "entity_configuration_jwks";
+  public static final String REGISTRATION_ID = "registration_id";
   public static final String ENTITY_ID = "entityId";
   public static final String METADATA_POLICY = "metadata_policy";
   public static final String REGISTRATION_POLICIES = "registration_policies";
   public static final String METADATA_POLICY_TEMPLATE = "metadata_policy_template";
   public static final String TAIM_ID = "taimId";
-  public static final String REGISTRATION_FLOW_ID = "registrationFlowId";
+  public static final String JOIN_ID = "joinId";
   public static final String TRUSTMARKS_REQUESTED = "trustmarksRequested";
 
   private ContextKey() {

@@ -15,7 +15,6 @@
  */
 package se.swedenconnect.oidf.registry.infrastructure.audit;
 
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import se.swedenconnect.oidf.registry.entity.dto.FederationEntityDto;
 import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
@@ -29,7 +28,6 @@ import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.net.URI;
-import java.net.URL;
 import java.util.UUID;
 
 /**

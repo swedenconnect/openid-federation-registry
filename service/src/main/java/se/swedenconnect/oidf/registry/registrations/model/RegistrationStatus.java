@@ -22,8 +22,16 @@ package se.swedenconnect.oidf.registry.registrations.model;
  */
 public enum RegistrationStatus {
 
+  /**
+   * Registration is started
+   */
+  STARTED,
+
   /** Awaiting review by an operator. */
-  PENDING,
+  PENDING_APPROVAL,
+
+  /** REgistration has failed
+   FAILED,
 
   /** Approved — subordinate statement has been created. */
   APPROVED,

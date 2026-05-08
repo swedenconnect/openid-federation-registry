@@ -77,16 +77,18 @@ public class OidfServiceIntegration {
     final UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUri(entityId.toURI())
         .path("/.well-known/openid-federation");
     final URI uri = uriBuilder.build().toUri();
-    return this.callEntityStatement(uri);
+    return this.callEntityStatementAndVerifyJwks(uri);
   }
 
   /**
    * Configures and retrieves an entity statement for the provided EntityID.
+   * Validate that JWKS exists and then check that the signature matches with the included keys.
+   * if not a IllegalArgumentException is thrown.
    *
    * @param uri URI for the entity statement.
    * @return an EntityStatement object containing the configured entity statement.
    */
-  public EntityStatement callEntityStatement(final URI uri) {
+  public EntityStatement callEntityStatementAndVerifyJwks(final URI uri) {
     this.auditLogger.resolveJwks(uri);
     log.debug("Loading entityStatement from: {}", uri);
     try {

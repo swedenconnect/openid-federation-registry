@@ -15,21 +15,14 @@
  */
 package se.swedenconnect.oidf.registry.registrations.service;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.registrationflow.RegistrationFlowService;
-import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
 import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
-import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
-import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
-import se.swedenconnect.oidf.registry.registrationflow.process.ProcessEngine;
-import se.swedenconnect.oidf.registry.registrationflow.process.ProcessFlow;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrations.dto.FedRegStatus;
@@ -40,12 +33,8 @@ import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestStatu
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
-import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
-import se.swedenconnect.oidf.registry.subordinate.service.SubordinateService;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -59,9 +48,7 @@ public class RegistrationServiceImpl implements RegistrationService {
   private final FlowAssignmentRepository flowAssignmentRepository;
   private final RegistrationRepository registrationRepository;
   private final RegistrationFlowService registrationFlowService;
-  private final ProcessEngine processEngine;
-  private final SubordinateService subordinateService;
-  private final JsonMapper objectMapper;
+
 
   /**
    * Constructs a new RegistrationServiceImpl.
@@ -69,33 +56,27 @@ public class RegistrationServiceImpl implements RegistrationService {
    * @param flowAssignmentRepository repository for flow assignments
    * @param registrationRepository repository for registration records
    * @param registrationFlowService service for managing registration flows
-   * @param processEngine engine that executes the pipeline
-   * @param subordinateService service for subordinate statement management
-   * @param objectMapper JSON mapper
    */
   public RegistrationServiceImpl(final FlowAssignmentRepository flowAssignmentRepository,
       final RegistrationRepository registrationRepository,
-      final RegistrationFlowService registrationFlowService,
-      final ProcessEngine processEngine,
-      final SubordinateService subordinateService,
-      final JsonMapper objectMapper) {
+      final RegistrationFlowService registrationFlowService) {
     this.flowAssignmentRepository = flowAssignmentRepository;
     this.registrationRepository = registrationRepository;
     this.registrationFlowService = registrationFlowService;
-    this.processEngine = processEngine;
-    this.subordinateService = subordinateService;
-    this.objectMapper = objectMapper;
   }
 
 
 
   @Override
   @Transactional
-  public RegistrationRequestStatusDto createRegistrationRequestWithId(final OrganizationRecord organizationRecord,
+  public RegistrationRequestStatusDto createRegistrationRequest(final OrganizationRecord organizationRecord,
       final UUID joinId, final RegistrationRequestDto request) {
-
-    this.processEngine.register(request);
-    return  new RegistrationRequestStatusDto();
+    request.setJoinId(joinId);
+    final ProcessReport report = this.registrationFlowService.executeRegistrationFlow(organizationRecord, request);
+    final RegistrationRequestStatusDto dto = new RegistrationRequestStatusDto();
+    dto.setEntityId(request.getEntityId());
+    dto.setStatus(report.status().toString());
+    return dto;
   }
 
   @Override
@@ -148,14 +129,8 @@ public class RegistrationServiceImpl implements RegistrationService {
     dto.setEntityId(reg.getEntityId());
     dto.setIntermediateEntityId(reg.getFlowAssignment().getTaIm().getEntity().getSubject());
     dto.setRegistrationId(reg.getRegistrationId());
-    dto.setStatusFedreg(switch (reg.getStatus()) {
-      case APPROVED -> FedRegStatus.APPROVED;
-      case PENDING -> FedRegStatus.PENDING;
-      case REJECTED -> FedRegStatus.REJECTED;
-    });
-    if (reg.getRejectionReason() != null) {
-      dto.setRejectionReason(reg.getRejectionReason().toString());
-    }
+    dto.setStatusFedreg(FedRegStatus.valueOf(reg.getStatus().toString()));
+    dto.setRejectionReason(reg.getRejectionReason());
     return dto;
   }
 }

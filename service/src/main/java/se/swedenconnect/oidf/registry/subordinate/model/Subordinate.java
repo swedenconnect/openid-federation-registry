@@ -34,6 +34,7 @@ import org.hibernate.type.SqlTypes;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.MapConverter;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
+
 import java.util.Map;
 import java.util.UUID;
 

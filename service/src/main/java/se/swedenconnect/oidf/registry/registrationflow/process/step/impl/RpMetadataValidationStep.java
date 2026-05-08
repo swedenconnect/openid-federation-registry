@@ -30,11 +30,9 @@ import java.util.UUID;
 @Component
 public class RpMetadataValidationStep extends NoConfigStepAdapter {
 
-
-
   @Override
   public StepResult execute(final ProcessContext ctx, final StepConfig config) {
-    return null;
+    return StepResult.success();
   }
 
   @Override

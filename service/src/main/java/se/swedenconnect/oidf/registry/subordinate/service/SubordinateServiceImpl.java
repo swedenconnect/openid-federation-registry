@@ -34,6 +34,7 @@ import se.swedenconnect.oidf.registry.subordinate.mapper.DtoToSubordinateMapper;
 import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateToDtoMapper;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
+
 import java.util.Optional;
 import java.util.UUID;
 

@@ -33,7 +33,7 @@ import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.module.model.ModuleType;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
-import java.util.ArrayList;
+
 import java.util.List;
 import java.util.UUID;
 

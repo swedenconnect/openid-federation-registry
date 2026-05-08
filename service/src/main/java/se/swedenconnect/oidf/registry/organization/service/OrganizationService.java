@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
-import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
 import se.swedenconnect.oidf.registry.organization.repository.OrganizationRepository;
 
 import java.util.Optional;

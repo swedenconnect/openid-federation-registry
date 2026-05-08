@@ -21,14 +21,19 @@ package se.swedenconnect.oidf.registry.registrations.dto;
  * @author Per Fredrik Plars
  */
 public enum FedRegStatus {
+  STARTED,
 
-  /** Approved and active in the federation. */
+  /** Awaiting review by an operator. */
+  PENDING_APPROVAL,
+
+  /**
+   * REgistration has failed FAILED,
+   *
+   * /** Approved — subordinate statement has been created.
+   */
   APPROVED,
 
-  /** Application is under review. */
-  PENDING,
-
-  /** Application was REJECTED. */
+  /** Rejected by an operator. Automatically deleted after 30 days. */
   REJECTED
 
 }

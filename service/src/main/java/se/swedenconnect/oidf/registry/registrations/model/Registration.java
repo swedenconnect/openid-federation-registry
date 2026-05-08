@@ -86,5 +86,5 @@ public class Registration extends BaseEntity {
   private String reviewedBy;
 
   @Column(name = "rejection_reason", columnDefinition = "TEXT")
-  private RegistrationStatus rejectionReason;
+  private String rejectionReason;
 }

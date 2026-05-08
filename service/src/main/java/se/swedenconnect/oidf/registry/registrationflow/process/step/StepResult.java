@@ -37,6 +37,16 @@ public record StepResult(StepStatus status, String message, List<StepIssue> issu
   }
 
   /**
+   * Create a success result with a statusmessage
+   *
+   * @param statusMessage Status message
+   * @return successful StepResult
+   */
+  public static StepResult success(final String statusMessage) {
+    return new StepResult(StepStatus.SUCCESS, statusMessage, List.of());
+  }
+
+  /**
    * Creates a warning result.
    *
    * @param message human-readable summary

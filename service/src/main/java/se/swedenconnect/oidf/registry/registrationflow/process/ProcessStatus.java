@@ -22,5 +22,6 @@ package se.swedenconnect.oidf.registry.registrationflow.process;
  */
 public enum ProcessStatus {
   COMPLETED,
-  SKIPPED
+  SKIPPED,
+  FAILED
 }

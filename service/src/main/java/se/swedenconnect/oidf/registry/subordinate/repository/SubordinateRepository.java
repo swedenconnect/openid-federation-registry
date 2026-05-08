@@ -23,6 +23,7 @@ import org.springframework.stereotype.Repository;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -44,5 +45,15 @@ public interface SubordinateRepository extends JpaRepository<Subordinate, UUID> 
       + "WHERE o.orgNumber = :orgNumber AND s.entityidentifier = :entityidentifier ")
   List<Subordinate> findByOrgNumberAndEntityidentifier(
       @Param("orgNumber") String orgNumber, @Param("entityidentifier") String entityidentifier);
+
+  /**
+   * Finds subordinate by entityidentifier
+   *
+   * @param entityidentifier entityidentifier
+   * @param taImId taImId
+   * @return subordinate
+   */
+  Optional<Subordinate> findByEntityidentifierAndTaIm_TaImId(@Param("entityidentifier") String entityidentifier,
+      @Param("taImId") UUID taImId);
 
 }

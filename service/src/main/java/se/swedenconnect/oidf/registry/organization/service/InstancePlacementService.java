@@ -17,9 +17,7 @@
 package se.swedenconnect.oidf.registry.organization.service;
 
 import org.springframework.stereotype.Service;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationInformation;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
-import se.swedenconnect.oidf.registry.infrastructure.config.RegistryConfig;
 import se.swedenconnect.oidf.registry.infrastructure.config.RegistryProperties;
 import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
@@ -50,9 +48,9 @@ public class InstancePlacementService {
   }
 
   /**
-   * Finds the instance to be used for this organization
+   * Finds the instance to be used for this organization. It matches on organization_number or functiongroup
    * @param organizationRecord data to be used when matching data.
-   * @return Instance if found
+   * @return Instance object if found, else empty Optional
    */
   public Optional<Instance> resolveInstance(final OrganizationRecord organizationRecord) {
     if (this.registryProperties.instances().isEmpty()) {

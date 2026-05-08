@@ -78,7 +78,7 @@ public class FederationRegistrationController {
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
       @RequestBody final RegistrationRequestDto body) {
     return ResponseEntity.status(201)
-        .body(this.registrationService.createRegistrationRequestWithId(organizationRecord, joinId, body));
+        .body(this.registrationService.createRegistrationRequest(organizationRecord, joinId, body));
   }
 
   /**
