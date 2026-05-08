@@ -66,4 +66,18 @@ public class ProcessContext {
     return this.<T>get(key)
         .orElseThrow(() -> new MissingContextValueException(key));
   }
+
+  /**
+   * Returns the value associated with the given key, cast to the given type.
+   *
+   * @param <T> value type
+   * @param key context key
+   * @param type the expected type class
+   * @return the value
+   * @throws MissingContextValueException if the key is not present
+   */
+  public <T extends Serializable> T getRequired(final String key, final Class<T> type) {
+    return this.<T>get(key)
+        .orElseThrow(() -> new MissingContextValueException(key));
+  }
 }

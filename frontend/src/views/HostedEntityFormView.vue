@@ -35,16 +35,24 @@
       </v-card-title>
       <v-card-text>
         <v-form ref="form" @submit.prevent="saveEntity">
-          <v-text-field
-              v-model="entityIdentifier"
-              label="Entity Identifier"
-              :rules="[rules.required]"
-              :disabled="saving"
-              required
-              hint="The entity identifier (entity ID)"
-              persistent-hint
-              class="mb-4"
-          ></v-text-field>
+
+          <div class="d-flex align-start gap-2 mb-4">
+            <v-text-field
+                v-model="entityIdentifier"
+                label="Entity Identifier"
+                :rules="[rules.required]"
+                :disabled="saving"
+                required
+                hint="The entity identifier (entity ID)"
+                persistent-hint
+                class="flex-grow-1"
+            ></v-text-field>
+            <EntityConfigurationViewer
+                v-if="isEdit && entityIdentifier"
+                :entity-id="entityIdentifier"
+                class="mt-1"
+            />
+          </div>
 
           <v-textarea
               v-model="metadata"
@@ -89,6 +97,7 @@
         </v-form>
       </v-card-text>
     </v-card>
+
   </div>
 </template>
 
@@ -98,6 +107,7 @@ import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import TrustmarkSourcesField from '@/components/TrustmarkSourcesField.vue';
+import EntityConfigurationViewer from '@/components/EntityConfigurationViewer.vue';
 import {hostedEntitiesPath, hostedEntityPath} from '@/config/path';
 
 const route = useRoute();
@@ -188,3 +198,9 @@ onMounted(() => {
   }
 });
 </script>
+
+<style scoped>
+.gap-2 {
+  gap: 8px;
+}
+</style>

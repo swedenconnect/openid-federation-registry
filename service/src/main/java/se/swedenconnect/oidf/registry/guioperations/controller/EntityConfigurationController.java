@@ -21,6 +21,7 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,6 +32,7 @@ import org.springframework.web.client.ResourceAccessException;
 import se.swedenconnect.oidf.registry.guioperations.OidfService;
 import se.swedenconnect.oidf.registry.guioperations.OidfServiceIntegration;
 import se.swedenconnect.oidf.registry.guioperations.dto.EntityConfigurationPingDto;
+import se.swedenconnect.oidf.registry.guioperations.dto.EntityConfigurationViewDto;
 import se.swedenconnect.oidf.registry.guioperations.dto.JwksLoadedDto;
 
 import java.util.List;
@@ -72,7 +74,7 @@ public class EntityConfigurationController {
       @RequestBody final String entityId) {
     log.debug("Start loading jwks from entitystatement {}", entityId);
     try {
-      final List<JwksLoadedDto> jwks = this.oidfService.resolveEntityStatement(EntityID.parse(entityId));
+      final List<JwksLoadedDto> jwks = this.oidfService.loadJwks(EntityID.parse(entityId));
 
       if (jwks.isEmpty()) {
         throw new IllegalArgumentException("There is no jwks for entity id " + entityId);
@@ -98,47 +100,38 @@ public class EntityConfigurationController {
   }
 
   /**
-   * Endpoint that controls if entityconfiguration is accessible
+   * Fetches an entity configuration and returns its decoded header and payload as JSON.
+   * The JWT signature is intentionally omitted.
    *
-   * @param entityId EntityId that will be used to resolve JWKS
-   * @return EntityConfigurationPingDto That contains OK or an error description
+   * @param entityId EntityId whose entity configuration will be fetched
+   * @return decoded header and payload, or 400 on error
    */
-  @PostMapping(path = "/ping")
-  public EntityConfigurationPingDto pingEntityConfiguration(
+  @PostMapping(path = "/view")
+  public ResponseEntity<EntityConfigurationViewDto> viewEntityConfiguration(
       @RequestBody final String entityId) {
-    log.debug("Start loading entity configuration for entityid: {}", entityId);
-    final EntityConfigurationPingDto response = new EntityConfigurationPingDto();
+    log.debug("Fetching entity configuration for view: {}", entityId);
     try {
-      final EntityStatement entityConfiguration =
+      final EntityStatement statement =
           this.oidfServiceIntegration.entityConfigurationOnStandardLocation(EntityID.parse(entityId));
-      final EntityStatementClaimsSet claimsSet = entityConfiguration.getClaimsSet();
-      if (claimsSet == null) {
-        throw new IllegalArgumentException("Entity configuration is missing claims");
-      }
-      response.setEntityConfigurationAccessible(true);
-      return response;
-    }
-    catch (final ParseException e) {
-      response.setErrorMessage("Invalid entity ID: " + entityId);
-      response.setEntityConfigurationAccessible(false);
-      return response;
+      final com.nimbusds.jwt.SignedJWT signedJWT = statement.getSignedStatement();
 
+      final EntityConfigurationViewDto dto = new EntityConfigurationViewDto();
+      dto.setHeader(signedJWT.getHeader().toJSONObject());
+      dto.setPayload(signedJWT.getPayload().toJSONObject());
+      return ResponseEntity.ok(dto);
+    }
+    catch (final com.nimbusds.oauth2.sdk.ParseException e) {
+      log.info("Invalid entity ID for view: {}", entityId);
+      return ResponseEntity.badRequest().build();
     }
     catch (final HttpClientErrorException | HttpServerErrorException e) {
-      log.info("Error loading jwks from entitystatement {}", entityId, e);
-
-      response.setErrorMessage("Unable to get entity configuration, "
-          + "target server gave httpStatus:" + e.getStatusCode());
-      response.setEntityConfigurationAccessible(false);
-      return response;
+      log.info("HTTP error fetching entity configuration for view {}: {}", entityId, e.getStatusCode());
+      return ResponseEntity.badRequest().build();
     }
-    catch (final SecurityException | ResourceAccessException e) {
-      log.info("Error loading entity configuration {}", entityId, e);
-      response.setErrorMessage("Unable to get entity configuration.");
-      response.setEntityConfigurationAccessible(false);
-      return response;
+    catch (final SecurityException | ResourceAccessException | IllegalArgumentException | IllegalStateException e) {
+      log.info("Error fetching entity configuration for view {}", entityId, e);
+      return ResponseEntity.badRequest().build();
     }
-
   }
 
 }

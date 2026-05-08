@@ -16,9 +16,8 @@
 
 package se.swedenconnect.oidf.registry.infrastructure.validation;
 
-
+import com.nimbusds.jose.jwk.JWKSet;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
-import se.swedenconnect.oidf.registry.validation.PropertyValidationFailException;
 
 import java.util.List;
 import java.util.Map;
@@ -42,12 +41,28 @@ public final class CleanInput {
     return dto;
   }
 
+
   /**
-   * Remove attributes exp,iat,nbf from keys in jwks
+   * Removes the exp, iat, and nbf attributes from all keys in the given JWKS.
    *
-   * @param jwks Jwks strukture
-   * @return Cleaned verson
+   * @param jwks the JWKS to clean
+   * @return a new JWKS with those attributes removed
    */
+  public static JWKSet removeExpIatNbfFromJwks(final JWKSet jwks) {
+    try {
+      return JWKSet.parse(CleanInput.removeExpIatNbfFromJwks(jwks.toJSONObject()));
+    }
+    catch (final Exception e) {
+      throw null;
+    }
+
+  }
+    /**
+     * Remove attributes exp,iat,nbf from keys in jwks
+     *
+     * @param jwks Jwks strukture
+     * @return Cleaned verson
+     */
   public static Map<String, Object> removeExpIatNbfFromJwks(final Map<String, Object> jwks) {
     if(jwks == null) {
       return jwks;

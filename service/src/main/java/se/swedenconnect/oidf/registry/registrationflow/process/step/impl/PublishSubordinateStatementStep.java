@@ -15,22 +15,23 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow.process.step.impl;
 
+import com.nimbusds.jose.jwk.JWKSet;
+import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONObject;
 import org.springframework.stereotype.Component;
-import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
+import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
-import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
-import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
-import tools.jackson.databind.json.JsonMapper;
+import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
+import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -46,72 +47,59 @@ import java.util.UUID;
  * @author Per Fredrik Plars
  */
 @Component
+@Slf4j
 public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
 
   private final RegistrationRepository registrationRepository;
-  private final FlowAssignmentRepository flowAssignmentRepository;
-  private final JsonMapper objectMapper;
-
+  private final SubordinateRepository subordinateRepository;
   /**
    * Constructs a new ManualValidationStep.
    *
    * @param registrationRepository repository for persisting registrations
-   * @param flowAssignmentRepository repository for flow assignments
-   * @param objectMapper JSON mapper
+   * @param subordinateRepository subordinate
    */
   public PublishSubordinateStatementStep(final RegistrationRepository registrationRepository,
-      final FlowAssignmentRepository flowAssignmentRepository,
-      final JsonMapper objectMapper) {
+      final SubordinateRepository subordinateRepository) {
     this.registrationRepository = registrationRepository;
-    this.flowAssignmentRepository = flowAssignmentRepository;
-    this.objectMapper = objectMapper;
+    this.subordinateRepository = subordinateRepository;
   }
 
   @Override
+  @Transactional
   public StepResult execute(final ProcessContext ctx, final StepConfig config) {
     final String entityId = ctx.getRequired(ContextKey.ENTITY_ID);
-    final UUID taimId = ctx.getRequired(ContextKey.TAIM_ID);
-    final UUID flowId = ctx.getRequired(ContextKey.REGISTRATION_FLOW_ID);
+    final UUID registrationId = ctx.getRequired(ContextKey.REGISTRATION_ID);
+    final Optional<JSONObject> metadataPolicy = ctx.get(ContextKey.METADATA_POLICY);
+    final JWKSet ecJwks = ctx.getRequired(ContextKey.ENTITY_CONFIGURATION_JWKS, JWKSet.class);
 
-    final Optional<Registration> approved =
-        this.registrationRepository.findByEntityIdAndStatus(entityId, RegistrationStatus.APPROVED);
-    if (approved.isPresent()) {
-      return StepResult.failure("Entity %s is already registered (APPROVED)".formatted(entityId), List.of());
+    final Registration registration = this.registrationRepository.findById(registrationId)
+        .orElseThrow();
+
+    if(config.getBoolean("manualreview")) {
+      registration.setStatus(RegistrationStatus.PENDING_APPROVAL);
+      this.registrationRepository.save(registration);
+      return StepResult.success("Registration is pending approval");
     }
 
-    final String jwks = ctx.<String> get(ContextKey.ENTITY_CONFIGURATION_JWKS).orElse(null);
-    final String metadata = ctx.<String> get(ContextKey.ENTITY_CONFIGURATION_METADATA).orElse(null);
-    final String metadataPolicy = ctx.<String> get(ContextKey.METADATA_POLICY).orElse(null);
-    final String trustmarks = ctx.<String> get(ContextKey.TRUSTMARKS_REQUESTED).orElse(null);
+    final Subordinate subordinate =
+        this.subordinateRepository.findByEntityidentifierAndTaIm_TaImId(entityId,
+            registration.getFlowAssignment().getTaIm().getTaImId()).or(() -> {
+          final Subordinate newSubordinate = new Subordinate();
+          newSubordinate.setSubordinateId(UUID.randomUUID());
+          newSubordinate.setTaIm(registration.getFlowAssignment().getTaIm());
+          newSubordinate.setEntityidentifier(entityId);
+          metadataPolicy.ifPresent(newSubordinate::setMetadataPolicy);
+          return Optional.of(newSubordinate);
+        }).orElseThrow();
 
-    final Optional<Registration> existing =
-        this.registrationRepository.findByEntityIdAndStatus(entityId, RegistrationStatus.PENDING);
 
-    if (existing.isPresent()) {
-      final Registration reg = existing.get();
-      //reg.setJwks(dockjwks);
-      //reg.setMetadataPolicy(metadataPolicy);
-      //reg.setTrustmarksRequested(trustmarks);
-      this.registrationRepository.save(reg);
-      return StepResult.success();
-    }
+      metadataPolicy.ifPresent(subordinate::setMetadataPolicy);
+      subordinate.setJwks(ecJwks.toJSONObject());
+      this.subordinateRepository.save(subordinate);
 
-    final FlowAssignment assignment = this.flowAssignmentRepository
-        .findByTaImTaImIdAndRegistrationFlowFlowId(taimId, flowId)
-        .orElseThrow(() -> new IllegalStateException(
-            "FlowAssignment not found for taim=%s flow=%s".formatted(taimId, flowId)));
-
-    final Registration registration = new Registration();
-    registration.setRegistrationId(UUID.randomUUID());
-    registration.setFlowAssignment(assignment);
-    registration.setEntityId(entityId);
-    //registration.setJwks(jwks);
-    //registration.setMetadataPolicy(metadataPolicy);
-    //registration.setTrustmarksRequested(trustmarks);
-    registration.setStatus(RegistrationStatus.PENDING);
-
-    this.registrationRepository.save(registration);
-    return StepResult.success();
+      registration.setStatus(RegistrationStatus.APPROVED);
+      this.registrationRepository.save(registration);
+      return StepResult.success("Registration is approved. And published");
   }
 
   @Override

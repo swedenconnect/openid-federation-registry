@@ -28,6 +28,8 @@ import TrustmarkSubjectsListView from '../views/TrustmarkSubjectsListView.vue';
 import TrustmarkSubjectFormView from '../views/TrustmarkSubjectFormView.vue';
 import RegistrationFlowsListView from '../views/RegistrationFlowsListView.vue';
 import RegistrationFlowFormView from '../views/RegistrationFlowFormView.vue';
+import RegistrationsListView from '../views/RegistrationsListView.vue';
+import RegistrationDetailView from '../views/RegistrationDetailView.vue';
 import {useAuthorizationStatusStore} from '@/authorization/stores/authorizationStatusStore';
 
 let base = import.meta.env.BASE_URL;
@@ -132,6 +134,16 @@ const router = createRouter({
             path: '/registration-flows/:id/edit',
             name: 'registration-flow-edit',
             component: RegistrationFlowFormView,
+        },
+        {
+            path: '/registrations',
+            name: 'registrations-list',
+            component: RegistrationsListView,
+        },
+        {
+            path: '/registrations/:id',
+            name: 'registration-detail',
+            component: RegistrationDetailView,
         },
     ],
 });

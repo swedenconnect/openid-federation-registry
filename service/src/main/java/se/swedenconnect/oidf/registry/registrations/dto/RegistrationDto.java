@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -79,4 +80,19 @@ public class RegistrationDto {
       accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private String rejectionReason;
+
+  @Schema(description = "JWKS keys provided during registration",
+      accessMode = Schema.AccessMode.READ_ONLY)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  private Map<String, Object> jwks;
+
+  @Schema(description = "Metadata policy provided during registration",
+      accessMode = Schema.AccessMode.READ_ONLY)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  private Map<String, Object> metadataPolicy;
+
+  @Schema(description = "Trustmarks requested during registration",
+      accessMode = Schema.AccessMode.READ_ONLY)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  private List<String> trustmarksRequested;
 }
