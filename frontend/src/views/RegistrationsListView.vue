@@ -18,6 +18,13 @@
   <div>
     <div class="d-flex justify-space-between align-center mb-4">
       <h2>Registrations</h2>
+      <v-btn
+          id="btn-trigger-registration"
+          color="primary"
+          @click="router.push({ name: 'registration-trigger' })"
+      >
+        Trigger Registration
+      </v-btn>
     </div>
 
     <v-text-field
@@ -57,7 +64,7 @@
               class="clickable-row"
               @click="openDetail(reg.registrationId)"
           >
-            <td>{{ reg.entityId }}</td>
+            <td>{{ reg.entityIdentifyer }}</td>
             <td>{{ reg.intermediateEntityId }}</td>
             <td>
               <v-chip :color="statusColor(reg.statusFedreg)" size="small" label>
@@ -99,7 +106,7 @@ const filteredRegistrations = computed(() => {
   const q = (search.value ?? '').toLowerCase();
   return registrations.value
       .filter(r => !q
-          || r.entityId?.toLowerCase().includes(q)
+          || r.entityIdentifyer?.toLowerCase().includes(q)
           || r.intermediateEntityId?.toLowerCase().includes(q))
       .sort((a, b) => (STATUS_ORDER[a.statusFedreg] ?? 99) - (STATUS_ORDER[b.statusFedreg] ?? 99));
 });

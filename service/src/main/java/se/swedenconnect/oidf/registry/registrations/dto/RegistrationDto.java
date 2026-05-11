@@ -94,5 +94,5 @@ public class RegistrationDto {
   @Schema(description = "Trustmarks requested during registration",
       accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private List<String> trustmarksRequested;
+  private List<TrustmarkDto> trustmarksRequested;
 }

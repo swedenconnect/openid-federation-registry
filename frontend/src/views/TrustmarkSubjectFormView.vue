@@ -209,6 +209,8 @@ onMounted(() => {
   errorStore.clearError();
   if (isEdit.value) {
     loadSubject();
+  } else if (route.query.subject) {
+    subject.value = route.query.subject;
   }
 });
 </script>

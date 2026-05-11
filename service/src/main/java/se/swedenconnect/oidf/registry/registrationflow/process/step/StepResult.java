@@ -15,6 +15,9 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow.process.step;
 
+import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,6 +29,18 @@ import java.util.List;
  * @author Per Fredrik Plars
  */
 public record StepResult(StepStatus status, String message, List<StepIssue> issues) {
+  /**
+   * Merge one stepResult with the other
+   * @param appendResult
+   * @return
+   */
+  public StepResult merge(final StepResult appendResult) {
+    final StepStatus s = this.status;
+    final String message = this.message+ ", " +appendResult.message;
+    final List<StepIssue> issues = new ArrayList<>(this.issues);
+    issues.addAll(appendResult.issues);
+    return new StepResult(this.status, message, issues);
+  }
 
   /**
    * Creates a successful result with no issues.

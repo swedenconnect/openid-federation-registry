@@ -17,24 +17,26 @@
 <template>
   <div>
     <!-- Header -->
-    <div class="d-flex align-center mb-4 gap-4">
-      <v-btn
-          id="btn-back"
-          variant="text"
-          prepend-icon="mdi-arrow-left"
-          @click="router.push({name: 'registrations-list'})"
-      >
-        Back
-      </v-btn>
-      <h2 class="flex-grow-1">Registration Detail</h2>
-      <v-btn
-          v-if="registration && registration.statusFedreg === 'PENDING_APPROVAL'"
-          id="btn-reject"
-          color="error"
-          @click="rejectDialog = true"
-      >
-        Reject
-      </v-btn>
+    <div class="d-flex justify-space-between align-center mb-4">
+      <h2>Registration Detail</h2>
+      <div>
+        <v-btn
+            v-if="registration && registration.statusFedreg === 'PENDING_APPROVAL'"
+            id="btn-reject"
+            color="error"
+            class="mr-2"
+            @click="rejectDialog = true"
+        >
+          Reject
+        </v-btn>
+        <v-btn
+            id="btn-back"
+            color="grey"
+            @click="router.push({name: 'registrations-list'})"
+        >
+          Back
+        </v-btn>
+      </div>
     </div>
 
     <v-card v-if="loading">
@@ -63,7 +65,7 @@
               </tr>
               <tr>
                 <td class="font-weight-bold field-label">Entity ID</td>
-                <td class="text-mono">{{ registration.entityId }}</td>
+                <td class="text-mono">{{ registration.entityIdentifyer }}</td>
               </tr>
               <tr>
                 <td class="font-weight-bold field-label">Intermediate Entity ID</td>
@@ -100,51 +102,49 @@
                 <td class="font-weight-bold field-label">Hosted ID</td>
                 <td class="text-mono">{{ registration.hostedId }}</td>
               </tr>
-              <tr v-if="registration.trustmarksRequested && registration.trustmarksRequested.length">
-                <td class="font-weight-bold field-label">Trustmarks Requested</td>
-                <td>
-                  <div
-                      v-for="tm in registration.trustmarksRequested"
-                      :key="tm"
-                      class="text-mono text-body-2"
-                  >{{ tm }}</div>
-                </td>
-              </tr>
-              <tr v-if="registration.statusTrustmarks && registration.statusTrustmarks.length">
-                <td class="font-weight-bold field-label">Trustmark Status</td>
-                <td>
-                  <div
-                      v-for="ts in registration.statusTrustmarks"
-                      :key="ts.trustmarkId"
-                      class="text-body-2"
-                  >{{ ts.trustmarkId }}: {{ ts.status }}</div>
-                </td>
-              </tr>
             </tbody>
           </v-table>
         </v-card-text>
       </v-card>
 
-      <!-- Tabs: Entity Statement / Metadata Policy -->
+      <!-- Tabs -->
       <v-card>
         <v-tabs v-model="activeTab" color="primary">
-          <v-tab value="jwks">Entity Statement (JWKS)</v-tab>
+          <v-tab value="entityStatement">Entity Statement</v-tab>
           <v-tab value="metadataPolicy">Metadata Policy</v-tab>
+          <v-tab value="trustmarkRequests">Trustmark requests</v-tab>
         </v-tabs>
 
         <v-divider></v-divider>
 
         <v-window v-model="activeTab">
-          <v-window-item value="jwks">
+
+          <!-- Entity Statement tab -->
+          <v-window-item value="entityStatement">
             <v-card-text>
-              <pre
-                  v-if="registration.jwks"
-                  class="json-block"
-              >{{ JSON.stringify(registration.jwks, null, 2) }}</pre>
-              <p v-else class="text-grey text-center py-6">No JWKS data available.</p>
+              <div v-if="entityStatementLoading" class="text-center py-12">
+                <v-progress-circular indeterminate color="primary" size="48"></v-progress-circular>
+                <p class="mt-4 text-grey">Fetching entity configuration…</p>
+              </div>
+              <v-alert
+                  v-else-if="entityStatementError"
+                  type="error"
+                  variant="tonal"
+                  class="mt-2"
+              >
+                {{ entityStatementError }}
+              </v-alert>
+              <template v-else-if="entityStatement">
+                <p class="text-overline text-grey mb-1 mt-2">Header</p>
+                <pre class="json-block mb-6">{{ JSON.stringify(entityStatement.header, null, 2) }}</pre>
+                <p class="text-overline text-grey mb-1">Payload</p>
+                <pre class="json-block">{{ JSON.stringify(entityStatement.payload, null, 2) }}</pre>
+              </template>
+              <p v-else class="text-grey text-center py-6">No entity configuration available.</p>
             </v-card-text>
           </v-window-item>
 
+          <!-- Metadata Policy tab -->
           <v-window-item value="metadataPolicy">
             <v-card-text>
               <pre
@@ -154,6 +154,65 @@
               <p v-else class="text-grey text-center py-6">No metadata policy available.</p>
             </v-card-text>
           </v-window-item>
+
+          <!-- Trustmark requests tab -->
+          <v-window-item value="trustmarkRequests">
+            <v-card-text>
+              <div v-if="trustmarksTabLoading" class="text-center py-12">
+                <v-progress-circular indeterminate color="primary" size="48"></v-progress-circular>
+                <p class="mt-4 text-grey">Loading trustmark data…</p>
+              </div>
+              <template v-else-if="registration.trustmarksRequested?.length">
+                <v-table density="compact">
+                  <thead>
+                    <tr>
+                      <th class="text-left">Trustmark type</th>
+                      <th class="text-left">Status</th>
+                      <th class="text-left">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="item in trustmarkStatuses" :key="item.type">
+                      <td class="text-mono text-body-2">{{ item.type }}</td>
+                      <td>
+                        <v-chip
+                            v-if="item.status === 'enrolled'"
+                            color="success"
+                            size="small"
+                            label
+                        >Enrolled</v-chip>
+                        <v-chip
+                            v-else-if="item.status === 'not_subject'"
+                            color="warning"
+                            size="small"
+                            label
+                        >Not yet enrolled</v-chip>
+                        <v-chip
+                            v-else
+                            color="default"
+                            size="small"
+                            label
+                        >Not in organization</v-chip>
+                      </td>
+                      <td>
+                        <v-btn
+                            v-if="item.status === 'not_subject' && item.addSubjectLink"
+                            color="primary"
+                            variant="text"
+                            size="small"
+                            @click="router.push(item.addSubjectLink)"
+                        >
+                          Add as subject
+                        </v-btn>
+                      </td>
+                    </tr>
+                  </tbody>
+                </v-table>
+              </template>
+              <p v-else class="text-grey text-center py-6">No trustmarks requested.</p>
+            </v-card-text>
+          </v-window-item>
+
         </v-window>
       </v-card>
     </template>
@@ -165,7 +224,7 @@
         <v-card-text>
           <p class="mb-3">
             You are about to reject the registration for
-            <strong>{{ registration?.entityId }}</strong>.
+            <strong>{{ registration?.entityIdentifyer }}</strong>.
           </p>
           <v-textarea
               v-model="rejectionReason"
@@ -204,11 +263,17 @@
 </template>
 
 <script setup>
-import {onMounted, ref} from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
-import {registrationAdminItemPath, registrationAdminRejectPath} from '@/config/path';
+import {
+  entityConfigurationViewPath,
+  modulesPath,
+  registrationAdminItemPath,
+  registrationAdminRejectPath,
+  trustmarksPath,
+} from '@/config/path';
 
 const route = useRoute();
 const router = useRouter();
@@ -218,11 +283,23 @@ const {requestGet, loading} = useRequest();
 const {requestPost, loading: rejecting, ok} = useRequest();
 
 const registration = ref(null);
-const activeTab = ref('jwks');
+const activeTab = ref('entityStatement');
 
 const rejectDialog = ref(false);
 const rejectionReason = ref('');
 const reasonError = ref(false);
+
+// Entity statement tab
+const entityStatement = ref(null);
+const entityStatementLoading = ref(false);
+const entityStatementError = ref(null);
+const entityStatementLoaded = ref(false);
+
+// Trustmark requests tab
+const allTrustmarks = ref([]);
+const trustmarkIssuersMap = ref({});
+const trustmarksTabLoading = ref(false);
+const trustmarksLoaded = ref(false);
 
 function statusColor(status) {
   const colors = {PENDING_APPROVAL: 'warning', APPROVED: 'success', REJECTED: 'error', STARTED: 'info'};
@@ -258,9 +335,91 @@ async function submitReject() {
   }
 }
 
+async function loadEntityStatement() {
+  if (entityStatementLoaded.value || !registration.value?.entityIdentifyer) return;
+  entityStatementLoading.value = true;
+  entityStatementError.value = null;
+  try {
+    const res = await fetch(entityConfigurationViewPath, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type': 'text/plain'},
+      body: registration.value.entityIdentifyer,
+    });
+    if (res.ok) {
+      entityStatement.value = await res.json();
+    } else {
+      entityStatementError.value = 'Could not fetch entity configuration. The entity may be unreachable.';
+    }
+  } catch {
+    entityStatementError.value = 'Could not fetch entity configuration. The entity may be unreachable.';
+  } finally {
+    entityStatementLoading.value = false;
+    entityStatementLoaded.value = true;
+  }
+}
+
+async function loadTrustmarkData() {
+  if (trustmarksLoaded.value) return;
+  trustmarksTabLoading.value = true;
+  try {
+    const [tmRes, modRes] = await Promise.all([
+      fetch(`${trustmarksPath}?includeSubjects=true`, {credentials: 'include'}),
+      fetch(`${modulesPath}?type=trustmarkissuer`, {credentials: 'include'}),
+    ]);
+    if (tmRes.ok) {
+      allTrustmarks.value = await tmRes.json();
+    }
+    if (modRes.ok) {
+      const modData = await modRes.json();
+      const map = {};
+      (modData.trustmarkIssuers ?? []).forEach(m => {
+        map[m.trustmarkIssuerId] = m.entityId;
+      });
+      trustmarkIssuersMap.value = map;
+    }
+  } catch {
+    // empty state handles this gracefully
+  } finally {
+    trustmarksTabLoading.value = false;
+    trustmarksLoaded.value = true;
+  }
+}
+
+const trustmarkStatuses = computed(() => {
+  if (!registration.value?.trustmarksRequested?.length) return [];
+  const allTypes = registration.value.trustmarksRequested.flatMap(tm => tm.trustmarkType ?? []);
+  return allTypes.map(requestedType => {
+    const match = allTrustmarks.value.find(tm => tm.trustmarkType === requestedType);
+    if (!match) {
+      return {type: requestedType, status: 'not_in_org'};
+    }
+    const isSubject = (match.trustmarkSubjects ?? []).some(
+        s => s.subject === registration.value.entityIdentifyer,
+    );
+    if (isSubject) {
+      return {type: requestedType, status: 'enrolled', trustmark: match};
+    }
+    const entityId = trustmarkIssuersMap.value[match.trustmarkissuerId];
+    const addSubjectLink = entityId
+        ? `/entities/${entityId}/modules/trustmarkissuer/trustmarks/${match.trustmarkId}/subjects/new?trustmarkIssuerId=${match.trustmarkissuerId}&subject=${encodeURIComponent(registration.value.entityIdentifyer)}`
+        : null;
+    return {type: requestedType, status: 'not_subject', trustmark: match, addSubjectLink};
+  });
+});
+
+watch(activeTab, (tab) => {
+  if (tab === 'trustmarkRequests' && !trustmarksLoaded.value) {
+    loadTrustmarkData();
+  }
+});
+
 async function loadRegistration() {
   errorStore.clearError();
   registration.value = await requestGet(registrationAdminItemPath(route.params.id));
+  if (registration.value) {
+    loadEntityStatement();
+  }
 }
 
 onMounted(() => {
@@ -269,10 +428,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.gap-4 {
-  gap: 16px;
-}
-
 .field-label {
   width: 220px;
   white-space: nowrap;

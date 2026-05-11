@@ -53,8 +53,44 @@
               auto-grow
               hint="Human-readable description of this flow's purpose"
               persistent-hint
-              class="mb-6"
+              class="mb-4"
           ></v-textarea>
+
+          <v-textarea
+              v-model="descriptionSv"
+              label="Description (Swedish)"
+              :disabled="saving"
+              :rows="2"
+              auto-grow
+              hint="Beskrivning av flödet på svenska"
+              persistent-hint
+              class="mb-4"
+          ></v-textarea>
+
+          <v-row class="mb-6">
+            <v-col cols="12" sm="6">
+              <v-select
+                  v-model="technology"
+                  :items="technologyOptions"
+                  label="Technology"
+                  :disabled="saving"
+                  clearable
+                  hint="Protocol technology for entities in this flow"
+                  persistent-hint
+              ></v-select>
+            </v-col>
+            <v-col cols="12" sm="6">
+              <v-combobox
+                  v-model="entityType"
+                  :items="entityTypeOptions"
+                  label="Entity type"
+                  :disabled="saving"
+                  clearable
+                  hint="Select from list or enter a custom EntityType value"
+                  persistent-hint
+              ></v-combobox>
+            </v-col>
+          </v-row>
 
           <!-- Step selector -->
           <div class="mb-2 text-subtitle-1 font-weight-medium">Pipeline Steps</div>
@@ -210,9 +246,22 @@ const form = ref(null);
 const saving = ref(false);
 const name = ref('');
 const description = ref('');
+const descriptionSv = ref('');
+const technology = ref(null);
+const entityType = ref(null);
 const availableSteps = ref([]);
 const selectedSteps = ref([]);
 const stepToAdd = ref(null);
+
+const technologyOptions = ['OIDC', 'SAML'];
+const entityTypeOptions = [
+  'openid_relying_party',
+  'openid_provider',
+  'oauth_authorization_server',
+  'oauth_client',
+  'oauth_resource',
+  'federation_entity',
+];
 
 const isEdit = computed(() => !!route.params.id);
 
@@ -265,6 +314,9 @@ async function loadFlow() {
   if (response) {
     name.value = response.name || '';
     description.value = response.description || '';
+    descriptionSv.value = response.descriptionSv || '';
+    technology.value = response.technology || null;
+    entityType.value = response.entityType || null;
     // Restore selected steps if the backend returns them
     if (Array.isArray(response.steps) && response.steps.length > 0) {
       selectedSteps.value = response.steps.map(s => ({
@@ -289,6 +341,9 @@ async function submitForm() {
     const payload = {
       name: name.value,
       description: description.value,
+      descriptionSv: descriptionSv.value || null,
+      technology: technology.value || null,
+      entityType: entityType.value || null,
       steps: selectedSteps.value.map(step => ({
         stepId: step.stepId,
         name: step.name,

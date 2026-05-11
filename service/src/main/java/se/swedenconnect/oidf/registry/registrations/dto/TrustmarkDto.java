@@ -15,30 +15,23 @@
  */
 package se.swedenconnect.oidf.registry.registrations.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
- * Represents a registration request visible to an operator.
+ * A requested trustmark included in a join application.
  *
  * @author Per Fredrik Plars
  */
 @Data
-@Schema(name = "RegistrationRequest")
-public class RegistrationRequestDto {
+@Schema(name = "Trustmark")
+public class TrustmarkDto {
 
-  @Schema(description = "JoinId - Id for the join flow to register on", accessMode = Schema.AccessMode.READ_ONLY)
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private UUID joinId;
+  @Schema(description = "Trustmark type identifier (URI)", example = "https://trust.example.com/tm/loa3")
+  private List<String> trustmarkType;
 
-  @Schema(description = "Entity identifier of the applicant", example = "https://example.com/entity")
-  private String entityIdentifyer;
-
-  @Schema(description = "Trustmarks requested in the application")
-  private List<TrustmarkDto> trustmarksRequested;
-
+  @Schema(description = "Entity identifier of the trustmark issuer", example = "https://issuer.example.com")
+  private String trustmarkIssuer;
 }

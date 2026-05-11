@@ -48,6 +48,11 @@ public class LoadEntityConfigurationStep extends NoConfigStepAdapter {
   }
 
   @Override
+  public boolean isPublic() {
+    return true;
+  }
+
+  @Override
   public String getDescription() {
     return "From a entityid entityconfiguration is loaded. Signature is validated";
   }

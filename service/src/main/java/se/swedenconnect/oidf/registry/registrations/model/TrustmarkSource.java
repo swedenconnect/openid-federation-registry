@@ -13,30 +13,19 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.registry.registrationflow.dto;
 
+package se.swedenconnect.oidf.registry.registrations.model;
+
+import java.io.Serializable;
 import java.util.List;
-import java.util.UUID;
 
 /**
- * Defines a complete execution flow.
+ * Representation of Trustmarks
  *
- * @param flowId unique flow identifier
- * @param name display name
- * @param description human-readable description
- * @param descriptionSv Swedish description
- * @param technology protocol technology (OIDC or SAML)
- * @param entityType entity type as defined in OpenID Federation
- * @param steps ordered list of step definitions
+ * @param trustMarkIssuer entity identifier of the trustmark issuer
+ * @param trustmarkType   list of trustmark type URIs issued by this issuer
  * @author Per Fredrik Plars
  */
-public record RegistrationFlowDto(
-    UUID flowId,
-    String name,
-    String description,
-    String descriptionSv,
-    Technology technology,
-    String entityType,
-    List<StepDto> steps
-) {
+public record TrustmarkSource(String trustMarkIssuer, List<String> trustmarkType) implements Serializable {
+
 }

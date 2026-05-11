@@ -42,13 +42,15 @@ import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessEngine;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessFlow;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
+import se.swedenconnect.oidf.registry.registrationflow.process.SerializableList;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.MissingContextValueException;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowRepository;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationMapper;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestDto;
+import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -114,11 +116,12 @@ public class RegistrationFlowService {
   public RegistrationFlowDto createRegistrationFlow(final OrganizationRecord organizationRecord,
       final RegistrationFlowDto registrationFlowDto, final UUID flowId) {
     ValidateDto.init(organizationRecord).validate(registrationFlowDto);
-    final UUID effectiveId = registrationFlowDto.flowId() != null ? registrationFlowDto.flowId() : flowId;
     final Organization org = this.resolveOrganization(organizationRecord);
-    final RegistrationFlowDto dtoWithId = new RegistrationFlowDto(effectiveId, registrationFlowDto.name(),
-        registrationFlowDto.description(), registrationFlowDto.steps());
-    final RegistrationFlow registrationFlow = Mapper.toModel(dtoWithId, effectiveId, org,
+    final RegistrationFlowDto dtoWithId = new RegistrationFlowDto(flowId, registrationFlowDto.name(),
+        registrationFlowDto.description(), registrationFlowDto.descriptionSv(),
+        registrationFlowDto.technology(), registrationFlowDto.entityType(),
+        registrationFlowDto.steps());
+    final RegistrationFlow registrationFlow = Mapper.toModel(dtoWithId, flowId, org,
         this.registrationStepRepository);
     this.flowRepository.save(registrationFlow);
     return dtoWithId;
@@ -139,7 +142,8 @@ public class RegistrationFlowService {
     final RegistrationFlow existing = this.findOwnedFlowOrThrow(organizationRecord, flowId);
     Mapper.applyUpdate(existing, registrationFlowDto, this.registrationStepRepository);
     this.flowRepository.save(existing);
-    return new RegistrationFlowDto(existing.getFlowId(), existing.getName(), existing.getDescription(), List.of());
+    return new RegistrationFlowDto(existing.getFlowId(), existing.getName(), existing.getDescription(),
+        existing.getDescriptionSv(), existing.getTechnology(), existing.getEntityType(), List.of());
   }
 
   /**
@@ -167,7 +171,8 @@ public class RegistrationFlowService {
         .stream()
         .map(this::resolveStep)
         .toList();
-    return new RegistrationFlowDto(flow.getFlowId(), flow.getName(), flow.getDescription(), steps);
+    return new RegistrationFlowDto(flow.getFlowId(), flow.getName(), flow.getDescription(),
+        flow.getDescriptionSv(), flow.getTechnology(), flow.getEntityType(), steps);
   }
 
   private StepDto resolveStep(final StepModel storedStep) {
@@ -210,7 +215,7 @@ public class RegistrationFlowService {
    * @return list of step DTOs
    */
   public List<StepDto> getDefineSteps() {
-    return this.registrationStepRepository.getDefinedSteps()
+    return this.registrationStepRepository.getPublicDefinedSteps()
         .stream()
         .map(step -> new StepDto(step.getStepId(),
             step.getName(),
@@ -239,10 +244,13 @@ public class RegistrationFlowService {
     final RegistrationFlow registrationFlow = flowAssignment.getRegistrationFlow();
     final ProcessFlow processFlow = Mapper.toProcessFlow(registrationFlow, this.registrationStepRepository);
 
-
     final ProcessContext processContext = new ProcessContext();
     processContext.put(ContextKey.ENTITY_ID, registrationRequestDto.getEntityIdentifyer());
-    processContext.put(ContextKey.TRUSTMARKS_REQUESTED, new ArrayList(registrationRequestDto.getTrustmarksRequested()));
+    final List<TrustmarkSource> trustmarkSources =
+        RegistrationMapper.toTrustmarkSourceList(registrationRequestDto.getTrustmarksRequested());
+    if (trustmarkSources != null) {
+      processContext.put(ContextKey.TRUSTMARKS_REQUESTED, new SerializableList<>(trustmarkSources));
+    }
     processContext.put(ContextKey.TAIM_ID, flowAssignment.getTaIm().getTaImId());
     processContext.put(ContextKey.JOIN_ID, flowAssignment.getAssignId());
 
@@ -267,7 +275,8 @@ public class RegistrationFlowService {
     return this.flowAssignmentRepository.findByTaImTaImId(taImId).stream()
         .map(a -> {
           final RegistrationFlow f = a.getRegistrationFlow();
-          return new RegistrationFlowDto(f.getFlowId(), f.getName(), f.getDescription(), List.of());
+          return new RegistrationFlowDto(f.getFlowId(), f.getName(), f.getDescription(),
+              f.getDescriptionSv(), f.getTechnology(), f.getEntityType(), List.of());
         })
         .toList();
   }

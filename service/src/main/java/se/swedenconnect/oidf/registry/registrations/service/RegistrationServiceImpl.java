@@ -20,14 +20,12 @@ import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
-import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.registrationflow.RegistrationFlowService;
-import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
-import se.swedenconnect.oidf.registry.registrations.dto.FedRegStatus;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationFlowDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationMapper;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestStatusDto;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
@@ -73,10 +71,10 @@ public class RegistrationServiceImpl implements RegistrationService {
       final UUID joinId, final RegistrationRequestDto request) {
     request.setJoinId(joinId);
     final ProcessReport report = this.registrationFlowService.executeRegistrationFlow(organizationRecord, request);
-    final RegistrationRequestStatusDto dto = new RegistrationRequestStatusDto();
-    dto.setEntityIdentifyer(request.getEntityIdentifyer());
-    dto.setStatus(report.status().toString());
-    return dto;
+    final UUID registrationId = this.registrationRepository.findByEntityId(request.getEntityIdentifyer())
+        .map(Registration::getRegistrationId)
+        .orElse(null);
+    return RegistrationMapper.toRegistrationRequestStatusDto(request.getEntityIdentifyer(), registrationId, report);
   }
 
   @Override
@@ -99,7 +97,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     return this.registrationRepository.findAll().stream()
         .filter(reg -> reg.getFlowAssignment().getTaIm().getOrganization().getOrgNumber()
             .equals(organizationRecord.orgNumber()))
-        .map(RegistrationServiceImpl::toJoinDto)
+        .map(RegistrationMapper::toRegistrationDto)
         .toList();
   }
 
@@ -108,29 +106,9 @@ public class RegistrationServiceImpl implements RegistrationService {
   public List<RegistrationFlowDto> listRegistrationFlows(final OrganizationRecord organizationRecord) {
     return this.flowAssignmentRepository.findAll()
         .stream()
-        .map(flowAssignment -> {
-          final RegistrationFlow registrationFlow = flowAssignment.getRegistrationFlow();
-          final TrustAnchorIntermediateModule intermediate = flowAssignment.getTaIm();
-
-          final RegistrationFlowDto dto = new RegistrationFlowDto();
-          dto.setJoinId(flowAssignment.getAssignId());
-          dto.setName(registrationFlow.getName());
-          dto.setDescription(registrationFlow.getDescription());
-          dto.setIntermediateEntityId(intermediate.getEntity().getSubject());
-          return dto;
-        })
+        .map(RegistrationMapper::toRegistrationFlowDto)
         .toList();
   }
 
 
-  private static RegistrationDto toJoinDto(final Registration reg) {
-    final RegistrationDto dto = new RegistrationDto();
-    dto.setJoinId(reg.getFlowAssignment().getAssignId());
-    dto.setEntityIdentifyer(reg.getEntityId());
-    dto.setIntermediateEntityId(reg.getFlowAssignment().getTaIm().getEntity().getSubject());
-    dto.setRegistrationId(reg.getRegistrationId());
-    dto.setStatusFedreg(FedRegStatus.valueOf(reg.getStatus().toString()));
-    dto.setRejectionReason(reg.getRejectionReason());
-    return dto;
-  }
 }
