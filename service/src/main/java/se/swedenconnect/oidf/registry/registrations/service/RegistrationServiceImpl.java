@@ -74,7 +74,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     request.setJoinId(joinId);
     final ProcessReport report = this.registrationFlowService.executeRegistrationFlow(organizationRecord, request);
     final RegistrationRequestStatusDto dto = new RegistrationRequestStatusDto();
-    dto.setEntityId(request.getEntityId());
+    dto.setEntityIdentifyer(request.getEntityIdentifyer());
     dto.setStatus(report.status().toString());
     return dto;
   }
@@ -116,7 +116,7 @@ public class RegistrationServiceImpl implements RegistrationService {
           dto.setJoinId(flowAssignment.getAssignId());
           dto.setName(registrationFlow.getName());
           dto.setDescription(registrationFlow.getDescription());
-          dto.setIntermidiateEntityId(intermediate.getEntity().getSubject());
+          dto.setIntermediateEntityId(intermediate.getEntity().getSubject());
           return dto;
         })
         .toList();
@@ -126,7 +126,7 @@ public class RegistrationServiceImpl implements RegistrationService {
   private static RegistrationDto toJoinDto(final Registration reg) {
     final RegistrationDto dto = new RegistrationDto();
     dto.setJoinId(reg.getFlowAssignment().getAssignId());
-    dto.setEntityId(reg.getEntityId());
+    dto.setEntityIdentifyer(reg.getEntityId());
     dto.setIntermediateEntityId(reg.getFlowAssignment().getTaIm().getEntity().getSubject());
     dto.setRegistrationId(reg.getRegistrationId());
     dto.setStatusFedreg(FedRegStatus.valueOf(reg.getStatus().toString()));

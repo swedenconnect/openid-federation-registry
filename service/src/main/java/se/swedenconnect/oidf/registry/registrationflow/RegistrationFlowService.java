@@ -241,7 +241,7 @@ public class RegistrationFlowService {
 
 
     final ProcessContext processContext = new ProcessContext();
-    processContext.put(ContextKey.ENTITY_ID, registrationRequestDto.getEntityId());
+    processContext.put(ContextKey.ENTITY_ID, registrationRequestDto.getEntityIdentifyer());
     processContext.put(ContextKey.TRUSTMARKS_REQUESTED, new ArrayList(registrationRequestDto.getTrustmarksRequested()));
     processContext.put(ContextKey.TAIM_ID, flowAssignment.getTaIm().getTaImId());
     processContext.put(ContextKey.JOIN_ID, flowAssignment.getAssignId());

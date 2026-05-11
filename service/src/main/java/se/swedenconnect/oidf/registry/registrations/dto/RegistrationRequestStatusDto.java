@@ -39,7 +39,7 @@ public class RegistrationRequestStatusDto {
   private String status;
 
   @Schema(description = "Entity identifier of the applicant", example = "https://example.com/entity")
-  private String entityId;
+  private String entityIdentifyer;
 
   @Schema(description = "Trustmarks requested in the application")
   private List<String> trustmarksRequested;

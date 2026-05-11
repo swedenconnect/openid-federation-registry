@@ -95,7 +95,7 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
     final RegistrationDto dto = new RegistrationDto();
     dto.setRegistrationId(reg.getRegistrationId());
     dto.setJoinId(reg.getFlowAssignment().getAssignId());
-    dto.setEntityId(reg.getEntityId());
+    dto.setEntityIdentifyer(reg.getEntityId());
     dto.setIntermediateEntityId(reg.getFlowAssignment().getTaIm().getEntity().getSubject());
     dto.setStatusFedreg(FedRegStatus.valueOf(reg.getStatus().name()));
     dto.setRejectionReason(reg.getRejectionReason());

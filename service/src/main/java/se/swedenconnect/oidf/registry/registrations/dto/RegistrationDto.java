@@ -45,7 +45,7 @@ public class RegistrationDto {
       example = "https://example.com/service",
       accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private String entityId;
+  private String entityIdentifyer;
 
   @Schema(description = "EntityId of the Intermediate that the registration is made for",
       example = "https://example.com/entity",
