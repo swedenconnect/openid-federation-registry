@@ -23,7 +23,6 @@ import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
 import se.swedenconnect.oidf.registry.registrationflow.model.StepModel;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessFlow;
 import se.swedenconnect.oidf.registry.registrationflow.process.StepDefinition;
-import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.impl.DefaultConfig;
 
@@ -131,6 +130,7 @@ public class Mapper {
 
     final List<StepModel> stepModels = Optional.ofNullable(dto.steps()).orElse(List.of())
         .stream()
+        .filter(stepDto -> registrationStepRepository.isPublic(stepDto.stepId()))
         .map(s -> new StepModel(s.stepId(),
             Optional.ofNullable(s.config()).orElse(List.of()).stream()
                 .map(c -> new ConfigValueModel(c.key(), c.value()))
@@ -143,7 +143,6 @@ public class Mapper {
     existing.setTechnology(dto.technology());
     existing.setEntityType(dto.entityType());
     existing.setFlowDefinition(stepModels);
-
     return existing;
   }
 

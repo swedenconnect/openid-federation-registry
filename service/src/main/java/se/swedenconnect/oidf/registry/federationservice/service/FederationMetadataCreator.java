@@ -84,7 +84,7 @@ public class FederationMetadataCreator {
           .map(trustmarkSourceDto ->
               new TrustMarkSourceProperty(new EntityID(trustmarkSourceDto.getTrustMarkIssuer()),
                   trustmarkSourceDto.getTrustmarkId())).toList());
-        this.authorityHint(entityEntity).map(List::of).ifPresent(entityData::setAuthorityHints);
+      entityData.setAuthorityHints(this.authorityHint(entityEntity));
         return entityData;
       }
     if (entityType == EntityType.FEDERATION_ENTITY) {
@@ -95,8 +95,9 @@ public class FederationMetadataCreator {
         entityData.setEntityIdentifier(new EntityID(dto.getEntityIdentifier()));
         entityData.setCrit(dto.getCrit());
         entityData.setMetadata(Map.of("federation_entity", this.createFederationMetadata(entityEntity)));
-        this.authorityHint(entityEntity).map(List::of).ifPresent(entityData::setAuthorityHints);
-        return entityData;
+      entityData.setAuthorityHints(this.authorityHint(entityEntity));
+
+      return entityData;
       }
 
     throw new IllegalArgumentException("Unsupported entity type: " + entityType);
@@ -110,13 +111,13 @@ public class FederationMetadataCreator {
    * @param entity Entity
    * @return Issuer for subordinate statement if there is one.
    */
-  private Optional<String> authorityHint(final FederationEntity entity) {
+  private List<String> authorityHint(final FederationEntity entity) {
     return this.subordinateRepository.findByOrgNumberAndEntityidentifier(entity.getOrganization().getOrgNumber(),
             entity.getIssuer())
         .stream()
         .map(Subordinate::getTaIm)
         .map(taImEntity -> taImEntity.getEntity().getSubject())
-        .reduce((a, b) -> a + "," + b);
+        .toList();
 
   }
 

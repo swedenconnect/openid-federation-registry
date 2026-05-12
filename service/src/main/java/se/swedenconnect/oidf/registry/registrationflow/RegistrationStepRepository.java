@@ -17,7 +17,6 @@ package se.swedenconnect.oidf.registry.registrationflow;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.Assert;
-import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 
 import java.util.Collections;
@@ -77,7 +76,10 @@ public class RegistrationStepRepository {
    * @return list of public steps
    */
   public List<Step> getPublicDefinedSteps() {
-    return this.definedSteps.stream().filter(Step::isPublic).collect(Collectors.toList());
+    return this.definedSteps.stream()
+        .filter(Step::isPublic)
+        .filter(step -> step.stepType().equals(Step.StepType.MID))
+        .collect(Collectors.toList());
   }
 
   /**
