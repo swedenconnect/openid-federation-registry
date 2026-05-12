@@ -23,6 +23,7 @@
       <v-card-text>
         <v-form ref="form" @submit.prevent="saveEntity">
           <v-text-field
+              id="entity-identifier"
               v-model="entityIdentifier"
               label="Entity Identifier"
               :rules="[rules.required]"
@@ -34,6 +35,7 @@
           ></v-text-field>
 
           <ListField
+              id="crit"
               v-model="crit"
               label="Crit"
               hint="Crit list"
