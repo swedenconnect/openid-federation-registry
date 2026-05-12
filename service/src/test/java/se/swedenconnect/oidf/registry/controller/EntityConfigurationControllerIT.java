@@ -183,7 +183,7 @@ class EntityConfigurationControllerIT {
       restClient.post()
           .uri("/registry/v1/entityconfiguration/jwks")
           .contentType(MediaType.APPLICATION_JSON)
-          .body("https://plars.org")
+          .body("https://digg.se")
           .retrieve()
           .toEntity(String.class);
     });

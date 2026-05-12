@@ -32,7 +32,6 @@ import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RejectRegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.service.RegistrationAdminService;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -63,7 +62,7 @@ public class RegistrationAdminController {
   @Operation(summary = "Count unhandled PENDING registrations for an intermediate")
   public ResponseEntity<Map<String, Long>> countPending(
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
-      @Parameter(description = "Intermediate ID") @RequestParam final UUID taimId) {
+      @Parameter(description = "Intermediate ID") @RequestParam("taimId") final UUID taimId) {
     return ResponseEntity.ok(Map.of("count", this.registrationAdminService.countPending(taimId)));
   }
 
@@ -71,16 +70,16 @@ public class RegistrationAdminController {
    * Rejects a pending registration request.
    *
    * @param organizationRecord the calling organization
-   * @param registrationID the registration ID
+   * @param registrationId the registration ID
    * @param body the rejection details
    * @return the updated registration DTO
    */
-  @PostMapping("/{registrationID}/reject")
+  @PostMapping("/{registrationId}/reject")
   @Operation(summary = "Reject a pending registration request")
   public ResponseEntity<RegistrationDto> reject(
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
-      @Parameter(description = "Registration ID") @PathVariable final UUID registrationID,
+      @Parameter(description = "Registration ID") @PathVariable("registrationId") final UUID registrationId,
       @RequestBody final RejectRegistrationDto body) {
-    return ResponseEntity.ok(this.registrationAdminService.reject(registrationID, body.rejectionReason()));
+    return ResponseEntity.ok(this.registrationAdminService.reject(registrationId, body.rejectionReason()));
   }
 }
