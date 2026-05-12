@@ -27,6 +27,13 @@ import java.util.List;
  * @author Per Fredrik Plars
  */
 public record TrustmarkSource(String trustMarkIssuer, List<TrustMarkStatus> trustmarks) implements Serializable {
+
+  /**
+   * Status for  trustmarkttype
+   *
+   * @param trustmarkType trustmarkType
+   * @param trustmarkStatus status of the registration
+   */
   public record TrustMarkStatus(String trustmarkType,TrustmarkStatus trustmarkStatus) implements Serializable {
   }
 }
