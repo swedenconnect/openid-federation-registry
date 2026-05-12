@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
+import se.swedenconnect.oidf.registry.registrationflow.process.SerializableList;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Severity;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepIssue;
@@ -26,10 +27,10 @@ import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
+import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -61,7 +62,11 @@ public class InternalPreRegistrationStep extends NoConfigStepAdapter {
     return """
         Internal pre step, that check if there is an ongoing registration, if not a new one is created. 
         """;
+  }
 
+  @Override
+  public StepType stepType() {
+    return StepType.PRE;
   }
 
   @Override
@@ -73,15 +78,18 @@ public class InternalPreRegistrationStep extends NoConfigStepAdapter {
     final FlowAssignment flow = this.flowAssignmentRepository.findById(joinIdAssignmentId)
         .orElseThrow(() -> new IllegalArgumentException("Join id assignment not found"));
 
-    final Registration registration = this.registrationRepository.findByEntityId(entityId).or(() -> {
+    final Registration registration = this.registrationRepository.findByEntityId(entityId).orElseGet(() -> {
       final Registration newRegistration = new Registration();
       newRegistration.setRegistrationId(UUID.randomUUID());
       newRegistration.setEntityId(entityId);
       newRegistration.setStatus(RegistrationStatus.STARTED);
       newRegistration.setFlowAssignment(flow);
-      this.registrationRepository.save(newRegistration);
-     return Optional.of(newRegistration);
-    }).orElseThrow();
+      return newRegistration;
+    });
+
+    ctx.<SerializableList<TrustmarkSource>>get(ContextKey.TRUSTMARKS_REQUESTED)
+        .ifPresent(registration::setTrustmarksRequested);
+    this.registrationRepository.save(registration);
 
     ctx.put(ContextKey.REGISTRATION_ID, registration.getRegistrationId());
     if(registration.getStatus() == RegistrationStatus.PENDING_APPROVAL) {

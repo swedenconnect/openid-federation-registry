@@ -15,9 +15,12 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow.process.step;
 
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityType;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Base configuration for all pipeline steps.
@@ -56,7 +59,7 @@ public abstract class StepConfig implements Serializable {
    * @return parsed boolean value
    */
   public Boolean getBoolean(final String name) {
-    return Boolean.parseBoolean(this.dataValues.get(name).toString());
+    return Boolean.valueOf(Objects.toString(this.dataValues.get(name)));
   }
 
   /**
@@ -76,7 +79,7 @@ public abstract class StepConfig implements Serializable {
    * @return parsed integer value
    */
   public int getInt(final String name) {
-    return Integer.parseInt(this.dataValues.get(name).toString());
+    return Integer.parseInt(Objects.toString(this.dataValues.get(name)));
   }
 
   /**

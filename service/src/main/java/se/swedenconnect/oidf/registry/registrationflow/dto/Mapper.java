@@ -23,6 +23,8 @@ import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
 import se.swedenconnect.oidf.registry.registrationflow.model.StepModel;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessFlow;
 import se.swedenconnect.oidf.registry.registrationflow.process.StepDefinition;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.impl.DefaultConfig;
 
 import java.util.ArrayList;
@@ -32,7 +34,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * oidf-entity-registry
+ * RegistrationFlowMapper
  *
  * @author Per Fredrik Plars
  */
@@ -48,16 +50,36 @@ public class Mapper {
   public static ProcessFlow toProcessFlow(final RegistrationFlow dto,
       final RegistrationStepRepository registrationStepRepository) {
 
-    final List<StepDefinition> steps = Optional.ofNullable(dto.getFlowDefinition())
+    final List<StepDefinition> steps = new ArrayList<>();
+    registrationStepRepository.preDefaultSteps()
+        .stream()
+        .map(step -> new StepDefinition(step, new DefaultConfig(step.getStepConfigurationValues().stream()
+            .collect(Collectors.toMap(
+                StepConfigurationValue::name,
+                StepConfigurationValue::defaultValue
+            )))))
+        .forEach(steps::add);
+
+    Optional.ofNullable(dto.getFlowDefinition())
         .orElse(new ArrayList<>(0))
         .stream()
+        .filter(stepModel -> registrationStepRepository.isPublic(stepModel.stepId()))
         .map(stepInfoDto ->
             new StepDefinition(registrationStepRepository.findStepById(stepInfoDto.stepId()).orElseThrow(),
                 new DefaultConfig(stepInfoDto.config().stream().collect(Collectors.toMap(
                     ConfigValueModel::key,
                     ConfigValueModel::value
                 )))))
-        .toList();
+        .forEach(steps::add);
+
+    registrationStepRepository.postDefaultSteps()
+        .stream()
+        .map(step -> new StepDefinition(step, new DefaultConfig(step.getStepConfigurationValues().stream()
+            .collect(Collectors.toMap(
+                StepConfigurationValue::name,
+                StepConfigurationValue::defaultValue
+            )))))
+        .forEach(steps::add);
 
     return new ProcessFlow(dto.getFlowId(), dto.getName(), dto.getDescription(), steps);
   }
@@ -76,6 +98,7 @@ public class Mapper {
 
     final List<StepModel> stepModels = Optional.ofNullable(dto.steps()).orElse(List.of())
         .stream()
+        .filter(stepDto -> registrationStepRepository.isPublic(stepDto.stepId()))
         .map(s -> new StepModel(s.stepId(),
             Optional.ofNullable(s.config()).orElse(List.of()).stream()
                 .map(c -> new ConfigValueModel(c.key(), c.value()))
@@ -87,11 +110,13 @@ public class Mapper {
     registrationFlow.setOrganization(organization);
     registrationFlow.setName(dto.name());
     registrationFlow.setDescription(dto.description());
+    registrationFlow.setDescriptionSv(dto.descriptionSv());
+    registrationFlow.setTechnology(dto.technology());
+    registrationFlow.setEntityType(dto.entityType());
     registrationFlow.setFlowDefinition(stepModels);
 
     return registrationFlow;
   }
-
 
   /**
    * Applies updated fields from a DTO onto an existing {@link RegistrationFlow} entity.
@@ -114,10 +139,12 @@ public class Mapper {
 
     existing.setName(dto.name());
     existing.setDescription(dto.description());
+    existing.setDescriptionSv(dto.descriptionSv());
+    existing.setTechnology(dto.technology());
+    existing.setEntityType(dto.entityType());
     existing.setFlowDefinition(stepModels);
 
     return existing;
   }
-
 
 }

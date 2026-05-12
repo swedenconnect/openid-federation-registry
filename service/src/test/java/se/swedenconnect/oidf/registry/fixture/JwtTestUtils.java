@@ -22,7 +22,6 @@ import com.nimbusds.jwt.SignedJWT;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.registry.infrastructure.auth.AuthConstants;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,7 +60,7 @@ public class JwtTestUtils {
 
   public void setAuthHeaders(OrganisationType organizationType, HttpHeaders headers) {
     headers.set("Authorization", "Bearer " + this.createJwt(organizationType));
-    headers.set(AuthConstants.SELECTED_ORG_NUMBER_ATTRIBUTE, organizationType.orgId);
+    headers.set(AuthConstants.SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE, organizationType.orgId);
   }
 
 

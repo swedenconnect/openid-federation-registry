@@ -23,10 +23,14 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
+import se.swedenconnect.oidf.registry.infrastructure.persistence.JsonConverter;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.MapConverter;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.StringListConverter;
 import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
+import se.swedenconnect.oidf.registry.registrationflow.model.StepModel;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -72,8 +76,8 @@ public class Registration extends BaseEntity {
   private Map<String,Object> metadataPolicy;
 
   @Column(name = "trustmarks_requested", columnDefinition = "TEXT")
-  @Convert(converter = StringListConverter.class)
-  private List<String> trustmarksRequested;
+  @Convert(converter = TrustmarkSourceConverter.class)
+  private List<TrustmarkSource> trustmarksRequested;
 
   @Enumerated(EnumType.STRING)
   @Column(name = "status", length = 20, nullable = false)
@@ -87,4 +91,18 @@ public class Registration extends BaseEntity {
 
   @Column(name = "rejection_reason", columnDefinition = "TEXT")
   private String rejectionReason;
+
+  /** JPA converter for the flow definition list. */
+  @Converter
+  public static class TrustmarkSourceConverter extends JsonConverter<List<TrustmarkSource>> {
+
+    /**
+     * Constructor.
+     *
+     * @param mapper the JSON mapper
+     */
+    public TrustmarkSourceConverter(final JsonMapper mapper) {
+      super(mapper, new tools.jackson.core.type.TypeReference<List<TrustmarkSource>>() {});
+    }
+  }
 }

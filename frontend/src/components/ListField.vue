@@ -27,6 +27,7 @@
           class="list-item d-flex align-center mb-2"
       >
         <v-text-field
+            :id="id ? `${id}-item-${index}` : undefined"
             :model-value="item"
             @update:model-value="(value) => updateItem(index, value)"
             :disabled="disabled"
@@ -37,6 +38,7 @@
             class="flex-grow-1 mr-2"
         ></v-text-field>
         <v-btn
+            :id="id ? `${id}-delete-${index}` : undefined"
             icon
             size="small"
             color="error"
@@ -50,6 +52,7 @@
     </div>
 
     <v-btn
+        :id="id ? `${id}-add` : undefined"
         color="primary"
         variant="outlined"
         size="small"
@@ -74,6 +77,10 @@ const props = defineProps({
   modelValue: {
     type: Array,
     default: () => [],
+  },
+  id: {
+    type: String,
+    default: '',
   },
   label: {
     type: String,

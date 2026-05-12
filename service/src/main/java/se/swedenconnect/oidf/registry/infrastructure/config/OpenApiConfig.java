@@ -65,7 +65,7 @@ public class OpenApiConfig {
             .addSecuritySchemes("selectedOrgNumber", new SecurityScheme()
                 .type(SecurityScheme.Type.APIKEY)
                 .in(SecurityScheme.In.HEADER)
-                .name(AuthConstants.SELECTED_ORG_NUMBER_ATTRIBUTE)
+                .name(AuthConstants.SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE)
                 .description("Organization number to use for the request. Enter your organization number here.")))
         .addSecurityItem(new SecurityRequirement().addList("bearerAuth").addList("selectedOrgNumber"));
   }

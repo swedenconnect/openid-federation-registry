@@ -11,18 +11,10 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- *  limitations under the License.
+ * limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.infrastructure.auth;
-
-/**
- * Constants used when working with authentication
- *
- * @author Per Fredrik Plars
- */
-public final class AuthConstants {
-  public final static String SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE = "selected-org-number";
-  public final static String POST_LOGOUT_TARGET_ATTRIBUTE = "post-logout-target";
-
-}
+ALTER TABLE `registration_flow`
+    ADD COLUMN `description_sv` TEXT,
+    ADD COLUMN `technology`     VARCHAR(10),
+    ADD COLUMN `entity_type`    VARCHAR(100);

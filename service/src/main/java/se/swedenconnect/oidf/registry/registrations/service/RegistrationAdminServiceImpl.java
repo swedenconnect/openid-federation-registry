@@ -20,8 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
-import se.swedenconnect.oidf.registry.registrations.dto.FedRegStatus;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationMapper;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
@@ -55,7 +55,7 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
     return this.registrationRepository
         .findAllByOrganizationOrgNumber(organizationRecord.orgNumber())
         .stream()
-        .map(RegistrationAdminServiceImpl::toDto)
+        .map(RegistrationMapper::toRegistrationDto)
         .toList();
   }
 
@@ -63,7 +63,7 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
   @Transactional(readOnly = true)
   public RegistrationDto getById(final UUID id) {
     return this.registrationRepository.findByIdFetched(id)
-        .map(RegistrationAdminServiceImpl::toDto)
+        .map(RegistrationMapper::toRegistrationDto)
         .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
             "Registration not found: %s".formatted(id)));
   }
@@ -88,20 +88,6 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
     reg.setRejectionReason(rejectionReason);
     reg.setReviewedAt(LocalDateTime.now());
     this.registrationRepository.save(reg);
-    return toDto(reg);
-  }
-
-  private static RegistrationDto toDto(final Registration reg) {
-    final RegistrationDto dto = new RegistrationDto();
-    dto.setRegistrationId(reg.getRegistrationId());
-    dto.setJoinId(reg.getFlowAssignment().getAssignId());
-    dto.setEntityId(reg.getEntityId());
-    dto.setIntermediateEntityId(reg.getFlowAssignment().getTaIm().getEntity().getSubject());
-    dto.setStatusFedreg(FedRegStatus.valueOf(reg.getStatus().name()));
-    dto.setRejectionReason(reg.getRejectionReason());
-    dto.setJwks(reg.getJwks());
-    dto.setMetadataPolicy(reg.getMetadataPolicy());
-    dto.setTrustmarksRequested(reg.getTrustmarksRequested());
-    return dto;
+    return RegistrationMapper.toRegistrationDto(reg);
   }
 }

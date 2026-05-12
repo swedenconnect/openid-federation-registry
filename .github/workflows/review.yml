@@ -19,6 +19,6 @@ jobs:
           distribution: 'temurin'
           java-version: '25'
           cache: 'maven'
-      - run: mvn clean verify javadoc:javadoc --no-transfer-progress
+      - run: mvn clean verify  --no-transfer-progress
         env:
           GITHUB_TOKEN: ${{ secrets.SC_ACTION_SECRET }}

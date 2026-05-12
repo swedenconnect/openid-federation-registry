@@ -30,6 +30,7 @@ import RegistrationFlowsListView from '../views/RegistrationFlowsListView.vue';
 import RegistrationFlowFormView from '../views/RegistrationFlowFormView.vue';
 import RegistrationsListView from '../views/RegistrationsListView.vue';
 import RegistrationDetailView from '../views/RegistrationDetailView.vue';
+import TriggerRegistrationView from '../views/TriggerRegistrationView.vue';
 import {useAuthorizationStatusStore} from '@/authorization/stores/authorizationStatusStore';
 
 let base = import.meta.env.BASE_URL;
@@ -139,6 +140,11 @@ const router = createRouter({
             path: '/registrations',
             name: 'registrations-list',
             component: RegistrationsListView,
+        },
+        {
+            path: '/registrations/trigger',
+            name: 'registration-trigger',
+            component: TriggerRegistrationView,
         },
         {
             path: '/registrations/:id',

@@ -33,8 +33,8 @@ public class RegistrationFlowDto {
       example = "550e8400-e29b-41d4-a716-446655440000")
   private UUID joinId;
 
-  @Schema(description = "Intermidiate EntityID", example = "https://fed.swedenconnect.se/im")
-  private String intermidiateEntityId;
+  @Schema(description = "Intermediate EntityID", example = "https://fed.swedenconnect.se/im")
+  private String intermediateEntityId;
 
   @Schema(description = "Human-readable name of the flow", example = "Sweden Connect QA")
   private String name;

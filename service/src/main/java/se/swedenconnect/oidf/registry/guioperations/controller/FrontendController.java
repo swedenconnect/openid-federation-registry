@@ -36,7 +36,14 @@ public class FrontendController {
    *
    * @return a {@code String} indicating the forward path
    */
-  @GetMapping("/login")
+  @GetMapping({
+      "/login",
+      "/entities/**",
+      "/registration-flows",
+      "/registration-flows/**",
+      "/registrations",
+      "/registrations/**"
+  })
   public String forwardToFrontend() {
     return "forward:/";
   }

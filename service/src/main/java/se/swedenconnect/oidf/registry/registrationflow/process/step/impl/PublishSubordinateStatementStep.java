@@ -64,6 +64,12 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
     this.subordinateRepository = subordinateRepository;
   }
 
+
+  @Override
+  public boolean isPublic() {
+    return true;
+  }
+
   @Override
   @Transactional
   public StepResult execute(final ProcessContext ctx, final StepConfig config) {

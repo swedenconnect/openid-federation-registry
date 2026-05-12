@@ -15,30 +15,32 @@
  */
 package se.swedenconnect.oidf.registry.registrations.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
- * Represents a registration request visible to an operator.
+ * Execution outcome of a single pipeline step.
  *
+ * @param stepName display name of the step
+ * @param status step outcome (SUCCESS, WARNING, FAILURE)
+ * @param message optional human-readable summary
+ * @param issues validation issues found during this step
  * @author Per Fredrik Plars
  */
-@Data
-@Schema(name = "RegistrationRequest")
-public class RegistrationRequestDto {
+@Schema(name = "StepExecutionRecord")
+public record StepExecutionRecordDto(
 
-  @Schema(description = "JoinId - Id for the join flow to register on", accessMode = Schema.AccessMode.READ_ONLY)
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private UUID joinId;
+    @Schema(description = "Display name of the step", example = "LoadEntityConfigurationStep")
+    String stepName,
 
-  @Schema(description = "Entity identifier of the applicant", example = "https://example.com/entity")
-  private String entityIdentifyer;
+    @Schema(description = "Step execution outcome", example = "SUCCESS")
+    String status,
 
-  @Schema(description = "Trustmarks requested in the application")
-  private List<TrustmarkDto> trustmarksRequested;
+    @Schema(description = "Human-readable summary of the step result")
+    String message,
 
+    @Schema(description = "Validation issues found during this step")
+    List<StepIssueDto> issues
+) {
 }

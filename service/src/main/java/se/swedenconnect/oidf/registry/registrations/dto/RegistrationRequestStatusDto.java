@@ -39,12 +39,15 @@ public class RegistrationRequestStatusDto {
   private String status;
 
   @Schema(description = "Entity identifier of the applicant", example = "https://example.com/entity")
-  private String entityId;
+  private String entityIdentifyer;
 
   @Schema(description = "Trustmarks requested in the application")
   private List<String> trustmarksRequested;
 
-  // TODO, some type of status message from the executed steps.
-  // EntityStatmentLoader:error - Unable to load entitystatement
+  @Schema(description = "True if the pipeline completed without any step failures")
+  private boolean successful;
+
+  @Schema(description = "Ordered list of step execution records")
+  private List<StepExecutionRecordDto> steps;
 
 }

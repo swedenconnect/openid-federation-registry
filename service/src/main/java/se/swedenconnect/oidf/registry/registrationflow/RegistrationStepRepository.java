@@ -17,6 +17,7 @@ package se.swedenconnect.oidf.registry.registrationflow;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.Assert;
+import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 
 import java.util.Collections;
@@ -52,14 +53,14 @@ public class RegistrationStepRepository {
   /**
    * Getting step by there id
    *
-   * @param id Id of step
+   * @param stepId Id of step
    * @return Optional Step
    */
-  public Optional<Step> findStepById(final UUID id) {
-    if (id == null) {
+  public Optional<Step> findStepById(final UUID stepId) {
+    if (stepId == null) {
       return Optional.empty();
     }
-    return this.definedSteps.stream().filter(step -> step.getStepId().equals(id)).findFirst();
+    return this.definedSteps.stream().filter(step -> step.getStepId().equals(stepId)).findFirst();
   }
 
   /**
@@ -69,5 +70,46 @@ public class RegistrationStepRepository {
    */
   public List<Step> getDefinedSteps() {
     return Collections.unmodifiableList(this.definedSteps);
+  }
+
+  /**
+   * Returning steps that are defined as public
+   * @return list of public steps
+   */
+  public List<Step> getPublicDefinedSteps() {
+    return this.definedSteps.stream().filter(Step::isPublic).collect(Collectors.toList());
+  }
+
+  /**
+   * If a step is public
+   * @param stepId StepID to check
+   * @return true if public
+   */
+  public boolean isPublic(final UUID stepId) {
+    return this.findStepById(stepId)
+        .filter(Step::isPublic)
+        .filter(step -> step.stepType().equals(Step.StepType.MID))
+        .map(Step::isPublic)
+        .orElse(false);
+  }
+
+  /**
+   * Pre default steps
+   * @return list of default pre steps
+   */
+  public List<Step> preDefaultSteps() {
+    return this.definedSteps.stream()
+        .filter(step -> step.stepType().equals(Step.StepType.PRE))
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * Post default steps
+   * @return list of default post steps
+   */
+  public List<Step> postDefaultSteps() {
+    return this.definedSteps.stream()
+        .filter(step -> step.stepType().equals(Step.StepType.POST))
+        .collect(Collectors.toList());
   }
 }

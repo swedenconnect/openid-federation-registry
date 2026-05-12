@@ -43,7 +43,7 @@ public class TestRestClientFactory {
         .requestFactory(clientHttpRequestFactory)
         .defaultHeader(HttpHeaders.AUTHORIZATION,
             "Bearer " + new JwtTestUtils().createJwt(JwtTestUtils.OrganisationType.PM))
-        .defaultHeader(AuthConstants.SELECTED_ORG_NUMBER_ATTRIBUTE, JwtTestUtils.OrganisationType.PM.orgId)
+        .defaultHeader(AuthConstants.SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE, JwtTestUtils.OrganisationType.PM.orgId)
         .baseUrl("http://localhost:%d".formatted(port))
         .build();
 /*

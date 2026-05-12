@@ -26,6 +26,10 @@ import java.util.UUID;
  * @author Per Fredrik Plars
  */
 public interface Step {
+  /**
+   * When this step is executed
+   */
+  enum StepType {PRE,MID,POST}
 
   /**
    * Executes this step against the shared pipeline context.
@@ -59,6 +63,26 @@ public interface Step {
    */
   default String getDescription() {
     return "<NoDescription defined>";
+  }
+
+
+
+  /**
+   * Where this step is executed
+   *
+   * @return MID as default
+   */
+  default StepType stepType() {
+    return StepType.MID;
+  }
+
+  /**
+   * Public steps are selectable by the user
+   *
+   * @return true if it is public selectable
+   */
+  default boolean isPublic() {
+    return false;
   }
 
   /**

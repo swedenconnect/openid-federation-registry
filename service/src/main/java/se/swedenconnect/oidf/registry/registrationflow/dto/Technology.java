@@ -13,23 +13,14 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.registry.registrations.dto;
-
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
+package se.swedenconnect.oidf.registry.registrationflow.dto;
 
 /**
- * A requested trustmark included in a join application.
+ * Protocol technology used by a registered entity.
  *
  * @author Per Fredrik Plars
  */
-@Data
-@Schema(name = "TrustmarkRequest")
-public class TrustmarkRequestDto {
-
-  @Schema(description = "Trustmark type identifier (URI)", example = "https://trust.example.com/tm/loa3")
-  private String trustmarkType;
-
-  @Schema(description = "Entity identifier of the trustmark issuer", example = "https://issuer.example.com")
-  private String trustmarkIssuer;
+public enum Technology {
+  OIDC,
+  SAML
 }

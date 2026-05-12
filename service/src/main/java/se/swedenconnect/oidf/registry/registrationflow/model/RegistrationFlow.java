@@ -20,6 +20,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Converter;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -34,6 +36,7 @@ import org.hibernate.type.SqlTypes;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.JsonConverter;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
+import se.swedenconnect.oidf.registry.registrationflow.dto.Technology;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
@@ -69,6 +72,16 @@ public class RegistrationFlow extends BaseEntity {
 
   @Column(name = "description", length = 255)
   private String description;
+
+  @Column(name = "description_sv", columnDefinition = "TEXT")
+  private String descriptionSv;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "technology", length = 10)
+  private Technology technology;
+
+  @Column(name = "entity_type", length = 100)
+  private String entityType;
 
   @Column(name = "flowDefinition", columnDefinition = "TEXT")
   @Convert(converter = RegistrationFlow.StepConverter.class)

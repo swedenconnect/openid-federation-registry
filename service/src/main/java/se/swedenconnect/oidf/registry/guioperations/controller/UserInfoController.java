@@ -87,7 +87,7 @@ public class UserInfoController {
               .anyMatch(org -> org.orgNumber().equals(orgNumber));
 
       if (selectedOrgNumberExists) {
-        request.getSession().setAttribute(AuthConstants.SELECTED_ORG_NUMBER_ATTRIBUTE, orgNumber);
+        request.getSession().setAttribute(AuthConstants.SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE, orgNumber);
       }
     }
   }
@@ -97,13 +97,15 @@ public class UserInfoController {
    *
    * @param oidcUser the OpenID Connect (OIDC) user providing user-related claims and details
    * @param request the HTTP request, used to retrieve additional session attributes if needed
-   * @return a {@code ResponseEntity} containing a {@code OidfUserInfoResponse}, which includes user related information
+   * @return a {@code ResponseEntity} containing a {@code OidfUserInfoResponse}, which includes
+   * user related information
    */
   private ResponseEntity<UserInfoResponse> handleOrganizationRealm(
       final OidcUser oidcUser, final HttpServletRequest request) {
     final OrganizationInformation orgInfo = OrganizationInformationFactory.getInformation(oidcUser);
 
-    final String attribute = (String) request.getSession().getAttribute(AuthConstants.SELECTED_ORG_NUMBER_ATTRIBUTE);
+    final String attribute = (String) request.getSession()
+        .getAttribute(AuthConstants.SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE);
     final OrganizationRecord organizationRecord = Optional.ofNullable(attribute)
         .flatMap(orgNumber -> orgInfo.organizations().stream()
             .filter(org -> org.orgNumber().equals(orgNumber))
