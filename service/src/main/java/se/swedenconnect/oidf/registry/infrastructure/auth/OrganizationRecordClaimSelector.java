@@ -74,25 +74,25 @@ public class OrganizationRecordClaimSelector implements HandlerMethodArgumentRes
     final Object authentication = SecurityContextHolder.getContext().getAuthentication();
     if (authentication instanceof RegistryClaims registryClaims) {
       final String selectedOrgNumberFromHeader =
-          Objects.requireNonNull(request).getHeader(AuthConstants.SELECTED_ORG_NUMBER_ATTRIBUTE);
+          Objects.requireNonNull(request).getHeader(AuthConstants.SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE);
       log.debug("Selected organization number from header: {}", selectedOrgNumberFromHeader);
 
       return Optional.ofNullable(selectedOrgNumberFromHeader)
           .map(registryClaims::getOrganizationRecordByOrgNumber)
           .orElseThrow(
-              () -> new IllegalArgumentException("Header:  " + AuthConstants.SELECTED_ORG_NUMBER_ATTRIBUTE +
+              () -> new IllegalArgumentException("Header:  " + AuthConstants.SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE +
                   " missing or have a value that does not match claim in jwt"));
     }
     else if (authentication instanceof OAuth2AuthenticationToken auth2AuthenticationToken) {
       final HttpSession session = request.getSession();
       final String selectedOrgNumberFromSession = Optional.ofNullable(session)
-          .map(httpSession -> httpSession.getAttribute(AuthConstants.SELECTED_ORG_NUMBER_ATTRIBUTE))
+          .map(httpSession -> httpSession.getAttribute(AuthConstants.SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE))
           .map(String.class::cast)
           .orElse(null);
 
       if (auth2AuthenticationToken.getPrincipal() instanceof RegistryOidcUser oidcUser) {
         final OrganizationRecord or = oidcUser.getOrganizationRecordByOrgNumber(selectedOrgNumberFromSession);
-        session.setAttribute(AuthConstants.SELECTED_ORG_NUMBER_ATTRIBUTE, or.orgNumber());
+        session.setAttribute(AuthConstants.SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE, or.orgNumber());
         log.debug("Selected organization number from session:'{}' SelectedOrgInfo:'{}'",
             selectedOrgNumberFromSession,
             or.orgNumber());

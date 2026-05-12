@@ -22,7 +22,7 @@ package se.swedenconnect.oidf.registry.infrastructure.auth;
  * @author Per Fredrik Plars
  */
 public final class AuthConstants {
-  public final static String SELECTED_ORG_NUMBER_ATTRIBUTE = "selected-org-number";
+  public final static String SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE = "selected-org-number";
   public final static String POST_LOGOUT_TARGET_ATTRIBUTE = "post-logout-target";
 
 }

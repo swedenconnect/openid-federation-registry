@@ -187,6 +187,8 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.OPTIONS).permitAll()
             .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/assets/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/entities/**",
+                "/registration-flows/**", "/registrations/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/*").permitAll()
 
             .requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**")
