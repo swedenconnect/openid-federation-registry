@@ -21,8 +21,11 @@ import se.swedenconnect.oidf.registry.registrationflow.process.StepExecutionReco
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepIssue;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
+import se.swedenconnect.oidf.registry.registrations.model.TrustmarkStatus;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -38,16 +41,16 @@ public final class RegistrationMapper {
   /**
    * Maps a {@link ProcessReport} and entity identifier to a {@link RegistrationRequestStatusDto}.
    *
-   * @param entityIdentifyer entity identifier from the request
+   * @param entityIdentifier entity identifier from the request
    * @param registrationId the registration ID, may be {@code null} if not yet persisted
    * @param report process report from the pipeline run
    * @return mapped DTO
    */
   public static RegistrationRequestStatusDto toRegistrationRequestStatusDto(
-      final String entityIdentifyer, final UUID registrationId, final ProcessReport report) {
+      final String entityIdentifier, final UUID registrationId, final ProcessReport report) {
     final RegistrationRequestStatusDto dto = new RegistrationRequestStatusDto();
     dto.setRegistrationId(registrationId);
-    dto.setEntityIdentifyer(entityIdentifyer);
+    dto.setEntityIdentifier(entityIdentifier);
     dto.setStatus(report.status().toString());
     dto.setSuccessful(report.isSuccessful());
     dto.setSteps(report.steps().stream()
@@ -59,61 +62,72 @@ public final class RegistrationMapper {
   /**
    * Maps a {@link Registration} entity to a {@link RegistrationDto}.
    *
-   * @param reg registration entity
+   * @param model registration entity
    * @return mapped DTO
    */
-  public static RegistrationDto toRegistrationDto(final Registration reg) {
+  public static RegistrationDto toRegistrationDto(final Registration model) {
     final RegistrationDto dto = new RegistrationDto();
-    dto.setRegistrationId(reg.getRegistrationId());
-    dto.setJoinId(reg.getFlowAssignment().getAssignId());
-    dto.setEntityIdentifyer(reg.getEntityId());
-    dto.setIntermediateEntityId(reg.getFlowAssignment().getTaIm().getEntity().getSubject());
-    dto.setStatusFedreg(FedRegStatus.valueOf(reg.getStatus().toString()));
-    dto.setRejectionReason(reg.getRejectionReason());
-    dto.setJwks(reg.getJwks());
-    dto.setMetadataPolicy(reg.getMetadataPolicy());
-    dto.setTrustmarksRequested(toTrustmarkDtoList(reg.getTrustmarksRequested()));
+    dto.setRegistrationId(model.getRegistrationId());
+    dto.setJoinId(model.getFlowAssignment().getAssignId());
+    dto.setEntityIdentifier(model.getEntityId());
+    dto.setIntermediateEntityId(model.getFlowAssignment().getTaIm().getEntity().getSubject());
+    dto.setStatusFedreg(FedRegStatus.valueOf(model.getStatus().toString()));
+    dto.setRejectionReason(model.getRejectionReason());
+    dto.setStatusTrustmarks(toTrustmarkDtoList(model.getTrustmarksRequested()));
     return dto;
   }
 
-  private static List<TrustmarkDto> toTrustmarkDtoList(final List<TrustmarkSource> sources) {
-    if (sources == null) {
+  private static List<TrustmarkRegistrationDto> toTrustmarkDtoList(final List<TrustmarkSource> tmSource) {
+    if (tmSource == null) {
       return null;
     }
-    return sources.stream().map(source -> {
-      final TrustmarkDto dto = new TrustmarkDto();
-      dto.setTrustmarkIssuer(source.trustMarkIssuer());
-      dto.setTrustmarkType(source.trustmarkType());
+    return tmSource.stream().map(tm -> {
+      final TrustmarkRegistrationDto dto = new TrustmarkRegistrationDto();
+      dto.setTrustmarkIssuer(tm.trustMarkIssuer());
+      dto.setTrustmarkStatus(Optional.ofNullable(tm.trustmarks())
+          .orElse(Collections.emptyList())
+          .stream()
+          .map(trustMarkStatus ->
+              new TrustmarkStatusDto(trustMarkStatus.trustmarkType(),trustMarkStatus.trustmarkStatus()))
+          .toList());
       return dto;
     }).toList();
   }
 
   /**
-   * Maps a list of {@link TrustmarkDto} to a list of {@link TrustmarkSource} domain records.
+   * Maps a list of {@link TrustmarkRegistrationDto} to a list of {@link TrustmarkSource} domain records.
    *
    * @param dtos the source DTOs, may be {@code null}
    * @return mapped domain records, or {@code null} if {@code dtos} is {@code null}
    */
-  public static List<TrustmarkSource> toTrustmarkSourceList(final List<TrustmarkDto> dtos) {
+  public static List<TrustmarkSource> toTrustmarkSourceList(final List<TrustmarkRequestDto> dtos) {
     if (dtos == null) {
       return null;
     }
     return dtos.stream()
-        .map(dto -> new TrustmarkSource(dto.getTrustmarkIssuer(), dto.getTrustmarkType()))
+        .map(dto -> new TrustmarkSource(dto.getTrustmarkIssuer(),
+            dto.getTrustmarkType()
+                .stream()
+                .map(tmType ->
+                    new TrustmarkSource.TrustMarkStatus(tmType, TrustmarkStatus.PENDING))
+                .toList()))
         .toList();
   }
 
   /**
-   * Maps a {@link FlowAssignment} entity to a {@link RegistrationFlowDto}.
+   * Maps a {@link FlowAssignment} entity to a {@link RegistrationFlowInformationDto}.
    *
    * @param flowAssignment flow assignment entity
    * @return mapped DTO
    */
-  public static RegistrationFlowDto toRegistrationFlowDto(final FlowAssignment flowAssignment) {
-    final RegistrationFlowDto dto = new RegistrationFlowDto();
+  public static RegistrationFlowInformationDto toRegistrationFlowDto(final FlowAssignment flowAssignment) {
+    final RegistrationFlowInformationDto dto = new RegistrationFlowInformationDto();
     dto.setJoinId(flowAssignment.getAssignId());
     dto.setName(flowAssignment.getRegistrationFlow().getName());
     dto.setDescription(flowAssignment.getRegistrationFlow().getDescription());
+    dto.setDescriptionSv(flowAssignment.getRegistrationFlow().getDescriptionSv());
+    dto.setTechnology(flowAssignment.getRegistrationFlow().getTechnology().name());
+    dto.setEntityType(flowAssignment.getRegistrationFlow().getEntityType());
     dto.setIntermediateEntityId(flowAssignment.getTaIm().getEntity().getSubject());
     return dto;
   }

@@ -39,10 +39,10 @@ public class RegistrationRequestStatusDto {
   private String status;
 
   @Schema(description = "Entity identifier of the applicant", example = "https://example.com/entity")
-  private String entityIdentifyer;
+  private String entityIdentifier;
 
   @Schema(description = "Trustmarks requested in the application")
-  private List<String> trustmarksRequested;
+  private List<TrustmarkRegistrationDto> trustmarksRequested;
 
   @Schema(description = "True if the pipeline completed without any step failures")
   private boolean successful;

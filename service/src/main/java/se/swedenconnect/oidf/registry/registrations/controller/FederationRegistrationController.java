@@ -29,8 +29,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
-import se.swedenconnect.oidf.registry.registrations.dto.RegistrationFlowDto;
-import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationFlowInformationDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationJoinRequestDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestStatusDto;
 import se.swedenconnect.oidf.registry.registrations.service.RegistrationService;
 
@@ -51,18 +51,32 @@ public class FederationRegistrationController {
   private final RegistrationService registrationService;
 
   /**
-   * Lists all join records.
+   * Lists all registration records.
    *
    * @param organizationRecord the calling organization
-   * @return list of join DTOs
+   * @return list of registration DTOs
    */
   @GetMapping
-  @Operation(summary = "List all registration records for your organization")
+  @Operation(summary = "List all registration records for current organization")
   public ResponseEntity<List<RegistrationDto>> listRegistrations(
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.registrationService.listRegistrations(organizationRecord));
   }
 
+  /**
+   * Returns a single registration by ID.
+   *
+   * @param organizationRecord the calling organization
+   * @param registrationId the registration ID
+   * @return the registration DTO
+   */
+  @GetMapping("/{registrationId}")
+  @Operation(summary = "Get a single registration by ID")
+  public ResponseEntity<RegistrationDto> getById(
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord,
+      @Parameter(description = "Registration ID") @PathVariable("registrationId") final UUID registrationId) {
+    return ResponseEntity.ok(this.registrationService.getRegistrationById(registrationId));
+  }
   /**
    * Creates a join application with a specified ID.
    *
@@ -72,11 +86,11 @@ public class FederationRegistrationController {
    * @return the created join DTO
    */
   @PostMapping("/{joinId}")
-  @Operation(summary = "Create a join application with specified ID")
+  @Operation(summary = "Create a registration request on this id")
   public ResponseEntity<RegistrationRequestStatusDto> createJoinWithId(
       @PathVariable("joinId") final UUID joinId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
-      @RequestBody final RegistrationRequestDto body) {
+      @RequestBody final RegistrationJoinRequestDto body) {
     return ResponseEntity.status(201)
         .body(this.registrationService.createRegistrationRequest(organizationRecord, joinId, body));
   }
@@ -105,7 +119,7 @@ public class FederationRegistrationController {
    */
   @GetMapping("/flows")
   @Operation(summary = "List all available registration flows")
-  public ResponseEntity<List<RegistrationFlowDto>> listFlows(
+  public ResponseEntity<List<RegistrationFlowInformationDto>> listFlows(
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.registrationService.listRegistrationFlows(organizationRecord));
   }

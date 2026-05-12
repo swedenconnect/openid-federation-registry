@@ -50,25 +50,6 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
   }
 
   @Override
-  @Transactional(readOnly = true)
-  public List<RegistrationDto> listAll(final OrganizationRecord organizationRecord) {
-    return this.registrationRepository
-        .findAllByOrganizationOrgNumber(organizationRecord.orgNumber())
-        .stream()
-        .map(RegistrationMapper::toRegistrationDto)
-        .toList();
-  }
-
-  @Override
-  @Transactional(readOnly = true)
-  public RegistrationDto getById(final UUID id) {
-    return this.registrationRepository.findByIdFetched(id)
-        .map(RegistrationMapper::toRegistrationDto)
-        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
-            "Registration not found: %s".formatted(id)));
-  }
-
-  @Override
   public long countPending(final UUID taimId) {
     return this.registrationRepository
         .countByFlowAssignment_TaIm_TaImIdAndStatus(taimId, RegistrationStatus.PENDING_APPROVAL);

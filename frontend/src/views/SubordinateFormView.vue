@@ -37,6 +37,7 @@
         <v-form ref="form" @submit.prevent="submitForm">
           <div class="d-flex align-start gap-2 mb-4">
             <v-text-field
+                id="entity-identifier"
                 v-model="entityIdentifier"
                 label="Entity Identifier (Subject)"
                 :rules="[rules.required]"
@@ -54,6 +55,7 @@
           </div>
 
           <v-textarea
+              id="subordinate-jwks"
               v-model="jwks"
               label="JWKS (Public Keys)"
               :rules="[rules.required, rules.json]"

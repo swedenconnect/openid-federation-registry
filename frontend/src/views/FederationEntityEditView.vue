@@ -16,6 +16,18 @@
 
 <template>
   <div>
+    <!-- Header -->
+    <div class="d-flex justify-space-between align-center mb-4">
+      <h2>Edit Federation Entity</h2>
+      <v-btn
+          id="btn-back"
+          color="grey"
+          @click="router.push('/')"
+      >
+        Back
+      </v-btn>
+    </div>
+
     <v-card v-if="loading">
       <v-card-text>
         <div class="text-center py-12">
@@ -30,9 +42,6 @@
     </v-card>
 
     <v-card v-else>
-      <v-card-title>
-        <h2>Edit Federation Entity</h2>
-      </v-card-title>
       <v-card-text>
         <v-form ref="form" @submit.prevent="saveEntity">
           <div class="d-flex align-start gap-2 mb-4">

@@ -47,8 +47,8 @@ import se.swedenconnect.oidf.registry.registrationflow.process.step.MissingConte
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowRepository;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationJoinRequestDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationMapper;
-import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestDto;
 import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
 
 import java.util.List;
@@ -235,7 +235,7 @@ public class RegistrationFlowService {
    * @return join ID string for the created registration flow
    */
   public ProcessReport executeRegistrationFlow(final OrganizationRecord organizationRecord,
-      final RegistrationRequestDto registrationRequestDto) {
+      final RegistrationJoinRequestDto registrationRequestDto) {
 
     final UUID joinId = registrationRequestDto.getJoinId();
     final FlowAssignment flowAssignment = this.flowAssignmentRepository.findById(joinId)
@@ -245,7 +245,7 @@ public class RegistrationFlowService {
     final ProcessFlow processFlow = Mapper.toProcessFlow(registrationFlow, this.registrationStepRepository);
 
     final ProcessContext processContext = new ProcessContext();
-    processContext.put(ContextKey.ENTITY_ID, registrationRequestDto.getEntityIdentifyer());
+    processContext.put(ContextKey.ENTITY_ID, registrationRequestDto.getEntityIdentifier());
     final List<TrustmarkSource> trustmarkSources =
         RegistrationMapper.toTrustmarkSourceList(registrationRequestDto.getTrustmarksRequested());
     if (trustmarkSources != null) {

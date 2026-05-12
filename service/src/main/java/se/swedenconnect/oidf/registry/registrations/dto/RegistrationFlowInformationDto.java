@@ -26,8 +26,8 @@ import java.util.UUID;
  * @author Per Fredrik Plars
  */
 @Data
-@Schema(name = "RegistrationFlow")
-public class RegistrationFlowDto {
+@Schema(name = "RegistrationFlowInformation")
+public class RegistrationFlowInformationDto {
 
   @Schema(description = "ID to be used when making a join request to this registrationflow",
       example = "550e8400-e29b-41d4-a716-446655440000")
@@ -42,4 +42,17 @@ public class RegistrationFlowDto {
   @Schema(description = "Description of the flow and its purpose",
       example = "QA-miljö för Sweden Connect")
   private String description;
+
+  @Schema(description = "Description#Sv of the flow and its purpose",
+      example = "QA-miljö för Sweden Connect")
+  private String descriptionSv;
+
+  @Schema(description = "Supported entityType for this registration",
+      example = "openid_connect")
+  private String entityType;
+
+  @Schema(description = "Supported technology",
+      example = "OIDC")
+  private String technology;
+
 }

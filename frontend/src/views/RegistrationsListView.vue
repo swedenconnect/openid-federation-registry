@@ -64,7 +64,7 @@
               class="clickable-row"
               @click="openDetail(reg.registrationId)"
           >
-            <td>{{ reg.entityIdentifyer }}</td>
+            <td>{{ reg.entityIdentifier }}</td>
             <td>{{ reg.intermediateEntityId }}</td>
             <td>
               <v-chip :color="statusColor(reg.statusFedreg)" size="small" label>
@@ -106,7 +106,7 @@ const filteredRegistrations = computed(() => {
   const q = (search.value ?? '').toLowerCase();
   return registrations.value
       .filter(r => !q
-          || r.entityIdentifyer?.toLowerCase().includes(q)
+          || r.entityIdentifier?.toLowerCase().includes(q)
           || r.intermediateEntityId?.toLowerCase().includes(q))
       .sort((a, b) => (STATUS_ORDER[a.statusFedreg] ?? 99) - (STATUS_ORDER[b.statusFedreg] ?? 99));
 });

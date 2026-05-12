@@ -27,7 +27,6 @@ import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
 import java.net.URI;
 import java.util.Stack;
 
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -51,12 +50,12 @@ class RegistryAuditServiceAdapterTest {
       }
     };
 
-    auditService.resolveJwks(URI.create("https://plars.org/papartner"));
+    auditService.resolveJwks(URI.create("https://digg.se/papartner"));
 
     assertEquals(stack.peek().getType(), RegistryAuditEventType.RESOLVED_ENTITY_CONFIGURATION.name());
     assertNull(stack.peek().getData().get("oldData"));
     assertNotNull(stack.peek().getData().get("extId"));
-    assertEquals("https://plars.org/papartner", stack.peek().getData().get("extId"));
+    assertEquals("https://digg.se/papartner", stack.peek().getData().get("extId"));
   }
 
 

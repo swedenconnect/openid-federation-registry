@@ -32,10 +32,6 @@
       "description": "Apply to and manage federation membership"
     },
     {
-      "name": "Pending registrations",
-      "description": "Operator view of incoming registration requests"
-    },
-    {
       "name": "Registration Flow",
       "description": "Configured pipeline steps for entity registration"
     },
@@ -52,8 +48,20 @@
       "description": "CRUD for federation, hosted and subordinate entities"
     },
     {
+      "name": "EntityConfigurationController",
+      "description": "Loading entity configurations"
+    },
+    {
       "name": "Trustmarks",
       "description": "CRUD for trustmarks and trust mark subjects"
+    },
+    {
+      "name": "RegistrationAdmin",
+      "description": "Operator view of incoming registration requests"
+    },
+    {
+      "name": "OpenID Federation Service API",
+      "description": "API that OpenID Federation calls to get configuration for the federation setup"
     }
   ],
   "paths": {
@@ -1637,12 +1645,12 @@
         }
       }
     },
-    "/registry/v1/entityconfiguration/ping": {
+    "/registry/v1/entityconfiguration/view": {
       "post": {
         "tags": [
-          "entity-configuration-controller"
+          "EntityConfigurationController"
         ],
-        "operationId": "pingEntityConfiguration",
+        "operationId": "viewEntityConfiguration",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1659,7 +1667,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/EntityConfigurationPingDto"
+                  "$ref": "#/components/schemas/EntityConfigurationViewDto"
                 }
               }
             }
@@ -1670,7 +1678,7 @@
     "/registry/v1/entityconfiguration/jwks": {
       "post": {
         "tags": [
-          "entity-configuration-controller"
+          "EntityConfigurationController"
         ],
         "operationId": "loadJwksFromEntityConfiguration",
         "requestBody": {
@@ -1794,12 +1802,12 @@
         }
       }
     },
-    "/registration/{joinId}": {
+    "/registration/v1/{joinId}": {
       "post": {
         "tags": [
           "FederationRegistration"
         ],
-        "summary": "Create a join application with specified ID",
+        "summary": "Create a registration request on this id",
         "operationId": "createJoinWithId",
         "parameters": [
           {
@@ -1816,7 +1824,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RegistrationRequest"
+                "$ref": "#/components/schemas/RegistrationJoinRequest"
               }
             }
           },
@@ -1828,7 +1836,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegistrationRequest"
+                  "$ref": "#/components/schemas/RegistrationRequestStatus"
                 }
               }
             }
@@ -1856,80 +1864,6 @@
         "responses": {
           "200": {
             "description": "OK"
-          }
-        }
-      }
-    },
-    "/registration/admin/{id}/reject": {
-      "post": {
-        "tags": [
-          "Pending registrations"
-        ],
-        "summary": "Reject a pending registration request",
-        "operationId": "reject",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "Registration ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RejectRegistrationRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/RegistrationRequest"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/registration/": {
-      "post": {
-        "tags": [
-          "FederationRegistration"
-        ],
-        "summary": "Create a join application with auto-generated ID",
-        "operationId": "createRegistration",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegistrationRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/RegistrationRequest"
-                }
-              }
-            }
           }
         }
       }
@@ -2000,6 +1934,49 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/RegistrationFlowDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-admin/v1/{registrationId}/reject": {
+      "post": {
+        "tags": [
+          "RegistrationAdmin"
+        ],
+        "summary": "Reject a pending registration request",
+        "operationId": "reject",
+        "parameters": [
+          {
+            "name": "registrationId",
+            "in": "path",
+            "description": "Registration ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectRegistrationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Registration"
                 }
               }
             }
@@ -2147,12 +2124,12 @@
         }
       }
     },
-    "/registration": {
+    "/registration/v1": {
       "get": {
         "tags": [
           "FederationRegistration"
         ],
-        "summary": "List all registration records for your organization",
+        "summary": "List all registration records for current organization",
         "operationId": "listRegistrations",
         "responses": {
           "200": {
@@ -2171,7 +2148,40 @@
         }
       }
     },
-    "/registration/flows": {
+    "/registration/v1/{registrationId}": {
+      "get": {
+        "tags": [
+          "FederationRegistration"
+        ],
+        "summary": "Get a single registration by ID",
+        "operationId": "getById",
+        "parameters": [
+          {
+            "name": "registrationId",
+            "in": "path",
+            "description": "Registration ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Registration"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration/v1/flows": {
       "get": {
         "tags": [
           "FederationRegistration"
@@ -2186,80 +2196,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/RegistrationFlow"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/registration/admin": {
-      "get": {
-        "tags": [
-          "Pending registrations"
-        ],
-        "summary": "List pending registrations for an intermediate",
-        "operationId": "listPending",
-        "parameters": [
-          {
-            "name": "arg1",
-            "in": "query",
-            "description": "Filter by intermediate ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RegistrationRequest"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/registration/admin/count": {
-      "get": {
-        "tags": [
-          "Pending registrations"
-        ],
-        "summary": "Count unhandled PENDING registrations for an intermediate (badge)",
-        "operationId": "countPending",
-        "parameters": [
-          {
-            "name": "arg1",
-            "in": "query",
-            "description": "Intermediate ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "integer",
-                    "format": "int64"
+                    "$ref": "#/components/schemas/RegistrationFlowInformation"
                   }
                 }
               }
@@ -2418,10 +2355,47 @@
         }
       }
     },
+    "/registration-admin/v1/count": {
+      "get": {
+        "tags": [
+          "RegistrationAdmin"
+        ],
+        "summary": "Count unhandled PENDING registrations for an intermediate",
+        "operationId": "countPending",
+        "parameters": [
+          {
+            "name": "arg1",
+            "in": "query",
+            "description": "Intermediate ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/federationservice/submodules": {
       "get": {
         "tags": [
-          "oidf-service-api-controller"
+          "OpenID Federation Service API"
         ],
         "operationId": "submoduleRecord",
         "parameters": [
@@ -2461,7 +2435,7 @@
     "/api/v1/federationservice/entity_record": {
       "get": {
         "tags": [
-          "oidf-service-api-controller"
+          "OpenID Federation Service API"
         ],
         "operationId": "entityRecord",
         "parameters": [
@@ -2935,6 +2909,19 @@
           "description": {
             "type": "string"
           },
+          "descriptionSv": {
+            "type": "string"
+          },
+          "technology": {
+            "type": "string",
+            "enum": [
+              "OIDC",
+              "SAML"
+            ]
+          },
+          "entityType": {
+            "type": "string"
+          },
           "steps": {
             "type": "array",
             "items": {
@@ -2964,16 +2951,16 @@
           }
         }
       },
-      "EntityConfigurationPingDto": {
+      "EntityConfigurationViewDto": {
         "type": "object",
         "properties": {
-          "errorMessage": {
-            "type": "string",
-            "description": "Error message explaining way entityconfiguration was not accessable",
-            "example": "Remote server reply 404 NotFound"
+          "header": {
+            "type": "object",
+            "additionalProperties": {}
           },
-          "entityConfigurationAccessible": {
-            "type": "boolean"
+          "payload": {
+            "type": "object",
+            "additionalProperties": {}
           }
         }
       },
@@ -2997,85 +2984,163 @@
           }
         }
       },
-      "RegistrationRequest": {
+      "RegistrationJoinRequest": {
         "type": "object",
         "properties": {
-          "id": {
+          "joinId": {
             "type": "string",
             "format": "uuid",
-            "description": "Registration ID",
+            "description": "JoinId - Id for the join flow to register on",
             "readOnly": true
           },
-          "taimId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Intermediate (TaIm) this registration belongs to"
-          },
-          "registrationFlowId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Registration flow used for this request"
-          },
-          "entityId": {
+          "entityIdentifier": {
             "type": "string",
             "description": "Entity identifier of the applicant",
             "example": "https://example.com/entity"
           },
-          "jwks": {
-            "type": "string",
-            "description": "JWKS snapshot from entity configuration at time of registration"
-          },
-          "metadata": {
-            "type": "string",
-            "description": "Entity configuration metadata snapshot"
-          },
-          "metadataPolicy": {
-            "type": "string",
-            "description": "Proposed metadata_policy generated by PolicyCreationStep"
-          },
           "trustmarksRequested": {
-            "type": "string",
-            "description": "Trustmarks requested in the application"
-          },
-          "status": {
-            "type": "string",
-            "description": "Current status of the registration request",
-            "enum": [
-              "PENDING",
-              "APPROVED",
-              "REJECTED"
-            ]
-          },
-          "reviewedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When the request was reviewed by an operator",
-            "readOnly": true
-          },
-          "reviewedBy": {
-            "type": "string",
-            "description": "Identity of the operator who reviewed the request",
-            "readOnly": true
-          },
-          "rejectionReason": {
-            "type": "string",
-            "description": "Reason provided by the operator when rejecting the request"
-          },
-          "createdDate": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When this registration was created",
-            "readOnly": true
+            "type": "array",
+            "description": "Trustmarks requested",
+            "items": {
+              "$ref": "#/components/schemas/TrustmarkRequest"
+            }
           }
         }
       },
-      "RejectRegistrationRequest": {
+      "TrustmarkRequest": {
         "type": "object",
         "properties": {
-          "rejectionReason": {
+          "trustmarkIssuer": {
             "type": "string",
-            "description": "Human-readable explanation shown to the applicant",
-            "example": "Entity configuration could not be fetched from the provided entity ID."
+            "description": "Entity identifier of the trustmark issuer",
+            "example": "https://fed.swedenconnect.se/tmi"
+          },
+          "trustmarkType": {
+            "type": "array",
+            "description": "TrustmarkType",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "RegistrationRequestStatus": {
+        "type": "object",
+        "properties": {
+          "registrationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "RegistrationID",
+            "readOnly": true
+          },
+          "status": {
+            "type": "string",
+            "description": "Status on registration",
+            "example": "PENDING_APPROVAL"
+          },
+          "entityIdentifier": {
+            "type": "string",
+            "description": "Entity identifier of the applicant",
+            "example": "https://example.com/entity"
+          },
+          "trustmarksRequested": {
+            "type": "array",
+            "description": "Trustmarks requested in the application",
+            "items": {
+              "$ref": "#/components/schemas/TrustmarkRegistration"
+            }
+          },
+          "successful": {
+            "type": "boolean",
+            "description": "True if the pipeline completed without any step failures"
+          },
+          "steps": {
+            "type": "array",
+            "description": "Ordered list of step execution records",
+            "items": {
+              "$ref": "#/components/schemas/StepExecutionRecord"
+            }
+          }
+        }
+      },
+      "StepExecutionRecord": {
+        "type": "object",
+        "properties": {
+          "stepName": {
+            "type": "string",
+            "description": "Display name of the step",
+            "example": "LoadEntityConfigurationStep"
+          },
+          "status": {
+            "type": "string",
+            "description": "Step execution outcome",
+            "example": "SUCCESS"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable summary of the step result"
+          },
+          "issues": {
+            "type": "array",
+            "description": "Validation issues found during this step",
+            "items": {
+              "$ref": "#/components/schemas/StepIssue"
+            }
+          }
+        }
+      },
+      "StepIssue": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "Field that caused the issue",
+            "example": "InternalPreRegistrationStep.status"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable description of the issue"
+          },
+          "severity": {
+            "type": "string",
+            "description": "Severity of the issue",
+            "example": "ERROR"
+          }
+        }
+      },
+      "TrustmarkRegistration": {
+        "type": "object",
+        "properties": {
+          "trustmarkIssuer": {
+            "type": "string",
+            "description": "Entity identifier of the trustmark issuer",
+            "example": "https://fed.swedenconnect.se/tmi"
+          },
+          "trustmarkStatus": {
+            "type": "array",
+            "description": "Trustmarks with status",
+            "items": {
+              "$ref": "#/components/schemas/TrustmarkStatus"
+            }
+          }
+        }
+      },
+      "TrustmarkStatus": {
+        "type": "object",
+        "properties": {
+          "trustmarkType": {
+            "type": "string",
+            "description": "Trustmark type identifier (URI)",
+            "example": "https://trust.example.com/tm/loa3"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of this trustmark",
+            "enum": [
+              "APPROVED",
+              "PENDING",
+              "REVOKED"
+            ]
           }
         }
       },
@@ -3094,6 +3159,74 @@
           "assignId": {
             "type": "string",
             "format": "uuid"
+          }
+        }
+      },
+      "RejectRegistrationRequest": {
+        "type": "object",
+        "properties": {
+          "rejectionReason": {
+            "type": "string",
+            "description": "Human-readable explanation shown to the applicant",
+            "example": "Entity configuration could not be fetched from the provided entity ID."
+          }
+        }
+      },
+      "Registration": {
+        "type": "object",
+        "properties": {
+          "registrationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id of this specific registration",
+            "readOnly": true
+          },
+          "joinId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Join ID",
+            "readOnly": true
+          },
+          "entityIdentifier": {
+            "type": "string",
+            "description": "EntityId for the requested registration",
+            "example": "https://example.com/service",
+            "readOnly": true
+          },
+          "intermediateEntityId": {
+            "type": "string",
+            "description": "EntityId of the Intermediate that the registration is made on",
+            "example": "https://example.com/entity",
+            "readOnly": true
+          },
+          "isHosted": {
+            "type": "boolean",
+            "description": "True if the entity's metadata is hosted in this registry",
+            "readOnly": true
+          },
+          "statusFedreg": {
+            "type": "string",
+            "description": "Current federation registration status",
+            "enum": [
+              "STARTED",
+              "PENDING_APPROVAL",
+              "APPROVED",
+              "REJECTED"
+            ],
+            "readOnly": true
+          },
+          "rejectionReason": {
+            "type": "string",
+            "description": "Reason for rejection, present when status_fedreg is DENY",
+            "readOnly": true
+          },
+          "statusTrustmarks": {
+            "type": "array",
+            "description": "Trustmark status per requested trustmark",
+            "items": {
+              "$ref": "#/components/schemas/TrustmarkRegistration"
+            },
+            "readOnly": true
           }
         }
       },
@@ -3248,102 +3381,19 @@
         ],
         "description": "Extended federation entity including modules"
       },
-      "Registration": {
+      "RegistrationFlowInformation": {
         "type": "object",
         "properties": {
           "joinId": {
             "type": "string",
             "format": "uuid",
-            "description": "Join ID",
-            "readOnly": true
-          },
-          "entityId": {
-            "type": "string",
-            "description": "Entity identifier (URI)",
-            "example": "https://example.com/entity"
-          },
-          "registrationId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "ID of the registration flow this entity joined through"
-          },
-          "tags": {
-            "type": "array",
-            "description": "Tags describing the entity type, e.g. OIDC, SAML, RP, OP, IDP, SP",
-            "example": [
-              "OIDC",
-              "RP"
-            ],
-            "items": {
-              "type": "string"
-            }
-          },
-          "isHosted": {
-            "type": "boolean",
-            "description": "True if the entity's metadata is hosted in this registry"
-          },
-          "hostedId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "ID of the hosted entity record, present when isHosted is true",
-            "readOnly": true
-          },
-          "statusFedreg": {
-            "type": "string",
-            "description": "Current federation registration status",
-            "enum": [
-              "APPROVED",
-              "ONGOING",
-              "DENY"
-            ]
-          },
-          "statusTrustmarks": {
-            "type": "array",
-            "description": "Trustmark status per requested trustmark",
-            "items": {
-              "$ref": "#/components/schemas/TrustmarkStatus"
-            }
-          },
-          "rejectionReason": {
-            "type": "string",
-            "description": "Reason for rejection, present when status_fedreg is DENY",
-            "readOnly": true
-          }
-        }
-      },
-      "TrustmarkStatus": {
-        "type": "object",
-        "properties": {
-          "trustmarkId": {
-            "type": "string",
-            "description": "Trustmark type identifier (URI)",
-            "example": "https://trust.example.com/tm/loa3"
-          },
-          "status": {
-            "type": "string",
-            "description": "Current status of this trustmark",
-            "enum": [
-              "OK",
-              "PENDING",
-              "REVOKED",
-              "EXPIRED"
-            ]
-          }
-        }
-      },
-      "RegistrationFlow": {
-        "type": "object",
-        "properties": {
-          "registrationId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Registration ID (linked to an intermediate)",
+            "description": "ID to be used when making a join request to this registrationflow",
             "example": "550e8400-e29b-41d4-a716-446655440000"
           },
-          "type": {
+          "intermediateEntityId": {
             "type": "string",
-            "description": "Protocol/entity type for this flow",
-            "example": "OIDC-OP"
+            "description": "Intermediate EntityID",
+            "example": "https://fed.swedenconnect.se/im"
           },
           "name": {
             "type": "string",
@@ -3354,6 +3404,21 @@
             "type": "string",
             "description": "Description of the flow and its purpose",
             "example": "QA-miljÃ¶ fÃ¶r Sweden Connect"
+          },
+          "descriptionSv": {
+            "type": "string",
+            "description": "Description#Sv of the flow and its purpose",
+            "example": "QA-miljÃ¶ fÃ¶r Sweden Connect"
+          },
+          "entityType": {
+            "type": "string",
+            "description": "Supported entityType for this registration",
+            "example": "openid_connect"
+          },
+          "technology": {
+            "type": "string",
+            "description": "Supported technology",
+            "example": "OIDC"
           }
         }
       },

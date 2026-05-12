@@ -20,13 +20,14 @@ import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
+import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
 import se.swedenconnect.oidf.registry.registrationflow.RegistrationFlowService;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
-import se.swedenconnect.oidf.registry.registrations.dto.RegistrationFlowDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationFlowInformationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationMapper;
-import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationJoinRequestDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestStatusDto;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
@@ -64,17 +65,28 @@ public class RegistrationServiceImpl implements RegistrationService {
   }
 
 
+  @Override
+  @Transactional(readOnly = true)
+  public RegistrationDto getRegistrationById(final UUID registrationId) {
+    return this.registrationRepository.findByIdFetched(registrationId)
+        .map(RegistrationMapper::toRegistrationDto)
+        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
+            "Registration not found: %s".formatted(registrationId)));
+  }
+
 
   @Override
   @Transactional
   public RegistrationRequestStatusDto createRegistrationRequest(final OrganizationRecord organizationRecord,
-      final UUID joinId, final RegistrationRequestDto request) {
+      final UUID joinId, final RegistrationJoinRequestDto request) {
+
     request.setJoinId(joinId);
+    ValidateDto.init(organizationRecord).validate(request);
     final ProcessReport report = this.registrationFlowService.executeRegistrationFlow(organizationRecord, request);
-    final UUID registrationId = this.registrationRepository.findByEntityId(request.getEntityIdentifyer())
+    final UUID registrationId = this.registrationRepository.findByEntityId(request.getEntityIdentifier())
         .map(Registration::getRegistrationId)
         .orElse(null);
-    return RegistrationMapper.toRegistrationRequestStatusDto(request.getEntityIdentifyer(), registrationId, report);
+    return RegistrationMapper.toRegistrationRequestStatusDto(request.getEntityIdentifier(), registrationId, report);
   }
 
   @Override
@@ -103,7 +115,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
   @Override
   @Transactional(readOnly = true)
-  public List<RegistrationFlowDto> listRegistrationFlows(final OrganizationRecord organizationRecord) {
+  public List<RegistrationFlowInformationDto> listRegistrationFlows(final OrganizationRecord organizationRecord) {
     return this.flowAssignmentRepository.findAll()
         .stream()
         .map(RegistrationMapper::toRegistrationFlowDto)

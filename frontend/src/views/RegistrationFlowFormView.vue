@@ -75,6 +75,7 @@
                   label="Technology"
                   :disabled="saving"
                   clearable
+                  :rules="[rules.required]"
                   hint="Protocol technology for entities in this flow"
                   persistent-hint
               ></v-select>
@@ -124,8 +125,10 @@
           </v-row>
 
           <!-- Selected steps -->
-          <div v-if="selectedSteps.length === 0" class="text-grey text-body-2 mb-4">
-            No steps selected. Add at least one step above.
+          <div v-if="selectedSteps.length === 0" class="mb-4">
+            <span :class="stepsValidationAttempted ? 'text-error' : 'text-grey'" class="text-body-2">
+              No steps selected. Add at least one step above.
+            </span>
           </div>
 
           <v-card
@@ -244,6 +247,7 @@ const errorStore = useErrorStore();
 
 const form = ref(null);
 const saving = ref(false);
+const stepsValidationAttempted = ref(false);
 const name = ref('');
 const description = ref('');
 const descriptionSv = ref('');
@@ -331,8 +335,9 @@ async function loadFlow() {
 }
 
 async function submitForm() {
+  stepsValidationAttempted.value = true;
   const {valid} = await form.value.validate();
-  if (!valid) return;
+  if (!valid || selectedSteps.value.length === 0) return;
 
   saving.value = true;
   errorStore.clearError();
