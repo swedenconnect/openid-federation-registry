@@ -97,7 +97,8 @@ public class UserInfoController {
    *
    * @param oidcUser the OpenID Connect (OIDC) user providing user-related claims and details
    * @param request the HTTP request, used to retrieve additional session attributes if needed
-   * @return a {@code ResponseEntity} containing a {@code OidfUserInfoResponse}, which includes user related information
+   * @return a {@code ResponseEntity} containing a {@code OidfUserInfoResponse}, which includes
+   * user related information
    */
   private ResponseEntity<UserInfoResponse> handleOrganizationRealm(
       final OidcUser oidcUser, final HttpServletRequest request) {
