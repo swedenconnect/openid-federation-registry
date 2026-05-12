@@ -17,8 +17,8 @@ package se.swedenconnect.oidf.registry.registrations.service;
 
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
-import se.swedenconnect.oidf.registry.registrations.dto.RegistrationFlowDto;
-import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationFlowInformationDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationJoinRequestDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestStatusDto;
 
 import java.util.List;
@@ -42,7 +42,16 @@ public interface RegistrationService {
    * @return the created join record
    */
   RegistrationRequestStatusDto createRegistrationRequest(OrganizationRecord organizationRecord, UUID joinId,
-      RegistrationRequestDto request);
+      RegistrationJoinRequestDto request);
+
+  /**
+   * Returns a single registration by ID.
+   *
+   * @param registrationId the registration ID
+   * @return the registration DTO
+   */
+  RegistrationDto getRegistrationById(UUID registrationId);
+
 
   /**
    * Removes a join record by ID.
@@ -66,5 +75,5 @@ public interface RegistrationService {
    * @param organizationRecord the calling organization
    * @return list of flows
    */
-  List<RegistrationFlowDto> listRegistrationFlows(OrganizationRecord organizationRecord);
+  List<RegistrationFlowInformationDto> listRegistrationFlows(OrganizationRecord organizationRecord);
 }

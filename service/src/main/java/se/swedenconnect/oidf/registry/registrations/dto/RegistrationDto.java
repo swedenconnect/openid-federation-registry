@@ -20,7 +20,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -45,54 +44,31 @@ public class RegistrationDto {
       example = "https://example.com/service",
       accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private String entityIdentifyer;
+  private String entityIdentifier;
 
-  @Schema(description = "EntityId of the Intermediate that the registration is made for",
+  @Schema(description = "EntityId of the Intermediate that the registration is made on",
       example = "https://example.com/entity",
       accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private String intermediateEntityId;
-
-  @Schema(description = "Tags describing the entity type, e.g. OIDC, SAML, RP, OP, IDP, SP",
-      example = "[\"OIDC\", \"RP\"]",
-      accessMode = Schema.AccessMode.READ_ONLY)
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private List<String> tags;
 
   @Schema(description = "True if the entity's metadata is hosted in this registry",
       accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private Boolean isHosted;
 
-  @Schema(description = "ID of the hosted entity record, present when isHosted is true",
-      accessMode = Schema.AccessMode.READ_ONLY)
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private UUID hostedId;
-
   @Schema(description = "Current federation registration status",
       accessMode = Schema.AccessMode.READ_ONLY)
   private FedRegStatus statusFedreg;
-
-  @Schema(description = "Trustmark status per requested trustmark")
-  private List<TrustmarkStatusDto> statusTrustmarks;
 
   @Schema(description = "Reason for rejection, present when status_fedreg is DENY",
       accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private String rejectionReason;
 
-  @Schema(description = "JWKS keys provided during registration",
+  @Schema(description = "Trustmark status per requested trustmark",
       accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private Map<String, Object> jwks;
+  private List<TrustmarkRegistrationDto> statusTrustmarks;
 
-  @Schema(description = "Metadata policy provided during registration",
-      accessMode = Schema.AccessMode.READ_ONLY)
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private Map<String, Object> metadataPolicy;
-
-  @Schema(description = "Trustmarks requested during registration",
-      accessMode = Schema.AccessMode.READ_ONLY)
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private List<TrustmarkDto> trustmarksRequested;
 }

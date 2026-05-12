@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.registry.registrations.dto;
+package se.swedenconnect.oidf.registry.registrations.model;
 
 /**
  * Status for an individual trustmark assignment.
@@ -22,15 +22,12 @@ package se.swedenconnect.oidf.registry.registrations.dto;
  */
 public enum TrustmarkStatus {
 
-  /** Trustmark granted and valid. */
-  OK,
+  /** Trustmark APPROVED. */
+  APPROVED,
 
   /** Awaiting approval. */
   PENDING,
 
   /** Trustmark revoked. */
-  REVOKED,
-
-  /** Trustmark has expired. */
-  EXPIRED
+  REVOKED
 }

@@ -53,34 +53,6 @@ public class RegistrationAdminController {
   private final RegistrationAdminService registrationAdminService;
 
   /**
-   * Lists all registrations for the calling organization.
-   *
-   * @param organizationRecord the calling organization
-   * @return list of registration DTOs
-   */
-  @GetMapping
-  @Operation(summary = "List all registrations for the calling organization")
-  public ResponseEntity<List<RegistrationDto>> listAll(
-      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    return ResponseEntity.ok(this.registrationAdminService.listAll(organizationRecord));
-  }
-
-  /**
-   * Returns a single registration by ID.
-   *
-   * @param organizationRecord the calling organization
-   * @param registrationId the registration ID
-   * @return the registration DTO
-   */
-  @GetMapping("/{registrationId}")
-  @Operation(summary = "Get a single registration by ID")
-  public ResponseEntity<RegistrationDto> getById(
-      @Parameter(hidden = true) final OrganizationRecord organizationRecord,
-      @Parameter(description = "Registration ID") @PathVariable("registrationId") final UUID registrationId) {
-    return ResponseEntity.ok(this.registrationAdminService.getById(registrationId));
-  }
-
-  /**
    * Counts unhandled PENDING registrations for an intermediate.
    *
    * @param organizationRecord the calling organization
@@ -88,7 +60,7 @@ public class RegistrationAdminController {
    * @return map containing the count
    */
   @GetMapping("/count")
-  @Operation(summary = "Count unhandled PENDING registrations for an intermediate (badge)")
+  @Operation(summary = "Count unhandled PENDING registrations for an intermediate")
   public ResponseEntity<Map<String, Long>> countPending(
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
       @Parameter(description = "Intermediate ID") @RequestParam final UUID taimId) {
@@ -99,16 +71,16 @@ public class RegistrationAdminController {
    * Rejects a pending registration request.
    *
    * @param organizationRecord the calling organization
-   * @param id the registration ID
+   * @param registrationID the registration ID
    * @param body the rejection details
    * @return the updated registration DTO
    */
-  @PostMapping("/{id}/reject")
+  @PostMapping("/{registrationID}/reject")
   @Operation(summary = "Reject a pending registration request")
   public ResponseEntity<RegistrationDto> reject(
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
-      @Parameter(description = "Registration ID") @PathVariable final UUID id,
+      @Parameter(description = "Registration ID") @PathVariable final UUID registrationID,
       @RequestBody final RejectRegistrationDto body) {
-    return ResponseEntity.ok(this.registrationAdminService.reject(id, body.rejectionReason()));
+    return ResponseEntity.ok(this.registrationAdminService.reject(registrationID, body.rejectionReason()));
   }
 }

@@ -17,6 +17,7 @@ package se.swedenconnect.oidf.registry.registrations.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import se.swedenconnect.oidf.registry.registrations.model.TrustmarkStatus;
 
 /**
  * Status for a single trustmark on a registered entity.
@@ -26,10 +27,20 @@ import lombok.Data;
 @Data
 @Schema(name = "TrustmarkStatus")
 public class TrustmarkStatusDto {
-
+  /**
+   * Constructor
+   * @param trustmarkType trustmarkType
+   * @param trustmarkStatus trustmarkStatus
+   */
+  public TrustmarkStatusDto(final String trustmarkType, final TrustmarkStatus trustmarkStatus) {
+    this.trustmarkType = trustmarkType;
+    this.status = trustmarkStatus;
+  }
   @Schema(description = "Trustmark type identifier (URI)", example = "https://trust.example.com/tm/loa3")
-  private String trustmarkId;
+  private String trustmarkType;
 
   @Schema(description = "Current status of this trustmark")
   private TrustmarkStatus status;
+
+
 }

@@ -105,12 +105,10 @@ async function saveEntity() {
       crit: crit.value.filter(c => c && c.trim() !== ''),
     };
 
-    await requestPost(federationEntitiesPath, entityData);
+    const response = await requestPost(federationEntitiesPath, entityData);
 
-    // Check if request was successful
-    if (ok.value) {
-      // Success - navigate back to list
-      router.push('/');
+    if (ok.value && response?.entityId) {
+      router.push({name: 'federation-entity-edit', params: {id: response.entityId}});
     }
   } catch (error) {
     // Error is already handled by useRequest and set in errorStore

@@ -29,22 +29,6 @@ import java.util.UUID;
 public interface RegistrationAdminService {
 
   /**
-   * Returns all registrations belonging to the calling organization.
-   *
-   * @param organizationRecord the calling organization
-   * @return list of registration DTOs
-   */
-  List<RegistrationDto> listAll(OrganizationRecord organizationRecord);
-
-  /**
-   * Returns a single registration by ID.
-   *
-   * @param registrationId the registration ID
-   * @return the registration DTO
-   */
-  RegistrationDto getById(UUID registrationId);
-
-  /**
    * Counts registrations with PENDING_APPROVAL status for a given intermediate.
    *
    * @param taimId the intermediate ID

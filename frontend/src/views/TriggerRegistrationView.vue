@@ -49,7 +49,12 @@
                 :rules="[v => !!v || 'Registration flow is required']"
             >
               <template #item="{ props: itemProps, item }">
-                <v-list-item v-bind="itemProps" :subtitle="item.raw.description"></v-list-item>
+                <v-list-item v-bind="itemProps">
+                  <template #subtitle>
+                    <div v-if="item.raw.description">{{ item.raw.description }}</div>
+                    <div v-if="item.raw.intermediateEntityId" class="text-caption text-grey">{{ item.raw.intermediateEntityId }}</div>
+                  </template>
+                </v-list-item>
               </template>
             </v-select>
 
@@ -106,7 +111,7 @@
               </tr>
               <tr>
                 <td class="font-weight-medium">Entity Identifier</td>
-                <td>{{ result.entityIdentifyer }}</td>
+                <td>{{ result.entityIdentifier }}</td>
               </tr>
               <tr>
                 <td class="font-weight-medium">Status</td>
@@ -265,7 +270,7 @@ async function submit() {
 
   try {
     const body = {
-      entityIdentifyer: entityIdentifier.value,
+      entityIdentifier: entityIdentifier.value,
       trustmarksRequested: mapTrustmarks(trustmarkSources.value),
     };
 

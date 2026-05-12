@@ -24,6 +24,7 @@ import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.RegistrationFlowDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationJoinRequestDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
@@ -33,7 +34,9 @@ import se.swedenconnect.oidf.registry.validation.VariableValueResolver;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Validator for DTO objects using PropertyValidators framework.
@@ -71,8 +74,43 @@ public class ValidateDto {
   }
 
   /**
-   * Validates RegistrationFlowDto. The {@code flowId} field is intentionally not validated here
-   * because it is always assigned server-side.
+   * Validates RegistrationJoinRequestDto.
+   *
+   * @param dto the registration join request DTO
+   * @throws PropertyValidationFailException if validation fails
+   */
+  public void validate(final RegistrationJoinRequestDto dto) {
+    Objects.requireNonNull(dto, "RegistrationJoinRequestDto cannot be null");
+
+    this.v.required()
+        .uuid()
+        .build()
+        .ifFailThrow("joinId", dto.getJoinId());
+
+    this.v.required()
+        .entityid()
+        .build()
+        .ifFailThrow("entityIdentifier", dto.getEntityIdentifier());
+
+    Optional.ofNullable(dto.getTrustmarksRequested())
+        .orElse(Collections.emptyList())
+        .forEach(trustmarks -> {
+          this.v.required()
+              .entityid()
+              .build()
+              .ifFailThrow("trustmarkissuer", trustmarks.getTrustmarkIssuer());
+
+          this.v.required()
+              .entityid()
+              .build()
+              .ifFailThrow("trustmarktype", trustmarks.getTrustmarkType());
+        });
+
+  }
+
+  /**
+   * Validates RegistrationFlowDto. The {@code flowId} field is intentionally not validated here because it is always
+   * assigned server-side.
    *
    * @param dto the registration flow DTO
    * @throws PropertyValidationFailException if validation fails
@@ -87,6 +125,14 @@ public class ValidateDto {
     this.v.required()
         .build()
         .ifFailThrow("description", dto.description());
+
+    this.v.required()
+        .build()
+        .ifFailThrow("technology", dto.technology());
+
+    this.v.required().build()
+        .ifFailThrow("steps", dto.steps());
+
   }
 
   /**
@@ -257,8 +303,6 @@ public class ValidateDto {
         .build()
         .ifFailThrow("delegation", dto.getDelegation());
   }
-
-
 
   /**
    * Validates TrustmarkSubjectDto.

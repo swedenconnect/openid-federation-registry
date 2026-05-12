@@ -13,20 +13,26 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package se.swedenconnect.oidf.registry.registrations.dto;
 
-package se.swedenconnect.oidf.registry.registrations.model;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
-import java.io.Serializable;
 import java.util.List;
 
 /**
- * Representation of Trustmarks
+ * A requested trustmark included in a join application.
  *
- * @param trustMarkIssuer entity identifier of the trustmark issuer
- * @param trustmarks   list of trustmarks
  * @author Per Fredrik Plars
  */
-public record TrustmarkSource(String trustMarkIssuer, List<TrustMarkStatus> trustmarks) implements Serializable {
-  public record TrustMarkStatus(String trustmarkType,TrustmarkStatus trustmarkStatus) implements Serializable {
-  }
+@Data
+@Schema(name = "TrustmarkRequest")
+public class TrustmarkRequestDto {
+
+  @Schema(description = "Entity identifier of the trustmark issuer", example = "https://fed.swedenconnect.se/tmi")
+  private String trustmarkIssuer;
+
+  @Schema(description = "TrustmarkType", example = "")
+  private List<String> trustmarkType;
+
 }

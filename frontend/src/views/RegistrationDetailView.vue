@@ -65,7 +65,7 @@
               </tr>
               <tr>
                 <td class="font-weight-bold field-label">Entity ID</td>
-                <td class="text-mono">{{ registration.entityIdentifyer }}</td>
+                <td class="text-mono">{{ registration.entityIdentifier }}</td>
               </tr>
               <tr>
                 <td class="font-weight-bold field-label">Intermediate Entity ID</td>
@@ -162,7 +162,7 @@
                 <v-progress-circular indeterminate color="primary" size="48"></v-progress-circular>
                 <p class="mt-4 text-grey">Loading trustmark data…</p>
               </div>
-              <template v-else-if="registration.trustmarksRequested?.length">
+              <template v-else-if="registration.statusTrustmarks?.length">
                 <v-table density="compact">
                   <thead>
                     <tr>
@@ -224,7 +224,7 @@
         <v-card-text>
           <p class="mb-3">
             You are about to reject the registration for
-            <strong>{{ registration?.entityIdentifyer }}</strong>.
+            <strong>{{ registration?.entityIdentifier }}</strong>.
           </p>
           <v-textarea
               v-model="rejectionReason"
@@ -336,7 +336,7 @@ async function submitReject() {
 }
 
 async function loadEntityStatement() {
-  if (entityStatementLoaded.value || !registration.value?.entityIdentifyer) return;
+  if (entityStatementLoaded.value || !registration.value?.entityIdentifier) return;
   entityStatementLoading.value = true;
   entityStatementError.value = null;
   try {
@@ -344,7 +344,7 @@ async function loadEntityStatement() {
       method: 'POST',
       credentials: 'include',
       headers: {'Content-Type': 'text/plain'},
-      body: registration.value.entityIdentifyer,
+      body: registration.value.entityIdentifier,
     });
     if (res.ok) {
       entityStatement.value = await res.json();
@@ -387,22 +387,22 @@ async function loadTrustmarkData() {
 }
 
 const trustmarkStatuses = computed(() => {
-  if (!registration.value?.trustmarksRequested?.length) return [];
-  const allTypes = registration.value.trustmarksRequested.flatMap(tm => tm.trustmarkType ?? []);
+  if (!registration.value?.statusTrustmarks?.length) return [];
+  const allTypes = registration.value.statusTrustmarks.flatMap(tm => (tm.trustmarkStatus ?? []).map(s => s.trustmarkType));
   return allTypes.map(requestedType => {
     const match = allTrustmarks.value.find(tm => tm.trustmarkType === requestedType);
     if (!match) {
       return {type: requestedType, status: 'not_in_org'};
     }
     const isSubject = (match.trustmarkSubjects ?? []).some(
-        s => s.subject === registration.value.entityIdentifyer,
+        s => s.subject === registration.value.entityIdentifier,
     );
     if (isSubject) {
       return {type: requestedType, status: 'enrolled', trustmark: match};
     }
     const entityId = trustmarkIssuersMap.value[match.trustmarkissuerId];
     const addSubjectLink = entityId
-        ? `/entities/${entityId}/modules/trustmarkissuer/trustmarks/${match.trustmarkId}/subjects/new?trustmarkIssuerId=${match.trustmarkissuerId}&subject=${encodeURIComponent(registration.value.entityIdentifyer)}`
+        ? `/entities/${entityId}/modules/trustmarkissuer/trustmarks/${match.trustmarkId}/subjects/new?trustmarkIssuerId=${match.trustmarkissuerId}&subject=${encodeURIComponent(registration.value.entityIdentifier)}`
         : null;
     return {type: requestedType, status: 'not_subject', trustmark: match, addSubjectLink};
   });

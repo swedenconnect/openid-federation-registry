@@ -97,6 +97,7 @@
 
     <modules>
         <module>service</module>
+        <module>guitest</module>
     </modules>
     <dependencyManagement>
         <dependencies>
