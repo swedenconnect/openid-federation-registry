@@ -103,7 +103,8 @@ public class UserInfoController {
       final OidcUser oidcUser, final HttpServletRequest request) {
     final OrganizationInformation orgInfo = OrganizationInformationFactory.getInformation(oidcUser);
 
-    final String attribute = (String) request.getSession().getAttribute(AuthConstants.SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE);
+    final String attribute = (String) request.getSession()
+        .getAttribute(AuthConstants.SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE);
     final OrganizationRecord organizationRecord = Optional.ofNullable(attribute)
         .flatMap(orgNumber -> orgInfo.organizations().stream()
             .filter(org -> org.orgNumber().equals(orgNumber))
