@@ -107,11 +107,6 @@
             </dependency>
             <dependency>
                 <groupId>se.swedenconnect.oidf</groupId>
-                <artifactId>hash</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>se.swedenconnect.oidf</groupId>
                 <artifactId>openid-federation-entity-registry-api</artifactId>
                 <version>${revision}</version>
             </dependency>

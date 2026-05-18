@@ -14,26 +14,21 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.registrations.model;
-
-import java.io.Serializable;
-import java.util.List;
+package se.swedenconnect.oidf.registry.registrations.dto;
 
 /**
- * Representation of Trustmarks
+ * Tags for a registration
  *
- * @param trustMarkIssuer entity identifier of the trustmark issuer
- * @param trustmarks   list of trustmarks
  * @author Per Fredrik Plars
  */
-public record TrustmarkSource(String trustMarkIssuer, List<TrustMarkStatus> trustmarks) implements Serializable {
-
-  /**
-   * Status for  trustmarkttype
-   *
-   * @param trustmarkType trustmarkType
-   * @param trustmarkStatus status of the registration
-   */
-  public record TrustMarkStatus(String trustmarkType, RegistrationStatus trustmarkStatus) implements Serializable {
-  }
+public enum RegistrationTagsDto {
+  OIDC,
+  SAML,
+  HOSTED,
+  FED,   // federation_entity
+  RP,    // openid_relying_party
+  OP,    // openid_provider
+  AS,   // oauth_authorization_server
+  OAC,   // oauth_client
+  ORS    // oauth_resource / oauth_resource_server
 }

@@ -13,21 +13,8 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.registry.registrations.model;
 
-/**
- * Status for an individual trustmark assignment.
- *
- * @author Per Fredrik Plars
- */
-public enum TrustmarkStatus {
-
-  /** Trustmark APPROVED. */
-  APPROVED,
-
-  /** Awaiting approval. */
-  PENDING,
-
-  /** Trustmark revoked. */
-  REVOKED
-}
+ALTER TABLE `registrations`
+    ADD COLUMN `organization_id` UUID,
+    ADD CONSTRAINT `fk_reg_organization`
+        FOREIGN KEY (`organization_id`) REFERENCES `organization` (`organization_id`);

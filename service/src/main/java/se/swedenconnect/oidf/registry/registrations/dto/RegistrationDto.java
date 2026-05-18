@@ -71,4 +71,15 @@ public class RegistrationDto {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private List<TrustmarkRegistrationDto> statusTrustmarks;
 
+  @Schema(description = "Tags describing the entity type, e.g. OIDC, SAML, RP, OP, IDP, SP",
+      example = "[\"OIDC\", \"RP\"]",
+      accessMode = Schema.AccessMode.READ_ONLY)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  private List<RegistrationTagsDto> tags;
+
+  @Schema(description = "Name of the organization that submitted the registration",
+      accessMode = Schema.AccessMode.READ_ONLY)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  private String organizationName;
+
 }

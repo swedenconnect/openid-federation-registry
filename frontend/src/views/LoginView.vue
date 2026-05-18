@@ -45,7 +45,7 @@
 </template>
 
 <script setup>
-import {computed} from 'vue';
+import {computed, onMounted, onUnmounted} from 'vue';
 import {useRoute} from 'vue-router';
 import {adminAuthenticatePath} from '@/config/path';
 
@@ -63,4 +63,11 @@ const errorMessage = computed(() => {
 function login() {
   globalThis.location.href = adminAuthenticatePath;
 }
+
+function onKeydown(e) {
+  if (e.key === 'Enter') login();
+}
+
+onMounted(() => document.addEventListener('keydown', onKeydown));
+onUnmounted(() => document.removeEventListener('keydown', onKeydown));
 </script>

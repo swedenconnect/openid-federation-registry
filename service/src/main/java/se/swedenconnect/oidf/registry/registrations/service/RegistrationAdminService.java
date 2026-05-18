@@ -44,4 +44,21 @@ public interface RegistrationAdminService {
    * @return the updated registration DTO
    */
   RegistrationDto reject(UUID id, String rejectionReason);
+
+  /**
+   * Return all registrations that is done towards this organization intermidiate:s
+   *
+   * @param organizationRecord the calling organization
+   * @return list of registration records
+   */
+  List<RegistrationDto> listRegistrationsConnectedToThisOrgIM(OrganizationRecord organizationRecord);
+
+  /**
+   * Getting registration no organization validation
+   *
+   * @param registrationId the registration ID
+   * @return the registration DTO
+   */
+  RegistrationDto getRegistrationById(UUID registrationId);
+
 }

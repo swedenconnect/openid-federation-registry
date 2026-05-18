@@ -15,6 +15,8 @@
  */
 package se.swedenconnect.oidf.registry.infrastructure.auth.domain;
 
+import java.io.Serializable;
+
 /**
  * Organizational orgInfo about a specific org.
  *
@@ -24,5 +26,6 @@ package se.swedenconnect.oidf.registry.infrastructure.auth.domain;
  * @param functionGroup Optional function group identifier used for instance placement matching
  * @author Felix Hellman
  */
-public record OrganizationRecord(String orgNumber, String orgName, String entityPrefix,String functionGroup) {
+public record OrganizationRecord(String orgNumber, String orgName, String entityPrefix, String functionGroup)
+    implements Serializable {
 }

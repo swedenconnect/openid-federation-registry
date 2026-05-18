@@ -253,6 +253,7 @@ public class RegistrationFlowService {
     }
     processContext.put(ContextKey.TAIM_ID, flowAssignment.getTaIm().getTaImId());
     processContext.put(ContextKey.JOIN_ID, flowAssignment.getAssignId());
+    processContext.put(ContextKey.ORG, organizationRecord);
 
     try {
       return this.processEngine.run(processFlow.getProcessFlow(), processContext);

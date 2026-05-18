@@ -60,7 +60,7 @@ public class FederationRegistrationController {
   @Operation(summary = "List all registration records for current organization")
   public ResponseEntity<List<RegistrationDto>> listRegistrations(
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    return ResponseEntity.ok(this.registrationService.listRegistrations(organizationRecord));
+    return ResponseEntity.ok(this.registrationService.listRegistrationsForThisOrg(organizationRecord));
   }
 
   /**
@@ -75,7 +75,7 @@ public class FederationRegistrationController {
   public ResponseEntity<RegistrationDto> getById(
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
       @Parameter(description = "Registration ID") @PathVariable("registrationId") final UUID registrationId) {
-    return ResponseEntity.ok(this.registrationService.getRegistrationById(registrationId));
+    return ResponseEntity.ok(this.registrationService.getRegistrationById(organizationRecord, registrationId));
   }
   /**
    * Creates a join application with a specified ID.

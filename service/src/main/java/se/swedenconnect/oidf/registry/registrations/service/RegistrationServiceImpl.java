@@ -26,8 +26,8 @@ import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationFlowInformationDto;
-import se.swedenconnect.oidf.registry.registrations.dto.RegistrationMapper;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationJoinRequestDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationMapper;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestStatusDto;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
@@ -67,8 +67,9 @@ public class RegistrationServiceImpl implements RegistrationService {
 
   @Override
   @Transactional(readOnly = true)
-  public RegistrationDto getRegistrationById(final UUID registrationId) {
-    return this.registrationRepository.findByIdFetched(registrationId)
+  public RegistrationDto getRegistrationById(final OrganizationRecord organizationRecord, final UUID registrationId) {
+    // todo limit by its orgbelonging
+    return this.registrationRepository.findById(registrationId)
         .map(RegistrationMapper::toRegistrationDto)
         .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
             "Registration not found: %s".formatted(registrationId)));
@@ -104,11 +105,9 @@ public class RegistrationServiceImpl implements RegistrationService {
 
   @Override
   @Transactional(readOnly = true)
-  public List<RegistrationDto> listRegistrations(final OrganizationRecord organizationRecord) {
-    //TODO this is not the right way to handle organizations
-    return this.registrationRepository.findAll().stream()
-        .filter(reg -> reg.getFlowAssignment().getTaIm().getOrganization().getOrgNumber()
-            .equals(organizationRecord.orgNumber()))
+  public List<RegistrationDto> listRegistrationsForThisOrg(final OrganizationRecord organizationRecord) {
+    return this.registrationRepository.findAllByOrganizationOrgNumber(organizationRecord.orgNumber())
+        .stream()
         .map(RegistrationMapper::toRegistrationDto)
         .toList();
   }
