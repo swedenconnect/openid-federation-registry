@@ -75,7 +75,7 @@ public class RegistrationDto {
       example = "[\"OIDC\", \"RP\"]",
       accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  private List<String> tags;
+  private List<RegistrationTagsDto> tags;
 
   @Schema(description = "Name of the organization that submitted the registration",
       accessMode = Schema.AccessMode.READ_ONLY)

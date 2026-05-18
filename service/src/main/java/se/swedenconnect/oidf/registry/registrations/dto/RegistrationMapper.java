@@ -16,6 +16,7 @@
 package se.swedenconnect.oidf.registry.registrations.dto;
 
 import se.swedenconnect.oidf.registry.organization.model.Organization;
+import se.swedenconnect.oidf.registry.registrationflow.dto.Technology;
 import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
 import se.swedenconnect.oidf.registry.registrationflow.process.StepExecutionRecord;
@@ -24,6 +25,7 @@ import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -75,10 +77,34 @@ public final class RegistrationMapper {
     dto.setStatusFedreg(FedRegStatus.valueOf(model.getStatus().toString()));
     dto.setRejectionReason(model.getRejectionReason());
     dto.setStatusTrustmarks(toTrustmarkDtoList(model.getTrustmarksRequested()));
-    dto.setOrganizationName(Optional.ofNullable(model.getOrganization()).map(Organization::getOrgName).orElse(null));
+    dto.setOrganizationName(
+        Optional.ofNullable(model.getOrganization()).map(Organization::getOrgName).orElse(null));
+
+    final Technology technology = model.getFlowAssignment().getRegistrationFlow().getTechnology();
+    final List<RegistrationTagsDto> registrationTags = new ArrayList<>();
+    switch (technology) {
+    case OIDC -> registrationTags.add(RegistrationTagsDto.OIDC);
+    case SAML -> registrationTags.add(RegistrationTagsDto.SAML);
+    }
+
+    final String entityType = model.getFlowAssignment().getRegistrationFlow().getEntityType();
+    registrationTags.add(fromEntityType(entityType));
+
+    dto.setTags(registrationTags);
     return dto;
   }
 
+  private static RegistrationTagsDto fromEntityType(String entityType) {
+    return switch (entityType) {
+      case "federation_entity" -> RegistrationTagsDto.FED;
+      case "openid_relying_party" -> RegistrationTagsDto.RP;
+      case "openid_provider" -> RegistrationTagsDto.OP;
+      case "oauth_authorization_server" -> RegistrationTagsDto.AS;
+      case "oauth_client" -> RegistrationTagsDto.OAC;
+      case "oauth_protected_resource" -> RegistrationTagsDto.ORS;
+      default -> throw new IllegalArgumentException("Unknown entity_type: " + entityType);
+    };
+  }
   private static List<TrustmarkRegistrationDto> toTrustmarkDtoList(final List<TrustmarkSource> tmSource) {
     if (tmSource == null) {
       return null;

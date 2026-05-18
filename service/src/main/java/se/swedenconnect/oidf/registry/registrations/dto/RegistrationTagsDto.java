@@ -24,7 +24,6 @@ package se.swedenconnect.oidf.registry.registrations.dto;
 public enum RegistrationTagsDto {
   OIDC,
   SAML,
-  OAUTH2,
   HOSTED,
   FED,   // federation_entity
   RP,    // openid_relying_party
