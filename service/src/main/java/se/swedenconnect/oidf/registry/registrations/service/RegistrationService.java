@@ -47,6 +47,7 @@ public interface RegistrationService {
   /**
    * Returns a single registration by ID.
    *
+   * @param organizationRecord the calling organization
    * @param registrationId the registration ID
    * @return the registration DTO
    */

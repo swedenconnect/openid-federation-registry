@@ -94,7 +94,7 @@ public final class RegistrationMapper {
     return dto;
   }
 
-  private static RegistrationTagsDto fromEntityType(String entityType) {
+  private static RegistrationTagsDto fromEntityType(final String entityType) {
     return switch (entityType) {
       case "federation_entity" -> RegistrationTagsDto.FED;
       case "openid_relying_party" -> RegistrationTagsDto.RP;

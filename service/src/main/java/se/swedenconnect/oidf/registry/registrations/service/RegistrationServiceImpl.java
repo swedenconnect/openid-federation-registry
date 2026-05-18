@@ -67,7 +67,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
   @Override
   @Transactional(readOnly = true)
-  public RegistrationDto getRegistrationById(OrganizationRecord organizationRecord, final UUID registrationId) {
+  public RegistrationDto getRegistrationById(final OrganizationRecord organizationRecord, final UUID registrationId) {
     // todo limit by its orgbelonging
     return this.registrationRepository.findById(registrationId)
         .map(RegistrationMapper::toRegistrationDto)
