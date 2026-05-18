@@ -19,7 +19,7 @@ package se.swedenconnect.oidf.registry.subordinate.mapper;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 
-import java.util.List;
+import java.util.Optional;
 
 /**
  * Utility class for converting Subordinate objects to DTO objects.
@@ -43,14 +43,9 @@ public final class SubordinateToDtoMapper {
     dto.setJwks(subordinate.getJwks());
     dto.setEntityIdentifier(subordinate.getEntityidentifier());
 
-    // Convert crit and metadataPolicyCrit from comma-separated strings to lists
-    if (subordinate.getCrit() != null && !subordinate.getCrit().isEmpty()) {
-      dto.setCrit(List.of(subordinate.getCrit().split(",")));
-    }
+    Optional.ofNullable(subordinate.getCrit()).ifPresent(dto::setCrit);
+    Optional.ofNullable(subordinate.getMetadataPolicyCrit()).ifPresent(dto::setMetadataPolicyCrit);
 
-    if (subordinate.getMetadataPolicyCrit() != null && !subordinate.getMetadataPolicyCrit().isEmpty()) {
-      dto.setMetadataPolicyCrit(List.of(subordinate.getMetadataPolicyCrit().split(",")));
-    }
 
     dto.setEcLocation(subordinate.getEcLocation());
     dto.setEcLocationAutomaticResolve(subordinate.isEcLocationAutomatic());

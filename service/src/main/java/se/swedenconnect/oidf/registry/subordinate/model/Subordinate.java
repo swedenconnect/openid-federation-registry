@@ -33,8 +33,10 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.MapConverter;
+import se.swedenconnect.oidf.registry.infrastructure.persistence.StringListConverter;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -71,10 +73,12 @@ public class Subordinate extends BaseEntity {
   private String entityidentifier;
 
   @Column(name = "crit", columnDefinition = "TEXT")
-  private String crit;
+  @Convert(converter = StringListConverter.class)
+  private List<String> crit;
 
   @Column(name = "metadata_policy_crit", columnDefinition = "TEXT")
-  private String metadataPolicyCrit;
+  @Convert(converter = StringListConverter.class)
+  private List<String> metadataPolicyCrit;
 
   @Column(name = "ec_location", length = 255)
   private String ecLocation;

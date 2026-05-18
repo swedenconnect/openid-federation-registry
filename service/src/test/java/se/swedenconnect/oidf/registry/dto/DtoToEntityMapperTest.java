@@ -280,8 +280,8 @@ class DtoToEntityMapperTest {
     assertThat(entity.getTaIm()).isEqualTo(taIm);
     assertThat(entity.getJwks()).isEqualTo(dto.getJwks());
     assertThat(entity.getEntityidentifier()).isEqualTo("https://subordinate.example.com");
-    assertThat(entity.getCrit()).isEqualTo("crit1,crit2");
-    assertThat(entity.getMetadataPolicyCrit()).isEqualTo("mpc1,mpc2");
+    assertThat(entity.getCrit()).isEqualTo(List.of("crit1", "crit2"));
+    assertThat(entity.getMetadataPolicyCrit()).isEqualTo(List.of("mpc1", "mpc2"));
     assertThat(entity.getEcLocation()).isEqualTo("https://ec.example.com");
     assertThat(entity.isEcLocationAutomatic()).isFalse();
   }
@@ -500,8 +500,8 @@ class DtoToEntityMapperTest {
 
     assertThat(entity.getJwks()).isEqualTo(dto.getJwks());
     assertThat(entity.getEntityidentifier()).isEqualTo("https://updated-sub.example.com");
-    assertThat(entity.getCrit()).isEqualTo("new-crit");
-    assertThat(entity.getMetadataPolicyCrit()).isEqualTo("new-mpc");
+    assertThat(entity.getCrit()).isEqualTo(List.of("new-crit"));
+    assertThat(entity.getMetadataPolicyCrit()).isEqualTo(List.of("new-mpc"));
     assertThat(entity.getEcLocation()).isEqualTo("https://new-ec.example.com");
     assertThat(entity.isEcLocationAutomatic()).isTrue();
   }
@@ -509,8 +509,8 @@ class DtoToEntityMapperTest {
   @Test
   void updateEntity_subordinateDto_clearsNullCrit() {
     final Subordinate entity = new Subordinate();
-    entity.setCrit("old-crit");
-    entity.setMetadataPolicyCrit("old-mpc");
+    entity.setCrit(List.of("old-crit"));
+    entity.setMetadataPolicyCrit(List.of("old-mpc"));
     final SubordinateDto dto = new SubordinateDto();
     dto.setJwks(TestDataOperations.genJWKS().toJSONObject());
     dto.setEntityIdentifier("https://sub.example.com");
@@ -519,26 +519,25 @@ class DtoToEntityMapperTest {
 
     DtoToSubordinateMapper.updateEntity(entity, dto);
 
-    assertThat(entity.getCrit()).isNull();
-    assertThat(entity.getMetadataPolicyCrit()).isNull();
+    assertThat(entity.getCrit()).isEmpty();
+    assertThat(entity.getMetadataPolicyCrit()).isEmpty();
   }
 
   @Test
   void updateEntity_subordinateDto_clearsEmptyCrit() {
     final Subordinate entity = new Subordinate();
-    entity.setCrit("old-crit");
-    entity.setMetadataPolicyCrit("old-mpc");
+    entity.setCrit(List.of("old-crit"));
+    entity.setMetadataPolicyCrit(List.of("old-mpc"));
     final SubordinateDto dto = new SubordinateDto();
     dto.setJwks(TestDataOperations.genJWKS().toJSONObject());
-
     dto.setEntityIdentifier("https://sub.example.com");
     dto.setCrit(Collections.emptyList());
     dto.setMetadataPolicyCrit(Collections.emptyList());
 
     DtoToSubordinateMapper.updateEntity(entity, dto);
 
-    assertThat(entity.getCrit()).isNull();
-    assertThat(entity.getMetadataPolicyCrit()).isNull();
+    assertThat(entity.getCrit()).isEmpty();
+    assertThat(entity.getMetadataPolicyCrit()).isEmpty();
   }
 
   // -------------------------------------------------------------------------
