@@ -220,12 +220,12 @@ public class OidfApiService {
         .build();
   }
 
-  private TrustAnchorProperties.SubordinateListingProperty toSubordinates(final Subordinate subordinateEntity) {
+  protected TrustAnchorProperties.SubordinateListingProperty toSubordinates(final Subordinate subordinateEntity) {
     final TrustAnchorProperties.SubordinateListingProperty sub = new TrustAnchorProperties.SubordinateListingProperty();
     final SubordinateDto subDto = SubordinateToDtoMapper.toDto(subordinateEntity);
 
     Map<String, Object> metadataPolicy = subDto.getMetadataPolicy();
-    if (metadataPolicy != null && !metadataPolicy.containsKey("metadata_policy")) {
+    if (metadataPolicy != null && metadataPolicy.containsKey("metadata_policy")) {
       metadataPolicy = (Map<String, Object>) metadataPolicy.get("metadata_policy");
     }
     sub.setPolicy(new PolicyRecord(subDto.getSubordinateId().toString(), metadataPolicy));
