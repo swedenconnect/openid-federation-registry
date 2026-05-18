@@ -246,6 +246,7 @@ public class OidfApiService {
           .map(EntityToDtoMapper::toDtoHosted)
           .map(dto -> {
             sub.setOverrideConfigurationLocation(dto.getEffectiveEcLocation());
+            sub.setCrit(Optional.ofNullable(dto.getCrit()).map(ArrayList::new).orElse(new ArrayList<>(1)));
             sub.getCrit().add("ec_location");
             return sub;
           })
