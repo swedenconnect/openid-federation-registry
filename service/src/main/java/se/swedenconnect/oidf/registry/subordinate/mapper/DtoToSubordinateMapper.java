@@ -20,6 +20,7 @@ import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -49,14 +50,8 @@ public final class DtoToSubordinateMapper {
     entity.setJwks(dto.getJwks());
     entity.setEntityidentifier(dto.getEntityIdentifier());
 
-    // Convert crit and metadataPolicyCrit from lists to comma-separated strings
-    if (dto.getCrit() != null && !dto.getCrit().isEmpty()) {
-      entity.setCrit(String.join(",", dto.getCrit()));
-    }
-
-    if (dto.getMetadataPolicyCrit() != null && !dto.getMetadataPolicyCrit().isEmpty()) {
-      entity.setMetadataPolicyCrit(String.join(",", dto.getMetadataPolicyCrit()));
-    }
+    Optional.ofNullable(dto.getCrit()).ifPresent(entity::setCrit);
+    Optional.ofNullable(dto.getMetadataPolicyCrit()).ifPresent(entity::setMetadataPolicyCrit);
 
     if (!entity.isEcLocationAutomatic()) {
       entity.setEcLocation(dto.getEcLocation());
@@ -76,20 +71,8 @@ public final class DtoToSubordinateMapper {
     entity.setJwks(dto.getJwks());
     entity.setEntityidentifier(dto.getEntityIdentifier());
 
-    // Convert crit and metadataPolicyCrit from lists to comma-separated strings
-    if (dto.getCrit() != null && !dto.getCrit().isEmpty()) {
-      entity.setCrit(String.join(",", dto.getCrit()));
-    }
-    else {
-      entity.setCrit(null);
-    }
-
-    if (dto.getMetadataPolicyCrit() != null && !dto.getMetadataPolicyCrit().isEmpty()) {
-      entity.setMetadataPolicyCrit(String.join(",", dto.getMetadataPolicyCrit()));
-    }
-    else {
-      entity.setMetadataPolicyCrit(null);
-    }
+    entity.setCrit(Optional.ofNullable(dto.getCrit()).orElse(Collections.emptyList()));
+    entity.setMetadataPolicyCrit(Optional.ofNullable(dto.getMetadataPolicyCrit()).orElse(Collections.emptyList()));
 
     entity.setEcLocation(dto.getEcLocation());
     entity.setEcLocationAutomatic(Optional.ofNullable(dto.getEcLocationAutomaticResolve()).orElse(false));

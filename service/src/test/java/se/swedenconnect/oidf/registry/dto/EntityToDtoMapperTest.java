@@ -520,8 +520,8 @@ class EntityToDtoMapperTest {
     sub.setJwks(TestDataOperations.genJWKS().toJSONObject());
 
     sub.setEntityidentifier("https://subordinate.example.com");
-    sub.setCrit("crit1,crit2");
-    sub.setMetadataPolicyCrit("mpc1,mpc2");
+    sub.setCrit(List.of("crit1", "crit2"));
+    sub.setMetadataPolicyCrit(List.of("mpc1", "mpc2"));
     sub.setEcLocation("https://ec.example.com");
     sub.setEcLocationAutomatic(false);
     sub.setMetadataPolicy(new TestDataOperations().createPolicy());
