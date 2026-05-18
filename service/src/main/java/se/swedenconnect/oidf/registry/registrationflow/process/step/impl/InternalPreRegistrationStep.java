@@ -16,6 +16,9 @@
 package se.swedenconnect.oidf.registry.registrationflow.process.step.impl;
 
 import org.springframework.stereotype.Component;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
+import se.swedenconnect.oidf.registry.organization.model.Organization;
+import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
@@ -43,18 +46,22 @@ public class InternalPreRegistrationStep extends NoConfigStepAdapter {
 
   final RegistrationRepository registrationRepository;
   final FlowAssignmentRepository flowAssignmentRepository;
+  final OrganizationService organizationService;
 
   /**
    * Constructor
    *
    * @param registrationRepository repository for registration records
    * @param flowAssignmentRepository repository for flow assignments
+   * @param organizationService repository for organizations
    */
   public InternalPreRegistrationStep(final RegistrationRepository registrationRepository,
-      final FlowAssignmentRepository flowAssignmentRepository) {
+      final FlowAssignmentRepository flowAssignmentRepository,
+      final OrganizationService organizationService) {
     super();
     this.registrationRepository = registrationRepository;
     this.flowAssignmentRepository = flowAssignmentRepository;
+    this.organizationService = organizationService;
   }
 
   @Override
@@ -78,12 +85,15 @@ public class InternalPreRegistrationStep extends NoConfigStepAdapter {
     final FlowAssignment flow = this.flowAssignmentRepository.findById(joinIdAssignmentId)
         .orElseThrow(() -> new IllegalArgumentException("Join id assignment not found"));
 
+    final OrganizationRecord orgNumber = ctx.getRequired(ContextKey.ORG);
     final Registration registration = this.registrationRepository.findByEntityId(entityId).orElseGet(() -> {
+      final Organization organization = this.organizationService.findCreate(orgNumber);
       final Registration newRegistration = new Registration();
       newRegistration.setRegistrationId(UUID.randomUUID());
       newRegistration.setEntityId(entityId);
       newRegistration.setStatus(RegistrationStatus.STARTED);
       newRegistration.setFlowAssignment(flow);
+      newRegistration.setOrganization(organization);
       return newRegistration;
     });
 

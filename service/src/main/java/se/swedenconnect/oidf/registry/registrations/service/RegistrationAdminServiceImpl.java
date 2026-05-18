@@ -57,18 +57,38 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
 
   @Override
   @Transactional
-  public RegistrationDto reject(final UUID id, final String rejectionReason) {
-    final Registration reg = this.registrationRepository.findByIdFetched(id)
+  public RegistrationDto reject(final UUID registrationId, final String rejectionReason) {
+    final Registration reg = this.registrationRepository.findById(registrationId)
         .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
-            "Registration not found: %s".formatted(id)));
+            "Registration not found: %s".formatted(registrationId)));
     if (reg.getStatus() != RegistrationStatus.PENDING_APPROVAL) {
       throw new RegistryServerException(ErrorTypes.CONFLICT,
-          "Registration %s is not pending approval".formatted(id));
+          "Registration %s is not pending approval".formatted(registrationId));
     }
     reg.setStatus(RegistrationStatus.REJECTED);
     reg.setRejectionReason(rejectionReason);
     reg.setReviewedAt(LocalDateTime.now());
     this.registrationRepository.save(reg);
     return RegistrationMapper.toRegistrationDto(reg);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<RegistrationDto> listRegistrationsConnectedToThisOrgIM(final OrganizationRecord organizationRecord) {
+    //TODO this is not the right way to handle organizations
+    return this.registrationRepository.findAll().stream()
+        .filter(reg -> reg.getFlowAssignment().getTaIm().getOrganization().getOrgNumber()
+            .equals(organizationRecord.orgNumber()))
+        .map(RegistrationMapper::toRegistrationDto)
+        .toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public RegistrationDto getRegistrationById(final UUID registrationId) {
+    return this.registrationRepository.findById(registrationId)
+        .map(RegistrationMapper::toRegistrationDto)
+        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
+            "Registration not found: %s".formatted(registrationId)));
   }
 }

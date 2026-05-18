@@ -23,13 +23,11 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.JsonConverter;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.MapConverter;
-import se.swedenconnect.oidf.registry.infrastructure.persistence.StringListConverter;
+import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
-import se.swedenconnect.oidf.registry.registrationflow.model.StepModel;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDateTime;
@@ -63,6 +61,10 @@ public class Registration extends BaseEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "assign_id", nullable = false)
   private FlowAssignment flowAssignment;
+
+  @ManyToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.DETACH)
+  @JoinColumn(name = "organization_id")
+  private Organization organization;
 
   @Column(name = "entity_id", length = 255, nullable = false)
   private String entityId;

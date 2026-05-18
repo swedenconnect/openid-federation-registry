@@ -32,6 +32,7 @@ import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RejectRegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.service.RegistrationAdminService;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -45,7 +46,7 @@ import java.util.UUID;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/registration-admin/v1/")
+@RequestMapping("/registration-admin/v1")
 @Tag(name = "RegistrationAdmin", description = "Operator view of incoming registration requests")
 public class RegistrationAdminController {
 
@@ -64,6 +65,34 @@ public class RegistrationAdminController {
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
       @Parameter(description = "Intermediate ID") @RequestParam("taimId") final UUID taimId) {
     return ResponseEntity.ok(Map.of("count", this.registrationAdminService.countPending(taimId)));
+  }
+
+  /**
+   * List all registration records for this organizations intermidiates
+   *
+   * @param organizationRecord the calling organization
+   * @return list of registration DTOs
+   */
+  @GetMapping
+  @Operation(summary = "List all registration records for current organization")
+  public ResponseEntity<List<RegistrationDto>> listRegistrations(
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(this.registrationAdminService.listRegistrationsConnectedToThisOrgIM(organizationRecord));
+  }
+
+  /**
+   * Returns a single registration by ID.
+   *
+   * @param organizationRecord the calling organization
+   * @param registrationId the registration ID
+   * @return the registration DTO
+   */
+  @GetMapping("/{registrationId}")
+  @Operation(summary = "Get a single registration by ID")
+  public ResponseEntity<RegistrationDto> getById(
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord,
+      @Parameter(description = "Registration ID") @PathVariable("registrationId") final UUID registrationId) {
+    return ResponseEntity.ok(this.registrationAdminService.getRegistrationById(registrationId));
   }
 
   /**

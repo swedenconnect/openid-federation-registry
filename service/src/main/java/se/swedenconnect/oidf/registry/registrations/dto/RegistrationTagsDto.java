@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.registry.registrations.model;
+
+package se.swedenconnect.oidf.registry.registrations.dto;
 
 /**
- * Status for an individual trustmark assignment.
+ * Tags for a registration
  *
  * @author Per Fredrik Plars
  */
-public enum TrustmarkStatus {
-
-  /** Trustmark APPROVED. */
-  APPROVED,
-
-  /** Awaiting approval. */
-  PENDING,
-
-  /** Trustmark revoked. */
-  REVOKED
+public enum RegistrationTagsDto {
+  OIDC,
+  SAML,
+  OAUTH2,
+  HOSTED,
+  FED,   // federation_entity
+  RP,    // openid_relying_party
+  OP,    // openid_provider
+  AS,   // oauth_authorization_server
+  OAC,   // oauth_client
+  ORS    // oauth_resource / oauth_resource_server
 }

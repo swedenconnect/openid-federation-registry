@@ -50,7 +50,7 @@ public interface RegistrationService {
    * @param registrationId the registration ID
    * @return the registration DTO
    */
-  RegistrationDto getRegistrationById(UUID registrationId);
+  RegistrationDto getRegistrationById(OrganizationRecord organizationRecord, UUID registrationId);
 
 
   /**
@@ -67,7 +67,8 @@ public interface RegistrationService {
    * @param organizationRecord the calling organization
    * @return list of join records
    */
-  List<RegistrationDto> listRegistrations(OrganizationRecord organizationRecord);
+  List<RegistrationDto> listRegistrationsForThisOrg(OrganizationRecord organizationRecord);
+
 
   /**
    * Returns all available registration flows.

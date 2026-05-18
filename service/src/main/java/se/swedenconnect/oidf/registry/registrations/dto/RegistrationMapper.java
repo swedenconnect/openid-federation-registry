@@ -15,13 +15,14 @@
  */
 package se.swedenconnect.oidf.registry.registrations.dto;
 
+import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
 import se.swedenconnect.oidf.registry.registrationflow.process.StepExecutionRecord;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepIssue;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
+import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
-import se.swedenconnect.oidf.registry.registrations.model.TrustmarkStatus;
 
 import java.util.Collections;
 import java.util.List;
@@ -74,6 +75,7 @@ public final class RegistrationMapper {
     dto.setStatusFedreg(FedRegStatus.valueOf(model.getStatus().toString()));
     dto.setRejectionReason(model.getRejectionReason());
     dto.setStatusTrustmarks(toTrustmarkDtoList(model.getTrustmarksRequested()));
+    dto.setOrganizationName(Optional.ofNullable(model.getOrganization()).map(Organization::getOrgName).orElse(null));
     return dto;
   }
 
@@ -88,7 +90,8 @@ public final class RegistrationMapper {
           .orElse(Collections.emptyList())
           .stream()
           .map(trustMarkStatus ->
-              new TrustmarkStatusDto(trustMarkStatus.trustmarkType(),trustMarkStatus.trustmarkStatus()))
+              new TrustmarkStatusDto(trustMarkStatus.trustmarkType(),
+                  FedRegStatus.valueOf(trustMarkStatus.trustmarkStatus().toString())))
           .toList());
       return dto;
     }).toList();
@@ -109,7 +112,7 @@ public final class RegistrationMapper {
             dto.getTrustmarkType()
                 .stream()
                 .map(tmType ->
-                    new TrustmarkSource.TrustMarkStatus(tmType, TrustmarkStatus.PENDING))
+                    new TrustmarkSource.TrustMarkStatus(tmType, RegistrationStatus.STARTED))
                 .toList()))
         .toList();
   }

@@ -34,6 +34,6 @@ public record TrustmarkSource(String trustMarkIssuer, List<TrustMarkStatus> trus
    * @param trustmarkType trustmarkType
    * @param trustmarkStatus status of the registration
    */
-  public record TrustMarkStatus(String trustmarkType,TrustmarkStatus trustmarkStatus) implements Serializable {
+  public record TrustMarkStatus(String trustmarkType, RegistrationStatus trustmarkStatus) implements Serializable {
   }
 }

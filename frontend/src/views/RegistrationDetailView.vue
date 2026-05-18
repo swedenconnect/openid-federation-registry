@@ -71,6 +71,10 @@
                 <td class="font-weight-bold field-label">Intermediate Entity ID</td>
                 <td class="text-mono">{{ registration.intermediateEntityId }}</td>
               </tr>
+              <tr v-if="registration.organizationName">
+                <td class="font-weight-bold field-label">Organization</td>
+                <td>{{ registration.organizationName }}</td>
+              </tr>
               <tr>
                 <td class="font-weight-bold field-label">Status</td>
                 <td>

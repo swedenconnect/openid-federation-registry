@@ -38,7 +38,7 @@
             <v-select
                 v-model="selectedJoinId"
                 :items="flows"
-                item-title="name"
+                item-title="displayLabel"
                 item-value="joinId"
                 label="Registration Flow"
                 hint="Select the registration flow to apply to"
@@ -52,7 +52,6 @@
                 <v-list-item v-bind="itemProps">
                   <template #subtitle>
                     <div v-if="item.raw.description">{{ item.raw.description }}</div>
-                    <div v-if="item.raw.intermediateEntityId" class="text-caption text-grey">{{ item.raw.intermediateEntityId }}</div>
                   </template>
                 </v-list-item>
               </template>
@@ -301,7 +300,10 @@ function viewRegistration() {
 async function loadFlows() {
   errorStore.clearError();
   const response = await requestGet(registrationPublicFlowsPath);
-  flows.value = Array.isArray(response) ? response : [];
+  flows.value = (Array.isArray(response) ? response : []).map(f => ({
+    ...f,
+    displayLabel: f.intermediateEntityId ? `${f.name} - ${f.intermediateEntityId}` : f.name,
+  }));
 }
 
 onMounted(() => {

@@ -77,27 +77,9 @@ public interface RegistrationRepository extends JpaRepository<Registration, UUID
    */
   @Query("""
       SELECT r FROM Registration r
-      JOIN FETCH r.flowAssignment fa
-      JOIN FETCH fa.taIm tim
-      JOIN FETCH tim.entity
-      WHERE fa.registrationFlow.organization.orgNumber = :orgNumber
+      WHERE r.organization.orgNumber = :orgNumber
       """)
   List<Registration> findAllByOrganizationOrgNumber(@Param("orgNumber") String orgNumber);
-
-  /**
-   * Finds a single registration by ID with associations eagerly fetched for DTO mapping.
-   *
-   * @param id the registration ID
-   * @return optional registration
-   */
-  @Query("""
-      SELECT r FROM Registration r
-      JOIN FETCH r.flowAssignment fa
-      JOIN FETCH fa.taIm tim
-      JOIN FETCH tim.entity
-      WHERE r.registrationId = :id
-      """)
-  Optional<Registration> findByIdFetched(@Param("id") UUID id);
 
   /**
    * Deletes registrations with the given status created before the given date.

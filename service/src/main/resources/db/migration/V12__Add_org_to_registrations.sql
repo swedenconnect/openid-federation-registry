@@ -13,19 +13,8 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.registry.infrastructure.auth.domain;
 
-import java.io.Serializable;
-
-/**
- * Organizational orgInfo about a specific org.
- *
- * @param orgNumber Organization Number
- * @param orgName OrganizationName
- * @param entityPrefix EntityPrefix ex https://www.digg.se/oidf/
- * @param functionGroup Optional function group identifier used for instance placement matching
- * @author Felix Hellman
- */
-public record OrganizationRecord(String orgNumber, String orgName, String entityPrefix, String functionGroup)
-    implements Serializable {
-}
+ALTER TABLE `registrations`
+    ADD COLUMN `organization_id` UUID,
+    ADD CONSTRAINT `fk_reg_organization`
+        FOREIGN KEY (`organization_id`) REFERENCES `organization` (`organization_id`);
