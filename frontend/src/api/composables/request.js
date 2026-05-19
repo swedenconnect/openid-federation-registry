@@ -28,7 +28,7 @@ function _errorMap(error) {
 }
 
 export function useRequest(logError = true) {
-    const {fetchData, json, ok, status, correlationId} = useFetch();
+    const {fetchData, json, ok, status, traceparent} = useFetch();
     const errorStore = useErrorStore();
 
     const error = ref(null);
@@ -66,7 +66,7 @@ export function useRequest(logError = true) {
             }
             error.value = errorMessage;
             if (logError) {
-                console.error(`[CorrelationId: ${correlationId.value ?? '-'}]`, err);
+                console.error(`[traceparent: ${traceparent.value ?? '-'}]`, err);
             }
         } finally {
             loading.value = false;

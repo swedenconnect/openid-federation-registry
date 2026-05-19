@@ -16,6 +16,8 @@
 
 package se.swedenconnect.oidf.registry.infrastructure.error;
 
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.Tracer;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +51,24 @@ import java.util.Optional;
 @ControllerAdvice
 public class ErrorHandler extends ResponseEntityExceptionHandler {
 
+  private static final String TRACEPARENT_HEADER = "traceparent";
+
+  private final Tracer tracer;
+
+  public ErrorHandler(final Tracer tracer) {
+    this.tracer = tracer;
+  }
+
+  private HttpHeaders headersWithTraceparent() {
+    final HttpHeaders headers = new HttpHeaders();
+    Optional.ofNullable(this.tracer.currentSpan())
+        .map(Span::context)
+        .map(ctx -> "00-%s-%s-%s".formatted(ctx.traceId(), ctx.spanId(),
+            ctx.sampled() != null && ctx.sampled() ? "01" : "00"))
+        .ifPresent(tp -> headers.set(TRACEPARENT_HEADER, tp));
+    return headers;
+  }
+
   /**
    * Mapping IllegalArgumentException to 400 BAD_REQUEST
    *
@@ -60,7 +80,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
   public ResponseEntity<Object> handle(final IllegalArgumentException e, final WebRequest request) {
     return this.handleExceptionInternal(e,
         ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(400), e.getMessage()),
-        new HttpHeaders(),
+        this.headersWithTraceparent(),
         HttpStatusCode.valueOf(400),
         request);
   }
@@ -88,7 +108,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     return this.handleExceptionInternal(e,
         problemDetail,
-        new HttpHeaders(),
+        this.headersWithTraceparent(),
         HttpStatusCode.valueOf(problemDetail.getStatus()),
         request);
   }
@@ -112,7 +132,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     return this.handleExceptionInternal(e,
         problemDetail,
-        new HttpHeaders(),
+        this.headersWithTraceparent(),
         HttpStatusCode.valueOf(problemDetail.getStatus()),
         request);
   }
@@ -134,7 +154,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     return this.handleExceptionInternal(e,
         problemDetail,
-        new HttpHeaders(),
+        this.headersWithTraceparent(),
         HttpStatusCode.valueOf(problemDetail.getStatus()),
         request);
   }
@@ -159,9 +179,11 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         }).toList();
     problemDetail.setProperty("cause", detailProblem);
 
+    final HttpHeaders mergedHeaders = new HttpHeaders(headers);
+    mergedHeaders.addAll(this.headersWithTraceparent());
     return this.handleExceptionInternal(e,
         problemDetail,
-        new HttpHeaders(),
+        mergedHeaders,
         HttpStatusCode.valueOf(problemDetail.getStatus()),
         request);
   }

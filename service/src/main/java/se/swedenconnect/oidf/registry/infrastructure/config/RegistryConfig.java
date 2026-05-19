@@ -30,13 +30,11 @@ import org.apache.hc.core5.util.Timeout;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.ssl.SslBundle;
 import org.springframework.boot.ssl.SslBundles;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.core.Ordered;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.util.Assert;
@@ -44,7 +42,6 @@ import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.registry.entity.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.federationservice.service.NotifyService;
 import se.swedenconnect.oidf.registry.federationservice.service.OidfApiService;
-import se.swedenconnect.oidf.registry.infrastructure.tracing.CorrelationIdFilter;
 import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
@@ -109,19 +106,6 @@ public class RegistryConfig {
     return entity.getOrganizations()
         .stream()
         .noneMatch(o -> o.getOrgNumber().equals(org_nr));
-  }
-
-  /**
-   * Registers {@link CorrelationIdFilter} first in the filter chain.
-   *
-   * @return the filter registration bean
-   */
-  @Bean
-  public FilterRegistrationBean<CorrelationIdFilter> correlationIdFilter() {
-    final FilterRegistrationBean<CorrelationIdFilter> bean = new FilterRegistrationBean<>(new CorrelationIdFilter());
-    bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
-    bean.addUrlPatterns("/*");
-    return bean;
   }
 
   /**

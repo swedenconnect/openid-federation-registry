@@ -1,4 +1,6 @@
 management:
+  server:
+    port: 8081
   metrics:
     tags:
       application_version: ${spring.application.version}
@@ -7,7 +9,12 @@ management:
     metrics:
       export:
         enabled: true
-
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
   endpoints:
     web:
       exposure:
@@ -35,7 +42,7 @@ spring:
 
 logging:
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%X{CorrelationId:--}] [%t] %-40.40logger{39} : %m%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%X{traceId:--},%X{spanId:--}] [%t] %-40.40logger{39} : %m%n"
   level:
     se:
       swedenconnect:
