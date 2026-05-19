@@ -36,7 +36,7 @@ export function useFetch() {
     const status = ref(null);
     const json = ref(null);
     const ok = ref(null);
-    const correlationId = ref(null);
+    const traceparent = ref(null);
 
     async function fetchData(path, payload = null, method = 'GET') {
         status.value = null;
@@ -59,7 +59,7 @@ export function useFetch() {
 
         status.value = response.status;
         ok.value = response.ok;
-        correlationId.value = response.headers.get('CorrelationId');
+        traceparent.value = response.headers.get('traceparent');
 
         if (!ok.value) {
             if (status.value === 401) {
@@ -91,7 +91,7 @@ export function useFetch() {
         json,
         ok,
         status,
-        correlationId,
+        traceparent,
     }
 }
 

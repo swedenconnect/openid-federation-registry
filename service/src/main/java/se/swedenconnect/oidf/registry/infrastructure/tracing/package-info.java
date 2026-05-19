@@ -15,7 +15,7 @@
  */
 
 /**
- * Handle correlationid in the application
+ * Distributed tracing support. W3C traceparent propagated via micrometer-tracing + OpenTelemetry.
  *
  * @author Per Fredrik Plars
  */
