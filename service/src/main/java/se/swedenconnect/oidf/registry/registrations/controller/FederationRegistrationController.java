@@ -106,7 +106,8 @@ public class FederationRegistrationController {
   @Operation(summary = "Remove a join record")
   public ResponseEntity<Void> deleteJoin(
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
-      @Parameter(description = "ID of the registration to remove") @PathVariable("registrationId") final UUID registrationId) {
+      @Parameter(description = "ID of the registration to remove")
+      @PathVariable("registrationId") final UUID registrationId) {
     this.registrationService.deleteRegistrationRequest(organizationRecord, registrationId);
     return ResponseEntity.noContent().build();
   }
