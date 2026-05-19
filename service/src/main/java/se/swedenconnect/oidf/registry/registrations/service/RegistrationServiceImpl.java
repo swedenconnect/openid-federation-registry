@@ -32,6 +32,8 @@ import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestStatu
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
+import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
+import se.swedenconnect.oidf.registry.subordinate.service.SubordinateService;
 
 import java.util.List;
 import java.util.UUID;
@@ -47,6 +49,8 @@ public class RegistrationServiceImpl implements RegistrationService {
   private final FlowAssignmentRepository flowAssignmentRepository;
   private final RegistrationRepository registrationRepository;
   private final RegistrationFlowService registrationFlowService;
+  private final SubordinateRepository subordinateRepository;
+  private final SubordinateService subordinateService;
 
 
   /**
@@ -55,13 +59,19 @@ public class RegistrationServiceImpl implements RegistrationService {
    * @param flowAssignmentRepository repository for flow assignments
    * @param registrationRepository repository for registration records
    * @param registrationFlowService service for managing registration flows
+   * @param subordinateRepository repository for subordinate statements
+   * @param subordinateService service for deleting subordinate statements
    */
   public RegistrationServiceImpl(final FlowAssignmentRepository flowAssignmentRepository,
       final RegistrationRepository registrationRepository,
-      final RegistrationFlowService registrationFlowService) {
+      final RegistrationFlowService registrationFlowService,
+      final SubordinateRepository subordinateRepository,
+      final SubordinateService subordinateService) {
     this.flowAssignmentRepository = flowAssignmentRepository;
     this.registrationRepository = registrationRepository;
     this.registrationFlowService = registrationFlowService;
+    this.subordinateRepository = subordinateRepository;
+    this.subordinateService = subordinateService;
   }
 
 
@@ -97,8 +107,9 @@ public class RegistrationServiceImpl implements RegistrationService {
         .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
             "Registration not found: %s".formatted(registrationId)));
     if (reg.getStatus() == RegistrationStatus.APPROVED) {
-      throw new RegistryServerException(ErrorTypes.CONFLICT,
-          "Cannot delete an approved registration — remove the subordinate statement first.");
+      this.subordinateRepository
+          .findByOrgNumberAndEntityidentifier(organizationRecord.orgNumber(), reg.getEntityId())
+          .forEach(sub -> this.subordinateService.deleteSubordinate(organizationRecord, sub.getSubordinateId()));
     }
     this.registrationRepository.delete(reg);
   }
