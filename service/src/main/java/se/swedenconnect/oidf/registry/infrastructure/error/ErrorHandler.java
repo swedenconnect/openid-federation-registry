@@ -55,8 +55,16 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
   private final Tracer tracer;
 
-  public ErrorHandler(final Tracer tracer) {
-    this.tracer = tracer;
+  /**
+   * Creates an ErrorHandler with the provided Tracer for traceparent header injection.
+   *
+   * @param tracer the Micrometer tracer, empty if tracing is not configured
+   */
+  public ErrorHandler(final Optional<Tracer> tracer) {
+    this.tracer = tracer.orElseGet(() -> {
+      log.warn("No Tracer bean available, traceparent headers will not be set in error responses");
+      return Tracer.NOOP;
+    });
   }
 
   private HttpHeaders headersWithTraceparent() {

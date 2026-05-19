@@ -31,9 +31,13 @@ import org.springframework.web.context.request.WebRequest;
 
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Optional;
+
+import io.micrometer.tracing.Tracer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit test for the {@link ErrorHandler} class.
@@ -58,7 +62,9 @@ class ErrorHandlerTest {
     final MethodArgumentNotValidException exception =
         new MethodArgumentNotValidException(methodParameter, bindingResult);
 
-    final ErrorHandler errorHandler = new ErrorHandler();
+    final Tracer tracer = mock(Tracer.class);
+    when(tracer.currentSpan()).thenReturn(null);
+    final ErrorHandler errorHandler = new ErrorHandler(Optional.of(tracer));
 
     final ResponseEntity<Object> responseEntity = errorHandler.handleMethodArgumentNotValid(
         exception, new HttpHeaders(), HttpStatusCode.valueOf(400), mock(WebRequest.class));
