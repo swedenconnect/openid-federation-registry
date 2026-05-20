@@ -82,4 +82,11 @@ public class RegistrationDto {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private String organizationName;
 
+  @Schema(description = "True if the pipeline completed without any step failures")
+  private boolean successful;
+
+  @Schema(description = "Ordered list of step execution records")
+  private List<StepExecutionRecordDto> steps;
+
+
 }

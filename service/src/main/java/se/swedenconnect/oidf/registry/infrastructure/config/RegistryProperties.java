@@ -229,7 +229,7 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
      * By default, no local ip address ranges can be resolved. Note: setting this to true will open a security issue,
      * users of the system can do internal network calls.
      */
-    private boolean enableLocalIpAdressRanges;
+    private boolean enableLocalIpAddressRanges;
     /**
      * By default, system properties are used to configure the REST client used for outgoing calls. This is convenient
      * when setting up proxy servers, etc.

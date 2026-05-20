@@ -270,7 +270,7 @@ public class RegistryConfig {
               throw new SecurityException("Only HTTPS is allowed, got: " + host.getSchemeName());
             }
 
-            if (!jwksLoaderConf.isEnableLocalIpAdressRanges() && (
+            if (!jwksLoaderConf.isEnableLocalIpAddressRanges() && (
                 addr.isAnyLocalAddress() ||
                     addr.isLoopbackAddress() ||
                     addr.isSiteLocalAddress())) {
@@ -279,7 +279,7 @@ public class RegistryConfig {
 
             if (addr instanceof Inet6Address ipv6Addr) {
               final byte[] ipv6 = ipv6Addr.getAddress();
-              if (!jwksLoaderConf.isEnableLocalIpAdressRanges() && (ipv6[0] & 0xFE) == 0xFC) {
+              if (!jwksLoaderConf.isEnableLocalIpAddressRanges() && (ipv6[0] & 0xFE) == 0xFC) {
                 throw new SecurityException("Blocked internal address");
               }
             }

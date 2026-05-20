@@ -1836,34 +1836,10 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegistrationRequestStatus"
+                  "$ref": "#/components/schemas/Registration"
                 }
               }
             }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "FederationRegistration"
-        ],
-        "summary": "Remove a join record",
-        "operationId": "deleteJoin",
-        "parameters": [
-          {
-            "name": "joinId",
-            "in": "path",
-            "description": "ID of the join record to remove",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
           }
         }
       }
@@ -2179,6 +2155,30 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "FederationRegistration"
+        ],
+        "summary": "Remove a join record",
+        "operationId": "deleteJoin",
+        "parameters": [
+          {
+            "name": "registrationId",
+            "in": "path",
+            "description": "ID of the registration to remove",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/registration/v1/flows": {
@@ -2355,6 +2355,63 @@
         }
       }
     },
+    "/registration-admin/v1": {
+      "get": {
+        "tags": [
+          "RegistrationAdmin"
+        ],
+        "summary": "List all registration records for current organization",
+        "operationId": "listRegistrations_1",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Registration"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-admin/v1/{registrationId}": {
+      "get": {
+        "tags": [
+          "RegistrationAdmin"
+        ],
+        "summary": "Get a single registration by ID",
+        "operationId": "getById_1",
+        "parameters": [
+          {
+            "name": "registrationId",
+            "in": "path",
+            "description": "Registration ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Registration"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/registration-admin/v1/count": {
       "get": {
         "tags": [
@@ -2364,7 +2421,7 @@
         "operationId": "countPending",
         "parameters": [
           {
-            "name": "arg1",
+            "name": "taimId",
             "in": "query",
             "description": "Intermediate ID",
             "required": true,
@@ -3024,31 +3081,89 @@
           }
         }
       },
-      "RegistrationRequestStatus": {
+      "Registration": {
         "type": "object",
         "properties": {
           "registrationId": {
             "type": "string",
             "format": "uuid",
-            "description": "RegistrationID",
+            "description": "Id of this specific registration",
             "readOnly": true
           },
-          "status": {
+          "joinId": {
             "type": "string",
-            "description": "Status on registration",
-            "example": "PENDING_APPROVAL"
+            "format": "uuid",
+            "description": "Join ID",
+            "readOnly": true
           },
           "entityIdentifier": {
             "type": "string",
-            "description": "Entity identifier of the applicant",
-            "example": "https://example.com/entity"
+            "description": "EntityId for the requested registration",
+            "example": "https://example.com/service",
+            "readOnly": true
           },
-          "trustmarksRequested": {
+          "intermediateEntityId": {
+            "type": "string",
+            "description": "EntityId of the Intermediate that the registration is made on",
+            "example": "https://example.com/entity",
+            "readOnly": true
+          },
+          "isHosted": {
+            "type": "boolean",
+            "description": "True if the entity's metadata is hosted in this registry",
+            "readOnly": true
+          },
+          "statusFedreg": {
+            "type": "string",
+            "description": "Current federation registration status",
+            "enum": [
+              "STARTED",
+              "PENDING_APPROVAL",
+              "APPROVED",
+              "REJECTED"
+            ],
+            "readOnly": true
+          },
+          "rejectionReason": {
+            "type": "string",
+            "description": "Reason for rejection, present when status_fedreg is DENY",
+            "readOnly": true
+          },
+          "statusTrustmarks": {
             "type": "array",
-            "description": "Trustmarks requested in the application",
+            "description": "Trustmark status per requested trustmark",
             "items": {
               "$ref": "#/components/schemas/TrustmarkRegistration"
-            }
+            },
+            "readOnly": true
+          },
+          "tags": {
+            "type": "array",
+            "description": "Tags describing the entity type, e.g. OIDC, SAML, RP, OP, IDP, SP",
+            "example": [
+              "OIDC",
+              "RP"
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "OIDC",
+                "SAML",
+                "HOSTED",
+                "FED",
+                "RP",
+                "OP",
+                "AS",
+                "OAC",
+                "ORS"
+              ]
+            },
+            "readOnly": true
+          },
+          "organizationName": {
+            "type": "string",
+            "description": "Name of the organization that submitted the registration",
+            "readOnly": true
           },
           "successful": {
             "type": "boolean",
@@ -3137,9 +3252,10 @@
             "type": "string",
             "description": "Current status of this trustmark",
             "enum": [
+              "STARTED",
+              "PENDING_APPROVAL",
               "APPROVED",
-              "PENDING",
-              "REVOKED"
+              "REJECTED"
             ]
           }
         }
@@ -3169,64 +3285,6 @@
             "type": "string",
             "description": "Human-readable explanation shown to the applicant",
             "example": "Entity configuration could not be fetched from the provided entity ID."
-          }
-        }
-      },
-      "Registration": {
-        "type": "object",
-        "properties": {
-          "registrationId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Id of this specific registration",
-            "readOnly": true
-          },
-          "joinId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Join ID",
-            "readOnly": true
-          },
-          "entityIdentifier": {
-            "type": "string",
-            "description": "EntityId for the requested registration",
-            "example": "https://example.com/service",
-            "readOnly": true
-          },
-          "intermediateEntityId": {
-            "type": "string",
-            "description": "EntityId of the Intermediate that the registration is made on",
-            "example": "https://example.com/entity",
-            "readOnly": true
-          },
-          "isHosted": {
-            "type": "boolean",
-            "description": "True if the entity's metadata is hosted in this registry",
-            "readOnly": true
-          },
-          "statusFedreg": {
-            "type": "string",
-            "description": "Current federation registration status",
-            "enum": [
-              "STARTED",
-              "PENDING_APPROVAL",
-              "APPROVED",
-              "REJECTED"
-            ],
-            "readOnly": true
-          },
-          "rejectionReason": {
-            "type": "string",
-            "description": "Reason for rejection, present when status_fedreg is DENY",
-            "readOnly": true
-          },
-          "statusTrustmarks": {
-            "type": "array",
-            "description": "Trustmark status per requested trustmark",
-            "items": {
-              "$ref": "#/components/schemas/TrustmarkRegistration"
-            },
-            "readOnly": true
           }
         }
       },

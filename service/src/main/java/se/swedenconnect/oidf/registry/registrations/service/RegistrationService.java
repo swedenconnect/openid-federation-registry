@@ -19,7 +19,6 @@ import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRec
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationFlowInformationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationJoinRequestDto;
-import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestStatusDto;
 
 import java.util.List;
 import java.util.UUID;
@@ -41,7 +40,7 @@ public interface RegistrationService {
    * @param request the join request
    * @return the created join record
    */
-  RegistrationRequestStatusDto createRegistrationRequest(OrganizationRecord organizationRecord, UUID joinId,
+  RegistrationDto createRegistrationRequest(OrganizationRecord organizationRecord, UUID joinId,
       RegistrationJoinRequestDto request);
 
   /**

@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Maps domain objects to registration DTOs.
@@ -44,17 +43,13 @@ public final class RegistrationMapper {
   /**
    * Maps a {@link ProcessReport} and entity identifier to a {@link RegistrationRequestStatusDto}.
    *
-   * @param entityIdentifier entity identifier from the request
-   * @param registrationId the registration ID, may be {@code null} if not yet persisted
+   * @param registration the registration
    * @param report process report from the pipeline run
    * @return mapped DTO
    */
-  public static RegistrationRequestStatusDto toRegistrationRequestStatusDto(
-      final String entityIdentifier, final UUID registrationId, final ProcessReport report) {
-    final RegistrationRequestStatusDto dto = new RegistrationRequestStatusDto();
-    dto.setRegistrationId(registrationId);
-    dto.setEntityIdentifier(entityIdentifier);
-    dto.setStatus(report.status().toString());
+  public static RegistrationDto toRegistrationRequestStatusDto(
+      final Registration registration, final ProcessReport report) {
+    final RegistrationDto dto = toRegistrationDto(registration);
     dto.setSuccessful(report.isSuccessful());
     dto.setSteps(report.steps().stream()
         .map(RegistrationMapper::toStepExecutionRecordDto)
@@ -88,7 +83,7 @@ public final class RegistrationMapper {
     }
 
     final String entityType = model.getFlowAssignment().getRegistrationFlow().getEntityType();
-    registrationTags.add(fromEntityType(entityType));
+    Optional.ofNullable(entityType).ifPresent(s -> registrationTags.add(fromEntityType(s)));
 
     dto.setTags(registrationTags);
     return dto;

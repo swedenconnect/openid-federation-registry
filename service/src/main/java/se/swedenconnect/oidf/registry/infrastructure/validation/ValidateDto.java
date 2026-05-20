@@ -31,7 +31,6 @@ import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
 import se.swedenconnect.oidf.registry.validation.PropertyValidationFailException;
 import se.swedenconnect.oidf.registry.validation.PropertyValidators;
 import se.swedenconnect.oidf.registry.validation.VariableValueResolver;
-import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Collections;
@@ -392,18 +391,5 @@ public class ValidateDto {
         .ifFailThrow("metadataPolicy", dto.getMetadataPolicy());
   }
 
-  private void validatePolicyJson(final Object policy) {
-    try {
-      final String policyJson = MAPPER.writeValueAsString(policy);
-      this.v.required()
-          .json()
-          .build()
-          .ifFailThrow("policy", policyJson);
-    }
-    catch (final JacksonException e) {
-      throw new PropertyValidationFailException("policy", policy.toString(),
-          "Invalid JSON format: " + e.getMessage());
-    }
-  }
 }
 

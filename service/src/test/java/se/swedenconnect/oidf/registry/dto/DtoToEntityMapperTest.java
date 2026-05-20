@@ -34,7 +34,7 @@ import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule
 import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
-import se.swedenconnect.oidf.registry.subordinate.mapper.DtoToSubordinateMapper;
+import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateMapper;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSourceDto;
@@ -274,7 +274,7 @@ class DtoToEntityMapperTest {
     final TrustAnchorIntermediateModule taIm = new TrustAnchorIntermediateModule();
     taIm.setTaImId(UUID.randomUUID());
 
-    final Subordinate entity = DtoToSubordinateMapper.toEntity(ID, dto, taIm);
+    final Subordinate entity = SubordinateMapper.toEntity(ID, dto, taIm);
 
     assertThat(entity.getSubordinateId()).isEqualTo(ID);
     assertThat(entity.getTaIm()).isEqualTo(taIm);
@@ -296,7 +296,7 @@ class DtoToEntityMapperTest {
     final TrustAnchorIntermediateModule taIm = new TrustAnchorIntermediateModule();
     taIm.setTaImId(UUID.randomUUID());
 
-    final Subordinate entity = DtoToSubordinateMapper.toEntity(ID, dto, taIm);
+    final Subordinate entity = SubordinateMapper.toEntity(ID, dto, taIm);
 
     assertThat(entity.getCrit()).isNull();
     assertThat(entity.getMetadataPolicyCrit()).isNull();
@@ -496,7 +496,7 @@ class DtoToEntityMapperTest {
     dto.setEcLocation("https://new-ec.example.com");
     dto.setEcLocationAutomaticResolve(true);
 
-    DtoToSubordinateMapper.updateEntity(entity, dto);
+    SubordinateMapper.updateEntity(entity, dto);
 
     assertThat(entity.getJwks()).isEqualTo(dto.getJwks());
     assertThat(entity.getEntityidentifier()).isEqualTo("https://updated-sub.example.com");
@@ -517,7 +517,7 @@ class DtoToEntityMapperTest {
     dto.setCrit(null);
     dto.setMetadataPolicyCrit(null);
 
-    DtoToSubordinateMapper.updateEntity(entity, dto);
+    SubordinateMapper.updateEntity(entity, dto);
 
     assertThat(entity.getCrit()).isEmpty();
     assertThat(entity.getMetadataPolicyCrit()).isEmpty();
@@ -534,7 +534,7 @@ class DtoToEntityMapperTest {
     dto.setCrit(Collections.emptyList());
     dto.setMetadataPolicyCrit(Collections.emptyList());
 
-    DtoToSubordinateMapper.updateEntity(entity, dto);
+    SubordinateMapper.updateEntity(entity, dto);
 
     assertThat(entity.getCrit()).isEmpty();
     assertThat(entity.getMetadataPolicyCrit()).isEmpty();
