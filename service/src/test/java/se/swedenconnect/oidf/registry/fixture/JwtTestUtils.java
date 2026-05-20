@@ -97,7 +97,9 @@ public class JwtTestUtils {
               "http://registry.swedenconnect.se/trustmarks/read",
               "http://registry.swedenconnect.se/trustmarks/write",
               "http://registry.swedenconnect.se/subordinates/read",
-              "http://registry.swedenconnect.se/subordinates/write")
+              "http://registry.swedenconnect.se/subordinates/write",
+              "http://registry.swedenconnect.se/registration/read",
+              "http://registry.swedenconnect.se/registration/write")
           .reduce("", (s, s2) -> s + " " + s2);
 
       final JWTClaimsSet claims = new com.nimbusds.jwt.JWTClaimsSet.Builder()
@@ -156,6 +158,16 @@ public class JwtTestUtils {
     PM("Pensionsmyndigheten", "55555", "https://www.pm.se/oidf"),
     AF("Arbetsförmedlingen", "66666", "https://www.af.se/oidf"),
     SKATT("Skatteverket", "77777", "https://www.skv.se/oidf"),
+    TESTORG1("TestOrg1", "10001", "https://testorg1.test.se/oidf"),
+    TESTORG2("TestOrg2", "10002", "https://testorg2.test.se/oidf"),
+    TESTORG3("TestOrg3", "10003", "https://testorg3.test.se/oidf"),
+    TESTORG4("TestOrg4", "10004", "https://testorg4.test.se/oidf"),
+    TESTORG5("TestOrg5", "10005", "https://testorg5.test.se/oidf"),
+    TESTORG6("TestOrg6", "10006", "https://testorg6.test.se/oidf"),
+    TESTORG7("TestOrg7", "10007", "https://testorg7.test.se/oidf"),
+    TESTORG8("TestOrg8", "10008", "https://testorg8.test.se/oidf"),
+    TESTORG9("TestOrg9", "10009", "https://testorg9.test.se/oidf"),
+    TESTORG10("TestOrg10", "10010", "https://testorg10.test.se/oidf"),
     ;
 
     public final String name;

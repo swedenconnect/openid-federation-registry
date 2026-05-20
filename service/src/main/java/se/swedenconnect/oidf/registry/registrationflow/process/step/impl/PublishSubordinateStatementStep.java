@@ -20,6 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
+import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
@@ -28,8 +30,10 @@ import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
+import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
+import se.swedenconnect.oidf.registry.subordinate.service.SubordinateService;
 
 import java.util.List;
 import java.util.Optional;
@@ -51,19 +55,19 @@ import java.util.UUID;
 public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
 
   private final RegistrationRepository registrationRepository;
-  private final SubordinateRepository subordinateRepository;
+  private final SubordinateService subordinateService;
+
   /**
    * Constructs a new ManualValidationStep.
    *
    * @param registrationRepository repository for persisting registrations
-   * @param subordinateRepository subordinate
+   * @param subordinateService subordinate service for creating and updating subordinates
    */
   public PublishSubordinateStatementStep(final RegistrationRepository registrationRepository,
-      final SubordinateRepository subordinateRepository) {
+      final SubordinateService subordinateService) {
     this.registrationRepository = registrationRepository;
-    this.subordinateRepository = subordinateRepository;
+    this.subordinateService = subordinateService;
   }
-
 
   @Override
   public boolean isPublic() {
@@ -86,6 +90,42 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
       this.registrationRepository.save(registration);
       return StepResult.success("Registration is pending approval");
     }
+    final Organization imOrganization = registration.getFlowAssignment().getTaIm().getOrganization();
+    final OrganizationRecord org = new OrganizationRecord(imOrganization.getOrgNumber(), imOrganization.getOrgName(),
+        null,null);
+
+    this.subordinateService.getByEntityidentifierAndTaIm(entityId,
+        registration.getFlowAssignment().getTaIm().getTaImId())
+        .ifPresentOrElse(subordinateDto -> {//Update
+          metadataPolicy.ifPresent(subordinateDto::setMetadataPolicy);
+          subordinateDto.setJwks(ecJwks.toJSONObject());
+          this.subordinateService.updateSubordinate(org,subordinateDto.getSubordinateId(),subordinateDto);
+           }, () -> {
+          // Create
+            final SubordinateDto newSubordinate = new SubordinateDto();
+            newSubordinate.setSubordinateId(UUID.randomUUID());
+            newSubordinate.setTaImId(registration.getFlowAssignment().getTaIm().getTaImId());
+            newSubordinate.setEntityIdentifier(entityId);
+            metadataPolicy.ifPresent(newSubordinate::setMetadataPolicy);
+            newSubordinate.setJwks(ecJwks.toJSONObject());
+            this.subordinateService.createSubordinate(org, newSubordinate);
+        });
+
+
+    /*
+    this.subordinateService.getByEntityidentifierAndTaIm(entityId,
+        registration.getFlowAssignment().getTaIm().getTaImId()).or(() ->
+          {
+              final SubordinateDto newSubordinate = new SubordinateDto();
+              newSubordinate.setSubordinateId(UUID.randomUUID());
+              newSubordinate.setTaImId(registration.getFlowAssignment().getTaIm().getTaImId());
+              newSubordinate.setEntityIdentifier(entityId);
+              metadataPolicy.ifPresent(newSubordinate::setMetadataPolicy);
+              newSubordinate.setJwks(ecJwks.toJSONObject());
+              return Optional.ofNullable(this.subordinateService.createSubordinate(new OrganizationRecord(),
+              newSubordinate));
+         }
+    );
 
     final Subordinate subordinate =
         this.subordinateRepository.findByEntityidentifierAndTaIm_TaImId(entityId,
@@ -102,7 +142,7 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
       metadataPolicy.ifPresent(subordinate::setMetadataPolicy);
       subordinate.setJwks(ecJwks.toJSONObject());
       this.subordinateRepository.save(subordinate);
-
+*/
       registration.setStatus(RegistrationStatus.APPROVED);
       this.registrationRepository.save(registration);
       return StepResult.success("Registration is approved. And published");
