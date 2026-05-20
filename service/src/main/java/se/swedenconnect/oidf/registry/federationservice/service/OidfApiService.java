@@ -43,7 +43,7 @@ import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
 import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
-import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateToDtoMapper;
+import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateMapper;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
 
@@ -222,7 +222,7 @@ public class OidfApiService {
 
   protected TrustAnchorProperties.SubordinateListingProperty toSubordinates(final Subordinate subordinateEntity) {
     final TrustAnchorProperties.SubordinateListingProperty sub = new TrustAnchorProperties.SubordinateListingProperty();
-    final SubordinateDto subDto = SubordinateToDtoMapper.toDto(subordinateEntity);
+    final SubordinateDto subDto = SubordinateMapper.toDto(subordinateEntity);
 
     Map<String, Object> metadataPolicy = subDto.getMetadataPolicy();
     if (metadataPolicy != null && metadataPolicy.containsKey("metadata_policy")) {

@@ -19,6 +19,7 @@ package se.swedenconnect.oidf.registry.subordinate.service;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -74,4 +75,13 @@ public interface SubordinateService {
    * @param id the subordinate ID
    */
   void deleteSubordinate(OrganizationRecord organizationRecord, UUID id);
+
+  /**
+   * Finding subordinate for this
+   *
+   * @param entityIdentifier EntityId
+   * @param taImId IntermidiateID
+   * @return Optional if there is a hit.
+   */
+  Optional<SubordinateDto> getByEntityidentifierAndTaIm(String entityIdentifier, UUID taImId);
 }

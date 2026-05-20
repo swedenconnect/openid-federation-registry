@@ -29,8 +29,8 @@ import java.util.UUID;
  *
  * @author Per Fredrik Plars
  */
-public final class DtoToSubordinateMapper {
-  private DtoToSubordinateMapper() {
+public final class SubordinateMapper {
+  private SubordinateMapper() {
   }
 
   /**
@@ -77,5 +77,27 @@ public final class DtoToSubordinateMapper {
     entity.setEcLocation(dto.getEcLocation());
     entity.setEcLocationAutomatic(Optional.ofNullable(dto.getEcLocationAutomaticResolve()).orElse(false));
     entity.setMetadataPolicy(dto.getMetadataPolicy());
+  }
+
+  /**
+   * Converts Subordinate to SubordinateDto.
+   *
+   * @param subordinate the subordinate entity
+   * @return the subordinate DTO
+   */
+  public static SubordinateDto toDto(final Subordinate subordinate) {
+    final SubordinateDto dto = new SubordinateDto();
+    dto.setSubordinateId(subordinate.getSubordinateId());
+    dto.setTaImId(subordinate.getTaIm().getTaImId());
+    dto.setJwks(subordinate.getJwks());
+    dto.setEntityIdentifier(subordinate.getEntityidentifier());
+
+    Optional.ofNullable(subordinate.getCrit()).ifPresent(dto::setCrit);
+    Optional.ofNullable(subordinate.getMetadataPolicyCrit()).ifPresent(dto::setMetadataPolicyCrit);
+
+    dto.setEcLocation(subordinate.getEcLocation());
+    dto.setEcLocationAutomaticResolve(subordinate.isEcLocationAutomatic());
+    dto.setMetadataPolicy(subordinate.getMetadataPolicy());
+    return dto;
   }
 }

@@ -33,7 +33,7 @@ import se.swedenconnect.oidf.registry.module.model.Resolver;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
-import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateToDtoMapper;
+import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateMapper;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
@@ -439,7 +439,7 @@ class EntityToDtoMapperTest {
     final TrustAnchorIntermediateModule taIm = createTaImEntity(entity, ModuleType.TRUSTANCHOR);
     final Subordinate sub = createSubordinateEntity(taIm);
 
-    final SubordinateDto dto = SubordinateToDtoMapper.toDto(sub);
+    final SubordinateDto dto = SubordinateMapper.toDto(sub);
 
     assertThat(dto.getSubordinateId()).isEqualTo(sub.getSubordinateId());
     assertThat(dto.getTaImId()).isEqualTo(taIm.getTaImId());
@@ -457,7 +457,7 @@ class EntityToDtoMapperTest {
     final TrustAnchorIntermediateModule taIm = createTaImEntity(entity, ModuleType.TRUSTANCHOR);
     final Subordinate sub = createSubordinateEntity(taIm);
 
-    final SubordinateDto dto = SubordinateToDtoMapper.toDto(sub);
+    final SubordinateDto dto = SubordinateMapper.toDto(sub);
 
     assertThat(dto.getMetadataPolicy()).isEqualTo(sub.getMetadataPolicy());
   }
@@ -470,7 +470,7 @@ class EntityToDtoMapperTest {
     sub.setCrit(null);
     sub.setMetadataPolicyCrit(null);
 
-    final SubordinateDto dto = SubordinateToDtoMapper.toDto(sub);
+    final SubordinateDto dto = SubordinateMapper.toDto(sub);
 
     assertThat(dto.getCrit()).isNull();
     assertThat(dto.getMetadataPolicyCrit()).isNull();

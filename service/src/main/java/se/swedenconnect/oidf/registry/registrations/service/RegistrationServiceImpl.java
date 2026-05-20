@@ -28,7 +28,6 @@ import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationFlowInformationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationJoinRequestDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationMapper;
-import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestStatusDto;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
@@ -88,16 +87,15 @@ public class RegistrationServiceImpl implements RegistrationService {
 
   @Override
   @Transactional
-  public RegistrationRequestStatusDto createRegistrationRequest(final OrganizationRecord organizationRecord,
+  public RegistrationDto createRegistrationRequest(final OrganizationRecord organizationRecord,
       final UUID joinId, final RegistrationJoinRequestDto request) {
 
     request.setJoinId(joinId);
     ValidateDto.init(organizationRecord).validate(request);
     final ProcessReport report = this.registrationFlowService.executeRegistrationFlow(organizationRecord, request);
-    final UUID registrationId = this.registrationRepository.findByEntityId(request.getEntityIdentifier())
-        .map(Registration::getRegistrationId)
-        .orElse(null);
-    return RegistrationMapper.toRegistrationRequestStatusDto(request.getEntityIdentifier(), registrationId, report);
+    final Registration registration = this.registrationRepository.findByEntityId(request.getEntityIdentifier())
+        .orElseThrow(() -> new IllegalArgumentException("No registration found for this registrationid"));
+    return RegistrationMapper.toRegistrationRequestStatusDto(registration, report);
   }
 
   @Override

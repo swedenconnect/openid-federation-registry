@@ -30,8 +30,7 @@ import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.module.repository.TaImRepository;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
-import se.swedenconnect.oidf.registry.subordinate.mapper.DtoToSubordinateMapper;
-import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateToDtoMapper;
+import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateMapper;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
 
@@ -69,9 +68,7 @@ public class SubordinateServiceImpl implements SubordinateService {
     this.auditService = auditService;
   }
 
-  private static SubordinateDto toDto(final Subordinate entity) {
-    return SubordinateToDtoMapper.toDto(entity);
-  }
+
 
   private TrustAnchorIntermediateModule findTaImOrThrow(final OrganizationRecord organizationRecord,
       final UUID taImId) {
@@ -95,7 +92,7 @@ public class SubordinateServiceImpl implements SubordinateService {
   @Transactional(readOnly = true)
   public SubordinateDto getSubordinate(final OrganizationRecord organizationRecord, final UUID id) {
     final Subordinate entity = this.findSubordinateOrThrow(organizationRecord, id);
-    return toDto(entity);
+    return SubordinateMapper.toDto(entity);
   }
 
   @Override
@@ -115,7 +112,7 @@ public class SubordinateServiceImpl implements SubordinateService {
 
     final TrustAnchorIntermediateModule taIm = this.findTaImOrThrow(organizationRecord, input.getTaImId());
 
-    final Subordinate subordinateEntity = DtoToSubordinateMapper.toEntity(id, input, taIm);
+    final Subordinate subordinateEntity = SubordinateMapper.toEntity(id, input, taIm);
 
     // If automatic resolve is selected, the system try to find a hosted entity. If not an exception is thrown.
     if (Optional.ofNullable(input.getEcLocationAutomaticResolve()).orElse(false)) {
@@ -135,7 +132,7 @@ public class SubordinateServiceImpl implements SubordinateService {
           "A subordinate with entityIdentifier '%s' already exists for this intermediate"
               .formatted(subordinateEntity.getEntityidentifier()));
     }
-    final SubordinateDto dto = toDto(subordinateEntity);
+    final SubordinateDto dto = SubordinateMapper.toDto(subordinateEntity);
     this.auditService.subordinateCreated(id, taIm.getOrganization().getInstance().getInstanceId(),
         taIm.getOrganization().getOrganizationId(), null, dto);
     return dto;
@@ -149,9 +146,9 @@ public class SubordinateServiceImpl implements SubordinateService {
     ValidateDto.init(organizationRecord).validate(input);
 
     final Subordinate existing = this.findSubordinateOrThrow(organizationRecord, id);
-    final SubordinateDto oldDto = toDto(existing);
+    final SubordinateDto oldDto = SubordinateMapper.toDto(existing);
 
-    DtoToSubordinateMapper.updateEntity(existing, input);
+    SubordinateMapper.updateEntity(existing, input);
 
     if (Optional.ofNullable(input.getEcLocationAutomaticResolve()).orElse(false)) {
       this.entityRepository
@@ -171,7 +168,7 @@ public class SubordinateServiceImpl implements SubordinateService {
           "A subordinate with entityIdentifier '%s' already exists for this intermediate"
               .formatted(existing.getEntityidentifier()));
     }
-    final SubordinateDto newDto = toDto(existing);
+    final SubordinateDto newDto = SubordinateMapper.toDto(existing);
     this.auditService.subordinateUpdated(id, existing.getTaIm().getOrganization().getInstance().getInstanceId(),
         existing.getTaIm().getOrganization().getOrganizationId(), oldDto, newDto);
     return newDto;
@@ -181,9 +178,15 @@ public class SubordinateServiceImpl implements SubordinateService {
   @Transactional
   public void deleteSubordinate(final OrganizationRecord organizationRecord, final UUID id) {
     final Subordinate entity = this.findSubordinateOrThrow(organizationRecord, id);
-    final SubordinateDto dto = toDto(entity);
+    final SubordinateDto dto = SubordinateMapper.toDto(entity);
     this.subordinateRepository.delete(entity);
     this.auditService.subordinateDeleted(id, entity.getTaIm().getOrganization().getInstance().getInstanceId(),
         entity.getTaIm().getOrganization().getOrganizationId(), dto);
+  }
+
+  @Override
+  public Optional<SubordinateDto> getByEntityidentifierAndTaIm(final String entityIdentifier, final UUID taImId) {
+    return this.subordinateRepository.findByEntityidentifierAndTaIm_TaImId(entityIdentifier, taImId)
+        .map(SubordinateMapper::toDto);
   }
 }

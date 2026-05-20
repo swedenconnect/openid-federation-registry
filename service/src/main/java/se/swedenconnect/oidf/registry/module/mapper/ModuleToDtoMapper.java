@@ -25,7 +25,7 @@ import se.swedenconnect.oidf.registry.module.model.Resolver;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
-import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateToDtoMapper;
+import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateMapper;
 
 import java.util.List;
 
@@ -57,7 +57,7 @@ public final class ModuleToDtoMapper {
     // Add subordinates
     if (moduleEntity.getSubordinates() != null) {
       final List<SubordinateDto> subordinates = moduleEntity.getSubordinates().stream()
-          .map(SubordinateToDtoMapper::toDto)
+          .map(SubordinateMapper::toDto)
           .toList();
       dto.setSubordinates(subordinates);
     }
@@ -84,7 +84,7 @@ public final class ModuleToDtoMapper {
     // Add subordinates
     if (moduleEntity.getSubordinates() != null) {
       final List<SubordinateDto> subordinates = moduleEntity.getSubordinates().stream()
-          .map(SubordinateToDtoMapper::toDto)
+          .map(SubordinateMapper::toDto)
           .toList();
       dto.setSubordinates(subordinates);
     }

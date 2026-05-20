@@ -31,7 +31,6 @@ import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRec
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationFlowInformationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationJoinRequestDto;
-import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestStatusDto;
 import se.swedenconnect.oidf.registry.registrations.service.RegistrationService;
 
 import java.util.List;
@@ -87,7 +86,7 @@ public class FederationRegistrationController {
    */
   @PostMapping("/{joinId}")
   @Operation(summary = "Create a registration request on this id")
-  public ResponseEntity<RegistrationRequestStatusDto> createJoinWithId(
+  public ResponseEntity<RegistrationDto> createJoinWithId(
       @PathVariable("joinId") final UUID joinId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
       @RequestBody final RegistrationJoinRequestDto body) {
