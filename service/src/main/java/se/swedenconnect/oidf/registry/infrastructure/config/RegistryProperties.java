@@ -149,6 +149,8 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
    *
    * @param instanceId the unique identifier for the instance must not be null
    * @param name the name of the instance must not be empty
+   * @param baseUrl the base URL for this instance, used to compute entity prefixes
+   * @param orgBaseUrlOverrides optional per-org overrides on the form orgNumber → base URL
    * @param matchers the matcher configuration used to assign organizations to this instance
    */
   public record InstanceProperties(UUID instanceId,
