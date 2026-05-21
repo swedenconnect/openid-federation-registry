@@ -113,8 +113,7 @@ public class JwtTestUtils {
           .claim("org", Arrays.stream(OrganisationType.values())
               .map(o ->
                   Map.of("orgName", o.name,
-                      "orgNumber", o.orgId,
-                      "entity_prefix", o.domainPrefix))
+                      "orgNumber", o.orgId))
               .toList())
           .build();
 
@@ -155,29 +154,27 @@ public class JwtTestUtils {
 
 
   public enum OrganisationType {
-    PM("Pensionsmyndigheten", "55555", "https://www.pm.se/oidf"),
-    AF("Arbetsförmedlingen", "66666", "https://www.af.se/oidf"),
-    SKATT("Skatteverket", "77777", "https://www.skv.se/oidf"),
-    TESTORG1("TestOrg1", "10001", "https://testorg1.test.se/oidf"),
-    TESTORG2("TestOrg2", "10002", "https://testorg2.test.se/oidf"),
-    TESTORG3("TestOrg3", "10003", "https://testorg3.test.se/oidf"),
-    TESTORG4("TestOrg4", "10004", "https://testorg4.test.se/oidf"),
-    TESTORG5("TestOrg5", "10005", "https://testorg5.test.se/oidf"),
-    TESTORG6("TestOrg6", "10006", "https://testorg6.test.se/oidf"),
-    TESTORG7("TestOrg7", "10007", "https://testorg7.test.se/oidf"),
-    TESTORG8("TestOrg8", "10008", "https://testorg8.test.se/oidf"),
-    TESTORG9("TestOrg9", "10009", "https://testorg9.test.se/oidf"),
-    TESTORG10("TestOrg10", "10010", "https://testorg10.test.se/oidf"),
+    PM("Pensionsmyndigheten", "55555"),
+    AF("Arbetsförmedlingen", "66666"),
+    SKATT("Skatteverket", "77777"),
+    TESTORG1("TestOrg1", "10001"),
+    TESTORG2("TestOrg2", "10002"),
+    TESTORG3("TestOrg3", "10003"),
+    TESTORG4("TestOrg4", "10004"),
+    TESTORG5("TestOrg5", "10005"),
+    TESTORG6("TestOrg6", "10006"),
+    TESTORG7("TestOrg7", "10007"),
+    TESTORG8("TestOrg8", "10008"),
+    TESTORG9("TestOrg9", "10009"),
+    TESTORG10("TestOrg10", "10010"),
     ;
 
     public final String name;
     public final String orgId;
-    public final String domainPrefix;
 
-    OrganisationType(String name, String orgId, String domainPrefix) {
+    OrganisationType(String name, String orgId) {
       this.name = name;
       this.orgId = orgId;
-      this.domainPrefix = domainPrefix;
     }
 
   }

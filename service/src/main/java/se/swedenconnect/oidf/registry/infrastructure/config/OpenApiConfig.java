@@ -44,7 +44,7 @@ public class OpenApiConfig {
   public OpenAPI openAPI() {
     return new OpenAPI()
         .info(new Info()
-            .title("OpenID Federation Entity Registry API")
+            .title("OpenID Federation Registry API")
             .description("REST API for managing OpenID Federation entities, policies, modules, and trust marks. "
                 + "This API provides endpoints for creating, reading, updating, and deleting federation entities, "
                 + "policies, trust anchors, resolvers, trust marks, and trust mark subjects.")

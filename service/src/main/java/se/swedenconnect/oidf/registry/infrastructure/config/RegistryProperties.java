@@ -24,6 +24,7 @@ import org.springframework.util.Assert;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -152,6 +153,8 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
    */
   public record InstanceProperties(UUID instanceId,
       String name,
+      URI baseUrl,
+      Map<String, String> orgBaseUrlOverrides,
       InstanceMatcherProperties matchers) {
     /**
      * Validates the instance properties to ensure all required fields are properly configured.
@@ -161,6 +164,7 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
       Assert.notNull(
           this.instanceId, "Expected openid.federation.registry.instances[].instance_id");
       Assert.hasText(this.name, "Expected openid.federation.registry.instances[].name");
+      Assert.notNull(this.baseUrl, "Expected openid.federation.registry.instances[].base_url");
       Assert.isTrue(this.matchers != null, "Expected at least one matcher"
           + " openid.federation.registry.instances[].matchers");
       this.matchers.validate();

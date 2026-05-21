@@ -172,6 +172,9 @@ class RegistrationFlowEndToEndIT {
       assertThat(status.getStatusFedreg())
           .as("Registration for testOrg%d should be APPROVED immediately", orgNumber)
           .isEqualTo(Registration.StatusFedregEnum.APPROVED);
+
+      final List<Registration> registrations = registrationApi.listRegistrations();
+      assertThat(registrations).hasSize(1);
     }
 
     verifyOrgASeesAllRegistrationsAndSubordinates();

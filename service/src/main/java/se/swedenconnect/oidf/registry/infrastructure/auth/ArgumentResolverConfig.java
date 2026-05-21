@@ -15,9 +15,11 @@
  */
 package se.swedenconnect.oidf.registry.infrastructure.auth;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import se.swedenconnect.oidf.registry.organization.service.InstancePlacementService;
 
 import java.util.List;
 
@@ -27,7 +29,11 @@ import java.util.List;
  * @author Felix Hellman
  */
 @Configuration
+@RequiredArgsConstructor
 public class ArgumentResolverConfig implements WebMvcConfigurer {
+
+  private final InstancePlacementService instancePlacementService;
+
   /**
    * Adds custom argument resolvers to the list of resolvers.
    *
@@ -35,6 +41,6 @@ public class ArgumentResolverConfig implements WebMvcConfigurer {
    */
   @Override
   public void addArgumentResolvers(final List<HandlerMethodArgumentResolver> resolvers) {
-    resolvers.add(new OrganizationRecordClaimSelector());
+    resolvers.add(new OrganizationRecordClaimSelector(this.instancePlacementService));
   }
 }

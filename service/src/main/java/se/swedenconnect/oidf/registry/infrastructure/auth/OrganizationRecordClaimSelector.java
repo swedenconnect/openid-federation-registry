@@ -29,6 +29,7 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryClaims;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauthclient.RegistryOidcUser;
+import se.swedenconnect.oidf.registry.organization.service.InstancePlacementService;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -40,6 +41,17 @@ import java.util.Optional;
  */
 @Slf4j
 public class OrganizationRecordClaimSelector implements HandlerMethodArgumentResolver {
+
+  private final InstancePlacementService instancePlacementService;
+
+  /**
+   * Constructor.
+   *
+   * @param instancePlacementService used to compute entity prefix from instance configuration
+   */
+  public OrganizationRecordClaimSelector(final InstancePlacementService instancePlacementService) {
+    this.instancePlacementService = instancePlacementService;
+  }
 
   /**
    * Determines whether this resolver supports the given method parameter.
@@ -79,6 +91,7 @@ public class OrganizationRecordClaimSelector implements HandlerMethodArgumentRes
 
       return Optional.ofNullable(selectedOrgNumberFromHeader)
           .map(registryClaims::getOrganizationRecordByOrgNumber)
+          .map(this::withComputedEntityPrefix)
           .orElseThrow(
               () -> new IllegalArgumentException("Header:  " + AuthConstants.SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE +
                   " missing or have a value that does not match claim in jwt"));
@@ -96,7 +109,7 @@ public class OrganizationRecordClaimSelector implements HandlerMethodArgumentRes
         log.debug("Selected organization number from session:'{}' SelectedOrgInfo:'{}'",
             selectedOrgNumberFromSession,
             or.orgNumber());
-        return or;
+        return this.withComputedEntityPrefix(or);
       }
 
       throw new IllegalArgumentException("Wrong authentication class, check supportsParameter method.");
@@ -105,5 +118,12 @@ public class OrganizationRecordClaimSelector implements HandlerMethodArgumentRes
     else {
       throw new IllegalArgumentException("Wrong authentication class, check supportsParameter method.");
     }
+  }
+
+  private OrganizationRecord withComputedEntityPrefix(final OrganizationRecord or) {
+    final String entityPrefix = this.instancePlacementService
+        .resolveEntityPrefix(or.orgNumber(), or.functionGroup())
+        .orElse(or.entityPrefix());
+    return new OrganizationRecord(or.orgNumber(), or.orgName(), entityPrefix, or.functionGroup());
   }
 }
