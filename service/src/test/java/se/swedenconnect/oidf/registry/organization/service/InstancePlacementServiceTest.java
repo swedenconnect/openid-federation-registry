@@ -26,6 +26,7 @@ import se.swedenconnect.oidf.registry.infrastructure.config.RegistryProperties;
 import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -58,18 +59,20 @@ class InstancePlacementServiceTest {
     defaultInstance.setInstanceId(defaultInstanceId);
   }
 
+  private static final URI TEST_BASE_URL = URI.create("https://registry.example.se/oidf");
+
   private RegistryProperties.InstanceProperties orgNumberInstance(UUID id, String... orgNumbers) {
-    return new RegistryProperties.InstanceProperties(id, "Instance " + id,
+    return new RegistryProperties.InstanceProperties(id, "Instance " + id, TEST_BASE_URL, null,
         new RegistryProperties.InstanceMatcherProperties(List.of(), false, List.of(orgNumbers)));
   }
 
   private RegistryProperties.InstanceProperties functionGroupInstance(UUID id, String... groups) {
-    return new RegistryProperties.InstanceProperties(id, "Instance " + id,
+    return new RegistryProperties.InstanceProperties(id, "Instance " + id, TEST_BASE_URL, null,
         new RegistryProperties.InstanceMatcherProperties(List.of(groups), false, List.of()));
   }
 
   private RegistryProperties.InstanceProperties defaultInstance(UUID id) {
-    return new RegistryProperties.InstanceProperties(id, "Default instance",
+    return new RegistryProperties.InstanceProperties(id, "Default instance", TEST_BASE_URL, null,
         new RegistryProperties.InstanceMatcherProperties(List.of(), true, List.of()));
   }
 

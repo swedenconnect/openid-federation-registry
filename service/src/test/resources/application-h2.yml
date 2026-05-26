@@ -28,12 +28,16 @@ openid:
       instances:
         - instance_id: "123e4567-e89b-12d3-a456-426614174000"
           name: "Swedenconnect"
-          useForDefaultAssignment: true
+          base_url: "https://registry.swedenconnect.se/oidf"
+          matchers:
+            useForDefaultAssignment: true
         - instance_id: "223e4567-e89b-12d3-a456-426614174001"
           name: "ENA"
-          org_numbers:
-            - "2021002114"
-            - "99999999"
+          base_url: "https://registry.ena.se/oidf"
+          matchers:
+            org_numbers:
+              - "2021002114"
+              - "99999999"
 
 logging:
   level:

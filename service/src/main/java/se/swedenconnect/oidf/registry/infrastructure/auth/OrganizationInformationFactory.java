@@ -54,11 +54,10 @@ public class OrganizationInformationFactory {
             .map(s -> s
                 .filter(entry -> entry.containsKey("orgName"))
                 .filter(entry -> entry.containsKey("orgNumber"))
-                .filter(entry -> entry.containsKey("entity_prefix"))
                 .map(entry -> new OrganizationRecord(
                     entry.get("orgNumber").toString(),
                     entry.get("orgName").toString(),
-                    entry.get("entity_prefix").toString(),
+                    null,
                     null
                 )).toList())
             .orElse(List.of());

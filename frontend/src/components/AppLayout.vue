@@ -113,12 +113,13 @@
 
 <script setup>
 import {computed, onBeforeMount} from 'vue';
-import {RouterLink, RouterView, useRoute} from 'vue-router';
+import {RouterLink, RouterView, useRoute, useRouter} from 'vue-router';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
 import {adminAuthenticatePath, logoutPath, swaggerUiPath} from '@/config/path';
 
 const route = useRoute();
+const router = useRouter();
 const errorStore = useErrorStore();
 const userStore = useUserStore();
 
@@ -132,8 +133,9 @@ function clearError() {
   errorStore.clearError();
 }
 
-function handleOrgChange(orgNumber) {
-  userStore.selectOrganization(orgNumber);
+async function handleOrgChange(orgNumber) {
+  await userStore.selectOrganization(orgNumber);
+  await router.push('/');
 }
 
 function login() {

@@ -17,6 +17,7 @@ package se.swedenconnect.oidf.registry.guioperations.controller;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +34,7 @@ import se.swedenconnect.oidf.registry.infrastructure.auth.AuthConstants;
 import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationInformationFactory;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationInformation;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
+import se.swedenconnect.oidf.registry.organization.service.InstancePlacementService;
 
 import java.util.Optional;
 
@@ -45,8 +47,11 @@ import java.util.Optional;
 @Slf4j
 @RestController
 @Hidden
+@RequiredArgsConstructor
 @RequestMapping("/userinfo")
 public class UserInfoController {
+
+  private final InstancePlacementService instancePlacementService;
 
 
   /**
@@ -114,6 +119,10 @@ public class UserInfoController {
             .findFirst()
             .orElseThrow(() -> new IllegalArgumentException("No organization available")));
 
+    final String entityPrefix = this.instancePlacementService
+        .resolveEntityPrefix(organizationRecord.orgNumber(), organizationRecord.functionGroup())
+        .orElse(null);
+
     final UserInfoResponse oidfUserResponse = new UserInfoResponse(
         oidcUser.getPreferredUsername(),
         oidcUser.getGivenName(),
@@ -121,7 +130,7 @@ public class UserInfoController {
         oidcUser.getFullName(),
         organizationRecord.orgNumber(),
         organizationRecord.orgName(),
-        organizationRecord.entityPrefix(),
+        entityPrefix,
         orgInfo
     );
 

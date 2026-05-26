@@ -234,7 +234,7 @@
 </template>
 
 <script setup>
-import {computed, onMounted, ref} from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
@@ -258,7 +258,8 @@ const selectedSteps = ref([]);
 const stepToAdd = ref(null);
 
 const technologyOptions = ['OIDC', 'SAML'];
-const entityTypeOptions = [
+
+const oidcEntityTypes = [
   'openid_relying_party',
   'openid_provider',
   'oauth_authorization_server',
@@ -266,6 +267,23 @@ const entityTypeOptions = [
   'oauth_resource',
   'federation_entity',
 ];
+
+const samlEntityTypes = [
+  'saml_identity_provider',
+  'saml_service_provider',
+];
+
+const entityTypeOptions = computed(() => {
+  if (technology.value === 'SAML') return samlEntityTypes;
+  if (technology.value === 'OIDC') return oidcEntityTypes;
+  return [...oidcEntityTypes, ...samlEntityTypes];
+});
+
+watch(technology, () => {
+  if (entityType.value && !entityTypeOptions.value.includes(entityType.value)) {
+    entityType.value = null;
+  }
+});
 
 const isEdit = computed(() => !!route.params.id);
 

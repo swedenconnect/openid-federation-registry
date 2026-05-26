@@ -16,12 +16,14 @@
 
 package se.swedenconnect.oidf.registry.organization.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.config.RegistryProperties;
 import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -30,6 +32,7 @@ import java.util.Optional;
  *
  * @author Per Fredrik Plars
  */
+@Slf4j
 @Service
 public class InstancePlacementService {
 
@@ -45,6 +48,55 @@ public class InstancePlacementService {
       final InstanceRepository instanceRepository) {
     this.registryProperties = registryProperties;
     this.instanceRepository = instanceRepository;
+  }
+
+  /**
+   * Resolves the entity prefix for an organization by finding its instance and combining the
+   * instance base URL with the organization number. Pure config lookup — no database access.
+   *
+   * @param orgNumber organization number
+   * @param functionGroup optional function group used for matching
+   * @return entity prefix on the form {@code baseUrl/orgNumber}, or empty if no instance matches
+   */
+  public Optional<String> resolveEntityPrefix(final String orgNumber, final String functionGroup) {
+    if (this.registryProperties.instances().isEmpty()) {
+      return Optional.empty();
+    }
+
+    for (final RegistryProperties.InstanceProperties instance : this.registryProperties.instances()) {
+      final RegistryProperties.InstanceMatcherProperties matcher = instance.matchers();
+
+      final boolean orgNumberMatch = Optional.ofNullable(matcher.org_numbers())
+          .orElse(Collections.emptyList())
+          .stream()
+          .anyMatch(orgNr -> orgNr.equals(orgNumber));
+
+      if (orgNumberMatch) {
+        return Optional.of(this.entityPrefixFrom(instance, orgNumber));
+      }
+
+      final boolean functionGroupMatch = functionGroup != null
+          && Optional.ofNullable(matcher.functiongroups())
+              .orElse(Collections.emptyList())
+              .stream()
+              .anyMatch(fg -> fg.equals(functionGroup));
+
+      if (functionGroupMatch) {
+        return Optional.of(this.entityPrefixFrom(instance, orgNumber));
+      }
+    }
+
+    return this.registryProperties.instances().stream()
+        .filter(i -> i.matchers().useForDefaultAssignment())
+        .map(i -> this.entityPrefixFrom(i, orgNumber))
+        .findFirst();
+  }
+
+  private String entityPrefixFrom(final RegistryProperties.InstanceProperties instance, final String orgNumber) {
+    return Optional.ofNullable(instance.orgBaseUrlOverrides())
+        .map(overrides -> overrides.get(orgNumber))
+        .orElse(instance.baseUrl().toString() + "/" + orgNumber);
+
   }
 
   /**
