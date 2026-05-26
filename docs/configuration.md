@@ -11,9 +11,14 @@ This document describes the configuration settings available for the OpenID Fede
 - [Database Configuration](#database-configuration)
 - [Security Configuration](#security-configuration)
 - [Logging Configuration](#logging-configuration)
+- [Observability](#observability)
+- [API Documentation (SpringDoc)](#api-documentation-springdoc)
 - [Credential Bundles](#credential-bundles)
 - [Audit Logging](#audit-logging)
 - [OpenID Federation Registry Settings](#openid-federation-registry-settings)
+  - [Federation Service API](#federation-service-api)
+  - [Federation Instances](#federation-instances)
+  - [Entity Configuration Loader](#entity-configuration-loader)
 
 ---
 
@@ -69,6 +74,32 @@ This document describes the configuration settings available for the OpenID Fede
 |---------------------------------------|---------------|-----------------------------------------------------------------|
 | `logging.level.se.swedenconnect.oidf` | debug         | Sets the logging level for the `se.swedenconnect.oidf` package. |
 
+## Observability
+
+| Setting                                                 | Example Value                     | Description                                                                                    |
+|---------------------------------------------------------|-----------------------------------|------------------------------------------------------------------------------------------------|
+| `management.server.port`                                | `8081`                            | Port for the management/actuator endpoints (separate from the main server port).               |
+| `management.metrics.tags.application_name`              | `oidf-registry`                   | Tag added to all metrics for filtering by application name.                                    |
+| `management.metrics.tags.application_version`           | `1.0.0`                           | Tag added to all metrics for filtering by application version.                                 |
+| `management.prometheus.metrics.export.enabled`          | `true`                            | Enables Prometheus metrics export.                                                             |
+| `management.tracing.sampling.probability`               | `1.0`                             | Fraction of requests to sample for distributed tracing. `1.0` = 100 %.                         |
+| `management.opentelemetry.tracing.export.otlp.endpoint` | `http://localhost:4318/v1/traces` | OTLP endpoint for exporting traces. Can also be set via `OTEL_EXPORTER_OTLP_ENDPOINT` env var. |
+| `management.endpoints.web.exposure.include`             | `*`                               | Controls which actuator endpoints are exposed over HTTP.                                       |
+
+## API Documentation (SpringDoc)
+
+| Setting                                     | Example Value      | Description                                                      |
+|---------------------------------------------|--------------------|------------------------------------------------------------------|
+| `springdoc.api-docs.path`                   | `/v3/api-docs`     | Path where the OpenAPI JSON descriptor is served.                |
+| `springdoc.api-docs.enabled`                | `true`             | Enables or disables the OpenAPI descriptor endpoint.             |
+| `springdoc.swagger-ui.path`                 | `/swagger-ui.html` | Path where the Swagger UI is served.                             |
+| `springdoc.swagger-ui.enabled`              | `true`             | Enables or disables the Swagger UI.                              |
+| `springdoc.swagger-ui.operationsSorter`     | `method`           | Sort order for operations in the UI (`method` or `alpha`).       |
+| `springdoc.swagger-ui.tagsSorter`           | `alpha`            | Sort order for tags in the UI.                                   |
+| `springdoc.swagger-ui.tryItOutEnabled`      | `true`             | Enables the "Try it out" button in Swagger UI by default.        |
+| `springdoc.swagger-ui.filter`               | `true`             | Enables the filter/search box in Swagger UI.                     |
+| `springdoc.swagger-ui.persistAuthorization` | `true`             | Persists authorization tokens across page reloads in Swagger UI. |
+
 ## Credential Bundles
 
 | Setting                                                 | Example Value              | Description                                                       |
@@ -104,18 +135,115 @@ This document describes the configuration settings available for the OpenID Fede
 
 ### Federation Instances
 
-Defines individual instances under the OpenID Federation Registry.
+Each entry in `openid.federation.registry.instances` represents one federation instance managed by
+this registry. An instance maps a set of organisations to a specific federation endpoint.
 
-| Setting                                                              | Example Value                          | Description                                                                       |
-|----------------------------------------------------------------------|----------------------------------------|-----------------------------------------------------------------------------------|
-| `openid.federation.registry.instances[0].instance_id`                | `123e4567-e89b-12d3-a456-426614174000` | Unique identifier for the first Federation Instance, representing Sweden Connect. |
-| `openid.federation.registry.instances[0].name`                       | `Swedenconnect`                        | Name of the first Federation Instance, representing Sweden Connect.               |
-| `openid.federation.registry.instances[0].use-for-default-assignment` | `false`                                | Flag indicating if this instance should be used for the default assignment.       |
-| `openid.federation.registry.instances[0].org_numbers`                | `123456-7890`                          | A list of organizational numbers associated with the instance.                    |
-| `openid.federation.registry.instances[1].instance_id`                | `223e4567-e89b-12d3-a456-426614174001` | Unique identifier for the second Federation Instance, representing ENA.           |
-| `openid.federation.registry.instances[1].name`                       | `ENA`                                  | Name of the second Federation Instance, representing ENA.                         |
+#### Instance properties
+
+| Setting                                                          | Required | Example Value                            | Description                                                                                                                                                    |
+|------------------------------------------------------------------|----------|------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `openid.federation.registry.instances[i].instance_id`            | Yes      | `123e4567-e89b-12d3-a456-426614174000`   | UUID that uniquely identifies this instance. Must match the instance record in the database.                                                                   |
+| `openid.federation.registry.instances[i].name`                   | Yes      | `Swedenconnect`                          | Human-readable name for the instance.                                                                                                                          |
+| `openid.federation.registry.instances[i].base_url`               | Yes      | `https://registry.swedenconnect.se/oidf` | Base URL for this instance. Used to compute the `entityPrefix` for every organisation assigned to it: `base_url/orgNumber`.                                    |
+| `openid.federation.registry.instances[i].org_base_url_overrides` | No       | See example below                        | Optional per-organisation override of `base_url`. When set for an org, its `entityPrefix` is computed as `override/orgNumber` instead of `base_url/orgNumber`. |
+| `openid.federation.registry.instances[i].matchers`               | Yes      | See below                                | Matcher configuration that determines which organisations are assigned to this instance.                                                                       |
+
+#### Entity prefix computation
+
+The `entityPrefix` for an organisation is resolved at request time — it is not stored in the token:
+
+1. The matching instance is found using `matchers` (see below).
+2. If the organisation number exists in `org_base_url_overrides`, the override URL is used as the base.
+3. Otherwise `base_url` is used.
+4. The final value is `<base>/orgNumber`, e.g. `https://registry.swedenconnect.se/oidf/5590026042`.
+
+#### Per-organisation URL override
+
+```yaml
+openid:
+  federation:
+    registry:
+      instances:
+        - instance_id: "123e4567-e89b-12d3-a456-426614174000"
+          name: "Swedenconnect"
+          base_url: "https://registry.swedenconnect.se/oidf"
+          org_base_url_overrides:
+            "5590026042": "https://dev.swedenconnect.se/oidf-test"
+          matchers:
+            useForDefaultAssignment: true
+```
+
+In this example all organisations use `https://registry.swedenconnect.se/oidf/{orgNumber}` except
+`5590026042`, which resolves to `https://dev.swedenconnect.se/oidf-test/5590026042`.
+
+#### Matchers
+
+Matchers control which organisations are routed to a given instance.
+Exactly one of the three properties must be active per instance.
+
+| Setting                                                                    | Example Value       | Description                                                                                                                                                                                         |
+|----------------------------------------------------------------------------|---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `openid.federation.registry.instances[i].matchers.org_numbers`             | `["5590026042"]`    | Explicit list of organisation numbers assigned to this instance. Takes precedence over `functiongroups`.                                                                                            |
+| `openid.federation.registry.instances[i].matchers.functiongroups`          | `["swedenconnect"]` | List of function group identifiers. Matches after `org_numbers`. Cannot be combined with `useForDefaultAssignment`.                                                                                 |
+| `openid.federation.registry.instances[i].matchers.useForDefaultAssignment` | `true`              | When `true`, this instance receives all organisations that do not match any other instance. At most one instance may set this to `true`. Cannot be combined with `org_numbers` or `functiongroups`. |
+
+**Matching order** (evaluated per request, first match wins):
+
+1. `org_numbers` — exact match on organisation number.
+2. `functiongroups` — match on the organisation's function group.
+3. `useForDefaultAssignment` — catch-all fallback.
+
+#### Full example
+
+```yaml
+openid:
+  federation:
+    registry:
+      instances:
+        - instance_id: "123e4567-e89b-12d3-a456-426614174000"
+          name: "Swedenconnect"
+          base_url: "https://registry.swedenconnect.se/oidf"
+          matchers:
+            useForDefaultAssignment: true
+
+        - instance_id: "223e4567-e89b-12d3-a456-426614174001"
+          name: "ENA"
+          base_url: "https://registry.ena.se/oidf"
+          matchers:
+            org_numbers:
+              - "2021002114"
+              - "5590026042"
+```
+
+### Entity Configuration Loader
+
+Controls how the registry fetches and validates entity configurations from external entities during
+registration flows. All settings are optional; the loader is disabled by default.
+
+| Setting                                                                                 | Required | Default | Description                                                                                                                             |
+|-----------------------------------------------------------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `openid.federation.registry.entity-configuration-loader.enabled`                        | No       | `false` | Enables loading entity configuration (and JWKS) from an entity's self-signed entity statement during registration.                      |
+| `openid.federation.registry.entity-configuration-loader.trust-bundle-alias`             | No       | —       | Alias of the Spring credential bundle used to trust HTTPS connections when fetching remote entity configurations.                       |
+| `openid.federation.registry.entity-configuration-loader.enable-local-ip-address-ranges` | No       | `false` | When `true`, the loader may resolve entity IDs that map to private/local IP ranges. **Security risk** — enables SSRF to internal hosts. |
+| `openid.federation.registry.entity-configuration-loader.disable-system-properties`      | No       | `false` | When `true`, JVM system properties (e.g. proxy settings) are ignored when building the outgoing HTTP client.                            |
+| `openid.federation.registry.entity-configuration-loader.block-hostname`                 | No       | —       | List of regular expressions. Any entity ID whose host matches one of these patterns is rejected before the outgoing request is made.    |
+
+#### Example
+
+```yaml
+openid:
+  federation:
+    registry:
+      entity_configuration_loader:
+        enabled: true
+        trust-bundle-alias: "myTrustBundle"
+        enable-local-ip-address-ranges: false
+        block-hostname:
+          - ".*\\.internal\\.example\\.com"
+          - "localhost"
+```
 
 ---
 
-Copyright &copy; 2025, [Sweden Connect](https://www.swedenconnect.se). Licensed under version 2.0 of
+Copyright &copy; 2026, [Sweden Connect](https://www.swedenconnect.se). Licensed under version 2.0 of
 the [Apache License](https://www.apache.org/licenses/LICENSE-2.0).
