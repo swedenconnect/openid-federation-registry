@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -40,5 +41,8 @@ public class RegistrationJoinRequestDto {
 
   @Schema(description = "Trustmarks requested")
   private List<TrustmarkRequestDto> trustmarksRequested;
+
+  @Schema(description = "FederationMetadata")
+  private Map<String, Object> metadata;
 
 }

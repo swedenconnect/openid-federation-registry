@@ -22,6 +22,9 @@ openid:
         - instance_id: "123e4567-e89b-12d3-a456-426614174000"
           name: "Swedenconnect"
           base_url: "https://registry.swedenconnect.se/oidf"
+          org-base-url-overrides:
+            "55555": "https://www.pm.se/oidf"
+
           matchers:
             useForDefaultAssignment: true
         - instance_id: "223e4567-e89b-12d3-a456-426614174001"
