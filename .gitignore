@@ -1,5 +1,7 @@
 ${BACKUP_DIR}
 
+build-snapshot.sh
+
 .DS_Store
 
 *.class

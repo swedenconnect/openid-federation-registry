@@ -103,10 +103,25 @@ public final class EntityToDtoMapper {
     // Calculation of ec_location will be made if EntityIdentifier differ from entity prefix.
     // Example EntityIdentifier is set to http://www.telia.com/oidf but the entityprefix is set to http://www.sc.se
     // An ec_location will be calculated according to calculatedEcLocation(...
-    if (!entity.getIssuer().startsWith(entity.getSubject())) {
-      dto.setEffectiveEcLocation(calculatedEcLocation(entity.getSubject(), entity.getIssuer()));
-      dto.getCrit().add("ec_location");
-
+    // Use a trailing-slash-normalized prefix to avoid false matches where the entityPrefix string
+    // is a raw prefix of the entityIdentifier but not an actual URL path ancestor.
+    // E.g. prefix="https://example.com/oidf" must NOT match "https://example.com/oidf-other".
+    if (entity.getSubject() != null) {
+      // Determine whether the entityIdentifier is "under" the registry's entity-prefix.
+      // We check two conditions:
+      //   1. Exact match: issuer == subject (locally-hosted entity whose ID is the prefix itself)
+      //   2. Path-prefix match: issuer starts with subject + "/" (entity under registry URL space)
+      // The trailing-slash normalization prevents false positives where subject="https://host/oidf"
+      // would incorrectly match issuer="https://host/oidf-other" via raw startsWith.
+      final String subjectPathPrefix = entity.getSubject().endsWith("/")
+          ? entity.getSubject()
+          : entity.getSubject() + "/";
+      final boolean isUnderRegistryPrefix = entity.getIssuer().equals(entity.getSubject())
+          || entity.getIssuer().startsWith(subjectPathPrefix);
+      if (!isUnderRegistryPrefix) {
+        dto.setEffectiveEcLocation(calculatedEcLocation(entity.getSubject(), entity.getIssuer()));
+        dto.getCrit().add("ec_location");
+      }
     }
     dto.setMetadata(entity.getMetadata());
     return dto;
@@ -124,7 +139,7 @@ public final class EntityToDtoMapper {
         .replace("/", "_");
     final String encodedId = URLEncoder.encode(id, StandardCharsets.UTF_8);
     final String calculatedEcLocation = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
-    return calculatedEcLocation + encodedId + "/.well-known/openid-federation";
+    return calculatedEcLocation + encodedId;
   }
 
   /**

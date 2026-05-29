@@ -70,8 +70,13 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
   }
 
   @Override
+  public StepType stepType() {
+    return StepType.POST;
+  }
+
+  @Override
   public boolean isPublic() {
-    return true;
+    return false;
   }
 
   @Override
@@ -90,6 +95,8 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
       this.registrationRepository.save(registration);
       return StepResult.success("Registration is pending approval");
     }
+    final boolean isHosted = ctx.get(ContextKey.REQUEST_METADATA).isPresent();
+
     final Organization imOrganization = registration.getFlowAssignment().getTaIm().getOrganization();
     final OrganizationRecord org = new OrganizationRecord(imOrganization.getOrgNumber(), imOrganization.getOrgName(),
         null,null);
@@ -99,6 +106,7 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
         .ifPresentOrElse(subordinateDto -> {//Update
           metadataPolicy.ifPresent(subordinateDto::setMetadataPolicy);
           subordinateDto.setJwks(ecJwks.toJSONObject());
+          subordinateDto.setEcLocationAutomaticResolve(isHosted);
           this.subordinateService.updateSubordinate(org,subordinateDto.getSubordinateId(),subordinateDto);
            }, () -> {
           // Create
@@ -108,6 +116,7 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
             newSubordinate.setEntityIdentifier(entityId);
             metadataPolicy.ifPresent(newSubordinate::setMetadataPolicy);
             newSubordinate.setJwks(ecJwks.toJSONObject());
+            newSubordinate.setEcLocationAutomaticResolve(isHosted);
             this.subordinateService.createSubordinate(org, newSubordinate);
         });
 

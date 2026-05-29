@@ -59,9 +59,13 @@ public class Mapper {
             )))))
         .forEach(steps::add);
 
-    Optional.ofNullable(dto.getFlowDefinition())
-        .orElse(new ArrayList<>(0))
-        .stream()
+    List<StepModel> flowDef = Optional.ofNullable(dto.getFlowDefinition()).orElse(new ArrayList<>(0));
+    if (flowDef.isEmpty()) {
+      flowDef = registrationStepRepository.defaultMidSteps().stream()
+          .map(step -> new StepModel(step.getStepId(), List.of()))
+          .toList();
+    }
+    flowDef.stream()
         .filter(stepModel -> registrationStepRepository.isPublic(stepModel.stepId()))
         .map(stepInfoDto ->
             new StepDefinition(registrationStepRepository.findStepById(stepInfoDto.stepId()).orElseThrow(),
@@ -95,8 +99,13 @@ public class Mapper {
   public static RegistrationFlow toModel(final RegistrationFlowDto dto, final UUID flowId,
       final Organization organization, final RegistrationStepRepository registrationStepRepository) {
 
-    final List<StepModel> stepModels = Optional.ofNullable(dto.steps()).orElse(List.of())
-        .stream()
+    List<StepDto> incomingSteps = Optional.ofNullable(dto.steps()).orElse(List.of());
+    if (incomingSteps.isEmpty()) {
+      incomingSteps = registrationStepRepository.defaultMidSteps().stream()
+          .map(step -> new StepDto(step.getStepId(), step.getName(), step.getDescription(), List.of()))
+          .toList();
+    }
+    final List<StepModel> stepModels = incomingSteps.stream()
         .filter(stepDto -> registrationStepRepository.isPublic(stepDto.stepId()))
         .map(s -> new StepModel(s.stepId(),
             Optional.ofNullable(s.config()).orElse(List.of()).stream()

@@ -116,12 +116,12 @@ public class SubordinateServiceImpl implements SubordinateService {
 
     // If automatic resolve is selected, the system try to find a hosted entity. If not an exception is thrown.
     if (Optional.ofNullable(input.getEcLocationAutomaticResolve()).orElse(false)) {
-      this.entityRepository.findByOrgNumberAndEntityKeyTypeAndIssuer(taIm.getOrganization().getOrgNumber(),
-              EntityType.HOSTED_ENTITY, subordinateEntity.getEntityidentifier())
-          .orElseThrow(() ->
-              new RegistryServerException(ErrorTypes.RELATION_NOT_FOUND,
-                  "No hosted entity found for entityid %s".formatted(subordinateEntity.getEntityidentifier()))
-          );
+      final boolean hostedEntityExists = !this.entityRepository.findByEntityTypeAndOptionalIssuer(
+          EntityType.HOSTED_ENTITY, subordinateEntity.getEntityidentifier()).isEmpty();
+      if (!hostedEntityExists) {
+        throw new RegistryServerException(ErrorTypes.RELATION_NOT_FOUND,
+            "No hosted entity found for entityid %s".formatted(subordinateEntity.getEntityidentifier()));
+      }
     }
 
     try {
@@ -151,14 +151,13 @@ public class SubordinateServiceImpl implements SubordinateService {
     SubordinateMapper.updateEntity(existing, input);
 
     if (Optional.ofNullable(input.getEcLocationAutomaticResolve()).orElse(false)) {
-      this.entityRepository
-          .findByOrgNumberAndEntityKeyTypeAndIssuer(existing.getTaIm().getOrganization().getOrgNumber(),
-              EntityType.HOSTED_ENTITY, existing.getEntityidentifier())
-          .orElseThrow(() ->
-              new RegistryServerException(ErrorTypes.RELATION_NOT_FOUND,
-                  "No hosted entity found for entityid: %s. Subordinatestatement can not be created"
-                      .formatted(existing.getEntityidentifier()))
-          );
+      final boolean hostedEntityExists = !this.entityRepository.findByEntityTypeAndOptionalIssuer(
+          EntityType.HOSTED_ENTITY, existing.getEntityidentifier()).isEmpty();
+      if (!hostedEntityExists) {
+        throw new RegistryServerException(ErrorTypes.RELATION_NOT_FOUND,
+            "No hosted entity found for entityid: %s. Subordinatestatement can not be created"
+                .formatted(existing.getEntityidentifier()));
+      }
     }
     try {
       this.subordinateRepository.save(existing);

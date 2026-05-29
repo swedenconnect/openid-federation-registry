@@ -16,6 +16,7 @@
 
 package se.swedenconnect.oidf.registry.registrationflow;
 
+import net.minidev.json.JSONObject;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
@@ -254,6 +255,10 @@ public class RegistrationFlowService {
     processContext.put(ContextKey.TAIM_ID, flowAssignment.getTaIm().getTaImId());
     processContext.put(ContextKey.JOIN_ID, flowAssignment.getAssignId());
     processContext.put(ContextKey.ORG, organizationRecord);
+    final Map<String, Object> bodyMetadata = registrationRequestDto.getMetadata();
+    if (bodyMetadata != null && !bodyMetadata.isEmpty()) {
+      processContext.put(ContextKey.REQUEST_METADATA, new JSONObject(bodyMetadata));
+    }
 
     try {
       return this.processEngine.run(processFlow.getProcessFlow(), processContext);

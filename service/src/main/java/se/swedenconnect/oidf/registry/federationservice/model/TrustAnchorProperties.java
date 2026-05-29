@@ -108,6 +108,8 @@ public class TrustAnchorProperties {
     private EntityID entityIdentifier;
     @SerializedName("ec-location")
     private String overrideConfigurationLocation;
+    @SerializedName("virtual-entity-id")
+    private String virtualEntityId;
     @SerializedName("policy")
     private PolicyRecord policy;
     @SerializedName("jwks")

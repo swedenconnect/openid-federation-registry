@@ -92,7 +92,6 @@ class OidfApiServiceToSubordinatesTest {
     final Subordinate sub = subordinate("https://entity.example.com", false);
     sub.setCrit(List.of("claim1", "claim2"));
     sub.setMetadataPolicyCrit(List.of("op1"));
-    sub.setEcLocation("https://ec.example.com/stmt");
 
     final TrustAnchorProperties.SubordinateListingProperty result = this.service.toSubordinates(sub);
 
@@ -100,7 +99,7 @@ class OidfApiServiceToSubordinatesTest {
     assertThat(result.getEntityIdentifier().getValue()).isEqualTo("https://entity.example.com");
     assertThat(result.getCrit()).containsExactly("claim1", "claim2");
     assertThat(result.getMetadataPolicyCrit()).containsExactly("op1");
-    assertThat(result.getOverrideConfigurationLocation()).isEqualTo("https://ec.example.com/stmt");
+    assertThat(result.getOverrideConfigurationLocation()).isNull();
   }
 
   @Test
@@ -163,7 +162,7 @@ class OidfApiServiceToSubordinatesTest {
   }
 
   @Test
-  void autoResolve_entityFound_setsEcLocationAndAddsCritClaim() {
+  void autoResolve_entityFound_returnsSubordinate() {
     final Subordinate sub = subordinate("https://entity.example.com", true);
 
     final FederationEntity hosted = new FederationEntity();
@@ -171,22 +170,52 @@ class OidfApiServiceToSubordinatesTest {
     hosted.setIssuer("https://entity.example.com");
     hosted.setSubject("https://entity.example.com");
 
-    when(this.entityRepository.findByOrgNumberAndEntityKeyTypeAndIssuer(
-        eq("SE0123456789"), eq(EntityType.HOSTED_ENTITY), eq("https://entity.example.com")))
-        .thenReturn(Optional.of(hosted));
+    when(this.entityRepository.findByEntityTypeAndOptionalIssuer(
+        eq(EntityType.HOSTED_ENTITY), eq("https://entity.example.com")))
+        .thenReturn(List.of(hosted));
 
     final TrustAnchorProperties.SubordinateListingProperty result = this.service.toSubordinates(sub);
 
     assertThat(result).isNotNull();
-    assertThat(result.getCrit()).contains("ec_location");
+    assertThat(result.getOverrideConfigurationLocation()).isNull();
+  }
+
+  @Test
+  void explicitEcLocation_isSetAsVirtualEntityId() {
+    final Subordinate sub = subordinate("https://entity.example.com", false);
+    sub.setEcLocation("https://registry.example.com/entity-config");
+
+    final TrustAnchorProperties.SubordinateListingProperty result = this.service.toSubordinates(sub);
+
+    assertThat(result).isNotNull();
+    assertThat(result.getVirtualEntityId()).isEqualTo("https://registry.example.com/entity-config");
+  }
+
+  @Test
+  void autoResolve_entityFoundWithEffectiveEcLocation_setsVirtualEntityId() {
+    final Subordinate sub = subordinate("https://entity.example.com", true);
+
+    final FederationEntity hosted = new FederationEntity();
+    hosted.setEntityType(EntityType.HOSTED_ENTITY);
+    hosted.setIssuer("https://entity.example.com");
+    hosted.setSubject("https://registry.example.com");
+
+    when(this.entityRepository.findByEntityTypeAndOptionalIssuer(
+        eq(EntityType.HOSTED_ENTITY), eq("https://entity.example.com")))
+        .thenReturn(List.of(hosted));
+
+    final TrustAnchorProperties.SubordinateListingProperty result = this.service.toSubordinates(sub);
+
+    assertThat(result).isNotNull();
+    assertThat(result.getVirtualEntityId()).isNotNull();
   }
 
   @Test
   void autoResolve_entityNotFound_returnsNull() {
     final Subordinate sub = subordinate("https://entity.example.com", true);
 
-    when(this.entityRepository.findByOrgNumberAndEntityKeyTypeAndIssuer(any(), any(), any()))
-        .thenReturn(Optional.empty());
+    when(this.entityRepository.findByEntityTypeAndOptionalIssuer(eq(EntityType.HOSTED_ENTITY), any()))
+        .thenReturn(List.of());
 
     final TrustAnchorProperties.SubordinateListingProperty result = this.service.toSubordinates(sub);
 

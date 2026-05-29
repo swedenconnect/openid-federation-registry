@@ -21,6 +21,7 @@ import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRec
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
 import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
+import se.swedenconnect.oidf.registry.entity.service.EntityConfigService;
 import se.swedenconnect.oidf.registry.registrationflow.RegistrationFlowService;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
@@ -50,6 +51,7 @@ public class RegistrationServiceImpl implements RegistrationService {
   private final RegistrationFlowService registrationFlowService;
   private final SubordinateRepository subordinateRepository;
   private final SubordinateService subordinateService;
+  private final EntityConfigService entityConfigService;
 
 
   /**
@@ -60,17 +62,20 @@ public class RegistrationServiceImpl implements RegistrationService {
    * @param registrationFlowService service for managing registration flows
    * @param subordinateRepository repository for subordinate statements
    * @param subordinateService service for deleting subordinate statements
+   * @param entityConfigService service for deleting hosted entities
    */
   public RegistrationServiceImpl(final FlowAssignmentRepository flowAssignmentRepository,
       final RegistrationRepository registrationRepository,
       final RegistrationFlowService registrationFlowService,
       final SubordinateRepository subordinateRepository,
-      final SubordinateService subordinateService) {
+      final SubordinateService subordinateService,
+      final EntityConfigService entityConfigService) {
     this.flowAssignmentRepository = flowAssignmentRepository;
     this.registrationRepository = registrationRepository;
     this.registrationFlowService = registrationFlowService;
     this.subordinateRepository = subordinateRepository;
     this.subordinateService = subordinateService;
+    this.entityConfigService = entityConfigService;
   }
 
 
@@ -109,6 +114,8 @@ public class RegistrationServiceImpl implements RegistrationService {
           .findByOrgNumberAndEntityidentifier(organizationRecord.orgNumber(), reg.getEntityId())
           .forEach(sub -> this.subordinateService.deleteSubordinate(organizationRecord, sub.getSubordinateId()));
     }
+    this.entityConfigService.listHostedEntity(organizationRecord, reg.getEntityId())
+        .forEach(hosted -> this.entityConfigService.deleteHostedEntity(organizationRecord, hosted.getEntityId()));
     this.registrationRepository.delete(reg);
   }
 

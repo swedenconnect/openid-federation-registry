@@ -33,6 +33,13 @@ import java.util.stream.Collectors;
 @Configuration
 public class RegistrationStepRepository {
 
+  // Ordered list of default MID steps injected into every new flow with no explicit steps.
+  // Order matters: hosted path runs first, non-hosted path second.
+  private static final List<UUID> DEFAULT_MID_STEP_IDS = List.of(
+      UUID.fromString("C3F1A820-5D7B-4E9A-B034-1F6D9A3C7E82"), // HostedEntityRegistrationStep
+      UUID.fromString("A00BCEAD-ECD9-4EB4-8A7B-481D928B2CC9")  // LoadEntityConfigurationStep
+  );
+
   final List<Step> definedSteps;
 
   /**
@@ -113,5 +120,18 @@ public class RegistrationStepRepository {
     return this.definedSteps.stream()
         .filter(step -> step.stepType().equals(Step.StepType.POST))
         .collect(Collectors.toList());
+  }
+
+  /**
+   * Default MID steps in the order they should run.
+   * Used when a new flow is created without an explicit step list.
+   *
+   * @return ordered list of default MID steps
+   */
+  public List<Step> defaultMidSteps() {
+    return DEFAULT_MID_STEP_IDS.stream()
+        .map(id -> this.findStepById(id)
+            .orElseThrow(() -> new IllegalStateException("Default MID step not found: " + id)))
+        .toList();
   }
 }

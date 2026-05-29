@@ -160,7 +160,7 @@ class EntityToDtoMapperTest {
     final HostedEntityDto dto = EntityToDtoMapper.toDtoHosted(entity);
 
     assertThat(dto.getEffectiveEcLocation()).isNotNull();
-    assertThat(dto.getEffectiveEcLocation()).contains(".well-known/openid-federation");
+    assertThat(dto.getEffectiveEcLocation()).doesNotContain(".well-known/openid-federation");
     assertThat(dto.getCrit()).contains("ec_location");
   }
 

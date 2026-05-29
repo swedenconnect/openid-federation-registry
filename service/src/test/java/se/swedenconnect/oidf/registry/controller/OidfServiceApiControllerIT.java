@@ -115,7 +115,7 @@ class OidfServiceApiControllerIT {
     assertEquals("https://www.polisen.se/op/sverigeid", polisen.getEntityIdentifier().toString());
     assertEquals("ec_location", polisen.getCrit().getFirst());
     assertNull(polisen.getJwks());
-    assertEquals("https://www.pm.se/oidf/www_polisen_se_op_sverigeid/.well-known/openid-federation",
+    assertEquals("https://www.pm.se/oidf/www_polisen_se_op_sverigeid",
         polisen.getEcLocation());
     assertEquals(this.taEntityId, polisen.getAuthorityHints().getFirst());
 

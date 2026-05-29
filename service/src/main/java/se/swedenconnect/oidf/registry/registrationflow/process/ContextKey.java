@@ -36,6 +36,7 @@ public final class ContextKey {
   public static final String JOIN_ID = "joinId";
   public static final String TRUSTMARKS_REQUESTED = "trustmarksRequested";
   public static final String ORG = "org";
+  public static final String REQUEST_METADATA = "request_metadata";
 
   private ContextKey() {
   }
