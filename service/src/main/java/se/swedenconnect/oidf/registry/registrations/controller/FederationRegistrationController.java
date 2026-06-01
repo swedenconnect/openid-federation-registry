@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -92,6 +93,24 @@ public class FederationRegistrationController {
       @RequestBody final RegistrationJoinRequestDto body) {
     return ResponseEntity.status(201)
         .body(this.registrationService.createRegistrationRequest(organizationRecord, joinId, body));
+  }
+
+  /**
+   * Re-runs the registration flow for an existing entity.
+   *
+   * @param registrationId the existing registration ID
+   * @param organizationRecord the calling organization
+   * @param body the updated registration request
+   * @return the updated registration DTO
+   */
+  @PutMapping("/{registrationId}")
+  @Operation(summary = "Re-run the registration flow for an existing entity")
+  public ResponseEntity<RegistrationDto> updateRegistration(
+      @PathVariable("registrationId") final UUID registrationId,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord,
+      @RequestBody final RegistrationJoinRequestDto body) {
+    return ResponseEntity.ok(
+        this.registrationService.updateRegistrationRequest(organizationRecord, registrationId, body));
   }
 
   /**

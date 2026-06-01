@@ -17,6 +17,8 @@ package se.swedenconnect.oidf.registry.registrations.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
+import se.swedenconnect.oidf.registry.entity.service.EntityConfigService;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
@@ -27,7 +29,9 @@ import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -39,14 +43,18 @@ import java.util.UUID;
 public class RegistrationAdminServiceImpl implements RegistrationAdminService {
 
   private final RegistrationRepository registrationRepository;
+  private final EntityConfigService entityConfigService;
 
   /**
    * Constructor.
    *
    * @param registrationRepository repository for registration records
+   * @param entityConfigService service for checking hosted entities
    */
-  public RegistrationAdminServiceImpl(final RegistrationRepository registrationRepository) {
+  public RegistrationAdminServiceImpl(final RegistrationRepository registrationRepository,
+      final EntityConfigService entityConfigService) {
     this.registrationRepository = registrationRepository;
+    this.entityConfigService = entityConfigService;
   }
 
   @Override
@@ -69,26 +77,37 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
     reg.setRejectionReason(rejectionReason);
     reg.setReviewedAt(LocalDateTime.now());
     this.registrationRepository.save(reg);
-    return RegistrationMapper.toRegistrationDto(reg);
+    final List<HostedEntityDto> hostedEntities = this.entityConfigService.listHostedEntity(reg.getEntityId());
+    final boolean isHosted = !hostedEntities.isEmpty();
+    final Map<String, Object> hostedMetadata = isHosted ? hostedEntities.getFirst().getMetadata() : null;
+    return RegistrationMapper.toRegistrationDto(reg, isHosted, hostedMetadata);
   }
 
   @Override
   @Transactional(readOnly = true)
   public List<RegistrationDto> listRegistrationsConnectedToThisOrgIM(final OrganizationRecord organizationRecord) {
     //TODO this is not the right way to handle organizations
+    final Map<String, Map<String, Object>> hostedMetadataByEntityId = new HashMap<>();
+    this.entityConfigService.listHostedEntity((String) null)
+        .forEach(h -> hostedMetadataByEntityId.put(h.getEntityIdentifier(), h.getMetadata()));
     return this.registrationRepository.findAll().stream()
         .filter(reg -> reg.getFlowAssignment().getTaIm().getOrganization().getOrgNumber()
             .equals(organizationRecord.orgNumber()))
-        .map(RegistrationMapper::toRegistrationDto)
+        .map(r -> RegistrationMapper.toRegistrationDto(r,
+            hostedMetadataByEntityId.containsKey(r.getEntityId()),
+            hostedMetadataByEntityId.get(r.getEntityId())))
         .toList();
   }
 
   @Override
   @Transactional(readOnly = true)
   public RegistrationDto getRegistrationById(final UUID registrationId) {
-    return this.registrationRepository.findById(registrationId)
-        .map(RegistrationMapper::toRegistrationDto)
+    final Registration reg = this.registrationRepository.findById(registrationId)
         .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
             "Registration not found: %s".formatted(registrationId)));
+    final List<HostedEntityDto> hostedEntities = this.entityConfigService.listHostedEntity(reg.getEntityId());
+    final boolean isHosted = !hostedEntities.isEmpty();
+    final Map<String, Object> hostedMetadata = isHosted ? hostedEntities.getFirst().getMetadata() : null;
+    return RegistrationMapper.toRegistrationDto(reg, isHosted, hostedMetadata);
   }
 }

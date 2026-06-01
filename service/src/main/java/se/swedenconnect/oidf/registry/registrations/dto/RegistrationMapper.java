@@ -27,7 +27,9 @@ import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -45,11 +47,14 @@ public final class RegistrationMapper {
    *
    * @param registration the registration
    * @param report process report from the pipeline run
+   * @param isHosted whether the entity is hosted
+   * @param hostedMetadata metadata for hosted entity, or null if not hosted
    * @return mapped DTO
    */
   public static RegistrationDto toRegistrationRequestStatusDto(
-      final Registration registration, final ProcessReport report) {
-    final RegistrationDto dto = toRegistrationDto(registration);
+      final Registration registration, final ProcessReport report, final boolean isHosted,
+      final Map<String, Object> hostedMetadata) {
+    final RegistrationDto dto = toRegistrationDto(registration, isHosted, hostedMetadata);
     dto.setSuccessful(report.isSuccessful());
     dto.setSteps(report.steps().stream()
         .map(RegistrationMapper::toStepExecutionRecordDto)
@@ -61,9 +66,12 @@ public final class RegistrationMapper {
    * Maps a {@link Registration} entity to a {@link RegistrationDto}.
    *
    * @param model registration entity
+   * @param isHosted whether the entity is hosted
+   * @param hostedMetadata metadata for hosted entity, or null if not hosted
    * @return mapped DTO
    */
-  public static RegistrationDto toRegistrationDto(final Registration model) {
+  public static RegistrationDto toRegistrationDto(final Registration model, final boolean isHosted,
+      final Map<String, Object> hostedMetadata) {
     final RegistrationDto dto = new RegistrationDto();
     dto.setRegistrationId(model.getRegistrationId());
     dto.setJoinId(model.getFlowAssignment().getAssignId());
@@ -74,6 +82,8 @@ public final class RegistrationMapper {
     dto.setStatusTrustmarks(toTrustmarkDtoList(model.getTrustmarksRequested()));
     dto.setOrganizationName(
         Optional.ofNullable(model.getOrganization()).map(Organization::getOrgName).orElse(null));
+    dto.setIsHosted(isHosted);
+    dto.setMetadata(hostedMetadata);
 
     final Technology technology = model.getFlowAssignment().getRegistrationFlow().getTechnology();
     final List<RegistrationTagsDto> registrationTags = new ArrayList<>();
@@ -82,10 +92,29 @@ public final class RegistrationMapper {
     case SAML -> registrationTags.add(RegistrationTagsDto.SAML);
     }
 
+    if (isHosted) {
+      registrationTags.add(RegistrationTagsDto.HOSTED);
+    }
+
     final String entityType = model.getFlowAssignment().getRegistrationFlow().getEntityType();
     Optional.ofNullable(entityType).ifPresent(s -> registrationTags.add(fromEntityType(s)));
 
     dto.setTags(registrationTags);
+
+    final String orgNumber = Optional.ofNullable(model.getOrganization())
+        .map(Organization::getOrgNumber).orElse(null);
+    if (orgNumber != null && hostedMetadata != null) {
+      final boolean isEntityWithMetadata = registrationTags.stream().anyMatch(t ->
+          t == RegistrationTagsDto.RP || t == RegistrationTagsDto.OP
+              || t == RegistrationTagsDto.SAML_IDP || t == RegistrationTagsDto.SAML_SP
+              || t == RegistrationTagsDto.SAML_RP);
+      if (isEntityWithMetadata) {
+        final Map<String, Object> enrichedMetadata = new HashMap<>(hostedMetadata);
+        enrichedMetadata.put("organization_number", orgNumber);
+        dto.setMetadata(enrichedMetadata);
+      }
+    }
+
     return dto;
   }
 
@@ -97,6 +126,9 @@ public final class RegistrationMapper {
       case "oauth_authorization_server" -> RegistrationTagsDto.AS;
       case "oauth_client" -> RegistrationTagsDto.OAC;
       case "oauth_protected_resource" -> RegistrationTagsDto.ORS;
+      case "saml_identity_provider" -> RegistrationTagsDto.SAML_IDP;
+      case "saml_service_provider" -> RegistrationTagsDto.SAML_SP;
+      case "saml_relying_party" -> RegistrationTagsDto.SAML_RP;
       default -> throw new IllegalArgumentException("Unknown entity_type: " + entityType);
     };
   }

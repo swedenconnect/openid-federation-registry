@@ -16,11 +16,13 @@
 package se.swedenconnect.oidf.registry.registrationflow.process.step.impl;
 
 import com.nimbusds.jose.jwk.JWKSet;
+import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.entity.service.EntityConfigService;
+import se.swedenconnect.oidf.registry.guioperations.OidfServiceIntegration;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.validation.CleanInput;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
@@ -34,13 +36,12 @@ import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigur
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepIssue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 
+import java.net.URI;
 import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-
-@SuppressWarnings("unchecked")
 
 /**
  * Handles the hosted-entity path of a registration join.
@@ -63,26 +64,32 @@ import java.util.UUID;
  *
  * @author Felix Hellman
  */
+@Slf4j
+@SuppressWarnings("unchecked")
 @Component
 public class HostedEntityRegistrationStep extends NoConfigStepAdapter {
 
   private final EntityConfigService entityConfigService;
   private final TaImRepository taImRepository;
   private final InstancePlacementService instancePlacementService;
+  private final OidfServiceIntegration oidfServiceIntegration;
 
   /**
    * Constructor.
    *
-   * @param entityConfigService     service used to persist the hosted entity and trigger audit
-   * @param taImRepository          repository used to load the TaIm for its entity prefix
-   * @param instancePlacementService service used to resolve the registry entity prefix
+   * @param entityConfigService      service used to persist the hosted entity and trigger audit
+   * @param taImRepository           repository used to load the TaIm for its entity prefix
+   * @param instancePlacementService service used to resolve the registry entity prefix and base URL
+   * @param oidfServiceIntegration   integration used to fetch JWKS from the service node
    */
   public HostedEntityRegistrationStep(final EntityConfigService entityConfigService,
       final TaImRepository taImRepository,
-      final InstancePlacementService instancePlacementService) {
+      final InstancePlacementService instancePlacementService,
+      final OidfServiceIntegration oidfServiceIntegration) {
     this.entityConfigService = entityConfigService;
     this.taImRepository = taImRepository;
     this.instancePlacementService = instancePlacementService;
+    this.oidfServiceIntegration = oidfServiceIntegration;
   }
 
   @Override
@@ -157,6 +164,25 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter {
           List.of(new StepIssue("HostedEntityRegistrationStep.jwks",
               "jwks could not be parsed: " + e.getMessage(), Severity.ERROR)));
     }
+
+    // Merge hosted keys from the service-node's /jwk endpoint.
+    // These are the keys that will actually be used when the entity is hosted, so they must
+    // be included in the subordinate statement even though the entity isn't live yet.
+    final Optional<URI> serviceNodeBaseUrl = this.instancePlacementService
+        .resolveBaseUrl(taIm.getOrganization().getOrgNumber(), null);
+
+    serviceNodeBaseUrl.ifPresent(baseUrl -> {
+      try {
+        final JWKSet hostedJwks = this.oidfServiceIntegration.fetchHostedJwksFromServiceNode(baseUrl);
+        ctx.put(ContextKey.ENTITY_CONFIGURATION_JWKS, CleanInput.removeExpIatNbfFromJwks(hostedJwks));
+        log.debug("Replaced JWKS with {} hosted keys from service node {} for entity {}",
+            hostedJwks.getKeys().size(), baseUrl, entityId);
+      }
+      catch (final Exception e) {
+        log.warn("Could not fetch hosted JWKS from service node {}, falling back to metadata JWKS: {}",
+            baseUrl, e.getMessage());
+      }
+    });
 
     return StepResult.success("Hosted entity stored and JWKS loaded for: " + entityId);
   }

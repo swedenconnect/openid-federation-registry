@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -56,6 +57,11 @@ public class RegistrationDto {
       accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private Boolean isHosted;
+
+  @Schema(description = "Hosted metadata, present when isHosted is true",
+      accessMode = Schema.AccessMode.READ_ONLY)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  private Map<String, Object> metadata;
 
   @Schema(description = "Current federation registration status",
       accessMode = Schema.AccessMode.READ_ONLY)

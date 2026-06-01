@@ -100,6 +100,47 @@ public class InstancePlacementService {
   }
 
   /**
+   * Resolves the base URL of the service-node instance that an organisation is assigned to.
+   *
+   * @param orgNumber organization number
+   * @param functionGroup optional function group used for matching
+   * @return the instance {@code baseUrl}, or empty if no instance matches
+   */
+  public Optional<URI> resolveBaseUrl(final String orgNumber, final String functionGroup) {
+    if (this.registryProperties.instances().isEmpty()) {
+      return Optional.empty();
+    }
+
+    for (final RegistryProperties.InstanceProperties instance : this.registryProperties.instances()) {
+      final RegistryProperties.InstanceMatcherProperties matcher = instance.matchers();
+
+      final boolean orgNumberMatch = Optional.ofNullable(matcher.org_numbers())
+          .orElse(Collections.emptyList())
+          .stream()
+          .anyMatch(orgNr -> orgNr.equals(orgNumber));
+
+      if (orgNumberMatch) {
+        return Optional.of(instance.baseUrl());
+      }
+
+      final boolean functionGroupMatch = functionGroup != null
+          && Optional.ofNullable(matcher.functiongroups())
+              .orElse(Collections.emptyList())
+              .stream()
+              .anyMatch(fg -> fg.equals(functionGroup));
+
+      if (functionGroupMatch) {
+        return Optional.of(instance.baseUrl());
+      }
+    }
+
+    return this.registryProperties.instances().stream()
+        .filter(i -> i.matchers().useForDefaultAssignment())
+        .map(RegistryProperties.InstanceProperties::baseUrl)
+        .findFirst();
+  }
+
+  /**
    * Finds the instance to be used for this organization. It matches on organization_number or functiongroup
    * @param organizationRecord data to be used when matching data.
    * @return Instance object if found, else empty Optional

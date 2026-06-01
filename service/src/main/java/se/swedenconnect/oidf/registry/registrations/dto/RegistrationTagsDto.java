@@ -29,6 +29,9 @@ public enum RegistrationTagsDto {
   RP,    // openid_relying_party
   OP,    // openid_provider
   AS,   // oauth_authorization_server
-  OAC,   // oauth_client
-  ORS    // oauth_resource / oauth_resource_server
+  OAC,      // oauth_client
+  ORS,      // oauth_resource / oauth_resource_server
+  SAML_IDP, // saml_identity_provider
+  SAML_SP,  // saml_service_provider
+  SAML_RP   // saml_relying_party
 }

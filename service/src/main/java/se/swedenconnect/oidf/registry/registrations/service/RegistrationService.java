@@ -71,6 +71,17 @@ public interface RegistrationService {
 
 
   /**
+   * Re-runs the full registration flow for an existing entity.
+   *
+   * @param organizationRecord the calling organization
+   * @param registrationId the ID of the existing registration
+   * @param request the updated registration request
+   * @return the updated registration DTO
+   */
+  RegistrationDto updateRegistrationRequest(OrganizationRecord organizationRecord, UUID registrationId,
+      RegistrationJoinRequestDto request);
+
+  /**
    * Returns all available registration flows.
    *
    * @param organizationRecord the calling organization
