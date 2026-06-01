@@ -27,6 +27,7 @@ import java.util.UUID;
  * Service for managing federation registrations (join, hosted entities, flows).
  *
  * @author Per Fredrik Plars
+ * @author Felix Hellman
  */
 public interface RegistrationService {
 

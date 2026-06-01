@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit;
  * pre-configured notification endpoints with structured payload data.
  *
  * @author Per Fredrik Plars
+ * @author Felix Hellman
  */
 @Slf4j
 public class NotifyService {

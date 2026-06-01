@@ -41,6 +41,7 @@ import java.util.UUID;
  * Handles join applications — applying to and leaving the federation.
  *
  * @author Per Fredrik Plars
+ * @author Felix Hellman
  */
 @RestController
 @RequiredArgsConstructor

@@ -47,6 +47,7 @@ import java.util.Optional;
  * OIDF Service Integration
  *
  * @author Per Fredrik Plars
+ * @author Felix Hellman
  */
 @Slf4j
 @Service

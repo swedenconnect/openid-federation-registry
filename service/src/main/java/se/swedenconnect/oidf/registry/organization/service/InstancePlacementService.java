@@ -31,6 +31,7 @@ import java.util.Optional;
  * Finds the instance to be used for this organization
  *
  * @author Per Fredrik Plars
+ * @author Felix Hellman
  */
 @Slf4j
 @Service

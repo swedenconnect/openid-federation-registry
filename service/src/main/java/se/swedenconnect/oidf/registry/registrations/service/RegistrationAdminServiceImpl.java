@@ -38,6 +38,7 @@ import java.util.UUID;
  * Implementation of {@link RegistrationAdminService}.
  *
  * @author Per Fredrik Plars
+ * @author Felix Hellman
  */
 @Service
 public class RegistrationAdminServiceImpl implements RegistrationAdminService {

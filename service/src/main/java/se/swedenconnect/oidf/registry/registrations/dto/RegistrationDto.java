@@ -27,6 +27,7 @@ import java.util.UUID;
  * Represents a registered joiner with federation and trustmark status.
  *
  * @author Per Fredrik Plars
+ * @author Felix Hellman
  */
 @Data
 @Schema(name = "Registration")

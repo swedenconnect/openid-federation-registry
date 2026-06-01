@@ -245,7 +245,11 @@ public class OidfApiService {
           .map(EntityToDtoMapper::toDtoHosted)
           .map(dto -> {
             sub.setCrit(Optional.ofNullable(dto.getCrit()).map(ArrayList::new).orElse(new ArrayList<>(1)));
-            sub.setVirtualEntityId(Optional.ofNullable(dto.getEffectiveEcLocation()).orElse(dto.getEntityIdentifier()));
+            final String ecLocation = dto.getEffectiveEcLocation();
+            sub.setVirtualEntityId(Optional.ofNullable(ecLocation).orElse(dto.getEntityIdentifier()));
+            if (ecLocation != null) {
+              sub.setOverrideConfigurationLocation(ecLocation + "/.well-known/openid-federation");
+            }
             return sub;
           })
           .orElse(null);

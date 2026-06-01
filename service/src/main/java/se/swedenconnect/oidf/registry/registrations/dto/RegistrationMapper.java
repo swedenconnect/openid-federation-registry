@@ -36,6 +36,7 @@ import java.util.Optional;
  * Maps domain objects to registration DTOs.
  *
  * @author Per Fredrik Plars
+ * @author Felix Hellman
  */
 public final class RegistrationMapper {
 

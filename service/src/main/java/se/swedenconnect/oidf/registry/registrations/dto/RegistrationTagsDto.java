@@ -20,6 +20,7 @@ package se.swedenconnect.oidf.registry.registrations.dto;
  * Tags for a registration
  *
  * @author Per Fredrik Plars
+ * @author Felix Hellman
  */
 public enum RegistrationTagsDto {
   OIDC,
