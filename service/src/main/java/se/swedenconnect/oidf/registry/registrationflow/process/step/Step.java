@@ -32,6 +32,13 @@ public interface Step {
   enum StepType {PRE,MID,POST}
 
   /**
+   * Which registration flow type this step belongs to.
+   * INTERMEDIATE steps appear in flows assigned to intermediate modules.
+   * TRUST_MARK_ISSUER steps appear in flows assigned to trust mark issuer modules.
+   */
+  enum FlowType { INTERMEDIATE, TRUST_MARK_ISSUER }
+
+  /**
    * Executes this step against the shared pipeline context.
    *
    * @param ctx shared pipeline context
@@ -83,6 +90,28 @@ public interface Step {
    */
   default boolean isPublic() {
     return false;
+  }
+
+  /**
+   * The flow type this step belongs to.
+   *
+   * @return flow type
+   */
+  default FlowType flowType() {
+    return FlowType.INTERMEDIATE;
+  }
+
+  /**
+   * Determines whether this step should execute given the current pipeline context.
+   * When {@code false} the engine records a {@link StepStatus#SKIPPED} result and
+   * continues without calling {@link #execute}.
+   *
+   * @param ctx shared pipeline context
+   * @param config step-specific configuration
+   * @return {@code true} if the step should run, {@code false} to skip it
+   */
+  default boolean canApply(ProcessContext ctx, StepConfig config) {
+    return true;
   }
 
   /**

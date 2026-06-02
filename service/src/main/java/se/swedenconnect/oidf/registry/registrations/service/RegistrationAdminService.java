@@ -61,4 +61,13 @@ public interface RegistrationAdminService {
    */
   RegistrationDto getRegistrationById(UUID registrationId);
 
+  /**
+   * Approves a specific pending step, resumes pipeline execution from that step.
+   *
+   * @param registrationId the registration ID
+   * @param stepIndex the index of the step to approve
+   * @return the updated registration DTO after resumption
+   */
+  RegistrationDto approveStep(UUID registrationId, int stepIndex);
+
 }

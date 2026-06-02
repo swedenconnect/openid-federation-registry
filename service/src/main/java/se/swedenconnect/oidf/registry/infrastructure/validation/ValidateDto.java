@@ -125,9 +125,12 @@ public class ValidateDto {
         .build()
         .ifFailThrow("description", dto.description());
 
-    this.v.required()
-        .build()
-        .ifFailThrow("technology", dto.technology());
+    if (dto.flowType() !=
+        se.swedenconnect.oidf.registry.registrationflow.process.step.Step.FlowType.TRUST_MARK_ISSUER) {
+      this.v.required()
+          .build()
+          .ifFailThrow("technology", dto.technology());
+    }
 
     this.v.required().build()
         .ifFailThrow("steps", dto.steps());

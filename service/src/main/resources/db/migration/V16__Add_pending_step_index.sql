@@ -13,16 +13,6 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.registry.registrationflow.process;
 
-/**
- * Overall status of a completed pipeline run.
- *
- * @author Per Fredrik Plars
- */
-public enum ProcessStatus {
-  COMPLETED,
-  SKIPPED,
-  FAILED,
-  PENDING_APPROVAL
-}
+ALTER TABLE `registrations`
+    ADD COLUMN `pending_step_index` INT NULL;

@@ -55,4 +55,13 @@ public interface TrustmarkIssuerRepository extends JpaRepository<TrustMarkIssuer
   @Query("SELECT ti FROM TrustMarkIssuer ti JOIN ti.entity e JOIN e.organization o "
       + "WHERE o.orgNumber = :orgNumber")
   List<TrustMarkIssuer> findByOrgNumber(@Param("orgNumber") String orgNumber);
+
+  /**
+   * Finds a trust mark issuer by its federation entity identifier.
+   *
+   * @param entityIdentifier the entity subject string (e.g. {@code https://issuer.example.com})
+   * @return the matching issuer if found
+   */
+  @Query("SELECT ti FROM TrustMarkIssuer ti JOIN ti.entity e WHERE e.subject = :entityIdentifier")
+  Optional<TrustMarkIssuer> findByEntityIdentifier(@Param("entityIdentifier") String entityIdentifier);
 }

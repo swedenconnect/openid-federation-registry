@@ -22,6 +22,7 @@ import se.swedenconnect.oidf.registry.entity.service.EntityConfigService;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
+import se.swedenconnect.oidf.registry.registrationflow.RegistrationFlowService;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationMapper;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
@@ -45,17 +46,21 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
 
   private final RegistrationRepository registrationRepository;
   private final EntityConfigService entityConfigService;
+  private final RegistrationFlowService registrationFlowService;
 
   /**
    * Constructor.
    *
    * @param registrationRepository repository for registration records
    * @param entityConfigService service for checking hosted entities
+   * @param registrationFlowService service for resuming pipeline execution on step approval
    */
   public RegistrationAdminServiceImpl(final RegistrationRepository registrationRepository,
-      final EntityConfigService entityConfigService) {
+      final EntityConfigService entityConfigService,
+      final RegistrationFlowService registrationFlowService) {
     this.registrationRepository = registrationRepository;
     this.entityConfigService = entityConfigService;
+    this.registrationFlowService = registrationFlowService;
   }
 
   @Override
@@ -110,5 +115,12 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
     final boolean isHosted = !hostedEntities.isEmpty();
     final Map<String, Object> hostedMetadata = isHosted ? hostedEntities.getFirst().getMetadata() : null;
     return RegistrationMapper.toRegistrationDto(reg, isHosted, hostedMetadata);
+  }
+
+  @Override
+  @Transactional
+  public RegistrationDto approveStep(final UUID registrationId, final int stepIndex) {
+    this.registrationFlowService.approveStep(registrationId, stepIndex);
+    return this.getRegistrationById(registrationId);
   }
 }

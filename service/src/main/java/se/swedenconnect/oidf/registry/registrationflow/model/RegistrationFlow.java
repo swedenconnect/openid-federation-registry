@@ -37,6 +37,7 @@ import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.JsonConverter;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.registrationflow.dto.Technology;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
@@ -82,6 +83,10 @@ public class RegistrationFlow extends BaseEntity {
 
   @Column(name = "entity_type", length = 100)
   private String entityType;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "flow_type", length = 30, nullable = false)
+  private Step.FlowType flowType = Step.FlowType.INTERMEDIATE;
 
   @Column(name = "flowDefinition", columnDefinition = "TEXT")
   @Convert(converter = RegistrationFlow.StepConverter.class)

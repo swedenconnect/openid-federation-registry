@@ -36,6 +36,8 @@ import se.swedenconnect.oidf.registry.registrationflow.dto.FlowSummaryDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.IntermediateFlowAssignmentDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.RegistrationFlowDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.StepDto;
+import se.swedenconnect.oidf.registry.registrationflow.dto.TrustMarkFlowAssignmentDto;
+import se.swedenconnect.oidf.registry.registrationflow.dto.TrustMarkIssuerFlowAssignmentDto;
 
 import java.util.List;
 import java.util.UUID;
@@ -233,6 +235,110 @@ public class RegistrationFlowController {
       @PathVariable("assignId") final UUID assignId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     this.registrationFlowService.unassignFlow(taImId, assignId);
+    return ResponseEntity.noContent().build();
+  }
+
+  /**
+   * Returns all flow assignments for a trust mark issuer, including assign IDs for unassign calls.
+   *
+   * @param tmIssuerId the trust mark issuer ID
+   * @param organizationRecord the calling organization
+   * @return list of assignment summaries
+   */
+  @GetMapping("/trustmark-issuer/{tmIssuerId}/assignments")
+  @Operation(summary = "List flow assignments for a trust mark issuer (includes assignId)")
+  public ResponseEntity<List<TrustMarkIssuerFlowAssignmentDto>> getTrustMarkIssuerFlowAssignments(
+      @PathVariable("tmIssuerId") final UUID tmIssuerId,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(this.registrationFlowService.getFlowAssignmentsForTrustMarkIssuer(tmIssuerId));
+  }
+
+  /**
+   * Assigns a flow to a trust mark issuer. Idempotent: if the flow is already assigned the existing
+   * assignment ID is returned.
+   *
+   * @param tmIssuerId the trust mark issuer ID
+   * @param request body containing the flow ID to assign
+   * @param organizationRecord the calling organization
+   * @return 201 Created with the assignment ID
+   */
+  @PostMapping("/trustmark-issuer/{tmIssuerId}/assign")
+  @Operation(summary = "Assign a flow to a trust mark issuer")
+  public ResponseEntity<AssignFlowResponse> assignFlowToTrustMarkIssuer(
+      @PathVariable("tmIssuerId") final UUID tmIssuerId,
+      @RequestBody final AssignFlowRequest request,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(this.registrationFlowService.assignFlowToTrustMarkIssuer(tmIssuerId, request.flowId()));
+  }
+
+  /**
+   * Removes a flow assignment from a trust mark issuer.
+   *
+   * @param tmIssuerId the trust mark issuer ID
+   * @param assignId the assignment ID to remove
+   * @param organizationRecord the calling organization
+   * @return no-content response
+   */
+  @DeleteMapping("/trustmark-issuer/{tmIssuerId}/assign/{assignId}")
+  @Operation(summary = "Remove a flow assignment from a trust mark issuer")
+  public ResponseEntity<Void> unassignFlowFromTrustMarkIssuer(
+      @PathVariable("tmIssuerId") final UUID tmIssuerId,
+      @PathVariable("assignId") final UUID assignId,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    this.registrationFlowService.unassignFlowFromTrustMarkIssuer(tmIssuerId, assignId);
+    return ResponseEntity.noContent().build();
+  }
+
+  /**
+   * Lists flow assignments for all trust marks under a trust mark issuer.
+   *
+   * @param tmIssuerId trust mark issuer ID
+   * @param organizationRecord resolved organization
+   * @return list of trust mark flow assignments
+   */
+  @GetMapping("/trustmark-issuer/{tmIssuerId}/trustmark-assignments")
+  @Operation(summary = "List flow assignments for all trust marks under a trust mark issuer")
+  public ResponseEntity<List<TrustMarkFlowAssignmentDto>> getTrustMarkFlowAssignments(
+      @PathVariable("tmIssuerId") final UUID tmIssuerId,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(
+        this.registrationFlowService.getFlowAssignmentsForTrustMarkIssuerTrustmarks(tmIssuerId));
+  }
+
+  /**
+   * Assigns a flow to a specific trust mark.
+   *
+   * @param trustmarkId trust mark ID
+   * @param request assign flow request
+   * @param organizationRecord resolved organization
+   * @return created assignment response
+   */
+  @PostMapping("/trustmark/{trustmarkId}/assign")
+  @Operation(summary = "Assign a flow to a specific trust mark")
+  public ResponseEntity<AssignFlowResponse> assignFlowToTrustMark(
+      @PathVariable("trustmarkId") final UUID trustmarkId,
+      @RequestBody final AssignFlowRequest request,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(this.registrationFlowService.assignFlowToTrustMark(trustmarkId, request.flowId()));
+  }
+
+  /**
+   * Removes a flow assignment from a specific trust mark.
+   *
+   * @param trustmarkId trust mark ID
+   * @param assignId assignment ID
+   * @param organizationRecord resolved organization
+   * @return no content response
+   */
+  @DeleteMapping("/trustmark/{trustmarkId}/assign/{assignId}")
+  @Operation(summary = "Remove a flow assignment from a specific trust mark")
+  public ResponseEntity<Void> unassignFlowFromTrustMark(
+      @PathVariable("trustmarkId") final UUID trustmarkId,
+      @PathVariable("assignId") final UUID assignId,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    this.registrationFlowService.unassignFlowFromTrustMark(trustmarkId, assignId);
     return ResponseEntity.noContent().build();
   }
 

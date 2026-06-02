@@ -10,19 +10,18 @@
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
 package se.swedenconnect.oidf.registry.registrationflow.process;
 
 /**
- * Overall status of a completed pipeline run.
+ * Describes a single change to the pipeline context caused by a step execution.
  *
- * @author Per Fredrik Plars
+ * @param key context key that changed
+ * @param changeType one of {@code ADDED}, {@code CHANGED}, or {@code REMOVED}
+ * @param before string representation of the value before execution, or {@code null} if added
+ * @param after string representation of the value after execution, or {@code null} if removed
+ * @author Felix Hellman
  */
-public enum ProcessStatus {
-  COMPLETED,
-  SKIPPED,
-  FAILED,
-  PENDING_APPROVAL
+public record ContextDiffEntry(String key, String changeType, String before, String after) {
 }

@@ -15,6 +15,8 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow.dto;
 
+import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +30,7 @@ import java.util.UUID;
  * @param technology protocol technology (OIDC or SAML)
  * @param entityType entity type as defined in OpenID Federation
  * @param steps ordered list of step definitions
+ * @param flowType the type of flow (INTERMEDIATE or TRUST_MARK_ISSUER)
  * @author Per Fredrik Plars
  */
 public record RegistrationFlowDto(
@@ -37,6 +40,7 @@ public record RegistrationFlowDto(
     String descriptionSv,
     Technology technology,
     String entityType,
-    List<StepDto> steps
+    List<StepDto> steps,
+    Step.FlowType flowType
 ) {
 }

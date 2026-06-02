@@ -75,6 +75,58 @@
               class="mb-4"
           ></v-textarea>
 
+          <template v-if="isEdit">
+            <v-divider class="mb-4"></v-divider>
+            <div class="text-subtitle-2 mb-2">Registration Flow</div>
+
+            <template v-if="flowAssignment">
+              <v-list density="compact" class="pa-0 mb-1">
+                <v-list-item
+                    :title="flowAssignment.name"
+                    :subtitle="flowAssignment.description"
+                >
+                  <template #append>
+                    <v-btn
+                        id="btn-unassign-tm-flow"
+                        icon
+                        size="small"
+                        color="error"
+                        variant="text"
+                        :loading="removingAssignId !== null"
+                        :disabled="removingAssignId !== null"
+                        @click="unassignFlow(flowAssignment.assignId)"
+                    >
+                      <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                  </template>
+                </v-list-item>
+              </v-list>
+            </template>
+            <div v-else class="d-flex align-center gap-2 mb-3">
+              <v-select
+                  v-model="selectedFlow"
+                  :items="availableFlows"
+                  item-title="name"
+                  item-value="flowId"
+                  label="Assign flow"
+                  :disabled="addingFlow || availableFlows.length === 0"
+                  clearable
+                  return-object
+                  hide-details
+                  class="flex-grow-1"
+              ></v-select>
+              <v-btn
+                  id="btn-assign-tm-flow"
+                  color="primary"
+                  :disabled="!selectedFlow || addingFlow"
+                  :loading="addingFlow"
+                  @click="assignFlow"
+              >
+                Assign
+              </v-btn>
+            </div>
+          </template>
+
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn
@@ -107,11 +159,17 @@ import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
-import {trustmarksPath} from '@/config/path';
+import {
+  registrationFlowsPath,
+  tmFlowAssignPath,
+  tmFlowUnassignPath,
+  tmIssuerTrustmarkAssignmentsPath,
+  trustmarksPath,
+} from '@/config/path';
 
 const route = useRoute();
 const router = useRouter();
-const {requestGet, requestPost, requestPut, loading, ok} = useRequest();
+const {requestGet, requestPost, requestPut, requestDelete, loading, ok} = useRequest();
 const errorStore = useErrorStore();
 
 const form = ref(null);
@@ -123,6 +181,12 @@ const trustmarkType = ref('');
 const logoUri = ref('');
 const refUri = ref('');
 const delegation = ref('');
+
+const flowAssignment = ref(null);
+const availableFlows = ref([]);
+const selectedFlow = ref(null);
+const addingFlow = ref(false);
+const removingAssignId = ref(null);
 
 const isEdit = computed(() => !!route.params.id);
 const entityId = computed(() => route.params.entityId);
@@ -137,6 +201,51 @@ const rules = {
   },
 };
 
+async function loadFlowData() {
+  if (!trustmarkIssuerId.value || !trustmarkId.value) return;
+  const [flows, assignments] = await Promise.all([
+    requestGet(registrationFlowsPath),
+    requestGet(tmIssuerTrustmarkAssignmentsPath(trustmarkIssuerId.value)),
+  ]);
+  availableFlows.value = Array.isArray(flows)
+      ? flows.filter(f => f.flowType === 'TRUST_MARK_ISSUER') : [];
+  const assignment = Array.isArray(assignments)
+      ? assignments.find(a => a.trustmarkId === trustmarkId.value) : null;
+  flowAssignment.value = assignment || null;
+}
+
+async function assignFlow() {
+  if (!selectedFlow.value) return;
+  addingFlow.value = true;
+  try {
+    const result = await requestPost(tmFlowAssignPath(trustmarkId.value), {flowId: selectedFlow.value.flowId});
+    if (ok.value && result) {
+      flowAssignment.value = {
+        assignId: result.assignId,
+        trustmarkId: trustmarkId.value,
+        flowId: selectedFlow.value.flowId,
+        name: selectedFlow.value.name,
+        description: selectedFlow.value.description,
+      };
+      selectedFlow.value = null;
+    }
+  } finally {
+    addingFlow.value = false;
+  }
+}
+
+async function unassignFlow(assignId) {
+  removingAssignId.value = assignId;
+  try {
+    await requestDelete(tmFlowUnassignPath(trustmarkId.value, assignId));
+    if (ok.value) {
+      flowAssignment.value = null;
+    }
+  } finally {
+    removingAssignId.value = null;
+  }
+}
+
 async function loadTrustmark() {
   errorStore.clearError();
   trustmarkId.value = route.params.id;
@@ -149,6 +258,7 @@ async function loadTrustmark() {
     refUri.value = response.refUri || '';
     delegation.value = response.delegation || '';
   }
+  await loadFlowData();
 }
 
 async function submitForm() {
@@ -200,3 +310,9 @@ onMounted(() => {
   }
 });
 </script>
+
+<style scoped>
+.gap-2 {
+  gap: 8px;
+}
+</style>

@@ -439,6 +439,7 @@
                     persistent-hint
                     class="mb-4"
                 ></v-text-field>
+
                 <v-card-actions class="px-0">
                   <v-spacer></v-spacer>
                   <v-btn
@@ -569,13 +570,17 @@ const selectedFlowToAdd = ref(null);
 const addingFlow = ref(false);
 const removingAssignId = ref(null);
 
+
 const resolverJwksLoadedFrom = ref('');
 const resolverJwksPickerDialog = ref(false);
 const resolverJwksPickerItems = ref([]);
 
 const availableFlowsForSelect = computed(() =>
-    availableFlows.value.filter(f => !assignedFlows.value.some(a => a.flowId === f.flowId))
+    availableFlows.value.filter(f =>
+        f.flowType === 'INTERMEDIATE' && !assignedFlows.value.some(a => a.flowId === f.flowId)
+    )
 );
+
 
 const deleteModuleType = computed(() => {
   if (!moduleToDelete.value) return '';
@@ -679,8 +684,9 @@ async function loadEntity() {
     }
 
     if (response.trustmarkIssuer) {
+      const tmIssuerId = response.trustmarkIssuer.trustmarkIssuerId || response.trustmarkIssuer.id;
       modules.value.trustmarkissuer = {
-        id: response.trustmarkIssuer.trustmarkIssuerId || response.trustmarkIssuer.id,
+        id: tmIssuerId,
         active: response.trustmarkIssuer.active !== false,
         trustMarkTokenValidityDuration: response.trustmarkIssuer.trustMarkTokenValidityDuration || 'PT1H',
       };
@@ -729,6 +735,7 @@ async function unassignFlow(assignId) {
     removingAssignId.value = null;
   }
 }
+
 
 async function saveEntity() {
   const {valid} = await form.value.validate();

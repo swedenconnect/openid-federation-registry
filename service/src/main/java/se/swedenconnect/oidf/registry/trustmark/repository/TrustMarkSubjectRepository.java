@@ -66,4 +66,13 @@ public interface TrustMarkSubjectRepository extends JpaRepository<TrustMarkSubje
   Optional<TrustMarkSubject> findByOrgNumberAndTrustmarkId(@Param("orgNumber") String orgNumber,
       @Param("id") UUID trustmarksubjectId);
 
+  /**
+   * Finds an existing subject entry for a given trust mark and subject entity identifier.
+   *
+   * @param trustmarkId the trust mark ID
+   * @param subject the subject entity identifier
+   * @return an {@link Optional} containing the matching subject if found
+   */
+  Optional<TrustMarkSubject> findByTrustMarkTrustmarkIdAndSubject(UUID trustmarkId, String subject);
+
 }

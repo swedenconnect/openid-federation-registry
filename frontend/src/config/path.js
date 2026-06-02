@@ -73,9 +73,14 @@ export const intermediateFlowAssignmentsPath = (taImId) => getAbsolutePath(`regi
 export const intermediateFlowAssignPath = (taImId) => getAbsolutePath(`registration-flow/v1/intermediate/${taImId}/assign`);
 export const intermediateFlowUnassignPath = (taImId, assignId) => getAbsolutePath(`registration-flow/v1/intermediate/${taImId}/assign/${assignId}`);
 
+export const tmIssuerTrustmarkAssignmentsPath = (tmIssuerId) => getAbsolutePath(`registration-flow/v1/trustmark-issuer/${tmIssuerId}/trustmark-assignments`);
+export const tmFlowAssignPath = (trustmarkId) => getAbsolutePath(`registration-flow/v1/trustmark/${trustmarkId}/assign`);
+export const tmFlowUnassignPath = (trustmarkId, assignId) => getAbsolutePath(`registration-flow/v1/trustmark/${trustmarkId}/assign/${assignId}`);
+
 export const registrationAdminPath = getAbsolutePath('registration-admin/v1');
 export const registrationAdminItemPath = (id) => getAbsolutePath(`registration-admin/v1/${id}`);
 export const registrationAdminRejectPath = (id) => getAbsolutePath(`registration-admin/v1/${id}/reject`);
+export const registrationAdminApproveStepPath = (id, stepIndex) => getAbsolutePath(`registration-admin/v1/${id}/steps/${stepIndex}/approve`);
 
 export const registrationPublicFlowsPath = getAbsolutePath('registration/v1/flows');
 export const registrationTriggerPath = (joinId) => getAbsolutePath(`registration/v1/${joinId}`);

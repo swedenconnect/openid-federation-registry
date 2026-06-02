@@ -22,6 +22,8 @@ package se.swedenconnect.oidf.registry.registrationflow.process.step;
  */
 public enum StepStatus {
   SUCCESS,
+  SKIPPED,
   WARNING,
-  FAILURE
+  FAILURE,
+  PENDING_APPROVAL
 }

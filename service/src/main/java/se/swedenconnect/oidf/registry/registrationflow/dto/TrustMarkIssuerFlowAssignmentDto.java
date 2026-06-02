@@ -15,26 +15,21 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow.dto;
 
-import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
-
-import java.util.List;
 import java.util.UUID;
 
 /**
- * Response DTO for a single pipeline step — its name, base settings and full configuration.
+ * Summary of a flow assignment for a trust mark issuer, including the assign ID needed to remove it.
  *
- * @param stepId unique step identifier
- * @param name display name
- * @param description human-readable description
- * @param config list of configurable values for this step
- * @param flowType the flow type this step belongs to
- * @author Per Fredrik Plars
+ * @param assignId the unique assignment ID (used for unassign)
+ * @param flowId the assigned flow ID
+ * @param name the flow display name
+ * @param description the flow description
+ * @author Felix Hellman
  */
-public record StepDto(
-    UUID stepId,
+public record TrustMarkIssuerFlowAssignmentDto(
+    UUID assignId,
+    UUID flowId,
     String name,
-    String description,
-    List<ConfigValueDto> config,
-    Step.FlowType flowType
+    String description
 ) {
 }

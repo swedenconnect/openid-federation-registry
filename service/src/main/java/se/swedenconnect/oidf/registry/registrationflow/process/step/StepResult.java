@@ -82,4 +82,24 @@ public record StepResult(StepStatus status, String message, List<StepIssue> issu
   public static StepResult failure(final String message, final List<StepIssue> issues) {
     return new StepResult(StepStatus.FAILURE, message, List.copyOf(issues));
   }
+
+  /**
+   * Creates a pending-approval result — pipeline pauses until an operator approves this step.
+   *
+   * @param message human-readable summary
+   * @return pending-approval StepResult
+   */
+  public static StepResult pendingApproval(final String message) {
+    return new StepResult(StepStatus.PENDING_APPROVAL, message, List.of());
+  }
+
+  /**
+   * Creates a skipped result — step was not applicable and was bypassed without failure.
+   *
+   * @param message human-readable explanation of why the step was skipped
+   * @return skipped StepResult
+   */
+  public static StepResult skipped(final String message) {
+    return new StepResult(StepStatus.SKIPPED, message, List.of());
+  }
 }

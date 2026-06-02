@@ -15,15 +15,18 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow.dto;
 
+import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
+
 import java.util.UUID;
 
 /**
- * Summary view of a registration flow — ID, name and description only.
+ * Summary view of a registration flow — ID, name, description and flow type.
  *
  * @param flowId unique flow identifier
  * @param name display name
  * @param description human-readable description
+ * @param flowType the type of flow (INTERMEDIATE or TRUST_MARK_ISSUER)
  * @author Per Fredrik Plars
  */
-public record FlowSummaryDto(UUID flowId, String name, String description) {
+public record FlowSummaryDto(UUID flowId, String name, String description, Step.FlowType flowType) {
 }

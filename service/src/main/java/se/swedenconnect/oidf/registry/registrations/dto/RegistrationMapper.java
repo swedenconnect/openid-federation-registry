@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.registry.registrations.dto;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.registrationflow.dto.Technology;
 import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
+import se.swedenconnect.oidf.registry.registrationflow.process.ContextDiffEntry;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
 import se.swedenconnect.oidf.registry.registrationflow.process.StepExecutionRecord;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepIssue;
@@ -78,6 +79,7 @@ public final class RegistrationMapper {
     dto.setJoinId(model.getFlowAssignment().getAssignId());
     dto.setEntityIdentifier(model.getEntityId());
     dto.setIntermediateEntityId(model.getFlowAssignment().getTaIm().getEntity().getSubject());
+    dto.setRegistrationType(model.getRegistrationType());
     dto.setStatusFedreg(FedRegStatus.valueOf(model.getStatus().toString()));
     dto.setRejectionReason(model.getRejectionReason());
     dto.setStatusTrustmarks(toTrustmarkDtoList(model.getTrustmarksRequested()));
@@ -85,12 +87,17 @@ public final class RegistrationMapper {
         Optional.ofNullable(model.getOrganization()).map(Organization::getOrgName).orElse(null));
     dto.setIsHosted(isHosted);
     dto.setMetadata(hostedMetadata);
+    if (model.getStepResults() != null) {
+      dto.setSteps(model.getStepResults());
+    }
 
     final Technology technology = model.getFlowAssignment().getRegistrationFlow().getTechnology();
     final List<RegistrationTagsDto> registrationTags = new ArrayList<>();
-    switch (technology) {
-    case OIDC -> registrationTags.add(RegistrationTagsDto.OIDC);
-    case SAML -> registrationTags.add(RegistrationTagsDto.SAML);
+    if (technology != null) {
+      switch (technology) {
+      case OIDC -> registrationTags.add(RegistrationTagsDto.OIDC);
+      case SAML -> registrationTags.add(RegistrationTagsDto.SAML);
+      }
     }
 
     if (isHosted) {
@@ -183,20 +190,36 @@ public final class RegistrationMapper {
     dto.setName(flowAssignment.getRegistrationFlow().getName());
     dto.setDescription(flowAssignment.getRegistrationFlow().getDescription());
     dto.setDescriptionSv(flowAssignment.getRegistrationFlow().getDescriptionSv());
-    dto.setTechnology(flowAssignment.getRegistrationFlow().getTechnology().name());
+    final Technology tech = flowAssignment.getRegistrationFlow().getTechnology();
+    dto.setTechnology(tech != null ? tech.name() : null);
     dto.setEntityType(flowAssignment.getRegistrationFlow().getEntityType());
     dto.setIntermediateEntityId(flowAssignment.getTaIm().getEntity().getSubject());
     return dto;
   }
 
+  /**
+   * Converts a {@link ProcessReport} to a list of {@link StepExecutionRecordDto}.
+   *
+   * @param report the pipeline report
+   * @return mapped step DTOs
+   */
+  public static List<StepExecutionRecordDto> toStepExecutionRecordDtos(final ProcessReport report) {
+    return report.steps().stream().map(RegistrationMapper::toStepExecutionRecordDto).toList();
+  }
+
   private static StepExecutionRecordDto toStepExecutionRecordDto(final StepExecutionRecord record) {
+    final List<ContextDiffEntryDto> diff = record.contextDiff() == null ? List.of() :
+        record.contextDiff().stream()
+            .map(e -> new ContextDiffEntryDto(e.key(), e.changeType(), e.before(), e.after()))
+            .toList();
     return new StepExecutionRecordDto(
         record.stepName(),
         record.result().status().toString(),
         record.result().message(),
         record.result().issues().stream()
             .map(RegistrationMapper::toStepIssueDto)
-            .toList()
+            .toList(),
+        diff
     );
   }
 

@@ -111,6 +111,80 @@
         </v-card-text>
       </v-card>
 
+      <!-- Pipeline graph -->
+      <v-card class="mb-4">
+        <v-card-title>Pipeline</v-card-title>
+        <v-card-text v-if="registration.steps && registration.steps.length">
+          <div class="pipeline">
+            <div
+                v-for="(step, i) in registration.steps"
+                :key="i"
+                class="pipeline-step"
+            >
+              <!-- connector line -->
+              <div v-if="i > 0" class="pipeline-connector"></div>
+
+              <div class="d-flex align-start gap-3">
+                <!-- status icon -->
+                <div class="pipeline-icon-wrap">
+                  <v-icon :color="stepColor(step.status)" size="28">
+                    {{ stepIcon(step.status) }}
+                  </v-icon>
+                </div>
+
+                <div class="flex-grow-1">
+                  <div class="d-flex align-center gap-2 mb-1">
+                    <span class="text-body-1 font-weight-medium">{{ step.stepName }}</span>
+                    <v-chip :color="stepColor(step.status)" size="x-small" label>
+                      {{ step.status }}
+                    </v-chip>
+                    <v-btn
+                        v-if="step.status === 'PENDING_APPROVAL'"
+                        :id="`btn-approve-step-${i}`"
+                        color="success"
+                        size="x-small"
+                        variant="tonal"
+                        :loading="approvingStepIndex === i"
+                        :disabled="approvingStepIndex !== null"
+                        @click="approveStep(i)"
+                    >
+                      Approve
+                    </v-btn>
+                    <v-btn
+                        :id="`btn-diff-step-${i}`"
+                        size="x-small"
+                        variant="tonal"
+                        @click="openStepInfo(step)"
+                    >Diff</v-btn>
+                  </div>
+                  <div v-if="step.message" class="text-body-2 text-medium-emphasis mb-1">
+                    {{ step.message }}
+                  </div>
+                  <div v-if="step.issues && step.issues.length" class="mt-1">
+                    <div
+                        v-for="(issue, j) in step.issues"
+                        :key="j"
+                        class="d-flex align-start gap-1 mb-1"
+                    >
+                      <v-icon :color="issueColor(issue.severity)" size="14" class="mt-1">
+                        {{ issueIcon(issue.severity) }}
+                      </v-icon>
+                      <span class="text-caption">
+                        <strong v-if="issue.field">{{ issue.field }}:</strong>
+                        {{ issue.message }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </v-card-text>
+        <v-card-text v-else>
+          <p class="text-grey text-center py-4">No pipeline data available.</p>
+        </v-card-text>
+      </v-card>
+
       <!-- Tabs -->
       <v-card>
         <v-tabs v-model="activeTab" color="primary">
@@ -221,6 +295,52 @@
       </v-card>
     </template>
 
+    <!-- Step Diff Dialog -->
+    <v-dialog v-model="stepInfoDialog" max-width="1000" scrollable>
+      <v-card v-if="stepInfoTarget">
+        <v-card-title class="d-flex align-center gap-2">
+          {{ stepInfoTarget.stepName }}
+          <v-chip :color="stepColor(stepInfoTarget.status)" size="x-small" label>
+            {{ stepInfoTarget.status }}
+          </v-chip>
+        </v-card-title>
+        <v-card-text>
+          <div v-if="stepInfoTarget.message" class="text-body-2 text-medium-emphasis mb-4">
+            {{ stepInfoTarget.message }}
+          </div>
+
+          <div v-if="stepInfoTarget.contextDiff && stepInfoTarget.contextDiff.length">
+            <div class="text-subtitle-2 mb-3">Context changes</div>
+            <div
+                v-for="entry in stepInfoTarget.contextDiff"
+                :key="entry.key"
+                class="diff-entry mb-4"
+            >
+              <div class="d-flex align-center gap-2 mb-2">
+                <v-chip :color="diffColor(entry.changeType)" size="x-small" label>
+                  {{ entry.changeType }}
+                </v-chip>
+                <span class="text-mono text-body-2 font-weight-medium">{{ entry.key }}</span>
+              </div>
+              <div v-if="entry.changeType !== 'ADDED'" class="mb-2">
+                <div class="text-caption text-medium-emphasis mb-1">Before</div>
+                <pre class="diff-value-block diff-before">{{ formatDiffValue(entry.before) }}</pre>
+              </div>
+              <div v-if="entry.changeType !== 'REMOVED'">
+                <div class="text-caption text-medium-emphasis mb-1">After</div>
+                <pre class="diff-value-block diff-after">{{ formatDiffValue(entry.after) }}</pre>
+              </div>
+            </div>
+          </div>
+          <p v-else class="text-grey text-body-2">No context changes recorded for this step.</p>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" variant="text" @click="stepInfoDialog = false">Close</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- Reject Dialog -->
     <v-dialog v-model="rejectDialog" max-width="500">
       <v-card>
@@ -274,6 +394,7 @@ import {useErrorStore} from '@/stores/errorStore';
 import {
   entityConfigurationViewPath,
   modulesPath,
+  registrationAdminApproveStepPath,
   registrationAdminItemPath,
   registrationAdminRejectPath,
   trustmarksPath,
@@ -285,6 +406,8 @@ const errorStore = useErrorStore();
 
 const {requestGet, loading} = useRequest();
 const {requestPost, loading: rejecting, ok} = useRequest();
+const {requestPost: requestApprove, ok: approveOk} = useRequest();
+const approvingStepIndex = ref(null);
 
 const registration = ref(null);
 const activeTab = ref('entityStatement');
@@ -292,6 +415,9 @@ const activeTab = ref('entityStatement');
 const rejectDialog = ref(false);
 const rejectionReason = ref('');
 const reasonError = ref(false);
+
+const stepInfoDialog = ref(false);
+const stepInfoTarget = ref(null);
 
 // Entity statement tab
 const entityStatement = ref(null);
@@ -313,6 +439,58 @@ function statusColor(status) {
 function statusLabel(status) {
   const labels = {PENDING_APPROVAL: 'Pending Approval', APPROVED: 'Approved', REJECTED: 'Rejected', STARTED: 'Started'};
   return labels[status] ?? status;
+}
+
+function stepColor(status) {
+  const map = {SUCCESS: 'success', SKIPPED: 'grey', FAILURE: 'error', WARNING: 'warning', PENDING_APPROVAL: 'orange'};
+  return map[status] ?? 'grey';
+}
+
+function stepIcon(status) {
+  const map = {SUCCESS: 'mdi-check-circle', SKIPPED: 'mdi-skip-next-circle-outline', FAILURE: 'mdi-close-circle', WARNING: 'mdi-alert-circle', PENDING_APPROVAL: 'mdi-clock-outline'};
+  return map[status] ?? 'mdi-circle-outline';
+}
+
+function issueColor(severity) {
+  const map = {ERROR: 'error', WARNING: 'warning', INFO: 'info'};
+  return map[severity] ?? 'grey';
+}
+
+function issueIcon(severity) {
+  const map = {ERROR: 'mdi-alert-circle', WARNING: 'mdi-alert', INFO: 'mdi-information'};
+  return map[severity] ?? 'mdi-circle-small';
+}
+
+async function approveStep(stepIndex) {
+  approvingStepIndex.value = stepIndex;
+  errorStore.clearError();
+  try {
+    await requestApprove(registrationAdminApproveStepPath(route.params.id, stepIndex), {});
+    if (approveOk.value) {
+      await loadRegistration();
+    }
+  } finally {
+    approvingStepIndex.value = null;
+  }
+}
+
+function openStepInfo(step) {
+  stepInfoTarget.value = step;
+  stepInfoDialog.value = true;
+}
+
+function diffColor(changeType) {
+  const map = {ADDED: 'success', CHANGED: 'warning', REMOVED: 'error'};
+  return map[changeType] ?? 'grey';
+}
+
+function formatDiffValue(value) {
+  if (value == null) return '—';
+  try {
+    return JSON.stringify(JSON.parse(value), null, 2);
+  } catch {
+    return value;
+  }
 }
 
 function closeRejectDialog() {
@@ -454,5 +632,65 @@ onMounted(() => {
   white-space: pre-wrap;
   word-break: break-all;
   max-height: 480px;
+}
+
+.pipeline {
+  position: relative;
+}
+
+.pipeline-step {
+  position: relative;
+}
+
+.pipeline-connector {
+  width: 2px;
+  height: 16px;
+  background-color: #e0e0e0;
+  margin-left: 13px;
+  margin-bottom: 4px;
+}
+
+.pipeline-icon-wrap {
+  flex-shrink: 0;
+  width: 28px;
+  margin-right: 4px;
+}
+
+.gap-3 {
+  gap: 12px;
+}
+
+.gap-1 {
+  gap: 4px;
+}
+
+.gap-2 {
+  gap: 8px;
+}
+
+.diff-entry {
+  border-left: 3px solid #e0e0e0;
+  padding-left: 12px;
+}
+
+.diff-value-block {
+  background: #f5f5f5;
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-family: monospace;
+  font-size: 0.82rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 320px;
+  overflow: auto;
+  margin: 0;
+}
+
+.diff-before {
+  border-left: 3px solid #ef5350;
+}
+
+.diff-after {
+  border-left: 3px solid #66bb6a;
 }
 </style>

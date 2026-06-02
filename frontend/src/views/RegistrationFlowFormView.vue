@@ -67,7 +67,28 @@
               class="mb-4"
           ></v-textarea>
 
-          <v-row class="mb-6">
+          <v-row class="mb-4">
+            <v-col cols="12">
+              <v-label class="text-caption text-medium-emphasis mb-1 d-block">Flow Type</v-label>
+              <v-btn-toggle
+                  v-model="flowType"
+                  mandatory
+                  :disabled="saving || isEdit"
+                  color="primary"
+                  variant="outlined"
+                  class="mb-1"
+              >
+                <v-btn value="INTERMEDIATE">Intermediate</v-btn>
+                <v-btn value="TRUST_MARK_ISSUER">Trust Mark</v-btn>
+              </v-btn-toggle>
+              <div class="text-caption text-medium-emphasis mt-1">
+                Determines which steps are available and which module type can use this flow.
+                Cannot be changed after creation.
+              </div>
+            </v-col>
+          </v-row>
+
+          <v-row v-if="flowType !== 'TRUST_MARK_ISSUER'" class="mb-6">
             <v-col cols="12" sm="6">
               <v-select
                   v-model="technology"
@@ -97,7 +118,7 @@
           <div class="mb-2 text-subtitle-1 font-weight-medium">Pipeline Steps</div>
 
           <v-row class="mb-4" align="center">
-            <v-col cols="12" sm="8">
+            <v-col cols="12">
               <v-select
                   v-model="stepToAdd"
                   :items="availableStepsForSelect"
@@ -110,17 +131,6 @@
                   hint="Steps already added to the flow are not shown"
                   persistent-hint
               ></v-select>
-            </v-col>
-            <v-col cols="12" sm="4">
-              <v-btn
-                  id="btn-add-step"
-                  color="primary"
-                  variant="outlined"
-                  :disabled="!stepToAdd || saving"
-                  @click="addStep"
-              >
-                Add step
-              </v-btn>
             </v-col>
           </v-row>
 
@@ -142,6 +152,14 @@
                 {{ index + 1 }}. {{ step.name }}
               </span>
               <v-spacer></v-spacer>
+              <v-btn
+                  :id="'btn-settings-' + step.stepId"
+                  icon="mdi-cog"
+                  size="small"
+                  variant="text"
+                  :disabled="!step.config || step.config.length === 0 || saving"
+                  @click="openStepConfig(index)"
+              ></v-btn>
               <v-btn
                   :id="'btn-move-up-' + step.stepId"
                   icon="mdi-arrow-up"
@@ -172,37 +190,6 @@
             <v-card-text v-if="step.description" class="text-grey text-body-2 py-1 px-4">
               {{ step.description }}
             </v-card-text>
-
-            <!-- Config fields -->
-            <v-card-text v-if="step.config && step.config.length > 0" class="pt-2">
-              <v-divider class="mb-3"></v-divider>
-              <div
-                  v-for="cfg in step.config"
-                  :key="cfg.key"
-                  class="mb-3"
-              >
-                <v-checkbox
-                    v-if="cfg.type === 'BOOLEAN'"
-                    v-model="cfg.value"
-                    :label="cfg.key"
-                    :hint="cfg.description"
-                    persistent-hint
-                    :disabled="saving"
-                    true-value="true"
-                    false-value="false"
-                ></v-checkbox>
-
-                <v-text-field
-                    v-else
-                    v-model="cfg.value"
-                    :label="cfg.key"
-                    :hint="cfg.description"
-                    persistent-hint
-                    :disabled="saving"
-                    :placeholder="String(cfg.defaultValue ?? '')"
-                ></v-text-field>
-              </div>
-            </v-card-text>
           </v-card>
 
           <v-card-actions class="px-0 mt-2">
@@ -230,11 +217,48 @@
         </v-form>
       </v-card-text>
     </v-card>
+
+    <!-- Step settings dialog -->
+    <v-dialog v-model="configDialog.open" max-width="560" scrollable>
+      <v-card v-if="configDialogStep">
+        <v-card-title>{{ configDialogStep.name }} Settings</v-card-title>
+        <v-card-text>
+          <div
+              v-for="cfg in configDialogStep.config"
+              :key="cfg.key"
+              class="mb-4"
+          >
+            <v-checkbox
+                v-if="cfg.type === 'BOOLEAN'"
+                v-model="cfg.value"
+                :label="cfg.key"
+                :hint="cfg.description"
+                persistent-hint
+                true-value="true"
+                false-value="false"
+            ></v-checkbox>
+
+            <v-text-field
+                v-else
+                v-model="cfg.value"
+                :label="cfg.key"
+                :hint="cfg.description"
+                persistent-hint
+                :placeholder="String(cfg.defaultValue ?? '')"
+            ></v-text-field>
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="configDialog.open = false">Done</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup>
-import {computed, onMounted, ref, watch} from 'vue';
+import {computed, nextTick, onMounted, ref, watch} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
@@ -248,11 +272,13 @@ const errorStore = useErrorStore();
 const form = ref(null);
 const saving = ref(false);
 const stepsValidationAttempted = ref(false);
+const configDialog = ref({open: false, stepIndex: null});
 const name = ref('');
 const description = ref('');
 const descriptionSv = ref('');
 const technology = ref(null);
 const entityType = ref(null);
+const flowType = ref('INTERMEDIATE');
 const availableSteps = ref([]);
 const selectedSteps = ref([]);
 const stepToAdd = ref(null);
@@ -289,9 +315,30 @@ const isEdit = computed(() => !!route.params.id);
 
 const availableStepsForSelect = computed(() =>
     availableSteps.value.filter(
-        s => !selectedSteps.value.some(sel => sel.stepId === s.stepId)
+        s => s.flowType === flowType.value && !selectedSteps.value.some(sel => sel.stepId === s.stepId)
     )
 );
+
+watch(stepToAdd, (val) => {
+  if (val) addStep();
+});
+
+watch(flowType, (val) => {
+  selectedSteps.value = [];
+  stepToAdd.value = null;
+  if (val === 'TRUST_MARK_ISSUER') {
+    technology.value = null;
+    entityType.value = null;
+  }
+});
+
+const configDialogStep = computed(() =>
+    configDialog.value.stepIndex !== null ? selectedSteps.value[configDialog.value.stepIndex] : null
+);
+
+function openStepConfig(index) {
+  configDialog.value = {open: true, stepIndex: index};
+}
 
 const rules = {
   required: (value) => {
@@ -339,7 +386,9 @@ async function loadFlow() {
     descriptionSv.value = response.descriptionSv || '';
     technology.value = response.technology || null;
     entityType.value = response.entityType || null;
-    // Restore selected steps if the backend returns them
+    flowType.value = response.flowType || 'INTERMEDIATE';
+    // Wait for the flowType watcher to fire and clear selectedSteps, then set them.
+    await nextTick();
     if (Array.isArray(response.steps) && response.steps.length > 0) {
       selectedSteps.value = response.steps.map(s => ({
         ...s,
@@ -367,6 +416,7 @@ async function submitForm() {
       descriptionSv: descriptionSv.value || null,
       technology: technology.value || null,
       entityType: entityType.value || null,
+      flowType: flowType.value,
       steps: selectedSteps.value.map(step => ({
         stepId: step.stepId,
         name: step.name,

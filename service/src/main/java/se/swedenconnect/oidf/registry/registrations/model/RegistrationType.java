@@ -13,16 +13,22 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.registry.registrationflow.process;
+package se.swedenconnect.oidf.registry.registrations.model;
 
 /**
- * Overall status of a completed pipeline run.
+ * Distinguishes the kind of registration being processed.
  *
- * @author Per Fredrik Plars
+ * @author Felix Hellman
  */
-public enum ProcessStatus {
-  COMPLETED,
-  SKIPPED,
-  FAILED,
-  PENDING_APPROVAL
+public enum RegistrationType {
+
+  /** Standard subordinate registration. */
+  SUBORDINATE,
+
+  /**
+   * Subordinate registration that also requests trust marks.
+   * Uses the same API as {@link #SUBORDINATE}; the trust mark flow
+   * executes after the subordinate step completes.
+   */
+  TRUST_MARK_SUBORDINATE
 }

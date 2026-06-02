@@ -17,12 +17,15 @@ package se.swedenconnect.oidf.registry.registrationflow.process;
 
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 
+import java.util.List;
+
 /**
  * Immutable record of one step's execution outcome within a {@link ProcessReport}.
  *
  * @param stepName display name of the step
  * @param result the step's execution result
+ * @param contextDiff changes made to the pipeline context by this step
  * @author Per Fredrik Plars
  */
-public record StepExecutionRecord(String stepName, StepResult result) {
+public record StepExecutionRecord(String stepName, StepResult result, List<ContextDiffEntry> contextDiff) {
 }
