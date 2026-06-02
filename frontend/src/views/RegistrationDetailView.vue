@@ -87,7 +87,11 @@
                 <td class="font-weight-bold field-label">Rejection Reason</td>
                 <td>{{ registration.rejectionReason }}</td>
               </tr>
-              <tr v-if="registration.tags && registration.tags.length">
+              <tr v-if="registration.subordinateEntityId">
+                <td class="font-weight-bold field-label">Subordinate Entity ID</td>
+                <td class="text-mono">{{ registration.subordinateEntityId }}</td>
+              </tr>
+              <tr v-if="registration.registrationType !== 'TRUST_MARK_SUBORDINATE' && registration.tags && registration.tags.length">
                 <td class="font-weight-bold field-label">Tags</td>
                 <td>
                   <v-chip
@@ -98,11 +102,11 @@
                   >{{ tag }}</v-chip>
                 </td>
               </tr>
-              <tr v-if="registration.isHosted !== undefined && registration.isHosted !== null">
+              <tr v-if="registration.registrationType !== 'TRUST_MARK_SUBORDINATE' && registration.isHosted !== undefined && registration.isHosted !== null">
                 <td class="font-weight-bold field-label">Hosted</td>
                 <td>{{ registration.isHosted ? 'Yes' : 'No' }}</td>
               </tr>
-              <tr v-if="registration.hostedId">
+              <tr v-if="registration.registrationType !== 'TRUST_MARK_SUBORDINATE' && registration.hostedId">
                 <td class="font-weight-bold field-label">Hosted ID</td>
                 <td class="text-mono">{{ registration.hostedId }}</td>
               </tr>
@@ -186,7 +190,7 @@
       </v-card>
 
       <!-- Tabs -->
-      <v-card>
+      <v-card v-if="registration.registrationType !== 'TRUST_MARK_SUBORDINATE'">
         <v-tabs v-model="activeTab" color="primary">
           <v-tab value="entityStatement">Entity Statement</v-tab>
           <v-tab value="metadataPolicy">Metadata Policy</v-tab>
@@ -486,10 +490,24 @@ function diffColor(changeType) {
 
 function formatDiffValue(value) {
   if (value == null) return '—';
+
+  const looksLikeJson = typeof value === 'string'
+    && (value.trimStart().startsWith('{') || value.trimStart().startsWith('['));
+
+  if (!looksLikeJson) return value;
+
+  // Try to parse as-is first (complete JSON)
   try {
     return JSON.stringify(JSON.parse(value), null, 2);
   } catch {
-    return value;
+    // Value may be truncated — strip the trailing ellipsis and try again
+    const trimmed = value.endsWith('…') ? value.slice(0, -1) : value;
+    try {
+      return JSON.stringify(JSON.parse(trimmed), null, 2) + '\n… (truncated)';
+    } catch {
+      // Still not valid JSON; return the raw string so at least something is shown
+      return value;
+    }
   }
 }
 

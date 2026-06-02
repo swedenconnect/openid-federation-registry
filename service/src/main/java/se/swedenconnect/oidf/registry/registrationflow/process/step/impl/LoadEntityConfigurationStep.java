@@ -58,10 +58,12 @@ public class LoadEntityConfigurationStep extends NoConfigStepAdapter {
   }
 
   @Override
+  public boolean canApply(final ProcessContext ctx, final StepConfig config) {
+    return ctx.get(ContextKey.REQUEST_METADATA).isEmpty();
+  }
+
+  @Override
   public StepResult execute(final ProcessContext ctx, final StepConfig config) {
-    if (ctx.get(ContextKey.REQUEST_METADATA).isPresent()) {
-      return StepResult.success("Hosted-entity join — entity configuration fetch skipped");
-    }
     final String entityId = ctx.getRequired(ContextKey.ENTITY_ID);
     final EntityStatement entityStatement = this.oidfService.loadEntityStatement(new EntityID(entityId));
 

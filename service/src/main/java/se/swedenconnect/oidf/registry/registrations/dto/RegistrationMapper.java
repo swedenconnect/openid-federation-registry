@@ -87,6 +87,9 @@ public final class RegistrationMapper {
         Optional.ofNullable(model.getOrganization()).map(Organization::getOrgName).orElse(null));
     dto.setIsHosted(isHosted);
     dto.setMetadata(hostedMetadata);
+    if (model.getParentRegistration() != null) {
+      dto.setSubordinateEntityId(model.getParentRegistration().getEntityId());
+    }
     if (model.getStepResults() != null) {
       dto.setSteps(model.getStepResults());
     }

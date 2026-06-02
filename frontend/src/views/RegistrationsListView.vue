@@ -65,8 +65,8 @@
       <v-table>
         <thead>
           <tr>
-            <th class="text-left">Entity ID</th>
-            <th class="text-left">Intermediate Entity ID</th>
+            <th class="text-left">Entity ID / Subordinate Entity ID</th>
+            <th class="text-left">Intermediate Entity ID / Trust Mark Type</th>
             <th class="text-left">Type</th>
             <th class="text-left">Status</th>
           </tr>
@@ -78,8 +78,8 @@
               class="clickable-row"
               @click="openDetail(reg.registrationId)"
           >
-            <td>{{ reg.entityIdentifier }}</td>
-            <td>{{ reg.intermediateEntityId }}</td>
+            <td>{{ reg.registrationType === 'TRUST_MARK_SUBORDINATE' ? reg.subordinateEntityId : reg.entityIdentifier }}</td>
+            <td>{{ reg.registrationType === 'TRUST_MARK_SUBORDINATE' ? reg.entityIdentifier : reg.intermediateEntityId }}</td>
             <td>
               <v-chip :color="typeColor(reg.registrationType)" size="small" label>
                 {{ typeLabel(reg.registrationType) }}

@@ -75,4 +75,12 @@ public interface TrustMarkSubjectRepository extends JpaRepository<TrustMarkSubje
    */
   Optional<TrustMarkSubject> findByTrustMarkTrustmarkIdAndSubject(UUID trustmarkId, String subject);
 
+  /**
+   * Finds all trust mark subjects added via a specific registration.
+   *
+   * @param registrationId the registration ID
+   * @return subjects linked to that registration
+   */
+  List<TrustMarkSubject> findByRegistrationRegistrationId(UUID registrationId);
+
 }

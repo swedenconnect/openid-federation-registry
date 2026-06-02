@@ -30,6 +30,7 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
+import se.swedenconnect.oidf.registry.registrations.model.Registration;
 
 import java.util.UUID;
 
@@ -67,6 +68,10 @@ public class TrustMarkSubject extends BaseEntity {
 
   @Column(name = "expires")
   private java.time.OffsetDateTime expires;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "registration_id", nullable = true)
+  private Registration registration;
 
   /**
    * Retrieves the unique identifier of the associated TrustMark.

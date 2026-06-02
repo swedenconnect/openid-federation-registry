@@ -24,7 +24,11 @@ import se.swedenconnect.oidf.registry.registrationflow.process.SerializableList;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
+import se.swedenconnect.oidf.registry.registrations.model.Registration;
+import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
+import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
 import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
+import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
 import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
 import se.swedenconnect.oidf.registry.trustmark.model.TrustMarkSubject;
 import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
@@ -49,17 +53,21 @@ public class AddTrustMarkSubjectStep extends NoConfigStepAdapter {
 
   private final TrustMarkRepository trustMarkRepository;
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
+  private final RegistrationRepository registrationRepository;
 
   /**
    * Constructor.
    *
    * @param trustMarkRepository repository for resolving trust marks
    * @param trustMarkSubjectRepository repository for persisting trust mark subjects
+   * @param registrationRepository repository for loading the source registration
    */
   public AddTrustMarkSubjectStep(final TrustMarkRepository trustMarkRepository,
-      final TrustMarkSubjectRepository trustMarkSubjectRepository) {
+      final TrustMarkSubjectRepository trustMarkSubjectRepository,
+      final RegistrationRepository registrationRepository) {
     this.trustMarkRepository = trustMarkRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
+    this.registrationRepository = registrationRepository;
   }
 
   @Override
@@ -112,12 +120,28 @@ public class AddTrustMarkSubjectStep extends NoConfigStepAdapter {
             .isPresent();
 
         if (!alreadyExists) {
+          final Optional<Registration> parentReg = ctx.<UUID>get(ContextKey.REGISTRATION_ID)
+              .flatMap(this.registrationRepository::findById);
+
+          final Registration tmRegistration = new Registration();
+          tmRegistration.setRegistrationId(UUID.randomUUID());
+          tmRegistration.setEntityId(status.trustmarkType());
+          tmRegistration.setRegistrationType(RegistrationType.TRUST_MARK_SUBORDINATE);
+          tmRegistration.setStatus(RegistrationStatus.APPROVED);
+          parentReg.ifPresent(p -> {
+            tmRegistration.setFlowAssignment(p.getFlowAssignment());
+            tmRegistration.setOrganization(p.getOrganization());
+            tmRegistration.setParentRegistration(p);
+          });
+          this.registrationRepository.save(tmRegistration);
+
           final TrustMarkSubject subject = new TrustMarkSubject();
           subject.setTrustmarksubjectId(UUID.randomUUID());
           subject.setTrustMark(tm);
           subject.setSubject(entityId);
           subject.setRevoked(false);
           subject.setGranted(OffsetDateTime.now());
+          subject.setRegistration(tmRegistration);
           this.trustMarkSubjectRepository.save(subject);
           created++;
         }

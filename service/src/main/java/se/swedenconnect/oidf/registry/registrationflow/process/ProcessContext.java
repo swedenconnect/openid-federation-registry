@@ -104,7 +104,8 @@ public class ProcessContext {
 
   /**
    * Returns a string snapshot of the current context for diff computation.
-   * Values are truncated to 500 characters to keep diffs readable.
+   * Values are truncated to 100 000 characters to keep diff storage bounded while
+   * preserving complete JSON structures for front-end pretty-printing.
    *
    * @return ordered map of key to string representation
    */
@@ -112,8 +113,8 @@ public class ProcessContext {
     final Map<String, String> snap = new LinkedHashMap<>();
     this.data.forEach((k, v) -> {
       String s = v == null ? "null" : v.toString();
-      if (s.length() > 500) {
-        s = s.substring(0, 500) + "…";
+      if (s.length() > 100_000) {
+        s = s.substring(0, 100_000) + "…";
       }
       snap.put(k, s);
     });

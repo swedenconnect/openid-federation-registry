@@ -30,10 +30,12 @@ import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 import se.swedenconnect.oidf.registry.registrationflow.repository.TrustMarkFlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
+import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
 import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -93,17 +95,15 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
     final List<String> failed = new ArrayList<>();
 
     for (final TrustmarkSource source : requested.get()) {
-      final String issuerEntityId = source.trustMarkIssuer();
-
       for (final TrustmarkSource.TrustMarkStatus tmStatus : source.trustmarks()) {
         final String trustmarkType = tmStatus.trustmarkType();
 
-        final var trustMark = this.trustMarkRepository
-            .findByIssuerEntityIdAndTrustmarkType(issuerEntityId, trustmarkType);
+        final Optional<TrustMark> trustMark = this.trustMarkRepository
+            .findAllByTrustmarkType(trustmarkType)
+            .stream().findFirst();
 
         if (trustMark.isEmpty()) {
-          log.warn("TrustMarkIssuerRegistrationStep: trust mark not found for issuer='{}' type='{}'",
-              issuerEntityId, trustmarkType);
+          log.warn("TrustMarkIssuerRegistrationStep: trust mark not found for type='{}'", trustmarkType);
           skippedNotFound.add(trustmarkType);
           continue;
         }
@@ -112,8 +112,8 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
         final var assignment = this.tmFlowAssignmentRepository.findByTrustMarkTrustmarkId(trustmarkId);
 
         if (assignment.isEmpty()) {
-          log.warn("TrustMarkIssuerRegistrationStep: no flow assigned to trust mark '{}' ({})",
-              trustmarkType, issuerEntityId);
+          log.warn("TrustMarkIssuerRegistrationStep: no flow assigned to trust mark type='{}'",
+              trustmarkType);
           skippedNoFlow.add(trustmarkType);
           continue;
         }
@@ -127,10 +127,15 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
           continue;
         }
 
-        // Sub-context scoped to this specific trust mark
+        final String resolvedIssuerId =
+            trustMark.get().getTrustmarkIssuer().getEntity().getSubject();
+
+        log.debug("TrustMarkIssuerRegistrationStep: resolved trust mark id='{}' type='{}' issuer='{}'",
+            trustMark.get().getTrustmarkId(), trustmarkType, resolvedIssuerId);
+
         final ProcessContext subCtx = ctx.copy();
         subCtx.put(ContextKey.TRUSTMARKS_REQUESTED, new SerializableList<>(List.of(
-            new TrustmarkSource(issuerEntityId, List.of(tmStatus)))));
+            new TrustmarkSource(resolvedIssuerId, List.of(tmStatus)))));
 
         final ProcessReport report = this.processEngine.run(subFlow.getProcessFlow(), subCtx);
         if (!report.isSuccessful() && !report.isPendingApproval()) {

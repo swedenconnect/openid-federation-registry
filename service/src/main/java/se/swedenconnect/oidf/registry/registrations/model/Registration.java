@@ -82,6 +82,10 @@ public class Registration extends BaseEntity {
   @Convert(converter = TrustmarkSourceConverter.class)
   private List<TrustmarkSource> trustmarksRequested;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "parent_registration_id", nullable = true)
+  private Registration parentRegistration;
+
   @Enumerated(EnumType.STRING)
   @Column(name = "registration_type", length = 30, nullable = false)
   private RegistrationType registrationType;

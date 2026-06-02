@@ -109,16 +109,16 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter {
   }
 
   @Override
+  public boolean canApply(final ProcessContext ctx, final StepConfig config) {
+    return ctx.get(ContextKey.REQUEST_METADATA).isPresent();
+  }
+
+  @Override
   @Transactional
   public StepResult execute(final ProcessContext ctx, final StepConfig config) {
-    final Optional<JSONObject> bodyMetadata = ctx.get(ContextKey.REQUEST_METADATA);
-    if (bodyMetadata.isEmpty()) {
-      return StepResult.success("Not a hosted-entity join — step skipped");
-    }
-
+    final JSONObject metadata = ctx.<JSONObject>getRequired(ContextKey.REQUEST_METADATA);
     final String entityId = ctx.getRequired(ContextKey.ENTITY_ID);
     final OrganizationRecord org = ctx.getRequired(ContextKey.ORG);
-    final JSONObject metadata = bodyMetadata.get();
 
     // Derive registry entity-prefix from the TaIm's org so that the hosted-entity
     // subject points to the registry host URL, not to the joining entity's own domain.

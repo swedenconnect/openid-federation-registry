@@ -32,6 +32,7 @@ import se.swedenconnect.oidf.registry.registrations.dto.RegistrationJoinRequestD
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationMapper;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
+import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
 import se.swedenconnect.oidf.registry.subordinate.service.SubordinateService;
@@ -139,6 +140,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         .forEach(h -> hostedMetadataByEntityId.put(h.getEntityIdentifier(), h.getMetadata()));
     return this.registrationRepository.findAllByOrganizationOrgNumber(organizationRecord.orgNumber())
         .stream()
+        .filter(r -> r.getRegistrationType() != RegistrationType.TRUST_MARK_SUBORDINATE)
         .map(r -> RegistrationMapper.toRegistrationDto(r,
             hostedMetadataByEntityId.containsKey(r.getEntityId()),
             hostedMetadataByEntityId.get(r.getEntityId())))
