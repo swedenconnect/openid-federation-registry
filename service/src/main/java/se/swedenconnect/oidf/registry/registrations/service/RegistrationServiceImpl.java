@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Implementation of {@link RegistrationService}.
@@ -95,7 +96,11 @@ public class RegistrationServiceImpl implements RegistrationService {
         this.entityConfigService.listHostedEntity(organizationRecord, reg.getEntityId());
     final boolean isHosted = !hostedEntities.isEmpty();
     final Map<String, Object> hostedMetadata = isHosted ? hostedEntities.getFirst().getMetadata() : null;
-    return RegistrationMapper.toRegistrationDto(reg, isHosted, hostedMetadata);
+    final Map<String, RegistrationStatus> tmStatusByType =
+        this.registrationRepository.findByParentRegistration_RegistrationId(registrationId)
+            .stream()
+            .collect(Collectors.toMap(Registration::getEntityId, Registration::getStatus));
+    return RegistrationMapper.toRegistrationDto(reg, isHosted, hostedMetadata, tmStatusByType);
   }
 
 
@@ -138,12 +143,20 @@ public class RegistrationServiceImpl implements RegistrationService {
     final Map<String, Map<String, Object>> hostedMetadataByEntityId = new HashMap<>();
     this.entityConfigService.listHostedEntity(organizationRecord, null)
         .forEach(h -> hostedMetadataByEntityId.put(h.getEntityIdentifier(), h.getMetadata()));
-    return this.registrationRepository.findAllByOrganizationOrgNumber(organizationRecord.orgNumber())
-        .stream()
+    final List<Registration> allRegs =
+        this.registrationRepository.findAllByOrganizationOrgNumber(organizationRecord.orgNumber());
+    final Map<UUID, Map<String, RegistrationStatus>> tmStatusByParent = allRegs.stream()
+        .filter(r -> r.getRegistrationType() == RegistrationType.TRUST_MARK_SUBORDINATE)
+        .filter(r -> r.getParentRegistration() != null)
+        .collect(Collectors.groupingBy(
+            r -> r.getParentRegistration().getRegistrationId(),
+            Collectors.toMap(Registration::getEntityId, Registration::getStatus)));
+    return allRegs.stream()
         .filter(r -> r.getRegistrationType() != RegistrationType.TRUST_MARK_SUBORDINATE)
         .map(r -> RegistrationMapper.toRegistrationDto(r,
             hostedMetadataByEntityId.containsKey(r.getEntityId()),
-            hostedMetadataByEntityId.get(r.getEntityId())))
+            hostedMetadataByEntityId.get(r.getEntityId()),
+            tmStatusByParent.getOrDefault(r.getRegistrationId(), Map.of())))
         .toList();
   }
 

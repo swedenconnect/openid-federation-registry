@@ -82,6 +82,14 @@ public interface RegistrationRepository extends JpaRepository<Registration, UUID
   List<Registration> findAllByOrganizationOrgNumber(@Param("orgNumber") String orgNumber);
 
   /**
+   * Finds all trust mark subordinate registrations that were generated for the given parent registration.
+   *
+   * @param parentId the registration ID of the parent registration
+   * @return list of trust mark subordinate registrations
+   */
+  List<Registration> findByParentRegistration_RegistrationId(UUID parentId);
+
+  /**
    * Deletes registrations with the given status created before the given date.
    *
    * @param status the registration status

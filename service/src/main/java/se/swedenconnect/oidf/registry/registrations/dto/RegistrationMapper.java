@@ -74,6 +74,20 @@ public final class RegistrationMapper {
    */
   public static RegistrationDto toRegistrationDto(final Registration model, final boolean isHosted,
       final Map<String, Object> hostedMetadata) {
+    return toRegistrationDto(model, isHosted, hostedMetadata, Map.of());
+  }
+
+  /**
+   * Maps a {@link Registration} entity to a {@link RegistrationDto} with trust mark status overrides.
+   *
+   * @param model registration entity
+   * @param isHosted whether the entity is hosted
+   * @param hostedMetadata metadata for hosted entity, or null if not hosted
+   * @param tmStatusByType map from trust mark type to actual registration status, overrides stored value
+   * @return mapped DTO
+   */
+  public static RegistrationDto toRegistrationDto(final Registration model, final boolean isHosted,
+      final Map<String, Object> hostedMetadata, final Map<String, RegistrationStatus> tmStatusByType) {
     final RegistrationDto dto = new RegistrationDto();
     dto.setRegistrationId(model.getRegistrationId());
     dto.setJoinId(model.getFlowAssignment().getAssignId());
@@ -82,7 +96,7 @@ public final class RegistrationMapper {
     dto.setRegistrationType(model.getRegistrationType());
     dto.setStatusFedreg(FedRegStatus.valueOf(model.getStatus().toString()));
     dto.setRejectionReason(model.getRejectionReason());
-    dto.setStatusTrustmarks(toTrustmarkDtoList(model.getTrustmarksRequested()));
+    dto.setStatusTrustmarks(toTrustmarkDtoList(model.getTrustmarksRequested(), tmStatusByType));
     dto.setOrganizationName(
         Optional.ofNullable(model.getOrganization()).map(Organization::getOrgName).orElse(null));
     dto.setIsHosted(isHosted);
@@ -143,7 +157,8 @@ public final class RegistrationMapper {
       default -> throw new IllegalArgumentException("Unknown entity_type: " + entityType);
     };
   }
-  private static List<TrustmarkRegistrationDto> toTrustmarkDtoList(final List<TrustmarkSource> tmSource) {
+  private static List<TrustmarkRegistrationDto> toTrustmarkDtoList(final List<TrustmarkSource> tmSource,
+      final Map<String, RegistrationStatus> tmStatusByType) {
     if (tmSource == null) {
       return null;
     }
@@ -153,9 +168,12 @@ public final class RegistrationMapper {
       dto.setTrustmarkStatus(Optional.ofNullable(tm.trustmarks())
           .orElse(Collections.emptyList())
           .stream()
-          .map(trustMarkStatus ->
-              new TrustmarkStatusDto(trustMarkStatus.trustmarkType(),
-                  FedRegStatus.valueOf(trustMarkStatus.trustmarkStatus().toString())))
+          .map(trustMarkStatus -> {
+            final RegistrationStatus resolved = tmStatusByType.getOrDefault(
+                trustMarkStatus.trustmarkType(), trustMarkStatus.trustmarkStatus());
+            return new TrustmarkStatusDto(trustMarkStatus.trustmarkType(),
+                FedRegStatus.valueOf(resolved.toString()));
+          })
           .toList());
       return dto;
     }).toList();
