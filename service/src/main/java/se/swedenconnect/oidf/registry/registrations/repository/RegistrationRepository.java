@@ -90,6 +90,16 @@ public interface RegistrationRepository extends JpaRepository<Registration, UUID
   List<Registration> findByParentRegistration_RegistrationId(UUID parentId);
 
   /**
+   * Finds a trust mark subordinate registration by trust mark type (entityId) and parent registration.
+   *
+   * @param entityId the trust mark type stored as entityId
+   * @param parentRegistrationId the parent registration ID
+   * @return optional registration
+   */
+  Optional<Registration> findByEntityIdAndParentRegistration_RegistrationId(String entityId,
+      UUID parentRegistrationId);
+
+  /**
    * Deletes registrations with the given status created before the given date.
    *
    * @param status the registration status

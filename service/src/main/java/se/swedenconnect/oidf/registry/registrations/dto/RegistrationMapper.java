@@ -24,6 +24,7 @@ import se.swedenconnect.oidf.registry.registrationflow.process.StepExecutionReco
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepIssue;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
+import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
 import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
 
 import java.util.ArrayList;
@@ -108,36 +109,40 @@ public final class RegistrationMapper {
       dto.setSteps(model.getStepResults());
     }
 
-    final Technology technology = model.getFlowAssignment().getRegistrationFlow().getTechnology();
-    final List<RegistrationTagsDto> registrationTags = new ArrayList<>();
-    if (technology != null) {
-      switch (technology) {
-      case OIDC -> registrationTags.add(RegistrationTagsDto.OIDC);
-      case SAML -> registrationTags.add(RegistrationTagsDto.SAML);
+    if (model.getRegistrationType() != RegistrationType.TRUST_MARK_SUBORDINATE) {
+      final Technology technology = model.getFlowAssignment().getRegistrationFlow().getTechnology();
+      final List<RegistrationTagsDto> registrationTags = new ArrayList<>();
+      if (technology != null) {
+        switch (technology) {
+        case OIDC -> registrationTags.add(RegistrationTagsDto.OIDC);
+        case SAML -> registrationTags.add(RegistrationTagsDto.SAML);
+        }
       }
-    }
 
-    if (isHosted) {
-      registrationTags.add(RegistrationTagsDto.HOSTED);
-    }
-
-    final String entityType = model.getFlowAssignment().getRegistrationFlow().getEntityType();
-    Optional.ofNullable(entityType).ifPresent(s -> registrationTags.add(fromEntityType(s)));
-
-    dto.setTags(registrationTags);
-
-    final String orgNumber = Optional.ofNullable(model.getOrganization())
-        .map(Organization::getOrgNumber).orElse(null);
-    if (orgNumber != null && hostedMetadata != null) {
-      final boolean isEntityWithMetadata = registrationTags.stream().anyMatch(t ->
-          t == RegistrationTagsDto.RP || t == RegistrationTagsDto.OP
-              || t == RegistrationTagsDto.SAML_IDP || t == RegistrationTagsDto.SAML_SP
-              || t == RegistrationTagsDto.SAML_RP);
-      if (isEntityWithMetadata) {
-        final Map<String, Object> enrichedMetadata = new HashMap<>(hostedMetadata);
-        enrichedMetadata.put("organization_number", orgNumber);
-        dto.setMetadata(enrichedMetadata);
+      if (isHosted) {
+        registrationTags.add(RegistrationTagsDto.HOSTED);
       }
+
+      final String entityType = model.getFlowAssignment().getRegistrationFlow().getEntityType();
+      Optional.ofNullable(entityType).ifPresent(s -> registrationTags.add(fromEntityType(s)));
+
+      dto.setTags(registrationTags);
+
+      final String orgNumber = Optional.ofNullable(model.getOrganization())
+          .map(Organization::getOrgNumber).orElse(null);
+      if (orgNumber != null && hostedMetadata != null) {
+        final boolean isEntityWithMetadata = registrationTags.stream().anyMatch(t ->
+            t == RegistrationTagsDto.RP || t == RegistrationTagsDto.OP
+                || t == RegistrationTagsDto.SAML_IDP || t == RegistrationTagsDto.SAML_SP
+                || t == RegistrationTagsDto.SAML_RP);
+        if (isEntityWithMetadata) {
+          final Map<String, Object> enrichedMetadata = new HashMap<>(hostedMetadata);
+          enrichedMetadata.put("organization_number", orgNumber);
+          dto.setMetadata(enrichedMetadata);
+        }
+      }
+    } else {
+      dto.setTags(List.of());
     }
 
     return dto;

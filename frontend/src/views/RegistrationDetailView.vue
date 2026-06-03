@@ -155,6 +155,17 @@
                       Approve
                     </v-btn>
                     <v-btn
+                        v-if="step.status === 'PENDING_APPROVAL'"
+                        :id="`btn-decline-step-${i}`"
+                        color="error"
+                        size="x-small"
+                        variant="tonal"
+                        :disabled="approvingStepIndex !== null"
+                        @click="rejectDialog = true"
+                    >
+                      Decline
+                    </v-btn>
+                    <v-btn
                         :id="`btn-diff-step-${i}`"
                         size="x-small"
                         variant="tonal"

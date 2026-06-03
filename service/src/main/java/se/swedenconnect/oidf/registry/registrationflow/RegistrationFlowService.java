@@ -66,7 +66,9 @@ import se.swedenconnect.oidf.registry.registrations.dto.RegistrationMapper;
 import se.swedenconnect.oidf.registry.registrations.dto.StepExecutionRecordDto;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
+import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
 import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.impl.DefaultConfig;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
 
 import java.util.List;
@@ -312,6 +314,7 @@ public class RegistrationFlowService {
             reg.setStepResults(RegistrationMapper.toStepExecutionRecordDtos(report));
             if (report.isPendingApproval()) {
               reg.setPendingStepIndex(report.steps().size() - 1);
+              reg.setStatus(RegistrationStatus.PENDING_APPROVAL);
             } else {
               reg.setPendingStepIndex(null);
             }
@@ -349,6 +352,10 @@ public class RegistrationFlowService {
           "Step index %d does not match pending step %d".formatted(stepIndex, reg.getPendingStepIndex()));
     }
 
+    if (reg.getRegistrationType() == RegistrationType.TRUST_MARK_SUBORDINATE) {
+      return this.approveTrustMarkSubordinateStep(reg, stepIndex);
+    }
+
     final RegistrationFlow flow = reg.getFlowAssignment().getRegistrationFlow();
     final List<StepDefinition> allSteps = Mapper.toProcessFlow(flow, this.registrationStepRepository).getProcessFlow();
 
@@ -362,7 +369,7 @@ public class RegistrationFlowService {
     if (reg.getTrustmarksRequested() != null) {
       ctx.put(ContextKey.TRUSTMARKS_REQUESTED, new SerializableList<>(reg.getTrustmarksRequested()));
     }
-    if (reg.getJwks() != null) {
+    if (reg.getJwks() != null && !reg.getJwks().isEmpty()) {
       try {
         ctx.put(ContextKey.ENTITY_CONFIGURATION_JWKS,
             JWKSet.parse(new net.minidev.json.JSONObject(reg.getJwks()).toJSONString()));
@@ -388,6 +395,64 @@ public class RegistrationFlowService {
     reg.setStepResults(merged);
     if (resumeReport.isPendingApproval()) {
       reg.setPendingStepIndex(stepIndex + resumeReport.steps().size() - 1);
+      reg.setStatus(RegistrationStatus.PENDING_APPROVAL);
+    } else {
+      reg.setPendingStepIndex(null);
+    }
+    this.registrationRepository.save(reg);
+    return resumeReport;
+  }
+
+  private ProcessReport approveTrustMarkSubordinateStep(final Registration reg, final int stepIndex) {
+    final String trustmarkType = reg.getEntityId();
+    final TrustMark trustMark = this.trustMarkRepository.findAllByTrustmarkType(trustmarkType)
+        .stream().findFirst()
+        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
+            "Trust mark not found for type: " + trustmarkType));
+
+    final TrustMarkFlowAssignment tmAssignment = this.tmFlowAssignmentRepository
+        .findByTrustMarkTrustmarkId(trustMark.getTrustmarkId())
+        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
+            "No flow assignment for trust mark: " + trustmarkType));
+
+    final DefaultConfig emptyConfig = new DefaultConfig(Map.of());
+    final List<StepDefinition> midSteps = Mapper.toMidOnlyProcessFlow(
+        tmAssignment.getRegistrationFlow(), this.registrationStepRepository).getProcessFlow();
+
+    final List<StepDefinition> allSubSteps = new java.util.ArrayList<>();
+    this.registrationStepRepository.preTrustMarkSteps().stream()
+        .map(s -> new StepDefinition(s, emptyConfig)).forEach(allSubSteps::add);
+    allSubSteps.addAll(midSteps);
+    this.registrationStepRepository.postTrustMarkSteps().stream()
+        .map(s -> new StepDefinition(s, emptyConfig)).forEach(allSubSteps::add);
+
+    final String resolvedIssuerId = trustMark.getTrustmarkIssuer().getEntity().getSubject();
+    final TrustmarkSource tmSource = new TrustmarkSource(resolvedIssuerId,
+        List.of(new TrustmarkSource.TrustMarkStatus(trustmarkType, RegistrationStatus.STARTED)));
+
+    final ProcessContext ctx = new ProcessContext();
+    final String entityId = reg.getParentRegistration() != null
+        ? reg.getParentRegistration().getEntityId() : reg.getEntityId();
+    ctx.put(ContextKey.ENTITY_ID, entityId);
+    ctx.put(ContextKey.REGISTRATION_ID, reg.getRegistrationId());
+    ctx.put(ContextKey.JOIN_ID, reg.getFlowAssignment().getAssignId());
+    ctx.put(ContextKey.TAIM_ID, reg.getFlowAssignment().getTaIm().getTaImId());
+    final Organization org = reg.getOrganization();
+    ctx.put(ContextKey.ORG, new OrganizationRecord(org.getOrgNumber(), org.getOrgName(), null, null));
+    ctx.put(ContextKey.TRUSTMARKS_REQUESTED, new SerializableList<>(List.of(tmSource)));
+    ctx.put(ContextKey.STEP_APPROVED, Boolean.TRUE);
+
+    final List<StepDefinition> remaining = allSubSteps.subList(stepIndex, allSubSteps.size());
+    final ProcessReport resumeReport = this.processEngine.run(remaining, ctx);
+
+    final List<StepExecutionRecordDto> merged = new java.util.ArrayList<>(
+        Optional.ofNullable(reg.getStepResults()).orElse(List.of()).subList(0, stepIndex));
+    merged.addAll(RegistrationMapper.toStepExecutionRecordDtos(resumeReport));
+    reg.setStepResults(merged);
+
+    if (resumeReport.isPendingApproval()) {
+      reg.setPendingStepIndex(stepIndex + resumeReport.steps().size() - 1);
+      reg.setStatus(RegistrationStatus.PENDING_APPROVAL);
     } else {
       reg.setPendingStepIndex(null);
     }

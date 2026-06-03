@@ -103,22 +103,46 @@ public class RegistrationStepRepository {
   }
 
   /**
-   * Pre default steps
+   * Pre default steps for INTERMEDIATE flows.
    * @return list of default pre steps
    */
   public List<Step> preDefaultSteps() {
     return this.definedSteps.stream()
-        .filter(step -> step.stepType().equals(Step.StepType.PRE))
+        .filter(step -> step.stepType().equals(Step.StepType.PRE)
+            && step.flowType().equals(Step.FlowType.INTERMEDIATE))
         .collect(Collectors.toList());
   }
 
   /**
-   * Post default steps
+   * Post default steps for INTERMEDIATE flows.
    * @return list of default post steps
    */
   public List<Step> postDefaultSteps() {
     return this.definedSteps.stream()
-        .filter(step -> step.stepType().equals(Step.StepType.POST))
+        .filter(step -> step.stepType().equals(Step.StepType.POST)
+            && step.flowType().equals(Step.FlowType.INTERMEDIATE))
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * PRE steps for trust mark sub-flows.
+   * @return list of TM pre steps
+   */
+  public List<Step> preTrustMarkSteps() {
+    return this.definedSteps.stream()
+        .filter(step -> step.stepType().equals(Step.StepType.PRE)
+            && step.flowType().equals(Step.FlowType.TRUST_MARK_ISSUER))
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * POST steps for trust mark sub-flows.
+   * @return list of TM post steps
+   */
+  public List<Step> postTrustMarkSteps() {
+    return this.definedSteps.stream()
+        .filter(step -> step.stepType().equals(Step.StepType.POST)
+            && step.flowType().equals(Step.FlowType.TRUST_MARK_ISSUER))
         .collect(Collectors.toList());
   }
 

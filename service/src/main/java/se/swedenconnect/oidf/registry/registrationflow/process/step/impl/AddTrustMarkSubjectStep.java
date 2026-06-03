@@ -17,33 +17,33 @@ package se.swedenconnect.oidf.registry.registrationflow.process.step.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.SerializableList;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.Severity;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.StepIssue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
-import se.swedenconnect.oidf.registry.registrations.model.Registration;
-import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
-import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
 import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
-import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
-import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
-import se.swedenconnect.oidf.registry.trustmark.model.TrustMarkSubject;
 import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
-import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkSubjectRepository;
 
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Adds the registering entity as a trust mark subject for each requested trust mark type.
- * Idempotent: skips types where a subject entry already exists.
- * Skips issuer/type combinations not found in the registry and records them as warnings.
+ * MID step for trust mark enrollment flows.
+ * <p>
+ * Lifecycle:
+ * <ul>
+ *   <li>{@code buildContext} — validates that every requested trust mark type exists in the
+ *       registry. Aborts early (FAILURE) if any type is missing.</li>
+ *   <li>Approval gate — halts when {@code manualreview=true}.</li>
+ *   <li>{@code execute} — sets {@link ContextKey#TRUSTMARK_SUBJECT_PROCEED} so that the
+ *       downstream POST step ({@link CreateTrustMarkSubjectStep}) knows it is safe to create
+ *       the subject. Without this signal the POST step is a no-op.</li>
+ * </ul>
  *
  * @author Felix Hellman
  */
@@ -52,22 +52,14 @@ import java.util.UUID;
 public class AddTrustMarkSubjectStep extends NoConfigStepAdapter {
 
   private final TrustMarkRepository trustMarkRepository;
-  private final TrustMarkSubjectRepository trustMarkSubjectRepository;
-  private final RegistrationRepository registrationRepository;
 
   /**
    * Constructor.
    *
    * @param trustMarkRepository repository for resolving trust marks
-   * @param trustMarkSubjectRepository repository for persisting trust mark subjects
-   * @param registrationRepository repository for loading the source registration
    */
-  public AddTrustMarkSubjectStep(final TrustMarkRepository trustMarkRepository,
-      final TrustMarkSubjectRepository trustMarkSubjectRepository,
-      final RegistrationRepository registrationRepository) {
+  public AddTrustMarkSubjectStep(final TrustMarkRepository trustMarkRepository) {
     this.trustMarkRepository = trustMarkRepository;
-    this.trustMarkSubjectRepository = trustMarkSubjectRepository;
-    this.registrationRepository = registrationRepository;
   }
 
   @Override
@@ -86,74 +78,40 @@ public class AddTrustMarkSubjectStep extends NoConfigStepAdapter {
   }
 
   @Override
-  @Transactional
-  public StepResult execute(final ProcessContext ctx, final StepConfig config) {
-    final boolean alreadyApproved = ctx.<Boolean>get(ContextKey.STEP_APPROVED).orElse(false);
-    if (config.getBoolean("manualreview") && !alreadyApproved) {
-      return StepResult.pendingApproval("Trust mark subject enrollment requires manual approval");
-    }
-
-    final Optional<SerializableList<TrustmarkSource>> requested =
-        ctx.get(ContextKey.TRUSTMARKS_REQUESTED);
-
+  public StepResult buildContext(final ProcessContext ctx, final StepConfig config) {
+    final var requested = ctx.<SerializableList<TrustmarkSource>>get(ContextKey.TRUSTMARKS_REQUESTED);
     if (requested.isEmpty() || requested.get().isEmpty()) {
-      return StepResult.success("No trust marks requested — step skipped");
+      return StepResult.success("No trust marks requested");
     }
 
-    final String entityId = ctx.getRequired(ContextKey.ENTITY_ID);
-    final List<String> skipped = new ArrayList<>();
-    int created = 0;
-
+    final List<StepIssue> issues = new ArrayList<>();
     for (final TrustmarkSource source : requested.get()) {
       for (final TrustmarkSource.TrustMarkStatus status : source.trustmarks()) {
-        final Optional<TrustMark> trustMark = this.trustMarkRepository
-            .findByIssuerEntityIdAndTrustmarkType(source.trustMarkIssuer(), status.trustmarkType());
-
-        if (trustMark.isEmpty()) {
-          skipped.add("%s / %s".formatted(source.trustMarkIssuer(), status.trustmarkType()));
-          continue;
-        }
-
-        final TrustMark tm = trustMark.get();
-        final boolean alreadyExists = this.trustMarkSubjectRepository
-            .findByTrustMarkTrustmarkIdAndSubject(tm.getTrustmarkId(), entityId)
+        final boolean exists = this.trustMarkRepository
+            .findByIssuerEntityIdAndTrustmarkType(source.trustMarkIssuer(), status.trustmarkType())
             .isPresent();
-
-        if (!alreadyExists) {
-          final Optional<Registration> parentReg = ctx.<UUID>get(ContextKey.REGISTRATION_ID)
-              .flatMap(this.registrationRepository::findById);
-
-          final Registration tmRegistration = new Registration();
-          tmRegistration.setRegistrationId(UUID.randomUUID());
-          tmRegistration.setEntityId(status.trustmarkType());
-          tmRegistration.setRegistrationType(RegistrationType.TRUST_MARK_SUBORDINATE);
-          tmRegistration.setStatus(RegistrationStatus.APPROVED);
-          parentReg.ifPresent(p -> {
-            tmRegistration.setFlowAssignment(p.getFlowAssignment());
-            tmRegistration.setOrganization(p.getOrganization());
-            tmRegistration.setParentRegistration(p);
-          });
-          this.registrationRepository.save(tmRegistration);
-
-          final TrustMarkSubject subject = new TrustMarkSubject();
-          subject.setTrustmarksubjectId(UUID.randomUUID());
-          subject.setTrustMark(tm);
-          subject.setSubject(entityId);
-          subject.setRevoked(false);
-          subject.setGranted(OffsetDateTime.now());
-          subject.setRegistration(tmRegistration);
-          this.trustMarkSubjectRepository.save(subject);
-          created++;
+        if (!exists) {
+          log.warn("AddTrustMarkSubjectStep.buildContext: trust mark not found: {}/{}",
+              source.trustMarkIssuer(), status.trustmarkType());
+          issues.add(new StepIssue("trustmarkType",
+              "Trust mark not found: " + status.trustmarkType(), Severity.ERROR));
         }
       }
     }
-
-    if (!skipped.isEmpty()) {
-      log.warn("AddTrustMarkSubjectStep: trust mark(s) not found in registry: {}", skipped);
+    if (!issues.isEmpty()) {
+      return StepResult.failure("One or more trust mark types not found in registry", issues);
     }
+    return StepResult.success("Trust mark types validated");
+  }
 
-    return StepResult.success(
-        "Added %d trust mark subject(s). Skipped %d unknown type(s).".formatted(created, skipped.size()));
+  /**
+   * Sets {@link ContextKey#TRUSTMARK_SUBJECT_PROCEED} to signal the POST step to create the subject.
+   * Only reached when the approval gate has been passed (or skipped).
+   */
+  @Override
+  public StepResult execute(final ProcessContext ctx, final StepConfig config) {
+    ctx.put(ContextKey.TRUSTMARK_SUBJECT_PROCEED, Boolean.TRUE);
+    return StepResult.success("Enrollment approved — subject creation signalled");
   }
 
   @Override
@@ -163,14 +121,15 @@ public class AddTrustMarkSubjectStep extends NoConfigStepAdapter {
 
   @Override
   public String getDescription() {
-    return "Adds the registering entity as a trust mark subject for each requested trust mark type. "
-        + "Idempotent — skips subjects that already exist.";
+    return "Validates requested trust mark types. "
+        + "When manualreview=true the pipeline pauses until an admin approves. "
+        + "After approval the downstream POST step creates the trust mark subject.";
   }
 
   @Override
   public List<StepConfigurationValue> getStepConfigurationValues() {
     return List.of(new StepConfigurationValue("manualreview",
         StepConfigurationValue.DATA_TYPE.BOOLEAN,
-        "If true, enrollment requires manual approval before subjects are added", "false"));
+        "If true, enrollment requires manual approval before the subject is created", "false"));
   }
 }

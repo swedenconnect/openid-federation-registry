@@ -90,12 +90,6 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
     final Registration registration = this.registrationRepository.findById(registrationId)
         .orElseThrow();
 
-    final boolean alreadyApproved = ctx.<Boolean>get(ContextKey.STEP_APPROVED).orElse(false);
-    if (config.getBoolean("manualreview") && !alreadyApproved) {
-      registration.setStatus(RegistrationStatus.PENDING_APPROVAL);
-      this.registrationRepository.save(registration);
-      return StepResult.pendingApproval("Registration requires manual approval");
-    }
     final boolean isHosted = ctx.get(ContextKey.REQUEST_METADATA).isPresent();
 
     final Organization imOrganization = registration.getFlowAssignment().getTaIm().getOrganization();

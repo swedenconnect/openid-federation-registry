@@ -39,6 +39,7 @@ public final class ContextKey {
   public static final String REQUEST_METADATA = "request_metadata";
   public static final String TRUSTMARK_ISSUER_ID = "trustmarkIssuerId";
   public static final String STEP_APPROVED = "stepApproved";
+  public static final String TRUSTMARK_SUBJECT_PROCEED = "trustmarkSubjectProceed";
 
   private ContextKey() {
   }

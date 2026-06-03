@@ -24,8 +24,10 @@ import se.swedenconnect.oidf.registry.infrastructure.validation.CleanInput;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -80,4 +82,10 @@ public class LoadEntityConfigurationStep extends NoConfigStepAdapter {
     return UUID.fromString("A00BCEAD-ECD9-4EB4-8A7B-481D928B2CC9");
   }
 
+  @Override
+  public List<StepConfigurationValue> getStepConfigurationValues() {
+    return List.of(new StepConfigurationValue("manualreview",
+        StepConfigurationValue.DATA_TYPE.BOOLEAN,
+        "If true, registration requires manual approval before proceeding", "false"));
+  }
 }

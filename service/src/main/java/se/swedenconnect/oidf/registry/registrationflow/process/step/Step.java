@@ -102,6 +102,20 @@ public interface Step {
   }
 
   /**
+   * Builds or validates context data needed by this step before the manual-approval gate.
+   * Runs on every fresh execution; skipped when resuming after an approval.
+   * Implementations should be read-only / side-effect free so they are safe to skip on resume.
+   * A {@link StepStatus#FAILURE} result aborts the pipeline immediately.
+   *
+   * @param ctx shared pipeline context
+   * @param config step-specific configuration
+   * @return build result; return {@link StepResult#success()} if nothing to do
+   */
+  default StepResult buildContext(ProcessContext ctx, StepConfig config) {
+    return StepResult.success("Context build skipped");
+  }
+
+  /**
    * Determines whether this step should execute given the current pipeline context.
    * When {@code false} the engine records a {@link StepStatus#SKIPPED} result and
    * continues without calling {@link #execute}.

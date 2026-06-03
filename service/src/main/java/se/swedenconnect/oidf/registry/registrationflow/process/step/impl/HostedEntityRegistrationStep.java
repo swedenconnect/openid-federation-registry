@@ -194,6 +194,8 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter {
 
   @Override
   public List<StepConfigurationValue> getStepConfigurationValues() {
-    return List.of();
+    return List.of(new StepConfigurationValue("manualreview",
+        StepConfigurationValue.DATA_TYPE.BOOLEAN,
+        "If true, registration requires manual approval before proceeding", "false"));
   }
 }

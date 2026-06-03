@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.registry.registrationflow.process.step.impl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.registrationflow.RegistrationStepRepository;
 import se.swedenconnect.oidf.registry.registrationflow.dto.Mapper;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
@@ -29,9 +30,15 @@ import se.swedenconnect.oidf.registry.registrationflow.process.SerializableList;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 import se.swedenconnect.oidf.registry.registrationflow.repository.TrustMarkFlowAssignmentRepository;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationMapper;
+import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
+import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
 import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
 import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
+
+import se.swedenconnect.oidf.registry.registrations.dto.StepExecutionRecordDto;
+import se.swedenconnect.oidf.registry.registrationflow.process.StepDefinition;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,6 +60,9 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
   private final TrustMarkFlowAssignmentRepository tmFlowAssignmentRepository;
   private final RegistrationStepRepository registrationStepRepository;
   private final ProcessEngine processEngine;
+  private final RegistrationRepository registrationRepository;
+  private final InternalPreTrustMarkRegistrationStep preTmStep;
+  private final CreateTrustMarkSubjectStep postTmStep;
 
   /**
    * Constructor.
@@ -61,15 +71,24 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
    * @param tmFlowAssignmentRepository repository for looking up flows assigned to trust marks
    * @param registrationStepRepository repository for resolving step definitions
    * @param processEngine engine for running sub-flows
+   * @param registrationRepository repository for persisting sub-flow step results
+   * @param preTmStep auto-injected PRE step that creates the TM_SUBORDINATE registration
+   * @param postTmStep auto-injected POST step that creates the TrustMarkSubject
    */
   public TrustMarkIssuerRegistrationStep(final TrustMarkRepository trustMarkRepository,
       final TrustMarkFlowAssignmentRepository tmFlowAssignmentRepository,
       @Lazy final RegistrationStepRepository registrationStepRepository,
-      final ProcessEngine processEngine) {
+      final ProcessEngine processEngine,
+      final RegistrationRepository registrationRepository,
+      final InternalPreTrustMarkRegistrationStep preTmStep,
+      final CreateTrustMarkSubjectStep postTmStep) {
     this.trustMarkRepository = trustMarkRepository;
     this.tmFlowAssignmentRepository = tmFlowAssignmentRepository;
     this.registrationStepRepository = registrationStepRepository;
     this.processEngine = processEngine;
+    this.registrationRepository = registrationRepository;
+    this.preTmStep = preTmStep;
+    this.postTmStep = postTmStep;
   }
 
   @Override
@@ -83,6 +102,7 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
   }
 
   @Override
+  @Transactional
   public StepResult execute(final ProcessContext ctx, final StepConfig config) {
     final var requested = ctx.<SerializableList<TrustmarkSource>>get(ContextKey.TRUSTMARKS_REQUESTED);
 
@@ -90,9 +110,16 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
       return StepResult.success("No trust marks requested — step skipped");
     }
 
+    // STEP_APPROVED is still in ctx during execute (engine removes it after execute returns).
+    // This tells us we are resuming an earlier approval.
+    final boolean isResume = ctx.<Boolean>get(ContextKey.STEP_APPROVED).orElse(false);
+
     final List<String> skippedNotFound = new ArrayList<>();
     final List<String> skippedNoFlow = new ArrayList<>();
     final List<String> failed = new ArrayList<>();
+    final List<String> pendingApproval = new ArrayList<>();
+
+    final Optional<UUID> parentRegId = ctx.get(ContextKey.REGISTRATION_ID);
 
     for (final TrustmarkSource source : requested.get()) {
       for (final TrustmarkSource.TrustMarkStatus tmStatus : source.trustmarks()) {
@@ -112,35 +139,77 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
         final var assignment = this.tmFlowAssignmentRepository.findByTrustMarkTrustmarkId(trustmarkId);
 
         if (assignment.isEmpty()) {
-          log.warn("TrustMarkIssuerRegistrationStep: no flow assigned to trust mark type='{}'",
-              trustmarkType);
+          log.warn("TrustMarkIssuerRegistrationStep: no flow assigned to trust mark type='{}'", trustmarkType);
           skippedNoFlow.add(trustmarkType);
           continue;
         }
 
-        final ProcessFlow subFlow = Mapper.toMidOnlyProcessFlow(
-            assignment.get().getRegistrationFlow(), this.registrationStepRepository);
+        // Build the sub-flow: [PRE (auto)] + [user MID steps] + [POST (auto)]
+        final List<StepDefinition> midSteps = Mapper.toMidOnlyProcessFlow(
+            assignment.get().getRegistrationFlow(), this.registrationStepRepository).getProcessFlow();
 
-        if (subFlow.getProcessFlow().isEmpty()) {
-          log.warn("TrustMarkIssuerRegistrationStep: flow '{}' for trust mark '{}' has no MID steps",
-              assignment.get().getRegistrationFlow().getName(), trustmarkType);
-          continue;
-        }
+        final DefaultConfig emptyConfig = new DefaultConfig(java.util.Map.of());
+        final List<StepDefinition> allSubSteps = new ArrayList<>();
+        allSubSteps.add(new StepDefinition(this.preTmStep, emptyConfig));
+        allSubSteps.addAll(midSteps);
+        allSubSteps.add(new StepDefinition(this.postTmStep, emptyConfig));
 
-        final String resolvedIssuerId =
-            trustMark.get().getTrustmarkIssuer().getEntity().getSubject();
+        final String resolvedIssuerId = trustMark.get().getTrustmarkIssuer().getEntity().getSubject();
 
-        log.debug("TrustMarkIssuerRegistrationStep: resolved trust mark id='{}' type='{}' issuer='{}'",
-            trustMark.get().getTrustmarkId(), trustmarkType, resolvedIssuerId);
+        // Find existing TM_SUBORDINATE registration (may exist from a previous run or fresh)
+        final Optional<se.swedenconnect.oidf.registry.registrations.model.Registration> existingTmReg =
+            parentRegId.flatMap(pid ->
+                this.registrationRepository.findByEntityIdAndParentRegistration_RegistrationId(
+                    trustmarkType, pid));
 
         final ProcessContext subCtx = ctx.copy();
         subCtx.put(ContextKey.TRUSTMARKS_REQUESTED, new SerializableList<>(List.of(
             new TrustmarkSource(resolvedIssuerId, List.of(tmStatus)))));
 
-        final ProcessReport report = this.processEngine.run(subFlow.getProcessFlow(), subCtx);
-        if (!report.isSuccessful() && !report.isPendingApproval()) {
-          log.warn("TrustMarkIssuerRegistrationStep: sub-flow '{}' failed for trust mark '{}'",
-              subFlow.getName(), trustmarkType);
+        final List<StepDefinition> stepsToRun;
+        final int stepOffset;
+
+        if (isResume && existingTmReg.isPresent()
+            && existingTmReg.get().getPendingStepIndex() != null) {
+          final int pendingIdx = existingTmReg.get().getPendingStepIndex();
+          stepsToRun = allSubSteps.subList(pendingIdx, allSubSteps.size());
+          stepOffset = pendingIdx;
+          subCtx.put(ContextKey.REGISTRATION_ID, existingTmReg.get().getRegistrationId());
+          log.debug("TrustMarkIssuerRegistrationStep: resuming sub-flow for '{}' from step {}",
+              trustmarkType, pendingIdx);
+        } else {
+          stepsToRun = allSubSteps;
+          stepOffset = 0;
+        }
+
+        final ProcessReport report = this.processEngine.run(stepsToRun, subCtx);
+
+        // Find TM reg after sub-flow (PRE step may have just created it)
+        final Optional<UUID> tmRegId = subCtx.get(ContextKey.REGISTRATION_ID);
+        tmRegId.flatMap(this.registrationRepository::findById).ifPresent(tmReg -> {
+          // Merge with previously saved step results when resuming
+          final List<StepExecutionRecordDto> merged = new ArrayList<>();
+          if (stepOffset > 0 && tmReg.getStepResults() != null) {
+            merged.addAll(tmReg.getStepResults().subList(0,
+                Math.min(stepOffset, tmReg.getStepResults().size())));
+          }
+          merged.addAll(RegistrationMapper.toStepExecutionRecordDtos(report));
+          tmReg.setStepResults(merged);
+
+          if (report.isPendingApproval()) {
+            tmReg.setStatus(RegistrationStatus.PENDING_APPROVAL);
+            tmReg.setPendingStepIndex(stepOffset + report.steps().size() - 1);
+          } else {
+            tmReg.setPendingStepIndex(null);
+          }
+          this.registrationRepository.save(tmReg);
+        });
+
+        if (report.isPendingApproval()) {
+          log.info("TrustMarkIssuerRegistrationStep: sub-flow pending approval for '{}'", trustmarkType);
+          pendingApproval.add(trustmarkType);
+        } else if (!report.isSuccessful()) {
+          log.warn("TrustMarkIssuerRegistrationStep: sub-flow failed for '{}'", trustmarkType);
           failed.add(trustmarkType);
         }
       }
@@ -148,12 +217,12 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
 
     if (!failed.isEmpty()) {
       return StepResult.success(
-          "Trust mark flows completed with failures for: %s. Not found: %s. No flow assigned: %s"
-              .formatted(failed, skippedNotFound, skippedNoFlow));
+          "Trust mark flows completed with failures for: %s. Pending: %s. Not found: %s. No flow assigned: %s"
+              .formatted(failed, pendingApproval, skippedNotFound, skippedNoFlow));
     }
     return StepResult.success(
-        "Trust mark flows completed. Not found: %s. No flow assigned: %s"
-            .formatted(skippedNotFound, skippedNoFlow));
+        "Trust mark flows dispatched. Pending approval: %s. Not found: %s. No flow assigned: %s"
+            .formatted(pendingApproval, skippedNotFound, skippedNoFlow));
   }
 
   @Override

@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepStatus;
+import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,10 +35,15 @@ import java.util.Objects;
 public class ProcessEngine {
 
   /**
-   * Executes the pipeline sequentially, stopping on the first failure.
-   * Before each step the context is snapshotted; after execution the diff is recorded.
-   * Steps whose {@code canApply} check returns {@code false} are recorded as SKIPPED and
-   * do not halt the pipeline.
+   * Executes the pipeline sequentially using a four-phase lifecycle per step:
+   * <ol>
+   *   <li>{@code canApply} — skip the step if not applicable</li>
+   *   <li>{@code buildContext} — read-only data loading; skipped when resuming after approval</li>
+   *   <li>approval gate — halts the pipeline when {@code manualreview=true} and not yet approved</li>
+   *   <li>{@code execute} — write-side action</li>
+   * </ol>
+   * The {@code STEP_APPROVED} context flag is consumed per step so that only the first
+   * resumed step is bypassed; subsequent steps requiring approval still halt normally.
    *
    * @param steps ordered list of step definitions
    * @param ctx shared pipeline context
@@ -54,6 +60,7 @@ public class ProcessEngine {
 
       final Map<String, String> before = ctx.snapshot();
 
+      // Phase 1: canApply
       if (!def.step().canApply(ctx, def.config())) {
         log.info("Step {} not applicable — skipping", def.name());
         records.add(new StepExecutionRecord(def.name(),
@@ -61,8 +68,35 @@ public class ProcessEngine {
         continue;
       }
 
+      // Read the approval flag — do NOT remove yet so execute (and any sub-flows it spawns)
+      // can still propagate it. Flag is removed after execute returns.
+      final boolean alreadyApproved = ctx.<Boolean>get(ContextKey.STEP_APPROVED).orElse(false);
+
+      if (!alreadyApproved) {
+        // Phase 2: buildContext
+        final StepResult buildResult = def.step().buildContext(ctx, def.config());
+        if (buildResult.status() == StepStatus.FAILURE) {
+          log.error("Step {} buildContext failed — aborting pipeline", def.name());
+          final List<ContextDiffEntry> diff = computeDiff(before, ctx.snapshot());
+          records.add(new StepExecutionRecord(def.name(), buildResult, diff));
+          return ProcessReport.skipped(records);
+        }
+
+        // Phase 3: approval gate
+        if (def.config().getBoolean("manualreview")) {
+          log.info("Step {} requires manual approval — pausing pipeline", def.name());
+          final List<ContextDiffEntry> diff = computeDiff(before, ctx.snapshot());
+          records.add(new StepExecutionRecord(def.name(),
+              StepResult.pendingApproval("Step requires manual approval"), diff));
+          return ProcessReport.pendingApproval(records);
+        }
+      }
+
+      // Phase 4: execute
       log.info("Running step: {}", def.name());
       final StepResult result = def.run(ctx);
+      // Consume flag after execute so sub-pipelines inside execute can propagate it
+      ctx.remove(ContextKey.STEP_APPROVED);
       final List<ContextDiffEntry> diff = computeDiff(before, ctx.snapshot());
       records.add(new StepExecutionRecord(def.name(), result, diff));
 
@@ -72,7 +106,7 @@ public class ProcessEngine {
       }
 
       if (result.status() == StepStatus.PENDING_APPROVAL) {
-        log.info("Step {} requires manual approval — pausing pipeline", def.name());
+        log.info("Step {} returned pending approval from execute — pausing pipeline", def.name());
         return ProcessReport.pendingApproval(records);
       }
     }
