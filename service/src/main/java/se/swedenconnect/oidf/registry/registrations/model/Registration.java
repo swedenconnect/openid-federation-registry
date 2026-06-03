@@ -110,6 +110,10 @@ public class Registration extends BaseEntity {
   @Column(name = "pending_step_index")
   private Integer pendingStepIndex;
 
+  @Column(name = "request_metadata", columnDefinition = "TEXT")
+  @Convert(converter = MapConverter.class)
+  private Map<String, Object> requestMetadata;
+
   /** JPA converter for the trustmark source list. */
   @Converter
   public static class TrustmarkSourceConverter extends JsonConverter<List<TrustmarkSource>> {

@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.registry.registrationflow.process.step.impl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.SerializableList;
@@ -28,6 +29,7 @@ import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
 import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
+import se.swedenconnect.oidf.registry.trustmark.mapper.TrustmarkToDtoMapper;
 import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
 import se.swedenconnect.oidf.registry.trustmark.model.TrustMarkSubject;
 import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
@@ -54,6 +56,7 @@ public class CreateTrustMarkSubjectStep extends NoConfigStepAdapter {
   private final TrustMarkRepository trustMarkRepository;
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
   private final RegistrationRepository registrationRepository;
+  private final RegistryAuditService auditService;
 
   /**
    * Constructor.
@@ -61,13 +64,16 @@ public class CreateTrustMarkSubjectStep extends NoConfigStepAdapter {
    * @param trustMarkRepository repository for resolving trust marks
    * @param trustMarkSubjectRepository repository for persisting trust mark subjects
    * @param registrationRepository repository for updating registration status
+   * @param auditService audit service for publishing federation change events
    */
   public CreateTrustMarkSubjectStep(final TrustMarkRepository trustMarkRepository,
       final TrustMarkSubjectRepository trustMarkSubjectRepository,
-      final RegistrationRepository registrationRepository) {
+      final RegistrationRepository registrationRepository,
+      final RegistryAuditService auditService) {
     this.trustMarkRepository = trustMarkRepository;
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
     this.registrationRepository = registrationRepository;
+    this.auditService = auditService;
   }
 
   @Override
@@ -151,6 +157,13 @@ public class CreateTrustMarkSubjectStep extends NoConfigStepAdapter {
     subject.setGranted(OffsetDateTime.now());
     subject.setRegistration(tmReg);
     this.trustMarkSubjectRepository.save(subject);
+    this.auditService.trustmarkSubjectCreated(
+        subject.getTrustmarksubjectId(),
+        tm.getTrustmarkIssuer().getEntity().getOrganization().getInstance().getInstanceId(),
+        tm.getTrustmarkId(),
+        tm.getTrustmarkIssuer().getEntity().getOrganization().getOrganizationId(),
+        null,
+        TrustmarkToDtoMapper.toDto(subject));
 
     tmReg.setStatus(RegistrationStatus.APPROVED);
     this.registrationRepository.save(tmReg);

@@ -30,14 +30,20 @@ import se.swedenconnect.oidf.registry.module.repository.TaImRepository;
 import se.swedenconnect.oidf.registry.organization.service.InstancePlacementService;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
+import se.swedenconnect.oidf.registry.registrationflow.process.SerializableList;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Severity;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepIssue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
+import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
+import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSourceDto;
+import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
+import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
 
 import java.net.URI;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -73,6 +79,7 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter {
   private final TaImRepository taImRepository;
   private final InstancePlacementService instancePlacementService;
   private final OidfServiceIntegration oidfServiceIntegration;
+  private final TrustMarkRepository trustMarkRepository;
 
   /**
    * Constructor.
@@ -81,15 +88,18 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter {
    * @param taImRepository           repository used to load the TaIm for its entity prefix
    * @param instancePlacementService service used to resolve the registry entity prefix and base URL
    * @param oidfServiceIntegration   integration used to fetch JWKS from the service node
+   * @param trustMarkRepository      repository used to resolve trust mark issuers
    */
   public HostedEntityRegistrationStep(final EntityConfigService entityConfigService,
       final TaImRepository taImRepository,
       final InstancePlacementService instancePlacementService,
-      final OidfServiceIntegration oidfServiceIntegration) {
+      final OidfServiceIntegration oidfServiceIntegration,
+      final TrustMarkRepository trustMarkRepository) {
     this.entityConfigService = entityConfigService;
     this.taImRepository = taImRepository;
     this.instancePlacementService = instancePlacementService;
     this.oidfServiceIntegration = oidfServiceIntegration;
+    this.trustMarkRepository = trustMarkRepository;
   }
 
   @Override
@@ -132,17 +142,21 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter {
     final OrganizationRecord orgWithRegistryPrefix = new OrganizationRecord(
         org.orgNumber(), org.orgName(), registryEntityPrefix, org.functionGroup());
 
+    final List<TrustmarkSourceDto> trustMarkSources = this.buildTrustMarkSources(ctx);
+
     // Persist via service so audit fires
     final List<HostedEntityDto> existing = this.entityConfigService.listHostedEntity(org, entityId);
     if (existing.isEmpty()) {
       final HostedEntityDto input = new HostedEntityDto();
       input.setEntityIdentifier(entityId);
       input.setMetadata(metadata);
+      input.setTrustMarkSources(trustMarkSources);
       this.entityConfigService.createHostedEntity(orgWithRegistryPrefix, UUID.randomUUID(), input);
     }
     else {
       final HostedEntityDto current = existing.getFirst();
       current.setMetadata(metadata);
+      current.setTrustMarkSources(trustMarkSources);
       this.entityConfigService.updateHostedEntity(orgWithRegistryPrefix, current.getEntityId(), current);
     }
 
@@ -185,6 +199,36 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter {
     });
 
     return StepResult.success("Hosted entity stored and JWKS loaded for: " + entityId);
+  }
+
+  private List<TrustmarkSourceDto> buildTrustMarkSources(final ProcessContext ctx) {
+    final Optional<SerializableList<TrustmarkSource>> requested =
+        ctx.get(ContextKey.TRUSTMARKS_REQUESTED);
+    if (requested.isEmpty() || requested.get().isEmpty()) {
+      return List.of();
+    }
+    final List<TrustmarkSourceDto> sources = new ArrayList<>();
+    for (final TrustmarkSource source : requested.get()) {
+      for (final TrustmarkSource.TrustMarkStatus status : source.trustmarks()) {
+        final List<TrustMark> matches =
+            this.trustMarkRepository.findAllByTrustmarkType(status.trustmarkType());
+        if (matches.isEmpty()) {
+          log.warn("HostedEntityRegistrationStep: no trust mark found for type {}, skipping source",
+              status.trustmarkType());
+          continue;
+        }
+        if (matches.size() > 1) {
+          log.warn("HostedEntityRegistrationStep: multiple trust marks found for type {}, using first",
+              status.trustmarkType());
+        }
+        final String issuer = matches.getFirst().getTrustmarkIssuer().getEntity().getSubject();
+        final TrustmarkSourceDto dto = new TrustmarkSourceDto();
+        dto.setTrustMarkIssuer(issuer);
+        dto.setTrustmarkId(status.trustmarkType());
+        sources.add(dto);
+      }
+    }
+    return sources;
   }
 
   @Override

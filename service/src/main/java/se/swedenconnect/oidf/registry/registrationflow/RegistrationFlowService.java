@@ -60,7 +60,6 @@ import se.swedenconnect.oidf.registry.registrationflow.repository.TrustMarkIssue
 import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
 import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
 import com.nimbusds.jose.jwk.JWKSet;
-import se.swedenconnect.oidf.registry.entity.service.EntityConfigService;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationJoinRequestDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationMapper;
 import se.swedenconnect.oidf.registry.registrations.dto.StepExecutionRecordDto;
@@ -96,7 +95,6 @@ public class RegistrationFlowService {
   private final OrganizationService organizationService;
   private final ProcessEngine processEngine;
   private final RegistrationRepository registrationRepository;
-  private final EntityConfigService entityConfigService;
 
   /**
    * Constructs a new RegistrationFlowService.
@@ -112,7 +110,6 @@ public class RegistrationFlowService {
    * @param organizationService service for resolving organizations
    * @param processEngine engine that handle the processing of a flow
    * @param registrationRepository repository for persisting step results
-   * @param entityConfigService service for entity configuration
    */
   public RegistrationFlowService(final RegistrationStepRepository registrationStepRepository,
       final TaImRepository taImRepository, final FlowRepository flowRepository,
@@ -122,8 +119,7 @@ public class RegistrationFlowService {
       final TrustmarkIssuerRepository trustmarkIssuerRepository,
       final TrustMarkRepository trustMarkRepository,
       final OrganizationService organizationService, final ProcessEngine processEngine,
-      final RegistrationRepository registrationRepository,
-      final EntityConfigService entityConfigService) {
+      final RegistrationRepository registrationRepository) {
     this.registrationStepRepository = registrationStepRepository;
     this.taImRepository = taImRepository;
     this.flowRepository = flowRepository;
@@ -135,7 +131,6 @@ public class RegistrationFlowService {
     this.organizationService = organizationService;
     this.processEngine = processEngine;
     this.registrationRepository = registrationRepository;
-    this.entityConfigService = entityConfigService;
   }
 
   private Organization resolveOrganization(final OrganizationRecord organizationRecord) {
@@ -315,6 +310,8 @@ public class RegistrationFlowService {
             if (report.isPendingApproval()) {
               reg.setPendingStepIndex(report.steps().size() - 1);
               reg.setStatus(RegistrationStatus.PENDING_APPROVAL);
+              processContext.<net.minidev.json.JSONObject>get(ContextKey.REQUEST_METADATA)
+                  .ifPresent(m -> reg.setRequestMetadata(new java.util.HashMap<>(m)));
             } else {
               reg.setPendingStepIndex(null);
             }
@@ -380,9 +377,9 @@ public class RegistrationFlowService {
     if (reg.getMetadataPolicy() != null) {
       ctx.put(ContextKey.METADATA_POLICY, new net.minidev.json.JSONObject(reg.getMetadataPolicy()));
     }
-    this.entityConfigService.listHostedEntity(reg.getEntityId()).stream().findFirst()
-        .ifPresent(h -> ctx.put(ContextKey.REQUEST_METADATA,
-            new net.minidev.json.JSONObject(h.getMetadata())));
+    if (reg.getRequestMetadata() != null && !reg.getRequestMetadata().isEmpty()) {
+      ctx.put(ContextKey.REQUEST_METADATA, new net.minidev.json.JSONObject(reg.getRequestMetadata()));
+    }
     ctx.put(ContextKey.STEP_APPROVED, Boolean.TRUE);
 
     final List<StepDefinition> remaining = allSteps.subList(stepIndex, allSteps.size());
