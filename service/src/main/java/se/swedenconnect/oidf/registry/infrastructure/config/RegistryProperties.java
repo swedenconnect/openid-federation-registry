@@ -36,12 +36,15 @@ import java.util.regex.PatternSyntaxException;
  * @param federationServiceApi federation API settings.
  * @param instances InstanceProperties that is managed by this registry
  * @param entityConfigurationLoader EntityConfigurationLoader configuration
+ * @param clientRegistrationId OAuth2 client registration ID to use for GUI login. Required when more than one
+ *     ClientRegistration is configured.
  * @author Per Fredrik Plars
  */
 @ConfigurationProperties("openid.federation.registry")
 public record RegistryProperties(FederationAPIProperties federationServiceApi,
     List<InstanceProperties> instances,
-    EntityConfigurationLoaderProperties entityConfigurationLoader) {
+    EntityConfigurationLoaderProperties entityConfigurationLoader,
+    String clientRegistrationId) {
 
   /**
    * Validates the registry properties to ensure all required fields are properly configured.

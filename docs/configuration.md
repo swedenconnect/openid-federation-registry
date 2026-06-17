@@ -120,6 +120,10 @@ This document describes the configuration settings available for the OpenID Fede
 
 ## OpenID Federation Registry Settings
 
+| Setting                                             | Required | Example Value | Description                                                                                                                                                      |
+|-----------------------------------------------------|----------|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `openid.federation.registry.client-registration-id` | No*      | `my-idp`      | OAuth2 `ClientRegistration` ID used for GUI login. *Required when more than one `ClientRegistration` is configured — the service will refuse to start otherwise. |
+
 ### Federation Service API
 
 | Setting                                                                          | Example Value                           | Description                                                                                |

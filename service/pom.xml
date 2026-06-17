@@ -76,7 +76,13 @@
         <dependency>
             <groupId>org.mariadb.jdbc</groupId>
             <artifactId>mariadb-java-client</artifactId>
-            <version>3.5.2</version>
+            <version>3.5.8</version>
+        </dependency>
+
+        <dependency>
+            <groupId>se.swedenconnect.iam</groupId>
+            <artifactId>iam-security-spring-boot-starter</artifactId>
+            <version>0.9.0</version>
         </dependency>
 
         <dependency>
@@ -106,13 +112,13 @@
         </dependency>
 
         <dependency>
-            <groupId>com.nimbusds</groupId>
-            <artifactId>oauth2-oidc-sdk</artifactId>
+            <groupId>se.swedenconnect.security</groupId>
+            <artifactId>credentials-support-spring-boot-starter</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>se.swedenconnect.security</groupId>
-            <artifactId>credentials-support-spring-boot-starter</artifactId>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>oauth2-oidc-sdk</artifactId>
         </dependency>
 
         <dependency>
