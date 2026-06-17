@@ -77,7 +77,8 @@ class InstancePlacementServiceTest {
   }
 
   private RegistryProperties propertiesWith(RegistryProperties.InstanceProperties... instances) {
-    return new RegistryProperties(null, List.of(instances), null);
+    return new RegistryProperties(null, List.of(instances), null,
+        null);
   }
 
   private OrganizationRecord org(String orgNumber, String functionGroup) {
@@ -87,7 +88,8 @@ class InstancePlacementServiceTest {
   @Test
   @DisplayName("Empty instances list returns empty")
   void emptyInstancesReturnsEmpty() {
-    service = new InstancePlacementService(new RegistryProperties(null, List.of(), null), instanceRepository);
+    service = new InstancePlacementService(new RegistryProperties(null, List.of(),
+        null, null), instanceRepository);
 
     final Optional<Instance> result = service.resolveInstance(org("5566778899", null));
 

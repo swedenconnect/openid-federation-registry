@@ -38,7 +38,7 @@ function getAbsolutePath(path) {
     return base + normalized;
 }
 
-export const adminAuthenticatePath = getAbsolutePath('authenticate?reg=oidf-admin&continue=/');
+export const adminAuthenticatePath = getAbsolutePath('authenticate?continue=/');
 export const adminPath = getAbsolutePath('registry/v1/entities');
 export const userInfoPath = getAbsolutePath('userinfo');
 export const trustmarksPath = getAbsolutePath('registry/v1/trustmarks');
