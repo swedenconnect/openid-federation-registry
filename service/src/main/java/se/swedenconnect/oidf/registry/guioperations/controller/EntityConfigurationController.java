@@ -15,27 +15,38 @@
  */
 package se.swedenconnect.oidf.registry.guioperations.controller;
 
+import com.nimbusds.jose.Algorithm;
+import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
+import se.swedenconnect.oidf.registry.entity.model.EntityType;
+import se.swedenconnect.oidf.registry.guioperations.JwksKeysCacheService;
 import se.swedenconnect.oidf.registry.guioperations.OidfService;
 import se.swedenconnect.oidf.registry.guioperations.OidfServiceIntegration;
-import se.swedenconnect.oidf.registry.guioperations.dto.EntityConfigurationPingDto;
 import se.swedenconnect.oidf.registry.guioperations.dto.EntityConfigurationViewDto;
 import se.swedenconnect.oidf.registry.guioperations.dto.JwksLoadedDto;
+import se.swedenconnect.oidf.registry.guioperations.dto.SigningKeyDto;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Controller that handle operations on the entitystatmend for a specific entityid
@@ -50,17 +61,54 @@ public class EntityConfigurationController {
 
   final OidfServiceIntegration oidfServiceIntegration;
   final OidfService oidfService;
+  final JwksKeysCacheService jwksKeysCacheService;
 
   /**
    * Constructor
    *
    * @param oidfServiceIntegration OIDF integration
    * @param oidfService OIDF service
+   * @param jwksKeysCacheService cache service for signing keys
    */
   public EntityConfigurationController(final OidfServiceIntegration oidfServiceIntegration,
-      final OidfService oidfService) {
+      final OidfService oidfService,
+      final JwksKeysCacheService jwksKeysCacheService) {
     this.oidfServiceIntegration = oidfServiceIntegration;
     this.oidfService = oidfService;
+    this.jwksKeysCacheService = jwksKeysCacheService;
+  }
+
+  /**
+   * Returns available signing keys for the given entity type. Federation entities receive keys from the
+   * {@code federation} JWKS claim; hosted entities receive keys from the {@code hosted} claim.
+   *
+   * @param type FEDERATION_ENTITY or HOSTED_ENTITY
+   * @return list of available signing keys
+   */
+  @GetMapping(path = "/signing-keys")
+  public List<SigningKeyDto> listSigningKeys(
+      @RequestParam("type") final EntityType type,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    final List<JWK> keys = switch (type) {
+      case FEDERATION_ENTITY -> this.jwksKeysCacheService.getFederationKeys(organizationRecord);
+      case HOSTED_ENTITY -> this.jwksKeysCacheService.getHostedKeys(organizationRecord);
+      default -> List.of();
+    };
+    return keys.stream()
+        .filter(Objects::nonNull)
+        .collect(Collectors.toMap(
+            JWK::getKeyID,
+            k -> k,
+            (existing, duplicate) -> existing,
+            LinkedHashMap::new
+        ))
+        .values()
+        .stream()
+        .map(k -> new SigningKeyDto(
+            k.getKeyID(),
+            Optional.ofNullable(k.getAlgorithm()).map(Algorithm::getName).orElse(null),
+            k.getKeyType().getValue()))
+        .toList();
   }
 
   /**

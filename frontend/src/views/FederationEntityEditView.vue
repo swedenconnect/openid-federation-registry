@@ -62,6 +62,26 @@
             />
           </div>
 
+          <v-select
+              v-model="signingKeyId"
+              :items="signingKeys"
+              label="Signing Key"
+              hint="Select signing key (kid) from oidf-service federation keys"
+              persistent-hint
+              clearable
+              class="mb-4"
+          ></v-select>
+
+          <v-alert
+              v-if="signingKeyChanged"
+              type="warning"
+              variant="tonal"
+              class="mb-4"
+          >
+            Warning: Changing the signing key will affect how this federation entity's statements
+            are signed. Ensure the new key is correctly configured and distributed before saving.
+          </v-alert>
+
           <ListField
               v-model="crit"
               label="Crit"
@@ -532,6 +552,7 @@ import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useLoadJwks} from '@/api/composables/jwks';
+import {useSigningKeys} from '@/api/composables/signingKeys';
 import ListField from '@/components/ListField.vue';
 import EntityConfigurationViewer from '@/components/EntityConfigurationViewer.vue';
 import {
@@ -551,12 +572,19 @@ const router = useRouter();
 const {requestGet, requestPut, requestPost, requestDelete, loading, ok} = useRequest();
 const errorStore = useErrorStore();
 const {loadJwks: loadJwksFromApi, loading: loadingResolverJwks} = useLoadJwks();
+const {signingKeys, fetchSigningKeys} = useSigningKeys();
 
 const form = ref(null);
 const saving = ref(false);
 const entityId = ref(null);
 const entityIdentifier = ref('');
 const crit = ref([]);
+const signingKeyId = ref(null);
+const originalSigningKeyId = ref(null);
+const signingKeyChanged = computed(() =>
+    originalSigningKeyId.value !== null &&
+    signingKeyId.value !== originalSigningKeyId.value
+);
 const expandedPanels = ref([]);
 const savingModule = ref(null);
 const deletingModule = ref(null);
@@ -645,6 +673,8 @@ async function loadEntity() {
     const entity = response.federationEntity || response;
     entityIdentifier.value = entity.entityIdentifier || '';
     crit.value = entity.crit || [];
+    signingKeyId.value = entity.signingKeyId?.[0] || null;
+    originalSigningKeyId.value = signingKeyId.value;
 
     // Load existing modules
     if (response.trustAnchor) {
@@ -741,6 +771,7 @@ async function saveEntity() {
     const entityData = {
       entityIdentifier: entityIdentifier.value,
       crit: crit.value.filter(c => c && c.trim() !== ''),
+      signingKeyId: signingKeyId.value ? [signingKeyId.value] : [],
     };
 
     await requestPut(federationEntityPath(entityId.value), entityData);
@@ -958,8 +989,8 @@ function cancel() {
   router.push('/');
 }
 
-onMounted(() => {
-  loadEntity();
+onMounted(async () => {
+  await Promise.all([loadEntity(), fetchSigningKeys('FEDERATION_ENTITY')]);
 });
 </script>
 

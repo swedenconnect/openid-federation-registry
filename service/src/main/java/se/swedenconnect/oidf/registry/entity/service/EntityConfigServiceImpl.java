@@ -16,6 +16,7 @@
 
 package se.swedenconnect.oidf.registry.entity.service;
 
+import com.nimbusds.jose.jwk.JWK;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.entity.dto.EntityWithModulesDto;
@@ -27,6 +28,7 @@ import se.swedenconnect.oidf.registry.entity.mapper.EntityToDtoMapper;
 import se.swedenconnect.oidf.registry.entity.model.EntityType;
 import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.entity.repository.EntityRepository;
+import se.swedenconnect.oidf.registry.guioperations.JwksKeysCacheService;
 import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
@@ -52,6 +54,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   private final OrganizationService organizationService;
   private final RegistryAuditService auditService;
   private final SubordinateService subordinateService;
+  private final JwksKeysCacheService jwksKeysCacheService;
 
   /**
    * Constructor.
@@ -60,15 +63,18 @@ public class EntityConfigServiceImpl implements EntityConfigService {
    * @param organizationService the organization service
    * @param subordinateService the subordinate service
    * @param auditService the audit service
+   * @param jwksKeysCacheService the JWKS key cache service for signing key validation
    */
   public EntityConfigServiceImpl(final EntityRepository entityRepository,
       final OrganizationService organizationService,
       final RegistryAuditService auditService,
-      final SubordinateService subordinateService) {
+      final SubordinateService subordinateService,
+      final JwksKeysCacheService jwksKeysCacheService) {
     this.entityRepository = entityRepository;
     this.organizationService = organizationService;
     this.auditService = auditService;
     this.subordinateService = subordinateService;
+    this.jwksKeysCacheService = jwksKeysCacheService;
   }
 
   private Organization resolveOrganization(final OrganizationRecord organizationRecord) {
@@ -100,6 +106,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   public FederationEntityDto createFederationEntity(final OrganizationRecord organizationRecord,
       final UUID id, final FederationEntityDto input) {
     ValidateDto.init(organizationRecord).validate(input);
+    this.validateSigningKeyIds(input.getSigningKeyId(), true, organizationRecord);
 
     final Organization org = this.resolveOrganization(organizationRecord);
 
@@ -124,6 +131,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   public FederationEntityDto updateFederationEntity(final OrganizationRecord organizationRecord,
       final UUID id, final FederationEntityDto input) {
     ValidateDto.init(organizationRecord).validate(input);
+    this.validateSigningKeyIds(input.getSigningKeyId(), true, organizationRecord);
 
     final FederationEntity existing = this.findEntityOrThrow(organizationRecord, id, EntityType.FEDERATION_ENTITY);
     final FederationEntityDto oldDto = EntityToDtoMapper.toFederationEntity(existing, false);
@@ -191,6 +199,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   public HostedEntityDto createHostedEntity(final OrganizationRecord organizationRecord,
       final UUID id, final HostedEntityDto input) {
     ValidateDto.init(organizationRecord).validate(input);
+    this.validateSigningKeyIds(input.getSigningKeyId(), false, organizationRecord);
 
     final Organization org = this.resolveOrganization(organizationRecord);
     final FederationEntity entity = DtoToEntityMapper.toEntity(
@@ -215,6 +224,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   public HostedEntityDto updateHostedEntity(final OrganizationRecord organizationRecord,
       final UUID id, final HostedEntityDto input) {
     ValidateDto.init(organizationRecord).validate(input);
+    this.validateSigningKeyIds(input.getSigningKeyId(), false, organizationRecord);
 
     final FederationEntity existing = this.findEntityOrThrow(
         organizationRecord, id, EntityType.HOSTED_ENTITY);
@@ -349,6 +359,39 @@ public class EntityConfigServiceImpl implements EntityConfigService {
 
     return dto;
 
+  }
+
+  /**
+   * Validates that all provided signing key IDs exist in the allowed key set for the entity type. Federation entities
+   * may only use federation keys; hosted entities may only use hosted keys. If {@code signingKeyIds} is null or empty
+   * the check is skipped (key selection is optional).
+   *
+   * @param signingKeyIds the key IDs to validate
+   * @param isFederation {@code true} for federation entities, {@code false} for hosted entities
+   * @throws RegistryServerException if any key ID is not found in the allowed set
+   */
+  private void validateSigningKeyIds(final List<String> signingKeyIds, final boolean isFederation,
+      final OrganizationRecord organizationRecord) {
+    if (signingKeyIds == null || signingKeyIds.isEmpty()) {
+      return;
+    }
+    final List<String> validKids = (isFederation
+        ? this.jwksKeysCacheService.getFederationKeys(organizationRecord)
+        : this.jwksKeysCacheService.getHostedKeys(organizationRecord))
+        .stream()
+        .map(JWK::getKeyID)
+        .toList();
+
+    final List<String> invalidKids = signingKeyIds.stream()
+        .filter(kid -> !validKids.contains(kid))
+        .toList();
+
+    if (!invalidKids.isEmpty()) {
+      final String entityTypeName = isFederation ? "federation" : "hosted";
+      throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
+          "Signing key ID(s) %s are not valid %s keys. Valid kids: %s"
+              .formatted(invalidKids, entityTypeName, validKids));
+    }
   }
 
   private EntityType parseEntityType(final String type) {

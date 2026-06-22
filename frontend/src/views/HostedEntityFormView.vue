@@ -54,6 +54,26 @@
             />
           </div>
 
+          <v-select
+              v-model="signingKeyId"
+              :items="signingKeys"
+              label="Signing Key"
+              hint="Select signing key (kid) from oidf-service hosted keys"
+              persistent-hint
+              clearable
+              class="mb-4"
+          ></v-select>
+
+          <v-alert
+              v-if="signingKeyChanged"
+              type="warning"
+              variant="tonal"
+              class="mb-4"
+          >
+            Warning: Changing the signing key will affect how this hosted entity's statements
+            are signed. Ensure the new key is correctly configured and distributed before saving.
+          </v-alert>
+
           <v-textarea
               v-model="metadata"
               label="Metadata"
@@ -106,6 +126,7 @@ import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
+import {useSigningKeys} from '@/api/composables/signingKeys';
 import TrustmarkSourcesField from '@/components/TrustmarkSourcesField.vue';
 import EntityConfigurationViewer from '@/components/EntityConfigurationViewer.vue';
 import {hostedEntitiesPath, hostedEntityPath} from '@/config/path';
@@ -115,12 +136,21 @@ const router = useRouter();
 const {requestGet, requestPost, requestPut, loading, ok} = useRequest();
 const errorStore = useErrorStore();
 
+const {signingKeys, fetchSigningKeys} = useSigningKeys();
+
 const form = ref(null);
 const saving = ref(false);
 const entityId = ref(null);
 const entityIdentifier = ref('');
 const metadata = ref('{}');
 const trustmarkSources = ref([]);
+const signingKeyId = ref(null);
+const originalSigningKeyId = ref(null);
+const signingKeyChanged = computed(() =>
+    isEdit.value &&
+    originalSigningKeyId.value !== null &&
+    signingKeyId.value !== originalSigningKeyId.value
+);
 
 const isEdit = computed(() => !!route.params.id);
 
@@ -145,6 +175,8 @@ async function loadEntity() {
     entityIdentifier.value = response.entityIdentifier || '';
     metadata.value = JSON.stringify(response.metadata || {}, null, 2);
     trustmarkSources.value = response.trustMarkSources || response.trustmarkSources || [];
+    signingKeyId.value = response.signingKeyId?.[0] || null;
+    originalSigningKeyId.value = signingKeyId.value;
   }
 }
 
@@ -169,6 +201,7 @@ async function saveEntity() {
       entityIdentifier: entityIdentifier.value,
       metadata: parsedMetadata,
       trustMarkSources: trustmarkSources.value.filter(s => s.trustMarkIssuer || s.trustmarkId),
+      signingKeyId: signingKeyId.value ? [signingKeyId.value] : [],
     };
 
     if (isEdit.value) {
@@ -191,8 +224,9 @@ function cancel() {
   router.push('/');
 }
 
-onMounted(() => {
+onMounted(async () => {
   errorStore.clearError();
+  await fetchSigningKeys('HOSTED_ENTITY');
   if (isEdit.value) {
     loadEntity();
   }

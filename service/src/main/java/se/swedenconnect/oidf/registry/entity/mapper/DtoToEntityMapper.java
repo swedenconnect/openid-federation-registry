@@ -80,6 +80,7 @@ public final class DtoToEntityMapper {
     entity.setSubject(dto.getEntityIdentifier());
     entity.setCrit(dto.getCrit());
     entity.setAuthorityhints(dto.getAuthorityhints());
+    entity.setSigningKeyIds(dto.getSigningKeyId());
     return entity;
   }
 
@@ -92,9 +93,9 @@ public final class DtoToEntityMapper {
   public static void updateEntity(final FederationEntity entity, final HostedEntityDto dto) {
     entity.setIssuer(dto.getEntityIdentifier());
     entity.setSubject(dto.getEntityIdentifier());
-    // Serialize trustMarkSources to JSON string
     entity.setTrustmarksources(writeTrustMarkSourcesToJson(dto.getTrustMarkSources()));
     entity.setMetadata(dto.getMetadata());
+    entity.setSigningKeyIds(dto.getSigningKeyId());
   }
 
   /**
@@ -108,6 +109,7 @@ public final class DtoToEntityMapper {
     entity.setSubject(dto.getEntityIdentifier());
     entity.setCrit(dto.getCrit());
     entity.setAuthorityhints(dto.getAuthorityhints());
+    entity.setSigningKeyIds(dto.getSigningKeyId());
   }
 
   /**

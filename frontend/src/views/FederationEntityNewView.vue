@@ -34,6 +34,16 @@
               class="mb-4"
           ></v-text-field>
 
+          <v-select
+              v-model="signingKeyId"
+              :items="signingKeys"
+              label="Signing Key"
+              hint="Select signing key (kid) from oidf-service federation keys"
+              persistent-hint
+              clearable
+              class="mb-4"
+          ></v-select>
+
           <ListField
               id="crit"
               v-model="crit"
@@ -75,6 +85,7 @@ import {useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
+import {useSigningKeys} from '@/api/composables/signingKeys';
 import ListField from '@/components/ListField.vue';
 import {federationEntitiesPath} from '@/config/path';
 
@@ -83,10 +94,13 @@ const {requestPost, ok} = useRequest();
 const errorStore = useErrorStore();
 const userStore = useUserStore();
 
+const {signingKeys, fetchSigningKeys} = useSigningKeys();
+
 const form = ref(null);
 const saving = ref(false);
 const entityIdentifier = ref('');
 const crit = ref([]);
+const signingKeyId = ref(null);
 
 const rules = {
   required: (value) => !!value || 'This field is required.',
@@ -103,6 +117,7 @@ async function saveEntity() {
     const entityData = {
       entityIdentifier: entityIdentifier.value,
       crit: crit.value.filter(c => c && c.trim() !== ''),
+      signingKeyId: signingKeyId.value ? [signingKeyId.value] : [],
     };
 
     const response = await requestPost(federationEntitiesPath, entityData);
@@ -122,11 +137,12 @@ function cancel() {
   router.push('/');
 }
 
-onMounted(() => {
+onMounted(async () => {
   errorStore.clearError();
   if (userStore.entityPrefix) {
     entityIdentifier.value = userStore.entityPrefix;
   }
+  await fetchSigningKeys('FEDERATION_ENTITY');
 });
 </script>
 

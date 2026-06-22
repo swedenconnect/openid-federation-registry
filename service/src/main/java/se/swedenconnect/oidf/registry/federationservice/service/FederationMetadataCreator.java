@@ -85,6 +85,9 @@ public class FederationMetadataCreator {
               new TrustMarkSourceProperty(new EntityID(trustmarkSourceDto.getTrustMarkIssuer()),
                   trustmarkSourceDto.getTrustmarkId())).toList());
       entityData.setAuthorityHints(this.authorityHint(entityEntity));
+      Optional.ofNullable(dto.getSigningKeyId())
+          .map(ids -> String.join(",", ids))
+          .ifPresent(entityData::setJwks);
         return entityData;
       }
     if (entityType == EntityType.FEDERATION_ENTITY) {
@@ -95,6 +98,9 @@ public class FederationMetadataCreator {
         entityData.setEntityIdentifier(new EntityID(dto.getEntityIdentifier()));
         entityData.setCrit(dto.getCrit());
         entityData.setMetadata(Map.of("federation_entity", this.createFederationMetadata(entityEntity)));
+      Optional.ofNullable(dto.getSigningKeyId())
+          .map(ids -> String.join(",", ids))
+          .ifPresent(entityData::setJwks);
       entityData.setAuthorityHints(this.authorityHint(entityEntity));
 
       return entityData;
