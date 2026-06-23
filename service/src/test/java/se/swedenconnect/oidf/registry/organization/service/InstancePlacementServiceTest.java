@@ -32,8 +32,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -182,5 +184,79 @@ class InstancePlacementServiceTest {
     final Optional<Instance> result = service.resolveInstance(org("5566778899", null));
 
     assertThat(result).isEmpty();
+  }
+
+  // -------------------------------------------------------------------------
+  // resolveBaseUrl
+  // -------------------------------------------------------------------------
+
+  @Test
+  @DisplayName("resolveBaseUrl returns base URL for org number match")
+  void resolveBaseUrl_orgNumberMatch() {
+    service = new InstancePlacementService(
+        propertiesWith(orgNumberInstance(instanceId, "5566778899")), instanceRepository);
+
+    final Optional<URI> result = service.resolveBaseUrl(org("5566778899", null));
+
+    assertThat(result).contains(TEST_BASE_URL);
+    verify(instanceRepository, never()).findById(any());
+  }
+
+  @Test
+  @DisplayName("resolveBaseUrl returns base URL via function group fallback")
+  void resolveBaseUrl_functionGroupMatch() {
+    service = new InstancePlacementService(
+        propertiesWith(functionGroupInstance(instanceId, "digg-admin")), instanceRepository);
+
+    final Optional<URI> result = service.resolveBaseUrl(org("9999999999", "digg-admin"));
+
+    assertThat(result).contains(TEST_BASE_URL);
+    verify(instanceRepository, never()).findById(any());
+  }
+
+  @Test
+  @DisplayName("resolveBaseUrl returns default instance base URL when no explicit match")
+  void resolveBaseUrl_fallsBackToDefault() {
+    final URI defaultUrl = URI.create("https://default.example.se/oidf");
+    final RegistryProperties.InstanceProperties defaultProp =
+        new RegistryProperties.InstanceProperties(defaultInstanceId, "Default", defaultUrl, null,
+            new RegistryProperties.InstanceMatcherProperties(List.of(), true, List.of()));
+    service = new InstancePlacementService(propertiesWith(defaultProp), instanceRepository);
+
+    final Optional<URI> result = service.resolveBaseUrl(org("0000000000", null));
+
+    assertThat(result).contains(defaultUrl);
+  }
+
+  @Test
+  @DisplayName("resolveBaseUrl returns empty when no instance matches and no default configured")
+  void resolveBaseUrl_noMatchReturnsEmpty() {
+    service = new InstancePlacementService(
+        propertiesWith(orgNumberInstance(instanceId, "5566778899")), instanceRepository);
+
+    final Optional<URI> result = service.resolveBaseUrl(org("0000000000", null));
+
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  @DisplayName("resolveBaseUrl returns empty when instance list is empty")
+  void resolveBaseUrl_emptyInstancesReturnsEmpty() {
+    service = new InstancePlacementService(new RegistryProperties(null, List.of(), null), instanceRepository);
+
+    final Optional<URI> result = service.resolveBaseUrl(org("5566778899", null));
+
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  @DisplayName("resolveBaseUrl does not access the database")
+  void resolveBaseUrl_noDatabaseAccess() {
+    service = new InstancePlacementService(
+        propertiesWith(orgNumberInstance(instanceId, "5566778899")), instanceRepository);
+
+    service.resolveBaseUrl(org("5566778899", null));
+
+    verifyNoInteractions(instanceRepository);
   }
 }

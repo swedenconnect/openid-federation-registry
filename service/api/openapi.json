@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "OpenID Federation Entity Registry API",
+    "title": "OpenID Federation Registry API",
     "description": "REST API for managing OpenID Federation entities, policies, modules, and trust marks. This API provides endpoints for creating, reading, updating, and deleting federation entities, policies, trust anchors, resolvers, trust marks, and trust mark subjects.",
     "contact": {
       "name": "Sweden Connect",
@@ -2059,6 +2059,43 @@
         }
       }
     },
+    "/registry/v1/entityconfiguration/signing-keys": {
+      "get": {
+        "tags": [
+          "EntityConfigurationController"
+        ],
+        "operationId": "listSigningKeys",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "FEDERATION_ENTITY",
+                "HOSTED_ENTITY"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SigningKeyDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/registry/v1/entities": {
       "get": {
         "tags": [
@@ -2887,6 +2924,13 @@
             "items": {
               "type": "string"
             }
+          },
+          "signingKeyId": {
+            "type": "array",
+            "description": "Key reference to signkeys from oidf-service",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -2929,6 +2973,13 @@
             "type": "array",
             "description": "authorityhints",
             "example": "An array of strings representing the Entity Identifiers of Intermediate Entities or Trust Anchors that are Immediate Superiors of the Entity. the set of Claims specified for use in this type of JWT",
+            "items": {
+              "type": "string"
+            }
+          },
+          "signingKeyId": {
+            "type": "array",
+            "description": "Key reference to signkeys from oidf-service",
             "items": {
               "type": "string"
             }
@@ -3061,6 +3112,11 @@
             "items": {
               "$ref": "#/components/schemas/TrustmarkRequest"
             }
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "FederationMetadata"
           }
         }
       },
@@ -3364,6 +3420,20 @@
           }
         }
       },
+      "SigningKeyDto": {
+        "type": "object",
+        "properties": {
+          "kid": {
+            "type": "string"
+          },
+          "alg": {
+            "type": "string"
+          },
+          "kty": {
+            "type": "string"
+          }
+        }
+      },
       "EntityWithModules": {
         "type": "object",
         "properties": {
@@ -3414,6 +3484,13 @@
                 "type": "array",
                 "description": "authorityhints",
                 "example": "An array of strings representing the Entity Identifiers of Intermediate Entities or Trust Anchors that are Immediate Superiors of the Entity. the set of Claims specified for use in this type of JWT",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "signingKeyId": {
+                "type": "array",
+                "description": "Key reference to signkeys from oidf-service",
                 "items": {
                   "type": "string"
                 }

@@ -59,6 +59,7 @@ public final class EntityToDtoMapper {
     dto.setEntityIdentifier(entity.getIssuer());
     dto.setAuthorityhints(entity.getAuthorityhints());
     dto.setCrit(entity.getCrit());
+    dto.setSigningKeyId(entity.getSigningKeyIds());
 
     if (!includeModules) {
       return dto;
@@ -99,6 +100,7 @@ public final class EntityToDtoMapper {
     dto.setCrit(Optional.ofNullable(entity.getCrit()).map(ArrayList::new).orElse(new ArrayList<>(1)));
     dto.setTrustMarkSources(readTrustMarkSourcesFromJson(entity.getTrustmarksources()));
     dto.setAuthorityhints(entity.getAuthorityhints());
+    dto.setSigningKeyId(entity.getSigningKeyIds());
 
     // Calculation of ec_location will be made if EntityIdentifier differ from entity prefix.
     // Example EntityIdentifier is set to http://www.telia.com/oidf but the entityprefix is set to http://www.sc.se

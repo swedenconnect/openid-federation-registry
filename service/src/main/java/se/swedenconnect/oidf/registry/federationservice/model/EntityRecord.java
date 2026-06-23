@@ -15,7 +15,6 @@
  */
 package se.swedenconnect.oidf.registry.federationservice.model;
 
-import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.shaded.gson.ExclusionStrategy;
 import com.nimbusds.jose.shaded.gson.FieldAttributes;
 import com.nimbusds.jose.shaded.gson.annotations.SerializedName;
@@ -66,8 +65,9 @@ public class EntityRecord implements Serializable {
   private String ecLocation;
   @SerializedName("authority-hints")
   private List<String> authorityHints;
+  // This is a csv list of key identifyers: federation:sign-key-1,federation:sign-key-2
   @SerializedName("jwks")
-  private JWKSet jwks;
+  private String jwks;
   @SerializedName("crit")
   private List<String> crit;
 }

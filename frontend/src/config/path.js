@@ -86,3 +86,4 @@ export const registrationPublicFlowsPath = getAbsolutePath('registration/v1/flow
 export const registrationTriggerPath = (joinId) => getAbsolutePath(`registration/v1/${joinId}`);
 
 export const modulesPath = getAbsolutePath('registry/v1/modules');
+export const signingKeysPath = (type) => getAbsolutePath(`registry/v1/entityconfiguration/signing-keys?type=${type}`);

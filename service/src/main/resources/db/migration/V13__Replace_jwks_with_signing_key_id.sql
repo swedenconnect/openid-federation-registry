@@ -14,9 +14,7 @@
  *  limitations under the License.
  */
 
-/**
- * Distributed tracing support. W3C traceparent propagated via micrometer-tracing + OpenTelemetry.
- *
- * @author Per Fredrik Plars
- */
-package se.swedenconnect.oidf.registry.infrastructure.tracing;
+ALTER TABLE entities
+    DROP COLUMN jwks;
+ALTER TABLE entities
+    ADD COLUMN signing_key_ids VARCHAR(255);
