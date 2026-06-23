@@ -173,16 +173,16 @@
                       :disabled="savingModule || deletingModule"
                       class="mr-2"
                   >
-                    Delete
+                    Remove
                   </v-btn>
                   <v-btn
-                      id="btn-save-trustanchor"
+                      id="btn-add-trustanchor"
                       color="primary"
                       @click="saveModule('trustanchor')"
                       :loading="savingModule === 'trustanchor'"
                       :disabled="savingModule || deletingModule"
                   >
-                    Save
+                    Add
                   </v-btn>
                 </v-card-actions>
               </v-form>
@@ -287,16 +287,16 @@
                       :disabled="savingModule || deletingModule"
                       class="mr-2"
                   >
-                    Delete
+                    Remove
                   </v-btn>
                   <v-btn
-                      id="btn-save-intermediate"
+                      id="btn-add-intermediate"
                       color="primary"
                       @click="saveModule('intermediate')"
                       :loading="savingModule === 'intermediate'"
                       :disabled="savingModule || deletingModule"
                   >
-                    Save
+                    Add
                   </v-btn>
                 </v-card-actions>
               </v-form>
@@ -404,16 +404,16 @@
                       :disabled="savingModule || deletingModule"
                       class="mr-2"
                   >
-                    Delete
+                    Remove
                   </v-btn>
                   <v-btn
-                      id="btn-save-resolver"
+                      id="btn-add-resolver"
                       color="primary"
                       @click="saveModule('resolver')"
                       :loading="savingModule === 'resolver'"
                       :disabled="savingModule || deletingModule"
                   >
-                    Save
+                    Add
                   </v-btn>
                 </v-card-actions>
               </v-form>
@@ -471,16 +471,16 @@
                       :disabled="savingModule || deletingModule"
                       class="mr-2"
                   >
-                    Delete
+                    Remove
                   </v-btn>
                   <v-btn
-                      id="btn-save-trustmarkissuer"
+                      id="btn-add-trustmarkissuer"
                       color="primary"
                       @click="saveModule('trustmarkissuer')"
                       :loading="savingModule === 'trustmarkissuer'"
                       :disabled="savingModule || deletingModule"
                   >
-                    Save
+                    Add
                   </v-btn>
                 </v-card-actions>
               </v-form>
