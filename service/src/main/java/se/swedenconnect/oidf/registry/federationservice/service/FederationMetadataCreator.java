@@ -86,6 +86,7 @@ public class FederationMetadataCreator {
                   trustmarkSourceDto.getTrustmarkId())).toList());
       entityData.setAuthorityHints(this.authorityHint(entityEntity));
       Optional.ofNullable(dto.getSigningKeyId())
+          .filter(ids -> !ids.isEmpty())
           .map(ids -> String.join(",", ids))
           .ifPresent(entityData::setJwks);
         return entityData;
@@ -99,6 +100,7 @@ public class FederationMetadataCreator {
         entityData.setCrit(dto.getCrit());
         entityData.setMetadata(Map.of("federation_entity", this.createFederationMetadata(entityEntity)));
       Optional.ofNullable(dto.getSigningKeyId())
+          .filter(ids -> !ids.isEmpty())
           .map(ids -> String.join(",", ids))
           .ifPresent(entityData::setJwks);
       entityData.setAuthorityHints(this.authorityHint(entityEntity));

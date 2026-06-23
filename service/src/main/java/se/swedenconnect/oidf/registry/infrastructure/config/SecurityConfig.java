@@ -110,7 +110,7 @@ public class SecurityConfig {
             .hasAuthority("SCOPE_write")
             .requestMatchers(HttpMethod.DELETE, "/registry/v1/entities/federation/**")
             .hasAuthority("SCOPE_write")
-            // FederaionModules
+            // FederationModules
             .requestMatchers(HttpMethod.GET, "/registry/v1/modules/**")
             .hasAuthority("SCOPE_read")
             .requestMatchers(HttpMethod.POST, "/registry/v1/modules/**")
