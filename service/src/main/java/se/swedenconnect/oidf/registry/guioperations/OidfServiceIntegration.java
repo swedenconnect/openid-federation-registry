@@ -33,10 +33,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
+import se.swedenconnect.oidf.registry.guioperations.dto.JwksPayloadDto;
 import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
 
 import java.net.URI;
 import java.text.ParseException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -143,6 +145,119 @@ public class OidfServiceIntegration {
     }
     catch (final com.nimbusds.oauth2.sdk.ParseException | JOSEException | ParseException e) {
       throw new IllegalArgumentException(e);
+    }
+  }
+
+  /**
+   * Fetches and verifies the signed JWKS JWT from the entity's /jwks endpoint. The signature is verified using the
+   * federation keys from the entity's self-signed entity configuration. Parses directly from the raw JWT payload to
+   * handle the structure: {@code {"federation": {"keys": [...]}, "hosted": {"keys": [...]}, "name": {...}}}
+   *
+   * @param entityId the entity ID whose /jwks endpoint to fetch
+   * @return parsed and verified JWKS payload DTO
+   */
+  public JwksPayloadDto fetchServiceKeys(final EntityID entityId) {
+    final URI jwksUri = UriComponentsBuilder.fromUri(entityId.toURI())
+        .path("/jwks")
+        .build()
+        .toUri();
+
+    log.debug("Fetching service keys from: {}", jwksUri);
+
+    try {
+      final ResponseEntity<String> response = this.restClient.get()
+          .uri(jwksUri)
+          .retrieve()
+          .toEntity(String.class);
+      final String responseBody = response.getBody();
+      if (responseBody == null) {
+        throw new IllegalArgumentException("Empty response from /jwks endpoint: " + jwksUri);
+      }
+
+      final SignedJWT signedJWT = SignedJWT.parse(responseBody);
+      final JWSHeader header = signedJWT.getHeader();
+
+      if (header.getType() == null || !"JWT".equals(header.getType().getType())) {
+        throw new IllegalStateException("Unexpected typ in JWKS JWT, expected JWT but got: " + header.getType());
+      }
+
+      // Parse the payload first to extract the keys embedded in the JWT
+      final Map<String, Object> payload = signedJWT.getPayload().toJSONObject();
+
+      JWKSet federationJwks = new JWKSet();
+      final Object fedClaim = payload.get("federation");
+      if (fedClaim instanceof Map<?, ?>) {
+        try {
+          @SuppressWarnings("unchecked")
+          final Map<String, Object> fedMap = (Map<String, Object>) fedClaim;
+          federationJwks = JWKSet.parse(fedMap);
+        }
+        catch (final ParseException e) {
+          log.warn("Failed to parse federation JWKS from {}: {}", jwksUri, e.getMessage());
+        }
+      }
+
+      JWKSet hostedJwks = new JWKSet();
+      final Object hostedClaim = payload.get("hosted");
+      if (hostedClaim instanceof Map<?, ?>) {
+        try {
+          @SuppressWarnings("unchecked")
+          final Map<String, Object> hostedMap = (Map<String, Object>) hostedClaim;
+          hostedJwks = JWKSet.parse(hostedMap);
+        }
+        catch (final ParseException e) {
+          log.warn("Failed to parse hosted JWKS from {}: {}", jwksUri, e.getMessage());
+        }
+      }
+
+      // Verify signature using the federation keys embedded in the JWT payload
+      final JWKSelector selector = new JWKSelector(new JWKMatcher.Builder()
+          .keyID(header.getKeyID())
+          .build());
+
+      final Optional<JWK> signingKey = selector.select(federationJwks).stream().findFirst();
+      if (signingKey.isEmpty()) {
+        throw new IllegalArgumentException(
+            "No key with kid '%s' found in federation JWKS payload".formatted(header.getKeyID()));
+      }
+
+      final JWSVerifier verifier = switch (signingKey.get().getKeyType().getValue()) {
+        case "EC" -> new ECDSAVerifier(signingKey.get().toECKey());
+        case "RSA" -> new RSASSAVerifier(signingKey.get().toRSAKey());
+        case null, default ->
+            throw new IllegalArgumentException("Unsupported key type: " + signingKey.get().getKeyType());
+      };
+
+      if (!signedJWT.verify(verifier)) {
+        throw new IllegalStateException("Signature verification failed for JWKS JWT from: " + jwksUri);
+      }
+
+      @SuppressWarnings("unchecked")
+      final Map<String, Object> nameClaim = (Map<String, Object>) payload.get("name");
+      final JwksPayloadDto.KeyNames names;
+      if (nameClaim != null) {
+        @SuppressWarnings("unchecked")
+        final List<String> fedNames = (List<String>) nameClaim.getOrDefault("federation", List.of());
+        @SuppressWarnings("unchecked")
+        final List<String> hostedNames = (List<String>) nameClaim.getOrDefault("hosted", List.of());
+        names = new JwksPayloadDto.KeyNames(fedNames, hostedNames);
+      }
+      else {
+        names = JwksPayloadDto.KeyNames.empty();
+      }
+
+      final JwksPayloadDto result = new JwksPayloadDto(federationJwks, hostedJwks, names);
+
+      // Emit audit event with all loaded key IDs
+      final List<String> allKids = new java.util.ArrayList<>();
+      result.federation().getKeys().stream().map(JWK::getKeyID).forEach(allKids::add);
+      result.hosted().getKeys().stream().map(JWK::getKeyID).forEach(allKids::add);
+      this.auditLogger.loadedServiceKeys(jwksUri, allKids);
+
+      return result;
+    }
+    catch (final ParseException | JOSEException e) {
+      throw new IllegalArgumentException("Failed to parse or verify JWKS JWT from: " + jwksUri, e);
     }
   }
 

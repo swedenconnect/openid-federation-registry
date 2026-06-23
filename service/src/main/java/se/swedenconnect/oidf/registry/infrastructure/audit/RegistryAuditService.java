@@ -361,4 +361,12 @@ public interface RegistryAuditService {
    * @param entityConfigurationLocation URL for this entityconfiguration
    */
   void resolveJwks(URI entityConfigurationLocation);
+
+  /**
+   * Triggered when service keys have been successfully loaded from the oidf-service /jwks endpoint.
+   *
+   * @param jwksUri URL from which the service keys were loaded
+   * @param kids key IDs (kid) found in the signed JWT response
+   */
+  void loadedServiceKeys(URI jwksUri, java.util.List<String> kids);
 }

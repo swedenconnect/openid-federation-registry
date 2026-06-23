@@ -37,7 +37,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
-import java.util.stream.Stream;
 
 
 /**
@@ -86,21 +85,7 @@ public class JwtTestUtils {
   public String createJwt(OrganisationType orgType) {
     try {
 
-      final String scopes = Stream.of("http://registry.swedenconnect.se/policies/write",
-              "http://registry.swedenconnect.se/policies/read",
-              "http://registry.swedenconnect.se/modules/read",
-              "http://registry.swedenconnect.se/modules/write",
-              "http://registry.swedenconnect.se/entity/hosted/read",
-              "http://registry.swedenconnect.se/entity/hosted/write",
-              "http://registry.swedenconnect.se/trustmarksubjects/write",
-              "http://registry.swedenconnect.se/trustmarksubjects/read",
-              "http://registry.swedenconnect.se/trustmarks/read",
-              "http://registry.swedenconnect.se/trustmarks/write",
-              "http://registry.swedenconnect.se/subordinates/read",
-              "http://registry.swedenconnect.se/subordinates/write",
-              "http://registry.swedenconnect.se/registration/read",
-              "http://registry.swedenconnect.se/registration/write")
-          .reduce("", (s, s2) -> s + " " + s2);
+      final String scopes = "read write";
 
       final JWTClaimsSet claims = new com.nimbusds.jwt.JWTClaimsSet.Builder()
           .subject("test-user-subject")

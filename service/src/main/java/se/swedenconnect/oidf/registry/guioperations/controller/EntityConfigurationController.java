@@ -18,22 +18,27 @@ package se.swedenconnect.oidf.registry.guioperations.controller;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
-import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
+import se.swedenconnect.oidf.registry.entity.model.EntityType;
+import se.swedenconnect.oidf.registry.guioperations.JwksKeysCacheService;
 import se.swedenconnect.oidf.registry.guioperations.OidfService;
 import se.swedenconnect.oidf.registry.guioperations.OidfServiceIntegration;
-import se.swedenconnect.oidf.registry.guioperations.dto.EntityConfigurationPingDto;
 import se.swedenconnect.oidf.registry.guioperations.dto.EntityConfigurationViewDto;
 import se.swedenconnect.oidf.registry.guioperations.dto.JwksLoadedDto;
+import se.swedenconnect.oidf.registry.guioperations.dto.JwksPayloadDto;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 
 import java.util.List;
 
@@ -50,17 +55,54 @@ public class EntityConfigurationController {
 
   final OidfServiceIntegration oidfServiceIntegration;
   final OidfService oidfService;
+  final JwksKeysCacheService jwksKeysCacheService;
 
   /**
    * Constructor
    *
    * @param oidfServiceIntegration OIDF integration
    * @param oidfService OIDF service
+   * @param jwksKeysCacheService cache service for signing keys
    */
   public EntityConfigurationController(final OidfServiceIntegration oidfServiceIntegration,
-      final OidfService oidfService) {
+      final OidfService oidfService,
+      final JwksKeysCacheService jwksKeysCacheService) {
     this.oidfServiceIntegration = oidfServiceIntegration;
     this.oidfService = oidfService;
+    this.jwksKeysCacheService = jwksKeysCacheService;
+  }
+
+  /**
+   * Returns available signing keys for the given entity type. Federation entities receive keys from the
+   * {@code federation} JWKS claim; hosted entities receive keys from the {@code hosted} claim.
+   *
+   * @param type               FEDERATION_ENTITY or HOSTED_ENTITY
+   * @param organizationRecord the authenticated organisation used to resolve the correct instance
+   * @return list of available signing keys
+   */
+  /**
+   * Returns the available signing key names for the given entity type, sourced from the {@code name} claim of the
+   * oidf-service {@code /jwks} JWT.
+   *
+   * @param type FEDERATION_ENTITY or HOSTED_ENTITY
+   * @param organizationRecord the authenticated organisation used to resolve the correct instance
+   * @return ordered list of signing key names
+   */
+  @GetMapping(path = "/signing-keys")
+  public List<String> listSigningKeys(
+      @RequestParam("type") final EntityType type,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return this.jwksKeysCacheService.getPayload(organizationRecord)
+        .map(payload -> this.namesForType(type, payload))
+        .orElse(List.of());
+  }
+
+  private List<String> namesForType(final EntityType type, final JwksPayloadDto payload) {
+    return switch (type) {
+      case FEDERATION_ENTITY -> payload.names().federation();
+      case HOSTED_ENTITY -> payload.names().hosted();
+      default -> List.of();
+    };
   }
 
   /**

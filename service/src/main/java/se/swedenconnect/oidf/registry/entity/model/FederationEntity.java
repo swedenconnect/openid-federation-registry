@@ -58,8 +58,9 @@ public class FederationEntity extends BaseEntity {
   @Convert(converter = MapConverter.class)
   private Map<String, Object> metadata;
 
-  @Column(name = "jwks", columnDefinition = "TEXT")
-  private String jwks;
+  @Column(name = "signing_key_ids")
+  @Convert(converter = StringListConverter.class)
+  private List<String> signingKeyIds;
 
   @Column(name = "issuer", columnDefinition = "TEXT")
   private String issuer;

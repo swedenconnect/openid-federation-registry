@@ -47,4 +47,7 @@ public class FederationEntityDto {
       + "Intermediate Entities or Trust Anchors that are Immediate Superiors of the Entity. "
       + "the set of Claims specified for use in this type of JWT")
   private List<String> authorityhints;
+
+  @Schema(description = "Key reference to signkeys from oidf-service")
+  private List<String> signingKeyId;
 }
