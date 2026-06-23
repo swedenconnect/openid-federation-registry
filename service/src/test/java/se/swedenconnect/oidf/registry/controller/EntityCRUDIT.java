@@ -16,14 +16,19 @@
 
 package se.swedenconnect.oidf.registry.controller;
 
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.KeyUse;
+import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.client.RestClientResponseException;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -33,11 +38,16 @@ import se.swedenconnect.oidf.registry.api.EntitiesApi;
 import se.swedenconnect.oidf.registry.api.model.FederationEntity;
 import se.swedenconnect.oidf.registry.api.model.FederationEntityWithModules;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
+import se.swedenconnect.oidf.registry.guioperations.JwksKeysCacheService;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 /**
  * Integration tests for Entity CRUD operations (Federation, Hosted, Subordinate) using the generated OpenAPI client.
@@ -61,6 +71,9 @@ class EntityCRUDIT {
   @Autowired
   private JwtTestUtils jwtTestUtils;
 
+  @MockitoBean
+  private JwksKeysCacheService jwksKeysCacheService;
+
   private EntitiesApi entitiesApi;
 
 
@@ -74,6 +87,10 @@ class EntityCRUDIT {
     apiClient.setApiKey(JwtTestUtils.OrganisationType.PM.orgId);
 
     entitiesApi = new EntitiesApi(apiClient);
+
+    // By default cache returns no keys → empty signingKeyId list passes validation
+    when(jwksKeysCacheService.getFederationKeys(any(OrganizationRecord.class))).thenReturn(List.of());
+    when(jwksKeysCacheService.getHostedKeys(any(OrganizationRecord.class))).thenReturn(List.of());
   }
 
   private FederationEntity createFederationEntity() {
@@ -209,6 +226,124 @@ class EntityCRUDIT {
           final RestClientResponseException restException = (RestClientResponseException) exception;
           assertThat(restException.getStatusCode().value()).isEqualTo(404);
         });
+  }
+
+  // -------------------------------------------------------------------------
+  // Signing key tests
+  // -------------------------------------------------------------------------
+
+  @Test
+  @DisplayName("Federation entity created with empty signingKeyId list persists and returns the list")
+  void testCreateFederationEntityWithEmptySigningKeyId() {
+    final FederationEntity input = createFederationEntity().signingKeyId(List.of());
+
+    final FederationEntity created = this.entitiesApi.createFederationEntity(input);
+
+    assertThat(created.getSigningKeyId()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("Federation entity created with valid kid is persisted and returned")
+  void testCreateFederationEntityWithValidSigningKeyId() throws Exception {
+    final JWK key = rsaPublicKey("valid-fed-kid");
+    when(jwksKeysCacheService.getFederationKeys(any(OrganizationRecord.class)))
+        .thenReturn(List.of(key));
+
+    final FederationEntity input = createFederationEntity().signingKeyId(List.of("valid-fed-kid"));
+
+    final FederationEntity created = this.entitiesApi.createFederationEntity(input);
+
+    assertThat(created.getSigningKeyId()).containsExactly("valid-fed-kid");
+  }
+
+  @Test
+  @DisplayName("Federation entity creation fails when kid is not in the allowed key set")
+  void testCreateFederationEntityWithInvalidSigningKeyIdFails() throws Exception {
+    when(jwksKeysCacheService.getFederationKeys(any(OrganizationRecord.class)))
+        .thenReturn(List.of(rsaPublicKey("allowed-kid")));
+
+    final FederationEntity input = createFederationEntity().signingKeyId(List.of("unknown-kid"));
+
+    assertThatThrownBy(() -> this.entitiesApi.createFederationEntity(input))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(e -> assertThat(((RestClientResponseException) e).getStatusCode().value()).isEqualTo(400));
+  }
+
+  @Test
+  @DisplayName("Federation entity signingKeyId can be updated to a new valid kid")
+  void testUpdateFederationEntitySigningKeyId() throws Exception {
+    final JWK keyV1 = rsaPublicKey("kid-v1");
+    final JWK keyV2 = rsaPublicKey("kid-v2");
+    when(jwksKeysCacheService.getFederationKeys(any(OrganizationRecord.class)))
+        .thenReturn(List.of(keyV1, keyV2));
+
+    final UUID entityId = UUID.randomUUID();
+    this.entitiesApi.createFederationEntityWithId(entityId,
+        createFederationEntity().signingKeyId(List.of("kid-v1")));
+
+    final FederationEntity updated = this.entitiesApi.updateFederationEntity(entityId,
+        createFederationEntity().signingKeyId(List.of("kid-v2")));
+
+    assertThat(updated.getSigningKeyId()).containsExactly("kid-v2");
+  }
+
+  @Test
+  @DisplayName("Federation entity signingKeyId can be cleared")
+  void testClearFederationEntitySigningKeyId() throws Exception {
+    final JWK key = rsaPublicKey("kid-to-clear");
+    when(jwksKeysCacheService.getFederationKeys(any(OrganizationRecord.class)))
+        .thenReturn(List.of(key));
+
+    final UUID entityId = UUID.randomUUID();
+    this.entitiesApi.createFederationEntityWithId(entityId,
+        createFederationEntity().signingKeyId(List.of("kid-to-clear")));
+
+    final FederationEntity updated = this.entitiesApi.updateFederationEntity(entityId,
+        createFederationEntity().signingKeyId(List.of()));
+
+    assertThat(updated.getSigningKeyId()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("Update fails when the new kid is not in the allowed federation key set")
+  void testUpdateFederationEntityWithInvalidSigningKeyIdFails() throws Exception {
+    when(jwksKeysCacheService.getFederationKeys(any(OrganizationRecord.class)))
+        .thenReturn(List.of(rsaPublicKey("allowed-kid")));
+
+    final UUID entityId = UUID.randomUUID();
+    this.entitiesApi.createFederationEntityWithId(entityId,
+        createFederationEntity().signingKeyId(List.of("allowed-kid")));
+
+    assertThatThrownBy(() -> this.entitiesApi.updateFederationEntity(entityId,
+        createFederationEntity().signingKeyId(List.of("not-allowed-kid"))))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(e -> assertThat(((RestClientResponseException) e).getStatusCode().value()).isEqualTo(400));
+  }
+
+  @Test
+  @DisplayName("Hosted entity kid is rejected when submitted as federation key")
+  void testFederationEntityRejectHostedKey() throws Exception {
+    // Hosted key is available but NOT in federation keys
+    when(jwksKeysCacheService.getFederationKeys(any(OrganizationRecord.class)))
+        .thenReturn(List.of(rsaPublicKey("federation-kid")));
+
+    final FederationEntity input = createFederationEntity().signingKeyId(List.of("hosted-kid"));
+
+    assertThatThrownBy(() -> this.entitiesApi.createFederationEntity(input))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(e -> assertThat(((RestClientResponseException) e).getStatusCode().value()).isEqualTo(400));
+  }
+
+  // -------------------------------------------------------------------------
+  // Helpers
+  // -------------------------------------------------------------------------
+
+  private static JWK rsaPublicKey(final String kid) throws Exception {
+    return new RSAKeyGenerator(2048)
+        .keyID(kid)
+        .keyUse(KeyUse.SIGNATURE)
+        .generate()
+        .toPublicJWK();
   }
 }
 

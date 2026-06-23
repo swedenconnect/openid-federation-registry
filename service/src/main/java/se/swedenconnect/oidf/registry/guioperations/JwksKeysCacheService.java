@@ -20,7 +20,6 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import se.swedenconnect.oidf.registry.entity.model.EntityType;
 import se.swedenconnect.oidf.registry.guioperations.dto.JwksPayloadDto;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.organization.service.InstancePlacementService;
@@ -58,13 +57,29 @@ public class JwksKeysCacheService {
   }
 
   /**
+   * Returns the full {@link JwksPayloadDto} for the instance that {@code organizationRecord} belongs to,
+   * including federation keys, hosted keys, and key name aliases.
+   *
+   * @param organizationRecord the organisation whose instance to query
+   * @return the payload DTO, or empty if the instance cannot be resolved or the cache is cold after a failure
+   */
+  public Optional<JwksPayloadDto> getPayload(final OrganizationRecord organizationRecord) {
+    return Optional.ofNullable(this.refresh(organizationRecord));
+  }
+
+  /**
    * Returns the federation signing keys for the instance that {@code organizationRecord} belongs to.
    *
    * @param organizationRecord the organisation whose instance to query
    * @return list of federation signing keys, empty if the instance cannot be resolved or fetching fails
    */
   public List<JWK> getFederationKeys(final OrganizationRecord organizationRecord) {
-    return this.getKeysForType(organizationRecord, EntityType.FEDERATION_ENTITY);
+    final JwksPayloadDto payload = this.refresh(organizationRecord);
+    if (payload == null) {
+      return List.of();
+    }
+    final JWKSet jwkSet = payload.federation();
+    return jwkSet != null ? jwkSet.getKeys() : List.of();
   }
 
   /**
@@ -74,29 +89,30 @@ public class JwksKeysCacheService {
    * @return list of hosted signing keys, empty if the instance cannot be resolved or fetching fails
    */
   public List<JWK> getHostedKeys(final OrganizationRecord organizationRecord) {
-    return this.getKeysForType(organizationRecord, EntityType.HOSTED_ENTITY);
+    final JwksPayloadDto payload = this.refresh(organizationRecord);
+    if (payload == null) {
+      return List.of();
+    }
+    final JWKSet jwkSet = payload.hosted();
+    return jwkSet != null ? jwkSet.getKeys() : List.of();
   }
 
-  private List<JWK> getKeysForType(final OrganizationRecord organizationRecord, final EntityType type) {
+  private JwksPayloadDto refresh(final OrganizationRecord organizationRecord) {
     final Optional<URI> baseUrl = this.instancePlacementService.resolveBaseUrl(organizationRecord);
     if (baseUrl.isEmpty()) {
-      log.warn("No instance found for org '{}', skipping signing key validation",
+      log.warn("No instance found for org '{}', skipping signing key fetch",
           organizationRecord.orgNumber());
-      return List.of();
+      return null;
     }
     try {
-      this.cache.put(baseUrl.get(),
-          this.oidfServiceIntegration.fetchServiceKeys(EntityID.parse(baseUrl.get().toString())));
+      final JwksPayloadDto fresh =
+          this.oidfServiceIntegration.fetchServiceKeys(EntityID.parse(baseUrl.get().toString()));
+      this.cache.put(baseUrl.get(), fresh);
     }
     catch (final Exception e) {
-      log.error("Failed to fetch oidf sign keys from {} for org '{}', returning cached result",
+      log.error("Failed to fetch JWKS from {} for org '{}', returning cached result",
           baseUrl.get(), organizationRecord.orgNumber(), e);
     }
-    final JwksPayloadDto cached = this.cache.get(baseUrl.get());
-    if (cached == null) {
-      return List.of();
-    }
-    final JWKSet jwkSet = EntityType.FEDERATION_ENTITY.equals(type) ? cached.federation() : cached.hosted();
-    return jwkSet != null ? jwkSet.getKeys() : List.of();
+    return this.cache.get(baseUrl.get());
   }
 }

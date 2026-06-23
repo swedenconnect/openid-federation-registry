@@ -16,7 +16,6 @@
 
 package se.swedenconnect.oidf.registry.entity.service;
 
-import com.nimbusds.jose.jwk.JWK;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.entity.dto.EntityWithModulesDto;
@@ -375,22 +374,19 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     if (signingKeyIds == null || signingKeyIds.isEmpty()) {
       return;
     }
-    final List<String> validKids = (isFederation
-        ? this.jwksKeysCacheService.getFederationKeys(organizationRecord)
-        : this.jwksKeysCacheService.getHostedKeys(organizationRecord))
-        .stream()
-        .map(JWK::getKeyID)
+    final List<String> validNames = this.jwksKeysCacheService.getPayload(organizationRecord)
+        .map(payload -> isFederation ? payload.names().federation() : payload.names().hosted())
+        .orElse(List.of());
+
+    final List<String> invalidNames = signingKeyIds.stream()
+        .filter(name -> !validNames.contains(name))
         .toList();
 
-    final List<String> invalidKids = signingKeyIds.stream()
-        .filter(kid -> !validKids.contains(kid))
-        .toList();
-
-    if (!invalidKids.isEmpty()) {
+    if (!invalidNames.isEmpty()) {
       final String entityTypeName = isFederation ? "federation" : "hosted";
       throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
-          "Signing key ID(s) %s are not valid %s keys. Valid kids: %s"
-              .formatted(invalidKids, entityTypeName, validKids));
+          "Signing key name(s) %s are not valid %s key names. Valid names: %s"
+              .formatted(invalidNames, entityTypeName, validNames));
     }
   }
 

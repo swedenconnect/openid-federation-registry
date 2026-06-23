@@ -15,8 +15,6 @@
  */
 package se.swedenconnect.oidf.registry.guioperations.controller;
 
-import com.nimbusds.jose.Algorithm;
-import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
@@ -39,14 +37,10 @@ import se.swedenconnect.oidf.registry.guioperations.OidfService;
 import se.swedenconnect.oidf.registry.guioperations.OidfServiceIntegration;
 import se.swedenconnect.oidf.registry.guioperations.dto.EntityConfigurationViewDto;
 import se.swedenconnect.oidf.registry.guioperations.dto.JwksLoadedDto;
-import se.swedenconnect.oidf.registry.guioperations.dto.SigningKeyDto;
+import se.swedenconnect.oidf.registry.guioperations.dto.JwksPayloadDto;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Controller that handle operations on the entitystatmend for a specific entityid
@@ -82,33 +76,33 @@ public class EntityConfigurationController {
    * Returns available signing keys for the given entity type. Federation entities receive keys from the
    * {@code federation} JWKS claim; hosted entities receive keys from the {@code hosted} claim.
    *
-   * @param type FEDERATION_ENTITY or HOSTED_ENTITY
+   * @param type               FEDERATION_ENTITY or HOSTED_ENTITY
+   * @param organizationRecord the authenticated organisation used to resolve the correct instance
    * @return list of available signing keys
    */
+  /**
+   * Returns the available signing key names for the given entity type, sourced from the {@code name} claim of the
+   * oidf-service {@code /jwks} JWT.
+   *
+   * @param type FEDERATION_ENTITY or HOSTED_ENTITY
+   * @param organizationRecord the authenticated organisation used to resolve the correct instance
+   * @return ordered list of signing key names
+   */
   @GetMapping(path = "/signing-keys")
-  public List<SigningKeyDto> listSigningKeys(
+  public List<String> listSigningKeys(
       @RequestParam("type") final EntityType type,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    final List<JWK> keys = switch (type) {
-      case FEDERATION_ENTITY -> this.jwksKeysCacheService.getFederationKeys(organizationRecord);
-      case HOSTED_ENTITY -> this.jwksKeysCacheService.getHostedKeys(organizationRecord);
+    return this.jwksKeysCacheService.getPayload(organizationRecord)
+        .map(payload -> this.namesForType(type, payload))
+        .orElse(List.of());
+  }
+
+  private List<String> namesForType(final EntityType type, final JwksPayloadDto payload) {
+    return switch (type) {
+      case FEDERATION_ENTITY -> payload.names().federation();
+      case HOSTED_ENTITY -> payload.names().hosted();
       default -> List.of();
     };
-    return keys.stream()
-        .filter(Objects::nonNull)
-        .collect(Collectors.toMap(
-            JWK::getKeyID,
-            k -> k,
-            (existing, duplicate) -> existing,
-            LinkedHashMap::new
-        ))
-        .values()
-        .stream()
-        .map(k -> new SigningKeyDto(
-            k.getKeyID(),
-            Optional.ofNullable(k.getAlgorithm()).map(Algorithm::getName).orElse(null),
-            k.getKeyType().getValue()))
-        .toList();
   }
 
   /**

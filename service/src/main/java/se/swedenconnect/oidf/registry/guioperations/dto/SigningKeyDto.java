@@ -15,12 +15,13 @@
  */
 package se.swedenconnect.oidf.registry.guioperations.dto;
 
+import se.swedenconnect.oidf.registry.entity.model.EntityType;
+
 /**
  * Represents a signing key available for selection in the entity form.
  *
- * @param kid the key ID
- * @param alg the algorithm
- * @param kty the key type
+ * @param entityType  the algorithm
+ * @param name human-readable alias from the {@code name} claim (nullable)
  * @author Per Fredrik Plars
  */
-public record SigningKeyDto(String kid, String alg, String kty) {}
+public record SigningKeyDto(String name, EntityType entityType) {}
