@@ -16,11 +16,12 @@
 
 <template>
   <v-app>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
     <v-app-bar color="white" border="b" flat>
       <!-- Left: Logo + wordmark -->
       <div class="logo-area">
         <svg xmlns="http://www.w3.org/2000/svg" width="120" height="24" viewBox="0 0 280 56"
-             aria-label="Sweden Connect">
+             aria-label="Sweden Connect" role="img">
           <rect width="14" height="14" x="14" fill="#CD7A6E"/>
           <rect width="14" height="14" x="28" y="14" fill="#695F59"/>
           <rect width="14" height="14" x="42" y="14" fill="#B4AFAC"/>
@@ -49,6 +50,8 @@
           :items="userStore.organizations"
           item-title="orgName"
           item-value="orgNumber"
+          label="Organization"
+          aria-label="Select organization"
           density="compact"
           variant="outlined"
           hide-details
@@ -77,21 +80,29 @@
       </v-btn>
 
       <template #extension>
-        <nav v-if="userStore.isAuthorized" class="nav-bar">
+        <nav v-if="userStore.isAuthorized" aria-label="Main navigation" class="nav-bar">
           <RouterLink to="/" class="nav-link" :class="{ active: isEntityRoute }">Entity</RouterLink>
           <RouterLink to="/registration-flows" class="nav-link" :class="{ active: isRegistrationFlowsRoute }">Registration Flows</RouterLink>
           <RouterLink to="/registrations" class="nav-link" :class="{ active: isRegistrationsRoute }">Registrations</RouterLink>
-          <a :href="swaggerUiPath" rel="noopener" class="nav-link" target="_blank">API</a>
+          <a :href="swaggerUiPath" rel="noopener" class="nav-link" target="_blank"
+             aria-label="API documentation (opens in new tab)">
+            API
+            <v-icon aria-hidden="true" size="x-small" class="ml-1">mdi-open-in-new</v-icon>
+          </a>
         </nav>
       </template>
     </v-app-bar>
 
-    <v-main>
+    <v-main id="main-content">
       <v-container fluid>
+        <h1 class="sr-only">{{ currentPageTitle }} — OpenID Federation Registry</h1>
+
         <!-- Error Banner -->
         <v-alert
             v-if="errorMessage"
             type="error"
+            role="alert"
+            aria-live="assertive"
             closable
             @click:close="clearError"
             class="mb-4"
@@ -126,6 +137,7 @@ const userStore = useUserStore();
 const isEntityRoute = computed(() => route.path === '/');
 const isRegistrationFlowsRoute = computed(() => route.path.startsWith('/registration-flows'));
 const isRegistrationsRoute = computed(() => route.path.startsWith('/registrations'));
+const currentPageTitle = computed(() => route.meta.title ?? String(route.name ?? ''));
 
 const errorMessage = computed(() => errorStore.message);
 
@@ -206,6 +218,12 @@ onBeforeMount(async () => {
 
 .nav-link:hover {
   color: #4a6741;
+}
+
+.nav-link:focus-visible {
+  outline: 2px solid #4a6741;
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 .nav-link.active {

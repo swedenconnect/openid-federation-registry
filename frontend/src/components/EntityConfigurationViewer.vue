@@ -27,9 +27,9 @@
       View EC
     </v-btn>
 
-    <v-dialog v-model="dialog" max-width="860" scrollable>
+    <v-dialog v-model="dialog" max-width="860" scrollable aria-labelledby="ec-dialog-title">
       <v-card>
-        <v-card-title class="d-flex align-center">
+        <v-card-title id="ec-dialog-title" class="d-flex align-center">
           <span>Entity Configuration</span>
           <v-spacer></v-spacer>
           <span class="text-body-2 text-grey text-truncate" style="max-width: 420px;">
@@ -40,14 +40,16 @@
         <v-divider></v-divider>
 
         <v-card-text style="max-height: 72vh; overflow-y: auto;">
-          <div v-if="loading" class="text-center py-12">
-            <v-progress-circular indeterminate color="primary" size="48"></v-progress-circular>
+          <div v-if="loading" role="status" aria-live="polite" class="text-center py-12">
+            <v-progress-circular indeterminate color="primary" size="48" aria-hidden="true"></v-progress-circular>
             <p class="mt-4 text-grey">Fetching entity configuration…</p>
           </div>
 
           <v-alert
               v-else-if="errorMessage"
               type="error"
+              role="alert"
+              aria-live="assertive"
               variant="tonal"
               class="mt-2"
           >

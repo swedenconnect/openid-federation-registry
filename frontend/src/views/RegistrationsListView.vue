@@ -54,8 +54,8 @@
 
     <v-card v-if="loading">
       <v-card-text>
-        <div class="text-center py-12">
-          <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+        <div role="status" aria-live="polite" class="text-center py-12">
+          <v-progress-circular indeterminate color="primary" size="64" aria-hidden="true"></v-progress-circular>
           <p class="mt-4 text-grey">Loading registrations...</p>
         </div>
       </v-card-text>
@@ -63,6 +63,7 @@
 
     <v-card v-else-if="filteredRegistrations.length > 0">
       <v-table>
+        <caption class="sr-only">List of registrations</caption>
         <thead>
           <tr>
             <th class="text-left">Entity ID / Subordinate Entity ID</th>
@@ -75,8 +76,13 @@
           <tr
               v-for="reg in filteredRegistrations"
               :key="reg.registrationId"
+              role="button"
+              tabindex="0"
+              :aria-label="`View registration for ${reg.entityIdentifier}`"
               class="clickable-row"
               @click="openDetail(reg.registrationId)"
+              @keydown.enter.prevent="openDetail(reg.registrationId)"
+              @keydown.space.prevent="openDetail(reg.registrationId)"
           >
             <td>{{ reg.registrationType === 'TRUST_MARK_SUBORDINATE' ? reg.subordinateEntityId : reg.entityIdentifier }}</td>
             <td>{{ reg.registrationType === 'TRUST_MARK_SUBORDINATE' ? reg.entityIdentifier : reg.intermediateEntityId }}</td>

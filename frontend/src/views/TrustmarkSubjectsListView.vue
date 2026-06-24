@@ -40,12 +40,12 @@
     <v-card v-if="entityIdentifier || trustmarkType" variant="tonal" color="primary" class="mb-4">
       <v-card-text class="py-2">
         <div v-if="entityIdentifier" class="d-flex align-center">
-          <v-icon class="mr-2">mdi-certificate-outline</v-icon>
+          <v-icon aria-hidden="true" class="mr-2">mdi-certificate-outline</v-icon>
           <span class="text-caption text-uppercase font-weight-medium mr-3">Trustmark Issuer</span>
           <span class="text-body-2">{{ entityIdentifier }}</span>
         </div>
         <div v-if="trustmarkType" class="d-flex align-center" :class="{ 'mt-1': entityIdentifier }">
-          <v-icon class="mr-2">mdi-tag-outline</v-icon>
+          <v-icon aria-hidden="true" class="mr-2">mdi-tag-outline</v-icon>
           <span class="text-caption text-uppercase font-weight-medium mr-3">Trustmark Type</span>
           <span class="text-body-2">{{ trustmarkType }}</span>
         </div>
@@ -54,11 +54,12 @@
 
     <v-card v-if="loading">
       <v-card-text>
-        <div class="text-center py-12">
+        <div role="status" aria-live="polite" class="text-center py-12">
           <v-progress-circular
               indeterminate
               color="primary"
               size="64"
+              aria-hidden="true"
           ></v-progress-circular>
           <p class="mt-4 text-grey">Loading trustmark subjects...</p>
         </div>
@@ -67,6 +68,7 @@
 
     <v-card v-else-if="subjects.length > 0">
       <v-table>
+        <caption class="sr-only">List of trustmark subjects</caption>
         <thead>
         <tr>
           <th class="text-left">Subject</th>
@@ -111,9 +113,9 @@
     </v-card>
 
     <!-- Delete Confirmation Dialog -->
-    <v-dialog v-model="deleteDialog" max-width="500">
+    <v-dialog v-model="deleteDialog" max-width="500" aria-labelledby="delete-subject-dialog-title">
       <v-card>
-        <v-card-title class="text-h5">Confirm Delete</v-card-title>
+        <v-card-title id="delete-subject-dialog-title" class="text-h5">Confirm Delete</v-card-title>
         <v-card-text>
           Are you sure you want to delete subject "{{ deleteSubjectLabel }}"? This action cannot be undone.
         </v-card-text>

@@ -18,11 +18,12 @@
   <div>
     <v-card v-if="isEdit && loading">
       <v-card-text>
-        <div class="text-center py-12">
+        <div role="status" aria-live="polite" class="text-center py-12">
           <v-progress-circular
               indeterminate
               color="primary"
               size="64"
+              aria-hidden="true"
           ></v-progress-circular>
           <p class="mt-4 text-grey">Loading subordinate...</p>
         </div>
@@ -164,9 +165,9 @@
       </v-card-text>
     </v-card>
 
-    <v-dialog v-model="jwksPickerDialog" max-width="640" scrollable>
+    <v-dialog v-model="jwksPickerDialog" max-width="640" scrollable aria-labelledby="jwks-picker-title">
       <v-card>
-        <v-card-title>Select Entity</v-card-title>
+        <v-card-title id="jwks-picker-title">Select Entity</v-card-title>
         <v-card-text>
           <v-list lines="two">
             <v-list-item
@@ -174,8 +175,10 @@
                 :key="item.entityId"
                 :title="item.entityId"
                 :subtitle="item.ecLocation"
+                tabindex="0"
                 style="cursor: pointer"
                 @click="applyJwksResult(item)"
+                @keydown.enter.prevent="applyJwksResult(item)"
             ></v-list-item>
           </v-list>
         </v-card-text>

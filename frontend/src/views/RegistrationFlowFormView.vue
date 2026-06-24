@@ -18,8 +18,8 @@
   <div>
     <v-card v-if="isEdit && loading">
       <v-card-text>
-        <div class="text-center py-12">
-          <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+        <div role="status" aria-live="polite" class="text-center py-12">
+          <v-progress-circular indeterminate color="primary" size="64" aria-hidden="true"></v-progress-circular>
           <p class="mt-4 text-grey">Loading registration flow...</p>
         </div>
       </v-card-text>
@@ -136,7 +136,15 @@
 
           <!-- Selected steps -->
           <div v-if="selectedSteps.length === 0" class="mb-4">
-            <span :class="stepsValidationAttempted ? 'text-error' : 'text-grey'" class="text-body-2">
+            <span
+                v-if="stepsValidationAttempted"
+                role="alert"
+                aria-live="assertive"
+                class="text-error text-body-2"
+            >
+              No steps selected. Add at least one step above.
+            </span>
+            <span v-else class="text-grey text-body-2">
               No steps selected. Add at least one step above.
             </span>
           </div>
@@ -157,6 +165,7 @@
                   icon="mdi-cog"
                   size="small"
                   variant="text"
+                  :aria-label="`Settings for step ${index + 1}: ${step.name}`"
                   :disabled="!step.config || step.config.length === 0 || saving"
                   @click="openStepConfig(index)"
               ></v-btn>
@@ -165,6 +174,7 @@
                   icon="mdi-arrow-up"
                   size="small"
                   variant="text"
+                  :aria-label="`Move step ${index + 1} up`"
                   :disabled="index === 0 || saving"
                   @click="moveStep(index, -1)"
               ></v-btn>
@@ -173,6 +183,7 @@
                   icon="mdi-arrow-down"
                   size="small"
                   variant="text"
+                  :aria-label="`Move step ${index + 1} down`"
                   :disabled="index === selectedSteps.length - 1 || saving"
                   @click="moveStep(index, 1)"
               ></v-btn>
@@ -182,6 +193,7 @@
                   size="small"
                   variant="text"
                   color="error"
+                  :aria-label="`Remove step ${index + 1}: ${step.name}`"
                   :disabled="saving"
                   @click="removeStep(index)"
               ></v-btn>
@@ -219,9 +231,9 @@
     </v-card>
 
     <!-- Step settings dialog -->
-    <v-dialog v-model="configDialog.open" max-width="560" scrollable>
+    <v-dialog v-model="configDialog.open" max-width="560" scrollable aria-labelledby="step-settings-dialog-title">
       <v-card v-if="configDialogStep">
-        <v-card-title>{{ configDialogStep.name }} Settings</v-card-title>
+        <v-card-title id="step-settings-dialog-title">{{ configDialogStep.name }} Settings</v-card-title>
         <v-card-text>
           <div
               v-for="cfg in configDialogStep.config"
@@ -262,7 +274,7 @@ import {computed, nextTick, onMounted, ref, watch} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
-import {registrationFlowPath, registrationFlowCreatePath, registrationFlowStepsPath} from '@/config/path';
+import {registrationFlowCreatePath, registrationFlowPath, registrationFlowStepsPath} from '@/config/path';
 
 const route = useRoute();
 const router = useRouter();

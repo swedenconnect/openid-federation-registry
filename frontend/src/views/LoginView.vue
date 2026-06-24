@@ -22,6 +22,8 @@
         <v-alert
             v-if="errorMessage"
             type="error"
+            role="alert"
+            aria-live="assertive"
             variant="tonal"
             class="mb-4 text-left"
         >

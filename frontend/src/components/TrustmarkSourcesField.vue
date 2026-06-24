@@ -44,10 +44,11 @@
             size="small"
             color="error"
             variant="text"
+            :aria-label="`Remove issuer ${gi + 1}`"
             @click="removeIssuer(gi)"
             :disabled="disabled"
         >
-          <v-icon>mdi-delete</v-icon>
+          <v-icon aria-hidden="true">mdi-delete</v-icon>
         </v-btn>
       </div>
 
@@ -73,10 +74,11 @@
               size="x-small"
               color="error"
               variant="text"
+              :aria-label="`Remove trustmark ${ti + 1} from issuer ${gi + 1}`"
               @click="removeTrustmark(gi, ti)"
               :disabled="disabled"
           >
-            <v-icon>mdi-close</v-icon>
+            <v-icon aria-hidden="true">mdi-close</v-icon>
           </v-btn>
         </div>
         <v-btn
