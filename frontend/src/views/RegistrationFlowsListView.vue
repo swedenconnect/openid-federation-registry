@@ -29,11 +29,12 @@
 
     <v-card v-if="loading">
       <v-card-text>
-        <div class="text-center py-12">
+        <div role="status" aria-live="polite" class="text-center py-12">
           <v-progress-circular
               indeterminate
               color="primary"
               size="64"
+              aria-hidden="true"
           ></v-progress-circular>
           <p class="mt-4 text-grey">Loading registration flows...</p>
         </div>
@@ -42,6 +43,7 @@
 
     <v-card v-else-if="flows.length > 0">
       <v-table>
+        <caption class="sr-only">List of registration flows</caption>
         <thead>
         <tr>
           <th class="text-left">Name</th>
@@ -88,9 +90,9 @@
     </v-card>
 
     <!-- Delete Confirmation Dialog -->
-    <v-dialog v-model="deleteDialog" max-width="500">
+    <v-dialog v-model="deleteDialog" max-width="500" aria-labelledby="delete-flow-dialog-title">
       <v-card>
-        <v-card-title class="text-h5">Confirm Delete</v-card-title>
+        <v-card-title id="delete-flow-dialog-title" class="text-h5">Confirm Delete</v-card-title>
         <v-card-text>
           Are you sure you want to delete registration flow "{{ deleteFlowLabel }}"? This action cannot be undone.
         </v-card-text>
@@ -125,7 +127,7 @@ import {computed, onMounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
-import {registrationFlowsPath, registrationFlowPath} from '@/config/path';
+import {registrationFlowPath, registrationFlowsPath} from '@/config/path';
 
 const router = useRouter();
 const {requestGet, requestDelete, loading, ok} = useRequest();

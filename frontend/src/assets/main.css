@@ -511,6 +511,37 @@ tbody tr:hover {
     border-color: #e5e7eb;
 }
 
+/* Accessibility */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.skip-link {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+    padding: 8px 16px;
+    background: #5a6751;
+    color: #fff;
+    font-weight: 600;
+    text-decoration: none;
+    transform: translateY(-100%);
+    transition: transform 0.1s;
+}
+
+.skip-link:focus {
+    transform: translateY(0);
+}
+
 /* Responsive */
 @media (min-width: 640px) {
     .sm\:px-6 {

@@ -39,11 +39,12 @@
 
     <v-card v-if="loading">
       <v-card-text>
-        <div class="text-center py-12">
+        <div role="status" aria-live="polite" class="text-center py-12">
           <v-progress-circular
               indeterminate
               color="primary"
               size="64"
+              aria-hidden="true"
           ></v-progress-circular>
           <p class="mt-4 text-grey">Loading entities...</p>
         </div>
@@ -60,6 +61,7 @@
 
     <v-card v-else-if="entities.length > 0">
       <v-table>
+        <caption class="sr-only">List of entities</caption>
         <thead>
         <tr>
           <th class="text-left">Entity Identifier</th>
@@ -152,9 +154,9 @@
     </v-card>
 
     <!-- Delete Confirmation Dialog -->
-    <v-dialog v-model="deleteDialog" max-width="500">
+    <v-dialog v-model="deleteDialog" max-width="500" aria-labelledby="delete-entity-dialog-title">
       <v-card>
-        <v-card-title class="text-h5">Confirm Delete</v-card-title>
+        <v-card-title id="delete-entity-dialog-title" class="text-h5">Confirm Delete</v-card-title>
         <v-card-text>
           Are you sure you want to delete entity "{{ deleteEntityName }}"? This action cannot be undone.
         </v-card-text>

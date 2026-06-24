@@ -43,10 +43,11 @@
             size="small"
             color="error"
             variant="text"
+            :aria-label="`Remove item ${index + 1}`"
             @click="removeItem(index)"
             :disabled="disabled"
         >
-          <v-icon>mdi-delete</v-icon>
+          <v-icon aria-hidden="true">mdi-delete</v-icon>
         </v-btn>
       </div>
     </div>

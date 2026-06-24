@@ -41,8 +41,8 @@
 
     <v-card v-if="loading">
       <v-card-text>
-        <div class="text-center py-12">
-          <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+        <div role="status" aria-live="polite" class="text-center py-12">
+          <v-progress-circular indeterminate color="primary" size="64" aria-hidden="true"></v-progress-circular>
           <p class="mt-4 text-grey">Loading registration...</p>
         </div>
       </v-card-text>
@@ -222,6 +222,8 @@
               <v-alert
                   v-else-if="entityStatementError"
                   type="error"
+                  role="alert"
+                  aria-live="assertive"
                   variant="tonal"
                   class="mt-2"
               >
@@ -311,9 +313,9 @@
     </template>
 
     <!-- Step Diff Dialog -->
-    <v-dialog v-model="stepInfoDialog" max-width="1000" scrollable>
+    <v-dialog v-model="stepInfoDialog" max-width="1000" scrollable aria-labelledby="step-info-dialog-title">
       <v-card v-if="stepInfoTarget">
-        <v-card-title class="d-flex align-center gap-2">
+        <v-card-title id="step-info-dialog-title" class="d-flex align-center gap-2">
           {{ stepInfoTarget.stepName }}
           <v-chip :color="stepColor(stepInfoTarget.status)" size="x-small" label>
             {{ stepInfoTarget.status }}
@@ -357,9 +359,9 @@
     </v-dialog>
 
     <!-- Reject Dialog -->
-    <v-dialog v-model="rejectDialog" max-width="500">
+    <v-dialog v-model="rejectDialog" max-width="500" aria-labelledby="reject-dialog-title">
       <v-card>
-        <v-card-title class="text-h5">Reject Registration</v-card-title>
+        <v-card-title id="reject-dialog-title" class="text-h5">Reject Registration</v-card-title>
         <v-card-text>
           <p class="mb-3">
             You are about to reject the registration for

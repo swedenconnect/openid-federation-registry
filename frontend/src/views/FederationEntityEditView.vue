@@ -30,11 +30,12 @@
 
     <v-card v-if="loading">
       <v-card-text>
-        <div class="text-center py-12">
+        <div role="status" aria-live="polite" class="text-center py-12">
           <v-progress-circular
               indeterminate
               color="primary"
               size="64"
+              aria-hidden="true"
           ></v-progress-circular>
           <p class="mt-4 text-grey">Loading entity...</p>
         </div>
@@ -263,11 +264,12 @@
                             size="small"
                             color="error"
                             variant="text"
+                            :aria-label="`Remove flow ${assignment.name}`"
                             :loading="removingAssignId === assignment.assignId"
                             :disabled="removingAssignId !== null"
                             @click="unassignFlow(assignment.assignId)"
                         >
-                          <v-icon>mdi-close</v-icon>
+                          <v-icon aria-hidden="true">mdi-close</v-icon>
                         </v-btn>
                       </template>
                     </v-list-item>
@@ -492,9 +494,10 @@
     </v-card>
 
     <!-- Resolver JWKS Picker Dialog -->
-    <v-dialog v-model="resolverJwksPickerDialog" max-width="640" scrollable>
+    <v-dialog v-model="resolverJwksPickerDialog" max-width="640" scrollable
+              aria-labelledby="resolver-jwks-picker-title">
       <v-card>
-        <v-card-title>Select Entity</v-card-title>
+        <v-card-title id="resolver-jwks-picker-title">Select Entity</v-card-title>
         <v-card-text>
           <v-list lines="two">
             <v-list-item
@@ -502,8 +505,10 @@
                 :key="item.entityId"
                 :title="item.entityId"
                 :subtitle="item.ecLocation"
+                tabindex="0"
                 style="cursor: pointer"
                 @click="applyResolverJwks(item)"
+                @keydown.enter.prevent="applyResolverJwks(item)"
             ></v-list-item>
           </v-list>
         </v-card-text>
@@ -515,9 +520,9 @@
     </v-dialog>
 
     <!-- Delete Confirmation Dialog -->
-    <v-dialog v-model="deleteDialog" max-width="500">
+    <v-dialog v-model="deleteDialog" max-width="500" aria-labelledby="delete-module-dialog-title">
       <v-card>
-        <v-card-title class="text-h5">Confirm Delete</v-card-title>
+        <v-card-title id="delete-module-dialog-title" class="text-h5">Confirm Delete</v-card-title>
         <v-card-text>
           Are you sure you want to delete the {{ deleteModuleType }} module? This action cannot be undone.
         </v-card-text>
