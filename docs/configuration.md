@@ -18,6 +18,7 @@ This document describes the configuration settings available for the OpenID Fede
 - [OpenID Federation Registry Settings](#openid-federation-registry-settings)
   - [Federation Service API](#federation-service-api)
   - [Federation Instances](#federation-instances)
+    - [OIDF Service API Validation Key](#oidf-service-api-validation-key)
   - [Entity Configuration Loader](#entity-configuration-loader)
 
 ---
@@ -140,13 +141,14 @@ this registry. An instance maps a set of organisations to a specific federation 
 
 #### Instance properties
 
-| Setting                                                          | Required | Example Value                            | Description                                                                                                                                                    |
-|------------------------------------------------------------------|----------|------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `openid.federation.registry.instances[i].instance_id`            | Yes      | `123e4567-e89b-12d3-a456-426614174000`   | UUID that uniquely identifies this instance. Must match the instance record in the database.                                                                   |
-| `openid.federation.registry.instances[i].name`                   | Yes      | `Swedenconnect`                          | Human-readable name for the instance.                                                                                                                          |
-| `openid.federation.registry.instances[i].base_url`               | Yes      | `https://registry.swedenconnect.se/oidf` | Base URL for this instance. Used to compute the `entityPrefix` for every organisation assigned to it: `base_url/orgNumber`.                                    |
-| `openid.federation.registry.instances[i].org_base_url_overrides` | No       | See example below                        | Optional per-organisation override of `base_url`. When set for an org, its `entityPrefix` is computed as `override/orgNumber` instead of `base_url/orgNumber`. |
-| `openid.federation.registry.instances[i].matchers`               | Yes      | See below                                | Matcher configuration that determines which organisations are assigned to this instance.                                                                       |
+| Setting                                                                   | Required | Example Value                            | Description                                                                                                                                                                   |
+|---------------------------------------------------------------------------|----------|------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `openid.federation.registry.instances[i].instance_id`                     | Yes      | `123e4567-e89b-12d3-a456-426614174000`   | UUID that uniquely identifies this instance. Must match the instance record in the database.                                                                                  |
+| `openid.federation.registry.instances[i].name`                            | Yes      | `Swedenconnect`                          | Human-readable name for the instance.                                                                                                                                         |
+| `openid.federation.registry.instances[i].base_url`                        | Yes      | `https://registry.swedenconnect.se/oidf` | Base URL for this instance. Used to compute the `entityPrefix` for every organisation assigned to it: `base_url/orgNumber`.                                                   |
+| `openid.federation.registry.instances[i].org_base_url_overrides`          | No       | See example below                        | Optional per-organisation override of `base_url`. When set for an org, its `entityPrefix` is computed as `override/orgNumber` instead of `base_url/orgNumber`.                |
+| `openid.federation.registry.instances[i].matchers`                        | Yes      | See below                                | Matcher configuration that determines which organisations are assigned to this instance.                                                                                      |
+| `openid.federation.registry.instances[i].oidf_service_api_validation_key` | No       | See below                                | Public key used to verify signed JWT responses from the oidf-service node attached to this instance. See [OIDF Service API Validation Key](#oidf-service-api-validation-key). |
 
 #### Entity prefix computation
 
@@ -192,6 +194,67 @@ Exactly one of the three properties must be active per instance.
 1. `org_numbers` — exact match on organisation number.
 2. `functiongroups` — match on the organisation's function group.
 3. `useForDefaultAssignment` — catch-all fallback.
+
+#### OIDF Service API Validation Key
+
+Each instance can optionally declare a public key that is used to verify signed JWT responses
+from the oidf-service node attached to that instance.
+The key is a single `KeyEntry` object — **not** a list.
+Exactly one of `base64_encoded_public_jwk` or `certificate` must be provided.
+
+| Sub-property                                                                                        | Required       | Description                                                                |
+|-----------------------------------------------------------------------------------------------------|----------------|----------------------------------------------------------------------------|
+| `openid.federation.registry.instances[i].oidf_service_api_validation_key.name`                      | Yes            | Logical name for the key entry (used in logs and error messages).          |
+| `openid.federation.registry.instances[i].oidf_service_api_validation_key.base64_encoded_public_jwk` | One of the two | Public JWK encoded as a Base64 string (the full JWK JSON, Base64-encoded). |
+| `openid.federation.registry.instances[i].oidf_service_api_validation_key.certificate`               | One of the two | PEM-encoded X.509 certificate whose public key is used for verification.   |
+
+> **Note:** If neither or both of `base64_encoded_public_jwk` and `certificate` are set the application
+> will fail to start with a validation error.
+
+**Example using a Base64-encoded JWK:**
+
+```yaml
+openid:
+  federation:
+    registry:
+      instances:
+        - instance_id: "123e4567-e89b-12d3-a456-426614174000"
+          name: "Swedenconnect"
+          base_url: "https://registry.swedenconnect.se/oidf"
+          oidf_service_api_validation_key:
+            name: OidfService
+            base64_encoded_public_jwk: "<Base64-encoded JWK JSON>"
+          matchers:
+            useForDefaultAssignment: true
+```
+
+**Example using a PEM certificate:**
+
+```yaml
+openid:
+  federation:
+    registry:
+      instances:
+        - instance_id: "123e4567-e89b-12d3-a456-426614174000"
+          name: "Swedenconnect"
+          base_url: "https://registry.swedenconnect.se/oidf"
+          oidf_service_api_validation_key:
+            name: OidfService
+            certificate: |
+              -----BEGIN CERTIFICATE-----
+              MIIBxT...
+              -----END CERTIFICATE-----
+          matchers:
+            useForDefaultAssignment: true
+```
+
+To generate the Base64-encoded JWK value, export the public JWK from your oidf-service node and
+encode it:
+
+```bash
+# Encode an existing JWK JSON file
+base64 -w 0 my-public-key.json
+```
 
 #### Full example
 

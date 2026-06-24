@@ -19,6 +19,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.util.Assert;
 
 import java.net.URI;
@@ -152,12 +153,15 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
    * @param baseUrl the base URL for this instance, used to compute entity prefixes
    * @param orgBaseUrlOverrides optional per-org overrides on the form orgNumber → base URL
    * @param matchers the matcher configuration used to assign organizations to this instance
+   * @param oidfServiceApiValidationKey optional public key used to verify signed JWT responses from the oidf-service
+   *     node attached to this instance
    */
   public record InstanceProperties(UUID instanceId,
       String name,
       URI baseUrl,
-      Map<String, String> orgBaseUrlOverrides,
-      InstanceMatcherProperties matchers) {
+      Map<String, URI> orgBaseUrlOverrides,
+      InstanceMatcherProperties matchers,
+      @NestedConfigurationProperty KeyEntry oidfServiceApiValidationKey) {
     /**
      * Validates the instance properties to ensure all required fields are properly configured.
      * Checks that instanceId and name are set. If org_numbers is empty, useForDefaultAssignment must be true.
@@ -170,6 +174,7 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
       Assert.isTrue(this.matchers != null, "Expected at least one matcher"
           + " openid.federation.registry.instances[].matchers");
       this.matchers.validate();
+      Optional.ofNullable(this.oidfServiceApiValidationKey).ifPresent(KeyEntry::validate);
     }
   }
 
