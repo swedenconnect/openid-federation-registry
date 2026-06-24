@@ -2,68 +2,71 @@
 
 # OAuth2 Scopes
 
-This document describes the OAuth2 scopes required to access different endpoints of the OpenID Federation Entity
-Registry API.
+This document describes the OAuth2 scopes required to access the OpenID Federation Entity Registry API.
 
 ## Overview
 
-The Entity Registry Service uses OAuth2 JWT tokens for API authentication and authorization. Each endpoint requires
-specific scopes to be present in the JWT token. Scopes are organized by resource type and operation (read or write).
+The Entity Registry Service uses OAuth2 JWT tokens for authentication and authorization. All protected endpoints
+use exactly two scopes: `read` and `write`. There are no per-resource scopes.
 
 ## Scope Definitions
 
-The following table lists all available OAuth2 scopes and their corresponding API paths and HTTP methods:
+| Scope   | HTTP Methods            | Description                                  |
+|---------|-------------------------|----------------------------------------------|
+| `read`  | `GET`                   | Read access to all protected API resources.  |
+| `write` | `POST`, `PUT`, `DELETE` | Write access to all protected API resources. |
 
-| Scope Name                                                 | API Path                              | HTTP Methods            | Description                                           |
-|------------------------------------------------------------|---------------------------------------|-------------------------|-------------------------------------------------------|
-| `http://registry.swedenconnect.se/entity/hosted/read`      | `/registry/v1/entities/hosted/**`     | `GET`                   | Read access to hosted entity                          |
-| `http://registry.swedenconnect.se/entity/hosted/write`     | `/registry/v1/entities/hosted/**`     | `POST`, `PUT`, `DELETE` | Write access to hosted entity                         |
-| `http://registry.swedenconnect.se/modules/read`            | `/registry/v1/modules/**`             | `GET`                   | Read access to module resources and federation entity |
-| `http://registry.swedenconnect.se/modules/write`           | `/registry/v1/modules/**`             | `POST`, `PUT`, `DELETE` | Write access to module resources                      |
-| `http://registry.swedenconnect.se/trustmarks/read`         | `/registry/v1/trustmarks/**`          | `GET`                   | Read access to trust mark resources                   |
-| `http://registry.swedenconnect.se/trustmarks/write`        | `/registry/v1/trustmarks/**`          | `POST`, `PUT`, `DELETE` | Write access to trust mark resources                  |
-| `http://registry.swedenconnect.se/trustmarksubjects/read`  | `/registry/v1/trustmarks/subjects/**` | `GET`                   | Read access to trust mark subject resources           |
-| `http://registry.swedenconnect.se/trustmarksubjects/write` | `/registry/v1/trustmarks/subjects/**` | `POST`, `PUT`, `DELETE` | Write access to trust mark subject resources          |
-| `http://registry.swedenconnect.se/policies/read`           | `/registry/v1/policies/**`            | `GET`                   | Read access to policy resources                       |
-| `http://registry.swedenconnect.se/policies/write`          | `/registry/v1/policies/**`            | `POST`, `PUT`, `DELETE` | Write access to policy resources                      |
-| `http://registry.swedenconnect.se/subordinates/read`       | `/registry/v1/subordinates/**`        | `GET`                   | Read access to subordinate entity resources           |
-| `http://registry.swedenconnect.se/subordinates/write`      | `/registry/v1/subordinates/**`        | `POST`, `PUT`, `DELETE` | Write access to subordinate entity resources          |
+## Protected Endpoints
+
+The table below lists which API path groups require which scope:
+
+| API Path                              | `read` (GET) | `write` (POST / PUT / DELETE) |
+|---------------------------------------|:------------:|:-----------------------------:|
+| `/registry/v1/entities/hosted/**`     |      ✓       |               ✓               |
+| `/registry/v1/entities/**`            |      ✓       |               —               |
+| `/registry/v1/entities/federation/**` |      ✓       |               ✓               |
+| `/registry/v1/modules/**`             |      ✓       |               ✓               |
+| `/registry/v1/trustmarks/**`          |      ✓       |               ✓               |
+| `/registry/v1/trustmarks/subjects/**` |      ✓       |               ✓               |
+| `/registry/v1/subordinates/**`        |      ✓       |               ✓               |
+| `/registry/v1/entityconfiguration/**` |      ✓       |               ✓               |
+| `/registration-flow/v1/**`            |      ✓       |               ✓               |
+| `/registration/v1/**`                 |      ✓       |               ✓               |
+| `/registration-admin/v1/**`           |      ✓       |               ✓               |
+
+### Public endpoints (no scope required)
+
+| Path pattern                                                  | Notes                         |
+|---------------------------------------------------------------|-------------------------------|
+| `/api/v1/federationservice/**`                                | Public federation service API |
+| `/actuator/**`                                                | Health / metrics endpoints    |
+| `/assets/**`                                                  | Static frontend assets        |
+| `/entities/**`, `/registration-flows/**`, `/registrations/**` | Public read-only UI pages     |
+| `/logout/frontchannel`                                        | OIDC front-channel logout     |
 
 ## Usage
 
-When making API requests, include a valid JWT token in the `Authorization` header:
+Include a valid JWT token in the `Authorization` header:
 
 ```
 Authorization: Bearer <your-jwt-token>
 ```
 
-The JWT token must contain the required scope(s) in the `scope` claim. Multiple scopes can be included in a single
-token, separated by spaces.
+The JWT token must contain the required scope in the `scope` claim.
 
-### Example
-
-To read entities, your JWT token should include:
+### Read-only token example
 
 ```
-scope: "http://registry.swedenconnect.se/entity/read"
+scope: "read"
 ```
 
-To both read and write entities, your JWT token should include:
+### Full-access token example
 
 ```
-scope: "http://registry.swedenconnect.se/entity/read http://registry.swedenconnect.se/entity/write"
+scope: "read write"
 ```
-
-## Resource Types
-
-- **Entities**: Federation entity configurations and metadata
-- **Modules**: Federation module definitions
-- **Trust Marks**: Trust mark definitions and configurations
-- **Trust Mark Subjects**: Assignments of trust marks to subjects
-- **Policies**: Federation policies that govern entity behavior
-- **Subordinates**: Subordinate entity relationships and configurations
 
 ---
 
-Copyright &copy; 2025, [Sweden Connect](https://www.swedenconnect.se). Licensed under version 2.0 of
+Copyright &copy; 2026, [Sweden Connect](https://www.swedenconnect.se). Licensed under version 2.0 of
 the [Apache License](https://www.apache.org/licenses/LICENSE-2.0).
