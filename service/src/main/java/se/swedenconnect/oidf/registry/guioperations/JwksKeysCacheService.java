@@ -104,9 +104,14 @@ public class JwksKeysCacheService {
           organizationRecord.orgNumber());
       return null;
     }
+    final JWK validationKey = this.instancePlacementService
+        .resolveValidationKey(organizationRecord.orgNumber(), organizationRecord.functionGroup())
+        .orElseThrow(() -> new IllegalStateException(
+            "No oidf_service_api_validation_key configured for the instance serving org '"
+                + organizationRecord.orgNumber() + "'"));
     try {
       final JwksPayloadDto fresh =
-          this.oidfServiceIntegration.fetchServiceKeys(EntityID.parse(baseUrl.get().toString()));
+          this.oidfServiceIntegration.fetchServiceKeys(EntityID.parse(baseUrl.get().toString()), validationKey);
       this.cache.put(baseUrl.get(), fresh);
     }
     catch (final Exception e) {

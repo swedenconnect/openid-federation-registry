@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -55,9 +56,12 @@ class JwksKeysCacheServiceTest {
   final URI instanceUrl = URI.create("https://registry.example.se/oidf");
   final OrganizationRecord org = new OrganizationRecord("55555", "PM", "https://www.pm.se/oidf/", null);
 
+  JWK validationKey;
+
   @BeforeEach
-  void setUp() {
+  void setUp() throws Exception {
     service = new JwksKeysCacheService(oidfServiceIntegration, instancePlacementService);
+    validationKey = rsaKey("validation-key");
   }
 
   // -------------------------------------------------------------------------
@@ -71,7 +75,9 @@ class JwksKeysCacheServiceTest {
     final JwksPayloadDto payload = new JwksPayloadDto(fedKeys, new JWKSet(), JwksPayloadDto.KeyNames.empty());
 
     when(instancePlacementService.resolveBaseUrl(org)).thenReturn(Optional.of(instanceUrl));
-    when(oidfServiceIntegration.fetchServiceKeys(EntityID.parse(instanceUrl.toString())))
+    when(instancePlacementService.resolveValidationKey(org.orgNumber(), org.functionGroup()))
+        .thenReturn(Optional.of(validationKey));
+    when(oidfServiceIntegration.fetchServiceKeys(EntityID.parse(instanceUrl.toString()), validationKey))
         .thenReturn(payload);
 
     final List<JWK> result = service.getFederationKeys(org);
@@ -87,7 +93,9 @@ class JwksKeysCacheServiceTest {
     final JwksPayloadDto payload = new JwksPayloadDto(new JWKSet(), hostedKeys, JwksPayloadDto.KeyNames.empty());
 
     when(instancePlacementService.resolveBaseUrl(org)).thenReturn(Optional.of(instanceUrl));
-    when(oidfServiceIntegration.fetchServiceKeys(EntityID.parse(instanceUrl.toString())))
+    when(instancePlacementService.resolveValidationKey(org.orgNumber(), org.functionGroup()))
+        .thenReturn(Optional.of(validationKey));
+    when(oidfServiceIntegration.fetchServiceKeys(EntityID.parse(instanceUrl.toString()), validationKey))
         .thenReturn(payload);
 
     final List<JWK> result = service.getHostedKeys(org);
@@ -106,6 +114,19 @@ class JwksKeysCacheServiceTest {
     verifyNoInteractions(oidfServiceIntegration);
   }
 
+  @Test
+  @DisplayName("Throws when instance has no oidf_service_api_validation_key configured")
+  void throwsWhenValidationKeyMissing() {
+    when(instancePlacementService.resolveBaseUrl(org)).thenReturn(Optional.of(instanceUrl));
+    when(instancePlacementService.resolveValidationKey(org.orgNumber(), org.functionGroup()))
+        .thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> service.getFederationKeys(org))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("oidf_service_api_validation_key")
+        .hasMessageContaining(org.orgNumber());
+  }
+
   // -------------------------------------------------------------------------
   // Cache fallback behaviour
   // -------------------------------------------------------------------------
@@ -117,23 +138,27 @@ class JwksKeysCacheServiceTest {
     final JwksPayloadDto cached = new JwksPayloadDto(fedKeys, new JWKSet(), JwksPayloadDto.KeyNames.empty());
 
     when(instancePlacementService.resolveBaseUrl(org)).thenReturn(Optional.of(instanceUrl));
-    when(oidfServiceIntegration.fetchServiceKeys(any()))
-        .thenReturn(cached)               // first call: success → warms cache
-        .thenThrow(new RuntimeException("network error")); // second call: failure
+    when(instancePlacementService.resolveValidationKey(org.orgNumber(), org.functionGroup()))
+        .thenReturn(Optional.of(validationKey));
+    when(oidfServiceIntegration.fetchServiceKeys(any(), any()))
+        .thenReturn(cached)
+        .thenThrow(new RuntimeException("network error"));
 
-    service.getFederationKeys(org);                // warms cache
+    service.getFederationKeys(org);                 // warms cache
     final List<JWK> result = service.getFederationKeys(org); // should use cache
 
     assertThat(result).hasSize(1);
     assertThat(result.get(0).getKeyID()).isEqualTo("fed-kid-1");
-    verify(oidfServiceIntegration, times(2)).fetchServiceKeys(any());
+    verify(oidfServiceIntegration, times(2)).fetchServiceKeys(any(), any());
   }
 
   @Test
   @DisplayName("Returns empty list when fetch fails and cache is cold")
   void returnsEmptyWhenFetchFailsAndCacheIsCold() throws Exception {
     when(instancePlacementService.resolveBaseUrl(org)).thenReturn(Optional.of(instanceUrl));
-    when(oidfServiceIntegration.fetchServiceKeys(any()))
+    when(instancePlacementService.resolveValidationKey(org.orgNumber(), org.functionGroup()))
+        .thenReturn(Optional.of(validationKey));
+    when(oidfServiceIntegration.fetchServiceKeys(any(), any()))
         .thenThrow(new RuntimeException("network error"));
 
     assertThat(service.getFederationKeys(org)).isEmpty();
@@ -146,7 +171,9 @@ class JwksKeysCacheServiceTest {
     final JWKSet keysV2 = new JWKSet(rsaKey("kid-v2"));
 
     when(instancePlacementService.resolveBaseUrl(org)).thenReturn(Optional.of(instanceUrl));
-    when(oidfServiceIntegration.fetchServiceKeys(any()))
+    when(instancePlacementService.resolveValidationKey(org.orgNumber(), org.functionGroup()))
+        .thenReturn(Optional.of(validationKey));
+    when(oidfServiceIntegration.fetchServiceKeys(any(), any()))
         .thenReturn(new JwksPayloadDto(keysV1, new JWKSet(), JwksPayloadDto.KeyNames.empty()))
         .thenReturn(new JwksPayloadDto(keysV2, new JWKSet(), JwksPayloadDto.KeyNames.empty()));
 
@@ -167,15 +194,21 @@ class JwksKeysCacheServiceTest {
     final URI urlB = URI.create("https://instance-b.example.se/oidf");
     final OrganizationRecord orgA = new OrganizationRecord("11111", "OrgA", "https://a.example.se/", null);
     final OrganizationRecord orgB = new OrganizationRecord("22222", "OrgB", "https://b.example.se/", null);
+    final JWK keyA = rsaKey("validation-key-a");
+    final JWK keyB = rsaKey("validation-key-b");
 
     final JWKSet keysA = new JWKSet(rsaKey("kid-instance-a"));
     final JWKSet keysB = new JWKSet(rsaKey("kid-instance-b"));
 
     when(instancePlacementService.resolveBaseUrl(orgA)).thenReturn(Optional.of(urlA));
     when(instancePlacementService.resolveBaseUrl(orgB)).thenReturn(Optional.of(urlB));
-    when(oidfServiceIntegration.fetchServiceKeys(EntityID.parse(urlA.toString())))
+    when(instancePlacementService.resolveValidationKey(orgA.orgNumber(), orgA.functionGroup()))
+        .thenReturn(Optional.of(keyA));
+    when(instancePlacementService.resolveValidationKey(orgB.orgNumber(), orgB.functionGroup()))
+        .thenReturn(Optional.of(keyB));
+    when(oidfServiceIntegration.fetchServiceKeys(EntityID.parse(urlA.toString()), keyA))
         .thenReturn(new JwksPayloadDto(keysA, new JWKSet(), JwksPayloadDto.KeyNames.empty()));
-    when(oidfServiceIntegration.fetchServiceKeys(EntityID.parse(urlB.toString())))
+    when(oidfServiceIntegration.fetchServiceKeys(EntityID.parse(urlB.toString()), keyB))
         .thenReturn(new JwksPayloadDto(new JWKSet(), keysB, JwksPayloadDto.KeyNames.empty()));
 
     assertThat(service.getFederationKeys(orgA).get(0).getKeyID()).isEqualTo("kid-instance-a");
@@ -189,14 +222,20 @@ class JwksKeysCacheServiceTest {
     final URI urlB = URI.create("https://instance-b.example.se/oidf");
     final OrganizationRecord orgA = new OrganizationRecord("11111", "OrgA", "https://a.example.se/", null);
     final OrganizationRecord orgB = new OrganizationRecord("22222", "OrgB", "https://b.example.se/", null);
+    final JWK keyA = rsaKey("validation-key-a");
+    final JWK keyB = rsaKey("validation-key-b");
 
     final JWKSet keysA = new JWKSet(rsaKey("kid-a"));
 
     when(instancePlacementService.resolveBaseUrl(orgA)).thenReturn(Optional.of(urlA));
     when(instancePlacementService.resolveBaseUrl(orgB)).thenReturn(Optional.of(urlB));
-    when(oidfServiceIntegration.fetchServiceKeys(EntityID.parse(urlA.toString())))
+    when(instancePlacementService.resolveValidationKey(orgA.orgNumber(), orgA.functionGroup()))
+        .thenReturn(Optional.of(keyA));
+    when(instancePlacementService.resolveValidationKey(orgB.orgNumber(), orgB.functionGroup()))
+        .thenReturn(Optional.of(keyB));
+    when(oidfServiceIntegration.fetchServiceKeys(EntityID.parse(urlA.toString()), keyA))
         .thenReturn(new JwksPayloadDto(keysA, new JWKSet(), JwksPayloadDto.KeyNames.empty()));
-    when(oidfServiceIntegration.fetchServiceKeys(EntityID.parse(urlB.toString())))
+    when(oidfServiceIntegration.fetchServiceKeys(EntityID.parse(urlB.toString()), keyB))
         .thenThrow(new RuntimeException("instance B unreachable"));
 
     final List<JWK> resultA = service.getFederationKeys(orgA);

@@ -16,15 +16,16 @@
 
 package se.swedenconnect.oidf.registry.organization.service;
 
-import lombok.extern.slf4j.Slf4j;
+import com.nimbusds.jose.jwk.JWK;
 import org.springframework.stereotype.Service;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
+import se.swedenconnect.oidf.registry.infrastructure.config.KeyEntry;
 import se.swedenconnect.oidf.registry.infrastructure.config.RegistryProperties;
 import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
 
 import java.net.URI;
-import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -33,12 +34,11 @@ import java.util.Optional;
  * @author Per Fredrik Plars
  * @author Felix Hellman
  */
-@Slf4j
 @Service
 public class InstancePlacementService {
 
-  final RegistryProperties registryProperties;
-  final InstanceRepository instanceRepository;
+  private final RegistryProperties registryProperties;
+  private final InstanceRepository instanceRepository;
 
   /**
    * Constructor
@@ -61,7 +61,8 @@ public class InstancePlacementService {
    */
   public Optional<String> resolveEntityPrefix(final String orgNumber, final String functionGroup) {
     return this.findMatchingInstance(orgNumber, functionGroup)
-        .map(instance -> this.entityPrefixFrom(instance, orgNumber));
+        .map(instance -> this.entityPrefixFrom(instance, orgNumber))
+        .map(URI::toString);
   }
 
   /**
@@ -99,6 +100,21 @@ public class InstancePlacementService {
   }
 
   /**
+   * Resolves the public validation key configured for the instance that serves the given organisation.
+   * The key is used to verify JWT responses from the oidf-service node attached to that instance.
+   *
+   * @param orgNumber organization number
+   * @param functionGroup optional function group used for matching
+   * @return the parsed {@link JWK} from the instance's {@code oidf_service_api_validation_key}, or empty if
+   *     the instance has no such key configured
+   */
+  public Optional<JWK> resolveValidationKey(final String orgNumber, final String functionGroup) {
+    return this.findMatchingInstance(orgNumber, functionGroup)
+        .map(RegistryProperties.InstanceProperties::oidfServiceApiValidationKey)
+        .map(KeyEntry::getKey);
+  }
+
+  /**
    * Finds the first {@link RegistryProperties.InstanceProperties} that matches the given org number or function group.
    * Falls back to the instance marked as default if no explicit match is found.
    */
@@ -124,25 +140,23 @@ public class InstancePlacementService {
   private boolean matchesOrgNumber(
       final RegistryProperties.InstanceMatcherProperties matcher, final String orgNumber) {
     return Optional.ofNullable(matcher.org_numbers())
-        .orElse(Collections.emptyList())
-        .stream()
-        .anyMatch(orgNr -> orgNr.equals(orgNumber));
+        .orElse(List.of())
+        .contains(orgNumber);
   }
 
   private boolean matchesFunctionGroup(
       final RegistryProperties.InstanceMatcherProperties matcher, final String functionGroup) {
     return functionGroup != null
         && Optional.ofNullable(matcher.functiongroups())
-        .orElse(Collections.emptyList())
-        .stream()
-        .anyMatch(fg -> fg.equals(functionGroup));
+        .orElse(List.of())
+        .contains(functionGroup);
   }
 
-  private String entityPrefixFrom(
+  private URI entityPrefixFrom(
       final RegistryProperties.InstanceProperties instance, final String orgNumber) {
     return Optional.ofNullable(instance.orgBaseUrlOverrides())
         .map(overrides -> overrides.get(orgNumber))
-        .orElse(instance.baseUrl().toString() + "/" + orgNumber);
+        .orElse(URI.create(instance.baseUrl().toString() + "/" + orgNumber));
   }
 
 }

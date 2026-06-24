@@ -65,17 +65,17 @@ class InstancePlacementServiceTest {
 
   private RegistryProperties.InstanceProperties orgNumberInstance(UUID id, String... orgNumbers) {
     return new RegistryProperties.InstanceProperties(id, "Instance " + id, TEST_BASE_URL, null,
-        new RegistryProperties.InstanceMatcherProperties(List.of(), false, List.of(orgNumbers)));
+        new RegistryProperties.InstanceMatcherProperties(List.of(), false, List.of(orgNumbers)), null);
   }
 
   private RegistryProperties.InstanceProperties functionGroupInstance(UUID id, String... groups) {
     return new RegistryProperties.InstanceProperties(id, "Instance " + id, TEST_BASE_URL, null,
-        new RegistryProperties.InstanceMatcherProperties(List.of(groups), false, List.of()));
+        new RegistryProperties.InstanceMatcherProperties(List.of(groups), false, List.of()), null);
   }
 
   private RegistryProperties.InstanceProperties defaultInstance(UUID id) {
     return new RegistryProperties.InstanceProperties(id, "Default instance", TEST_BASE_URL, null,
-        new RegistryProperties.InstanceMatcherProperties(List.of(), true, List.of()));
+        new RegistryProperties.InstanceMatcherProperties(List.of(), true, List.of()), null);
   }
 
   private RegistryProperties propertiesWith(RegistryProperties.InstanceProperties... instances) {
@@ -220,7 +220,7 @@ class InstancePlacementServiceTest {
     final URI defaultUrl = URI.create("https://default.example.se/oidf");
     final RegistryProperties.InstanceProperties defaultProp =
         new RegistryProperties.InstanceProperties(defaultInstanceId, "Default", defaultUrl, null,
-            new RegistryProperties.InstanceMatcherProperties(List.of(), true, List.of()));
+            new RegistryProperties.InstanceMatcherProperties(List.of(), true, List.of()), null);
     service = new InstancePlacementService(propertiesWith(defaultProp), instanceRepository);
 
     final Optional<URI> result = service.resolveBaseUrl(org("0000000000", null));

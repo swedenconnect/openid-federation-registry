@@ -229,14 +229,16 @@ public class OidfServiceIntegration {
   }
 
   /**
-   * Fetches and verifies the signed JWKS JWT from the entity's /jwks endpoint. The signature is verified using the
-   * federation keys from the entity's self-signed entity configuration. Parses directly from the raw JWT payload to
+   * Fetches and verifies the signed JWKS JWT from the entity's /jwks endpoint. The JWT signature is
+   * verified using the provided {@code validationKey}, which must be the public key configured for this
+   * instance via {@code oidf_service_api_validation_key}. Parses directly from the raw JWT payload to
    * handle the structure: {@code {"federation": {"keys": [...]}, "hosted": {"keys": [...]}, "name": {...}}}
    *
    * @param entityId the entity ID whose /jwks endpoint to fetch
+   * @param validationKey the public key to use for JWT signature verification
    * @return parsed and verified JWKS payload DTO
    */
-  public JwksPayloadDto fetchServiceKeys(final EntityID entityId) {
+  public JwksPayloadDto fetchServiceKeys(final EntityID entityId, final JWK validationKey) {
     final URI jwksUri = UriComponentsBuilder.fromUri(entityId.toURI())
         .path("/jwks")
         .build()
@@ -261,7 +263,16 @@ public class OidfServiceIntegration {
         throw new IllegalStateException("Unexpected typ in JWKS JWT, expected JWT but got: " + header.getType());
       }
 
-      // Parse the payload first to extract the keys embedded in the JWT
+      final JWSVerifier verifier = switch (validationKey.getKeyType().getValue()) {
+        case "EC" -> new ECDSAVerifier(validationKey.toECKey());
+        case "RSA" -> new RSASSAVerifier(validationKey.toRSAKey());
+        case null, default -> throw new IllegalArgumentException("Unsupported key type: " + validationKey.getKeyType());
+      };
+
+      if (!signedJWT.verify(verifier)) {
+        throw new IllegalStateException("Signature verification failed for JWKS JWT from: " + jwksUri);
+      }
+
       final Map<String, Object> payload = signedJWT.getPayload().toJSONObject();
 
       JWKSet federationJwks = new JWKSet();
@@ -290,28 +301,6 @@ public class OidfServiceIntegration {
         }
       }
 
-      // Verify signature using the federation keys embedded in the JWT payload
-      final JWKSelector selector = new JWKSelector(new JWKMatcher.Builder()
-          .keyID(header.getKeyID())
-          .build());
-
-      final Optional<JWK> signingKey = selector.select(federationJwks).stream().findFirst();
-      if (signingKey.isEmpty()) {
-        throw new IllegalArgumentException(
-            "No key with kid '%s' found in federation JWKS payload".formatted(header.getKeyID()));
-      }
-
-      final JWSVerifier verifier = switch (signingKey.get().getKeyType().getValue()) {
-        case "EC" -> new ECDSAVerifier(signingKey.get().toECKey());
-        case "RSA" -> new RSASSAVerifier(signingKey.get().toRSAKey());
-        case null, default ->
-            throw new IllegalArgumentException("Unsupported key type: " + signingKey.get().getKeyType());
-      };
-
-      if (!signedJWT.verify(verifier)) {
-        throw new IllegalStateException("Signature verification failed for JWKS JWT from: " + jwksUri);
-      }
-
       @SuppressWarnings("unchecked")
       final Map<String, Object> nameClaim = (Map<String, Object>) payload.get("name");
       final JwksPayloadDto.KeyNames names;
@@ -328,7 +317,6 @@ public class OidfServiceIntegration {
 
       final JwksPayloadDto result = new JwksPayloadDto(federationJwks, hostedJwks, names);
 
-      // Emit audit event with all loaded key IDs
       final List<String> allKids = new java.util.ArrayList<>();
       result.federation().getKeys().stream().map(JWK::getKeyID).forEach(allKids::add);
       result.hosted().getKeys().stream().map(JWK::getKeyID).forEach(allKids::add);
