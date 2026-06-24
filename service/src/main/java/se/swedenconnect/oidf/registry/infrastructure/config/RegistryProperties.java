@@ -153,6 +153,8 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
    * @param baseUrl the base URL for this instance, used to compute entity prefixes
    * @param orgBaseUrlOverrides optional per-org overrides on the form orgNumber → base URL
    * @param matchers the matcher configuration used to assign organizations to this instance
+   * @param oidfServiceApiValidationKey optional public key used to verify signed JWT responses from the oidf-service
+   *     node attached to this instance
    */
   public record InstanceProperties(UUID instanceId,
       String name,
