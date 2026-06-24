@@ -1,5 +1,7 @@
 ${BACKUP_DIR}
 
+build-snapshot.sh
+
 .DS_Store
 
 *.class
@@ -37,3 +39,4 @@ hs_err_pid*
 /.apt_generated/
 
 **/.vite
+dev.sh

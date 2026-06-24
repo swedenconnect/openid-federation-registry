@@ -28,6 +28,7 @@ import se.swedenconnect.oidf.registry.infrastructure.persistence.JsonConverter;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.MapConverter;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
+import se.swedenconnect.oidf.registry.registrations.dto.StepExecutionRecordDto;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDateTime;
@@ -81,6 +82,14 @@ public class Registration extends BaseEntity {
   @Convert(converter = TrustmarkSourceConverter.class)
   private List<TrustmarkSource> trustmarksRequested;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "parent_registration_id", nullable = true)
+  private Registration parentRegistration;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "registration_type", length = 30, nullable = false)
+  private RegistrationType registrationType;
+
   @Enumerated(EnumType.STRING)
   @Column(name = "status", length = 20, nullable = false)
   private RegistrationStatus status;
@@ -94,7 +103,18 @@ public class Registration extends BaseEntity {
   @Column(name = "rejection_reason", columnDefinition = "TEXT")
   private String rejectionReason;
 
-  /** JPA converter for the flow definition list. */
+  @Column(name = "step_results", columnDefinition = "TEXT")
+  @Convert(converter = Registration.StepResultsConverter.class)
+  private List<StepExecutionRecordDto> stepResults;
+
+  @Column(name = "pending_step_index")
+  private Integer pendingStepIndex;
+
+  @Column(name = "request_metadata", columnDefinition = "TEXT")
+  @Convert(converter = MapConverter.class)
+  private Map<String, Object> requestMetadata;
+
+  /** JPA converter for the trustmark source list. */
   @Converter
   public static class TrustmarkSourceConverter extends JsonConverter<List<TrustmarkSource>> {
 
@@ -105,6 +125,20 @@ public class Registration extends BaseEntity {
      */
     public TrustmarkSourceConverter(final JsonMapper mapper) {
       super(mapper, new tools.jackson.core.type.TypeReference<List<TrustmarkSource>>() {});
+    }
+  }
+
+  /** JPA converter for the step results list. */
+  @Converter
+  public static class StepResultsConverter extends JsonConverter<List<StepExecutionRecordDto>> {
+
+    /**
+     * Constructor.
+     *
+     * @param mapper the JSON mapper
+     */
+    public StepResultsConverter(final JsonMapper mapper) {
+      super(mapper, new tools.jackson.core.type.TypeReference<List<StepExecutionRecordDto>>() {});
     }
   }
 }

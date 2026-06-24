@@ -28,6 +28,7 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONObject;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,7 @@ import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
 
 import java.net.URI;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,6 +48,7 @@ import java.util.Optional;
  * OIDF Service Integration
  *
  * @author Per Fredrik Plars
+ * @author Felix Hellman
  */
 @Slf4j
 @Service
@@ -67,6 +70,83 @@ public class OidfServiceIntegration {
     this.restClient = restClient;
     this.auditLogger = auditLogger;
 
+  }
+
+  /**
+   * Fetches the hosted JWKS from an oidf-service-node's {@code /jwk} endpoint.
+   * <p>
+   * The endpoint returns a self-signed JWT whose payload contains {@code federation.keys} and
+   * {@code hosted.keys}. This method verifies the signature using the keys carried in the JWT
+   * itself and returns only the {@code hosted} key set.
+   *
+   * @param baseUrl the base URL of the service node (e.g. {@code https://oidf-node.example.com})
+   * @return the {@code hosted} {@link JWKSet} from the service node
+   */
+  @SuppressWarnings("unchecked")
+  public JWKSet fetchHostedJwksFromServiceNode(final URI baseUrl) {
+    final URI jwkUri = UriComponentsBuilder.fromUri(baseUrl).path("/jwks").build().toUri();
+    log.debug("Fetching hosted JWKS from service node: {}", jwkUri);
+    try {
+      final ResponseEntity<String> response = this.restClient.get()
+          .uri(jwkUri)
+          .retrieve()
+          .toEntity(String.class);
+      final String body = response.getBody();
+      if (body == null) {
+        throw new IllegalArgumentException("Empty response from /jwks endpoint: " + jwkUri);
+      }
+
+      final SignedJWT jwt = SignedJWT.parse(body);
+      final Map<String, Object> payload = jwt.getPayload().toJSONObject();
+
+      // Collect keys from both sections for self-verification
+      final List<JWK> allKeys = new ArrayList<>();
+      for (final String section : List.of("federation", "hosted")) {
+        final Object sectionRaw = payload.get(section);
+        if (sectionRaw instanceof Map<?, ?> sectionMap) {
+          final Object keysRaw = sectionMap.get("keys");
+          if (keysRaw != null) {
+            allKeys.addAll(JWKSet.parse(new JSONObject(Map.of("keys", keysRaw))).getKeys());
+          }
+        }
+      }
+
+      final String kid = jwt.getHeader().getKeyID();
+      final JWK signingKey = allKeys.stream()
+          .filter(k -> kid.equals(k.getKeyID()))
+          .findFirst()
+          .orElseThrow(() -> new IllegalArgumentException(
+              "No key for kid '" + kid + "' in /jwks response from: " + jwkUri));
+
+      final JWSVerifier verifier = switch (signingKey.getKeyType().getValue()) {
+        case "EC" -> new ECDSAVerifier(signingKey.toECKey());
+        case "RSA" -> new RSASSAVerifier(signingKey.toRSAKey());
+        case null, default -> throw new IllegalArgumentException(
+            "Unsupported key type: " + signingKey.getKeyType());
+      };
+
+      if (!jwt.verify(verifier)) {
+        throw new IllegalStateException("Signature verification failed for /jwks response from: " + jwkUri);
+      }
+
+      final Object hostedRaw = payload.get("hosted");
+      if (!(hostedRaw instanceof Map<?, ?> hostedMap)) {
+        throw new IllegalArgumentException("No 'hosted' section in /jwks response from: " + jwkUri);
+      }
+      final Object hostedKeysRaw = hostedMap.get("keys");
+      if (hostedKeysRaw == null) {
+        throw new IllegalArgumentException("No 'hosted.keys' in /jwks response from: " + jwkUri);
+      }
+      final List<JWK> hostedKeys = JWKSet.parse(new JSONObject(Map.of("keys", hostedKeysRaw))).getKeys();
+      final Map<String, JWK> deduped = new java.util.LinkedHashMap<>();
+      for (final JWK k : hostedKeys) {
+        deduped.putIfAbsent(k.getKeyID() != null ? k.getKeyID() : k.toString(), k);
+      }
+      return new JWKSet(new ArrayList<>(deduped.values()));
+    }
+    catch (final ParseException | JOSEException e) {
+      throw new IllegalArgumentException("Failed to process /jwks response from: " + jwkUri, e);
+    }
   }
 
   /**

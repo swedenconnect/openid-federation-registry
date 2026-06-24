@@ -18,22 +18,27 @@ package se.swedenconnect.oidf.registry.registrations.dto;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.registrationflow.dto.Technology;
 import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
+import se.swedenconnect.oidf.registry.registrationflow.process.ContextDiffEntry;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
 import se.swedenconnect.oidf.registry.registrationflow.process.StepExecutionRecord;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepIssue;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
+import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
 import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
  * Maps domain objects to registration DTOs.
  *
  * @author Per Fredrik Plars
+ * @author Felix Hellman
  */
 public final class RegistrationMapper {
 
@@ -45,11 +50,14 @@ public final class RegistrationMapper {
    *
    * @param registration the registration
    * @param report process report from the pipeline run
+   * @param isHosted whether the entity is hosted
+   * @param hostedMetadata metadata for hosted entity, or null if not hosted
    * @return mapped DTO
    */
   public static RegistrationDto toRegistrationRequestStatusDto(
-      final Registration registration, final ProcessReport report) {
-    final RegistrationDto dto = toRegistrationDto(registration);
+      final Registration registration, final ProcessReport report, final boolean isHosted,
+      final Map<String, Object> hostedMetadata) {
+    final RegistrationDto dto = toRegistrationDto(registration, isHosted, hostedMetadata);
     dto.setSuccessful(report.isSuccessful());
     dto.setSteps(report.steps().stream()
         .map(RegistrationMapper::toStepExecutionRecordDto)
@@ -61,31 +69,82 @@ public final class RegistrationMapper {
    * Maps a {@link Registration} entity to a {@link RegistrationDto}.
    *
    * @param model registration entity
+   * @param isHosted whether the entity is hosted
+   * @param hostedMetadata metadata for hosted entity, or null if not hosted
    * @return mapped DTO
    */
-  public static RegistrationDto toRegistrationDto(final Registration model) {
+  public static RegistrationDto toRegistrationDto(final Registration model, final boolean isHosted,
+      final Map<String, Object> hostedMetadata) {
+    return toRegistrationDto(model, isHosted, hostedMetadata, Map.of());
+  }
+
+  /**
+   * Maps a {@link Registration} entity to a {@link RegistrationDto} with trust mark status overrides.
+   *
+   * @param model registration entity
+   * @param isHosted whether the entity is hosted
+   * @param hostedMetadata metadata for hosted entity, or null if not hosted
+   * @param tmStatusByType map from trust mark type to actual registration status, overrides stored value
+   * @return mapped DTO
+   */
+  public static RegistrationDto toRegistrationDto(final Registration model, final boolean isHosted,
+      final Map<String, Object> hostedMetadata, final Map<String, RegistrationStatus> tmStatusByType) {
     final RegistrationDto dto = new RegistrationDto();
     dto.setRegistrationId(model.getRegistrationId());
     dto.setJoinId(model.getFlowAssignment().getAssignId());
     dto.setEntityIdentifier(model.getEntityId());
     dto.setIntermediateEntityId(model.getFlowAssignment().getTaIm().getEntity().getSubject());
+    dto.setRegistrationType(model.getRegistrationType());
     dto.setStatusFedreg(FedRegStatus.valueOf(model.getStatus().toString()));
     dto.setRejectionReason(model.getRejectionReason());
-    dto.setStatusTrustmarks(toTrustmarkDtoList(model.getTrustmarksRequested()));
+    dto.setStatusTrustmarks(toTrustmarkDtoList(model.getTrustmarksRequested(), tmStatusByType));
     dto.setOrganizationName(
         Optional.ofNullable(model.getOrganization()).map(Organization::getOrgName).orElse(null));
-
-    final Technology technology = model.getFlowAssignment().getRegistrationFlow().getTechnology();
-    final List<RegistrationTagsDto> registrationTags = new ArrayList<>();
-    switch (technology) {
-    case OIDC -> registrationTags.add(RegistrationTagsDto.OIDC);
-    case SAML -> registrationTags.add(RegistrationTagsDto.SAML);
+    dto.setIsHosted(isHosted);
+    dto.setMetadata(hostedMetadata);
+    if (model.getParentRegistration() != null) {
+      dto.setSubordinateEntityId(model.getParentRegistration().getEntityId());
+    }
+    if (model.getStepResults() != null) {
+      dto.setSteps(model.getStepResults());
     }
 
-    final String entityType = model.getFlowAssignment().getRegistrationFlow().getEntityType();
-    Optional.ofNullable(entityType).ifPresent(s -> registrationTags.add(fromEntityType(s)));
+    if (model.getRegistrationType() != RegistrationType.TRUST_MARK_SUBORDINATE) {
+      final Technology technology = model.getFlowAssignment().getRegistrationFlow().getTechnology();
+      final List<RegistrationTagsDto> registrationTags = new ArrayList<>();
+      if (technology != null) {
+        switch (technology) {
+        case OIDC -> registrationTags.add(RegistrationTagsDto.OIDC);
+        case SAML -> registrationTags.add(RegistrationTagsDto.SAML);
+        }
+      }
 
-    dto.setTags(registrationTags);
+      if (isHosted) {
+        registrationTags.add(RegistrationTagsDto.HOSTED);
+      }
+
+      final String entityType = model.getFlowAssignment().getRegistrationFlow().getEntityType();
+      Optional.ofNullable(entityType).ifPresent(s -> registrationTags.add(fromEntityType(s)));
+
+      dto.setTags(registrationTags);
+
+      final String orgNumber = Optional.ofNullable(model.getOrganization())
+          .map(Organization::getOrgNumber).orElse(null);
+      if (orgNumber != null && hostedMetadata != null) {
+        final boolean isEntityWithMetadata = registrationTags.stream().anyMatch(t ->
+            t == RegistrationTagsDto.RP || t == RegistrationTagsDto.OP
+                || t == RegistrationTagsDto.SAML_IDP || t == RegistrationTagsDto.SAML_SP
+                || t == RegistrationTagsDto.SAML_RP);
+        if (isEntityWithMetadata) {
+          final Map<String, Object> enrichedMetadata = new HashMap<>(hostedMetadata);
+          enrichedMetadata.put("organization_number", orgNumber);
+          dto.setMetadata(enrichedMetadata);
+        }
+      }
+    } else {
+      dto.setTags(List.of());
+    }
+
     return dto;
   }
 
@@ -97,10 +156,14 @@ public final class RegistrationMapper {
       case "oauth_authorization_server" -> RegistrationTagsDto.AS;
       case "oauth_client" -> RegistrationTagsDto.OAC;
       case "oauth_protected_resource" -> RegistrationTagsDto.ORS;
+      case "saml_identity_provider" -> RegistrationTagsDto.SAML_IDP;
+      case "saml_service_provider" -> RegistrationTagsDto.SAML_SP;
+      case "saml_relying_party" -> RegistrationTagsDto.SAML_RP;
       default -> throw new IllegalArgumentException("Unknown entity_type: " + entityType);
     };
   }
-  private static List<TrustmarkRegistrationDto> toTrustmarkDtoList(final List<TrustmarkSource> tmSource) {
+  private static List<TrustmarkRegistrationDto> toTrustmarkDtoList(final List<TrustmarkSource> tmSource,
+      final Map<String, RegistrationStatus> tmStatusByType) {
     if (tmSource == null) {
       return null;
     }
@@ -110,9 +173,12 @@ public final class RegistrationMapper {
       dto.setTrustmarkStatus(Optional.ofNullable(tm.trustmarks())
           .orElse(Collections.emptyList())
           .stream()
-          .map(trustMarkStatus ->
-              new TrustmarkStatusDto(trustMarkStatus.trustmarkType(),
-                  FedRegStatus.valueOf(trustMarkStatus.trustmarkStatus().toString())))
+          .map(trustMarkStatus -> {
+            final RegistrationStatus resolved = tmStatusByType.getOrDefault(
+                trustMarkStatus.trustmarkType(), trustMarkStatus.trustmarkStatus());
+            return new TrustmarkStatusDto(trustMarkStatus.trustmarkType(),
+                FedRegStatus.valueOf(resolved.toString()));
+          })
           .toList());
       return dto;
     }).toList();
@@ -150,20 +216,36 @@ public final class RegistrationMapper {
     dto.setName(flowAssignment.getRegistrationFlow().getName());
     dto.setDescription(flowAssignment.getRegistrationFlow().getDescription());
     dto.setDescriptionSv(flowAssignment.getRegistrationFlow().getDescriptionSv());
-    dto.setTechnology(flowAssignment.getRegistrationFlow().getTechnology().name());
+    final Technology tech = flowAssignment.getRegistrationFlow().getTechnology();
+    dto.setTechnology(tech != null ? tech.name() : null);
     dto.setEntityType(flowAssignment.getRegistrationFlow().getEntityType());
     dto.setIntermediateEntityId(flowAssignment.getTaIm().getEntity().getSubject());
     return dto;
   }
 
+  /**
+   * Converts a {@link ProcessReport} to a list of {@link StepExecutionRecordDto}.
+   *
+   * @param report the pipeline report
+   * @return mapped step DTOs
+   */
+  public static List<StepExecutionRecordDto> toStepExecutionRecordDtos(final ProcessReport report) {
+    return report.steps().stream().map(RegistrationMapper::toStepExecutionRecordDto).toList();
+  }
+
   private static StepExecutionRecordDto toStepExecutionRecordDto(final StepExecutionRecord record) {
+    final List<ContextDiffEntryDto> diff = record.contextDiff() == null ? List.of() :
+        record.contextDiff().stream()
+            .map(e -> new ContextDiffEntryDto(e.key(), e.changeType(), e.before(), e.after()))
+            .toList();
     return new StepExecutionRecordDto(
         record.stepName(),
         record.result().status().toString(),
         record.result().message(),
         record.result().issues().stream()
             .map(RegistrationMapper::toStepIssueDto)
-            .toList()
+            .toList(),
+        diff
     );
   }
 

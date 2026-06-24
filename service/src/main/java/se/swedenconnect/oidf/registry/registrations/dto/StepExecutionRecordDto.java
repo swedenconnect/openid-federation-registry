@@ -23,9 +23,10 @@ import java.util.List;
  * Execution outcome of a single pipeline step.
  *
  * @param stepName display name of the step
- * @param status step outcome (SUCCESS, WARNING, FAILURE)
+ * @param status step outcome (SUCCESS, SKIPPED, WARNING, FAILURE, PENDING_APPROVAL)
  * @param message optional human-readable summary
  * @param issues validation issues found during this step
+ * @param contextDiff changes made to the pipeline context by this step
  * @author Per Fredrik Plars
  */
 @Schema(name = "StepExecutionRecord")
@@ -41,6 +42,9 @@ public record StepExecutionRecordDto(
     String message,
 
     @Schema(description = "Validation issues found during this step")
-    List<StepIssueDto> issues
+    List<StepIssueDto> issues,
+
+    @Schema(description = "Changes made to the pipeline context by this step")
+    List<ContextDiffEntryDto> contextDiff
 ) {
 }

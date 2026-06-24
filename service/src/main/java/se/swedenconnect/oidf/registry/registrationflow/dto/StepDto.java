@@ -15,6 +15,8 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow.dto;
 
+import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -25,12 +27,14 @@ import java.util.UUID;
  * @param name display name
  * @param description human-readable description
  * @param config list of configurable values for this step
+ * @param flowType the flow type this step belongs to
  * @author Per Fredrik Plars
  */
 public record StepDto(
     UUID stepId,
     String name,
     String description,
-    List<ConfigValueDto> config
+    List<ConfigValueDto> config,
+    Step.FlowType flowType
 ) {
 }

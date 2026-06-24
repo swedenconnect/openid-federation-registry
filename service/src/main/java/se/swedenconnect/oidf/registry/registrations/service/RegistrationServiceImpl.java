@@ -21,26 +21,33 @@ import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRec
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
 import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
+import se.swedenconnect.oidf.registry.entity.service.EntityConfigService;
 import se.swedenconnect.oidf.registry.registrationflow.RegistrationFlowService;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationFlowInformationDto;
+import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationJoinRequestDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationMapper;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
+import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
 import se.swedenconnect.oidf.registry.subordinate.service.SubordinateService;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Implementation of {@link RegistrationService}.
  *
  * @author Per Fredrik Plars
+ * @author Felix Hellman
  */
 @Service
 public class RegistrationServiceImpl implements RegistrationService {
@@ -50,6 +57,7 @@ public class RegistrationServiceImpl implements RegistrationService {
   private final RegistrationFlowService registrationFlowService;
   private final SubordinateRepository subordinateRepository;
   private final SubordinateService subordinateService;
+  private final EntityConfigService entityConfigService;
 
 
   /**
@@ -60,17 +68,20 @@ public class RegistrationServiceImpl implements RegistrationService {
    * @param registrationFlowService service for managing registration flows
    * @param subordinateRepository repository for subordinate statements
    * @param subordinateService service for deleting subordinate statements
+   * @param entityConfigService service for deleting hosted entities
    */
   public RegistrationServiceImpl(final FlowAssignmentRepository flowAssignmentRepository,
       final RegistrationRepository registrationRepository,
       final RegistrationFlowService registrationFlowService,
       final SubordinateRepository subordinateRepository,
-      final SubordinateService subordinateService) {
+      final SubordinateService subordinateService,
+      final EntityConfigService entityConfigService) {
     this.flowAssignmentRepository = flowAssignmentRepository;
     this.registrationRepository = registrationRepository;
     this.registrationFlowService = registrationFlowService;
     this.subordinateRepository = subordinateRepository;
     this.subordinateService = subordinateService;
+    this.entityConfigService = entityConfigService;
   }
 
 
@@ -78,10 +89,18 @@ public class RegistrationServiceImpl implements RegistrationService {
   @Transactional(readOnly = true)
   public RegistrationDto getRegistrationById(final OrganizationRecord organizationRecord, final UUID registrationId) {
     // todo limit by its orgbelonging
-    return this.registrationRepository.findById(registrationId)
-        .map(RegistrationMapper::toRegistrationDto)
+    final Registration reg = this.registrationRepository.findById(registrationId)
         .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
             "Registration not found: %s".formatted(registrationId)));
+    final List<HostedEntityDto> hostedEntities =
+        this.entityConfigService.listHostedEntity(organizationRecord, reg.getEntityId());
+    final boolean isHosted = !hostedEntities.isEmpty();
+    final Map<String, Object> hostedMetadata = isHosted ? hostedEntities.getFirst().getMetadata() : null;
+    final Map<String, RegistrationStatus> tmStatusByType =
+        this.registrationRepository.findByParentRegistration_RegistrationId(registrationId)
+            .stream()
+            .collect(Collectors.toMap(Registration::getEntityId, Registration::getStatus));
+    return RegistrationMapper.toRegistrationDto(reg, isHosted, hostedMetadata, tmStatusByType);
   }
 
 
@@ -95,7 +114,11 @@ public class RegistrationServiceImpl implements RegistrationService {
     final ProcessReport report = this.registrationFlowService.executeRegistrationFlow(organizationRecord, request);
     final Registration registration = this.registrationRepository.findByEntityId(request.getEntityIdentifier())
         .orElseThrow(() -> new IllegalArgumentException("No registration found for this registrationid"));
-    return RegistrationMapper.toRegistrationRequestStatusDto(registration, report);
+    final List<HostedEntityDto> hostedEntities =
+        this.entityConfigService.listHostedEntity(organizationRecord, request.getEntityIdentifier());
+    final boolean isHosted = !hostedEntities.isEmpty();
+    final Map<String, Object> hostedMetadata = isHosted ? hostedEntities.getFirst().getMetadata() : null;
+    return RegistrationMapper.toRegistrationRequestStatusDto(registration, report, isHosted, hostedMetadata);
   }
 
   @Override
@@ -109,16 +132,55 @@ public class RegistrationServiceImpl implements RegistrationService {
           .findByOrgNumberAndEntityidentifier(organizationRecord.orgNumber(), reg.getEntityId())
           .forEach(sub -> this.subordinateService.deleteSubordinate(organizationRecord, sub.getSubordinateId()));
     }
+    this.entityConfigService.listHostedEntity(organizationRecord, reg.getEntityId())
+        .forEach(hosted -> this.entityConfigService.deleteHostedEntity(organizationRecord, hosted.getEntityId()));
     this.registrationRepository.delete(reg);
   }
 
   @Override
   @Transactional(readOnly = true)
   public List<RegistrationDto> listRegistrationsForThisOrg(final OrganizationRecord organizationRecord) {
-    return this.registrationRepository.findAllByOrganizationOrgNumber(organizationRecord.orgNumber())
-        .stream()
-        .map(RegistrationMapper::toRegistrationDto)
+    final Map<String, Map<String, Object>> hostedMetadataByEntityId = new HashMap<>();
+    this.entityConfigService.listHostedEntity(organizationRecord, null)
+        .forEach(h -> hostedMetadataByEntityId.put(h.getEntityIdentifier(), h.getMetadata()));
+    final List<Registration> allRegs =
+        this.registrationRepository.findAllByOrganizationOrgNumber(organizationRecord.orgNumber());
+    final Map<UUID, Map<String, RegistrationStatus>> tmStatusByParent = allRegs.stream()
+        .filter(r -> r.getRegistrationType() == RegistrationType.TRUST_MARK_SUBORDINATE)
+        .filter(r -> r.getParentRegistration() != null)
+        .collect(Collectors.groupingBy(
+            r -> r.getParentRegistration().getRegistrationId(),
+            Collectors.toMap(Registration::getEntityId, Registration::getStatus)));
+    return allRegs.stream()
+        .filter(r -> r.getRegistrationType() != RegistrationType.TRUST_MARK_SUBORDINATE)
+        .map(r -> RegistrationMapper.toRegistrationDto(r,
+            hostedMetadataByEntityId.containsKey(r.getEntityId()),
+            hostedMetadataByEntityId.get(r.getEntityId()),
+            tmStatusByParent.getOrDefault(r.getRegistrationId(), Map.of())))
         .toList();
+  }
+
+  @Override
+  @Transactional
+  public RegistrationDto updateRegistrationRequest(final OrganizationRecord organizationRecord,
+      final UUID registrationId, final RegistrationJoinRequestDto request) {
+    final Registration existing = this.registrationRepository.findById(registrationId)
+        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
+            "Registration not found: %s".formatted(registrationId)));
+    if (!existing.getOrganization().getOrgNumber().equals(organizationRecord.orgNumber())) {
+      throw new RegistryServerException(ErrorTypes.NOT_FOUND,
+          "Registration not found: %s".formatted(registrationId));
+    }
+    request.setJoinId(existing.getFlowAssignment().getAssignId());
+    ValidateDto.init(organizationRecord).validate(request);
+    final ProcessReport report = this.registrationFlowService.executeRegistrationFlow(organizationRecord, request);
+    final Registration registration = this.registrationRepository.findByEntityId(request.getEntityIdentifier())
+        .orElseThrow(() -> new IllegalArgumentException("No registration found for this entity id"));
+    final List<HostedEntityDto> hostedEntities =
+        this.entityConfigService.listHostedEntity(organizationRecord, request.getEntityIdentifier());
+    final boolean isHosted = !hostedEntities.isEmpty();
+    final Map<String, Object> hostedMetadata = isHosted ? hostedEntities.getFirst().getMetadata() : null;
+    return RegistrationMapper.toRegistrationRequestStatusDto(registration, report, isHosted, hostedMetadata);
   }
 
   @Override

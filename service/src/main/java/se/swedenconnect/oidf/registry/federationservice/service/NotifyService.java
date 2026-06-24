@@ -19,7 +19,8 @@ package se.swedenconnect.oidf.registry.federationservice.service;
 import com.nimbusds.jose.jwk.JWK;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.registry.infrastructure.audit.FederationAuditEvent;
@@ -41,6 +42,7 @@ import java.util.concurrent.TimeUnit;
  * pre-configured notification endpoints with structured payload data.
  *
  * @author Per Fredrik Plars
+ * @author Felix Hellman
  */
 @Slf4j
 public class NotifyService {
@@ -75,7 +77,7 @@ public class NotifyService {
    *
    * @param event the {@link FederationAuditEvent} containing the audit event details to process
    */
-  @EventListener
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   public void onAuditEvent(final FederationAuditEvent event) {
     log.debug("Received FederationAuditEvent: {}", event);
       this.notificationEndPoints.stream()

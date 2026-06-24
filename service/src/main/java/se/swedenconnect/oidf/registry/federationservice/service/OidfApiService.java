@@ -230,7 +230,6 @@ public class OidfApiService {
     }
     sub.setPolicy(new PolicyRecord(subDto.getSubordinateId().toString(), metadataPolicy));
     sub.setJwks(this.toJwksSet(subDto.getJwks()));
-    sub.setOverrideConfigurationLocation(subDto.getEcLocation());
     sub.setMetadataPolicyCrit(subDto.getMetadataPolicyCrit());
     sub.setCrit(Optional.ofNullable(subDto.getCrit()).orElse(new ArrayList<>(1)));
     //TODO Implement naming constraints
@@ -239,19 +238,23 @@ public class OidfApiService {
     // if autoresolve is marked true. System tries to get the hosted entity.
     // If not found this subordinate relation is removed since it can not be resolved
     if (subDto.getEcLocationAutomaticResolve()) {
-      return this.entityRepository.findByOrgNumberAndEntityKeyTypeAndIssuer(
-              subordinateEntity.getTaIm().getOrganization().getOrgNumber(),
+      return this.entityRepository.findByEntityTypeAndOptionalIssuer(
               EntityType.HOSTED_ENTITY,
               subordinateEntity.getEntityidentifier())
+          .stream().findFirst()
           .map(EntityToDtoMapper::toDtoHosted)
           .map(dto -> {
-            sub.setOverrideConfigurationLocation(dto.getEffectiveEcLocation());
             sub.setCrit(Optional.ofNullable(dto.getCrit()).map(ArrayList::new).orElse(new ArrayList<>(1)));
-            sub.getCrit().add("ec_location");
+            final String ecLocation = dto.getEffectiveEcLocation();
+            sub.setVirtualEntityId(Optional.ofNullable(ecLocation).orElse(dto.getEntityIdentifier()));
+            if (ecLocation != null) {
+              sub.setOverrideConfigurationLocation(ecLocation + "/.well-known/openid-federation");
+            }
             return sub;
           })
           .orElse(null);
     }
+    sub.setVirtualEntityId(Optional.ofNullable(subDto.getEcLocation()).orElse(subDto.getEntityIdentifier()));
     return sub;
   }
 

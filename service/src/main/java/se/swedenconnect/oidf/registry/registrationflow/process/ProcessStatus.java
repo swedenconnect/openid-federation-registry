@@ -23,5 +23,6 @@ package se.swedenconnect.oidf.registry.registrationflow.process;
 public enum ProcessStatus {
   COMPLETED,
   SKIPPED,
-  FAILED
+  FAILED,
+  PENDING_APPROVAL
 }

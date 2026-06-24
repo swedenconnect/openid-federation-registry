@@ -27,6 +27,7 @@ import java.util.UUID;
  * Service for managing federation registrations (join, hosted entities, flows).
  *
  * @author Per Fredrik Plars
+ * @author Felix Hellman
  */
 public interface RegistrationService {
 
@@ -69,6 +70,17 @@ public interface RegistrationService {
    */
   List<RegistrationDto> listRegistrationsForThisOrg(OrganizationRecord organizationRecord);
 
+
+  /**
+   * Re-runs the full registration flow for an existing entity.
+   *
+   * @param organizationRecord the calling organization
+   * @param registrationId the ID of the existing registration
+   * @param request the updated registration request
+   * @return the updated registration DTO
+   */
+  RegistrationDto updateRegistrationRequest(OrganizationRecord organizationRecord, UUID registrationId,
+      RegistrationJoinRequestDto request);
 
   /**
    * Returns all available registration flows.

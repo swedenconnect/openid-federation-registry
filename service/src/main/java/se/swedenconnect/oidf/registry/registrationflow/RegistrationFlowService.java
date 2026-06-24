@@ -16,6 +16,7 @@
 
 package se.swedenconnect.oidf.registry.registrationflow;
 
+import net.minidev.json.JSONObject;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
@@ -33,23 +34,41 @@ import se.swedenconnect.oidf.registry.registrationflow.dto.IntermediateFlowAssig
 import se.swedenconnect.oidf.registry.registrationflow.dto.Mapper;
 import se.swedenconnect.oidf.registry.registrationflow.dto.RegistrationFlowDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.StepDto;
+import se.swedenconnect.oidf.registry.registrationflow.dto.TrustMarkFlowAssignmentDto;
+import se.swedenconnect.oidf.registry.registrationflow.dto.TrustMarkIssuerFlowAssignmentDto;
 import se.swedenconnect.oidf.registry.registrationflow.model.ConfigValueModel;
 import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
 import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
 import se.swedenconnect.oidf.registry.registrationflow.model.StepModel;
+import se.swedenconnect.oidf.registry.registrationflow.model.TrustMarkFlowAssignment;
+import se.swedenconnect.oidf.registry.registrationflow.model.TrustMarkIssuerFlowAssignment;
+import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
+import se.swedenconnect.oidf.registry.module.repository.TrustmarkIssuerRepository;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessEngine;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessFlow;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
+import se.swedenconnect.oidf.registry.registrationflow.process.StepDefinition;
 import se.swedenconnect.oidf.registry.registrationflow.process.SerializableList;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.MissingContextValueException;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowRepository;
+import se.swedenconnect.oidf.registry.registrationflow.repository.TrustMarkFlowAssignmentRepository;
+import se.swedenconnect.oidf.registry.registrationflow.repository.TrustMarkIssuerFlowAssignmentRepository;
+import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
+import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
+import com.nimbusds.jose.jwk.JWKSet;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationJoinRequestDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationMapper;
+import se.swedenconnect.oidf.registry.registrations.dto.StepExecutionRecordDto;
+import se.swedenconnect.oidf.registry.registrations.model.Registration;
+import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
+import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
 import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.impl.DefaultConfig;
+import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
 
 import java.util.List;
 import java.util.Map;
@@ -69,8 +88,14 @@ public class RegistrationFlowService {
   private final TaImRepository taImRepository;
   private final FlowRepository flowRepository;
   private final FlowAssignmentRepository flowAssignmentRepository;
+  private final TrustMarkIssuerFlowAssignmentRepository tmIssuerFlowAssignmentRepository;
+  private final TrustMarkFlowAssignmentRepository tmFlowAssignmentRepository;
+  private final TrustmarkIssuerRepository trustmarkIssuerRepository;
+  private final TrustMarkRepository trustMarkRepository;
   private final OrganizationService organizationService;
   private final ProcessEngine processEngine;
+  private final RegistrationRepository registrationRepository;
+
   /**
    * Constructs a new RegistrationFlowService.
    *
@@ -78,19 +103,34 @@ public class RegistrationFlowService {
    * @param taImRepository repository of trust anchor intermediates
    * @param flowRepository repository of registration flows
    * @param flowAssignmentRepository repository of flow assignments
+   * @param tmIssuerFlowAssignmentRepository repository of trust mark issuer flow assignments
+   * @param tmFlowAssignmentRepository repository of trust mark flow assignments
+   * @param trustMarkRepository repository of trust marks
+   * @param trustmarkIssuerRepository repository of trust mark issuers
    * @param organizationService service for resolving organizations
    * @param processEngine engine that handle the processing of a flow
+   * @param registrationRepository repository for persisting step results
    */
   public RegistrationFlowService(final RegistrationStepRepository registrationStepRepository,
       final TaImRepository taImRepository, final FlowRepository flowRepository,
       final FlowAssignmentRepository flowAssignmentRepository,
-      final OrganizationService organizationService, final ProcessEngine processEngine) {
+      final TrustMarkIssuerFlowAssignmentRepository tmIssuerFlowAssignmentRepository,
+      final TrustMarkFlowAssignmentRepository tmFlowAssignmentRepository,
+      final TrustmarkIssuerRepository trustmarkIssuerRepository,
+      final TrustMarkRepository trustMarkRepository,
+      final OrganizationService organizationService, final ProcessEngine processEngine,
+      final RegistrationRepository registrationRepository) {
     this.registrationStepRepository = registrationStepRepository;
     this.taImRepository = taImRepository;
     this.flowRepository = flowRepository;
     this.flowAssignmentRepository = flowAssignmentRepository;
+    this.tmIssuerFlowAssignmentRepository = tmIssuerFlowAssignmentRepository;
+    this.tmFlowAssignmentRepository = tmFlowAssignmentRepository;
+    this.trustmarkIssuerRepository = trustmarkIssuerRepository;
+    this.trustMarkRepository = trustMarkRepository;
     this.organizationService = organizationService;
     this.processEngine = processEngine;
+    this.registrationRepository = registrationRepository;
   }
 
   private Organization resolveOrganization(final OrganizationRecord organizationRecord) {
@@ -120,7 +160,7 @@ public class RegistrationFlowService {
     final RegistrationFlowDto dtoWithId = new RegistrationFlowDto(flowId, registrationFlowDto.name(),
         registrationFlowDto.description(), registrationFlowDto.descriptionSv(),
         registrationFlowDto.technology(), registrationFlowDto.entityType(),
-        registrationFlowDto.steps());
+        registrationFlowDto.steps(), registrationFlowDto.flowType());
     final RegistrationFlow registrationFlow = Mapper.toModel(dtoWithId, flowId, org,
         this.registrationStepRepository);
     this.flowRepository.save(registrationFlow);
@@ -143,7 +183,8 @@ public class RegistrationFlowService {
     Mapper.applyUpdate(existing, registrationFlowDto, this.registrationStepRepository);
     this.flowRepository.save(existing);
     return new RegistrationFlowDto(existing.getFlowId(), existing.getName(), existing.getDescription(),
-        existing.getDescriptionSv(), existing.getTechnology(), existing.getEntityType(), List.of());
+        existing.getDescriptionSv(), existing.getTechnology(), existing.getEntityType(), List.of(),
+        existing.getFlowType());
   }
 
   /**
@@ -172,7 +213,7 @@ public class RegistrationFlowService {
         .map(this::resolveStep)
         .toList();
     return new RegistrationFlowDto(flow.getFlowId(), flow.getName(), flow.getDescription(),
-        flow.getDescriptionSv(), flow.getTechnology(), flow.getEntityType(), steps);
+        flow.getDescriptionSv(), flow.getTechnology(), flow.getEntityType(), steps, flow.getFlowType());
   }
 
   private StepDto resolveStep(final StepModel storedStep) {
@@ -194,7 +235,7 @@ public class RegistrationFlowService {
             scv.defaultValue()))
         .toList();
 
-    return new StepDto(defined.getStepId(), defined.getName(), defined.getDescription(), configs);
+    return new StepDto(defined.getStepId(), defined.getName(), defined.getDescription(), configs, defined.flowType());
   }
 
   /**
@@ -205,7 +246,7 @@ public class RegistrationFlowService {
    */
   public List<FlowSummaryDto> listFlows(final OrganizationRecord organizationRecord) {
     return this.flowRepository.findByOrganizationOrgNumber(organizationRecord.orgNumber()).stream()
-        .map(f -> new FlowSummaryDto(f.getFlowId(), f.getName(), f.getDescription()))
+        .map(f -> new FlowSummaryDto(f.getFlowId(), f.getName(), f.getDescription(), f.getFlowType()))
         .toList();
   }
 
@@ -223,7 +264,8 @@ public class RegistrationFlowService {
             step.getStepConfigurationValues()
                 .stream()
                 .map(ConfigValueDto::create)
-                .toList()))
+                .toList(),
+            step.flowType()))
         .toList();
   }
 
@@ -254,9 +296,28 @@ public class RegistrationFlowService {
     processContext.put(ContextKey.TAIM_ID, flowAssignment.getTaIm().getTaImId());
     processContext.put(ContextKey.JOIN_ID, flowAssignment.getAssignId());
     processContext.put(ContextKey.ORG, organizationRecord);
+    final Map<String, Object> bodyMetadata = registrationRequestDto.getMetadata();
+    if (bodyMetadata != null && !bodyMetadata.isEmpty()) {
+      processContext.put(ContextKey.REQUEST_METADATA, new JSONObject(bodyMetadata));
+    }
 
     try {
-      return this.processEngine.run(processFlow.getProcessFlow(), processContext);
+      final List<StepDefinition> allSteps = processFlow.getProcessFlow();
+      final ProcessReport report = this.processEngine.run(allSteps, processContext);
+      processContext.<UUID>get(ContextKey.REGISTRATION_ID).flatMap(this.registrationRepository::findById)
+          .ifPresent(reg -> {
+            reg.setStepResults(RegistrationMapper.toStepExecutionRecordDtos(report));
+            if (report.isPendingApproval()) {
+              reg.setPendingStepIndex(report.steps().size() - 1);
+              reg.setStatus(RegistrationStatus.PENDING_APPROVAL);
+              processContext.<net.minidev.json.JSONObject>get(ContextKey.REQUEST_METADATA)
+                  .ifPresent(m -> reg.setRequestMetadata(new java.util.HashMap<>(m)));
+            } else {
+              reg.setPendingStepIndex(null);
+            }
+            this.registrationRepository.save(reg);
+          });
+      return report;
     }
     catch (final MissingContextValueException e) {
       throw new RegistryServerException(ErrorTypes.BLANK,"MissingContextValueException in process engine",e);
@@ -264,6 +325,137 @@ public class RegistrationFlowService {
 
   }
 
+
+  /**
+   * Approves a specific pending step, reconstructs the pipeline context from stored registration
+   * data, and resumes execution from that step onwards.
+   *
+   * @param registrationId the registration ID
+   * @param stepIndex the index of the pending step within the full step list
+   * @return updated process report from the resumed run
+   */
+  @Transactional
+  public ProcessReport approveStep(final UUID registrationId, final int stepIndex) {
+    final Registration reg = this.registrationRepository.findById(registrationId)
+        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
+            "Registration not found: " + registrationId));
+
+    if (reg.getStatus() != RegistrationStatus.PENDING_APPROVAL) {
+      throw new RegistryServerException(ErrorTypes.CONFLICT,
+          "Registration is not pending approval: " + registrationId);
+    }
+    if (!Integer.valueOf(stepIndex).equals(reg.getPendingStepIndex())) {
+      throw new RegistryServerException(ErrorTypes.CONFLICT,
+          "Step index %d does not match pending step %d".formatted(stepIndex, reg.getPendingStepIndex()));
+    }
+
+    if (reg.getRegistrationType() == RegistrationType.TRUST_MARK_SUBORDINATE) {
+      return this.approveTrustMarkSubordinateStep(reg, stepIndex);
+    }
+
+    final RegistrationFlow flow = reg.getFlowAssignment().getRegistrationFlow();
+    final List<StepDefinition> allSteps = Mapper.toProcessFlow(flow, this.registrationStepRepository).getProcessFlow();
+
+    final ProcessContext ctx = new ProcessContext();
+    ctx.put(ContextKey.ENTITY_ID, reg.getEntityId());
+    ctx.put(ContextKey.REGISTRATION_ID, reg.getRegistrationId());
+    ctx.put(ContextKey.JOIN_ID, reg.getFlowAssignment().getAssignId());
+    ctx.put(ContextKey.TAIM_ID, reg.getFlowAssignment().getTaIm().getTaImId());
+    final se.swedenconnect.oidf.registry.organization.model.Organization org = reg.getOrganization();
+    ctx.put(ContextKey.ORG, new OrganizationRecord(org.getOrgNumber(), org.getOrgName(), null, null));
+    if (reg.getTrustmarksRequested() != null) {
+      ctx.put(ContextKey.TRUSTMARKS_REQUESTED, new SerializableList<>(reg.getTrustmarksRequested()));
+    }
+    if (reg.getJwks() != null && !reg.getJwks().isEmpty()) {
+      try {
+        ctx.put(ContextKey.ENTITY_CONFIGURATION_JWKS,
+            JWKSet.parse(new net.minidev.json.JSONObject(reg.getJwks()).toJSONString()));
+      } catch (final java.text.ParseException e) {
+        throw new RegistryServerException(ErrorTypes.BLANK, "Failed to parse stored JWKS", e);
+      }
+    }
+    if (reg.getMetadataPolicy() != null) {
+      ctx.put(ContextKey.METADATA_POLICY, new net.minidev.json.JSONObject(reg.getMetadataPolicy()));
+    }
+    if (reg.getRequestMetadata() != null && !reg.getRequestMetadata().isEmpty()) {
+      ctx.put(ContextKey.REQUEST_METADATA, new net.minidev.json.JSONObject(reg.getRequestMetadata()));
+    }
+    ctx.put(ContextKey.STEP_APPROVED, Boolean.TRUE);
+
+    final List<StepDefinition> remaining = allSteps.subList(stepIndex, allSteps.size());
+    final ProcessReport resumeReport = this.processEngine.run(remaining, ctx);
+
+    final List<StepExecutionRecordDto> merged = new java.util.ArrayList<>(
+        Optional.ofNullable(reg.getStepResults()).orElse(List.of()).subList(0, stepIndex));
+    merged.addAll(RegistrationMapper.toStepExecutionRecordDtos(resumeReport));
+
+    reg.setStepResults(merged);
+    if (resumeReport.isPendingApproval()) {
+      reg.setPendingStepIndex(stepIndex + resumeReport.steps().size() - 1);
+      reg.setStatus(RegistrationStatus.PENDING_APPROVAL);
+    } else {
+      reg.setPendingStepIndex(null);
+    }
+    this.registrationRepository.save(reg);
+    return resumeReport;
+  }
+
+  private ProcessReport approveTrustMarkSubordinateStep(final Registration reg, final int stepIndex) {
+    final String trustmarkType = reg.getEntityId();
+    final TrustMark trustMark = this.trustMarkRepository.findAllByTrustmarkType(trustmarkType)
+        .stream().findFirst()
+        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
+            "Trust mark not found for type: " + trustmarkType));
+
+    final TrustMarkFlowAssignment tmAssignment = this.tmFlowAssignmentRepository
+        .findByTrustMarkTrustmarkId(trustMark.getTrustmarkId())
+        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
+            "No flow assignment for trust mark: " + trustmarkType));
+
+    final DefaultConfig emptyConfig = new DefaultConfig(Map.of());
+    final List<StepDefinition> midSteps = Mapper.toMidOnlyProcessFlow(
+        tmAssignment.getRegistrationFlow(), this.registrationStepRepository).getProcessFlow();
+
+    final List<StepDefinition> allSubSteps = new java.util.ArrayList<>();
+    this.registrationStepRepository.preTrustMarkSteps().stream()
+        .map(s -> new StepDefinition(s, emptyConfig)).forEach(allSubSteps::add);
+    allSubSteps.addAll(midSteps);
+    this.registrationStepRepository.postTrustMarkSteps().stream()
+        .map(s -> new StepDefinition(s, emptyConfig)).forEach(allSubSteps::add);
+
+    final String resolvedIssuerId = trustMark.getTrustmarkIssuer().getEntity().getSubject();
+    final TrustmarkSource tmSource = new TrustmarkSource(resolvedIssuerId,
+        List.of(new TrustmarkSource.TrustMarkStatus(trustmarkType, RegistrationStatus.STARTED)));
+
+    final ProcessContext ctx = new ProcessContext();
+    final String entityId = reg.getParentRegistration() != null
+        ? reg.getParentRegistration().getEntityId() : reg.getEntityId();
+    ctx.put(ContextKey.ENTITY_ID, entityId);
+    ctx.put(ContextKey.REGISTRATION_ID, reg.getRegistrationId());
+    ctx.put(ContextKey.JOIN_ID, reg.getFlowAssignment().getAssignId());
+    ctx.put(ContextKey.TAIM_ID, reg.getFlowAssignment().getTaIm().getTaImId());
+    final Organization org = reg.getOrganization();
+    ctx.put(ContextKey.ORG, new OrganizationRecord(org.getOrgNumber(), org.getOrgName(), null, null));
+    ctx.put(ContextKey.TRUSTMARKS_REQUESTED, new SerializableList<>(List.of(tmSource)));
+    ctx.put(ContextKey.STEP_APPROVED, Boolean.TRUE);
+
+    final List<StepDefinition> remaining = allSubSteps.subList(stepIndex, allSubSteps.size());
+    final ProcessReport resumeReport = this.processEngine.run(remaining, ctx);
+
+    final List<StepExecutionRecordDto> merged = new java.util.ArrayList<>(
+        Optional.ofNullable(reg.getStepResults()).orElse(List.of()).subList(0, stepIndex));
+    merged.addAll(RegistrationMapper.toStepExecutionRecordDtos(resumeReport));
+    reg.setStepResults(merged);
+
+    if (resumeReport.isPendingApproval()) {
+      reg.setPendingStepIndex(stepIndex + resumeReport.steps().size() - 1);
+      reg.setStatus(RegistrationStatus.PENDING_APPROVAL);
+    } else {
+      reg.setPendingStepIndex(null);
+    }
+    this.registrationRepository.save(reg);
+    return resumeReport;
+  }
 
   /**
    * Returns all flows assigned to the given intermediate.
@@ -277,7 +469,7 @@ public class RegistrationFlowService {
         .map(a -> {
           final RegistrationFlow f = a.getRegistrationFlow();
           return new RegistrationFlowDto(f.getFlowId(), f.getName(), f.getDescription(),
-              f.getDescriptionSv(), f.getTechnology(), f.getEntityType(), List.of());
+              f.getDescriptionSv(), f.getTechnology(), f.getEntityType(), List.of(), f.getFlowType());
         })
         .toList();
   }
@@ -338,6 +530,125 @@ public class RegistrationFlowService {
         .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
             "Assignment not found: " + assignId + " for intermediate: " + taImId));
     this.flowAssignmentRepository.delete(assignment);
+  }
+
+  /**
+   * Returns all flow assignments for the given trust mark issuer, including the assign ID required
+   * for unassign calls.
+   *
+   * @param tmIssuerId the trust mark issuer ID
+   * @return list of assignment summaries
+   */
+  @Transactional(readOnly = true)
+  public List<TrustMarkIssuerFlowAssignmentDto> getFlowAssignmentsForTrustMarkIssuer(final UUID tmIssuerId) {
+    return this.tmIssuerFlowAssignmentRepository.findByTrustMarkIssuerTrustmarkIssuerId(tmIssuerId).stream()
+        .map(a -> {
+          final RegistrationFlow f = a.getRegistrationFlow();
+          return new TrustMarkIssuerFlowAssignmentDto(a.getAssignId(), f.getFlowId(), f.getName(), f.getDescription());
+        })
+        .toList();
+  }
+
+  /**
+   * Assigns a flow to a trust mark issuer. Idempotent: returns the existing assignment ID if the
+   * flow is already assigned.
+   *
+   * @param tmIssuerId the trust mark issuer ID
+   * @param flowId the flow ID to assign
+   * @return the assignment response containing the assign ID
+   */
+  @Transactional
+  public AssignFlowResponse assignFlowToTrustMarkIssuer(final UUID tmIssuerId, final UUID flowId) {
+    return this.tmIssuerFlowAssignmentRepository
+        .findByTrustMarkIssuerTrustmarkIssuerIdAndRegistrationFlowFlowId(tmIssuerId, flowId)
+        .map(existing -> new AssignFlowResponse(existing.getAssignId()))
+        .orElseGet(() -> {
+          final TrustMarkIssuer issuer = this.trustmarkIssuerRepository.findById(tmIssuerId)
+              .orElseThrow(() -> new RegistryServerException(
+                  ErrorTypes.NOT_FOUND, "Trust mark issuer not found: " + tmIssuerId));
+          final RegistrationFlow flow = this.flowRepository.findById(flowId)
+              .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND, "Flow not found: " + flowId));
+          final TrustMarkIssuerFlowAssignment assignment =
+              new TrustMarkIssuerFlowAssignment(UUID.randomUUID(), issuer, flow);
+          this.tmIssuerFlowAssignmentRepository.save(assignment);
+          return new AssignFlowResponse(assignment.getAssignId());
+        });
+  }
+
+  /**
+   * Removes a flow assignment from a trust mark issuer. Throws 404 if the assignment is not found.
+   *
+   * @param tmIssuerId the trust mark issuer ID
+   * @param assignId the assignment ID to remove
+   */
+  @Transactional
+  public void unassignFlowFromTrustMarkIssuer(final UUID tmIssuerId, final UUID assignId) {
+    final TrustMarkIssuerFlowAssignment assignment = this.tmIssuerFlowAssignmentRepository
+        .findByAssignIdAndTrustMarkIssuerTrustmarkIssuerId(assignId, tmIssuerId)
+        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
+            "Assignment not found: " + assignId + " for trust mark issuer: " + tmIssuerId));
+    this.tmIssuerFlowAssignmentRepository.delete(assignment);
+  }
+
+  /**
+   * Returns all flow assignments for trust marks belonging to the given issuer.
+   *
+   * @param tmIssuerId the trust mark issuer module ID
+   * @return list of assignment DTOs
+   */
+  @Transactional(readOnly = true)
+  public List<TrustMarkFlowAssignmentDto> getFlowAssignmentsForTrustMarkIssuerTrustmarks(final UUID tmIssuerId) {
+    return this.tmFlowAssignmentRepository
+        .findByTrustMarkTrustmarkIssuerTrustmarkIssuerId(tmIssuerId).stream()
+        .map(a -> new TrustMarkFlowAssignmentDto(
+            a.getAssignId(),
+            a.getTrustMark().getTrustmarkId(),
+            a.getTrustMark().getTrustmarkType(),
+            a.getRegistrationFlow().getFlowId(),
+            a.getRegistrationFlow().getName(),
+            a.getRegistrationFlow().getDescription()))
+        .toList();
+  }
+
+  /**
+   * Assigns a flow to a specific trust mark. Idempotent.
+   *
+   * @param trustmarkId the trust mark ID
+   * @param flowId the flow to assign
+   * @return assign response with the assignment ID
+   */
+  @Transactional
+  public AssignFlowResponse assignFlowToTrustMark(final UUID trustmarkId, final UUID flowId) {
+    return this.tmFlowAssignmentRepository
+        .findByTrustMarkTrustmarkIdAndRegistrationFlowFlowId(trustmarkId, flowId)
+        .map(existing -> new AssignFlowResponse(existing.getAssignId()))
+        .orElseGet(() -> {
+          final TrustMark tm = this.trustMarkRepository.findById(trustmarkId)
+              .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
+                  "Trust mark not found: " + trustmarkId));
+          final RegistrationFlow flow = this.flowRepository.findById(flowId)
+              .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
+                  "Flow not found: " + flowId));
+          final TrustMarkFlowAssignment assignment =
+              new TrustMarkFlowAssignment(UUID.randomUUID(), tm, flow);
+          this.tmFlowAssignmentRepository.save(assignment);
+          return new AssignFlowResponse(assignment.getAssignId());
+        });
+  }
+
+  /**
+   * Removes a flow assignment from a trust mark.
+   *
+   * @param trustmarkId the trust mark ID
+   * @param assignId the assignment ID
+   */
+  @Transactional
+  public void unassignFlowFromTrustMark(final UUID trustmarkId, final UUID assignId) {
+    final TrustMarkFlowAssignment assignment = this.tmFlowAssignmentRepository.findById(assignId)
+        .filter(a -> a.getTrustMark().getTrustmarkId().equals(trustmarkId))
+        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
+            "Assignment not found: " + assignId + " for trust mark: " + trustmarkId));
+    this.tmFlowAssignmentRepository.delete(assignment);
   }
 
 }

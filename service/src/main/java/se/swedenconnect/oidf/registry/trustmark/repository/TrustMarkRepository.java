@@ -88,4 +88,37 @@ public interface TrustMarkRepository extends JpaRepository<TrustMark, UUID> {
       """)
   Optional<TrustMark> findByOrgNumberAndTrustmarkId(@Param("orgNumber") String orgNumber,
       @Param("trustmarkId") UUID trustmarkId);
+
+  /**
+   * Finds a {@link TrustMark} by the issuer's entity identifier and trust mark type.
+   *
+   * @param issuerEntityId the entity identifier (subject) of the trust mark issuer
+   * @param trustmarkType the trust mark type URI
+   * @return an {@link Optional} containing the matching {@link TrustMark} if found, otherwise empty
+   */
+  @Query("""
+      SELECT t FROM TrustMark t
+      JOIN t.trustmarkIssuer tmi
+      JOIN tmi.entity e
+      WHERE e.subject = :issuerEntityId
+      AND t.trustmarkType = :trustmarkType
+      """)
+  Optional<TrustMark> findByIssuerEntityIdAndTrustmarkType(
+      @Param("issuerEntityId") String issuerEntityId,
+      @Param("trustmarkType") String trustmarkType);
+
+  /**
+   * Finds {@link TrustMark} records by trust mark type only.
+   * Used as a fallback when the issuer entity identifier is unknown or does not match.
+   * Trust mark type URIs are expected to be globally unique; multiple results indicate
+   * a misconfigured registry.
+   *
+   * @param trustmarkType the trust mark type URI
+   * @return matching trust marks (normally at most one)
+   */
+  @Query("""
+      SELECT t FROM TrustMark t
+      WHERE t.trustmarkType = :trustmarkType
+      """)
+  List<TrustMark> findAllByTrustmarkType(@Param("trustmarkType") String trustmarkType);
 }

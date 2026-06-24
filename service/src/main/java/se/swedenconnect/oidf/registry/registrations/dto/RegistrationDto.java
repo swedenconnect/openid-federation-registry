@@ -18,14 +18,17 @@ package se.swedenconnect.oidf.registry.registrations.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  * Represents a registered joiner with federation and trustmark status.
  *
  * @author Per Fredrik Plars
+ * @author Felix Hellman
  */
 @Data
 @Schema(name = "Registration")
@@ -57,6 +60,16 @@ public class RegistrationDto {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private Boolean isHosted;
 
+  @Schema(description = "Hosted metadata, present when isHosted is true",
+      accessMode = Schema.AccessMode.READ_ONLY)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  private Map<String, Object> metadata;
+
+  @Schema(description = "Registration type: SUBORDINATE or TRUST_MARK_SUBORDINATE",
+      accessMode = Schema.AccessMode.READ_ONLY)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  private RegistrationType registrationType;
+
   @Schema(description = "Current federation registration status",
       accessMode = Schema.AccessMode.READ_ONLY)
   private FedRegStatus statusFedreg;
@@ -81,6 +94,11 @@ public class RegistrationDto {
       accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private String organizationName;
+
+  @Schema(description = "Entity ID of the subordinate subject, populated for TRUST_MARK_SUBORDINATE registrations",
+      accessMode = Schema.AccessMode.READ_ONLY)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  private String subordinateEntityId;
 
   @Schema(description = "True if the pipeline completed without any step failures")
   private boolean successful;

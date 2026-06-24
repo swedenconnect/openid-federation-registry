@@ -210,6 +210,13 @@ public class RegistryConfig {
         });
   }
 
+  /**
+   * REST client configured with SSL trust context and observation registry.
+   *
+   * @param ssl the SSL bundles for trust configuration
+   * @param observationRegistry the observation registry for metrics
+   * @return the configured rest client
+   */
   @Primary
   @Bean
   RestClient restClient(final SslBundles ssl,

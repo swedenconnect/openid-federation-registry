@@ -111,4 +111,21 @@ public class RegistrationAdminController {
       @RequestBody final RejectRegistrationDto body) {
     return ResponseEntity.ok(this.registrationAdminService.reject(registrationId, body.rejectionReason()));
   }
+
+  /**
+   * Approves a specific pending step and resumes pipeline execution from that step.
+   *
+   * @param organizationRecord the calling organization
+   * @param registrationId the registration ID
+   * @param stepIndex the zero-based index of the step to approve
+   * @return the updated registration DTO after resumption
+   */
+  @PostMapping("/{registrationId}/steps/{stepIndex}/approve")
+  @Operation(summary = "Approve a specific pending pipeline step and resume execution")
+  public ResponseEntity<RegistrationDto> approveStep(
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord,
+      @Parameter(description = "Registration ID") @PathVariable("registrationId") final UUID registrationId,
+      @Parameter(description = "Step index") @PathVariable("stepIndex") final int stepIndex) {
+    return ResponseEntity.ok(this.registrationAdminService.approveStep(registrationId, stepIndex));
+  }
 }

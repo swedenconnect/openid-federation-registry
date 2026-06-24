@@ -227,6 +227,7 @@ function hasEcLocation(subordinate) {
 }
 
 function isRemote(subordinate) {
+  if (subordinate.ecLocationAutomaticResolve) return false;
   const prefix = userStore.entityPrefix;
   if (!prefix || !subordinate.entityIdentifier) return false;
   return !subordinate.entityIdentifier.startsWith(prefix);

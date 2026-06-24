@@ -23,6 +23,7 @@ import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
 import se.swedenconnect.oidf.registry.registrationflow.model.StepModel;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessFlow;
 import se.swedenconnect.oidf.registry.registrationflow.process.StepDefinition;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.impl.DefaultConfig;
 
@@ -59,9 +60,13 @@ public class Mapper {
             )))))
         .forEach(steps::add);
 
-    Optional.ofNullable(dto.getFlowDefinition())
-        .orElse(new ArrayList<>(0))
-        .stream()
+    List<StepModel> flowDef = Optional.ofNullable(dto.getFlowDefinition()).orElse(new ArrayList<>(0));
+    if (flowDef.isEmpty()) {
+      flowDef = registrationStepRepository.defaultMidSteps().stream()
+          .map(step -> new StepModel(step.getStepId(), List.of()))
+          .toList();
+    }
+    flowDef.stream()
         .filter(stepModel -> registrationStepRepository.isPublic(stepModel.stepId()))
         .map(stepInfoDto ->
             new StepDefinition(registrationStepRepository.findStepById(stepInfoDto.stepId()).orElseThrow(),
@@ -84,6 +89,66 @@ public class Mapper {
   }
 
   /**
+   * Builds a full sub-flow for a trust mark enrollment:
+   * TRUST_MARK_ISSUER PRE steps → configured MID steps → TRUST_MARK_ISSUER POST steps.
+   *
+   * @param flow the flow definition (MID steps)
+   * @param registrationStepRepository repository used to resolve step references
+   * @return complete trust mark sub-flow
+   */
+  public static ProcessFlow toTrustMarkSubFlow(final RegistrationFlow flow,
+      final RegistrationStepRepository registrationStepRepository) {
+    final List<StepDefinition> steps = new ArrayList<>();
+
+    registrationStepRepository.preTrustMarkSteps().stream()
+        .map(step -> new StepDefinition(step, new DefaultConfig(step.getStepConfigurationValues().stream()
+            .collect(Collectors.toMap(StepConfigurationValue::name, StepConfigurationValue::defaultValue)))))
+        .forEach(steps::add);
+
+    Optional.ofNullable(flow.getFlowDefinition()).orElse(List.of()).stream()
+        .filter(stepModel -> registrationStepRepository.isPublic(stepModel.stepId()))
+        .map(stepModel ->
+            new StepDefinition(registrationStepRepository.findStepById(stepModel.stepId()).orElseThrow(),
+                new DefaultConfig(stepModel.config().stream().collect(Collectors.toMap(
+                    ConfigValueModel::key,
+                    ConfigValueModel::value
+                )))))
+        .forEach(steps::add);
+
+    registrationStepRepository.postTrustMarkSteps().stream()
+        .map(step -> new StepDefinition(step, new DefaultConfig(step.getStepConfigurationValues().stream()
+            .collect(Collectors.toMap(StepConfigurationValue::name, StepConfigurationValue::defaultValue)))))
+        .forEach(steps::add);
+
+    return new ProcessFlow(flow.getFlowId(), flow.getName(), flow.getDescription(), steps);
+  }
+
+  /**
+   * Builds a {@link ProcessFlow} containing only the MID steps of the given flow.
+   * Used for trust mark issuer sub-flows, which must not re-run PRE/POST framework steps.
+   *
+   * @param flow the flow definition to extract MID steps from
+   * @param registrationStepRepository repository used to resolve step references
+   * @return a process flow with only the configured MID steps
+   * @deprecated Use {@link #toTrustMarkSubFlow} instead
+   */
+  @Deprecated
+  public static ProcessFlow toMidOnlyProcessFlow(final RegistrationFlow flow,
+      final RegistrationStepRepository registrationStepRepository) {
+    final List<StepModel> flowDef = Optional.ofNullable(flow.getFlowDefinition()).orElse(List.of());
+    final List<StepDefinition> steps = flowDef.stream()
+        .filter(stepModel -> registrationStepRepository.isPublic(stepModel.stepId()))
+        .map(stepModel ->
+            new StepDefinition(registrationStepRepository.findStepById(stepModel.stepId()).orElseThrow(),
+                new DefaultConfig(stepModel.config().stream().collect(Collectors.toMap(
+                    ConfigValueModel::key,
+                    ConfigValueModel::value
+                )))))
+        .toList();
+    return new ProcessFlow(flow.getFlowId(), flow.getName(), flow.getDescription(), steps);
+  }
+
+  /**
    * Maps a {@link RegistrationFlowDto} with an explicit flow ID to a {@link RegistrationFlow} entity.
    *
    * @param dto the source DTO
@@ -95,8 +160,13 @@ public class Mapper {
   public static RegistrationFlow toModel(final RegistrationFlowDto dto, final UUID flowId,
       final Organization organization, final RegistrationStepRepository registrationStepRepository) {
 
-    final List<StepModel> stepModels = Optional.ofNullable(dto.steps()).orElse(List.of())
-        .stream()
+    List<StepDto> incomingSteps = Optional.ofNullable(dto.steps()).orElse(List.of());
+    if (incomingSteps.isEmpty() && dto.flowType() != Step.FlowType.TRUST_MARK_ISSUER) {
+      incomingSteps = registrationStepRepository.defaultMidSteps().stream()
+          .map(step -> new StepDto(step.getStepId(), step.getName(), step.getDescription(), List.of(), step.flowType()))
+          .toList();
+    }
+    final List<StepModel> stepModels = incomingSteps.stream()
         .filter(stepDto -> registrationStepRepository.isPublic(stepDto.stepId()))
         .map(s -> new StepModel(s.stepId(),
             Optional.ofNullable(s.config()).orElse(List.of()).stream()
@@ -112,6 +182,7 @@ public class Mapper {
     registrationFlow.setDescriptionSv(dto.descriptionSv());
     registrationFlow.setTechnology(dto.technology());
     registrationFlow.setEntityType(dto.entityType());
+    registrationFlow.setFlowType(dto.flowType() != null ? dto.flowType() : Step.FlowType.INTERMEDIATE);
     registrationFlow.setFlowDefinition(stepModels);
 
     return registrationFlow;
@@ -142,6 +213,9 @@ public class Mapper {
     existing.setDescriptionSv(dto.descriptionSv());
     existing.setTechnology(dto.technology());
     existing.setEntityType(dto.entityType());
+    if (dto.flowType() != null) {
+      existing.setFlowType(dto.flowType());
+    }
     existing.setFlowDefinition(stepModels);
     return existing;
   }

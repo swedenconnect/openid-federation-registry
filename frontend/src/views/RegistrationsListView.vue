@@ -27,17 +27,30 @@
       </v-btn>
     </div>
 
-    <v-text-field
-        v-model="search"
-        prepend-inner-icon="mdi-magnify"
-        label="Search by entity ID or intermediate"
-        single-line
-        hide-details
-        clearable
-        variant="outlined"
-        density="compact"
-        class="mb-4"
-    ></v-text-field>
+    <div class="d-flex align-center gap-3 mb-4">
+      <v-text-field
+          v-model="search"
+          prepend-inner-icon="mdi-magnify"
+          label="Search by entity ID or intermediate"
+          single-line
+          hide-details
+          clearable
+          variant="outlined"
+          density="compact"
+          class="flex-grow-1"
+      ></v-text-field>
+      <v-btn-toggle
+          v-model="typeFilter"
+          mandatory
+          color="primary"
+          variant="outlined"
+          density="compact"
+      >
+        <v-btn value="ALL">All</v-btn>
+        <v-btn value="SUBORDINATE">IM</v-btn>
+        <v-btn value="TRUST_MARK_SUBORDINATE">TM</v-btn>
+      </v-btn-toggle>
+    </div>
 
     <v-card v-if="loading">
       <v-card-text>
@@ -52,8 +65,9 @@
       <v-table>
         <thead>
           <tr>
-            <th class="text-left">Entity ID</th>
-            <th class="text-left">Intermediate Entity ID</th>
+            <th class="text-left">Entity ID / Subordinate Entity ID</th>
+            <th class="text-left">Intermediate Entity ID / Trust Mark Type</th>
+            <th class="text-left">Type</th>
             <th class="text-left">Status</th>
           </tr>
         </thead>
@@ -64,8 +78,13 @@
               class="clickable-row"
               @click="openDetail(reg.registrationId)"
           >
-            <td>{{ reg.entityIdentifier }}</td>
-            <td>{{ reg.intermediateEntityId }}</td>
+            <td>{{ reg.registrationType === 'TRUST_MARK_SUBORDINATE' ? reg.subordinateEntityId : reg.entityIdentifier }}</td>
+            <td>{{ reg.registrationType === 'TRUST_MARK_SUBORDINATE' ? reg.entityIdentifier : reg.intermediateEntityId }}</td>
+            <td>
+              <v-chip :color="typeColor(reg.registrationType)" size="small" label>
+                {{ typeLabel(reg.registrationType) }}
+              </v-chip>
+            </td>
             <td>
               <v-chip :color="statusColor(reg.statusFedreg)" size="small" label>
                 {{ statusLabel(reg.statusFedreg) }}
@@ -99,6 +118,7 @@ const errorStore = useErrorStore();
 
 const registrations = ref([]);
 const search = ref('');
+const typeFilter = ref('ALL');
 
 const STATUS_ORDER = {PENDING_APPROVAL: 0, STARTED: 1, APPROVED: 2, REJECTED: 3};
 
@@ -108,6 +128,7 @@ const filteredRegistrations = computed(() => {
       .filter(r => !q
           || r.entityIdentifier?.toLowerCase().includes(q)
           || r.intermediateEntityId?.toLowerCase().includes(q))
+      .filter(r => typeFilter.value === 'ALL' || r.registrationType === typeFilter.value)
       .sort((a, b) => (STATUS_ORDER[a.statusFedreg] ?? 99) - (STATUS_ORDER[b.statusFedreg] ?? 99));
 });
 
@@ -119,6 +140,14 @@ function statusColor(status) {
 function statusLabel(status) {
   const labels = {PENDING_APPROVAL: 'Pending Approval', APPROVED: 'Approved', REJECTED: 'Rejected', STARTED: 'Started'};
   return labels[status] ?? status;
+}
+
+function typeColor(type) {
+  return type === 'TRUST_MARK_SUBORDINATE' ? 'secondary' : 'primary';
+}
+
+function typeLabel(type) {
+  return type === 'TRUST_MARK_SUBORDINATE' ? 'TM' : 'IM';
 }
 
 function openDetail(id) {
@@ -142,5 +171,8 @@ onMounted(() => {
 }
 .clickable-row:hover td {
   background-color: rgba(0, 0, 0, 0.04);
+}
+.gap-3 {
+  gap: 12px;
 }
 </style>

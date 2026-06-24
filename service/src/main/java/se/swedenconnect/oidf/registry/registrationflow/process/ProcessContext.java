@@ -19,6 +19,7 @@ import se.swedenconnect.oidf.registry.registrationflow.process.step.MissingConte
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -79,5 +80,44 @@ public class ProcessContext {
   public <T extends Serializable> T getRequired(final String key, final Class<T> type) {
     return this.<T>get(key)
         .orElseThrow(() -> new MissingContextValueException(key));
+  }
+
+  /**
+   * Removes a value from the context.
+   *
+   * @param key context key to remove
+   */
+  public void remove(final String key) {
+    this.data.remove(key);
+  }
+
+  /**
+   * Creates a shallow copy of this context. Useful for sub-flows that need an isolated context.
+   *
+   * @return new ProcessContext with the same key-value entries
+   */
+  public ProcessContext copy() {
+    final ProcessContext copy = new ProcessContext();
+    copy.data.putAll(this.data);
+    return copy;
+  }
+
+  /**
+   * Returns a string snapshot of the current context for diff computation.
+   * Values are truncated to 100 000 characters to keep diff storage bounded while
+   * preserving complete JSON structures for front-end pretty-printing.
+   *
+   * @return ordered map of key to string representation
+   */
+  public Map<String, String> snapshot() {
+    final Map<String, String> snap = new LinkedHashMap<>();
+    this.data.forEach((k, v) -> {
+      String s = v == null ? "null" : v.toString();
+      if (s.length() > 100_000) {
+        s = s.substring(0, 100_000) + "…";
+      }
+      snap.put(k, s);
+    });
+    return snap;
   }
 }

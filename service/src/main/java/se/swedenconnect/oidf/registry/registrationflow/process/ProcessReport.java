@@ -49,6 +49,16 @@ public record ProcessReport(ProcessStatus status, List<StepExecutionRecord> step
   }
 
   /**
+   * Creates a report for a pipeline paused awaiting manual step approval.
+   *
+   * @param steps step execution records up to and including the pending step
+   * @return pending-approval report
+   */
+  public static ProcessReport pendingApproval(final List<StepExecutionRecord> steps) {
+    return new ProcessReport(ProcessStatus.PENDING_APPROVAL, List.copyOf(steps));
+  }
+
+  /**
    * Returns true if the pipeline completed without any step failures.
    *
    * @return true if successful
@@ -56,5 +66,14 @@ public record ProcessReport(ProcessStatus status, List<StepExecutionRecord> step
   public boolean isSuccessful() {
     return this.status == ProcessStatus.COMPLETED
         && this.steps.stream().noneMatch(r -> r.result().status() == StepStatus.FAILURE);
+  }
+
+  /**
+   * Returns true if the pipeline is paused awaiting manual step approval.
+   *
+   * @return true if pending approval
+   */
+  public boolean isPendingApproval() {
+    return this.status == ProcessStatus.PENDING_APPROVAL;
   }
 }

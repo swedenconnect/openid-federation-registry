@@ -30,6 +30,7 @@ import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
+import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
 import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
 
@@ -97,6 +98,7 @@ public class InternalPreRegistrationStep extends NoConfigStepAdapter {
       return newRegistration;
     });
 
+    registration.setRegistrationType(RegistrationType.SUBORDINATE);
     ctx.<SerializableList<TrustmarkSource>>get(ContextKey.TRUSTMARKS_REQUESTED)
         .ifPresent(registration::setTrustmarksRequested);
     this.registrationRepository.save(registration);

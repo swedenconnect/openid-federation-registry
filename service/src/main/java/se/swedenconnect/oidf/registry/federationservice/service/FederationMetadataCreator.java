@@ -78,7 +78,7 @@ public class FederationMetadataCreator {
       final HostedEntityDto dto = EntityToDtoMapper.toDtoHosted(entityEntity);
         entityData.setEntityIdentifier(new EntityID(dto.getEntityIdentifier()));
         entityData.setMetadata(dto.getMetadata());
-        entityData.setEcLocation(dto.getEffectiveEcLocation());
+        entityData.setEcLocation(Optional.ofNullable(dto.getEffectiveEcLocation()).orElse(dto.getEntityIdentifier()));
         entityData.setCrit(dto.getCrit());
       entityData.setTrustMarkSource(dto.getTrustMarkSources().stream()
           .map(trustmarkSourceDto ->
@@ -97,6 +97,7 @@ public class FederationMetadataCreator {
         }
       final FederationEntityDto dto = EntityToDtoMapper.toFederationEntity(entityEntity, false);
         entityData.setEntityIdentifier(new EntityID(dto.getEntityIdentifier()));
+        entityData.setEcLocation(dto.getEntityIdentifier());
         entityData.setCrit(dto.getCrit());
         entityData.setMetadata(Map.of("federation_entity", this.createFederationMetadata(entityEntity)));
       Optional.ofNullable(dto.getSigningKeyId())
