@@ -42,10 +42,8 @@ import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
 import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
 
 import java.net.URI;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -56,8 +54,8 @@ import java.util.UUID;
  * <ol>
  *   <li>Creates or updates the hosted entity via {@link EntityConfigService} so the
  *       audit trail is triggered correctly.</li>
- *   <li>Extracts the JWKS from the {@code jwks} key of the metadata body and places
- *       it in {@link ContextKey#ENTITY_CONFIGURATION_JWKS} for downstream steps.</li>
+ *   <li>Fetches the federation JWKS from the service node and places it in
+ *       {@link ContextKey#ENTITY_CONFIGURATION_JWKS} for downstream steps.</li>
  *   <li>Places the metadata body in {@link ContextKey#ENTITY_CONFIGURATION_METADATA}.</li>
  * </ol>
  * When {@link ContextKey#REQUEST_METADATA} is absent the step is a no-op, allowing
@@ -160,43 +158,30 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter {
       this.entityConfigService.updateHostedEntity(orgWithRegistryPrefix, current.getEntityId(), current);
     }
 
-    // Extract JWKS for downstream steps — expected at top-level "jwks" key
-    final Object jwksRaw = metadata.get("jwks");
-    if (jwksRaw == null) {
-      return StepResult.failure("metadata body missing 'jwks' — cannot create subordinate",
-          List.of(new StepIssue("HostedEntityRegistrationStep.jwks",
-              "jwks is required in metadata body", Severity.ERROR)));
-    }
+    ctx.put(ContextKey.ENTITY_CONFIGURATION_METADATA, metadata);
 
-    try {
-      final JWKSet jwkSet = JWKSet.parse(new JSONObject((Map<String, Object>) jwksRaw));
-      ctx.put(ContextKey.ENTITY_CONFIGURATION_JWKS, CleanInput.removeExpIatNbfFromJwks(jwkSet));
-      ctx.put(ContextKey.ENTITY_CONFIGURATION_METADATA, metadata);
-    }
-    catch (final ParseException e) {
-      return StepResult.failure("Failed to parse jwks from metadata body",
-          List.of(new StepIssue("HostedEntityRegistrationStep.jwks",
-              "jwks could not be parsed: " + e.getMessage(), Severity.ERROR)));
-    }
-
-    // Merge hosted keys from the service-node's /jwk endpoint.
-    // These are the keys that will actually be used when the entity is hosted, so they must
-    // be included in the subordinate statement even though the entity isn't live yet.
+    // Federation JWKS must come from the service node — metadata JWKS is entity-type specific (e.g. SAML)
+    // and must never be used as the subordinate statement JWKS.
     final Optional<URI> serviceNodeBaseUrl = this.instancePlacementService
         .resolveBaseUrl(taIm.getOrganization().getOrgNumber(), null);
 
-    serviceNodeBaseUrl.ifPresent(baseUrl -> {
-      try {
-        final JWKSet hostedJwks = this.oidfServiceIntegration.fetchHostedJwksFromServiceNode(baseUrl);
-        ctx.put(ContextKey.ENTITY_CONFIGURATION_JWKS, CleanInput.removeExpIatNbfFromJwks(hostedJwks));
-        log.debug("Replaced JWKS with {} hosted keys from service node {} for entity {}",
-            hostedJwks.getKeys().size(), baseUrl, entityId);
-      }
-      catch (final Exception e) {
-        log.warn("Could not fetch hosted JWKS from service node {}, falling back to metadata JWKS: {}",
-            baseUrl, e.getMessage());
-      }
-    });
+    if (serviceNodeBaseUrl.isEmpty()) {
+      return StepResult.failure("No service node configured — cannot derive federation JWKS for hosted entity",
+          List.of(new StepIssue("HostedEntityRegistrationStep.jwks",
+              "A service node must be configured to provide the federation JWKS", Severity.ERROR)));
+    }
+
+    try {
+      final JWKSet hostedJwks = this.oidfServiceIntegration.fetchHostedJwksFromServiceNode(serviceNodeBaseUrl.get());
+      ctx.put(ContextKey.ENTITY_CONFIGURATION_JWKS, CleanInput.removeExpIatNbfFromJwks(hostedJwks));
+      log.debug("Loaded {} federation keys from service node {} for entity {}",
+          hostedJwks.getKeys().size(), serviceNodeBaseUrl.get(), entityId);
+    }
+    catch (final Exception e) {
+      return StepResult.failure("Failed to fetch federation JWKS from service node",
+          List.of(new StepIssue("HostedEntityRegistrationStep.jwks",
+              "Could not fetch JWKS from service node: " + e.getMessage(), Severity.ERROR)));
+    }
 
     return StepResult.success("Hosted entity stored and JWKS loaded for: " + entityId);
   }
