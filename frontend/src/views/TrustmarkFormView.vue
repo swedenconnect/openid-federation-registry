@@ -159,6 +159,7 @@ import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
+import {useUserStore} from '@/stores/userStore';
 import {
   registrationFlowsPath,
   tmFlowAssignPath,
@@ -171,6 +172,7 @@ const route = useRoute();
 const router = useRouter();
 const {requestGet, requestPost, requestPut, requestDelete, loading, ok} = useRequest();
 const errorStore = useErrorStore();
+const userStore = useUserStore();
 
 const form = ref(null);
 const saving = ref(false);
@@ -204,8 +206,8 @@ const rules = {
 async function loadFlowData() {
   if (!trustmarkIssuerId.value || !trustmarkId.value) return;
   const [flows, assignments] = await Promise.all([
-    requestGet(registrationFlowsPath),
-    requestGet(tmIssuerTrustmarkAssignmentsPath(trustmarkIssuerId.value)),
+    requestGet(registrationFlowsPath(userStore.selectedTenant, userStore.orgNumber)),
+    requestGet(tmIssuerTrustmarkAssignmentsPath(userStore.selectedTenant, userStore.orgNumber, trustmarkIssuerId.value)),
   ]);
   availableFlows.value = Array.isArray(flows)
       ? flows.filter(f => f.flowType === 'TRUST_MARK_ISSUER') : [];
@@ -218,7 +220,7 @@ async function assignFlow() {
   if (!selectedFlow.value) return;
   addingFlow.value = true;
   try {
-    const result = await requestPost(tmFlowAssignPath(trustmarkId.value), {flowId: selectedFlow.value.flowId});
+    const result = await requestPost(tmFlowAssignPath(userStore.selectedTenant, userStore.orgNumber, trustmarkId.value), {flowId: selectedFlow.value.flowId});
     if (ok.value && result) {
       flowAssignment.value = {
         assignId: result.assignId,
@@ -237,7 +239,7 @@ async function assignFlow() {
 async function unassignFlow(assignId) {
   removingAssignId.value = assignId;
   try {
-    await requestDelete(tmFlowUnassignPath(trustmarkId.value, assignId));
+    await requestDelete(tmFlowUnassignPath(userStore.selectedTenant, userStore.orgNumber, trustmarkId.value, assignId));
     if (ok.value) {
       flowAssignment.value = null;
     }
@@ -250,7 +252,7 @@ async function loadTrustmark() {
   errorStore.clearError();
   trustmarkId.value = route.params.id;
 
-  const response = await requestGet(`${trustmarksPath}/${trustmarkId.value}`);
+  const response = await requestGet(`${trustmarksPath(userStore.selectedTenant, userStore.orgNumber)}/${trustmarkId.value}`);
   if (response) {
     trustmarkissuerId.value = response.trustmarkissuerId || trustmarkIssuerId.value || null;
     trustmarkType.value = response.trustmarkType || '';
@@ -278,9 +280,9 @@ async function submitForm() {
     };
 
     if (isEdit.value) {
-      await requestPut(`${trustmarksPath}/${trustmarkId.value}`, trustmarkData);
+      await requestPut(`${trustmarksPath(userStore.selectedTenant, userStore.orgNumber)}/${trustmarkId.value}`, trustmarkData);
     } else {
-      await requestPost(trustmarksPath, trustmarkData);
+      await requestPost(trustmarksPath(userStore.selectedTenant, userStore.orgNumber), trustmarkData);
     }
 
     if (ok.value) {

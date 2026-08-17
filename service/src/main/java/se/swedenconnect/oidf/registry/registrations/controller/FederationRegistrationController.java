@@ -20,6 +20,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -54,12 +56,17 @@ public class FederationRegistrationController {
   /**
    * Lists all registration records.
    *
+   * @param tenant the tenant slug
+   * @param orgNumber the calling organization's number
    * @param organizationRecord the calling organization
    * @return list of registration DTOs
    */
-  @GetMapping
+  @GetMapping("/{tenant}/{orgNumber}")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "List all registration records for current organization")
   public ResponseEntity<List<RegistrationDto>> listRegistrations(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.registrationService.listRegistrationsForThisOrg(organizationRecord));
   }
@@ -67,28 +74,39 @@ public class FederationRegistrationController {
   /**
    * Returns a single registration by ID.
    *
+   * @param tenant the tenant slug
+   * @param orgNumber the calling organization's number
    * @param organizationRecord the calling organization
    * @param registrationId the registration ID
    * @return the registration DTO
    */
-  @GetMapping("/{registrationId}")
+  @GetMapping("/{tenant}/{orgNumber}/{registrationId}")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Get a single registration by ID")
   public ResponseEntity<RegistrationDto> getById(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
       @Parameter(description = "Registration ID") @PathVariable("registrationId") final UUID registrationId) {
     return ResponseEntity.ok(this.registrationService.getRegistrationById(organizationRecord, registrationId));
   }
+
   /**
    * Creates a join application with a specified ID.
    *
+   * @param tenant the tenant slug
+   * @param orgNumber the calling organization's number
    * @param joinId the join ID to use
    * @param organizationRecord the calling organization
    * @param body the join request
    * @return the created join DTO
    */
-  @PostMapping("/{joinId}")
+  @PostMapping("/{tenant}/{orgNumber}/{joinId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create a registration request on this id")
   public ResponseEntity<RegistrationDto> createJoinWithId(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("joinId") final UUID joinId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
       @RequestBody final RegistrationJoinRequestDto body) {
@@ -99,14 +117,19 @@ public class FederationRegistrationController {
   /**
    * Re-runs the registration flow for an existing entity.
    *
+   * @param tenant the tenant slug
+   * @param orgNumber the calling organization's number
    * @param registrationId the existing registration ID
    * @param organizationRecord the calling organization
    * @param body the updated registration request
    * @return the updated registration DTO
    */
-  @PutMapping("/{registrationId}")
+  @PutMapping("/{tenant}/{orgNumber}/{registrationId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Re-run the registration flow for an existing entity")
   public ResponseEntity<RegistrationDto> updateRegistration(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("registrationId") final UUID registrationId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
       @RequestBody final RegistrationJoinRequestDto body) {
@@ -117,13 +140,18 @@ public class FederationRegistrationController {
   /**
    * Removes a join record.
    *
+   * @param tenant the tenant slug
+   * @param orgNumber the calling organization's number
    * @param organizationRecord the calling organization
    * @param registrationId the ID of the registration to remove
    * @return no-content response
    */
-  @DeleteMapping("/{registrationId}")
+  @DeleteMapping("/{tenant}/{orgNumber}/{registrationId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Remove a join record")
   public ResponseEntity<Void> deleteJoin(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
       @Parameter(description = "ID of the registration to remove")
       @PathVariable("registrationId") final UUID registrationId) {
@@ -132,15 +160,14 @@ public class FederationRegistrationController {
   }
 
   /**
-   * Lists all available registration flows.
+   * Lists all available registration flows. Open to any authenticated user — not scoped to a tenant or
+   * organization, since an applicant browsing available flows may not yet belong to one.
    *
-   * @param organizationRecord the calling organization
    * @return list of flow DTOs
    */
   @GetMapping("/flows")
   @Operation(summary = "List all available registration flows")
-  public ResponseEntity<List<RegistrationFlowInformationDto>> listFlows(
-      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    return ResponseEntity.ok(this.registrationService.listRegistrationFlows(organizationRecord));
+  public ResponseEntity<List<RegistrationFlowInformationDto>> listFlows() {
+    return ResponseEntity.ok(this.registrationService.listRegistrationFlows());
   }
 }

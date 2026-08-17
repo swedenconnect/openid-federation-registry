@@ -36,6 +36,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 
@@ -95,11 +96,12 @@ public class JwtTestUtils {
           .expirationTime(Date.from(Instant.now().plus(30, ChronoUnit.DAYS)))
           .issuer("http://swedenconnect.se/op")
           .claim("scope", scopes)
-          .claim("org", Arrays.stream(OrganisationType.values())
-              .map(o ->
-                  Map.of("orgName", o.name,
-                      "orgNumber", o.orgId))
-              .toList())
+
+          .claim("org_rights", List.of(Map.of(
+              "organization_identifier", orgType.orgId,
+              "organization_name#sv", orgType.name,
+              "organization_name#en", orgType.name,
+              "functions", List.of(Map.of("function", "swedenconnect", "right", "admin")))))
           .build();
 
       final RSASSASigner signer = new RSASSASigner(getPrivateKeyFromKeyStore());

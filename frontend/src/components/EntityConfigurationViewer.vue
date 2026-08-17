@@ -79,6 +79,7 @@
 import {ref} from 'vue';
 import {useErrorStore} from '@/stores/errorStore';
 import {entityConfigurationViewPath} from '@/config/path';
+import {useUserStore} from '@/stores/userStore';
 
 const props = defineProps({
   entityId: {
@@ -88,6 +89,7 @@ const props = defineProps({
 });
 
 const errorStore = useErrorStore();
+const userStore = useUserStore();
 
 const dialog = ref(false);
 const loading = ref(false);
@@ -101,7 +103,7 @@ async function open() {
   loading.value = true;
 
   try {
-    const response = await fetch(entityConfigurationViewPath, {
+    const response = await fetch(entityConfigurationViewPath(userStore.selectedTenant, userStore.orgNumber), {
       method: 'POST',
       credentials: 'include',
       headers: {'Content-Type': 'text/plain'},

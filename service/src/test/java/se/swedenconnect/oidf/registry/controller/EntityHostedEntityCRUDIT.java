@@ -52,6 +52,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EntityHostedEntityCRUDIT {
 
+  private static final String TENANT = "Swedenconnect";
+
   @Container
   @ServiceConnection
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
@@ -71,7 +73,6 @@ class EntityHostedEntityCRUDIT {
 
     // Configure authentication
     apiClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.PM));
-    apiClient.setApiKey(JwtTestUtils.OrganisationType.PM.orgId);
 
     entitiesApi = new EntitiesApi(apiClient);
   }
@@ -86,7 +87,7 @@ class EntityHostedEntityCRUDIT {
         .metadata(Map.of("hosted_entity", Map.of("name", "Hosted Entity")));
 
     // Act
-    final HostedEntity created = this.entitiesApi.createHostedEntity(input);
+    final HostedEntity created = this.entitiesApi.createHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, input);
 
     // Assert
     assertThat(created).isNotNull();
@@ -102,7 +103,7 @@ class EntityHostedEntityCRUDIT {
         .entityIdentifier("https://www.pm.se/oidf/ta2");
 
     // Act
-    final HostedEntity created = this.entitiesApi.createHostedEntityWithId(entityId, input);
+    final HostedEntity created = this.entitiesApi.createHostedEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, input);
 
     // Assert
     assertThat(created).isNotNull();
@@ -115,10 +116,10 @@ class EntityHostedEntityCRUDIT {
     final UUID entityId = UUID.randomUUID();
     final HostedEntity input = new HostedEntity()
         .entityIdentifier("https://www.pm.se/oidf/ta3");
-    this.entitiesApi.createHostedEntityWithId(entityId, input);
+    this.entitiesApi.createHostedEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, input);
 
     // Act
-    final HostedEntity retrieved = this.entitiesApi.getHostedEntity(entityId);
+    final HostedEntity retrieved = this.entitiesApi.getHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId);
 
     // Assert
     assertThat(retrieved).isNotNull();
@@ -131,13 +132,13 @@ class EntityHostedEntityCRUDIT {
     final UUID entityId = UUID.randomUUID();
     final HostedEntity createInput = new HostedEntity()
         .entityIdentifier("https://www.pm.se/oidf/ta4");
-    this.entitiesApi.createHostedEntityWithId(entityId, createInput);
+    this.entitiesApi.createHostedEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, createInput);
 
     final HostedEntity updateInput = new HostedEntity()
         .entityIdentifier("https://www.pm.se/oidf/ta4-updated");
 
     // Act
-    final HostedEntity updated = this.entitiesApi.updateHostedEntity(entityId, updateInput);
+    final HostedEntity updated = this.entitiesApi.updateHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, updateInput);
 
     // Assert
     assertThat(updated).isNotNull();
@@ -149,17 +150,17 @@ class EntityHostedEntityCRUDIT {
     final UUID entityId = UUID.randomUUID();
     final HostedEntity input = new HostedEntity()
         .entityIdentifier("https://www.pm.se/oidf/ta5");
-    this.entitiesApi.createHostedEntityWithId(entityId, input);
+    this.entitiesApi.createHostedEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, input);
 
     // Verify it exists
-    final HostedEntity beforeDelete = this.entitiesApi.getHostedEntity(entityId);
+    final HostedEntity beforeDelete = this.entitiesApi.getHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId);
     assertThat(beforeDelete).isNotNull();
 
     // Act
-    this.entitiesApi.deleteHostedEntity(entityId);
+    this.entitiesApi.deleteHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId);
 
     // Assert
-    assertThatThrownBy(() -> this.entitiesApi.getHostedEntity(entityId))
+    assertThatThrownBy(() -> this.entitiesApi.getHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(exception -> {
           final RestClientResponseException restException = (RestClientResponseException) exception;
@@ -174,7 +175,7 @@ class EntityHostedEntityCRUDIT {
         .entityIdentifier("https://www.telia.se/oidf/ta")
         .metadata(Map.of("hosted_entity", Map.of("name", "Hosted Entity")));
     // Act
-    final HostedEntity created = this.entitiesApi.createHostedEntity(input);
+    final HostedEntity created = this.entitiesApi.createHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, input);
     // Assert
     assertThat(created).isNotNull();
     assertThat(created.getEffectiveEcLocation()).isNotNull();
@@ -189,7 +190,7 @@ class EntityHostedEntityCRUDIT {
     final UUID nonExistentId = UUID.randomUUID();
 
     // Act & Assert
-    assertThatThrownBy(() -> this.entitiesApi.getHostedEntity(nonExistentId))
+    assertThatThrownBy(() -> this.entitiesApi.getHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, nonExistentId))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(exception -> {
           final RestClientResponseException apiException = (RestClientResponseException) exception;
@@ -204,14 +205,14 @@ class EntityHostedEntityCRUDIT {
     final HostedEntity createInput = new HostedEntity()
         .entityIdentifier("https://www.pm.se/oidf/ta-metadata")
         .metadata(Map.of("hosted_entity", Map.of("name", "Original Name")));
-    this.entitiesApi.createHostedEntityWithId(entityId, createInput);
+    this.entitiesApi.createHostedEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, createInput);
 
     final HostedEntity updateInput = new HostedEntity()
         .entityIdentifier("https://www.pm.se/oidf/ta-metadata")
         .metadata(Map.of("hosted_entity", Map.of("name", "Updated Name", "description", "Updated Description")));
 
     // Act
-    final HostedEntity updated = this.entitiesApi.updateHostedEntity(entityId, updateInput);
+    final HostedEntity updated = this.entitiesApi.updateHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, updateInput);
 
     // Assert
     assertThat(updated).isNotNull();
@@ -219,7 +220,7 @@ class EntityHostedEntityCRUDIT {
     assertThat(updated.getMetadata()).isNotNull();
 
     // Verify by getting again
-    final HostedEntity retrieved = this.entitiesApi.getHostedEntity(entityId);
+    final HostedEntity retrieved = this.entitiesApi.getHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId);
     assertThat(retrieved.getMetadata()).isNotNull();
   }
 
@@ -229,17 +230,16 @@ class EntityHostedEntityCRUDIT {
     final UUID entityId = UUID.randomUUID();
     final HostedEntity input = new HostedEntity()
         .entityIdentifier("https://www.pm.se/oidf/pm-hosted");
-    this.entitiesApi.createHostedEntityWithId(entityId, input);
+    this.entitiesApi.createHostedEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, input);
 
     // Act - Try to access with AF organization
     final ApiClient afApiClient = new ApiClient();
     afApiClient.setBasePath("http://localhost:" + this.port);
     afApiClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.AF));
-    afApiClient.setApiKey(JwtTestUtils.OrganisationType.AF.orgId);
     final EntitiesApi afEntitiesApi = new EntitiesApi(afApiClient);
 
     // Assert - Should not be found
-    assertThatThrownBy(() -> afEntitiesApi.getHostedEntity(entityId))
+    assertThatThrownBy(() -> afEntitiesApi.getHostedEntity(TENANT, JwtTestUtils.OrganisationType.AF.orgId, entityId))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(exception -> {
           final RestClientResponseException restException = (RestClientResponseException) exception;
@@ -261,12 +261,12 @@ class EntityHostedEntityCRUDIT {
     final HostedEntity entity3 = new HostedEntity()
         .entityIdentifier("https://www.pm.se/oidf/hosted3");
 
-    this.entitiesApi.createHostedEntityWithId(entityId1, entity1);
-    this.entitiesApi.createHostedEntityWithId(entityId2, entity2);
-    this.entitiesApi.createHostedEntityWithId(entityId3, entity3);
+    this.entitiesApi.createHostedEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId1, entity1);
+    this.entitiesApi.createHostedEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId2, entity2);
+    this.entitiesApi.createHostedEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId3, entity3);
 
     // Act - List all hosted entities without filter
-    final List<HostedEntity> result = this.entitiesApi.listHostedEntity(null);
+    final List<HostedEntity> result = this.entitiesApi.listHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, null);
 
     // Assert
     assertThat(result).isNotNull();
@@ -292,11 +292,11 @@ class EntityHostedEntityCRUDIT {
     final HostedEntity entity2 = new HostedEntity()
         .entityIdentifier("https://www.pm.se/oidf/filtered2");
 
-    this.entitiesApi.createHostedEntityWithId(entityId1, entity1);
-    this.entitiesApi.createHostedEntityWithId(entityId2, entity2);
+    this.entitiesApi.createHostedEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId1, entity1);
+    this.entitiesApi.createHostedEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId2, entity2);
 
     // Act - List hosted entities with entityIdentifier filter
-    final List<HostedEntity> result = this.entitiesApi.listHostedEntity("https://www.pm.se/oidf/filtered1");
+    final List<HostedEntity> result = this.entitiesApi.listHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, "https://www.pm.se/oidf/filtered1");
 
     // Assert
     assertThat(result).isNotNull();
@@ -311,7 +311,7 @@ class EntityHostedEntityCRUDIT {
     final String nonExistentEntityIdentifier = "https://www.pm.se/oidf/nonexistent";
 
     // Act - List hosted entities with non-existent entityIdentifier
-    final List<HostedEntity> result = this.entitiesApi.listHostedEntity(nonExistentEntityIdentifier);
+    final List<HostedEntity> result = this.entitiesApi.listHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, nonExistentEntityIdentifier);
 
     // Assert
     assertThat(result).isNotNull();
@@ -323,7 +323,7 @@ class EntityHostedEntityCRUDIT {
     // Arrange - No entities created
 
     // Act - List hosted entities
-    final List<HostedEntity> result = this.entitiesApi.listHostedEntity(null);
+    final List<HostedEntity> result = this.entitiesApi.listHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, null);
 
     // Assert
     assertThat(result).isNotNull();
@@ -337,16 +337,15 @@ class EntityHostedEntityCRUDIT {
     final UUID entityId = UUID.randomUUID();
     final HostedEntity input = new HostedEntity()
         .entityIdentifier("https://www.pm.se/oidf/pm-list-hosted");
-    this.entitiesApi.createHostedEntityWithId(entityId, input);
+    this.entitiesApi.createHostedEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, input);
 
     // Act - Try to list with AF organization
     final ApiClient afApiClient = new ApiClient();
     afApiClient.setBasePath("http://localhost:" + this.port);
     afApiClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.AF));
-    afApiClient.setApiKey(JwtTestUtils.OrganisationType.AF.orgId);
     final EntitiesApi afEntitiesApi = new EntitiesApi(afApiClient);
 
-    final List<HostedEntity> afResult = afEntitiesApi.listHostedEntity(null);
+    final List<HostedEntity> afResult = afEntitiesApi.listHostedEntity(TENANT, JwtTestUtils.OrganisationType.AF.orgId, null);
 
     // Assert - Should not contain PM's entity
     assertThat(afResult).isNotNull();

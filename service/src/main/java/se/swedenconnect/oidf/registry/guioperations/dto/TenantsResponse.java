@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package se.swedenconnect.oidf.registry.infrastructure.auth.domain;
+package se.swedenconnect.oidf.registry.guioperations.dto;
 
 import java.util.List;
 
 /**
- * Container for {@link OrganizationRecord}'s
+ * Response for the {@code /tenants} endpoint: the tenants (function groups) the caller has rights on, each with
+ * the organizations already registered under it.
  *
- * @param organizations
- * @author Felix Hellman
+ * @param tenants the tenants the caller has rights on
+ * @author Per Fredrik Plars
  */
-public record OrganizationInformation(List<OrganizationRecord> organizations) {
-
+public record TenantsResponse(List<TenantDto> tenants) {
 }
-

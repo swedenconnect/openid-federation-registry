@@ -210,12 +210,14 @@ import {onMounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
+import {useUserStore} from '@/stores/userStore';
 import {registrationPublicFlowsPath, registrationTriggerPath} from '@/config/path';
 import TrustmarkSourcesField from '@/components/TrustmarkSourcesField.vue';
 
 const router = useRouter();
 const {requestGet, requestPost, loading: loadingFlows} = useRequest();
 const errorStore = useErrorStore();
+const userStore = useUserStore();
 
 const formRef = ref(null);
 const flows = ref([]);
@@ -273,7 +275,8 @@ async function submit() {
       trustmarksRequested: mapTrustmarks(trustmarkSources.value),
     };
 
-    const response = await requestPost(registrationTriggerPath(selectedJoinId.value), body);
+    const response = await requestPost(
+        registrationTriggerPath(userStore.selectedTenant, userStore.orgNumber, selectedJoinId.value), body);
     if (response) {
       result.value = response;
     }

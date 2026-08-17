@@ -23,9 +23,10 @@ import java.io.Serializable;
  * @param orgNumber Organization Number
  * @param orgName OrganizationName
  * @param entityPrefix EntityPrefix ex https://www.digg.se/oidf/
- * @param functionGroup Optional function group identifier used for instance placement matching
+ * @param tenant Tenant slug identifier (e.g. "digg"), also the function group used for instance placement
+ *     matching — a tenant is backed by exactly one function group, so the two are the same value
  * @author Felix Hellman
  */
-public record OrganizationRecord(String orgNumber, String orgName, String entityPrefix, String functionGroup)
-    implements Serializable {
+public record OrganizationRecord(String orgNumber, String orgName, String entityPrefix,
+    String tenant) implements Serializable {
 }

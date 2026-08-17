@@ -85,7 +85,6 @@ class OidfServiceApiControllerIT {
 
     // Configure authentication
     apiClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.PM));
-    apiClient.setApiKey(JwtTestUtils.OrganisationType.PM.orgId);
     taEntityId = testDataOperations.createTestScenarioWithPolicyAndEntities(apiClient, "http://localhost:" + this.port);
 
   }

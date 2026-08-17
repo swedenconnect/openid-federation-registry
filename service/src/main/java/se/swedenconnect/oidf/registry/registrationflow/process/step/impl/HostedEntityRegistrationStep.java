@@ -135,10 +135,10 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter {
     final TrustAnchorIntermediateModule taIm = this.taImRepository.findById(taImId)
         .orElseThrow(() -> new IllegalStateException("TaIm not found: " + taImId));
     final String registryEntityPrefix = this.instancePlacementService
-        .resolveEntityPrefix(taIm.getOrganization().getOrgNumber(), null)
+        .resolveEntityPrefixForPlacedOrg(taIm.getOrganization().getOrgNumber())
         .orElse(org.entityPrefix());
     final OrganizationRecord orgWithRegistryPrefix = new OrganizationRecord(
-        org.orgNumber(), org.orgName(), registryEntityPrefix, org.functionGroup());
+        org.orgNumber(), org.orgName(), registryEntityPrefix, org.tenant());
 
     final List<TrustmarkSourceDto> trustMarkSources = this.buildTrustMarkSources(ctx);
 
@@ -163,7 +163,7 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter {
     // Federation JWKS must come from the service node — metadata JWKS is entity-type specific (e.g. SAML)
     // and must never be used as the subordinate statement JWKS.
     final Optional<URI> serviceNodeBaseUrl = this.instancePlacementService
-        .resolveBaseUrl(taIm.getOrganization().getOrgNumber(), null);
+        .resolveBaseUrl(taIm.getOrganization().getInstance().getInstanceId());
 
     if (serviceNodeBaseUrl.isEmpty()) {
       return StepResult.failure("No service node configured — cannot derive federation JWKS for hosted entity",

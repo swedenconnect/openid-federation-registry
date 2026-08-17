@@ -60,6 +60,8 @@ import static org.mockito.Mockito.when;
 
 class EntityCRUDIT {
 
+  private static final String TENANT = "Swedenconnect";
+
   @Container
   @ServiceConnection
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
@@ -83,7 +85,6 @@ class EntityCRUDIT {
 
     // Configure authentication
     apiClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.PM));
-    apiClient.setApiKey(JwtTestUtils.OrganisationType.PM.orgId);
 
     entitiesApi = new EntitiesApi(apiClient);
 
@@ -105,7 +106,7 @@ class EntityCRUDIT {
     final FederationEntity input = createFederationEntity();
 
     // Act
-    final FederationEntity created = this.entitiesApi.createFederationEntity(input);
+    final FederationEntity created = this.entitiesApi.createFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, input);
 
     // Assert
     assertThat(created).isNotNull();
@@ -119,13 +120,13 @@ class EntityCRUDIT {
 
 
     // Act
-    final FederationEntity created = this.entitiesApi.createFederationEntity(input);
+    final FederationEntity created = this.entitiesApi.createFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, input);
 
     // Assert
     assertThat(created).isNotNull();
     assertThat(created.getEntityId()).isNotNull();
     assertThat(created.getEntityIdentifier()).isEqualTo(input.getEntityIdentifier());
-    assertThatThrownBy(() -> this.entitiesApi.createFederationEntity(input))
+    assertThatThrownBy(() -> this.entitiesApi.createFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, input))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(exception -> {
           final RestClientResponseException restException = (RestClientResponseException) exception;
@@ -141,7 +142,7 @@ class EntityCRUDIT {
 
 
     // Act
-    final FederationEntity created = this.entitiesApi.createFederationEntityWithId(entityId, input);
+    final FederationEntity created = this.entitiesApi.createFederationEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, input);
 
     // Assert
     assertThat(created).isNotNull();
@@ -154,10 +155,10 @@ class EntityCRUDIT {
     final UUID entityId = UUID.randomUUID();
     final FederationEntity input = createFederationEntity();
 
-    this.entitiesApi.createFederationEntityWithId(entityId, input);
+    this.entitiesApi.createFederationEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, input);
 
     // Act
-    final FederationEntityWithModules retrieved = this.entitiesApi.getFederationEntity(entityId, false);
+    final FederationEntityWithModules retrieved = this.entitiesApi.getFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, false);
 
     // Assert
     assertThat(retrieved).isNotNull();
@@ -170,12 +171,12 @@ class EntityCRUDIT {
     final UUID entityId = UUID.randomUUID();
     final FederationEntity createInput = createFederationEntity();
 
-    this.entitiesApi.createFederationEntityWithId(entityId, createInput);
+    this.entitiesApi.createFederationEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, createInput);
 
     final FederationEntity updateInput = createFederationEntity();
 
     // Act
-    final FederationEntity updated = this.entitiesApi.updateFederationEntity(entityId, updateInput);
+    final FederationEntity updated = this.entitiesApi.updateFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, updateInput);
 
     // Assert
     assertThat(updated).isNotNull();
@@ -188,17 +189,17 @@ class EntityCRUDIT {
     final UUID entityId = UUID.randomUUID();
     final FederationEntity input = createFederationEntity();
 
-    this.entitiesApi.createFederationEntityWithId(entityId, input);
+    this.entitiesApi.createFederationEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, input);
 
     // Verify it exists
-    final FederationEntityWithModules beforeDelete = this.entitiesApi.getFederationEntity(entityId, false);
+    final FederationEntityWithModules beforeDelete = this.entitiesApi.getFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, false);
     assertThat(beforeDelete).isNotNull();
 
     // Act
-    this.entitiesApi.deleteFederationEntity(entityId);
+    this.entitiesApi.deleteFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId);
 
     // Assert
-    assertThatThrownBy(() -> this.entitiesApi.getFederationEntity(entityId, false))
+    assertThatThrownBy(() -> this.entitiesApi.getFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, false))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(exception -> {
           final RestClientResponseException restException = (RestClientResponseException) exception;
@@ -212,17 +213,16 @@ class EntityCRUDIT {
     final UUID entityId = UUID.randomUUID();
     final FederationEntity input = createFederationEntity();
 
-    this.entitiesApi.createFederationEntityWithId(entityId, input);
+    this.entitiesApi.createFederationEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, input);
 
     // Act - Try to access with AF organization
     final ApiClient afApiClient = new ApiClient();
     afApiClient.setBasePath("http://localhost:" + this.port);
     afApiClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.AF));
-    afApiClient.setApiKey(JwtTestUtils.OrganisationType.AF.orgId);
     final EntitiesApi afEntitiesApi = new EntitiesApi(afApiClient);
 
     // Assert - Should not be found
-    assertThatThrownBy(() -> afEntitiesApi.getFederationEntity(entityId, false))
+    assertThatThrownBy(() -> afEntitiesApi.getFederationEntity(TENANT, JwtTestUtils.OrganisationType.AF.orgId, entityId, false))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(exception -> {
           final RestClientResponseException restException = (RestClientResponseException) exception;
@@ -239,7 +239,7 @@ class EntityCRUDIT {
   void testCreateFederationEntityWithEmptySigningKeyId() {
     final FederationEntity input = createFederationEntity().signingKeyId(List.of());
 
-    final FederationEntity created = this.entitiesApi.createFederationEntity(input);
+    final FederationEntity created = this.entitiesApi.createFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, input);
 
     assertThat(created.getSigningKeyId()).isEmpty();
   }
@@ -253,7 +253,7 @@ class EntityCRUDIT {
             new com.nimbusds.jose.jwk.JWKSet(),
             new JwksPayloadDto.KeyNames(List.of("federation:sign-key-1"), List.of()))));
 
-    final FederationEntity created = this.entitiesApi.createFederationEntity(
+    final FederationEntity created = this.entitiesApi.createFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, 
         createFederationEntity().signingKeyId(List.of("federation:sign-key-1")));
 
     assertThat(created.getSigningKeyId()).containsExactly("federation:sign-key-1");
@@ -270,7 +270,7 @@ class EntityCRUDIT {
 
     final FederationEntity input = createFederationEntity().signingKeyId(List.of("federation:unknown-key"));
 
-    assertThatThrownBy(() -> this.entitiesApi.createFederationEntity(input))
+    assertThatThrownBy(() -> this.entitiesApi.createFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, input))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(e -> assertThat(((RestClientResponseException) e).getStatusCode().value()).isEqualTo(400));
   }
@@ -285,10 +285,10 @@ class EntityCRUDIT {
             new JwksPayloadDto.KeyNames(List.of("federation:key-v1", "federation:key-v2"), List.of()))));
 
     final UUID entityId = UUID.randomUUID();
-    this.entitiesApi.createFederationEntityWithId(entityId,
+    this.entitiesApi.createFederationEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId,
         createFederationEntity().signingKeyId(List.of("federation:key-v1")));
 
-    final FederationEntity updated = this.entitiesApi.updateFederationEntity(entityId,
+    final FederationEntity updated = this.entitiesApi.updateFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId,
         createFederationEntity().signingKeyId(List.of("federation:key-v2")));
 
     assertThat(updated.getSigningKeyId()).containsExactly("federation:key-v2");
@@ -304,10 +304,10 @@ class EntityCRUDIT {
             new JwksPayloadDto.KeyNames(List.of("federation:key-to-clear"), List.of()))));
 
     final UUID entityId = UUID.randomUUID();
-    this.entitiesApi.createFederationEntityWithId(entityId,
+    this.entitiesApi.createFederationEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId,
         createFederationEntity().signingKeyId(List.of("federation:key-to-clear")));
 
-    final FederationEntity updated = this.entitiesApi.updateFederationEntity(entityId,
+    final FederationEntity updated = this.entitiesApi.updateFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId,
         createFederationEntity().signingKeyId(List.of()));
 
     assertThat(updated.getSigningKeyId()).isEmpty();
@@ -323,10 +323,10 @@ class EntityCRUDIT {
             new JwksPayloadDto.KeyNames(List.of("federation:allowed-key"), List.of()))));
 
     final UUID entityId = UUID.randomUUID();
-    this.entitiesApi.createFederationEntityWithId(entityId,
+    this.entitiesApi.createFederationEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId,
         createFederationEntity().signingKeyId(List.of("federation:allowed-key")));
 
-    assertThatThrownBy(() -> this.entitiesApi.updateFederationEntity(entityId,
+    assertThatThrownBy(() -> this.entitiesApi.updateFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId,
         createFederationEntity().signingKeyId(List.of("federation:not-allowed-key"))))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(e -> assertThat(((RestClientResponseException) e).getStatusCode().value()).isEqualTo(400));
@@ -343,7 +343,7 @@ class EntityCRUDIT {
 
     final FederationEntity input = createFederationEntity().signingKeyId(List.of("hosted:sign-key-2"));
 
-    assertThatThrownBy(() -> this.entitiesApi.createFederationEntity(input))
+    assertThatThrownBy(() -> this.entitiesApi.createFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, input))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(e -> assertThat(((RestClientResponseException) e).getStatusCode().value()).isEqualTo(400));
   }

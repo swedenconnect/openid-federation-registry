@@ -58,6 +58,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @AutoConfigureRestTestClient
 class SubordinateCRUDIT {
 
+  private static final String TENANT = "Swedenconnect";
+
   @Container
   @ServiceConnection
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
@@ -77,7 +79,6 @@ class SubordinateCRUDIT {
     final ApiClient apiClient = new ApiClient();
     apiClient.setBasePath("http://localhost:" + this.port);
     apiClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.PM));
-    apiClient.setApiKey(JwtTestUtils.OrganisationType.PM.orgId);
 
     this.subordinatesApi = new SubordinatesApi(apiClient);
     this.entitiesApi = new EntitiesApi(apiClient);
@@ -89,10 +90,10 @@ class SubordinateCRUDIT {
    */
   private UUID setupTrustAnchor(final String entityIdentifier) {
     final UUID entityId = UUID.randomUUID();
-    this.entitiesApi.createFederationEntityWithId(entityId, new FederationEntity().entityIdentifier(entityIdentifier));
+    this.entitiesApi.createFederationEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, new FederationEntity().entityIdentifier(entityIdentifier));
 
     final UUID trustAnchorId = UUID.randomUUID();
-    this.modulesApi.createTrustAnchorWithId(trustAnchorId, new TrustAnchor().entityId(entityId).active(true));
+    this.modulesApi.createTrustAnchorWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, trustAnchorId, new TrustAnchor().entityId(entityId).active(true));
     return trustAnchorId;
   }
 
@@ -106,7 +107,7 @@ class SubordinateCRUDIT {
         "openid_provider", Map.of(
             "subject_types_supported", Map.of("value", List.of("pairwise")))));
 
-    final Subordinate created = this.subordinatesApi.createSubordinate(new Subordinate()
+    final Subordinate created = this.subordinatesApi.createSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/create")
         .jwks(TestDataOperations.genJWKS().toJSONObject())
@@ -123,7 +124,7 @@ class SubordinateCRUDIT {
 
     final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-policy-null");
 
-    final Subordinate created = this.subordinatesApi.createSubordinate(new Subordinate()
+    final Subordinate created = this.subordinatesApi.createSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/no-policy")
         .jwks(TestDataOperations.genJWKS().toJSONObject()));
@@ -140,13 +141,13 @@ class SubordinateCRUDIT {
             "organization_name", Map.of("value", "Test Org"))));
 
     final UUID subordinateId = UUID.randomUUID();
-    this.subordinatesApi.createSubordinateWithId(subordinateId, new Subordinate()
+    this.subordinatesApi.createSubordinateWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/get")
         .jwks(TestDataOperations.genJWKS().toJSONObject())
         .metadataPolicy(policy));
 
-    final Subordinate retrieved = this.subordinatesApi.getSubordinate(subordinateId);
+    final Subordinate retrieved = this.subordinatesApi.getSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId);
 
     assertThat(retrieved.getMetadataPolicy()).isEqualTo(policy);
   }
@@ -163,13 +164,13 @@ class SubordinateCRUDIT {
             "subject_types_supported", Map.of("value", List.of("pairwise")))));
 
     final UUID subordinateId = UUID.randomUUID();
-    this.subordinatesApi.createSubordinateWithId(subordinateId, new Subordinate()
+    this.subordinatesApi.createSubordinateWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/update")
         .jwks(TestDataOperations.genJWKS().toJSONObject())
         .metadataPolicy(initialPolicy));
 
-    final Subordinate updated = this.subordinatesApi.updateSubordinate(subordinateId, new Subordinate()
+    final Subordinate updated = this.subordinatesApi.updateSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/update")
         .jwks(TestDataOperations.genJWKS().toJSONObject())
@@ -187,13 +188,13 @@ class SubordinateCRUDIT {
             "subject_types_supported", Map.of("value", List.of("public")))));
 
     final UUID subordinateId = UUID.randomUUID();
-    this.subordinatesApi.createSubordinateWithId(subordinateId, new Subordinate()
+    this.subordinatesApi.createSubordinateWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/clear")
         .jwks(TestDataOperations.genJWKS().toJSONObject())
         .metadataPolicy(policy));
 
-    final Subordinate updated = this.subordinatesApi.updateSubordinate(subordinateId, new Subordinate()
+    final Subordinate updated = this.subordinatesApi.updateSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/clear")
         .jwks(TestDataOperations.genJWKS().toJSONObject())
@@ -210,17 +211,17 @@ class SubordinateCRUDIT {
         "openid_provider", Map.of(
             "subject_types_supported", Map.of("value", List.of("public")))));
     final UUID subordinateId = UUID.randomUUID();
-    this.subordinatesApi.createSubordinateWithId(subordinateId, new Subordinate()
+    this.subordinatesApi.createSubordinateWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/delete")
         .jwks(TestDataOperations.genJWKS().toJSONObject())
         .metadataPolicy(policy));
 
-    assertThat(this.subordinatesApi.getSubordinate(subordinateId)).isNotNull();
+    assertThat(this.subordinatesApi.getSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId)).isNotNull();
 
-    this.subordinatesApi.deleteSubordinate(subordinateId);
+    this.subordinatesApi.deleteSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId);
 
-    assertThatThrownBy(() -> this.subordinatesApi.getSubordinate(subordinateId))
+    assertThatThrownBy(() -> this.subordinatesApi.getSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(ex -> assertThat(((RestClientResponseException) ex).getStatusCode().value()).isEqualTo(404));
   }

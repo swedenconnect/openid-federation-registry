@@ -102,6 +102,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @AutoConfigureRestTestClient
 class RegistrationFlowEndToEndIT {
 
+  private static final String TENANT = "Swedenconnect";
+
   private static final UUID PREDEFINED_DIRECT_REGISTER_FLOW_STEP_ID =
       UUID.fromString("AE67B1D8-2DCF-4A8C-9E6B-FC972CC65DEA");
 
@@ -166,6 +168,8 @@ class RegistrationFlowEndToEndIT {
           .anyMatch(f -> assignId.equals(f.getJoinId()));
 
       final Registration status = registrationApi.createJoinWithId(
+          TENANT,
+          org.orgId,
           assignId,
           new RegistrationJoinRequest().entityIdentifier(entityId));
 
@@ -173,7 +177,7 @@ class RegistrationFlowEndToEndIT {
           .as("Registration for testOrg%d should be APPROVED immediately", orgNumber)
           .isEqualTo(Registration.StatusFedregEnum.APPROVED);
 
-      final List<Registration> registrations = registrationApi.listRegistrations();
+      final List<Registration> registrations = registrationApi.listRegistrations(TENANT, org.orgId);
       assertThat(registrations).hasSize(1);
     }
 
@@ -184,7 +188,7 @@ class RegistrationFlowEndToEndIT {
     final RestClient pmRestClient = buildPmRestClient();
 
     final List<Registration> registrations = pmRestClient.method(HttpMethod.GET)
-        .uri("/registration-admin/v1")
+        .uri("/registration-admin/v1/" + TENANT + "/" + JwtTestUtils.OrganisationType.PM.orgId)
         .retrieve()
         .body(new ParameterizedTypeReference<>() {});
 
@@ -196,7 +200,7 @@ class RegistrationFlowEndToEndIT {
         .allMatch(r -> Registration.StatusFedregEnum.APPROVED.equals(r.getStatusFedreg()));
 
     final ModulesApi modulesApi = new ModulesApi(pmApiClient);
-    final TrustAnchor trustAnchor = modulesApi.getTrustAnchor(taImId);
+    final TrustAnchor trustAnchor = modulesApi.getTrustAnchor(TENANT, JwtTestUtils.OrganisationType.PM.orgId, taImId);
     assertThat(trustAnchor.getSubordinates())
         .as("PM's TrustAnchor should have 10 subordinates")
         .hasSize(NUMBER_OF_ORGS);
@@ -231,19 +235,19 @@ class RegistrationFlowEndToEndIT {
     final ModulesApi modulesApi = new ModulesApi(pmApiClient);
     final RegistrationFlowApi flowApi = new RegistrationFlowApi(pmApiClient);
 
-    final FederationEntity taEntity = entitiesApi.createFederationEntity(
+    final FederationEntity taEntity = entitiesApi.createFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, 
         FederationEntity.builder()
             .entityIdentifier("https://www.pm.se/oidf/ta/e2e-test")
             .build());
 
-    final TrustAnchor trustAnchor = modulesApi.createTrustAnchor(
+    final TrustAnchor trustAnchor = modulesApi.createTrustAnchor(TENANT, JwtTestUtils.OrganisationType.PM.orgId, 
         TrustAnchor.builder()
             .entityId(taEntity.getEntityId())
             .active(true)
             .build());
     taImId = trustAnchor.getTrustAnchorId();
 
-    final RegistrationFlowDto flow = flowApi.createFlow(
+    final RegistrationFlowDto flow = flowApi.createFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, 
         new RegistrationFlowDto()
             .name("E2E Direct Registration Flow")
             .description("PredefinedDirectRegisterFlow for end-to-end test")
@@ -253,7 +257,7 @@ class RegistrationFlowEndToEndIT {
                 .name("PredefinedDirectRegisterFlow")
                 .description("Loads entity configuration and publishes subordinate statement"))));
 
-    final AssignFlowResponse assignment = flowApi.assignFlow(
+    final AssignFlowResponse assignment = flowApi.assignFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, 
         taImId,
         new AssignFlowRequest().flowId(flow.getFlowId()));
     assignId = assignment.getAssignId();
@@ -266,7 +270,6 @@ class RegistrationFlowEndToEndIT {
     final ApiClient client = new ApiClient();
     client.setBasePath("http://localhost:" + this.port);
     client.setBearerToken(this.jwtTestUtils.createJwt(org));
-    client.setApiKey(org.orgId);
     return client;
   }
 

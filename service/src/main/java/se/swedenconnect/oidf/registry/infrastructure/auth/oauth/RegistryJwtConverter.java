@@ -10,7 +10,6 @@
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
 package se.swedenconnect.oidf.registry.infrastructure.auth.oauth;
@@ -19,30 +18,23 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
-import org.springframework.util.Assert;
-import se.swedenconnect.oidf.registry.infrastructure.auth.OrganizationInformationFactory;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationInformation;
+import se.swedenconnect.oidf.registry.infrastructure.auth.OrgRightsFactory;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrgRights;
 
 /**
- * Jwt converter for extracting relevant claims.
+ * Converts a JWT into a {@link RegistryClaims} token by parsing the {@code org_rights} claim.
  *
  * @author Felix Hellman
  */
 public class RegistryJwtConverter implements Converter<Jwt, AbstractAuthenticationToken> {
 
-  final JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-  /**
-   * Constructor
-   *
-   */
-  public RegistryJwtConverter() {
-
-  }
+  private final JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter =
+      new JwtGrantedAuthoritiesConverter();
 
   @Override
   public AbstractAuthenticationToken convert(final Jwt jwt) {
-    final OrganizationInformation information = OrganizationInformationFactory.getInformation(jwt.getClaims());
-    Assert.isTrue(!information.organizations().isEmpty(), "Organizations can not be empty");
+    final OrgRights orgRights = OrgRightsFactory.fromClaims(jwt.getClaims());
+
     String username = jwt.getClaimAsString("preferred_username");
     if (username == null) {
       username = jwt.getSubject();
@@ -50,11 +42,10 @@ public class RegistryJwtConverter implements Converter<Jwt, AbstractAuthenticati
 
     final RegistryClaims registryClaims = new RegistryClaims(
         jwt,
-        information,
+        orgRights,
         username,
         this.jwtGrantedAuthoritiesConverter.convert(jwt));
     registryClaims.setAuthenticated(true);
     return registryClaims;
   }
-
 }

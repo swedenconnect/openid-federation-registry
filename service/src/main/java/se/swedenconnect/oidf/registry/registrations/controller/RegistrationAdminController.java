@@ -20,6 +20,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,7 +48,7 @@ import java.util.UUID;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/registration-admin/v1")
+@RequestMapping("/registration-admin/v1/{tenant}/{orgNumber}")
 @Tag(name = "RegistrationAdmin", description = "Operator view of incoming registration requests")
 public class RegistrationAdminController {
 
@@ -60,8 +62,11 @@ public class RegistrationAdminController {
    * @return map containing the count
    */
   @GetMapping("/count")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Count unhandled PENDING registrations for an intermediate")
   public ResponseEntity<Map<String, Long>> countPending(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
       @Parameter(description = "Intermediate ID") @RequestParam("taimId") final UUID taimId) {
     return ResponseEntity.ok(Map.of("count", this.registrationAdminService.countPending(taimId)));
@@ -74,8 +79,11 @@ public class RegistrationAdminController {
    * @return list of registration DTOs
    */
   @GetMapping
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "List all registration records for current organization")
   public ResponseEntity<List<RegistrationDto>> listRegistrations(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.registrationAdminService.listRegistrationsConnectedToThisOrgIM(organizationRecord));
   }
@@ -88,8 +96,11 @@ public class RegistrationAdminController {
    * @return the registration DTO
    */
   @GetMapping("/{registrationId}")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Get a single registration by ID")
   public ResponseEntity<RegistrationDto> getById(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
       @Parameter(description = "Registration ID") @PathVariable("registrationId") final UUID registrationId) {
     return ResponseEntity.ok(this.registrationAdminService.getRegistrationById(registrationId));
@@ -104,8 +115,11 @@ public class RegistrationAdminController {
    * @return the updated registration DTO
    */
   @PostMapping("/{registrationId}/reject")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Reject a pending registration request")
   public ResponseEntity<RegistrationDto> reject(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
       @Parameter(description = "Registration ID") @PathVariable("registrationId") final UUID registrationId,
       @RequestBody final RejectRegistrationDto body) {
@@ -121,8 +135,11 @@ public class RegistrationAdminController {
    * @return the updated registration DTO after resumption
    */
   @PostMapping("/{registrationId}/steps/{stepIndex}/approve")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Approve a specific pending pipeline step and resume execution")
   public ResponseEntity<RegistrationDto> approveStep(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
       @Parameter(description = "Registration ID") @PathVariable("registrationId") final UUID registrationId,
       @Parameter(description = "Step index") @PathVariable("stepIndex") final int stepIndex) {

@@ -22,11 +22,13 @@ import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRec
 import se.swedenconnect.oidf.registry.infrastructure.config.KeyEntry;
 import se.swedenconnect.oidf.registry.infrastructure.config.RegistryProperties;
 import se.swedenconnect.oidf.registry.organization.model.Instance;
+import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
+import se.swedenconnect.oidf.registry.organization.repository.OrganizationRepository;
 
 import java.net.URI;
-import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Finds the instance to be used for this organization
@@ -39,16 +41,21 @@ public class InstancePlacementService {
 
   private final RegistryProperties registryProperties;
   private final InstanceRepository instanceRepository;
+  private final OrganizationRepository organizationRepository;
 
   /**
    * Constructor
    * @param registryProperties Properties where the instance configuration exists
    * @param instanceRepository Instance repository used to load a instance when found.
+   * @param organizationRepository Organization repository used to resolve an already-placed organization's
+   *     attached function group.
    */
   public InstancePlacementService(final RegistryProperties registryProperties,
-      final InstanceRepository instanceRepository) {
+      final InstanceRepository instanceRepository,
+      final OrganizationRepository organizationRepository) {
     this.registryProperties = registryProperties;
     this.instanceRepository = instanceRepository;
+    this.organizationRepository = organizationRepository;
   }
 
   /**
@@ -60,21 +67,34 @@ public class InstancePlacementService {
    * @return entity prefix on the form {@code baseUrl/orgNumber}, or empty if no instance matches
    */
   public Optional<String> resolveEntityPrefix(final String orgNumber, final String functionGroup) {
-    return this.findMatchingInstance(orgNumber, functionGroup)
+    return this.findMatchingInstance( functionGroup)
         .map(instance -> this.entityPrefixFrom(instance, orgNumber))
         .map(URI::toString);
+  }
+
+  /**
+   * Resolves the entity prefix for an already-persisted organization, using the function group its instance is
+   * already attached to rather than one supplied by the caller. Use this when there is no tenant path variable
+   * in scope (e.g. resolving the prefix for a different organization than the one making the request).
+   *
+   * @param orgNumber organization number
+   * @return entity prefix on the form {@code baseUrl/orgNumber}, or empty if the organization is not yet
+   *     persisted or no instance matches
+   */
+  public Optional<String> resolveEntityPrefixForPlacedOrg(final String orgNumber) {
+    return this.resolveAttachedFunctionGroup(orgNumber)
+        .flatMap(functionGroup -> this.resolveEntityPrefix(orgNumber, functionGroup));
   }
 
   /**
    * Resolves the base URL of the instance that this organization is placed on. Pure config lookup — no database
    * access.
    *
-   * @param orgNumber organization number
    * @param functionGroup optional function group used for matching
    * @return base URL of the matched instance, or empty if no instance matches
    */
-  public Optional<URI> resolveBaseUrl(final String orgNumber, final String functionGroup) {
-    return this.findMatchingInstance(orgNumber, functionGroup)
+  public Optional<URI> resolveBaseUrl(final String functionGroup) {
+    return this.findMatchingInstance(functionGroup)
         .map(RegistryProperties.InstanceProperties::baseUrl);
   }
 
@@ -86,7 +106,21 @@ public class InstancePlacementService {
    * @return base URL of the matched instance, or empty if no instance matches
    */
   public Optional<URI> resolveBaseUrl(final OrganizationRecord organizationRecord) {
-    return this.resolveBaseUrl(organizationRecord.orgNumber(), organizationRecord.functionGroup());
+    return this.resolveBaseUrl(organizationRecord.tenant());
+  }
+
+  /**
+   * Resolves the base URL of the instance that this organization is placed on. Pure config lookup — no database
+   * access.
+   *
+   * @param instanceId instanceid for the instance
+   * @return base URL of the matched instance, or empty if no instance matches
+   */
+  public Optional<URI> resolveBaseUrl(final UUID instanceId) {
+    return this.registryProperties.instances().stream()
+        .filter(instanceProperties -> instanceProperties.instanceId().equals(instanceId))
+        .map(RegistryProperties.InstanceProperties::baseUrl)
+        .findFirst();
   }
 
   /**
@@ -95,7 +129,7 @@ public class InstancePlacementService {
    * @return Instance object if found, else empty Optional
    */
   public Optional<Instance> resolveInstance(final OrganizationRecord organizationRecord) {
-    return this.findMatchingInstance(organizationRecord.orgNumber(), organizationRecord.functionGroup())
+    return this.findMatchingInstance(organizationRecord.tenant())
         .flatMap(instance -> this.instanceRepository.findById(instance.instanceId()));
   }
 
@@ -103,53 +137,65 @@ public class InstancePlacementService {
    * Resolves the public validation key configured for the instance that serves the given organisation.
    * The key is used to verify JWT responses from the oidf-service node attached to that instance.
    *
-   * @param orgNumber organization number
    * @param functionGroup optional function group used for matching
    * @return the parsed {@link JWK} from the instance's {@code oidf_service_api_validation_key}, or empty if
    *     the instance has no such key configured
    */
-  public Optional<JWK> resolveValidationKey(final String orgNumber, final String functionGroup) {
-    return this.findMatchingInstance(orgNumber, functionGroup)
+  public Optional<JWK> resolveValidationKey(final String functionGroup) {
+    return this.findMatchingInstance(functionGroup)
         .map(RegistryProperties.InstanceProperties::oidfServiceApiValidationKey)
         .map(KeyEntry::getKey);
   }
 
   /**
-   * Finds the first {@link RegistryProperties.InstanceProperties} that matches the given org number or function group.
-   * Falls back to the instance marked as default if no explicit match is found.
+   * Resolves the function group backing the tenant with the given name, e.g. the tenant slug from a request
+   * path. Each tenant is backed by exactly one function group.
+   *
+   * @param tenantName the tenant's configured {@link RegistryProperties.InstanceProperties#name()}
+   * @return the function group backing that tenant, or empty if no configured instance has that name
    */
-  private Optional<RegistryProperties.InstanceProperties> findMatchingInstance(
-      final String orgNumber, final String functionGroup) {
-
-    if (this.registryProperties.instances().isEmpty()) {
+  public Optional<String> resolveFunctionGroupForTenant(final String tenantName) {
+    if (tenantName == null) {
       return Optional.empty();
     }
-
-    for (final RegistryProperties.InstanceProperties instance : this.registryProperties.instances()) {
-      final RegistryProperties.InstanceMatcherProperties matcher = instance.matchers();
-      if (this.matchesOrgNumber(matcher, orgNumber) || this.matchesFunctionGroup(matcher, functionGroup)) {
-        return Optional.of(instance);
-      }
-    }
-
     return this.registryProperties.instances().stream()
-        .filter(i -> i.matchers().useForDefaultAssignment())
+        .filter(instance -> instance.name().equals(tenantName))
+        .map(RegistryProperties.InstanceProperties::functionGroup)
         .findFirst();
   }
 
-  private boolean matchesOrgNumber(
-      final RegistryProperties.InstanceMatcherProperties matcher, final String orgNumber) {
-    return Optional.ofNullable(matcher.org_numbers())
-        .orElse(List.of())
-        .contains(orgNumber);
+  /**
+   * Finds the {@link RegistryProperties.InstanceProperties} backed by the given function group. Each tenant
+   * (instance) is backed by exactly one function group, so this is a straight equality match.
+   */
+  private Optional<RegistryProperties.InstanceProperties> findMatchingInstance(
+       final String functionGroup) {
+
+    if (functionGroup == null) {
+      return Optional.empty();
+    }
+
+    return this.registryProperties.instances().stream()
+        .filter(instance -> instance.functionGroup().equals(functionGroup))
+        .findFirst();
   }
 
-  private boolean matchesFunctionGroup(
-      final RegistryProperties.InstanceMatcherProperties matcher, final String functionGroup) {
-    return functionGroup != null
-        && Optional.ofNullable(matcher.functiongroups())
-        .orElse(List.of())
-        .contains(functionGroup);
+  /**
+   * Resolves the function group already attached to a persisted organization, i.e. the function group backing
+   * the instance the organization was placed on.
+   *
+   * @param orgNumber organization number
+   * @return the function group the organization is currently attached to, or empty if the organization is not
+   *     yet persisted (nothing attached to it yet)
+   */
+  public Optional<String> resolveAttachedFunctionGroup(final String orgNumber) {
+    return this.organizationRepository.findByOrgNumber(orgNumber)
+        .map(Organization::getInstance)
+        .map(Instance::getInstanceId)
+        .flatMap(instanceId -> this.registryProperties.instances().stream()
+            .filter(instance -> instance.instanceId().equals(instanceId))
+            .findFirst())
+        .map(RegistryProperties.InstanceProperties::functionGroup);
   }
 
   private URI entityPrefixFrom(

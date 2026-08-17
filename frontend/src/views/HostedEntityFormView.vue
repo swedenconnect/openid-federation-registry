@@ -126,6 +126,7 @@ import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
+import {useUserStore} from '@/stores/userStore';
 import {useSigningKeys} from '@/api/composables/signingKeys';
 import TrustmarkSourcesField from '@/components/TrustmarkSourcesField.vue';
 import EntityConfigurationViewer from '@/components/EntityConfigurationViewer.vue';
@@ -135,6 +136,7 @@ const route = useRoute();
 const router = useRouter();
 const {requestGet, requestPost, requestPut, loading, ok} = useRequest();
 const errorStore = useErrorStore();
+const userStore = useUserStore();
 
 const {signingKeys, fetchSigningKeys} = useSigningKeys();
 
@@ -170,7 +172,7 @@ const rules = {
 async function loadEntity() {
   errorStore.clearError();
   entityId.value = route.params.id;
-  const response = await requestGet(hostedEntityPath(entityId.value));
+  const response = await requestGet(hostedEntityPath(userStore.selectedTenant, userStore.orgNumber, entityId.value));
   if (response) {
     entityIdentifier.value = response.entityIdentifier || '';
     metadata.value = JSON.stringify(response.metadata || {}, null, 2);
@@ -205,9 +207,9 @@ async function saveEntity() {
     };
 
     if (isEdit.value) {
-      await requestPut(hostedEntityPath(entityId.value), entityData);
+      await requestPut(hostedEntityPath(userStore.selectedTenant, userStore.orgNumber, entityId.value), entityData);
     } else {
-      await requestPost(hostedEntitiesPath, entityData);
+      await requestPost(hostedEntitiesPath(userStore.selectedTenant, userStore.orgNumber), entityData);
     }
 
     if (ok.value) {

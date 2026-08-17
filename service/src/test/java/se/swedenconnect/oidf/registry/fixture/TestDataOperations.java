@@ -102,13 +102,18 @@ public class TestDataOperations {
    * @param baseUrl the base URL of the API (e.g., "https://localhost:8080")
    */
   public String createTestScenarioWithPolicyAndEntities(final ApiClient apiClient, final String baseUrl) {
+    return createTestScenarioWithPolicyAndEntities(apiClient, baseUrl, "Swedenconnect", "55555");
+  }
+
+  public String createTestScenarioWithPolicyAndEntities(
+      final ApiClient apiClient, final String baseUrl, final String tenant, final String orgNumber) {
     apiClient.setBasePath(baseUrl);
 
     final EntitiesApi entitiesApi = new EntitiesApi(apiClient);
     final ModulesApi modulesApi = new ModulesApi(apiClient);
     final SubordinatesApi subordinatesApi = new SubordinatesApi(apiClient);
 
-    final EntityWithModules e = entitiesApi.listEntities(EntityType.FEDERATION_ENTITY.toString(), true);
+    final EntityWithModules e = entitiesApi.listEntities(tenant, orgNumber, EntityType.FEDERATION_ENTITY.toString(), true);
     final String taEntityid = "https://www.pm.se/oidf/ta/";
     if (e.getFederationEntity().stream()
         .map(FederationEntityWithModules::getEntityIdentifier)
@@ -122,7 +127,7 @@ public class TestDataOperations {
         .entityIdentifier(taEntityid)
         .build();
 
-    final FederationEntity trustAnchorEntity = entitiesApi.createFederationEntity(taFederationEntityInput);
+    final FederationEntity trustAnchorEntity = entitiesApi.createFederationEntity(tenant, orgNumber, taFederationEntityInput);
     log.info("Created first federation entity with ID: {}", trustAnchorEntity.getEntityId());
 
     // Step 3: Add trustanchor module to the first federation entity
@@ -130,7 +135,7 @@ public class TestDataOperations {
         .entityId(trustAnchorEntity.getEntityId())
         .active(true)
         .build();
-    final TrustAnchor createdTrustAnchor = modulesApi.createTrustAnchor(trustAnchorInput);
+    final TrustAnchor createdTrustAnchor = modulesApi.createTrustAnchor(tenant, orgNumber, trustAnchorInput);
     log.info("Created trustanchor module with ID: {} for entity: {}",
         createdTrustAnchor.getTrustAnchorId(), trustAnchorEntity.getEntityIdentifier());
 
@@ -144,7 +149,7 @@ public class TestDataOperations {
         .stepRetryDuration("PT2M")
         .active(true)
         .build();
-    final Resolver createdResolver = modulesApi.createResolver(resolverInput);
+    final Resolver createdResolver = modulesApi.createResolver(tenant, orgNumber, resolverInput);
     log.info("Created resolver module with ID: {} for entity: {}",
         createdResolver.getResolverId(), trustAnchorEntity.getEntityIdentifier());
 
@@ -153,7 +158,7 @@ public class TestDataOperations {
         .trustMarkTokenValidityDuration("PT1H")
         .active(true)
         .build();
-    final TrustmarkIssuer createdTrustmarkIssuer = modulesApi.createTrustmarkIssuer(trustmarkIssuerInput);
+    final TrustmarkIssuer createdTrustmarkIssuer = modulesApi.createTrustmarkIssuer(tenant, orgNumber, trustmarkIssuerInput);
     log.info("Created tmi module with ID: {} for entity: {}",
         createdTrustmarkIssuer.getTrustmarkIssuerId(), trustAnchorEntity.getEntityIdentifier());
 
@@ -164,7 +169,7 @@ public class TestDataOperations {
         "redirect_uris", java.util.List.of("https://rp.test.se/callback")
     ));
 
-    final HostedEntity secondFederationEntity = entitiesApi.createHostedEntity(HostedEntity.builder()
+    final HostedEntity secondFederationEntity = entitiesApi.createHostedEntity(tenant, orgNumber, HostedEntity.builder()
         .entityIdentifier("https://www.pm.se/oidf/relyingparty")
         .metadata(relyingPartyMetadata)
         .build());
@@ -174,20 +179,20 @@ public class TestDataOperations {
     // Step 5: Create subordinate entity with subject set to first federation entity,
     // issuer set to second federation entity, and the created policy
 
-    subordinatesApi.createSubordinate(Subordinate.builder()
+    subordinatesApi.createSubordinate(tenant, orgNumber, Subordinate.builder()
         .taImId(createdTrustAnchor.getTrustAnchorId())
         .entityIdentifier(secondFederationEntity.getEntityIdentifier())
         .metadataPolicy(this.createPolicy())
         .jwks(genJWKS().toJSONObject())
         .build());
 
-    final HostedEntity hostedPolisen = entitiesApi.createHostedEntity(
+    final HostedEntity hostedPolisen = entitiesApi.createHostedEntity(tenant, orgNumber, 
         HostedEntity.builder()
             .entityIdentifier("https://www.polisen.se/op/sverigeid")
             .metadata(Map.of("openid_connect", "Polis polis..."))
             .build());
 
-    subordinatesApi.createSubordinate(Subordinate.builder()
+    subordinatesApi.createSubordinate(tenant, orgNumber, Subordinate.builder()
         .taImId(createdTrustAnchor.getTrustAnchorId())
         .entityIdentifier(hostedPolisen.getEntityIdentifier())
         .ecLocationAutomaticResolve(true)

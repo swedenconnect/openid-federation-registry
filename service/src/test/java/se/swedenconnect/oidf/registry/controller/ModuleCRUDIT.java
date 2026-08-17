@@ -58,6 +58,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ModuleCRUDIT {
 
+  private static final String TENANT = "Swedenconnect";
+
   @Container
   @ServiceConnection
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
@@ -80,7 +82,6 @@ class ModuleCRUDIT {
 
     // Configure authentication
     this.apiClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.PM));
-    this.apiClient.setApiKey(JwtTestUtils.OrganisationType.PM.orgId);
 
     this.modulesApi = new ModulesApi(this.apiClient);
     this.entitiesApi = new EntitiesApi(this.apiClient);
@@ -129,7 +130,7 @@ class ModuleCRUDIT {
     final UUID entityId = UUID.randomUUID();
     final FederationEntity entityInput = new FederationEntity()
         .entityIdentifier(entityIssuer);
-    this.entitiesApi.createFederationEntityWithId(entityId, entityInput);
+    this.entitiesApi.createFederationEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, entityInput);
 
     // Step 2: Create TrustmarkIssuer on the FederationEntity
     final UUID issuerId = trustmarkIssuerId != null ? trustmarkIssuerId : UUID.randomUUID();
@@ -138,7 +139,7 @@ class ModuleCRUDIT {
         .active(trustmarkIssuerActive)
         .trustMarkTokenValidityDuration(trustmarkIssuerValidityDuration);
 
-    final TrustmarkIssuer createdIssuer = this.modulesApi.createTrustmarkIssuerWithId(issuerId, issuerInput);
+    final TrustmarkIssuer createdIssuer = this.modulesApi.createTrustmarkIssuerWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId, issuerInput);
 
     return new TrustmarkTestData(entityId, createdIssuer.getTrustmarkIssuerId());
   }
@@ -186,10 +187,10 @@ class ModuleCRUDIT {
     }
 
     if (trustmarkId != null) {
-      return this.trustmarksApi.createTrustmarkWithId(trustmarkId, input);
+      return this.trustmarksApi.createTrustmarkWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, trustmarkId, input);
     }
     else {
-      return this.trustmarksApi.createTrustmark(input);
+      return this.trustmarksApi.createTrustmark(TENANT, JwtTestUtils.OrganisationType.PM.orgId, input);
     }
   }
 
@@ -204,7 +205,7 @@ class ModuleCRUDIT {
     final UUID entityId = UUID.randomUUID();
     final FederationEntity entityInput = new FederationEntity()
         .entityIdentifier(issuer);
-    this.entitiesApi.createFederationEntityWithId(entityId, entityInput);
+    this.entitiesApi.createFederationEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, entityInput);
     return entityId;
   }
 
@@ -223,7 +224,7 @@ class ModuleCRUDIT {
         .trustMarkIssuers(List.of("https://www.pm.se/oidf/tmi1", "https://www.pm.se/oidf/tmi2"));
 
     // Act
-    final TrustAnchor created = this.modulesApi.createTrustAnchor(input);
+    final TrustAnchor created = this.modulesApi.createTrustAnchor(TENANT, JwtTestUtils.OrganisationType.PM.orgId, input);
 
     // Assert
     assertThat(created).isNotNull();
@@ -246,7 +247,7 @@ class ModuleCRUDIT {
         .active(false);
 
     // Act
-    final TrustAnchor created = this.modulesApi.createTrustAnchorWithId(moduleId, input);
+    final TrustAnchor created = this.modulesApi.createTrustAnchorWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, moduleId, input);
 
     // Assert
     assertThat(created).isNotNull();
@@ -265,10 +266,10 @@ class ModuleCRUDIT {
     final TrustAnchor input = new TrustAnchor()
         .entityId(entityId)
         .active(true);
-    this.modulesApi.createTrustAnchorWithId(moduleId, input);
+    this.modulesApi.createTrustAnchorWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, moduleId, input);
 
     // Act
-    final TrustAnchor retrieved = this.modulesApi.getTrustAnchor(moduleId);
+    final TrustAnchor retrieved = this.modulesApi.getTrustAnchor(TENANT, JwtTestUtils.OrganisationType.PM.orgId, moduleId);
 
     // Assert
     assertThat(retrieved).isNotNull();
@@ -287,7 +288,7 @@ class ModuleCRUDIT {
     final TrustAnchor createInput = new TrustAnchor()
         .entityId(entityId)
         .active(true);
-    this.modulesApi.createTrustAnchorWithId(moduleId, createInput);
+    this.modulesApi.createTrustAnchorWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, moduleId, createInput);
 
     final TrustAnchor updateInput = new TrustAnchor()
         .entityId(entityId)
@@ -295,7 +296,7 @@ class ModuleCRUDIT {
         .trustMarkIssuers(List.of("https://www.pm.se/oidf/tmi-updated"));
 
     // Act
-    final TrustAnchor updated = this.modulesApi.updateTrustAnchor(moduleId, updateInput);
+    final TrustAnchor updated = this.modulesApi.updateTrustAnchor(TENANT, JwtTestUtils.OrganisationType.PM.orgId, moduleId, updateInput);
 
     // Assert
     assertThat(updated).isNotNull();
@@ -314,17 +315,17 @@ class ModuleCRUDIT {
     final TrustAnchor input = new TrustAnchor()
         .entityId(entityId)
         .active(true);
-    this.modulesApi.createTrustAnchorWithId(moduleId, input);
+    this.modulesApi.createTrustAnchorWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, moduleId, input);
 
     // Verify it exists
-    final TrustAnchor beforeDelete = this.modulesApi.getTrustAnchor(moduleId);
+    final TrustAnchor beforeDelete = this.modulesApi.getTrustAnchor(TENANT, JwtTestUtils.OrganisationType.PM.orgId, moduleId);
     assertThat(beforeDelete).isNotNull();
 
     // Act
-    this.modulesApi.deleteTrustAnchor(moduleId);
+    this.modulesApi.deleteTrustAnchor(TENANT, JwtTestUtils.OrganisationType.PM.orgId, moduleId);
 
     // Assert
-    assertThatThrownBy(() -> this.modulesApi.getTrustAnchor(moduleId))
+    assertThatThrownBy(() -> this.modulesApi.getTrustAnchor(TENANT, JwtTestUtils.OrganisationType.PM.orgId, moduleId))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(exception -> {
           final RestClientResponseException apiException = (RestClientResponseException) exception;
@@ -351,7 +352,7 @@ class ModuleCRUDIT {
         .resolveResponseDuration("PT1H");
 
     // Act
-    final Resolver created = this.modulesApi.createResolver(input);
+    final Resolver created = this.modulesApi.createResolver(TENANT, JwtTestUtils.OrganisationType.PM.orgId, input);
 
     // Assert
     assertThat(created).isNotNull();
@@ -380,7 +381,7 @@ class ModuleCRUDIT {
         .resolveResponseDuration("PT2H");
 
     // Act
-    final Resolver created = this.modulesApi.createResolverWithId(resolverId, input);
+    final Resolver created = this.modulesApi.createResolverWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, resolverId, input);
 
     // Assert
     assertThat(created).isNotNull();
@@ -404,10 +405,10 @@ class ModuleCRUDIT {
         .stepRetryDuration("PT5M")
         .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT1H");
-    this.modulesApi.createResolverWithId(resolverId, input);
+    this.modulesApi.createResolverWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, resolverId, input);
 
     // Act
-    final Resolver retrieved = this.modulesApi.getResolver(resolverId);
+    final Resolver retrieved = this.modulesApi.getResolver(TENANT, JwtTestUtils.OrganisationType.PM.orgId, resolverId);
 
     // Assert
     assertThat(retrieved).isNotNull();
@@ -431,7 +432,7 @@ class ModuleCRUDIT {
         .stepRetryDuration("PT5M")
         .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT1H");
-    this.modulesApi.createResolverWithId(resolverId, createInput);
+    this.modulesApi.createResolverWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, resolverId, createInput);
 
     final Resolver updateInput = new Resolver()
         .entityId(entityId)
@@ -443,7 +444,7 @@ class ModuleCRUDIT {
         .resolveResponseDuration("PT3H");
 
     // Act
-    final Resolver updated = this.modulesApi.updateResolver(resolverId, updateInput);
+    final Resolver updated = this.modulesApi.updateResolver(TENANT, JwtTestUtils.OrganisationType.PM.orgId, resolverId, updateInput);
 
     // Assert
     assertThat(updated).isNotNull();
@@ -468,17 +469,17 @@ class ModuleCRUDIT {
         .stepRetryDuration("PT5M")
         .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT1H");
-    this.modulesApi.createResolverWithId(resolverId, input);
+    this.modulesApi.createResolverWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, resolverId, input);
 
     // Verify it exists
-    final Resolver beforeDelete = this.modulesApi.getResolver(resolverId);
+    final Resolver beforeDelete = this.modulesApi.getResolver(TENANT, JwtTestUtils.OrganisationType.PM.orgId, resolverId);
     assertThat(beforeDelete).isNotNull();
 
     // Act
-    this.modulesApi.deleteResolver(resolverId);
+    this.modulesApi.deleteResolver(TENANT, JwtTestUtils.OrganisationType.PM.orgId, resolverId);
 
     // Assert
-    assertThatThrownBy(() -> this.modulesApi.getResolver(resolverId))
+    assertThatThrownBy(() -> this.modulesApi.getResolver(TENANT, JwtTestUtils.OrganisationType.PM.orgId, resolverId))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(exception -> {
           final RestClientResponseException apiException = (RestClientResponseException) exception;
@@ -500,24 +501,24 @@ class ModuleCRUDIT {
         .entityId(entityId)
         .active(true)
         .trustMarkIssuers(List.of("https://www.pm.se/oidf/tmi1"));
-    this.modulesApi.createTrustAnchorWithId(trustAnchorId, taInput);
+    this.modulesApi.createTrustAnchorWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, trustAnchorId, taInput);
 
     // Verify both exist
-    assertThat(this.entitiesApi.getFederationEntity(entityId, false)).isNotNull();
-    assertThat(this.modulesApi.getTrustAnchor(trustAnchorId)).isNotNull();
+    assertThat(this.entitiesApi.getFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, false)).isNotNull();
+    assertThat(this.modulesApi.getTrustAnchor(TENANT, JwtTestUtils.OrganisationType.PM.orgId, trustAnchorId)).isNotNull();
 
     // Act - Delete the federation entity
-    this.entitiesApi.deleteFederationEntity(entityId);
+    this.entitiesApi.deleteFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId);
 
     // Assert - Both entity and trust anchor should be gone
-    assertThatThrownBy(() -> this.entitiesApi.getFederationEntity(entityId, false))
+    assertThatThrownBy(() -> this.entitiesApi.getFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, false))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(exception -> {
           final RestClientResponseException e = (RestClientResponseException) exception;
           assertThat(e.getStatusCode().value()).isEqualTo(404);
         });
 
-    assertThatThrownBy(() -> this.modulesApi.getTrustAnchor(trustAnchorId))
+    assertThatThrownBy(() -> this.modulesApi.getTrustAnchor(TENANT, JwtTestUtils.OrganisationType.PM.orgId, trustAnchorId))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(exception -> {
           final RestClientResponseException e = (RestClientResponseException) exception;
@@ -593,7 +594,7 @@ class ModuleCRUDIT {
         null);
 
     // Act
-    final Trustmark retrieved = this.trustmarksApi.getTrustmark(trustmarkId);
+    final Trustmark retrieved = this.trustmarksApi.getTrustmark(TENANT, JwtTestUtils.OrganisationType.PM.orgId, trustmarkId);
 
     // Assert
     assertThat(retrieved).isNotNull();
@@ -624,7 +625,7 @@ class ModuleCRUDIT {
         .refUri("https://www.pm.se/ref-updated");
 
     // Act
-    final Trustmark updated = this.trustmarksApi.updateTrustmark(trustmarkId, updateInput);
+    final Trustmark updated = this.trustmarksApi.updateTrustmark(TENANT, JwtTestUtils.OrganisationType.PM.orgId, trustmarkId, updateInput);
 
     // Assert
     assertThat(updated).isNotNull();
@@ -649,14 +650,14 @@ class ModuleCRUDIT {
         null);
 
     // Verify it exists
-    final Trustmark beforeDelete = this.trustmarksApi.getTrustmark(trustmarkId);
+    final Trustmark beforeDelete = this.trustmarksApi.getTrustmark(TENANT, JwtTestUtils.OrganisationType.PM.orgId, trustmarkId);
     assertThat(beforeDelete).isNotNull();
 
     // Act
-    this.trustmarksApi.deleteTrustmark(trustmarkId);
+    this.trustmarksApi.deleteTrustmark(TENANT, JwtTestUtils.OrganisationType.PM.orgId, trustmarkId);
 
     // Assert
-    assertThatThrownBy(() -> this.trustmarksApi.getTrustmark(trustmarkId))
+    assertThatThrownBy(() -> this.trustmarksApi.getTrustmark(TENANT, JwtTestUtils.OrganisationType.PM.orgId, trustmarkId))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(exception -> {
           final RestClientResponseException apiException = (RestClientResponseException) exception;

@@ -55,6 +55,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @AutoConfigureRestTestClient
 class TrustmarkIssuerCRUDIT {
 
+  private static final String TENANT = "Swedenconnect";
+
   @Container
   @ServiceConnection
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
@@ -74,7 +76,6 @@ class TrustmarkIssuerCRUDIT {
     final ApiClient apiClient = new ApiClient();
     apiClient.setBasePath("http://localhost:" + this.port);
     apiClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.PM));
-    apiClient.setApiKey(JwtTestUtils.OrganisationType.PM.orgId);
 
     this.modulesApi = new ModulesApi(apiClient);
     this.trustmarksApi = new TrustmarksApi(apiClient);
@@ -83,7 +84,7 @@ class TrustmarkIssuerCRUDIT {
 
   private UUID createFederationEntity(final String entityIdentifier) {
     final UUID entityId = UUID.randomUUID();
-    this.entitiesApi.createFederationEntityWithId(entityId, new FederationEntity()
+    this.entitiesApi.createFederationEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, new FederationEntity()
         .entityIdentifier(entityIdentifier));
     return entityId;
   }
@@ -97,7 +98,7 @@ class TrustmarkIssuerCRUDIT {
         .active(true)
         .trustMarkTokenValidityDuration("PT1H");
 
-    final TrustmarkIssuer created = this.modulesApi.createTrustmarkIssuer(input);
+    final TrustmarkIssuer created = this.modulesApi.createTrustmarkIssuer(TENANT, JwtTestUtils.OrganisationType.PM.orgId, input);
 
     assertThat(created).isNotNull();
     assertThat(created.getTrustmarkIssuerId()).isNotNull();
@@ -116,7 +117,7 @@ class TrustmarkIssuerCRUDIT {
         .active(false)
         .trustMarkTokenValidityDuration("PT30M");
 
-    final TrustmarkIssuer created = this.modulesApi.createTrustmarkIssuerWithId(issuerId, input);
+    final TrustmarkIssuer created = this.modulesApi.createTrustmarkIssuerWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId, input);
 
     assertThat(created).isNotNull();
     assertThat(created.getTrustmarkIssuerId()).isEqualTo(issuerId);
@@ -130,12 +131,12 @@ class TrustmarkIssuerCRUDIT {
     final UUID entityId = this.createFederationEntity("https://www.pm.se/oidf/tmi-get");
     final UUID issuerId = UUID.randomUUID();
 
-    this.modulesApi.createTrustmarkIssuerWithId(issuerId, new TrustmarkIssuer()
+    this.modulesApi.createTrustmarkIssuerWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId, new TrustmarkIssuer()
         .entityId(entityId)
         .active(true)
         .trustMarkTokenValidityDuration("PT2H"));
 
-    final TrustmarkIssuer retrieved = this.modulesApi.getTrustmarkIssuer(issuerId);
+    final TrustmarkIssuer retrieved = this.modulesApi.getTrustmarkIssuer(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId);
 
     assertThat(retrieved).isNotNull();
     assertThat(retrieved.getTrustmarkIssuerId()).isEqualTo(issuerId);
@@ -150,16 +151,16 @@ class TrustmarkIssuerCRUDIT {
     final UUID issuerId = UUID.randomUUID();
     final UUID trustmarkId = UUID.randomUUID();
 
-    this.modulesApi.createTrustmarkIssuerWithId(issuerId, new TrustmarkIssuer()
+    this.modulesApi.createTrustmarkIssuerWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId, new TrustmarkIssuer()
         .entityId(entityId)
         .active(true)
         .trustMarkTokenValidityDuration("PT2H"));
 
-    this.trustmarksApi.createTrustmarkWithId(trustmarkId, new Trustmark()
+    this.trustmarksApi.createTrustmarkWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, trustmarkId, new Trustmark()
         .trustmarkType("https://loa3.sc.se")
         .trustmarkissuerId(issuerId));
 
-    final List<TrustmarkWithSubjects> trustmarkWithSubjects = this.modulesApi.getTrustmarks(issuerId);
+    final List<TrustmarkWithSubjects> trustmarkWithSubjects = this.modulesApi.getTrustmarks(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId);
 
     assertThat(trustmarkWithSubjects).isNotNull();
     assertThat(trustmarkWithSubjects.size()).isEqualTo(1);
@@ -172,12 +173,12 @@ class TrustmarkIssuerCRUDIT {
     final UUID entityId = this.createFederationEntity("https://www.pm.se/oidf/tmi-updates");
     final UUID issuerId = UUID.randomUUID();
 
-    this.modulesApi.createTrustmarkIssuerWithId(issuerId, new TrustmarkIssuer()
+    this.modulesApi.createTrustmarkIssuerWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId, new TrustmarkIssuer()
         .entityId(entityId)
         .active(true)
         .trustMarkTokenValidityDuration("PT1H"));
 
-    final TrustmarkIssuer updated = this.modulesApi.updateTrustmarkIssuer(issuerId, new TrustmarkIssuer()
+    final TrustmarkIssuer updated = this.modulesApi.updateTrustmarkIssuer(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId, new TrustmarkIssuer()
         .entityId(entityId)
         .active(false)
         .trustMarkTokenValidityDuration("PT4H"));
@@ -193,23 +194,23 @@ class TrustmarkIssuerCRUDIT {
     final UUID entityId = this.createFederationEntity("https://www.pm.se/oidf/tmi-delete");
     final UUID issuerId = UUID.randomUUID();
 
-    this.modulesApi.createTrustmarkIssuerWithId(issuerId, new TrustmarkIssuer()
+    this.modulesApi.createTrustmarkIssuerWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId, new TrustmarkIssuer()
         .entityId(entityId)
         .active(true)
         .trustMarkTokenValidityDuration("PT1H"));
 
-    assertThat(this.modulesApi.getTrustmarkIssuer(issuerId)).isNotNull();
+    assertThat(this.modulesApi.getTrustmarkIssuer(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId)).isNotNull();
 
-    this.modulesApi.deleteTrustmarkIssuer(issuerId);
+    this.modulesApi.deleteTrustmarkIssuer(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId);
 
-    assertThatThrownBy(() -> this.modulesApi.getTrustmarkIssuer(issuerId))
+    assertThatThrownBy(() -> this.modulesApi.getTrustmarkIssuer(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(ex -> assertThat(((RestClientResponseException) ex).getStatusCode().value()).isEqualTo(404));
   }
 
   @Test
   void getTrustmarkIssuerNotFound() {
-    assertThatThrownBy(() -> this.modulesApi.getTrustmarkIssuer(UUID.randomUUID()))
+    assertThatThrownBy(() -> this.modulesApi.getTrustmarkIssuer(TENANT, JwtTestUtils.OrganisationType.PM.orgId, UUID.randomUUID()))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(ex -> assertThat(((RestClientResponseException) ex).getStatusCode().value()).isEqualTo(404));
   }
@@ -219,7 +220,7 @@ class TrustmarkIssuerCRUDIT {
     // Create issuer for PM org
     final UUID pmEntityId = this.createFederationEntity("https://www.pm.se/oidf/tmi-isolation");
     final UUID pmIssuerId = UUID.randomUUID();
-    this.modulesApi.createTrustmarkIssuerWithId(pmIssuerId, new TrustmarkIssuer()
+    this.modulesApi.createTrustmarkIssuerWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, pmIssuerId, new TrustmarkIssuer()
         .entityId(pmEntityId)
         .active(true)
         .trustMarkTokenValidityDuration("PT1H"));
@@ -228,10 +229,9 @@ class TrustmarkIssuerCRUDIT {
     final ApiClient afClient = new ApiClient();
     afClient.setBasePath("http://localhost:" + this.port);
     afClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.AF));
-    afClient.setApiKey(JwtTestUtils.OrganisationType.AF.orgId);
     final ModulesApi afModulesApi = new ModulesApi(afClient);
 
-    assertThatThrownBy(() -> afModulesApi.getTrustmarkIssuer(pmIssuerId))
+    assertThatThrownBy(() -> afModulesApi.getTrustmarkIssuer(TENANT, JwtTestUtils.OrganisationType.AF.orgId, pmIssuerId))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(ex -> assertThat(((RestClientResponseException) ex).getStatusCode().value()).isEqualTo(404));
   }

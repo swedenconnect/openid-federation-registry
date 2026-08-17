@@ -85,8 +85,7 @@ public interface RegistrationService {
   /**
    * Returns all available registration flows.
    *
-   * @param organizationRecord the calling organization
    * @return list of flows
    */
-  List<RegistrationFlowInformationDto> listRegistrationFlows(OrganizationRecord organizationRecord);
+  List<RegistrationFlowInformationDto> listRegistrationFlows();
 }

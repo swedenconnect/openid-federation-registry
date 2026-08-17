@@ -75,7 +75,7 @@ class JwksKeysCacheServiceTest {
     final JwksPayloadDto payload = new JwksPayloadDto(fedKeys, new JWKSet(), JwksPayloadDto.KeyNames.empty());
 
     when(instancePlacementService.resolveBaseUrl(org)).thenReturn(Optional.of(instanceUrl));
-    when(instancePlacementService.resolveValidationKey(org.orgNumber(), org.functionGroup()))
+    when(instancePlacementService.resolveValidationKey(org.tenant()))
         .thenReturn(Optional.of(validationKey));
     when(oidfServiceIntegration.fetchServiceKeys(EntityID.parse(instanceUrl.toString()), validationKey))
         .thenReturn(payload);
@@ -93,7 +93,7 @@ class JwksKeysCacheServiceTest {
     final JwksPayloadDto payload = new JwksPayloadDto(new JWKSet(), hostedKeys, JwksPayloadDto.KeyNames.empty());
 
     when(instancePlacementService.resolveBaseUrl(org)).thenReturn(Optional.of(instanceUrl));
-    when(instancePlacementService.resolveValidationKey(org.orgNumber(), org.functionGroup()))
+    when(instancePlacementService.resolveValidationKey(org.tenant()))
         .thenReturn(Optional.of(validationKey));
     when(oidfServiceIntegration.fetchServiceKeys(EntityID.parse(instanceUrl.toString()), validationKey))
         .thenReturn(payload);
@@ -118,7 +118,7 @@ class JwksKeysCacheServiceTest {
   @DisplayName("Throws when instance has no oidf_service_api_validation_key configured")
   void throwsWhenValidationKeyMissing() {
     when(instancePlacementService.resolveBaseUrl(org)).thenReturn(Optional.of(instanceUrl));
-    when(instancePlacementService.resolveValidationKey(org.orgNumber(), org.functionGroup()))
+    when(instancePlacementService.resolveValidationKey(org.tenant()))
         .thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> service.getFederationKeys(org))
@@ -138,7 +138,7 @@ class JwksKeysCacheServiceTest {
     final JwksPayloadDto cached = new JwksPayloadDto(fedKeys, new JWKSet(), JwksPayloadDto.KeyNames.empty());
 
     when(instancePlacementService.resolveBaseUrl(org)).thenReturn(Optional.of(instanceUrl));
-    when(instancePlacementService.resolveValidationKey(org.orgNumber(), org.functionGroup()))
+    when(instancePlacementService.resolveValidationKey(org.tenant()))
         .thenReturn(Optional.of(validationKey));
     when(oidfServiceIntegration.fetchServiceKeys(any(), any()))
         .thenReturn(cached)
@@ -156,7 +156,7 @@ class JwksKeysCacheServiceTest {
   @DisplayName("Returns empty list when fetch fails and cache is cold")
   void returnsEmptyWhenFetchFailsAndCacheIsCold() throws Exception {
     when(instancePlacementService.resolveBaseUrl(org)).thenReturn(Optional.of(instanceUrl));
-    when(instancePlacementService.resolveValidationKey(org.orgNumber(), org.functionGroup()))
+    when(instancePlacementService.resolveValidationKey(org.tenant()))
         .thenReturn(Optional.of(validationKey));
     when(oidfServiceIntegration.fetchServiceKeys(any(), any()))
         .thenThrow(new RuntimeException("network error"));
@@ -171,7 +171,7 @@ class JwksKeysCacheServiceTest {
     final JWKSet keysV2 = new JWKSet(rsaKey("kid-v2"));
 
     when(instancePlacementService.resolveBaseUrl(org)).thenReturn(Optional.of(instanceUrl));
-    when(instancePlacementService.resolveValidationKey(org.orgNumber(), org.functionGroup()))
+    when(instancePlacementService.resolveValidationKey(org.tenant()))
         .thenReturn(Optional.of(validationKey));
     when(oidfServiceIntegration.fetchServiceKeys(any(), any()))
         .thenReturn(new JwksPayloadDto(keysV1, new JWKSet(), JwksPayloadDto.KeyNames.empty()))
@@ -192,8 +192,8 @@ class JwksKeysCacheServiceTest {
   void differentOrgsGetKeysFromCorrectInstance() throws Exception {
     final URI urlA = URI.create("https://instance-a.example.se/oidf");
     final URI urlB = URI.create("https://instance-b.example.se/oidf");
-    final OrganizationRecord orgA = new OrganizationRecord("11111", "OrgA", "https://a.example.se/", null);
-    final OrganizationRecord orgB = new OrganizationRecord("22222", "OrgB", "https://b.example.se/", null);
+    final OrganizationRecord orgA = new OrganizationRecord("11111", "OrgA", "https://a.example.se/", "group-a");
+    final OrganizationRecord orgB = new OrganizationRecord("22222", "OrgB", "https://b.example.se/", "group-b");
     final JWK keyA = rsaKey("validation-key-a");
     final JWK keyB = rsaKey("validation-key-b");
 
@@ -202,9 +202,9 @@ class JwksKeysCacheServiceTest {
 
     when(instancePlacementService.resolveBaseUrl(orgA)).thenReturn(Optional.of(urlA));
     when(instancePlacementService.resolveBaseUrl(orgB)).thenReturn(Optional.of(urlB));
-    when(instancePlacementService.resolveValidationKey(orgA.orgNumber(), orgA.functionGroup()))
+    when(instancePlacementService.resolveValidationKey(orgA.tenant()))
         .thenReturn(Optional.of(keyA));
-    when(instancePlacementService.resolveValidationKey(orgB.orgNumber(), orgB.functionGroup()))
+    when(instancePlacementService.resolveValidationKey(orgB.tenant()))
         .thenReturn(Optional.of(keyB));
     when(oidfServiceIntegration.fetchServiceKeys(EntityID.parse(urlA.toString()), keyA))
         .thenReturn(new JwksPayloadDto(keysA, new JWKSet(), JwksPayloadDto.KeyNames.empty()));
@@ -220,8 +220,8 @@ class JwksKeysCacheServiceTest {
   void failureForOneInstanceDoesNotAffectOther() throws Exception {
     final URI urlA = URI.create("https://instance-a.example.se/oidf");
     final URI urlB = URI.create("https://instance-b.example.se/oidf");
-    final OrganizationRecord orgA = new OrganizationRecord("11111", "OrgA", "https://a.example.se/", null);
-    final OrganizationRecord orgB = new OrganizationRecord("22222", "OrgB", "https://b.example.se/", null);
+    final OrganizationRecord orgA = new OrganizationRecord("11111", "OrgA", "https://a.example.se/", "group-a");
+    final OrganizationRecord orgB = new OrganizationRecord("22222", "OrgB", "https://b.example.se/", "group-b");
     final JWK keyA = rsaKey("validation-key-a");
     final JWK keyB = rsaKey("validation-key-b");
 
@@ -229,9 +229,9 @@ class JwksKeysCacheServiceTest {
 
     when(instancePlacementService.resolveBaseUrl(orgA)).thenReturn(Optional.of(urlA));
     when(instancePlacementService.resolveBaseUrl(orgB)).thenReturn(Optional.of(urlB));
-    when(instancePlacementService.resolveValidationKey(orgA.orgNumber(), orgA.functionGroup()))
+    when(instancePlacementService.resolveValidationKey(orgA.tenant()))
         .thenReturn(Optional.of(keyA));
-    when(instancePlacementService.resolveValidationKey(orgB.orgNumber(), orgB.functionGroup()))
+    when(instancePlacementService.resolveValidationKey(orgB.tenant()))
         .thenReturn(Optional.of(keyB));
     when(oidfServiceIntegration.fetchServiceKeys(EntityID.parse(urlA.toString()), keyA))
         .thenReturn(new JwksPayloadDto(keysA, new JWKSet(), JwksPayloadDto.KeyNames.empty()));

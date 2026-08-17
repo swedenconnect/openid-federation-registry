@@ -106,6 +106,9 @@ public class FederationMetadataCreator {
           .ifPresent(entityData::setJwks);
       entityData.setAuthorityHints(this.authorityHint(entityEntity));
 
+      //TODO Implement TrustMarkSources or TrustMarkIsssuers
+      //entityData.setTrustMarkSource(
+      // List.of(new TrustMarkSourceProperty(new EntityID("https://tmi"),"https://loa4")));
       return entityData;
       }
 

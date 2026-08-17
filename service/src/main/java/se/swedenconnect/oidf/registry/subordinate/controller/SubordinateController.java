@@ -21,6 +21,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,86 +44,64 @@ import java.util.UUID;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/registry/v1/subordinates")
+@RequestMapping("/registry/v1/{tenant}/{orgNumber}/subordinates")
 @Tag(name = "Subordinates", description = "CRUD for subordinates")
 public class SubordinateController {
 
   private final SubordinateService subordinateService;
 
-  /**
-   * Gets a subordinate by ID.
-   *
-   * @param id the subordinate ID
-   * @param organizationRecord the organization record
-   * @return the subordinate
-   */
   @GetMapping("/{subordinateId}")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Get subordinate by id")
   public ResponseEntity<SubordinateDto> getSubordinate(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("subordinateId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.subordinateService.getSubordinate(organizationRecord, id));
   }
 
-  /**
-   * Creates a subordinate with auto-generated ID.
-   *
-   * @param body the subordinate data
-   * @param organizationRecord the organization record
-   * @return the created subordinate
-   */
   @PostMapping("/")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create subordinate with auto-generated ID")
   public ResponseEntity<SubordinateDto> createSubordinate(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @RequestBody final SubordinateDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.subordinateService.createSubordinate(organizationRecord, body));
   }
 
-  /**
-   * Creates a subordinate with specified ID.
-   *
-   * @param id the subordinate ID
-   * @param body the subordinate data
-   * @param organizationRecord the organization record
-   * @return the created subordinate
-   */
   @PostMapping("/{subordinateId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create subordinate with specified ID")
   public ResponseEntity<SubordinateDto> createSubordinateWithId(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("subordinateId") final UUID id,
       @RequestBody final SubordinateDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.subordinateService.createSubordinateWithId(organizationRecord, id, body));
   }
 
-  /**
-   * Updates a subordinate.
-   *
-   * @param id the subordinate ID
-   * @param body the subordinate data
-   * @param organizationRecord the organization record
-   * @return the updated subordinate
-   */
   @PutMapping("/{subordinateId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Update subordinate")
   public ResponseEntity<SubordinateDto> updateSubordinate(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("subordinateId") final UUID id,
       @RequestBody final SubordinateDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.subordinateService.updateSubordinate(organizationRecord, id, body));
   }
 
-  /**
-   * Deletes a subordinate.
-   *
-   * @param id the subordinate ID
-   * @param organizationRecord the organization record
-   * @return empty response
-   */
   @DeleteMapping("/{subordinateId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Delete subordinate")
   public ResponseEntity<Void> deleteSubordinate(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("subordinateId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     this.subordinateService.deleteSubordinate(organizationRecord, id);

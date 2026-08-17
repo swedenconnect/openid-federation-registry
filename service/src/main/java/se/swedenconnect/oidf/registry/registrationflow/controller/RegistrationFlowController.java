@@ -20,6 +20,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -48,70 +50,52 @@ import java.util.UUID;
  * @author Per Fredrik Plars
  */
 @RestController
-@RequestMapping("/registration-flow/v1")
+@RequestMapping("/registration-flow/v1/{tenant}/{orgNumber}")
 @Tag(name = "Registration Flow", description = "Configured pipeline steps for entity registration")
 public class RegistrationFlowController {
 
   private final RegistrationFlowService registrationFlowService;
 
-  /**
-   * Constructs the controller.
-   *
-   * @param registrationFlowService the service handling flow operations
-   */
   public RegistrationFlowController(final RegistrationFlowService registrationFlowService) {
     this.registrationFlowService = registrationFlowService;
   }
 
-  /**
-   * Lists all registration flows owned by the calling organization.
-   *
-   * @param organizationRecord the calling organization
-   * @return list of flow summaries
-   */
   @GetMapping("/flows")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "List all registration flows")
   public ResponseEntity<List<FlowSummaryDto>> listFlows(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.registrationFlowService.listFlows(organizationRecord));
   }
 
-  /**
-   * Lists all configured pipeline steps with their settings.
-   *
-   * @return list of step DTOs
-   */
   @GetMapping("/steps")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "List all configured pipeline steps with their settings")
-  public ResponseEntity<List<StepDto>> getSteps() {
+  public ResponseEntity<List<StepDto>> getSteps(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber) {
     return ResponseEntity.ok(this.registrationFlowService.getDefineSteps());
   }
 
-  /**
-   * Returns a single registration flow by ID. The flow must belong to the calling organization.
-   *
-   * @param flowId the flow ID
-   * @param organizationRecord the calling organization
-   * @return the flow DTO
-   */
   @GetMapping("/flow/{flowId}")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Get a registration flow by ID")
   public ResponseEntity<RegistrationFlowDto> getFlow(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("flowId") final UUID flowId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.registrationFlowService.getRegistrationFlow(organizationRecord, flowId));
   }
 
-  /**
-   * Creates a new registration flow with an auto-generated ID.
-   *
-   * @param registrationFlowDto the flow definition
-   * @param organizationRecord the calling organization
-   * @return the created flow DTO
-   */
   @PostMapping("/flow")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create a new flow")
   public ResponseEntity<RegistrationFlowDto> createFlow(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @RequestBody final RegistrationFlowDto registrationFlowDto,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(
@@ -119,17 +103,12 @@ public class RegistrationFlowController {
             organizationRecord, registrationFlowDto, UUID.randomUUID()));
   }
 
-  /**
-   * Creates a new registration flow with a specified ID.
-   *
-   * @param id the flow ID to use
-   * @param registrationFlowDto the flow definition
-   * @param organizationRecord the calling organization
-   * @return the created flow DTO
-   */
   @PostMapping("/flow/{flowid}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create a new flow with a specified id")
   public ResponseEntity<RegistrationFlowDto> createFlowWithId(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("flowid") final UUID id,
       @RequestBody final RegistrationFlowDto registrationFlowDto,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
@@ -137,17 +116,12 @@ public class RegistrationFlowController {
         this.registrationFlowService.createRegistrationFlow(organizationRecord, registrationFlowDto, id));
   }
 
-  /**
-   * Updates a registration flow. The flow must belong to the calling organization.
-   *
-   * @param id the flow ID
-   * @param registrationFlowDto the updated flow definition
-   * @param organizationRecord the calling organization
-   * @return the updated flow DTO
-   */
   @PutMapping("/flow/{flowid}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Update a registration flow")
   public ResponseEntity<RegistrationFlowDto> updateFlow(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("flowid") final UUID id,
       @RequestBody final RegistrationFlowDto registrationFlowDto,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
@@ -155,64 +129,46 @@ public class RegistrationFlowController {
         this.registrationFlowService.updateRegistrationFlow(organizationRecord, id, registrationFlowDto));
   }
 
-  /**
-   * Deletes a registration flow. The flow must belong to the calling organization.
-   *
-   * @param id the flow ID to delete
-   * @param organizationRecord the calling organization
-   * @return no-content response
-   */
   @DeleteMapping("/flow/{flowid}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Delete a registration flow")
   public ResponseEntity<Void> deleteFlow(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("flowid") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     this.registrationFlowService.deleteRegistrationFlow(organizationRecord, id);
     return ResponseEntity.noContent().build();
   }
 
-  /**
-   * Lists flows assigned to an intermediate.
-   *
-   * @param taImId the intermediate ID
-   * @param organizationRecord the calling organization
-   * @return list of flow DTOs
-   */
   @GetMapping("/intermediate/{taImId}/flows")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "List flows assigned to an intermediate")
   public ResponseEntity<List<RegistrationFlowDto>> getFlowsForIntermediate(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("taImId") final UUID taImId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.registrationFlowService.getFlowsForIntermediate(taImId));
   }
 
-  /**
-   * Returns all flow assignments for an intermediate, including assign IDs for unassign calls.
-   *
-   * @param taImId the intermediate ID
-   * @param organizationRecord the calling organization
-   * @return list of assignment summaries
-   */
   @GetMapping("/intermediate/{taImId}/assignments")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "List flow assignments for an intermediate (includes assignId)")
   public ResponseEntity<List<IntermediateFlowAssignmentDto>> getFlowAssignments(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("taImId") final UUID taImId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.registrationFlowService.getFlowAssignmentsForIntermediate(taImId));
   }
 
-  /**
-   * Assigns a flow to an intermediate. Idempotent: if the flow is already assigned the existing
-   * assignment ID is returned.
-   *
-   * @param taImId the intermediate ID
-   * @param request body containing the flow ID to assign
-   * @param organizationRecord the calling organization
-   * @return 201 Created with the assignment ID
-   */
   @PostMapping("/intermediate/{taImId}/assign")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Assign a flow to an intermediate")
   public ResponseEntity<AssignFlowResponse> assignFlow(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("taImId") final UUID taImId,
       @RequestBody final AssignFlowRequest request,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
@@ -220,17 +176,12 @@ public class RegistrationFlowController {
         .body(this.registrationFlowService.assignFlow(taImId, request.flowId()));
   }
 
-  /**
-   * Removes a flow assignment from an intermediate.
-   *
-   * @param taImId the intermediate ID
-   * @param assignId the assignment ID to remove
-   * @param organizationRecord the calling organization
-   * @return no-content response
-   */
   @DeleteMapping("/intermediate/{taImId}/assign/{assignId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Remove a flow assignment from an intermediate")
   public ResponseEntity<Void> unassignFlow(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("taImId") final UUID taImId,
       @PathVariable("assignId") final UUID assignId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
@@ -238,33 +189,23 @@ public class RegistrationFlowController {
     return ResponseEntity.noContent().build();
   }
 
-  /**
-   * Returns all flow assignments for a trust mark issuer, including assign IDs for unassign calls.
-   *
-   * @param tmIssuerId the trust mark issuer ID
-   * @param organizationRecord the calling organization
-   * @return list of assignment summaries
-   */
   @GetMapping("/trustmark-issuer/{tmIssuerId}/assignments")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "List flow assignments for a trust mark issuer (includes assignId)")
   public ResponseEntity<List<TrustMarkIssuerFlowAssignmentDto>> getTrustMarkIssuerFlowAssignments(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("tmIssuerId") final UUID tmIssuerId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.registrationFlowService.getFlowAssignmentsForTrustMarkIssuer(tmIssuerId));
   }
 
-  /**
-   * Assigns a flow to a trust mark issuer. Idempotent: if the flow is already assigned the existing
-   * assignment ID is returned.
-   *
-   * @param tmIssuerId the trust mark issuer ID
-   * @param request body containing the flow ID to assign
-   * @param organizationRecord the calling organization
-   * @return 201 Created with the assignment ID
-   */
   @PostMapping("/trustmark-issuer/{tmIssuerId}/assign")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Assign a flow to a trust mark issuer")
   public ResponseEntity<AssignFlowResponse> assignFlowToTrustMarkIssuer(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("tmIssuerId") final UUID tmIssuerId,
       @RequestBody final AssignFlowRequest request,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
@@ -272,17 +213,12 @@ public class RegistrationFlowController {
         .body(this.registrationFlowService.assignFlowToTrustMarkIssuer(tmIssuerId, request.flowId()));
   }
 
-  /**
-   * Removes a flow assignment from a trust mark issuer.
-   *
-   * @param tmIssuerId the trust mark issuer ID
-   * @param assignId the assignment ID to remove
-   * @param organizationRecord the calling organization
-   * @return no-content response
-   */
   @DeleteMapping("/trustmark-issuer/{tmIssuerId}/assign/{assignId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Remove a flow assignment from a trust mark issuer")
   public ResponseEntity<Void> unassignFlowFromTrustMarkIssuer(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("tmIssuerId") final UUID tmIssuerId,
       @PathVariable("assignId") final UUID assignId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
@@ -290,33 +226,24 @@ public class RegistrationFlowController {
     return ResponseEntity.noContent().build();
   }
 
-  /**
-   * Lists flow assignments for all trust marks under a trust mark issuer.
-   *
-   * @param tmIssuerId trust mark issuer ID
-   * @param organizationRecord resolved organization
-   * @return list of trust mark flow assignments
-   */
   @GetMapping("/trustmark-issuer/{tmIssuerId}/trustmark-assignments")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "List flow assignments for all trust marks under a trust mark issuer")
   public ResponseEntity<List<TrustMarkFlowAssignmentDto>> getTrustMarkFlowAssignments(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("tmIssuerId") final UUID tmIssuerId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(
         this.registrationFlowService.getFlowAssignmentsForTrustMarkIssuerTrustmarks(tmIssuerId));
   }
 
-  /**
-   * Assigns a flow to a specific trust mark.
-   *
-   * @param trustmarkId trust mark ID
-   * @param request assign flow request
-   * @param organizationRecord resolved organization
-   * @return created assignment response
-   */
   @PostMapping("/trustmark/{trustmarkId}/assign")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Assign a flow to a specific trust mark")
   public ResponseEntity<AssignFlowResponse> assignFlowToTrustMark(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("trustmarkId") final UUID trustmarkId,
       @RequestBody final AssignFlowRequest request,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
@@ -324,22 +251,16 @@ public class RegistrationFlowController {
         .body(this.registrationFlowService.assignFlowToTrustMark(trustmarkId, request.flowId()));
   }
 
-  /**
-   * Removes a flow assignment from a specific trust mark.
-   *
-   * @param trustmarkId trust mark ID
-   * @param assignId assignment ID
-   * @param organizationRecord resolved organization
-   * @return no content response
-   */
   @DeleteMapping("/trustmark/{trustmarkId}/assign/{assignId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Remove a flow assignment from a specific trust mark")
   public ResponseEntity<Void> unassignFlowFromTrustMark(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("trustmarkId") final UUID trustmarkId,
       @PathVariable("assignId") final UUID assignId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     this.registrationFlowService.unassignFlowFromTrustMark(trustmarkId, assignId);
     return ResponseEntity.noContent().build();
   }
-
 }

@@ -23,6 +23,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -47,6 +48,7 @@ import se.swedenconnect.oidf.registry.infrastructure.auth.oauthclient.RegistryOi
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @Slf4j
 public class SecurityConfig {
 
@@ -87,100 +89,14 @@ public class SecurityConfig {
         )
 
         .authorizeHttpRequests(auth -> auth
-            // Hosted entities
-            .requestMatchers(HttpMethod.GET, "/registry/v1/entities/hosted/**")
-            .hasAuthority("SCOPE_read")
-            .requestMatchers(HttpMethod.POST, "/registry/v1/entities/hosted/**")
-            .hasAuthority("SCOPE_write")
-            .requestMatchers(HttpMethod.PUT, "/registry/v1/entities/hosted/**")
-            .hasAuthority("SCOPE_write")
-            .requestMatchers(HttpMethod.DELETE, "/registry/v1/entities/hosted/**")
-            .hasAuthority("SCOPE_write")
-
-            .requestMatchers(HttpMethod.GET, "/registry/v1/entities/**")
-            .hasAuthority("SCOPE_read")
-            .requestMatchers(HttpMethod.GET, "/registry/v1/entities/**")
-            .hasAuthority("SCOPE_read")
-            // Federation entities
-            .requestMatchers(HttpMethod.GET, "/registry/v1/entities/federation/**")
-            .hasAuthority("SCOPE_read")
-            .requestMatchers(HttpMethod.POST, "/registry/v1/entities/federation/**")
-            .hasAuthority("SCOPE_write")
-            .requestMatchers(HttpMethod.PUT, "/registry/v1/entities/federation/**")
-            .hasAuthority("SCOPE_write")
-            .requestMatchers(HttpMethod.DELETE, "/registry/v1/entities/federation/**")
-            .hasAuthority("SCOPE_write")
-            // FederationModules
-            .requestMatchers(HttpMethod.GET, "/registry/v1/modules/**")
-            .hasAuthority("SCOPE_read")
-            .requestMatchers(HttpMethod.POST, "/registry/v1/modules/**")
-            .hasAuthority("SCOPE_write")
-            .requestMatchers(HttpMethod.PUT, "/registry/v1/modules/**")
-            .hasAuthority("SCOPE_write")
-            .requestMatchers(HttpMethod.DELETE, "/registry/v1/modules/**")
-            .hasAuthority("SCOPE_write")
-            // Trustmark
-            .requestMatchers(HttpMethod.GET, "/registry/v1/trustmarks/**")
-            .hasAuthority("SCOPE_read")
-            .requestMatchers(HttpMethod.POST, "/registry/v1/trustmarks/**")
-            .hasAuthority("SCOPE_write")
-            .requestMatchers(HttpMethod.PUT, "/registry/v1/trustmarks/**")
-            .hasAuthority("SCOPE_write")
-            .requestMatchers(HttpMethod.DELETE, "/registry/v1/trustmarks/**")
-            .hasAuthority("SCOPE_write")
-            // Trustmark Subjects
-            .requestMatchers(HttpMethod.GET, "/registry/v1/trustmarks/subjects/**")
-            .hasAuthority("SCOPE_read")
-            .requestMatchers(HttpMethod.POST, "/registry/v1/trustmarks/subjects/**")
-            .hasAuthority("SCOPE_write")
-            .requestMatchers(HttpMethod.PUT, "/registry/v1/trustmarks/subjects/**")
-            .hasAuthority("SCOPE_write")
-            .requestMatchers(HttpMethod.DELETE, "/registry/v1/trustmarks/subjects/**")
-            .hasAuthority("SCOPE_write")
-
-            // Subordinates
-            .requestMatchers(HttpMethod.GET, "/registry/v1/subordinates/**")
-            .hasAuthority("SCOPE_read")
-            .requestMatchers(HttpMethod.POST, "/registry/v1/subordinates/**")
-            .hasAuthority("SCOPE_write")
-            .requestMatchers(HttpMethod.PUT, "/registry/v1/subordinates/**")
-            .hasAuthority("SCOPE_write")
-            .requestMatchers(HttpMethod.DELETE, "/registry/v1/subordinates/**")
-            .hasAuthority("SCOPE_write")
-            // GUI Services
-            .requestMatchers(HttpMethod.GET, "/registry/v1/entityconfiguration/**")
-            .hasAuthority("SCOPE_read")
-            .requestMatchers(HttpMethod.POST, "/registry/v1/entityconfiguration/**")
-            .hasAuthority("SCOPE_write")
-            // Registration-Flows
-            .requestMatchers(HttpMethod.GET, "/registration-flow/v1/**")
-            .hasAuthority("SCOPE_read")
-            .requestMatchers(HttpMethod.POST, "/registration-flow/v1/**")
-            .hasAuthority("SCOPE_write")
-            .requestMatchers(HttpMethod.PUT, "/registration-flow/v1/**")
-            .hasAuthority("SCOPE_write")
-            .requestMatchers(HttpMethod.DELETE, "/registration-flow/v1/**")
-            .hasAuthority("SCOPE_write")
-            // Registration
-            .requestMatchers(HttpMethod.GET, "/registration/v1/**")
-            .hasAuthority("SCOPE_read")
-            .requestMatchers(HttpMethod.POST, "/registration/v1/**")
-            .hasAuthority("SCOPE_write")
-            .requestMatchers(HttpMethod.PUT, "/registration/v1/**")
-            .hasAuthority("SCOPE_write")
-            .requestMatchers(HttpMethod.DELETE, "/registration/v1/**")
-            .hasAuthority("SCOPE_write")
-
-            // Registration-Admin
-            .requestMatchers(HttpMethod.GET, "/registration-admin/v1/**")
-            .hasAuthority("SCOPE_read")
-            .requestMatchers(HttpMethod.POST, "/registration-admin/v1/**")
-            .hasAuthority("SCOPE_write")
-            .requestMatchers(HttpMethod.PUT, "/registration-admin/v1/**")
-            .hasAuthority("SCOPE_write")
-            .requestMatchers(HttpMethod.DELETE, "/registration-admin/v1/**")
-            .hasAuthority("SCOPE_write")
-
+            // Registry API — right-level enforced by @PreAuthorize(@orgRightsService) on controllers
+            .requestMatchers("/registry/v1/**").authenticated()
+            // Registration-Flows — right-level enforced by @PreAuthorize(@orgRightsService) on controllers
+            .requestMatchers("/registration-flow/v1/**").authenticated()
+            // Registration — open to any authenticated user (join/apply flow)
+            .requestMatchers("/registration/v1/**").authenticated()
+            // Registration-Admin — right-level enforced by @PreAuthorize(@orgRightsService) on controllers
+            .requestMatchers("/registration-admin/v1/**").authenticated()
 
             .requestMatchers(HttpMethod.GET, "/logout/frontchannel").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/v1/federationservice/**").permitAll()
@@ -195,6 +111,7 @@ public class SecurityConfig {
             .authenticated()
             .requestMatchers(HttpMethod.GET, "/userinfo").authenticated()
             .requestMatchers(HttpMethod.PUT, "/userinfo").authenticated()
+            .requestMatchers(HttpMethod.GET, "/tenants").authenticated()
 
             .anyRequest().denyAll()
         );

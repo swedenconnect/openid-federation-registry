@@ -45,7 +45,23 @@
       <v-spacer></v-spacer>
 
       <v-select
-          v-if="userStore.isAuthorized && userStore.organizations.length > 1"
+          v-if="userStore.isAuthorized && userStore.tenants.length > 1"
+          :model-value="userStore.selectedTenant"
+          :items="userStore.tenants"
+          item-title="tenant"
+          item-value="tenant"
+          label="Tenant"
+          aria-label="Select tenant"
+          density="compact"
+          variant="outlined"
+          hide-details
+          style="max-width: 220px;"
+          class="mr-2"
+          @update:model-value="handleTenantChange"
+      ></v-select>
+
+      <v-select
+          v-if="userStore.isAuthorized && userStore.organizations.length >= 1"
           :model-value="userStore.orgNumber"
           :items="userStore.organizations"
           item-title="orgName"
@@ -111,7 +127,12 @@
         </v-alert>
 
         <!-- Main Content -->
-        <RouterView/>
+        <!-- Wait until the tenant/organization context has been loaded so that views
+             mounted below never issue requests with an empty tenant/orgNumber. -->
+        <v-row v-if="!ready" justify="center" class="mt-8">
+          <v-progress-circular indeterminate color="primary"/>
+        </v-row>
+        <RouterView v-else/>
       </v-container>
     </v-main>
 
@@ -123,7 +144,7 @@
 </template>
 
 <script setup>
-import {computed, onBeforeMount} from 'vue';
+import {computed, onBeforeMount, ref} from 'vue';
 import {RouterLink, RouterView, useRoute, useRouter} from 'vue-router';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
@@ -150,6 +171,11 @@ async function handleOrgChange(orgNumber) {
   await router.push('/');
 }
 
+async function handleTenantChange(tenantName) {
+  await userStore.selectTenant(tenantName);
+  await router.push('/');
+}
+
 function login() {
   globalThis.location.href = adminAuthenticatePath;
 }
@@ -158,10 +184,14 @@ function logout() {
   globalThis.location.href = logoutPath;
 }
 
+const ready = ref(false);
+
 onBeforeMount(async () => {
   if (route.name !== 'login') {
     await userStore.fetchUser();
+    await userStore.fetchTenants();
   }
+  ready.value = true;
 });
 </script>
 

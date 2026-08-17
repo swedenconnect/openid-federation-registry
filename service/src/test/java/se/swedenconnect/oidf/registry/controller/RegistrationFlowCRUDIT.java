@@ -57,6 +57,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @AutoConfigureRestTestClient
 class RegistrationFlowCRUDIT {
 
+  private static final String TENANT = "Swedenconnect";
+
   @Container
   @ServiceConnection
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
@@ -75,7 +77,6 @@ class RegistrationFlowCRUDIT {
     final ApiClient apiClient = new ApiClient();
     apiClient.setBasePath("http://localhost:" + this.port);
     apiClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.PM));
-    apiClient.setApiKey(JwtTestUtils.OrganisationType.PM.orgId);
 
     this.flowApi = new RegistrationFlowApi(apiClient);
     this.restClient = TestRestClientFactory.createAuthenticated(this.port, null);
@@ -106,7 +107,7 @@ class RegistrationFlowCRUDIT {
                 .key("entityid")
                 .value("https://www.digg.se/entityid"))));
 
-    final RegistrationFlowDto created = this.flowApi.createFlow(input);
+    final RegistrationFlowDto created = this.flowApi.createFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, input);
 
     assertThat(created).isNotNull();
     assertThat(created.getFlowId()).isNotNull();
@@ -118,10 +119,10 @@ class RegistrationFlowCRUDIT {
 
   @Test
   void listFlowsReturnsCreatedFlows() {
-    this.flowApi.createFlow(validFlow("List-Flow-A", "First"));
-    this.flowApi.createFlow(validFlow("List-Flow-B", "Second"));
+    this.flowApi.createFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, validFlow("List-Flow-A", "First"));
+    this.flowApi.createFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, validFlow("List-Flow-B", "Second"));
 
-    final List<FlowSummaryDto> flows = this.flowApi.listFlows1();
+    final List<FlowSummaryDto> flows = this.flowApi.listFlows1(TENANT, JwtTestUtils.OrganisationType.PM.orgId);
 
     assertThat(flows).isNotNull().isNotEmpty();
     final FlowSummaryDto first = flows.stream()
@@ -134,7 +135,7 @@ class RegistrationFlowCRUDIT {
 
   @Test
   void getFlowById() {
-    final RegistrationFlowDto created = this.flowApi.createFlow(validFlow("Get-Flow", "Fetch by ID"));
+    final RegistrationFlowDto created = this.flowApi.createFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, validFlow("Get-Flow", "Fetch by ID"));
     final UUID flowId = created.getFlowId();
 
     final Map<String, Object> retrieved = this.restClient.get()
@@ -159,9 +160,9 @@ class RegistrationFlowCRUDIT {
 
   @Test
   void updateFlow() {
-    final UUID flowId = this.flowApi.createFlow(validFlow("Update-Original", "Before update")).getFlowId();
+    final UUID flowId = this.flowApi.createFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, validFlow("Update-Original", "Before update")).getFlowId();
 
-    final RegistrationFlowDto updated = this.flowApi.updateFlow(flowId,
+    final RegistrationFlowDto updated = this.flowApi.updateFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, flowId,
         validFlow("Update-Changed", "After update"));
 
     assertThat(updated).isNotNull();
@@ -172,9 +173,9 @@ class RegistrationFlowCRUDIT {
 
   @Test
   void updateFlowPersists() {
-    final UUID flowId = this.flowApi.createFlow(validFlow("Persist-Original", "Before")).getFlowId();
+    final UUID flowId = this.flowApi.createFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, validFlow("Persist-Original", "Before")).getFlowId();
 
-    this.flowApi.updateFlow(flowId, validFlow("Persist-Updated", "After"));
+    this.flowApi.updateFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, flowId, validFlow("Persist-Updated", "After"));
 
     final Map<String, Object> retrieved = this.restClient.get()
         .uri("/registration-flow/v1/flow/{id}", flowId)
@@ -188,9 +189,9 @@ class RegistrationFlowCRUDIT {
 
   @Test
   void deleteFlow() {
-    final UUID flowId = this.flowApi.createFlow(validFlow("Delete-Flow", "Will be deleted")).getFlowId();
+    final UUID flowId = this.flowApi.createFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, validFlow("Delete-Flow", "Will be deleted")).getFlowId();
 
-    this.flowApi.deleteFlowWithResponseSpec(flowId).toBodilessEntity();
+    this.flowApi.deleteFlowWithResponseSpec(TENANT, JwtTestUtils.OrganisationType.PM.orgId, flowId).toBodilessEntity();
 
     assertThatThrownBy(() -> this.restClient.get()
         .uri("/registration-flow/v1/flow/{id}", flowId)
@@ -202,7 +203,7 @@ class RegistrationFlowCRUDIT {
 
   @Test
   void listFlowsSummaryContainsIdNameDescription() {
-    this.flowApi.createFlow(validFlow("Summary-Flow", "Summary desc"));
+    this.flowApi.createFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, validFlow("Summary-Flow", "Summary desc"));
 
     final List<Map<String, Object>> summaries = this.restClient.get()
         .uri("/registration-flow/v1/flows")

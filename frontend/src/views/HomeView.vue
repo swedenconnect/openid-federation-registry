@@ -191,11 +191,13 @@ import {computed, onMounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
+import {useUserStore} from '@/stores/userStore';
 import {adminPath, federationEntityPath, hostedEntityPath} from '@/config/path';
 
 const router = useRouter();
 const {requestGet, requestDelete, loading, error, ok} = useRequest();
 const errorStore = useErrorStore();
+const userStore = useUserStore();
 
 const entities = ref([]);
 const deleteDialog = ref(false);
@@ -243,7 +245,7 @@ function getEntityId(entity) {
 }
 
 async function loadEntities() {
-  const response = await requestGet(adminPath + '?includemodules=true');
+  const response = await requestGet(adminPath(userStore.selectedTenant, userStore.orgNumber) + '?includemodules=true');
   if (response && ok.value) {
     // API returns EntityWithModules: { federationEntity: [...], hostedEntity: [...] }
     const allEntities = [];
@@ -378,8 +380,8 @@ async function deleteEntity() {
     }
 
     const endpoint = entityType === 'federation'
-        ? federationEntityPath(entityId)
-        : hostedEntityPath(entityId);
+        ? federationEntityPath(userStore.selectedTenant, userStore.orgNumber, entityId)
+        : hostedEntityPath(userStore.selectedTenant, userStore.orgNumber, entityId);
 
     await requestDelete(endpoint);
 

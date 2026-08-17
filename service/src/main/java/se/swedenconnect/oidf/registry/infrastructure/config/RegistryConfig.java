@@ -43,7 +43,6 @@ import se.swedenconnect.oidf.registry.entity.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.federationservice.service.NotifyService;
 import se.swedenconnect.oidf.registry.federationservice.service.OidfApiService;
 import se.swedenconnect.oidf.registry.organization.model.Instance;
-import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
 import se.swedenconnect.security.credential.PkiCredential;
@@ -58,11 +57,12 @@ import java.net.http.HttpClient;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * A Spring configuration class that defines beans for different implementations of the EntityService interface.
@@ -97,15 +97,6 @@ public class RegistryConfig {
     this.instanceRepository = instanceRepository;
     this.registryProperties = registryProperties;
     this.entityRepository = entityRepository;
-  }
-
-  private static boolean hasOrg(final String org_nr, final Instance entity) {
-    if (entity.getOrganizations() == null) {
-      return false;
-    }
-    return entity.getOrganizations()
-        .stream()
-        .noneMatch(o -> o.getOrgNumber().equals(org_nr));
   }
 
   /**
@@ -162,52 +153,42 @@ public class RegistryConfig {
   }
 
   /**
-   * Initializes instances by converting the provided registry properties into entity objects and persisting them to the
-   * database.
+   * Initializes instances by creating a database {@link Instance} row for every instance in the registry
+   * configuration that doesn't already have one. Matching between configuration and database is always done on
+   * {@code instanceId}. Instances found in the database that are not present in the current configuration are not
+   * touched, only logged as a warning, since removing an instance's data is not something this should do
+   * automatically.
    */
   @EventListener(ContextRefreshedEvent.class)
   void initInstance() {
     log.info("Initializing instances from registry properties");
-    this.registryProperties.instances()
-        .forEach(instance -> {
 
-          final Instance instanceEntity = this.instanceRepository.findById(instance.instanceId())
-              .or(() -> {
-                log.debug("Creating new instance instanceEntity for instanceId:{}", instance.instanceId());
-                final Instance newEntity = new Instance();
-                newEntity.setInstanceId(instance.instanceId());
-                newEntity.setName(instance.name());
-                newEntity.setCreatedBy("Registry-Config");
-                newEntity.setLastModifiedBy(newEntity.getCreatedBy());
-                //newEntity.setUseForDefaultAssignment(instance.useForDefaultAssignment());
-                return Optional.of(newEntity);
-              }).orElseThrow();
+    this.registryProperties.instances().forEach(instance -> {
+      if (this.instanceRepository.existsById(instance.instanceId())) {
+        return;
+      }
+      log.info("Creating new instance in database for instanceId:{} name:{}",
+          instance.instanceId(), instance.name());
+      final Instance newEntity = new Instance();
+      newEntity.setInstanceId(instance.instanceId());
+      newEntity.setName(instance.name());
+      // No authenticated principal exists at this point for the @CreatedBy/@LastModifiedBy auditing
+      // listener to pick up, so set them explicitly.
+      newEntity.setCreatedBy("Registry-Config");
+      newEntity.setLastModifiedBy(newEntity.getCreatedBy());
+      this.instanceRepository.saveAndFlush(newEntity);
+    });
 
-          // Figureout if this instance is the default used for registrations
-          Optional.ofNullable(instance.matchers())
-              .filter(RegistryProperties.InstanceMatcherProperties::useForDefaultAssignment)
-              .ifPresent(i -> instanceEntity.setUseForDefaultAssignment(true));
+    final Set<UUID> configuredInstanceIds = this.registryProperties.instances().stream()
+        .map(RegistryProperties.InstanceProperties::instanceId)
+        .collect(Collectors.toSet());
 
-          Optional.ofNullable(instance.matchers())
-              .map(RegistryProperties.InstanceMatcherProperties::org_numbers)
-              .orElse(Collections.emptyList())
-              .stream()
-              .filter(org_nr -> hasOrg(org_nr, instanceEntity))
-              .map(org_nr -> {
-                log.debug("Adding organization with org_nr:{} to instanceId:{}", org_nr, instance.instanceId());
-                final Organization newOrgEntity = new Organization();
-                newOrgEntity.setOrganizationId(UUID.randomUUID());
-                newOrgEntity.setOrgNumber(org_nr);
-                newOrgEntity.setInstance(instanceEntity);
-                newOrgEntity.setCreatedBy(instanceEntity.getCreatedBy());
-                newOrgEntity.setLastModifiedBy(instanceEntity.getLastModifiedBy());
-                log.info("Creating a new organization with org_nr:{} to instanceId:{}", org_nr, instance.instanceId());
-                return newOrgEntity;
-              })
-              .forEach(instanceEntity::addOrganization);
-
-          this.instanceRepository.saveAndFlush(instanceEntity);
-        });
+    this.instanceRepository.findAll().stream()
+        .map(Instance::getInstanceId)
+        .filter(instanceId -> !configuredInstanceIds.contains(instanceId))
+        .forEach(instanceId -> log.warn(
+            "Instance with instanceId:{} exists in the database but is not matched by any instance in the "
+                + "current configuration", instanceId));
   }
 
   /**

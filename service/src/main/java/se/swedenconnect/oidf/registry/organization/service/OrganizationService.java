@@ -60,7 +60,7 @@ public class OrganizationService {
    * @throws RuntimeException if no default assignment instance is configured
    */
 
-  public synchronized Organization findCreate(final OrganizationRecord organizationRecord) {
+  public Organization findCreate(final OrganizationRecord organizationRecord) {
 
     return this.organizationRepository.findByOrgNumber(organizationRecord.orgNumber()).or(() -> {
 
@@ -72,12 +72,11 @@ public class OrganizationService {
       org.setOrganizationId(UUID.randomUUID());
       org.setOrgNumber(organizationRecord.orgNumber());
       org.setOrgName(organizationRecord.orgName());
-      org.setCreatedBy("Created by Registry Service");
-      org.setLastModifiedBy(org.getCreatedBy());
       org.setInstance(instanceEntity);
       this.organizationRepository.save(org);
-      log.info("Creating a new organization. {}-{}-{} assigning instance to id:{} ",
-          org.getOrganizationId(), org.getOrgName(), org.getOrgNumber());
+      //TODO: This is a significand event that should trigger a audit event.
+      log.info("Creating a new organization. {}-{}-{} assigning to instanceid:{}",
+          org.getOrganizationId(), org.getOrgName(), org.getOrgNumber(),org.getInstance().getInstanceId());
       return Optional.of(org);
 
     }).orElseThrow();

@@ -19,10 +19,12 @@ import {useErrorStore} from "@/stores/errorStore";
 import {useAuthorizationStatusStore} from "@/authorization/stores/authorizationStatusStore";
 import router from "@/router";
 import {jwksSupportPath} from "@/config/path";
+import {useUserStore} from "@/stores/userStore";
 
 export function useLoadJwks() {
     const errorStore = useErrorStore();
     const authorizationStatusStore = useAuthorizationStatusStore();
+    const userStore = useUserStore();
     const loading = ref(false);
 
     async function loadJwks(entityIdentifier) {
@@ -35,7 +37,7 @@ export function useLoadJwks() {
 
         try {
             // Make POST request with plain text body
-            const response = await fetch(jwksSupportPath, {
+            const response = await fetch(jwksSupportPath(userStore.selectedTenant, userStore.orgNumber), {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
