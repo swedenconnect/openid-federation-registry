@@ -83,8 +83,6 @@ class TenantServiceTest {
         .map(orgNumber -> {
           final Organization organization = new Organization();
           organization.setOrgNumber(orgNumber);
-          // Deliberately left unset in most tests: the org_rights token name takes priority
-          // over the persisted Organization.orgName when both are present.
           organization.setInstance(instance);
           return organization;
         })
@@ -101,23 +99,6 @@ class TenantServiceTest {
     organization.setInstance(instance);
     instance.setOrganizations(Set.of(organization));
     return instance;
-  }
-
-  private String orgName(final String orgNumber) {
-    return "Org " + orgNumber;
-  }
-
-  private TenantOrganizationDto organizationDto(final String orgNumber) {
-    // entityPrefix is null unless the test explicitly stubs instancePlacementService for this orgNumber.
-    return new TenantOrganizationDto(orgNumber, orgName(orgNumber), null);
-  }
-
-  /**
-   * Expected DTO when the org number has no matching org_rights entry (or no usable name in it),
-   * so the name falls back to the org number itself.
-   */
-  private TenantOrganizationDto organizationDtoFallenBackToNumber(final String orgNumber) {
-    return new TenantOrganizationDto(orgNumber, orgNumber, null);
   }
 
   private OrgRights orgRights(final OrgRightEntry... entries) {
@@ -141,48 +122,11 @@ class TenantServiceTest {
         .orElseThrow(() -> new AssertionError("No tenant '" + tenant + "' in response"));
   }
 
-  @Test
-  @DisplayName("Tenant is identified by the instance name, not the function group")
-  void tenantIsIdentifiedByInstanceName() {
-    final UUID instanceId = UUID.randomUUID();
-    service = new TenantService(
-        registryPropertiesWith(instanceProperties(instanceId, "Swedenconnect", "swedenconnect")),
-        instanceRepository, orgRightsService, instancePlacementService);
-
-    when(orgRightsService.extractOrgRights(authentication)).thenReturn(
-        orgRights(
-            orgEntry("4444", new FunctionRight("swedenconnect", Right.READ)),
-            orgEntry("55555", new FunctionRight("swedenconnect", Right.READ))));
-    when(instanceRepository.findAllById(Set.of(instanceId)))
-        .thenReturn(List.of(instanceWithOrgs(instanceId, "4444", "55555")));
-
-    final TenantsResponse result = service.resolveTenants(authentication);
-
-    assertThat(result.tenants()).extracting(TenantDto::tenant).containsExactly("Swedenconnect");
-    assertThat(organizationsFor(result, "Swedenconnect"))
-        .containsExactlyInAnyOrder(organizationDto("4444"), organizationDto("55555"));
-  }
+  // --- Superuser leg: tenants and organizations come exclusively from the database ---
 
   @Test
-  @DisplayName("Function groups not backing any instance are filtered out")
-  void filtersOutUnconfiguredTenants() {
-    final UUID instanceId = UUID.randomUUID();
-    service = new TenantService(
-        registryPropertiesWith(instanceProperties(instanceId, "Swedenconnect", "swedenconnect")),
-        instanceRepository, orgRightsService, instancePlacementService);
-
-    when(orgRightsService.extractOrgRights(authentication)).thenReturn(
-        orgRights(orgEntry("2021003948", new FunctionRight("stale-group", Right.READ))));
-
-    final TenantsResponse result = service.resolveTenants(authentication);
-
-    assertThat(result.tenants()).isEmpty();
-    verifyNoInteractions(instanceRepository);
-  }
-
-  @Test
-  @DisplayName("Superuser gets every tenant the registry is configured to support")
-  void superuserGetsAllConfiguredTenants() {
+  @DisplayName("Superuser gets every configured tenant, with organizations loaded from the database")
+  void superuserGetsAllConfiguredTenantsFromDatabase() {
     final UUID instanceIdA = UUID.randomUUID();
     final UUID instanceIdB = UUID.randomUUID();
     service = new TenantService(
@@ -200,17 +144,17 @@ class TenantServiceTest {
     final TenantsResponse result = service.resolveTenants(authentication);
 
     assertThat(result.tenants()).extracting(TenantDto::tenant).containsExactlyInAnyOrder("Swedenconnect", "Ena");
-    // Superuser tokens carry no per-organization names (org_rights is empty), so names fall
-    // back to the organization number itself.
+    // Superuser leg never reads org_rights, so persisted names (or the org number, absent one) are used as-is.
     assertThat(organizationsFor(result, "Swedenconnect"))
         .containsExactlyInAnyOrder(
-            organizationDtoFallenBackToNumber("4444"), organizationDtoFallenBackToNumber("55555"));
-    assertThat(organizationsFor(result, "Ena")).containsExactly(organizationDtoFallenBackToNumber("7777"));
+            new TenantOrganizationDto("4444", "4444", null),
+            new TenantOrganizationDto("55555", "55555", null));
+    assertThat(organizationsFor(result, "Ena")).containsExactly(new TenantOrganizationDto("7777", "7777", null));
   }
 
   @Test
-  @DisplayName("Tenant with no persisted organizations is included with an empty list")
-  void includesTenantWithNoOrganizationsForSuperuser() {
+  @DisplayName("Superuser: tenant with no persisted organizations is included with an empty list")
+  void superuserIncludesTenantWithNoOrganizations() {
     final UUID instanceId = UUID.randomUUID();
     service = new TenantService(
         registryPropertiesWith(instanceProperties(instanceId, "Ena", "ena")),
@@ -227,6 +171,90 @@ class TenantServiceTest {
   }
 
   @Test
+  @DisplayName("Superuser: organization name uses the persisted org name when present")
+  void superuserOrganizationNameUsesPersistedName() {
+    final UUID instanceId = UUID.randomUUID();
+    service = new TenantService(
+        registryPropertiesWith(instanceProperties(instanceId, "Swedenconnect", "swedenconnect")),
+        instanceRepository, orgRightsService, instancePlacementService);
+
+    when(orgRightsService.extractOrgRights(authentication)).thenReturn(new OrgRights(true, List.of()));
+    when(instanceRepository.findAllById(Set.of(instanceId)))
+        .thenReturn(List.of(instanceWithOrg(instanceId, "4444", "Persisted Org Name")));
+
+    final TenantsResponse result = service.resolveTenants(authentication);
+
+    assertThat(organizationsFor(result, "Swedenconnect"))
+        .containsExactly(new TenantOrganizationDto("4444", "Persisted Org Name", null));
+  }
+
+  @Test
+  @DisplayName("Superuser: entityPrefix is resolved per organization via InstancePlacementService")
+  void superuserEntityPrefixIsResolvedPerOrganization() {
+    final UUID instanceId = UUID.randomUUID();
+    service = new TenantService(
+        registryPropertiesWith(instanceProperties(instanceId, "Swedenconnect", "swedenconnect")),
+        instanceRepository, orgRightsService, instancePlacementService);
+
+    when(orgRightsService.extractOrgRights(authentication)).thenReturn(new OrgRights(true, List.of()));
+    when(instanceRepository.findAllById(Set.of(instanceId)))
+        .thenReturn(List.of(instanceWithOrgs(instanceId, "4444", "55555")));
+    when(instancePlacementService.resolveEntityPrefixForPlacedOrg("4444"))
+        .thenReturn(Optional.of("https://registry.example.se/oidf/4444"));
+    when(instancePlacementService.resolveEntityPrefixForPlacedOrg("55555"))
+        .thenReturn(Optional.empty());
+
+    final TenantsResponse result = service.resolveTenants(authentication);
+
+    assertThat(organizationsFor(result, "Swedenconnect"))
+        .containsExactlyInAnyOrder(
+            new TenantOrganizationDto("4444", "4444", "https://registry.example.se/oidf/4444"),
+            new TenantOrganizationDto("55555", "55555", null));
+  }
+
+  // --- Regular-user leg: tenants and organizations come exclusively from org_rights (no database access) ---
+
+  @Test
+  @DisplayName("Tenant is identified by the instance name backing the userfunktion (function group)")
+  void tenantIsIdentifiedByInstanceNameBackingFunctionGroup() {
+    final UUID instanceId = UUID.randomUUID();
+    service = new TenantService(
+        registryPropertiesWith(instanceProperties(instanceId, "Swedenconnect", "swedenconnect")),
+        instanceRepository, orgRightsService, instancePlacementService);
+
+    when(orgRightsService.extractOrgRights(authentication)).thenReturn(
+        orgRights(
+            orgEntry("4444", new FunctionRight("swedenconnect", Right.READ)),
+            orgEntry("55555", new FunctionRight("swedenconnect", Right.READ))));
+
+    final TenantsResponse result = service.resolveTenants(authentication);
+
+    assertThat(result.tenants()).extracting(TenantDto::tenant).containsExactly("Swedenconnect");
+    assertThat(organizationsFor(result, "Swedenconnect"))
+        .containsExactlyInAnyOrder(
+            new TenantOrganizationDto("4444", "Org 4444", null),
+            new TenantOrganizationDto("55555", "Org 55555", null));
+    verifyNoInteractions(instanceRepository);
+  }
+
+  @Test
+  @DisplayName("Userfunktions (function groups) not backing any configured instance are filtered out")
+  void filtersOutUnconfiguredTenants() {
+    final UUID instanceId = UUID.randomUUID();
+    service = new TenantService(
+        registryPropertiesWith(instanceProperties(instanceId, "Swedenconnect", "swedenconnect")),
+        instanceRepository, orgRightsService, instancePlacementService);
+
+    when(orgRightsService.extractOrgRights(authentication)).thenReturn(
+        orgRights(orgEntry("2021003948", new FunctionRight("stale-group", Right.READ))));
+
+    final TenantsResponse result = service.resolveTenants(authentication);
+
+    assertThat(result.tenants()).isEmpty();
+    verifyNoInteractions(instanceRepository);
+  }
+
+  @Test
   @DisplayName("Organization name is taken from the Swedish org_rights name when present")
   void organizationNameUsesSwedishNameFirst() {
     final UUID instanceId = UUID.randomUUID();
@@ -237,13 +265,12 @@ class TenantServiceTest {
     when(orgRightsService.extractOrgRights(authentication)).thenReturn(
         orgRights(orgEntryWithNames("4444", "Svenskt namn", "English name",
             new FunctionRight("swedenconnect", Right.READ))));
-    when(instanceRepository.findAllById(Set.of(instanceId)))
-        .thenReturn(List.of(instanceWithOrgs(instanceId, "4444")));
 
     final TenantsResponse result = service.resolveTenants(authentication);
 
     assertThat(organizationsFor(result, "Swedenconnect"))
         .containsExactly(new TenantOrganizationDto("4444", "Svenskt namn", null));
+    verifyNoInteractions(instanceRepository);
   }
 
   @Test
@@ -257,8 +284,6 @@ class TenantServiceTest {
     when(orgRightsService.extractOrgRights(authentication)).thenReturn(
         orgRights(orgEntryWithNames("4444", "", "English name",
             new FunctionRight("swedenconnect", Right.READ))));
-    when(instanceRepository.findAllById(Set.of(instanceId)))
-        .thenReturn(List.of(instanceWithOrgs(instanceId, "4444")));
 
     final TenantsResponse result = service.resolveTenants(authentication);
 
@@ -267,49 +292,7 @@ class TenantServiceTest {
   }
 
   @Test
-  @DisplayName("Organization name falls back to the persisted org name when neither token name is present")
-  void organizationNameFallsBackToPersistedOrgName() {
-    final UUID instanceId = UUID.randomUUID();
-    service = new TenantService(
-        registryPropertiesWith(instanceProperties(instanceId, "Swedenconnect", "swedenconnect")),
-        instanceRepository, orgRightsService, instancePlacementService);
-
-    when(orgRightsService.extractOrgRights(authentication)).thenReturn(
-        orgRights(orgEntryWithNames("4444", "", "",
-            new FunctionRight("swedenconnect", Right.READ))));
-    when(instanceRepository.findAllById(Set.of(instanceId)))
-        .thenReturn(List.of(instanceWithOrg(instanceId, "4444", "Persisted Org Name")));
-
-    final TenantsResponse result = service.resolveTenants(authentication);
-
-    assertThat(organizationsFor(result, "Swedenconnect"))
-        .containsExactly(new TenantOrganizationDto("4444", "Persisted Org Name", null));
-  }
-
-  @Test
-  @DisplayName("Organization name falls back to the persisted org name when there is no matching org_rights "
-      + "entry at all, e.g. an org administered by someone else")
-  void organizationNameFallsBackToPersistedOrgNameWhenNoMatchingEntry() {
-    final UUID instanceId = UUID.randomUUID();
-    service = new TenantService(
-        registryPropertiesWith(instanceProperties(instanceId, "Swedenconnect", "swedenconnect")),
-        instanceRepository, orgRightsService, instancePlacementService);
-
-    when(orgRightsService.extractOrgRights(authentication)).thenReturn(
-        orgRights(orgEntry("other-org", new FunctionRight("swedenconnect", Right.READ))));
-    when(instanceRepository.findAllById(Set.of(instanceId)))
-        .thenReturn(List.of(instanceWithOrg(instanceId, "4444", "Persisted Org Name")));
-
-    final TenantsResponse result = service.resolveTenants(authentication);
-
-    assertThat(organizationsFor(result, "Swedenconnect"))
-        .containsExactlyInAnyOrder(
-            new TenantOrganizationDto("4444", "Persisted Org Name", null),
-            new TenantOrganizationDto("other-org", "Org other-org", null));
-  }
-
-  @Test
-  @DisplayName("Organization name falls back to the org number when neither token nor persisted name is present")
+  @DisplayName("Organization name falls back to the org number when neither org_rights name is present")
   void organizationNameFallsBackToOrgNumber() {
     final UUID instanceId = UUID.randomUUID();
     service = new TenantService(
@@ -319,56 +302,34 @@ class TenantServiceTest {
     when(orgRightsService.extractOrgRights(authentication)).thenReturn(
         orgRights(orgEntryWithNames("4444", "", "",
             new FunctionRight("swedenconnect", Right.READ))));
-    when(instanceRepository.findAllById(Set.of(instanceId)))
-        .thenReturn(List.of(instanceWithOrgs(instanceId, "4444")));
 
     final TenantsResponse result = service.resolveTenants(authentication);
 
     assertThat(organizationsFor(result, "Swedenconnect"))
-        .containsExactly(organizationDtoFallenBackToNumber("4444"));
+        .containsExactly(new TenantOrganizationDto("4444", "4444", null));
   }
 
   @Test
-  @DisplayName("An org_rights entry with an explicit function right matching a tenant is itself surfaced as one "
-      + "of that tenant's organizations, even without a persisted Organization row")
-  void explicitFunctionRightSurfacesRightHolderAsTenantOrganization() {
+  @DisplayName("An org_rights entry naming the same organization twice for the same tenant is listed once")
+  void sameOrganizationListedOnceWhenMultipleFunctionRightsMatchTheSameTenant() {
     final UUID instanceId = UUID.randomUUID();
     service = new TenantService(
         registryPropertiesWith(instanceProperties(instanceId, "Swedenconnect", "swedenconnect")),
         instanceRepository, orgRightsService, instancePlacementService);
 
     when(orgRightsService.extractOrgRights(authentication)).thenReturn(
-        orgRights(orgEntryWithNames("2021000837", "Statistikmyndigheten SCB", "Statistics Sweden",
+        orgRights(orgEntry("4444",
+            new FunctionRight("swedenconnect", Right.READ),
             new FunctionRight("swedenconnect", Right.ADMIN))));
-    when(instanceRepository.findAllById(Set.of(instanceId)))
-        .thenReturn(List.of(instanceWithOrgs(instanceId)));
 
     final TenantsResponse result = service.resolveTenants(authentication);
 
     assertThat(organizationsFor(result, "Swedenconnect"))
-        .containsExactly(new TenantOrganizationDto("2021000837", "Statistikmyndigheten SCB", null));
+        .containsExactly(new TenantOrganizationDto("4444", "Org 4444", null));
   }
 
   @Test
-  @DisplayName("A right holder that is also already persisted under the tenant is listed exactly once")
-  void rightHolderAlreadyPersistedIsNotDuplicated() {
-    final UUID instanceId = UUID.randomUUID();
-    service = new TenantService(
-        registryPropertiesWith(instanceProperties(instanceId, "Swedenconnect", "swedenconnect")),
-        instanceRepository, orgRightsService, instancePlacementService);
-
-    when(orgRightsService.extractOrgRights(authentication)).thenReturn(
-        orgRights(orgEntry("4444", new FunctionRight("swedenconnect", Right.ADMIN))));
-    when(instanceRepository.findAllById(Set.of(instanceId)))
-        .thenReturn(List.of(instanceWithOrgs(instanceId, "4444")));
-
-    final TenantsResponse result = service.resolveTenants(authentication);
-
-    assertThat(organizationsFor(result, "Swedenconnect")).containsExactly(organizationDto("4444"));
-  }
-
-  @Test
-  @DisplayName("Organization entityPrefix is resolved via InstancePlacementService, per organization")
+  @DisplayName("Organization entityPrefix is resolved via InstancePlacementService's config-only lookup")
   void organizationEntityPrefixIsResolvedPerOrganization() {
     final UUID instanceId = UUID.randomUUID();
     service = new TenantService(
@@ -379,18 +340,16 @@ class TenantServiceTest {
         orgRights(
             orgEntry("4444", new FunctionRight("swedenconnect", Right.READ)),
             orgEntry("55555", new FunctionRight("swedenconnect", Right.READ))));
-    when(instanceRepository.findAllById(Set.of(instanceId)))
-        .thenReturn(List.of(instanceWithOrgs(instanceId, "4444", "55555")));
-    when(instancePlacementService.resolveEntityPrefixForPlacedOrg("4444"))
+    when(instancePlacementService.resolveEntityPrefix("4444", "swedenconnect"))
         .thenReturn(Optional.of("https://registry.example.se/oidf/4444"));
-    when(instancePlacementService.resolveEntityPrefixForPlacedOrg("55555"))
+    when(instancePlacementService.resolveEntityPrefix("55555", "swedenconnect"))
         .thenReturn(Optional.empty());
 
     final TenantsResponse result = service.resolveTenants(authentication);
 
     assertThat(organizationsFor(result, "Swedenconnect"))
         .containsExactlyInAnyOrder(
-            new TenantOrganizationDto("4444", orgName("4444"), "https://registry.example.se/oidf/4444"),
-            new TenantOrganizationDto("55555", orgName("55555"), null));
+            new TenantOrganizationDto("4444", "Org 4444", "https://registry.example.se/oidf/4444"),
+            new TenantOrganizationDto("55555", "Org 55555", null));
   }
 }
