@@ -79,6 +79,8 @@ public class EntityConfigurationController {
    * Returns the available signing key names for the given entity type, sourced from the {@code name} claim of the
    * oidf-service {@code /jwks} JWT.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param type FEDERATION_ENTITY or HOSTED_ENTITY
    * @param organizationRecord the authenticated organisation used to resolve the correct instance
    * @return ordered list of signing key names
@@ -106,6 +108,8 @@ public class EntityConfigurationController {
   /**
    * Endpoint to load JWKS from entityconfiguration
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param entityId EntityId that will be used to resolve JWKS
    * @return JWKS
    */
@@ -146,6 +150,8 @@ public class EntityConfigurationController {
    * Fetches an entity configuration and returns its decoded header and payload as JSON.
    * The JWT signature is intentionally omitted.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param entityId EntityId whose entity configuration will be fetched
    * @return decoded header and payload, or 400 on error
    */

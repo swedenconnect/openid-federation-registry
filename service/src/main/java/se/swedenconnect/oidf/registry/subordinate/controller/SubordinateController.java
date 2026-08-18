@@ -50,6 +50,15 @@ public class SubordinateController {
 
   private final SubordinateService subordinateService;
 
+  /**
+   * Get subordinate by id.
+   *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param id the subordinate ID
+   * @param organizationRecord the organization record
+   * @return the requested resource
+   */
   @GetMapping("/{subordinateId}")
   @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Get subordinate by id")
@@ -61,6 +70,15 @@ public class SubordinateController {
     return ResponseEntity.ok(this.subordinateService.getSubordinate(organizationRecord, id));
   }
 
+  /**
+   * Create subordinate with auto-generated ID.
+   *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param body the subordinate data
+   * @param organizationRecord the organization record
+   * @return the created resource
+   */
   @PostMapping("/")
   @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create subordinate with auto-generated ID")
@@ -72,6 +90,16 @@ public class SubordinateController {
     return ResponseEntity.ok(this.subordinateService.createSubordinate(organizationRecord, body));
   }
 
+  /**
+   * Create subordinate with specified ID.
+   *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param id the subordinate ID
+   * @param body the subordinate data
+   * @param organizationRecord the organization record
+   * @return the created resource
+   */
   @PostMapping("/{subordinateId}")
   @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create subordinate with specified ID")
@@ -84,6 +112,16 @@ public class SubordinateController {
     return ResponseEntity.ok(this.subordinateService.createSubordinateWithId(organizationRecord, id, body));
   }
 
+  /**
+   * Update subordinate.
+   *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param id the subordinate ID
+   * @param body the subordinate data
+   * @param organizationRecord the organization record
+   * @return the updated resource
+   */
   @PutMapping("/{subordinateId}")
   @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Update subordinate")
@@ -96,6 +134,15 @@ public class SubordinateController {
     return ResponseEntity.ok(this.subordinateService.updateSubordinate(organizationRecord, id, body));
   }
 
+  /**
+   * Delete subordinate.
+   *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param id the subordinate ID
+   * @param organizationRecord the organization record
+   * @return empty response
+   */
   @DeleteMapping("/{subordinateId}")
   @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Delete subordinate")

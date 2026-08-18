@@ -56,6 +56,15 @@ public class TrustmarkController {
   private final ModuleConfigService moduleConfigService;
   private final TrustmarkSubjectService trustmarkSubjectService;
 
+  /**
+   * List all trustmarks.
+   *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param includeSubjects whether to include subjects
+   * @param organizationRecord the organization record
+   * @return the list of results
+   */
   @GetMapping
   @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "List all trustmarks", description = "Lists all trustmarks for the organization, "
@@ -71,6 +80,15 @@ public class TrustmarkController {
 
   // Trustmark
 
+  /**
+   * Create trust mark with auto-generated ID.
+   *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param body the trustmark data
+   * @param organizationRecord the organization record
+   * @return the created resource
+   */
   @PostMapping
   @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create trust mark with auto-generated ID")
@@ -83,6 +101,16 @@ public class TrustmarkController {
     return ResponseEntity.ok(this.moduleConfigService.createTrustmark(organizationRecord, id, body));
   }
 
+  /**
+   * Create trust mark with specified ID.
+   *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param id the trust mark ID
+   * @param body the trustmark data
+   * @param organizationRecord the organization record
+   * @return the created resource
+   */
   @PostMapping("/{trustMarkId}")
   @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create trust mark with specified ID")
@@ -95,6 +123,16 @@ public class TrustmarkController {
     return ResponseEntity.ok(this.moduleConfigService.createTrustmark(organizationRecord, id, body));
   }
 
+  /**
+   * Update trust mark.
+   *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param id the trust mark ID
+   * @param body the trustmark data
+   * @param organizationRecord the organization record
+   * @return the updated resource
+   */
   @PutMapping("/{trustMarkId}")
   @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Update trust mark")
@@ -107,6 +145,15 @@ public class TrustmarkController {
     return ResponseEntity.ok(this.moduleConfigService.updateTrustmark(organizationRecord, id, body));
   }
 
+  /**
+   * Get trust mark.
+   *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param id the trust mark ID
+   * @param organizationRecord the organization record
+   * @return the requested resource
+   */
   @GetMapping("/{trustMarkId}")
   @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Get trust mark")
@@ -118,6 +165,15 @@ public class TrustmarkController {
     return ResponseEntity.ok(this.moduleConfigService.getTrustmark(organizationRecord, id));
   }
 
+  /**
+   * Get trust mark with their subjects.
+   *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param trustmarkId the trust mark ID
+   * @param organizationRecord the organization record
+   * @return the requested resource
+   */
   @GetMapping("/{trustMarkId}/subjects")
   @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Get trust mark with their subjects")
@@ -129,6 +185,15 @@ public class TrustmarkController {
     return ResponseEntity.ok(this.moduleConfigService.getTrustmarkWithSubjects(organizationRecord, trustmarkId));
   }
 
+  /**
+   * Delete trust mark.
+   *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param id the trust mark ID
+   * @param organizationRecord the organization record
+   * @return empty response
+   */
   @DeleteMapping("/{trustMarkId}")
   @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Delete trust mark")
@@ -143,6 +208,15 @@ public class TrustmarkController {
 
   // Trustmark Subject
 
+  /**
+   * Create trust mark subject with auto-generated ID.
+   *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param body the trustmark subject data
+   * @param organizationRecord the organization record
+   * @return the created resource
+   */
   @PostMapping("/subjects")
   @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create trust mark subject with auto-generated ID")
@@ -155,6 +229,16 @@ public class TrustmarkController {
     return ResponseEntity.ok(this.trustmarkSubjectService.createTrustmarkSubject(organizationRecord, id, body));
   }
 
+  /**
+   * Create trust mark subject with specified ID.
+   *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param id the subject ID
+   * @param body the trustmark subject data
+   * @param organizationRecord the organization record
+   * @return the created resource
+   */
   @PostMapping("/subjects/{subjectId}")
   @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create trust mark subject with specified ID")
@@ -167,6 +251,16 @@ public class TrustmarkController {
     return ResponseEntity.ok(this.trustmarkSubjectService.createTrustmarkSubject(organizationRecord, id, body));
   }
 
+  /**
+   * Update trust mark subject.
+   *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param id the subject ID
+   * @param body the trustmark subject data
+   * @param organizationRecord the organization record
+   * @return the updated resource
+   */
   @PutMapping("/subjects/{subjectId}")
   @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Update trust mark subject")
@@ -179,6 +273,15 @@ public class TrustmarkController {
     return ResponseEntity.ok(this.trustmarkSubjectService.updateTrustmarkSubject(organizationRecord, id, body));
   }
 
+  /**
+   * Get trust mark subject.
+   *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param id the subject ID
+   * @param organizationRecord the organization record
+   * @return the requested resource
+   */
   @GetMapping("/subjects/{subjectId}")
   @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Get trust mark subject")
@@ -190,6 +293,15 @@ public class TrustmarkController {
     return ResponseEntity.ok(this.trustmarkSubjectService.getTrustmarkSubject(organizationRecord, id));
   }
 
+  /**
+   * Delete trust mark subject.
+   *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param id the subject ID
+   * @param organizationRecord the organization record
+   * @return empty response
+   */
   @DeleteMapping("/subjects/{subjectId}")
   @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Delete trust mark subject")

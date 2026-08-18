@@ -58,6 +58,8 @@ public class EntityConfigController {
   /**
    * Lists all entities for the organization.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param type optional entity type filter (federation, hosted, subordinate)
    * @param includeModules whether to include modules (trustanchor, intermediate, resolver, trustmarkissuer)
    * @param organizationRecord the organization record
@@ -79,6 +81,8 @@ public class EntityConfigController {
   /**
    * Creates a federation entity with auto-generated ID.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param body the federation entity data
    * @param organizationRecord the organization record
    * @return the created federation entity
@@ -98,6 +102,8 @@ public class EntityConfigController {
   /**
    * Creates a federation entity with specified ID.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param id the federation entity ID
    * @param body the federation entity data
    * @param organizationRecord the organization record
@@ -118,6 +124,8 @@ public class EntityConfigController {
   /**
    * Updates a federation entity.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param id the federation entity ID
    * @param body the federation entity data
    * @param organizationRecord the organization record
@@ -139,6 +147,8 @@ public class EntityConfigController {
    * Retrieves a federation entity by its unique identifier. Optionally includes associated modules
    * based on the provided parameter.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param id the unique identifier of the federation entity
    * @param includeModules a flag indicating whether to include associated modules in the response
    * @param organizationRecord the organization context for the request, typically populated internally
@@ -159,6 +169,8 @@ public class EntityConfigController {
   /**
    * Deletes a federation entity.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param id the federation entity ID
    * @param organizationRecord the organization record
    * @return empty response
@@ -178,6 +190,8 @@ public class EntityConfigController {
   /**
    * Creates a hosted entity with auto-generated ID.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param body the hosted entity data
    * @param organizationRecord the organization record
    * @return the created hosted entity
@@ -197,6 +211,8 @@ public class EntityConfigController {
   /**
    * Creates a hosted entity with specified ID.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param id the hosted entity ID
    * @param body the hosted entity data
    * @param organizationRecord the organization record
@@ -217,6 +233,8 @@ public class EntityConfigController {
   /**
    * Updates a hosted entity.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param id the hosted entity ID
    * @param body the hosted entity data
    * @param organizationRecord the organization record
@@ -237,6 +255,8 @@ public class EntityConfigController {
   /**
    * Gets a hosted entity by ID.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param id the hosted entity ID
    * @param organizationRecord the organization record
    * @return the hosted entity
@@ -255,6 +275,8 @@ public class EntityConfigController {
   /**
    * Gets a hosted entity by ID.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param entityIdentifier the hosted entity ID
    * @param organizationRecord the organization record
    * @return the hosted entity
@@ -273,6 +295,8 @@ public class EntityConfigController {
   /**
    * Deletes a hosted entity.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param id the hosted entity ID
    * @param organizationRecord the organization record
    * @return empty response

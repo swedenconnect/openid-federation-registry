@@ -57,6 +57,8 @@ public class RegistrationAdminController {
   /**
    * Counts unhandled PENDING registrations for an intermediate.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param organizationRecord the calling organization
    * @param taimId the intermediate ID
    * @return map containing the count
@@ -75,6 +77,8 @@ public class RegistrationAdminController {
   /**
    * List all registration records for this organizations intermidiates
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param organizationRecord the calling organization
    * @return list of registration DTOs
    */
@@ -91,6 +95,8 @@ public class RegistrationAdminController {
   /**
    * Returns a single registration by ID.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param organizationRecord the calling organization
    * @param registrationId the registration ID
    * @return the registration DTO
@@ -109,6 +115,8 @@ public class RegistrationAdminController {
   /**
    * Rejects a pending registration request.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param organizationRecord the calling organization
    * @param registrationId the registration ID
    * @param body the rejection details
@@ -129,6 +137,8 @@ public class RegistrationAdminController {
   /**
    * Approves a specific pending step and resumes pipeline execution from that step.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param organizationRecord the calling organization
    * @param registrationId the registration ID
    * @param stepIndex the zero-based index of the step to approve

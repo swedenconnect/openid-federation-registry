@@ -171,7 +171,6 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
    * @param name the name of the instance must not be empty
    * @param baseUrl the base URL for this instance, used to compute entity prefixes
    * @param orgBaseUrlOverrides optional per-org overrides on the form orgNumber → base URL
-   * @param matchers the matcher configuration used to assign organizations to this instance
    * @param functionGroup the single function group that administrates this tenant. A tenant can only be backed
    *     by exactly one function group — read/write rights (including the {@code "*"} wildcard in the
    *     {@code org_rights} claim, which grants a right on every function currently attached to an organization)

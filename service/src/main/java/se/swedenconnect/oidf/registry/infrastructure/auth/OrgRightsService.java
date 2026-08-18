@@ -10,6 +10,7 @@
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
 package se.swedenconnect.oidf.registry.infrastructure.auth;
@@ -44,18 +45,47 @@ public class OrgRightsService {
 
   private final InstancePlacementService instancePlacementService;
 
+  /**
+   * Creates a new service.
+   *
+   * @param instancePlacementService service used to resolve tenants to function groups
+   */
   public OrgRightsService(final InstancePlacementService instancePlacementService) {
     this.instancePlacementService = instancePlacementService;
   }
 
+  /**
+   * Checks whether the authentication has read access to the given organization under the given tenant.
+   *
+   * @param authentication the current authentication
+   * @param orgNumber the organization number
+   * @param tenant the tenant identifier
+   * @return true if read access is granted
+   */
   public boolean canRead(final Authentication authentication, final String orgNumber, final String tenant) {
     return this.hasRight(authentication, orgNumber, tenant, Right.READ);
   }
 
+  /**
+   * Checks whether the authentication has write access to the given organization under the given tenant.
+   *
+   * @param authentication the current authentication
+   * @param orgNumber the organization number
+   * @param tenant the tenant identifier
+   * @return true if write access is granted
+   */
   public boolean canWrite(final Authentication authentication, final String orgNumber, final String tenant) {
     return this.hasRight(authentication, orgNumber, tenant, Right.WRITE);
   }
 
+  /**
+   * Checks whether the authentication has admin access to the given organization under the given tenant.
+   *
+   * @param authentication the current authentication
+   * @param orgNumber the organization number
+   * @param tenant the tenant identifier
+   * @return true if admin access is granted
+   */
   public boolean canAdmin(final Authentication authentication, final String orgNumber, final String tenant) {
     return this.hasRight(authentication, orgNumber, tenant, Right.ADMIN);
   }

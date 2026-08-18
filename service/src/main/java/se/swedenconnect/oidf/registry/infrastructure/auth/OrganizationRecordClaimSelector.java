@@ -10,6 +10,7 @@
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
 package se.swedenconnect.oidf.registry.infrastructure.auth;
@@ -57,6 +58,11 @@ public class OrganizationRecordClaimSelector implements HandlerMethodArgumentRes
 
   private final InstancePlacementService instancePlacementService;
 
+  /**
+   * Creates a new selector.
+   *
+   * @param instancePlacementService service used to resolve tenants to function groups and entity prefixes
+   */
   public OrganizationRecordClaimSelector(final InstancePlacementService instancePlacementService) {
     this.instancePlacementService = instancePlacementService;
   }
@@ -92,17 +98,17 @@ public class OrganizationRecordClaimSelector implements HandlerMethodArgumentRes
     final String functionGroup = this.instancePlacementService.resolveFunctionGroupForTenant(tenant)
         .orElseThrow(() -> new AccessDeniedException("Unknown tenant '" + tenant + "'"));
 
-    final OrgRights orgRights = extractOrgRights(SecurityContextHolder.getContext().getAuthentication());
+    final OrgRights orgRights = this.extractOrgRights(SecurityContextHolder.getContext().getAuthentication());
 
     if (orgRights.superuser()) {
-      return buildSuperuserRecord(orgNumber, functionGroup);
+      return this.buildSuperuserRecord(orgNumber, functionGroup);
     }
 
     final OrgRightEntry entry = orgRights.findOrg(orgNumber)
         .orElseThrow(() -> new AccessDeniedException(
             "Organization '" + orgNumber + "' not found in token claims"));
 
-    return buildOrganizationRecord(entry, functionGroup);
+    return this.buildOrganizationRecord(entry, functionGroup);
   }
 
   private OrgRights extractOrgRights(final Authentication authentication) {

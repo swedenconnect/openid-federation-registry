@@ -10,6 +10,7 @@
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
 package se.swedenconnect.oidf.registry.infrastructure.auth;
@@ -44,6 +45,12 @@ import java.util.Map;
  */
 public class OrgRightsFactory {
 
+  /**
+   * Parses the {@code org_rights} claim into an {@link OrgRights} object.
+   *
+   * @param claims the JWT claims map
+   * @return the parsed org rights
+   */
   @SuppressWarnings("unchecked")
   public static OrgRights fromClaims(final Map<String, Object> claims) {
     final Object raw = claims.get("org_rights");
