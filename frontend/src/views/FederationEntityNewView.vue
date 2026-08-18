@@ -120,7 +120,7 @@ async function saveEntity() {
       signingKeyId: signingKeyId.value ? [signingKeyId.value] : [],
     };
 
-    const response = await requestPost(federationEntitiesPath, entityData);
+    const response = await requestPost(federationEntitiesPath(userStore.selectedTenant, userStore.orgNumber), entityData);
 
     if (ok.value && response?.entityId) {
       router.push({name: 'federation-entity-edit', params: {id: response.entityId}});

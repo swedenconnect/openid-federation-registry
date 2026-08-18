@@ -198,6 +198,7 @@ import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useLoadJwks} from '@/api/composables/jwks';
 import {subordinatePath, subordinatesPath} from '@/config/path';
+import {useUserStore} from '@/stores/userStore';
 import EntityConfigurationViewer from '@/components/EntityConfigurationViewer.vue';
 import ListField from '@/components/ListField.vue';
 
@@ -205,6 +206,7 @@ const route = useRoute();
 const router = useRouter();
 const {requestGet, requestPost, requestPut, loading, ok} = useRequest();
 const errorStore = useErrorStore();
+const userStore = useUserStore();
 const {loadJwks: loadJwksFromApi, loading: loadingJwks} = useLoadJwks();
 
 const form = ref(null);
@@ -268,7 +270,7 @@ async function loadSubordinate() {
   errorStore.clearError();
   subordinateId.value = route.params.id;
 
-  const response = await requestGet(subordinatePath(subordinateId.value));
+  const response = await requestGet(subordinatePath(userStore.selectedTenant, userStore.orgNumber, subordinateId.value));
   if (response) {
     taImIdValue.value = response.taImId || taImId.value || null;
     entityIdentifier.value = response.entityIdentifier || '';
@@ -310,9 +312,9 @@ async function submitForm() {
     };
 
     if (isEdit.value) {
-      await requestPut(subordinatePath(subordinateId.value), subordinateData);
+      await requestPut(subordinatePath(userStore.selectedTenant, userStore.orgNumber, subordinateId.value), subordinateData);
     } else {
-      await requestPost(subordinatesPath, subordinateData);
+      await requestPost(subordinatesPath(userStore.selectedTenant, userStore.orgNumber), subordinateData);
     }
 
     if (ok.value) {

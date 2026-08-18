@@ -22,7 +22,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,7 +52,7 @@ import java.util.List;
  */
 @Slf4j
 @RestController
-@RequestMapping("/registry/v1/entityconfiguration")
+@RequestMapping("/registry/v1/{tenant}/{orgNumber}/entityconfiguration")
 @Tag(name = "EntityConfigurationController", description = "Loading entity configurations")
 public class EntityConfigurationController {
 
@@ -73,23 +76,20 @@ public class EntityConfigurationController {
   }
 
   /**
-   * Returns available signing keys for the given entity type. Federation entities receive keys from the
-   * {@code federation} JWKS claim; hosted entities receive keys from the {@code hosted} claim.
-   *
-   * @param type               FEDERATION_ENTITY or HOSTED_ENTITY
-   * @param organizationRecord the authenticated organisation used to resolve the correct instance
-   * @return list of available signing keys
-   */
-  /**
    * Returns the available signing key names for the given entity type, sourced from the {@code name} claim of the
    * oidf-service {@code /jwks} JWT.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param type FEDERATION_ENTITY or HOSTED_ENTITY
    * @param organizationRecord the authenticated organisation used to resolve the correct instance
    * @return ordered list of signing key names
    */
   @GetMapping(path = "/signing-keys")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   public List<String> listSigningKeys(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @RequestParam("type") final EntityType type,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return this.jwksKeysCacheService.getPayload(organizationRecord)
@@ -108,11 +108,16 @@ public class EntityConfigurationController {
   /**
    * Endpoint to load JWKS from entityconfiguration
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param entityId EntityId that will be used to resolve JWKS
    * @return JWKS
    */
   @PostMapping(path = "/jwks")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   public List<JwksLoadedDto> loadJwksFromEntityConfiguration(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @RequestBody final String entityId) {
     log.debug("Start loading jwks from entitystatement {}", entityId);
     try {
@@ -145,11 +150,16 @@ public class EntityConfigurationController {
    * Fetches an entity configuration and returns its decoded header and payload as JSON.
    * The JWT signature is intentionally omitted.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param entityId EntityId whose entity configuration will be fetched
    * @return decoded header and payload, or 400 on error
    */
   @PostMapping(path = "/view")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   public ResponseEntity<EntityConfigurationViewDto> viewEntityConfiguration(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @RequestBody final String entityId) {
     log.debug("Fetching entity configuration for view: {}", entityId);
     try {

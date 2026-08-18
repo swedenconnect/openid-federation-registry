@@ -15,21 +15,14 @@
  */
 package se.swedenconnect.oidf.registry.guioperations.dto;
 
-import lombok.Builder;
+import java.util.List;
 
 /**
- * Represents a response containing details about a user. Organization/tenant selection and the per-organization
- * entityPrefix are resolved purely from the {@code /tenants} endpoint, not here.
+ * One tenant (configured instance) the caller has rights on, with the organizations already registered under it.
  *
- * @param userName the users name
- * @param givenName the users given name
- * @param familyName the users family name
- * @param fullName the users full name
- * @author David Goldring
+ * @param tenant the instance name, e.g. {@code "Swedenconnect"}
+ * @param organizations the organizations registered under this tenant
+ * @author Per Fredrik Plars
  */
-@Builder
-public record UserInfoResponse(
-    String userName,
-    String givenName,
-    String familyName,
-    String fullName) {}
+public record TenantDto(String tenant, List<TenantOrganizationDto> organizations) {
+}

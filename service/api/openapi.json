@@ -22,8 +22,7 @@
   ],
   "security": [
     {
-      "bearerAuth": [],
-      "selectedOrgNumber": []
+      "bearerAuth": []
     }
   ],
   "tags": [
@@ -65,7 +64,7 @@
     }
   ],
   "paths": {
-    "/registry/v1/trustmarks/{trustMarkId}": {
+    "/registry/v1/{tenant}/{orgNumber}/trustmarks/{trustMarkId}": {
       "get": {
         "tags": [
           "Trustmarks"
@@ -73,6 +72,22 @@
         "summary": "Get trust mark",
         "operationId": "getTrustmark",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "trustMarkId",
             "in": "path",
@@ -103,6 +118,22 @@
         "summary": "Update trust mark",
         "operationId": "updateTrustmark",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "trustMarkId",
             "in": "path",
@@ -144,6 +175,22 @@
         "operationId": "createTrustmarkWithId",
         "parameters": [
           {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "trustMarkId",
             "in": "path",
             "required": true,
@@ -184,6 +231,22 @@
         "operationId": "deleteTrustmark",
         "parameters": [
           {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "trustMarkId",
             "in": "path",
             "required": true,
@@ -200,7 +263,7 @@
         }
       }
     },
-    "/registry/v1/trustmarks/subjects/{subjectId}": {
+    "/registry/v1/{tenant}/{orgNumber}/trustmarks/subjects/{subjectId}": {
       "get": {
         "tags": [
           "Trustmarks"
@@ -208,6 +271,22 @@
         "summary": "Get trust mark subject",
         "operationId": "getTrustmarkSubject",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "subjectId",
             "in": "path",
@@ -238,6 +317,22 @@
         "summary": "Update trust mark subject",
         "operationId": "updateTrustmarkSubject",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "subjectId",
             "in": "path",
@@ -279,6 +374,22 @@
         "operationId": "createTrustmarkSubjectWithId",
         "parameters": [
           {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "subjectId",
             "in": "path",
             "required": true,
@@ -319,6 +430,22 @@
         "operationId": "deleteTrustmarkSubject",
         "parameters": [
           {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "subjectId",
             "in": "path",
             "required": true,
@@ -335,7 +462,7 @@
         }
       }
     },
-    "/registry/v1/subordinates/{subordinateId}": {
+    "/registry/v1/{tenant}/{orgNumber}/subordinates/{subordinateId}": {
       "get": {
         "tags": [
           "Subordinates"
@@ -343,6 +470,22 @@
         "summary": "Get subordinate by id",
         "operationId": "getSubordinate",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "subordinateId",
             "in": "path",
@@ -373,6 +516,22 @@
         "summary": "Update subordinate",
         "operationId": "updateSubordinate",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "subordinateId",
             "in": "path",
@@ -414,6 +573,22 @@
         "operationId": "createSubordinateWithId",
         "parameters": [
           {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "subordinateId",
             "in": "path",
             "required": true,
@@ -454,6 +629,22 @@
         "operationId": "deleteSubordinate",
         "parameters": [
           {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "subordinateId",
             "in": "path",
             "required": true,
@@ -470,7 +661,7 @@
         }
       }
     },
-    "/registry/v1/modules/trustmark-issuer/{trustmarkIssuerId}": {
+    "/registry/v1/{tenant}/{orgNumber}/modules/trustmark-issuer/{trustmarkIssuerId}": {
       "get": {
         "tags": [
           "Modules"
@@ -478,6 +669,22 @@
         "summary": "Get trust mark issuer",
         "operationId": "getTrustmarkIssuer",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "trustmarkIssuerId",
             "in": "path",
@@ -508,6 +715,22 @@
         "summary": "Update trust mark issuer",
         "operationId": "updateTrustmarkIssuer",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "trustmarkIssuerId",
             "in": "path",
@@ -549,6 +772,22 @@
         "operationId": "createTrustmarkIssuerWithId",
         "parameters": [
           {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "trustmarkIssuerId",
             "in": "path",
             "required": true,
@@ -589,6 +828,22 @@
         "operationId": "deleteTrustmarkIssuer",
         "parameters": [
           {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "trustmarkIssuerId",
             "in": "path",
             "required": true,
@@ -605,7 +860,7 @@
         }
       }
     },
-    "/registry/v1/modules/trust-anchor/{trustAnchorId}": {
+    "/registry/v1/{tenant}/{orgNumber}/modules/trust-anchor/{trustAnchorId}": {
       "get": {
         "tags": [
           "Modules"
@@ -613,6 +868,22 @@
         "summary": "Get trust anchor",
         "operationId": "getTrustAnchor",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "trustAnchorId",
             "in": "path",
@@ -643,6 +914,22 @@
         "summary": "Update trust anchor",
         "operationId": "updateTrustAnchor",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "trustAnchorId",
             "in": "path",
@@ -684,6 +971,22 @@
         "operationId": "createTrustAnchorWithId",
         "parameters": [
           {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "trustAnchorId",
             "in": "path",
             "required": true,
@@ -724,6 +1027,22 @@
         "operationId": "deleteTrustAnchor",
         "parameters": [
           {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "trustAnchorId",
             "in": "path",
             "required": true,
@@ -740,7 +1059,7 @@
         }
       }
     },
-    "/registry/v1/modules/resolver/{resolverId}": {
+    "/registry/v1/{tenant}/{orgNumber}/modules/resolver/{resolverId}": {
       "get": {
         "tags": [
           "Modules"
@@ -748,6 +1067,22 @@
         "summary": "Get resolver",
         "operationId": "getResolver",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "resolverId",
             "in": "path",
@@ -778,6 +1113,22 @@
         "summary": "Update resolver",
         "operationId": "updateResolver",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "resolverId",
             "in": "path",
@@ -819,6 +1170,22 @@
         "operationId": "createResolverWithId",
         "parameters": [
           {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "resolverId",
             "in": "path",
             "required": true,
@@ -859,6 +1226,22 @@
         "operationId": "deleteResolver",
         "parameters": [
           {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "resolverId",
             "in": "path",
             "required": true,
@@ -875,7 +1258,7 @@
         }
       }
     },
-    "/registry/v1/modules/intermediate/{intermediateId}": {
+    "/registry/v1/{tenant}/{orgNumber}/modules/intermediate/{intermediateId}": {
       "get": {
         "tags": [
           "Modules"
@@ -883,6 +1266,22 @@
         "summary": "Get intermediate",
         "operationId": "getIntermediate",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "intermediateId",
             "in": "path",
@@ -913,6 +1312,22 @@
         "summary": "Update intermediate",
         "operationId": "updateIntermediate",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "intermediateId",
             "in": "path",
@@ -954,6 +1369,22 @@
         "operationId": "createIntermediateWithId",
         "parameters": [
           {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "intermediateId",
             "in": "path",
             "required": true,
@@ -994,6 +1425,22 @@
         "operationId": "deleteIntermediate",
         "parameters": [
           {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "intermediateId",
             "in": "path",
             "required": true,
@@ -1010,7 +1457,7 @@
         }
       }
     },
-    "/registry/v1/entities/hosted/{entityId}": {
+    "/registry/v1/{tenant}/{orgNumber}/entities/hosted/{entityId}": {
       "get": {
         "tags": [
           "Entities"
@@ -1018,6 +1465,22 @@
         "summary": "Get hosted entity",
         "operationId": "getHostedEntity",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "entityId",
             "in": "path",
@@ -1048,6 +1511,22 @@
         "summary": "Update hosted entity",
         "operationId": "updateHostedEntity",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "entityId",
             "in": "path",
@@ -1089,6 +1568,22 @@
         "operationId": "createHostedEntityWithId",
         "parameters": [
           {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "entityId",
             "in": "path",
             "required": true,
@@ -1129,6 +1624,22 @@
         "operationId": "deleteHostedEntity",
         "parameters": [
           {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "entityId",
             "in": "path",
             "required": true,
@@ -1145,7 +1656,7 @@
         }
       }
     },
-    "/registry/v1/entities/federation/{entityId}": {
+    "/registry/v1/{tenant}/{orgNumber}/entities/federation/{entityId}": {
       "get": {
         "tags": [
           "Entities"
@@ -1153,6 +1664,22 @@
         "summary": "Get federation entity",
         "operationId": "getFederationEntity",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "entityId",
             "in": "path",
@@ -1192,6 +1719,22 @@
         "summary": "Update federation entity",
         "operationId": "updateFederationEntity",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "entityId",
             "in": "path",
@@ -1233,6 +1776,22 @@
         "operationId": "createFederationEntityWithId",
         "parameters": [
           {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "entityId",
             "in": "path",
             "required": true,
@@ -1273,6 +1832,22 @@
         "operationId": "deleteFederationEntity",
         "parameters": [
           {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "entityId",
             "in": "path",
             "required": true,
@@ -1289,7 +1864,152 @@
         }
       }
     },
-    "/registration-flow/v1/flow/{flowid}": {
+    "/registration/v1/{tenant}/{orgNumber}/{registrationId}": {
+      "get": {
+        "tags": [
+          "FederationRegistration"
+        ],
+        "summary": "Get a single registration by ID",
+        "operationId": "getById",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "registrationId",
+            "in": "path",
+            "description": "Registration ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Registration"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "FederationRegistration"
+        ],
+        "summary": "Re-run the registration flow for an existing entity",
+        "operationId": "updateRegistration",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "registrationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationJoinRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Registration"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "FederationRegistration"
+        ],
+        "summary": "Remove a join record",
+        "operationId": "deleteJoin",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "registrationId",
+            "in": "path",
+            "description": "ID of the registration to remove",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/registration-flow/v1/{tenant}/{orgNumber}/flow/{flowid}": {
       "put": {
         "tags": [
           "Registration Flow"
@@ -1297,6 +2017,22 @@
         "summary": "Update a registration flow",
         "operationId": "updateFlow",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "flowid",
             "in": "path",
@@ -1338,6 +2074,22 @@
         "operationId": "createFlowWithId",
         "parameters": [
           {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "flowid",
             "in": "path",
             "required": true,
@@ -1378,6 +2130,22 @@
         "operationId": "deleteFlow",
         "parameters": [
           {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "flowid",
             "in": "path",
             "required": true,
@@ -1394,7 +2162,7 @@
         }
       }
     },
-    "/registry/v1/trustmarks": {
+    "/registry/v1/{tenant}/{orgNumber}/trustmarks": {
       "get": {
         "tags": [
           "Trustmarks"
@@ -1403,6 +2171,22 @@
         "description": "Lists all trustmarks for the organization, optionally including trustmark subjects",
         "operationId": "listTrustmarks",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "includeSubjects",
             "in": "query",
@@ -1435,6 +2219,24 @@
         ],
         "summary": "Create trust mark with auto-generated ID",
         "operationId": "createTrustmark",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1459,13 +2261,31 @@
         }
       }
     },
-    "/registry/v1/trustmarks/subjects": {
+    "/registry/v1/{tenant}/{orgNumber}/trustmarks/subjects": {
       "post": {
         "tags": [
           "Trustmarks"
         ],
         "summary": "Create trust mark subject with auto-generated ID",
         "operationId": "createTrustmarkSubject",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1490,13 +2310,31 @@
         }
       }
     },
-    "/registry/v1/subordinates/": {
+    "/registry/v1/{tenant}/{orgNumber}/subordinates/": {
       "post": {
         "tags": [
           "Subordinates"
         ],
         "summary": "Create subordinate with auto-generated ID",
         "operationId": "createSubordinate",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1521,13 +2359,31 @@
         }
       }
     },
-    "/registry/v1/modules/trustmark-issuer": {
+    "/registry/v1/{tenant}/{orgNumber}/modules/trustmark-issuer": {
       "post": {
         "tags": [
           "Modules"
         ],
         "summary": "Create trust mark issuer with auto-generated ID",
         "operationId": "createTrustmarkIssuer",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1552,13 +2408,31 @@
         }
       }
     },
-    "/registry/v1/modules/trust-anchor": {
+    "/registry/v1/{tenant}/{orgNumber}/modules/trust-anchor": {
       "post": {
         "tags": [
           "Modules"
         ],
         "summary": "Create trust anchor with auto-generated ID",
         "operationId": "createTrustAnchor",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1583,13 +2457,31 @@
         }
       }
     },
-    "/registry/v1/modules/resolver": {
+    "/registry/v1/{tenant}/{orgNumber}/modules/resolver": {
       "post": {
         "tags": [
           "Modules"
         ],
         "summary": "Create resolver with auto-generated ID",
         "operationId": "createResolver",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1614,13 +2506,31 @@
         }
       }
     },
-    "/registry/v1/modules/intermediate": {
+    "/registry/v1/{tenant}/{orgNumber}/modules/intermediate": {
       "post": {
         "tags": [
           "Modules"
         ],
         "summary": "Create intermediate with auto-generated ID",
         "operationId": "createIntermediate",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1645,12 +2555,30 @@
         }
       }
     },
-    "/registry/v1/entityconfiguration/view": {
+    "/registry/v1/{tenant}/{orgNumber}/entityconfiguration/view": {
       "post": {
         "tags": [
           "EntityConfigurationController"
         ],
         "operationId": "viewEntityConfiguration",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1675,12 +2603,30 @@
         }
       }
     },
-    "/registry/v1/entityconfiguration/jwks": {
+    "/registry/v1/{tenant}/{orgNumber}/entityconfiguration/jwks": {
       "post": {
         "tags": [
           "EntityConfigurationController"
         ],
         "operationId": "loadJwksFromEntityConfiguration",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1708,7 +2654,7 @@
         }
       }
     },
-    "/registry/v1/entities/hosted": {
+    "/registry/v1/{tenant}/{orgNumber}/entities/hosted": {
       "get": {
         "tags": [
           "Entities"
@@ -1716,6 +2662,22 @@
         "summary": "List hosted entity",
         "operationId": "listHostedEntity",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "entityIdentifier",
             "in": "query",
@@ -1747,6 +2709,24 @@
         ],
         "summary": "Create hosted entity with auto-generated ID",
         "operationId": "createHostedEntity",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1771,13 +2751,31 @@
         }
       }
     },
-    "/registry/v1/entities/federation": {
+    "/registry/v1/{tenant}/{orgNumber}/entities/federation": {
       "post": {
         "tags": [
           "Entities"
         ],
         "summary": "Create federation entity with auto-generated ID",
         "operationId": "createFederationEntity",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1802,7 +2800,7 @@
         }
       }
     },
-    "/registration/v1/{joinId}": {
+    "/registration/v1/{tenant}/{orgNumber}/{joinId}": {
       "post": {
         "tags": [
           "FederationRegistration"
@@ -1810,6 +2808,22 @@
         "summary": "Create a registration request on this id",
         "operationId": "createJoinWithId",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "joinId",
             "in": "path",
@@ -1844,7 +2858,123 @@
         }
       }
     },
-    "/registration-flow/v1/intermediate/{taImId}/assign": {
+    "/registration-flow/v1/{tenant}/{orgNumber}/trustmark/{trustmarkId}/assign": {
+      "post": {
+        "tags": [
+          "Registration Flow"
+        ],
+        "summary": "Assign a flow to a specific trust mark",
+        "operationId": "assignFlowToTrustMark",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "trustmarkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignFlowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignFlowResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-flow/v1/{tenant}/{orgNumber}/trustmark-issuer/{tmIssuerId}/assign": {
+      "post": {
+        "tags": [
+          "Registration Flow"
+        ],
+        "summary": "Assign a flow to a trust mark issuer",
+        "operationId": "assignFlowToTrustMarkIssuer",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tmIssuerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignFlowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignFlowResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-flow/v1/{tenant}/{orgNumber}/intermediate/{taImId}/assign": {
       "post": {
         "tags": [
           "Registration Flow"
@@ -1852,6 +2982,22 @@
         "summary": "Assign a flow to an intermediate",
         "operationId": "assignFlow",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "taImId",
             "in": "path",
@@ -1886,13 +3032,31 @@
         }
       }
     },
-    "/registration-flow/v1/flow": {
+    "/registration-flow/v1/{tenant}/{orgNumber}/flow": {
       "post": {
         "tags": [
           "Registration Flow"
         ],
         "summary": "Create a new flow",
         "operationId": "createFlow",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1917,7 +3081,66 @@
         }
       }
     },
-    "/registration-admin/v1/{registrationId}/reject": {
+    "/registration-admin/v1/{tenant}/{orgNumber}/{registrationId}/steps/{stepIndex}/approve": {
+      "post": {
+        "tags": [
+          "RegistrationAdmin"
+        ],
+        "summary": "Approve a specific pending pipeline step and resume execution",
+        "operationId": "approveStep",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "registrationId",
+            "in": "path",
+            "description": "Registration ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "stepIndex",
+            "in": "path",
+            "description": "Step index",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Registration"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-admin/v1/{tenant}/{orgNumber}/{registrationId}/reject": {
       "post": {
         "tags": [
           "RegistrationAdmin"
@@ -1925,6 +3148,22 @@
         "summary": "Reject a pending registration request",
         "operationId": "reject",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "registrationId",
             "in": "path",
@@ -1960,14 +3199,50 @@
         }
       }
     },
-    "/registry/v1/trustmarks/{trustMarkId}/subjects": {
+    "/tenants": {
+      "get": {
+        "tags": [
+          "tenant-controller"
+        ],
+        "operationId": "getTenants",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registry/v1/{tenant}/{orgNumber}/trustmarks/{trustMarkId}/subjects": {
       "get": {
         "tags": [
           "Trustmarks"
         ],
-        "summary": "Get trust mark with there subjects",
+        "summary": "Get trust mark with their subjects",
         "operationId": "getTrustmarkSubjects",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "trustMarkId",
             "in": "path",
@@ -1992,7 +3267,7 @@
         }
       }
     },
-    "/registry/v1/modules": {
+    "/registry/v1/{tenant}/{orgNumber}/modules": {
       "get": {
         "tags": [
           "Modules"
@@ -2001,6 +3276,22 @@
         "description": "Lists all modules for the organization, optionally filtered by type",
         "operationId": "listModules",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "type",
             "in": "query",
@@ -2024,14 +3315,30 @@
         }
       }
     },
-    "/registry/v1/modules/trustmark-issuer/{trustmarkIssuerId}/trustmarks": {
+    "/registry/v1/{tenant}/{orgNumber}/modules/trustmark-issuer/{trustmarkIssuerId}/trustmarks": {
       "get": {
         "tags": [
           "Modules"
         ],
-        "summary": "Get trust mark issuer",
+        "summary": "List trustmarks for a trust mark issuer",
         "operationId": "getTrustmarks",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "trustmarkIssuerId",
             "in": "path",
@@ -2059,13 +3366,29 @@
         }
       }
     },
-    "/registry/v1/entityconfiguration/signing-keys": {
+    "/registry/v1/{tenant}/{orgNumber}/entityconfiguration/signing-keys": {
       "get": {
         "tags": [
           "EntityConfigurationController"
         ],
         "operationId": "listSigningKeys",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "type",
             "in": "query",
@@ -2087,7 +3410,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/SigningKeyDto"
+                    "type": "string"
                   }
                 }
               }
@@ -2096,7 +3419,7 @@
         }
       }
     },
-    "/registry/v1/entities": {
+    "/registry/v1/{tenant}/{orgNumber}/entities": {
       "get": {
         "tags": [
           "Entities"
@@ -2105,6 +3428,22 @@
         "description": "Lists all entities for the organization, optionally filtered by type and with modules included",
         "operationId": "listEntities",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "type",
             "in": "query",
@@ -2137,13 +3476,31 @@
         }
       }
     },
-    "/registration/v1": {
+    "/registration/v1/{tenant}/{orgNumber}": {
       "get": {
         "tags": [
           "FederationRegistration"
         ],
         "summary": "List all registration records for current organization",
         "operationId": "listRegistrations",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -2157,63 +3514,6 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/registration/v1/{registrationId}": {
-      "get": {
-        "tags": [
-          "FederationRegistration"
-        ],
-        "summary": "Get a single registration by ID",
-        "operationId": "getById",
-        "parameters": [
-          {
-            "name": "registrationId",
-            "in": "path",
-            "description": "Registration ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Registration"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "FederationRegistration"
-        ],
-        "summary": "Remove a join record",
-        "operationId": "deleteJoin",
-        "parameters": [
-          {
-            "name": "registrationId",
-            "in": "path",
-            "description": "ID of the registration to remove",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
           }
         }
       }
@@ -2242,13 +3542,133 @@
         }
       }
     },
-    "/registration-flow/v1/steps": {
+    "/registration-flow/v1/{tenant}/{orgNumber}/trustmark-issuer/{tmIssuerId}/trustmark-assignments": {
+      "get": {
+        "tags": [
+          "Registration Flow"
+        ],
+        "summary": "List flow assignments for all trust marks under a trust mark issuer",
+        "operationId": "getTrustMarkFlowAssignments",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tmIssuerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TrustMarkFlowAssignmentDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-flow/v1/{tenant}/{orgNumber}/trustmark-issuer/{tmIssuerId}/assignments": {
+      "get": {
+        "tags": [
+          "Registration Flow"
+        ],
+        "summary": "List flow assignments for a trust mark issuer (includes assignId)",
+        "operationId": "getTrustMarkIssuerFlowAssignments",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tmIssuerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TrustMarkIssuerFlowAssignmentDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-flow/v1/{tenant}/{orgNumber}/steps": {
       "get": {
         "tags": [
           "Registration Flow"
         ],
         "summary": "List all configured pipeline steps with their settings",
         "operationId": "getSteps",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -2266,7 +3686,7 @@
         }
       }
     },
-    "/registration-flow/v1/intermediate/{taImId}/flows": {
+    "/registration-flow/v1/{tenant}/{orgNumber}/intermediate/{taImId}/flows": {
       "get": {
         "tags": [
           "Registration Flow"
@@ -2274,6 +3694,22 @@
         "summary": "List flows assigned to an intermediate",
         "operationId": "getFlowsForIntermediate",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "taImId",
             "in": "path",
@@ -2301,7 +3737,7 @@
         }
       }
     },
-    "/registration-flow/v1/intermediate/{taImId}/assignments": {
+    "/registration-flow/v1/{tenant}/{orgNumber}/intermediate/{taImId}/assignments": {
       "get": {
         "tags": [
           "Registration Flow"
@@ -2309,6 +3745,22 @@
         "summary": "List flow assignments for an intermediate (includes assignId)",
         "operationId": "getFlowAssignments",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "taImId",
             "in": "path",
@@ -2336,13 +3788,31 @@
         }
       }
     },
-    "/registration-flow/v1/flows": {
+    "/registration-flow/v1/{tenant}/{orgNumber}/flows": {
       "get": {
         "tags": [
           "Registration Flow"
         ],
         "summary": "List all registration flows",
         "operationId": "listFlows_1",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -2360,7 +3830,7 @@
         }
       }
     },
-    "/registration-flow/v1/flow/{flowId}": {
+    "/registration-flow/v1/{tenant}/{orgNumber}/flow/{flowId}": {
       "get": {
         "tags": [
           "Registration Flow"
@@ -2368,6 +3838,22 @@
         "summary": "Get a registration flow by ID",
         "operationId": "getFlow",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "flowId",
             "in": "path",
@@ -2392,13 +3878,31 @@
         }
       }
     },
-    "/registration-admin/v1": {
+    "/registration-admin/v1/{tenant}/{orgNumber}": {
       "get": {
         "tags": [
           "RegistrationAdmin"
         ],
         "summary": "List all registration records for current organization",
         "operationId": "listRegistrations_1",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -2416,7 +3920,7 @@
         }
       }
     },
-    "/registration-admin/v1/{registrationId}": {
+    "/registration-admin/v1/{tenant}/{orgNumber}/{registrationId}": {
       "get": {
         "tags": [
           "RegistrationAdmin"
@@ -2424,6 +3928,22 @@
         "summary": "Get a single registration by ID",
         "operationId": "getById_1",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "registrationId",
             "in": "path",
@@ -2449,7 +3969,7 @@
         }
       }
     },
-    "/registration-admin/v1/count": {
+    "/registration-admin/v1/{tenant}/{orgNumber}/count": {
       "get": {
         "tags": [
           "RegistrationAdmin"
@@ -2457,6 +3977,22 @@
         "summary": "Count unhandled PENDING registrations for an intermediate",
         "operationId": "countPending",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "taimId",
             "in": "query",
@@ -2566,7 +4102,107 @@
         }
       }
     },
-    "/registration-flow/v1/intermediate/{taImId}/assign/{assignId}": {
+    "/registration-flow/v1/{tenant}/{orgNumber}/trustmark/{trustmarkId}/assign/{assignId}": {
+      "delete": {
+        "tags": [
+          "Registration Flow"
+        ],
+        "summary": "Remove a flow assignment from a specific trust mark",
+        "operationId": "unassignFlowFromTrustMark",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "trustmarkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "assignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/registration-flow/v1/{tenant}/{orgNumber}/trustmark-issuer/{tmIssuerId}/assign/{assignId}": {
+      "delete": {
+        "tags": [
+          "Registration Flow"
+        ],
+        "summary": "Remove a flow assignment from a trust mark issuer",
+        "operationId": "unassignFlowFromTrustMarkIssuer",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tmIssuerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "assignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/registration-flow/v1/{tenant}/{orgNumber}/intermediate/{taImId}/assign/{assignId}": {
       "delete": {
         "tags": [
           "Registration Flow"
@@ -2574,6 +4210,22 @@
         "summary": "Remove a flow assignment from an intermediate",
         "operationId": "unassignFlow",
         "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
           {
             "name": "taImId",
             "in": "path",
@@ -2986,112 +4638,6 @@
           }
         }
       },
-      "ConfigValueDto": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "value": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          },
-          "defaultValue": {}
-        }
-      },
-      "RegistrationFlowDto": {
-        "type": "object",
-        "properties": {
-          "flowId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "descriptionSv": {
-            "type": "string"
-          },
-          "technology": {
-            "type": "string",
-            "enum": [
-              "OIDC",
-              "SAML"
-            ]
-          },
-          "entityType": {
-            "type": "string"
-          },
-          "steps": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StepDto"
-            }
-          }
-        }
-      },
-      "StepDto": {
-        "type": "object",
-        "properties": {
-          "stepId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "config": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ConfigValueDto"
-            }
-          }
-        }
-      },
-      "EntityConfigurationViewDto": {
-        "type": "object",
-        "properties": {
-          "header": {
-            "type": "object",
-            "additionalProperties": {}
-          },
-          "payload": {
-            "type": "object",
-            "additionalProperties": {}
-          }
-        }
-      },
-      "JwksLoadedDto": {
-        "type": "object",
-        "properties": {
-          "entityId": {
-            "type": "string",
-            "description": "EntityID",
-            "example": "https://www.digg.se/mysqrvice"
-          },
-          "ecLocation": {
-            "type": "string",
-            "description": "Location from where the entity configuration was loaded from",
-            "example": "https://www.digg.se/mysqrvice/.well-known/openid-federation"
-          },
-          "jwks": {
-            "type": "object",
-            "additionalProperties": {},
-            "description": "Jwks that is extracted from entity statement"
-          }
-        }
-      },
       "RegistrationJoinRequest": {
         "type": "object",
         "properties": {
@@ -3137,6 +4683,27 @@
           }
         }
       },
+      "ContextDiffEntry": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Context key that changed"
+          },
+          "changeType": {
+            "type": "string",
+            "description": "Type of change: ADDED, CHANGED, or REMOVED"
+          },
+          "before": {
+            "type": "string",
+            "description": "Value before execution, null for ADDED entries"
+          },
+          "after": {
+            "type": "string",
+            "description": "Value after execution, null for REMOVED entries"
+          }
+        }
+      },
       "Registration": {
         "type": "object",
         "properties": {
@@ -3167,6 +4734,21 @@
           "isHosted": {
             "type": "boolean",
             "description": "True if the entity's metadata is hosted in this registry",
+            "readOnly": true
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Hosted metadata, present when isHosted is true",
+            "readOnly": true
+          },
+          "registrationType": {
+            "type": "string",
+            "description": "Registration type: SUBORDINATE or TRUST_MARK_SUBORDINATE",
+            "enum": [
+              "SUBORDINATE",
+              "TRUST_MARK_SUBORDINATE"
+            ],
             "readOnly": true
           },
           "statusFedreg": {
@@ -3211,7 +4793,10 @@
                 "OP",
                 "AS",
                 "OAC",
-                "ORS"
+                "ORS",
+                "SAML_IDP",
+                "SAML_SP",
+                "SAML_RP"
               ]
             },
             "readOnly": true
@@ -3219,6 +4804,11 @@
           "organizationName": {
             "type": "string",
             "description": "Name of the organization that submitted the registration",
+            "readOnly": true
+          },
+          "subordinateEntityId": {
+            "type": "string",
+            "description": "Entity ID of the subordinate subject, populated for TRUST_MARK_SUBORDINATE registrations",
             "readOnly": true
           },
           "successful": {
@@ -3256,6 +4846,13 @@
             "description": "Validation issues found during this step",
             "items": {
               "$ref": "#/components/schemas/StepIssue"
+            }
+          },
+          "contextDiff": {
+            "type": "array",
+            "description": "Changes made to the pipeline context by this step",
+            "items": {
+              "$ref": "#/components/schemas/ContextDiffEntry"
             }
           }
         }
@@ -3316,6 +4913,126 @@
           }
         }
       },
+      "ConfigValueDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "defaultValue": {}
+        }
+      },
+      "RegistrationFlowDto": {
+        "type": "object",
+        "properties": {
+          "flowId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "descriptionSv": {
+            "type": "string"
+          },
+          "technology": {
+            "type": "string",
+            "enum": [
+              "OIDC",
+              "SAML"
+            ]
+          },
+          "entityType": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StepDto"
+            }
+          },
+          "flowType": {
+            "type": "string",
+            "enum": [
+              "INTERMEDIATE",
+              "TRUST_MARK_ISSUER"
+            ]
+          }
+        }
+      },
+      "StepDto": {
+        "type": "object",
+        "properties": {
+          "stepId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "config": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConfigValueDto"
+            }
+          },
+          "flowType": {
+            "type": "string",
+            "enum": [
+              "INTERMEDIATE",
+              "TRUST_MARK_ISSUER"
+            ]
+          }
+        }
+      },
+      "EntityConfigurationViewDto": {
+        "type": "object",
+        "properties": {
+          "header": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
+      "JwksLoadedDto": {
+        "type": "object",
+        "properties": {
+          "entityId": {
+            "type": "string",
+            "description": "EntityID",
+            "example": "https://www.digg.se/mysqrvice"
+          },
+          "ecLocation": {
+            "type": "string",
+            "description": "Location from where the entity configuration was loaded from",
+            "example": "https://www.digg.se/mysqrvice/.well-known/openid-federation"
+          },
+          "jwks": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Jwks that is extracted from entity statement"
+          }
+        }
+      },
       "AssignFlowRequest": {
         "type": "object",
         "properties": {
@@ -3341,6 +5058,45 @@
             "type": "string",
             "description": "Human-readable explanation shown to the applicant",
             "example": "Entity configuration could not be fetched from the provided entity ID."
+          }
+        }
+      },
+      "TenantDto": {
+        "type": "object",
+        "properties": {
+          "tenant": {
+            "type": "string"
+          },
+          "organizations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TenantOrganizationDto"
+            }
+          }
+        }
+      },
+      "TenantOrganizationDto": {
+        "type": "object",
+        "properties": {
+          "orgNumber": {
+            "type": "string"
+          },
+          "orgName": {
+            "type": "string"
+          },
+          "entityPrefix": {
+            "type": "string"
+          }
+        }
+      },
+      "TenantsResponse": {
+        "type": "object",
+        "properties": {
+          "tenants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TenantDto"
+            }
           }
         }
       },
@@ -3417,20 +5173,6 @@
             "items": {
               "$ref": "#/components/schemas/TrustmarkIssuer"
             }
-          }
-        }
-      },
-      "SigningKeyDto": {
-        "type": "object",
-        "properties": {
-          "kid": {
-            "type": "string"
-          },
-          "alg": {
-            "type": "string"
-          },
-          "kty": {
-            "type": "string"
           }
         }
       },
@@ -3557,6 +5299,51 @@
           }
         }
       },
+      "TrustMarkFlowAssignmentDto": {
+        "type": "object",
+        "properties": {
+          "assignId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "trustmarkId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "trustmarkType": {
+            "type": "string"
+          },
+          "flowId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "TrustMarkIssuerFlowAssignmentDto": {
+        "type": "object",
+        "properties": {
+          "assignId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "flowId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
       "IntermediateFlowAssignmentDto": {
         "type": "object",
         "properties": {
@@ -3588,6 +5375,13 @@
           },
           "description": {
             "type": "string"
+          },
+          "flowType": {
+            "type": "string",
+            "enum": [
+              "INTERMEDIATE",
+              "TRUST_MARK_ISSUER"
+            ]
           }
         }
       }
@@ -3598,12 +5392,6 @@
         "description": "JWT token obtained from authentication endpoint",
         "scheme": "bearer",
         "bearerFormat": "JWT"
-      },
-      "selectedOrgNumber": {
-        "type": "apiKey",
-        "description": "Organization number to use for the request. Enter your organization number here.",
-        "name": "selected-org-number",
-        "in": "header"
       }
     }
   }

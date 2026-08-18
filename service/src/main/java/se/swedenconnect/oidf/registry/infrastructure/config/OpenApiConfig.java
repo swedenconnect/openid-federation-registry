@@ -21,11 +21,16 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.media.StringSchema;
+import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import se.swedenconnect.oidf.registry.infrastructure.auth.AuthConstants;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Configuration class for OpenAPI/Swagger documentation.
@@ -61,13 +66,54 @@ public class OpenApiConfig {
                 .type(SecurityScheme.Type.HTTP)
                 .scheme("bearer")
                 .bearerFormat("JWT")
-                .description("JWT token obtained from authentication endpoint"))
-            .addSecuritySchemes("selectedOrgNumber", new SecurityScheme()
-                .type(SecurityScheme.Type.APIKEY)
-                .in(SecurityScheme.In.HEADER)
-                .name(AuthConstants.SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE)
-                .description("Organization number to use for the request. Enter your organization number here.")))
-        .addSecurityItem(new SecurityRequirement().addList("bearerAuth").addList("selectedOrgNumber"));
+                .description("JWT token obtained from authentication endpoint")))
+        .addSecurityItem(new SecurityRequirement().addList("bearerAuth"));
+  }
+
+  /**
+   * Post-processes the complete OpenAPI spec and injects {tenant} and {orgNumber} as
+   * explicit path parameters on every operation whose path template contains them.
+   * Springdoc does not reliably pick up class-level @RequestMapping path variables,
+   * so this customizer adds them based on the path string directly.
+   *
+   * @return OpenAPI customizer
+   */
+  @Bean
+  public OpenApiCustomizer tenantOrgNumberParameterCustomizer() {
+    return openApi -> openApi.getPaths().forEach((path, pathItem) -> {
+      final boolean hasTenant = path.contains("{tenant}");
+      final boolean hasOrgNumber = path.contains("{orgNumber}");
+      if (!hasTenant && !hasOrgNumber) {
+        return;
+      }
+      pathItem.readOperations().forEach(operation -> {
+        List<Parameter> params = operation.getParameters();
+        if (params == null) {
+          params = new ArrayList<>();
+          operation.setParameters(params);
+        }
+        final List<Parameter> paramsFinal = params;
+
+        if (hasTenant && paramsFinal.stream().noneMatch(p -> "tenant".equals(p.getName()))) {
+          paramsFinal.add(0, new Parameter()
+              .name("tenant")
+              .in("path")
+              .required(true)
+              .description("Tenant identifier, also the function name")
+              .example("swedenconnect")
+              .schema(new StringSchema()));
+        }
+        if (hasOrgNumber && paramsFinal.stream().noneMatch(p -> "orgNumber".equals(p.getName()))) {
+          paramsFinal.add(hasTenant ? 1 : 0, new Parameter()
+              .name("orgNumber")
+              .in("path")
+              .required(true)
+              .description("Organization number")
+              .example("2021003948")
+              .schema(new StringSchema()));
+        }
+      });
+    });
   }
 }
 

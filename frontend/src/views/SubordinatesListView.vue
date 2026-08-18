@@ -209,9 +209,9 @@ async function loadSubordinates() {
 
   let modulePath = null;
   if (moduleType.value === 'trustanchor') {
-    modulePath = trustAnchorModulePath(taImId.value);
+    modulePath = trustAnchorModulePath(userStore.selectedTenant, userStore.orgNumber, taImId.value);
   } else if (moduleType.value === 'intermediate') {
-    modulePath = intermediateModulePath(taImId.value);
+    modulePath = intermediateModulePath(userStore.selectedTenant, userStore.orgNumber, taImId.value);
   }
 
   if (!modulePath) {
@@ -267,7 +267,7 @@ async function deleteSubordinate() {
       return;
     }
 
-    await requestDelete(subordinatePath(subordinateId));
+    await requestDelete(subordinatePath(userStore.selectedTenant, userStore.orgNumber, subordinateId));
 
     if (ok.value) {
       deleteDialog.value = false;
@@ -287,7 +287,7 @@ function goBack() {
 
 async function loadEntityIdentifier() {
   if (!entityId.value) return;
-  const response = await requestGet(federationEntityPath(entityId.value));
+  const response = await requestGet(federationEntityPath(userStore.selectedTenant, userStore.orgNumber, entityId.value));
   if (response) {
     entityIdentifier.value = response.entityIdentifier || response.federationEntity?.entityIdentifier || null;
   }

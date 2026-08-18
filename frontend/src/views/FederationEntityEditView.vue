@@ -561,6 +561,7 @@ import {useLoadJwks} from '@/api/composables/jwks';
 import {useSigningKeys} from '@/api/composables/signingKeys';
 import ListField from '@/components/ListField.vue';
 import EntityConfigurationViewer from '@/components/EntityConfigurationViewer.vue';
+import {useUserStore} from '@/stores/userStore';
 import {
   federationEntityPath,
   intermediateFlowAssignmentsPath,
@@ -577,6 +578,7 @@ const route = useRoute();
 const router = useRouter();
 const {requestGet, requestPut, requestPost, requestDelete, loading, ok} = useRequest();
 const errorStore = useErrorStore();
+const userStore = useUserStore();
 const {loadJwks: loadJwksFromApi, loading: loadingResolverJwks} = useLoadJwks();
 const {signingKeys, fetchSigningKeys} = useSigningKeys();
 
@@ -677,7 +679,7 @@ async function loadResolverJwks() {
 async function loadEntity() {
   errorStore.clearError();
   entityId.value = route.params.id;
-  const response = await requestGet(`${federationEntityPath(entityId.value)}?includemodules=true`);
+  const response = await requestGet(`${federationEntityPath(userStore.selectedTenant, userStore.orgNumber, entityId.value)}?includemodules=true`);
   if (response) {
     // Response can be FederationEntityWithModules or FederationEntity
     const entity = response.federationEntity || response;
@@ -731,8 +733,8 @@ async function loadEntity() {
 
 async function loadFlowData(taImId) {
   const [flows, assignments] = await Promise.all([
-    requestGet(registrationFlowsPath),
-    requestGet(intermediateFlowAssignmentsPath(taImId)),
+    requestGet(registrationFlowsPath(userStore.selectedTenant, userStore.orgNumber)),
+    requestGet(intermediateFlowAssignmentsPath(userStore.selectedTenant, userStore.orgNumber, taImId)),
   ]);
   availableFlows.value = Array.isArray(flows) ? flows : [];
   assignedFlows.value = Array.isArray(assignments) ? assignments : [];
@@ -742,7 +744,7 @@ async function assignFlow() {
   if (!selectedFlowToAdd.value) return;
   addingFlow.value = true;
   try {
-    const result = await requestPost(intermediateFlowAssignPath(modules.value.intermediate.id), {
+    const result = await requestPost(intermediateFlowAssignPath(userStore.selectedTenant, userStore.orgNumber, modules.value.intermediate.id), {
       flowId: selectedFlowToAdd.value.flowId,
     });
     if (ok.value && result) {
@@ -762,7 +764,7 @@ async function assignFlow() {
 async function unassignFlow(assignId) {
   removingAssignId.value = assignId;
   try {
-    await requestDelete(intermediateFlowUnassignPath(modules.value.intermediate.id, assignId));
+    await requestDelete(intermediateFlowUnassignPath(userStore.selectedTenant, userStore.orgNumber, modules.value.intermediate.id, assignId));
     if (ok.value) {
       assignedFlows.value = assignedFlows.value.filter(a => a.assignId !== assignId);
     }
@@ -786,7 +788,7 @@ async function saveEntity() {
       signingKeyId: signingKeyId.value ? [signingKeyId.value] : [],
     };
 
-    await requestPut(federationEntityPath(entityId.value), entityData);
+    await requestPut(federationEntityPath(userStore.selectedTenant, userStore.orgNumber, entityId.value), entityData);
 
     if (ok.value) {
       // Reload to get updated data
@@ -834,11 +836,11 @@ async function saveModule(moduleType) {
           trustMarkIssuers: module.trustMarkIssuers.filter(s => s && s.trim() !== ''),
         };
         if (module.id) {
-          endpoint = trustAnchorModulePath(module.id);
+          endpoint = trustAnchorModulePath(userStore.selectedTenant, userStore.orgNumber, module.id);
           await requestPut(endpoint, moduleData);
         } else {
           const moduleId = crypto.randomUUID();
-          endpoint = trustAnchorModulePath(moduleId);
+          endpoint = trustAnchorModulePath(userStore.selectedTenant, userStore.orgNumber, moduleId);
           await requestPost(endpoint, moduleData);
           if (ok.value) {
             module.id = moduleId;
@@ -852,11 +854,11 @@ async function saveModule(moduleType) {
           active: module.active,
         };
         if (module.id) {
-          endpoint = intermediateModulePath(module.id);
+          endpoint = intermediateModulePath(userStore.selectedTenant, userStore.orgNumber, module.id);
           await requestPut(endpoint, moduleData);
         } else {
           const moduleId = crypto.randomUUID();
-          endpoint = intermediateModulePath(moduleId);
+          endpoint = intermediateModulePath(userStore.selectedTenant, userStore.orgNumber, moduleId);
           await requestPost(endpoint, moduleData);
           if (ok.value) {
             module.id = moduleId;
@@ -875,11 +877,11 @@ async function saveModule(moduleType) {
           stepCachedValueThreshold: module.stepCachedValueThreshold ?? null,
         };
         if (module.id) {
-          endpoint = resolverModulePath(module.id);
+          endpoint = resolverModulePath(userStore.selectedTenant, userStore.orgNumber, module.id);
           await requestPut(endpoint, moduleData);
         } else {
           const moduleId = crypto.randomUUID();
-          endpoint = resolverModulePath(moduleId);
+          endpoint = resolverModulePath(userStore.selectedTenant, userStore.orgNumber, moduleId);
           await requestPost(endpoint, moduleData);
           if (ok.value) {
             module.id = moduleId;
@@ -894,11 +896,11 @@ async function saveModule(moduleType) {
           trustMarkTokenValidityDuration: module.trustMarkTokenValidityDuration,
         };
         if (module.id) {
-          endpoint = trustmarkIssuerModulePath(module.id);
+          endpoint = trustmarkIssuerModulePath(userStore.selectedTenant, userStore.orgNumber, module.id);
           await requestPut(endpoint, moduleData);
         } else {
           const moduleId = crypto.randomUUID();
-          endpoint = trustmarkIssuerModulePath(moduleId);
+          endpoint = trustmarkIssuerModulePath(userStore.selectedTenant, userStore.orgNumber, moduleId);
           await requestPost(endpoint, moduleData);
           if (ok.value) {
             module.id = moduleId;
@@ -942,16 +944,16 @@ async function confirmDeleteModule() {
     let endpoint;
     switch (moduleType) {
       case 'trustanchor':
-        endpoint = trustAnchorModulePath(module.id);
+        endpoint = trustAnchorModulePath(userStore.selectedTenant, userStore.orgNumber, module.id);
         break;
       case 'intermediate':
-        endpoint = intermediateModulePath(module.id);
+        endpoint = intermediateModulePath(userStore.selectedTenant, userStore.orgNumber, module.id);
         break;
       case 'resolver':
-        endpoint = resolverModulePath(module.id);
+        endpoint = resolverModulePath(userStore.selectedTenant, userStore.orgNumber, module.id);
         break;
       case 'trustmarkissuer':
-        endpoint = trustmarkIssuerModulePath(module.id);
+        endpoint = trustmarkIssuerModulePath(userStore.selectedTenant, userStore.orgNumber, module.id);
         break;
     }
 

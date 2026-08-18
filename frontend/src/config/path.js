@@ -39,51 +39,54 @@ function getAbsolutePath(path) {
 }
 
 export const adminAuthenticatePath = getAbsolutePath('authenticate?reg=oidf-admin&continue=/');
-export const adminPath = getAbsolutePath('registry/v1/entities');
 export const userInfoPath = getAbsolutePath('userinfo');
-export const trustmarksPath = getAbsolutePath('registry/v1/trustmarks');
-export const trustmarksListingPath = (trustmarkIssuerID) => getAbsolutePath(`registry/v1/modules/trustmark-issuer/${trustmarkIssuerID}/trustmarks`);
-export const trustmarkSubjectsPath = getAbsolutePath('registry/v1/trustmarks/subjects');
+export const tenantsPath = getAbsolutePath('tenants');
 export const logoutPath = getAbsolutePath('logout');
-
-export const federationEntitiesPath = getAbsolutePath('registry/v1/entities/federation');
-export const federationEntityPath = (id) => getAbsolutePath(`registry/v1/entities/federation/${id}`);
-export const hostedEntitiesPath = getAbsolutePath('registry/v1/entities/hosted');
-export const hostedEntityPath = (id) => getAbsolutePath(`registry/v1/entities/hosted/${id}`);
-
-export const trustAnchorModulePath = (id) => getAbsolutePath(`registry/v1/modules/trust-anchor/${id}`);
-export const intermediateModulePath = (id) => getAbsolutePath(`registry/v1/modules/intermediate/${id}`);
-export const resolverModulePath = (id) => getAbsolutePath(`registry/v1/modules/resolver/${id}`);
-export const trustmarkIssuerModulePath = (id) => getAbsolutePath(`registry/v1/modules/trustmark-issuer/${id}`);
-
-export const subordinatesPath = getAbsolutePath('registry/v1/subordinates/');
-export const subordinatePath = (id) => getAbsolutePath(`registry/v1/subordinates/${id}`);
-
-export const jwksSupportPath = getAbsolutePath('registry/v1/entityconfiguration/jwks');
-export const entityConfigurationViewPath = getAbsolutePath('registry/v1/entityconfiguration/view');
-
 export const swaggerUiPath = getAbsolutePath('swagger-ui.html');
 
-export const registrationFlowsPath = getAbsolutePath('registration-flow/v1/flows');
-export const registrationFlowPath = (id) => getAbsolutePath(`registration-flow/v1/flow/${id}`);
-export const registrationFlowCreatePath = getAbsolutePath('registration-flow/v1/flow');
-export const registrationFlowStepsPath = getAbsolutePath('registration-flow/v1/steps');
+// Endpoints below require the tenant and organization currently selected in the
+// Tenant/Organization dropdowns (see userStore's selectedTenant/orgNumber).
+export const adminPath = (tenant, orgNumber) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/entities`);
+export const trustmarksPath = (tenant, orgNumber) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/trustmarks`);
+export const trustmarksListingPath = (tenant, orgNumber, trustmarkIssuerID) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/modules/trustmark-issuer/${trustmarkIssuerID}/trustmarks`);
+export const trustmarkSubjectsPath = (tenant, orgNumber) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/trustmarks/subjects`);
 
-export const intermediateFlowAssignmentsPath = (taImId) => getAbsolutePath(`registration-flow/v1/intermediate/${taImId}/assignments`);
-export const intermediateFlowAssignPath = (taImId) => getAbsolutePath(`registration-flow/v1/intermediate/${taImId}/assign`);
-export const intermediateFlowUnassignPath = (taImId, assignId) => getAbsolutePath(`registration-flow/v1/intermediate/${taImId}/assign/${assignId}`);
+export const federationEntitiesPath = (tenant, orgNumber) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/entities/federation`);
+export const federationEntityPath = (tenant, orgNumber, id) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/entities/federation/${id}`);
+export const hostedEntitiesPath = (tenant, orgNumber) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/entities/hosted`);
+export const hostedEntityPath = (tenant, orgNumber, id) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/entities/hosted/${id}`);
 
-export const tmIssuerTrustmarkAssignmentsPath = (tmIssuerId) => getAbsolutePath(`registration-flow/v1/trustmark-issuer/${tmIssuerId}/trustmark-assignments`);
-export const tmFlowAssignPath = (trustmarkId) => getAbsolutePath(`registration-flow/v1/trustmark/${trustmarkId}/assign`);
-export const tmFlowUnassignPath = (trustmarkId, assignId) => getAbsolutePath(`registration-flow/v1/trustmark/${trustmarkId}/assign/${assignId}`);
+export const trustAnchorModulePath = (tenant, orgNumber, id) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/modules/trust-anchor/${id}`);
+export const intermediateModulePath = (tenant, orgNumber, id) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/modules/intermediate/${id}`);
+export const resolverModulePath = (tenant, orgNumber, id) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/modules/resolver/${id}`);
+export const trustmarkIssuerModulePath = (tenant, orgNumber, id) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/modules/trustmark-issuer/${id}`);
 
-export const registrationAdminPath = getAbsolutePath('registration-admin/v1');
-export const registrationAdminItemPath = (id) => getAbsolutePath(`registration-admin/v1/${id}`);
-export const registrationAdminRejectPath = (id) => getAbsolutePath(`registration-admin/v1/${id}/reject`);
-export const registrationAdminApproveStepPath = (id, stepIndex) => getAbsolutePath(`registration-admin/v1/${id}/steps/${stepIndex}/approve`);
+export const subordinatesPath = (tenant, orgNumber) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/subordinates/`);
+export const subordinatePath = (tenant, orgNumber, id) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/subordinates/${id}`);
+
+export const jwksSupportPath = (tenant, orgNumber) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/entityconfiguration/jwks`);
+export const entityConfigurationViewPath = (tenant, orgNumber) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/entityconfiguration/view`);
+
+export const registrationFlowsPath = (tenant, orgNumber) => getAbsolutePath(`registration-flow/v1/${tenant}/${orgNumber}/flows`);
+export const registrationFlowPath = (tenant, orgNumber, id) => getAbsolutePath(`registration-flow/v1/${tenant}/${orgNumber}/flow/${id}`);
+export const registrationFlowCreatePath = (tenant, orgNumber) => getAbsolutePath(`registration-flow/v1/${tenant}/${orgNumber}/flow`);
+export const registrationFlowStepsPath = (tenant, orgNumber) => getAbsolutePath(`registration-flow/v1/${tenant}/${orgNumber}/steps`);
+
+export const intermediateFlowAssignmentsPath = (tenant, orgNumber, taImId) => getAbsolutePath(`registration-flow/v1/${tenant}/${orgNumber}/intermediate/${taImId}/assignments`);
+export const intermediateFlowAssignPath = (tenant, orgNumber, taImId) => getAbsolutePath(`registration-flow/v1/${tenant}/${orgNumber}/intermediate/${taImId}/assign`);
+export const intermediateFlowUnassignPath = (tenant, orgNumber, taImId, assignId) => getAbsolutePath(`registration-flow/v1/${tenant}/${orgNumber}/intermediate/${taImId}/assign/${assignId}`);
+
+export const tmIssuerTrustmarkAssignmentsPath = (tenant, orgNumber, tmIssuerId) => getAbsolutePath(`registration-flow/v1/${tenant}/${orgNumber}/trustmark-issuer/${tmIssuerId}/trustmark-assignments`);
+export const tmFlowAssignPath = (tenant, orgNumber, trustmarkId) => getAbsolutePath(`registration-flow/v1/${tenant}/${orgNumber}/trustmark/${trustmarkId}/assign`);
+export const tmFlowUnassignPath = (tenant, orgNumber, trustmarkId, assignId) => getAbsolutePath(`registration-flow/v1/${tenant}/${orgNumber}/trustmark/${trustmarkId}/assign/${assignId}`);
+
+export const modulesPath = (tenant, orgNumber) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/modules`);
+export const signingKeysPath = (tenant, orgNumber, type) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/entityconfiguration/signing-keys?type=${type}`);
+
+export const registrationAdminPath = (tenant, orgNumber) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}`);
+export const registrationAdminItemPath = (tenant, orgNumber, id) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/${id}`);
+export const registrationAdminRejectPath = (tenant, orgNumber, id) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/${id}/reject`);
+export const registrationAdminApproveStepPath = (tenant, orgNumber, id, stepIndex) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/${id}/steps/${stepIndex}/approve`);
 
 export const registrationPublicFlowsPath = getAbsolutePath('registration/v1/flows');
-export const registrationTriggerPath = (joinId) => getAbsolutePath(`registration/v1/${joinId}`);
-
-export const modulesPath = getAbsolutePath('registry/v1/modules');
-export const signingKeysPath = (type) => getAbsolutePath(`registry/v1/entityconfiguration/signing-keys?type=${type}`);
+export const registrationTriggerPath = (tenant, orgNumber, joinId) => getAbsolutePath(`registration/v1/${tenant}/${orgNumber}/${joinId}`);

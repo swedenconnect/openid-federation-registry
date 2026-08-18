@@ -24,8 +24,6 @@ import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTe
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -37,10 +35,8 @@ import se.swedenconnect.oidf.registry.api.model.FlowSummaryDto;
 import se.swedenconnect.oidf.registry.api.model.RegistrationFlowDto;
 import se.swedenconnect.oidf.registry.api.model.StepDto;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
-import se.swedenconnect.oidf.registry.fixture.TestRestClientFactory;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,6 +53,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @AutoConfigureRestTestClient
 class RegistrationFlowCRUDIT {
 
+  private static final String TENANT = "Swedenconnect";
+
   @Container
   @ServiceConnection
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
@@ -68,17 +66,14 @@ class RegistrationFlowCRUDIT {
   private JwtTestUtils jwtTestUtils;
 
   private RegistrationFlowApi flowApi;
-  private RestClient restClient;
 
   @BeforeEach
   void setUp() {
     final ApiClient apiClient = new ApiClient();
     apiClient.setBasePath("http://localhost:" + this.port);
     apiClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.PM));
-    apiClient.setApiKey(JwtTestUtils.OrganisationType.PM.orgId);
 
     this.flowApi = new RegistrationFlowApi(apiClient);
-    this.restClient = TestRestClientFactory.createAuthenticated(this.port, null);
   }
 
   private RegistrationFlowDto validFlow(final String name, final String description) {
@@ -106,7 +101,7 @@ class RegistrationFlowCRUDIT {
                 .key("entityid")
                 .value("https://www.digg.se/entityid"))));
 
-    final RegistrationFlowDto created = this.flowApi.createFlow(input);
+    final RegistrationFlowDto created = this.flowApi.createFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, input);
 
     assertThat(created).isNotNull();
     assertThat(created.getFlowId()).isNotNull();
@@ -118,10 +113,10 @@ class RegistrationFlowCRUDIT {
 
   @Test
   void listFlowsReturnsCreatedFlows() {
-    this.flowApi.createFlow(validFlow("List-Flow-A", "First"));
-    this.flowApi.createFlow(validFlow("List-Flow-B", "Second"));
+    this.flowApi.createFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, validFlow("List-Flow-A", "First"));
+    this.flowApi.createFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, validFlow("List-Flow-B", "Second"));
 
-    final List<FlowSummaryDto> flows = this.flowApi.listFlows1();
+    final List<FlowSummaryDto> flows = this.flowApi.listFlows1(TENANT, JwtTestUtils.OrganisationType.PM.orgId);
 
     assertThat(flows).isNotNull().isNotEmpty();
     final FlowSummaryDto first = flows.stream()
@@ -134,34 +129,29 @@ class RegistrationFlowCRUDIT {
 
   @Test
   void getFlowById() {
-    final RegistrationFlowDto created = this.flowApi.createFlow(validFlow("Get-Flow", "Fetch by ID"));
+    final RegistrationFlowDto created = this.flowApi.createFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, validFlow("Get-Flow", "Fetch by ID"));
+
     final UUID flowId = created.getFlowId();
 
-    final Map<String, Object> retrieved = this.restClient.get()
-        .uri("/registration-flow/v1/flow/{id}", flowId)
-        .retrieve()
-        .body(new ParameterizedTypeReference<>() {});
+    final RegistrationFlowDto retrieved = this.flowApi.getFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, flowId);
 
     assertThat(retrieved).isNotNull();
-    assertThat(retrieved.get("name")).isEqualTo("Get-Flow");
-    assertThat(retrieved.get("description")).isEqualTo("Fetch by ID");
+    assertThat(retrieved.getName()).isEqualTo("Get-Flow");
+    assertThat(retrieved.getDescription()).isEqualTo("Fetch by ID");
   }
 
   @Test
   void getFlowByIdNotFound() {
-    assertThatThrownBy(() -> this.restClient.get()
-        .uri("/registration-flow/v1/flow/{id}", UUID.randomUUID())
-        .retrieve()
-        .body(Map.class))
+    assertThatThrownBy(() -> this.flowApi.getFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, UUID.randomUUID()))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(ex -> assertThat(((RestClientResponseException) ex).getStatusCode().value()).isEqualTo(404));
   }
 
   @Test
   void updateFlow() {
-    final UUID flowId = this.flowApi.createFlow(validFlow("Update-Original", "Before update")).getFlowId();
+    final UUID flowId = this.flowApi.createFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, validFlow("Update-Original", "Before update")).getFlowId();
 
-    final RegistrationFlowDto updated = this.flowApi.updateFlow(flowId,
+    final RegistrationFlowDto updated = this.flowApi.updateFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, flowId,
         validFlow("Update-Changed", "After update"));
 
     assertThat(updated).isNotNull();
@@ -172,50 +162,41 @@ class RegistrationFlowCRUDIT {
 
   @Test
   void updateFlowPersists() {
-    final UUID flowId = this.flowApi.createFlow(validFlow("Persist-Original", "Before")).getFlowId();
+    final UUID flowId = this.flowApi.createFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, validFlow("Persist-Original", "Before")).getFlowId();
 
-    this.flowApi.updateFlow(flowId, validFlow("Persist-Updated", "After"));
+    this.flowApi.updateFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, flowId, validFlow("Persist-Updated", "After"));
 
-    final Map<String, Object> retrieved = this.restClient.get()
-        .uri("/registration-flow/v1/flow/{id}", flowId)
-        .retrieve()
-        .body(new ParameterizedTypeReference<>() {});
+    final RegistrationFlowDto retrieved = this.flowApi.getFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, flowId);
 
     assertThat(retrieved).isNotNull();
-    assertThat(retrieved.get("name")).isEqualTo("Persist-Updated");
-    assertThat(retrieved.get("description")).isEqualTo("After");
+    assertThat(retrieved.getName()).isEqualTo("Persist-Updated");
+    assertThat(retrieved.getDescription()).isEqualTo("After");
   }
 
   @Test
   void deleteFlow() {
-    final UUID flowId = this.flowApi.createFlow(validFlow("Delete-Flow", "Will be deleted")).getFlowId();
+    final UUID flowId = this.flowApi.createFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, validFlow("Delete-Flow", "Will be deleted")).getFlowId();
 
-    this.flowApi.deleteFlowWithResponseSpec(flowId).toBodilessEntity();
+    this.flowApi.deleteFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, flowId);
 
-    assertThatThrownBy(() -> this.restClient.get()
-        .uri("/registration-flow/v1/flow/{id}", flowId)
-        .retrieve()
-        .body(Map.class))
+    assertThatThrownBy(() -> this.flowApi.getFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, flowId))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(ex -> assertThat(((RestClientResponseException) ex).getStatusCode().value()).isEqualTo(404));
   }
 
   @Test
   void listFlowsSummaryContainsIdNameDescription() {
-    this.flowApi.createFlow(validFlow("Summary-Flow", "Summary desc"));
+    this.flowApi.createFlow(TENANT, JwtTestUtils.OrganisationType.PM.orgId, validFlow("Summary-Flow", "Summary desc"));
 
-    final List<Map<String, Object>> summaries = this.restClient.get()
-        .uri("/registration-flow/v1/flows")
-        .retrieve()
-        .body(new ParameterizedTypeReference<>() {});
+    final List<FlowSummaryDto> summaries = this.flowApi.listFlows1(TENANT, JwtTestUtils.OrganisationType.PM.orgId);
 
-    final Map<String, Object> match = summaries.stream()
-        .filter(s -> "Summary-Flow".equals(s.get("name")))
+    final FlowSummaryDto match = summaries.stream()
+        .filter(s -> "Summary-Flow".equals(s.getName()))
         .findFirst()
         .orElseThrow();
 
-    assertThat(match.get("flowId")).isNotNull();
-    assertThat(match.get("name")).isEqualTo("Summary-Flow");
-    assertThat(match.get("description")).isEqualTo("Summary desc");
+    assertThat(match.getFlowId()).isNotNull();
+    assertThat(match.getName()).isEqualTo("Summary-Flow");
+    assertThat(match.getDescription()).isEqualTo("Summary desc");
   }
 }

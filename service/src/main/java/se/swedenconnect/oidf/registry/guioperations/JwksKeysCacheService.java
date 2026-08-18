@@ -105,7 +105,7 @@ public class JwksKeysCacheService {
       return null;
     }
     final JWK validationKey = this.instancePlacementService
-        .resolveValidationKey(organizationRecord.orgNumber(), organizationRecord.functionGroup())
+        .resolveValidationKey(organizationRecord.tenant())
         .orElseThrow(() -> new IllegalStateException(
             "No oidf_service_api_validation_key configured for the instance serving org '"
                 + organizationRecord.orgNumber() + "'"));

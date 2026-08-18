@@ -408,6 +408,7 @@ import {computed, onMounted, ref, watch} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
+import {useUserStore} from '@/stores/userStore';
 import {
   entityConfigurationViewPath,
   modulesPath,
@@ -420,6 +421,7 @@ import {
 const route = useRoute();
 const router = useRouter();
 const errorStore = useErrorStore();
+const userStore = useUserStore();
 
 const {requestGet, loading} = useRequest();
 const {requestPost, loading: rejecting, ok} = useRequest();
@@ -482,7 +484,9 @@ async function approveStep(stepIndex) {
   approvingStepIndex.value = stepIndex;
   errorStore.clearError();
   try {
-    await requestApprove(registrationAdminApproveStepPath(route.params.id, stepIndex), {});
+    await requestApprove(
+        registrationAdminApproveStepPath(userStore.selectedTenant, userStore.orgNumber, route.params.id, stepIndex),
+        {});
     if (approveOk.value) {
       await loadRegistration();
     }
@@ -538,9 +542,10 @@ async function submitReject() {
   reasonError.value = false;
 
   errorStore.clearError();
-  await requestPost(registrationAdminRejectPath(route.params.id), {
-    rejectionReason: rejectionReason.value.trim(),
-  });
+  await requestPost(
+      registrationAdminRejectPath(userStore.selectedTenant, userStore.orgNumber, route.params.id), {
+        rejectionReason: rejectionReason.value.trim(),
+      });
 
   if (ok.value) {
     closeRejectDialog();
@@ -553,7 +558,7 @@ async function loadEntityStatement() {
   entityStatementLoading.value = true;
   entityStatementError.value = null;
   try {
-    const res = await fetch(entityConfigurationViewPath, {
+    const res = await fetch(entityConfigurationViewPath(userStore.selectedTenant, userStore.orgNumber), {
       method: 'POST',
       credentials: 'include',
       headers: {'Content-Type': 'text/plain'},
@@ -577,8 +582,8 @@ async function loadTrustmarkData() {
   trustmarksTabLoading.value = true;
   try {
     const [tmRes, modRes] = await Promise.all([
-      fetch(`${trustmarksPath}?includeSubjects=true`, {credentials: 'include'}),
-      fetch(`${modulesPath}?type=trustmarkissuer`, {credentials: 'include'}),
+      fetch(`${trustmarksPath(userStore.selectedTenant, userStore.orgNumber)}?includeSubjects=true`, {credentials: 'include'}),
+      fetch(`${modulesPath(userStore.selectedTenant, userStore.orgNumber)}?type=trustmarkissuer`, {credentials: 'include'}),
     ]);
     if (tmRes.ok) {
       allTrustmarks.value = await tmRes.json();
@@ -629,7 +634,8 @@ watch(activeTab, (tab) => {
 
 async function loadRegistration() {
   errorStore.clearError();
-  registration.value = await requestGet(registrationAdminItemPath(route.params.id));
+  registration.value = await requestGet(
+      registrationAdminItemPath(userStore.selectedTenant, userStore.orgNumber, route.params.id));
   if (registration.value) {
     loadEntityStatement();
   }

@@ -211,6 +211,7 @@ public class OidfApiService {
     return TrustAnchorProperties.builder()
         .entityIdentifier(new EntityID(taImModuleEntity.getEntity().getIssuer()))
         //.trustMarkOwners()
+        // TODO: Add trustMarkIssuers
         //.trustMarkIssuers(taImModuleEntity.getTrustMarkIssuers())
         .subordinates(taImModuleEntity.getSubordinates()
             .stream()

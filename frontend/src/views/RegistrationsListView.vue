@@ -116,11 +116,13 @@ import {computed, onMounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
+import {useUserStore} from '@/stores/userStore';
 import {registrationAdminPath} from '@/config/path';
 
 const router = useRouter();
 const {requestGet, loading} = useRequest();
 const errorStore = useErrorStore();
+const userStore = useUserStore();
 
 const registrations = ref([]);
 const search = ref('');
@@ -162,7 +164,7 @@ function openDetail(id) {
 
 async function loadRegistrations() {
   errorStore.clearError();
-  const response = await requestGet(registrationAdminPath);
+  const response = await requestGet(registrationAdminPath(userStore.selectedTenant, userStore.orgNumber));
   registrations.value = Array.isArray(response) ? response : [];
 }
 

@@ -28,8 +28,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 /**
  * Properties for RegistryService
@@ -63,12 +65,29 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
 
     this.instances.forEach(InstanceProperties::validate);
 
-    Assert.isTrue(this.instances.stream()
-            .map(InstanceProperties::matchers)
-            .filter(InstanceMatcherProperties::useForDefaultAssignment)
-            .count() <= 1,
-        "openid.federation.registry.instances[].matchers.useForDefaultAssignment "
-            + "shall only be set for one instance");
+    final List<String> duplicatedFunctionGroups = this.instances.stream()
+        .map(InstanceProperties::functionGroup)
+        .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+        .entrySet().stream()
+        .filter(entry -> entry.getValue() > 1)
+        .map(Map.Entry::getKey)
+        .toList();
+
+    Assert.isTrue(duplicatedFunctionGroups.isEmpty(),
+        "openid.federation.registry.instances[].function_group must not be reused across more than one "
+            + "instance, duplicate(s) found: " + duplicatedFunctionGroups);
+
+    final List<String> duplicatedNames = this.instances.stream()
+        .map(InstanceProperties::name)
+        .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+        .entrySet().stream()
+        .filter(entry -> entry.getValue() > 1)
+        .map(Map.Entry::getKey)
+        .toList();
+
+    Assert.isTrue(duplicatedNames.isEmpty(),
+        "openid.federation.registry.instances[].name must be unique, since it identifies the tenant, "
+            + "duplicate(s) found: " + duplicatedNames);
 
     Optional.ofNullable(this.entityConfigurationLoader).ifPresent(EntityConfigurationLoaderProperties::validate);
   }
@@ -152,7 +171,10 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
    * @param name the name of the instance must not be empty
    * @param baseUrl the base URL for this instance, used to compute entity prefixes
    * @param orgBaseUrlOverrides optional per-org overrides on the form orgNumber → base URL
-   * @param matchers the matcher configuration used to assign organizations to this instance
+   * @param functionGroup the single function group that administrates this tenant. A tenant can only be backed
+   *     by exactly one function group — read/write rights (including the {@code "*"} wildcard in the
+   *     {@code org_rights} claim, which grants a right on every function currently attached to an organization)
+   *     are only well-defined when each tenant maps to a single function group.
    * @param oidfServiceApiValidationKey optional public key used to verify signed JWT responses from the oidf-service
    *     node attached to this instance
    */
@@ -160,7 +182,7 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
       String name,
       URI baseUrl,
       Map<String, URI> orgBaseUrlOverrides,
-      InstanceMatcherProperties matchers,
+      String functionGroup,
       @NestedConfigurationProperty KeyEntry oidfServiceApiValidationKey) {
     /**
      * Validates the instance properties to ensure all required fields are properly configured.
@@ -171,55 +193,11 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
           this.instanceId, "Expected openid.federation.registry.instances[].instance_id");
       Assert.hasText(this.name, "Expected openid.federation.registry.instances[].name");
       Assert.notNull(this.baseUrl, "Expected openid.federation.registry.instances[].base_url");
-      Assert.isTrue(this.matchers != null, "Expected at least one matcher"
-          + " openid.federation.registry.instances[].matchers");
-      this.matchers.validate();
+      Assert.hasText(this.functionGroup, "Expected openid.federation.registry.instances[].function_group");
+
       Optional.ofNullable(this.oidfServiceApiValidationKey).ifPresent(KeyEntry::validate);
     }
   }
-
-  /**
-   * Matcher configuration that determines which organizations are assigned to a given instance.
-   *
-   * @param functiongroups list of function group identifiers to match against
-   * @param useForDefaultAssignment true if this instance should receive organizations that match no other instance
-   * @param org_numbers list of organization numbers to match against
-   */
-  public record InstanceMatcherProperties(List<String> functiongroups,
-      boolean useForDefaultAssignment,
-      List<String> org_numbers) {
-    /**
-     * Validates the instance properties to ensure all required fields are properly configured. Checks that instanceId
-     * and name are set. If org_numbers is empty, useForDefaultAssignment must be true.
-     */
-    public void validate() {
-
-      if (this.useForDefaultAssignment) {
-        Assert.isTrue(this.isEmpty(this.org_numbers),
-            "If useForDefaultAssignment=true"
-                + " openid.federation.registry.instances[].matcher.org_numbers can not be set");
-
-        Assert.isTrue(this.isEmpty(this.functiongroups),
-            "If useForDefaultAssignment=true"
-                + " openid.federation.registry.instances[].matcher.functiongroups can not be set");
-      }
-
-      final boolean noMatcher = this.isEmpty(this.org_numbers)
-          && this.isEmpty(this.functiongroups)
-          && !this.useForDefaultAssignment;
-      Assert.isTrue(!noMatcher,
-          "One of useForDefaultAssignment, org_numbers, functiongroups needs to exist");
-
-    }
-
-    private boolean isEmpty(final List<?> list) {
-      return list == null || list.isEmpty();
-    }
-
-  }
-
-
-
 
   /**
    * JwksLoader configuration

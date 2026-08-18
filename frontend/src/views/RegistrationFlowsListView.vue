@@ -127,11 +127,13 @@ import {computed, onMounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
+import {useUserStore} from '@/stores/userStore';
 import {registrationFlowPath, registrationFlowsPath} from '@/config/path';
 
 const router = useRouter();
 const {requestGet, requestDelete, loading, ok} = useRequest();
 const errorStore = useErrorStore();
+const userStore = useUserStore();
 
 const flows = ref([]);
 const deleteDialog = ref(false);
@@ -142,7 +144,7 @@ const deleteFlowLabel = computed(() => flowToDelete.value?.name || 'N/A');
 
 async function loadFlows() {
   errorStore.clearError();
-  const response = await requestGet(registrationFlowsPath);
+  const response = await requestGet(registrationFlowsPath(userStore.selectedTenant, userStore.orgNumber));
   flows.value = Array.isArray(response) ? response : [];
 }
 
@@ -166,7 +168,7 @@ async function deleteFlow() {
   errorStore.clearError();
 
   try {
-    await requestDelete(registrationFlowPath(flowToDelete.value.flowId));
+    await requestDelete(registrationFlowPath(userStore.selectedTenant, userStore.orgNumber, flowToDelete.value.flowId));
     if (ok.value) {
       deleteDialog.value = false;
       flowToDelete.value = null;

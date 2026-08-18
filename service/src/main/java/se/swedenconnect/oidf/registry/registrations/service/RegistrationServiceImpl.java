@@ -185,7 +185,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
   @Override
   @Transactional(readOnly = true)
-  public List<RegistrationFlowInformationDto> listRegistrationFlows(final OrganizationRecord organizationRecord) {
+  public List<RegistrationFlowInformationDto> listRegistrationFlows() {
     return this.flowAssignmentRepository.findAll()
         .stream()
         .map(RegistrationMapper::toRegistrationFlowDto)

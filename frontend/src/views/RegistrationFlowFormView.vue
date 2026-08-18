@@ -274,12 +274,14 @@ import {computed, nextTick, onMounted, ref, watch} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
+import {useUserStore} from '@/stores/userStore';
 import {registrationFlowCreatePath, registrationFlowPath, registrationFlowStepsPath} from '@/config/path';
 
 const route = useRoute();
 const router = useRouter();
 const {requestGet, requestPost, requestPut, loading, ok} = useRequest();
 const errorStore = useErrorStore();
+const userStore = useUserStore();
 
 const form = ref(null);
 const saving = ref(false);
@@ -385,13 +387,13 @@ function moveStep(index, direction) {
 }
 
 async function loadAvailableSteps() {
-  const response = await requestGet(registrationFlowStepsPath);
+  const response = await requestGet(registrationFlowStepsPath(userStore.selectedTenant, userStore.orgNumber));
   availableSteps.value = Array.isArray(response) ? response : [];
 }
 
 async function loadFlow() {
   errorStore.clearError();
-  const response = await requestGet(registrationFlowPath(route.params.id));
+  const response = await requestGet(registrationFlowPath(userStore.selectedTenant, userStore.orgNumber, route.params.id));
   if (response) {
     name.value = response.name || '';
     description.value = response.description || '';
@@ -441,9 +443,9 @@ async function submitForm() {
     };
 
     if (isEdit.value) {
-      await requestPut(registrationFlowPath(route.params.id), payload);
+      await requestPut(registrationFlowPath(userStore.selectedTenant, userStore.orgNumber, route.params.id), payload);
     } else {
-      await requestPost(registrationFlowCreatePath, payload);
+      await requestPost(registrationFlowCreatePath(userStore.selectedTenant, userStore.orgNumber), payload);
     }
 
     if (ok.value) {

@@ -17,13 +17,15 @@
 import {ref} from 'vue'
 import {useRequest} from './request'
 import {signingKeysPath} from '@/config/path'
+import {useUserStore} from '@/stores/userStore'
 
 export function useSigningKeys() {
     const {requestGet, loading} = useRequest(false)
+    const userStore = useUserStore()
     const signingKeys = ref([])
 
     async function fetchSigningKeys(type) {
-        const keys = await requestGet(signingKeysPath(type))
+        const keys = await requestGet(signingKeysPath(userStore.selectedTenant, userStore.orgNumber, type))
         signingKeys.value = (keys || []).map(name => ({
             value: name,
             title: name,

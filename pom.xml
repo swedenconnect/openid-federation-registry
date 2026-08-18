@@ -71,8 +71,8 @@
         <java.version>25</java.version>
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
-        <spring.boot.version>4.0.2</spring.boot.version>
-        <credentials.support.version>2.1.2</credentials.support.version>
+        <spring.boot.version>4.1.0</spring.boot.version>
+        <credentials.support.version>2.2.1</credentials.support.version>
 
     </properties>
 

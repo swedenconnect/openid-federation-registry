@@ -21,6 +21,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -49,39 +51,50 @@ import java.util.UUID;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/registry/v1/modules")
+@RequestMapping("/registry/v1/{tenant}/{orgNumber}/modules")
 @Tag(name = "Modules", description = "CRUD for federation modules")
 public class ModuleConfigController {
 
   private final ModuleConfigService moduleConfigService;
 
   /**
-   * Lists all modules for the organization.
+   * List all modules.
    *
-   * @param type optional module type filter (trustanchor, intermediate, resolver, trustmarkissuer)
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param type optional entity type filter
    * @param organizationRecord the organization record
-   * @return modules grouped by type
+   * @return the list of results
    */
   @GetMapping
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "List all modules", description = "Lists all modules for the organization, "
       + "optionally filtered by type")
   public ResponseEntity<ModuleDto> listModules(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @RequestParam(name = "type", required = false) final String type,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.listModules(organizationRecord, type));
   }
 
+  // Trust Anchor
 
   /**
-   * Creates a trust anchor with auto-generated ID.
+   * Create trust anchor with auto-generated ID.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param body the trust anchor data
    * @param organizationRecord the organization record
-   * @return the created trust anchor
+   * @return the created resource
    */
   @PostMapping("/trust-anchor")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create trust anchor with auto-generated ID")
   public ResponseEntity<TrustAnchorDto> createTrustAnchor(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @RequestBody final TrustAnchorDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     final UUID id = UUID.randomUUID();
@@ -89,16 +102,21 @@ public class ModuleConfigController {
   }
 
   /**
-   * Creates a trust anchor with specified ID.
+   * Create trust anchor with specified ID.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param id the trust anchor ID
    * @param body the trust anchor data
    * @param organizationRecord the organization record
-   * @return the created trust anchor
+   * @return the created resource
    */
   @PostMapping("/trust-anchor/{trustAnchorId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create trust anchor with specified ID")
   public ResponseEntity<TrustAnchorDto> createTrustAnchorWithId(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("trustAnchorId") final UUID id,
       @RequestBody final TrustAnchorDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
@@ -106,16 +124,21 @@ public class ModuleConfigController {
   }
 
   /**
-   * Updates a trust anchor.
+   * Update trust anchor.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param id the trust anchor ID
    * @param body the trust anchor data
    * @param organizationRecord the organization record
-   * @return the updated trust anchor
+   * @return the updated resource
    */
   @PutMapping("/trust-anchor/{trustAnchorId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Update trust anchor")
   public ResponseEntity<TrustAnchorDto> updateTrustAnchor(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("trustAnchorId") final UUID id,
       @RequestBody final TrustAnchorDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
@@ -123,30 +146,40 @@ public class ModuleConfigController {
   }
 
   /**
-   * Gets a trust anchor by ID.
+   * Get trust anchor.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param id the trust anchor ID
    * @param organizationRecord the organization record
-   * @return the trust anchor
+   * @return the requested resource
    */
   @GetMapping("/trust-anchor/{trustAnchorId}")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Get trust anchor")
   public ResponseEntity<TrustAnchorDto> getTrustAnchor(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("trustAnchorId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.getTrustAnchor(organizationRecord, id));
   }
 
   /**
-   * Deletes a trust anchor.
+   * Delete trust anchor.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param id the trust anchor ID
    * @param organizationRecord the organization record
    * @return empty response
    */
   @DeleteMapping("/trust-anchor/{trustAnchorId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Delete trust anchor")
   public ResponseEntity<Void> deleteTrustAnchor(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("trustAnchorId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     this.moduleConfigService.deleteTrustAnchor(organizationRecord, id);
@@ -156,15 +189,20 @@ public class ModuleConfigController {
   // Intermediate
 
   /**
-   * Creates an intermediate with auto-generated ID.
+   * Create intermediate with auto-generated ID.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param body the intermediate data
    * @param organizationRecord the organization record
-   * @return the created intermediate
+   * @return the created resource
    */
   @PostMapping("/intermediate")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create intermediate with auto-generated ID")
   public ResponseEntity<IntermediateDto> createIntermediate(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @RequestBody final IntermediateDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     final UUID id = UUID.randomUUID();
@@ -172,16 +210,21 @@ public class ModuleConfigController {
   }
 
   /**
-   * Creates an intermediate with specified ID.
+   * Create intermediate with specified ID.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param id the intermediate ID
    * @param body the intermediate data
    * @param organizationRecord the organization record
-   * @return the created intermediate
+   * @return the created resource
    */
   @PostMapping("/intermediate/{intermediateId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create intermediate with specified ID")
   public ResponseEntity<IntermediateDto> createIntermediateWithId(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("intermediateId") final UUID id,
       @RequestBody final IntermediateDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
@@ -189,16 +232,21 @@ public class ModuleConfigController {
   }
 
   /**
-   * Updates an intermediate.
+   * Update intermediate.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param id the intermediate ID
    * @param body the intermediate data
    * @param organizationRecord the organization record
-   * @return the updated intermediate
+   * @return the updated resource
    */
   @PutMapping("/intermediate/{intermediateId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Update intermediate")
   public ResponseEntity<IntermediateDto> updateIntermediate(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("intermediateId") final UUID id,
       @RequestBody final IntermediateDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
@@ -206,30 +254,40 @@ public class ModuleConfigController {
   }
 
   /**
-   * Gets an intermediate by ID.
+   * Get intermediate.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param id the intermediate ID
    * @param organizationRecord the organization record
-   * @return the intermediate
+   * @return the requested resource
    */
   @GetMapping("/intermediate/{intermediateId}")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Get intermediate")
   public ResponseEntity<IntermediateDto> getIntermediate(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("intermediateId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.getIntermediate(organizationRecord, id));
   }
 
   /**
-   * Deletes an intermediate.
+   * Delete intermediate.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param id the intermediate ID
    * @param organizationRecord the organization record
    * @return empty response
    */
   @DeleteMapping("/intermediate/{intermediateId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Delete intermediate")
   public ResponseEntity<Void> deleteIntermediate(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("intermediateId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     this.moduleConfigService.deleteIntermediate(organizationRecord, id);
@@ -239,15 +297,20 @@ public class ModuleConfigController {
   // Resolver
 
   /**
-   * Creates a resolver with auto-generated ID.
+   * Create resolver with auto-generated ID.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param body the resolver data
    * @param organizationRecord the organization record
-   * @return the created resolver
+   * @return the created resource
    */
   @PostMapping("/resolver")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create resolver with auto-generated ID")
   public ResponseEntity<ResolverDto> createResolver(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @RequestBody final ResolverDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     final UUID id = UUID.randomUUID();
@@ -255,16 +318,21 @@ public class ModuleConfigController {
   }
 
   /**
-   * Creates a resolver with specified ID.
+   * Create resolver with specified ID.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param id the resolver ID
    * @param body the resolver data
    * @param organizationRecord the organization record
-   * @return the created resolver
+   * @return the created resource
    */
   @PostMapping("/resolver/{resolverId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create resolver with specified ID")
   public ResponseEntity<ResolverDto> createResolverWithId(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("resolverId") final UUID id,
       @RequestBody final ResolverDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
@@ -272,16 +340,21 @@ public class ModuleConfigController {
   }
 
   /**
-   * Updates a resolver.
+   * Update resolver.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param id the resolver ID
    * @param body the resolver data
    * @param organizationRecord the organization record
-   * @return the updated resolver
+   * @return the updated resource
    */
   @PutMapping("/resolver/{resolverId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Update resolver")
   public ResponseEntity<ResolverDto> updateResolver(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("resolverId") final UUID id,
       @RequestBody final ResolverDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
@@ -289,30 +362,40 @@ public class ModuleConfigController {
   }
 
   /**
-   * Gets a resolver by ID.
+   * Get resolver.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param id the resolver ID
    * @param organizationRecord the organization record
-   * @return the resolver
+   * @return the requested resource
    */
   @GetMapping("/resolver/{resolverId}")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Get resolver")
   public ResponseEntity<ResolverDto> getResolver(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("resolverId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.getResolver(organizationRecord, id));
   }
 
   /**
-   * Deletes a resolver.
+   * Delete resolver.
    *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
    * @param id the resolver ID
    * @param organizationRecord the organization record
    * @return empty response
    */
   @DeleteMapping("/resolver/{resolverId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Delete resolver")
   public ResponseEntity<Void> deleteResolver(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("resolverId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     this.moduleConfigService.deleteResolver(organizationRecord, id);
@@ -322,15 +405,20 @@ public class ModuleConfigController {
   // Trustmark Issuer
 
   /**
-   * Creates a trust mark issuer with auto-generated ID.
+   * Create trust mark issuer with auto-generated ID.
    *
-   * @param body the trust mark issuer data
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param body the trustmark issuer data
    * @param organizationRecord the organization record
-   * @return the created trust mark issuer
+   * @return the created resource
    */
   @PostMapping("/trustmark-issuer")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create trust mark issuer with auto-generated ID")
   public ResponseEntity<TrustmarkIssuerDto> createTrustmarkIssuer(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @RequestBody final TrustmarkIssuerDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     final UUID id = UUID.randomUUID();
@@ -338,16 +426,21 @@ public class ModuleConfigController {
   }
 
   /**
-   * Creates a trust mark issuer with specified ID.
+   * Create trust mark issuer with specified ID.
    *
-   * @param id the trust mark issuer ID
-   * @param body the trust mark issuer data
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param id the trustmark issuer ID
+   * @param body the trustmark issuer data
    * @param organizationRecord the organization record
-   * @return the created trust mark issuer
+   * @return the created resource
    */
   @PostMapping("/trustmark-issuer/{trustmarkIssuerId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create trust mark issuer with specified ID")
   public ResponseEntity<TrustmarkIssuerDto> createTrustmarkIssuerWithId(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("trustmarkIssuerId") final UUID id,
       @RequestBody final TrustmarkIssuerDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
@@ -355,16 +448,21 @@ public class ModuleConfigController {
   }
 
   /**
-   * Updates a trust mark issuer.
+   * Update trust mark issuer.
    *
-   * @param id the trust mark issuer ID
-   * @param body the trust mark issuer data
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param id the trustmark issuer ID
+   * @param body the trustmark issuer data
    * @param organizationRecord the organization record
-   * @return the updated trust mark issuer
+   * @return the updated resource
    */
   @PutMapping("/trustmark-issuer/{trustmarkIssuerId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Update trust mark issuer")
   public ResponseEntity<TrustmarkIssuerDto> updateTrustmarkIssuer(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("trustmarkIssuerId") final UUID id,
       @RequestBody final TrustmarkIssuerDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
@@ -372,47 +470,61 @@ public class ModuleConfigController {
   }
 
   /**
-   * Gets a trust mark issuer by ID.
+   * Get trust mark issuer.
    *
-   * @param id the trust mark issuer ID
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param id the trustmark issuer ID
    * @param organizationRecord the organization record
-   * @return the trust mark issuer
+   * @return the requested resource
    */
   @GetMapping("/trustmark-issuer/{trustmarkIssuerId}")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Get trust mark issuer")
   public ResponseEntity<TrustmarkIssuerDto> getTrustmarkIssuer(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("trustmarkIssuerId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.moduleConfigService.getTrustmarkIssuer(organizationRecord, id));
   }
 
   /**
-   * Gets a trust mark issuer by ID.
+   * List trustmarks for a trust mark issuer.
    *
-   * @param trustmarkIssuerId the trust mark issuer ID
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param trustmarkIssuerId the trustmark issuer ID
    * @param organizationRecord the organization record
-   * @return the trust mark issuer
+   * @return the list of results
    */
   @GetMapping("/trustmark-issuer/{trustmarkIssuerId}/trustmarks")
-  @Operation(summary = "Get trust mark issuer")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
+  @Operation(summary = "List trustmarks for a trust mark issuer")
   public ResponseEntity<List<TrustmarkWithSubjectsDto>> getTrustmarks(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("trustmarkIssuerId") final UUID trustmarkIssuerId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(
-        this.moduleConfigService.listTrustmarks(organizationRecord, trustmarkIssuerId,
-            false));
+        this.moduleConfigService.listTrustmarks(organizationRecord, trustmarkIssuerId, false));
   }
 
   /**
-   * Deletes a trust mark issuer.
+   * Delete trust mark issuer.
    *
-   * @param id the trust mark issuer ID
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param id the trustmark issuer ID
    * @param organizationRecord the organization record
    * @return empty response
    */
   @DeleteMapping("/trustmark-issuer/{trustmarkIssuerId}")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Delete trust mark issuer")
   public ResponseEntity<Void> deleteTrustmarkIssuer(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("trustmarkIssuerId") final UUID id,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     this.moduleConfigService.deleteTrustmarkIssuer(organizationRecord, id);

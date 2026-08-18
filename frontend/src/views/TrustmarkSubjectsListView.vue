@@ -150,12 +150,14 @@ import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
+import {useUserStore} from '@/stores/userStore';
 import {federationEntityPath, trustmarksPath, trustmarkSubjectsPath} from '@/config/path';
 
 const route = useRoute();
 const router = useRouter();
 const {requestGet, requestDelete, loading, ok} = useRequest();
 const errorStore = useErrorStore();
+const userStore = useUserStore();
 
 const subjects = ref([]);
 const entityIdentifier = ref(null);
@@ -191,7 +193,7 @@ async function loadSubjects() {
     return;
   }
 
-  const response = await requestGet(`${trustmarksPath}/${trustmarkId.value}/subjects`);
+  const response = await requestGet(`${trustmarksPath(userStore.selectedTenant, userStore.orgNumber)}/${trustmarkId.value}/subjects`);
 
   if (response) {
     trustmarkType.value = response.trustmarkType || null;
@@ -231,7 +233,7 @@ async function deleteSubject() {
       return;
     }
 
-    await requestDelete(`${trustmarkSubjectsPath}/${subjectId}`);
+    await requestDelete(`${trustmarkSubjectsPath(userStore.selectedTenant, userStore.orgNumber)}/${subjectId}`);
 
     if (ok.value) {
       deleteDialog.value = false;
@@ -253,7 +255,7 @@ function goBack() {
 
 async function loadEntityIdentifier() {
   if (!entityId.value) return;
-  const response = await requestGet(federationEntityPath(entityId.value));
+  const response = await requestGet(federationEntityPath(userStore.selectedTenant, userStore.orgNumber, entityId.value));
   if (response) {
     entityIdentifier.value = response.entityIdentifier || response.federationEntity?.entityIdentifier || null;
   }

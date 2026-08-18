@@ -108,12 +108,14 @@ import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
+import {useUserStore} from '@/stores/userStore';
 import {trustmarkSubjectsPath} from '@/config/path';
 
 const route = useRoute();
 const router = useRouter();
 const {requestGet, requestPost, requestPut, loading, ok} = useRequest();
 const errorStore = useErrorStore();
+const userStore = useUserStore();
 
 const form = ref(null);
 const saving = ref(false);
@@ -153,7 +155,7 @@ async function loadSubject() {
   errorStore.clearError();
   subjectId.value = route.params.id;
 
-  const response = await requestGet(`${trustmarkSubjectsPath}/${subjectId.value}`);
+  const response = await requestGet(`${trustmarkSubjectsPath(userStore.selectedTenant, userStore.orgNumber)}/${subjectId.value}`);
   if (response) {
     trustmarkIdValue.value = response.trustmarkId || trustmarkId.value || null;
     subject.value = response.subject || '';
@@ -180,9 +182,9 @@ async function submitForm() {
     };
 
     if (isEdit.value) {
-      await requestPut(`${trustmarkSubjectsPath}/${subjectId.value}`, subjectData);
+      await requestPut(`${trustmarkSubjectsPath(userStore.selectedTenant, userStore.orgNumber)}/${subjectId.value}`, subjectData);
     } else {
-      await requestPost(trustmarkSubjectsPath, subjectData);
+      await requestPost(trustmarkSubjectsPath(userStore.selectedTenant, userStore.orgNumber), subjectData);
     }
 
     if (ok.value) {

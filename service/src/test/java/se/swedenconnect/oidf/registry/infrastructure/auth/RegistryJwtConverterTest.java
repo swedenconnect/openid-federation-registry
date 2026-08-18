@@ -20,14 +20,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.Right;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryClaims;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryJwtConverter;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -37,8 +36,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 class RegistryJwtConverterTest {
 
-  private static final List<Map<String, Object>> SINGLE_ORG = List.of(
-      Map.of("orgNumber", "55555", "orgName", "Pensionsmyndigheten", "entity_prefix", "https://www.pm.se/oidf")
+  private static final List<Map<String, Object>> SINGLE_ORG_RIGHTS = List.of(
+      Map.of(
+          "organization_identifier", "55555",
+          "organization_name#sv", "Pensionsmyndigheten",
+          "organization_name#en", "Pensionsmyndigheten",
+          "functions", List.of(Map.of("function", "demo", "right", "read"))
+      )
   );
 
   private final RegistryJwtConverter converter = new RegistryJwtConverter();
@@ -49,7 +53,7 @@ class RegistryJwtConverterTest {
         .subject("test-subject")
         .issuedAt(Instant.now())
         .expiresAt(Instant.now().plusSeconds(3600))
-        .claim("org", SINGLE_ORG);
+        .claim("org_rights", SINGLE_ORG_RIGHTS);
     extraClaims.forEach(builder::claim);
     return builder.build();
   }
@@ -131,8 +135,8 @@ class RegistryJwtConverterTest {
   }
 
   @Test
-  @DisplayName("Returns RegistryClaims with organization information")
-  void returnsRegistryClaimsWithOrganizationInformation() {
+  @DisplayName("Returns RegistryClaims with parsed org_rights")
+  void returnsRegistryClaimsWithOrgRights() {
     final Jwt jwt = buildJwt(Map.of(
         "scope", List.of("read"),
         "preferred_username", "alice"
@@ -142,57 +146,104 @@ class RegistryJwtConverterTest {
 
     assertThat(token).isInstanceOf(RegistryClaims.class);
     final RegistryClaims claims = (RegistryClaims) token;
-    assertThat(claims.getOrganizationInformation().organizations()).hasSize(1);
-    assertThat(claims.getOrganizationInformation().organizations().getFirst().orgNumber()).isEqualTo("55555");
+    assertThat(claims.getOrgRights().entries()).hasSize(1);
+    assertThat(claims.getOrgRights().entries().getFirst().organizationIdentifier()).isEqualTo("55555");
   }
 
   @Test
-  @DisplayName("Multiple organizations are all present in RegistryClaims")
+  @DisplayName("Multiple organizations are all present in OrgRights")
   void multipleOrganizationsAllPresentInClaims() {
     final Jwt jwt = Jwt.withTokenValue("token")
         .header("alg", "RS256")
         .subject("test-subject")
         .issuedAt(Instant.now())
         .expiresAt(Instant.now().plusSeconds(3600))
-        .claim("org", List.of(
-            Map.of("orgNumber", "55555", "orgName", "Pensionsmyndigheten", "entity_prefix", "https://www.pm.se/oidf"),
-            Map.of("orgNumber", "66666", "orgName", "Arbetsförmedlingen", "entity_prefix", "https://www.af.se/oidf")
+        .claim("org_rights", List.of(
+            Map.of(
+                "organization_identifier", "55555",
+                "organization_name#sv", "Pensionsmyndigheten",
+                "organization_name#en", "Pensionsmyndigheten",
+                "functions", List.of(Map.of("function", "*", "right", "read"))
+            ),
+            Map.of(
+                "organization_identifier", "66666",
+                "organization_name#sv", "Arbetsförmedlingen",
+                "organization_name#en", "Employment Agency",
+                "functions", List.of(Map.of("function", "*", "right", "write"))
+            )
         ))
         .claim("scope", List.of("read"))
         .build();
 
     final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
 
-    assertThat(claims.getOrganizationInformation().organizations())
-        .extracting(OrganizationRecord::orgNumber)
+    assertThat(claims.getOrgRights().entries())
+        .extracting(e -> e.organizationIdentifier())
         .containsExactlyInAnyOrder("55555", "66666");
   }
 
   @Test
-  @DisplayName("getOrganizationRecordByOrgNumber returns the matching organization")
-  void getOrganizationRecordByOrgNumberReturnsMatch() {
+  @DisplayName("findOrg returns present entry for known org")
+  void findOrgReturnsPresentEntryForKnownOrg() {
     final Jwt jwt = buildJwt(Map.of("scope", List.of("read"), "preferred_username", "alice"));
 
     final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
 
-    assertThat(claims.getOrganizationRecordByOrgNumber("55555").orgName())
+    assertThat(claims.getOrgRights().findOrg("55555")).isPresent();
+    assertThat(claims.getOrgRights().findOrg("55555").get().organizationNameSv())
         .isEqualTo("Pensionsmyndigheten");
   }
 
   @Test
-  @DisplayName("getOrganizationRecordByOrgNumber throws when organization not found")
-  void getOrganizationRecordByOrgNumberThrowsWhenNotFound() {
+  @DisplayName("findOrg returns empty for unknown org")
+  void findOrgReturnsEmptyForUnknownOrg() {
     final Jwt jwt = buildJwt(Map.of("scope", List.of("read"), "preferred_username", "alice"));
 
     final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
 
-    assertThatThrownBy(() -> claims.getOrganizationRecordByOrgNumber("99999"))
-        .isInstanceOf(NoSuchElementException.class);
+    assertThat(claims.getOrgRights().findOrg("99999")).isEmpty();
   }
 
   @Test
-  @DisplayName("Missing org claim throws IllegalArgumentException")
-  void missingOrgClaimThrowsIllegalArgumentException() {
+  @DisplayName("hasRight returns true when function matches and right is sufficient")
+  void hasRightReturnsTrueWhenSufficient() {
+    final Jwt jwt = buildJwt(Map.of("scope", List.of("read"), "preferred_username", "alice"));
+
+    final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
+
+    assertThat(claims.getOrgRights().hasRight("55555", "demo", Right.READ)).isTrue();
+  }
+
+  @Test
+  @DisplayName("hasRight returns false when right is insufficient")
+  void hasRightReturnsFalseWhenInsufficient() {
+    final Jwt jwt = buildJwt(Map.of("scope", List.of("read"), "preferred_username", "alice"));
+
+    final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
+
+    assertThat(claims.getOrgRights().hasRight("55555", "demo", Right.WRITE)).isFalse();
+  }
+
+  @Test
+  @DisplayName("Superuser token grants access to everything")
+  void superuserTokenGrantsAccessToEverything() {
+    final Jwt jwt = Jwt.withTokenValue("token")
+        .header("alg", "RS256")
+        .subject("superuser")
+        .issuedAt(Instant.now())
+        .expiresAt(Instant.now().plusSeconds(3600))
+        .claim("org_rights", List.of(Map.of("superuser", true)))
+        .build();
+
+    final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
+
+    assertThat(claims.getOrgRights().superuser()).isTrue();
+    assertThat(claims.getOrgRights().hasRight("any-org", "any-tenant", Right.ADMIN)).isTrue();
+  }
+
+  @Test
+  @DisplayName("Missing org_rights claim throws IllegalArgumentException")
+  void missingOrgRightsClaimThrowsIllegalArgumentException() {
     final Jwt jwt = Jwt.withTokenValue("token")
         .header("alg", "RS256")
         .subject("test-subject")

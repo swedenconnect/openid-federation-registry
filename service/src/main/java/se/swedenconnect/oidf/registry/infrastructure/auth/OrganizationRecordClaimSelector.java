@@ -17,25 +17,39 @@ package se.swedenconnect.oidf.registry.infrastructure.auth;
 
 import jakarta.annotation.Nonnull;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
+import org.springframework.web.servlet.HandlerMapping;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrgRightEntry;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrgRights;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryClaims;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauthclient.RegistryOidcUser;
 import se.swedenconnect.oidf.registry.organization.service.InstancePlacementService;
 
+import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
- * Implements argument resolver for picking org based on header, if present, or else first.
+ * Resolves {@link OrganizationRecord} from the {@code {orgNumber}} and {@code {tenant}} path variables.
+ *
+ * <p>The {@code {tenant}} path variable is the tenant's configured
+ * {@link se.swedenconnect.oidf.registry.infrastructure.config.RegistryProperties.InstanceProperties#name()};
+ * it is resolved to the tenant's function group via {@link InstancePlacementService#resolveFunctionGroupForTenant}
+ * before being used any further. Throws {@link AccessDeniedException} (HTTP 403) if the tenant does not match
+ * any configured instance.
+ *
+ * <p>Verifies that the authenticated user's {@code org_rights} claim contains an entry for the
+ * requested {@code orgNumber}. Throws {@link AccessDeniedException} (HTTP 403) if not found.
+ * Rights-level validation (READ/WRITE) is handled separately by {@code @PreAuthorize} on each endpoint.
  *
  * @author Per Fredrik Plars
  */
@@ -45,35 +59,19 @@ public class OrganizationRecordClaimSelector implements HandlerMethodArgumentRes
   private final InstancePlacementService instancePlacementService;
 
   /**
-   * Constructor.
+   * Creates a new selector.
    *
-   * @param instancePlacementService used to compute entity prefix from instance configuration
+   * @param instancePlacementService service used to resolve tenants to function groups and entity prefixes
    */
   public OrganizationRecordClaimSelector(final InstancePlacementService instancePlacementService) {
     this.instancePlacementService = instancePlacementService;
   }
 
-  /**
-   * Determines whether this resolver supports the given method parameter.
-   *
-   * @param parameter the method parameter to check
-   * @return true if the parameter type is OrganizationRecord and the authentication is RegistryClaims
-   */
   @Override
   public boolean supportsParameter(final MethodParameter parameter) {
     return parameter.getParameterType().equals(OrganizationRecord.class);
   }
 
-  /**
-   * Resolves the OrganizationRecord argument from the request header or JWT claims.
-   *
-   * @param parameter the method parameter
-   * @param mavContainer the model and view container
-   * @param webRequest the web request
-   * @param binderFactory the binder factory
-   * @return the OrganizationRecord resolved from the header or JWT claims
-   * @throws IllegalArgumentException if the header is missing or the organization is not found in claims
-   */
   @Override
   public Object resolveArgument(
       @Nonnull final MethodParameter parameter,
@@ -81,49 +79,65 @@ public class OrganizationRecordClaimSelector implements HandlerMethodArgumentRes
       final NativeWebRequest webRequest,
       final WebDataBinderFactory binderFactory) {
 
-    final HttpServletRequest request = webRequest.getNativeRequest(HttpServletRequest.class);
+    final HttpServletRequest request =
+        Objects.requireNonNull(webRequest.getNativeRequest(HttpServletRequest.class));
 
-    final Object authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication instanceof RegistryClaims registryClaims) {
-      final String selectedOrgNumberFromHeader =
-          Objects.requireNonNull(request).getHeader(AuthConstants.SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE);
-      log.debug("Selected organization number from header: {}", selectedOrgNumberFromHeader);
+    @SuppressWarnings("unchecked")
+    final Map<String, String> pathVars =
+        (Map<String, String>) request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
 
-      return Optional.ofNullable(selectedOrgNumberFromHeader)
-          .map(registryClaims::getOrganizationRecordByOrgNumber)
-          .map(this::withComputedEntityPrefix)
-          .orElseThrow(
-              () -> new IllegalArgumentException("Header:  " + AuthConstants.SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE +
-                  " missing or have a value that does not match claim in jwt"));
+    final String orgNumber = pathVars != null ? pathVars.get("orgNumber") : null;
+    final String tenant = pathVars != null ? pathVars.get("tenant") : null;
+
+    if (orgNumber == null) {
+      throw new IllegalArgumentException("Path variable 'orgNumber' is required");
     }
-    else if (authentication instanceof OAuth2AuthenticationToken auth2AuthenticationToken) {
-      final HttpSession session = request.getSession();
-      final String selectedOrgNumberFromSession = Optional.ofNullable(session)
-          .map(httpSession -> httpSession.getAttribute(AuthConstants.SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE))
-          .map(String.class::cast)
-          .orElse(null);
 
-      if (auth2AuthenticationToken.getPrincipal() instanceof RegistryOidcUser oidcUser) {
-        final OrganizationRecord or = oidcUser.getOrganizationRecordByOrgNumber(selectedOrgNumberFromSession);
-        session.setAttribute(AuthConstants.SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE, or.orgNumber());
-        log.debug("Selected organization number from session:'{}' SelectedOrgInfo:'{}'",
-            selectedOrgNumberFromSession,
-            or.orgNumber());
-        return this.withComputedEntityPrefix(or);
-      }
+    log.debug("Resolving OrganizationRecord for orgNumber='{}' tenant='{}'", orgNumber, tenant);
 
-      throw new IllegalArgumentException("Wrong authentication class, check supportsParameter method.");
+    final String functionGroup = this.instancePlacementService.resolveFunctionGroupForTenant(tenant)
+        .orElseThrow(() -> new AccessDeniedException("Unknown tenant '" + tenant + "'"));
 
+    final OrgRights orgRights = this.extractOrgRights(SecurityContextHolder.getContext().getAuthentication());
+
+    if (orgRights.superuser()) {
+      return this.buildSuperuserRecord(orgNumber, functionGroup);
     }
-    else {
-      throw new IllegalArgumentException("Wrong authentication class, check supportsParameter method.");
-    }
+
+    final OrgRightEntry entry = orgRights.findOrg(orgNumber)
+        .orElseThrow(() -> new AccessDeniedException(
+            "Organization '" + orgNumber + "' not found in token claims"));
+
+    return this.buildOrganizationRecord(entry, functionGroup);
   }
 
-  private OrganizationRecord withComputedEntityPrefix(final OrganizationRecord or) {
+  private OrgRights extractOrgRights(final Authentication authentication) {
+    if (authentication instanceof RegistryClaims registryClaims) {
+      return registryClaims.getOrgRights();
+    }
+    if (authentication instanceof OAuth2AuthenticationToken token
+        && token.getPrincipal() instanceof RegistryOidcUser oidcUser) {
+      return oidcUser.getOrgRights();
+    }
+    throw new IllegalArgumentException(
+        "Unsupported authentication type: " + authentication.getClass().getSimpleName());
+  }
+
+  private OrganizationRecord buildSuperuserRecord(final String orgNumber, final String functionGroup) {
     final String entityPrefix = this.instancePlacementService
-        .resolveEntityPrefix(or.orgNumber(), or.functionGroup())
-        .orElse(or.entityPrefix());
-    return new OrganizationRecord(or.orgNumber(), or.orgName(), entityPrefix, or.functionGroup());
+        .resolveEntityPrefix(orgNumber, functionGroup)
+        .orElse(null);
+    return new OrganizationRecord(orgNumber, orgNumber, entityPrefix, functionGroup);
+  }
+
+  private OrganizationRecord buildOrganizationRecord(final OrgRightEntry entry, final String functionGroup) {
+    final String entityPrefix = this.instancePlacementService
+        .resolveEntityPrefix(entry.organizationIdentifier(), functionGroup)
+        .orElse(null);
+    return new OrganizationRecord(
+        entry.organizationIdentifier(),
+        entry.organizationNameSv(),
+        entityPrefix,
+        functionGroup);
   }
 }

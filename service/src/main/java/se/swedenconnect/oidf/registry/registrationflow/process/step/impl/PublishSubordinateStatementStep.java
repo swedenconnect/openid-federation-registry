@@ -94,7 +94,7 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
 
     final Organization imOrganization = registration.getFlowAssignment().getTaIm().getOrganization();
     final OrganizationRecord org = new OrganizationRecord(imOrganization.getOrgNumber(), imOrganization.getOrgName(),
-        null,null);
+        null, null);
 
     this.subordinateService.getByEntityidentifierAndTaIm(entityId,
         registration.getFlowAssignment().getTaIm().getTaImId())
