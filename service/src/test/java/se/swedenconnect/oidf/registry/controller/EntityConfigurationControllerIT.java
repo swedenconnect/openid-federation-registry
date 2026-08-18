@@ -25,21 +25,23 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestClient;
 import org.testcontainers.containers.MariaDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import se.swedenconnect.oidf.registry.fixture.TestRestClientFactory;
+import se.swedenconnect.oidf.registry.ApiClient;
+import se.swedenconnect.oidf.registry.api.EntityConfigurationControllerApi;
+import se.swedenconnect.oidf.registry.api.model.JwksLoadedDto;
+import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
 
 import java.text.ParseException;
+import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
@@ -62,8 +64,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Testcontainers
 @AutoConfigureRestTestClient
 class EntityConfigurationControllerIT {
+
+  private static final String TENANT = "Swedenconnect";
+
   @LocalServerPort
   protected int port;
+
+  @Autowired
+  private JwtTestUtils jwtTestUtils;
+
+  private EntityConfigurationControllerApi entityConfigurationApi;
 
   @Container
   @ServiceConnection
@@ -75,6 +85,11 @@ class EntityConfigurationControllerIT {
 
   @BeforeEach
   public void setUp() {
+    final ApiClient apiClient = new ApiClient();
+    apiClient.setBasePath("http://localhost:" + this.port);
+    apiClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.PM));
+    this.entityConfigurationApi = new EntityConfigurationControllerApi(apiClient);
+
     wireMockServer = new WireMockServer(WireMockConfiguration.options()
         .port(6789)
         .httpsPort(6890)
@@ -110,103 +125,55 @@ class EntityConfigurationControllerIT {
 
   @Test
   void ipv6() {
-    final RestClient restClient = TestRestClientFactory.createAuthenticated(this.port, "entity-registry");
-
-    final HttpClientErrorException ex = assertThrows(HttpClientErrorException.class, () -> {
-      restClient.post()
-          .uri("/registry/v1/entityconfiguration/jwks")
-          .contentType(MediaType.APPLICATION_JSON)
-          .body("https://fe80::1a2b:3c4d:5e6f:7a8b:" + wireMockServer.httpsPort() + "/error")
-          //.body("https://dev.swedenconnect.se/oidf-test/serviceq")
-          .retrieve()
-          .toEntity(String.class);
-    });
+    final HttpClientErrorException ex = assertThrows(HttpClientErrorException.class, () ->
+        this.entityConfigurationApi.loadJwksFromEntityConfiguration(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+            "https://fe80::1a2b:3c4d:5e6f:7a8b:" + wireMockServer.httpsPort() + "/error"));
     assertThat(ex.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(400));
   }
 
   @Test
   void getJWKS_Invalid() {
-    final RestClient restClient = TestRestClientFactory.createAuthenticated(this.port, "entity-registry");
-
-    final HttpClientErrorException ex = assertThrows(HttpClientErrorException.class, () -> {
-      restClient.post()
-          .uri("/registry/v1/entityconfiguration/jwks")
-          .contentType(MediaType.APPLICATION_JSON)
-          .body("https://localhost:" + wireMockServer.httpsPort() + "/error")
-          //.body("https://dev.swedenconnect.se/oidf-test/serviceq")
-          .retrieve()
-          .toEntity(String.class);
-    });
+    final HttpClientErrorException ex = assertThrows(HttpClientErrorException.class, () ->
+        this.entityConfigurationApi.loadJwksFromEntityConfiguration(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+            "https://localhost:" + wireMockServer.httpsPort() + "/error"));
     assertThat(ex.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(400));
 
-    final HttpClientErrorException failEx = assertThrows(HttpClientErrorException.class, () -> {
-      restClient.post()
-          .uri("/registry/v1/entityconfiguration/jwks")
-          .contentType(MediaType.APPLICATION_JSON)
-          .body("https://localhost:" + wireMockServer.httpsPort() + "/fail")
-          .retrieve()
-          .toEntity(String.class);
-    });
+    final HttpClientErrorException failEx = assertThrows(HttpClientErrorException.class, () ->
+        this.entityConfigurationApi.loadJwksFromEntityConfiguration(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+            "https://localhost:" + wireMockServer.httpsPort() + "/fail"));
     assertThat(failEx.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(400));
 
-    final HttpClientErrorException notfound = assertThrows(HttpClientErrorException.class, () -> {
-      restClient.post()
-          .uri("/registry/v1/entityconfiguration/jwks")
-          .contentType(MediaType.APPLICATION_JSON)
-          .body("https://localhost:" + wireMockServer.httpsPort() + "/notfound")
-          .retrieve()
-          .toEntity(String.class);
-    });
+    final HttpClientErrorException notfound = assertThrows(HttpClientErrorException.class, () ->
+        this.entityConfigurationApi.loadJwksFromEntityConfiguration(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+            "https://localhost:" + wireMockServer.httpsPort() + "/notfound"));
     assertThat(notfound.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(400));
 
-    final HttpClientErrorException r = assertThrows(HttpClientErrorException.class, () -> {
-      restClient.post()
-          .uri("/registry/v1/entityconfiguration/jwks")
-          .contentType(MediaType.APPLICATION_JSON)
-          .body("https://127.0.0.1:" + wireMockServer.httpsPort() + "/notfound")
-          .retrieve()
-          .toEntity(String.class);
-    });
+    final HttpClientErrorException r = assertThrows(HttpClientErrorException.class, () ->
+        this.entityConfigurationApi.loadJwksFromEntityConfiguration(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+            "https://127.0.0.1:" + wireMockServer.httpsPort() + "/notfound"));
     assertThat(r.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(400));
 
-    final HttpClientErrorException unknownHost = assertThrows(HttpClientErrorException.class, () -> {
-      restClient.post()
-          .uri("/registry/v1/entityconfiguration/jwks")
-          .contentType(MediaType.APPLICATION_JSON)
-          .body("https://unknown.host")
-          .retrieve()
-          .toEntity(String.class);
-    });
+    final HttpClientErrorException unknownHost = assertThrows(HttpClientErrorException.class, () ->
+        this.entityConfigurationApi.loadJwksFromEntityConfiguration(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+            "https://unknown.host"));
     assertThat(unknownHost.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(400));
 
-    final HttpClientErrorException blocked = assertThrows(HttpClientErrorException.class, () -> {
-      restClient.post()
-          .uri("/registry/v1/entityconfiguration/jwks")
-          .contentType(MediaType.APPLICATION_JSON)
-          .body("https://digg.se")
-          .retrieve()
-          .toEntity(String.class);
-    });
+    final HttpClientErrorException blocked = assertThrows(HttpClientErrorException.class, () ->
+        this.entityConfigurationApi.loadJwksFromEntityConfiguration(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+            "https://digg.se"));
     assertThat(blocked.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(400));
-
   }
 
   @Test
   @Disabled
     // test is disabled since only real DNS can be used to load data from
   void getJWKS_OK() throws ParseException {
-    final RestClient restClient = TestRestClientFactory.createAuthenticated(this.port, "entity-registry");
+    final List<JwksLoadedDto> jwks = this.entityConfigurationApi.loadJwksFromEntityConfiguration(
+        TENANT, JwtTestUtils.OrganisationType.PM.orgId, "https://dev.swedenconnect.se/oidf-test/servicez");
 
-    final ResponseEntity<String> jwks =
-        restClient.post()
-            .uri("/registry/v1/entityconfiguration/jwks")
-            .contentType(MediaType.APPLICATION_JSON)
-            //.body("https://localhost:" + wireMockServer.httpsPort() + "/ok")
-            .body("https://dev.swedenconnect.se/oidf-test/servicez")
-            .retrieve()
-            .toEntity(String.class);
-    assertThat(jwks.getBody()).isNotNull();
-    assertEquals("6c101690-359f-422c-ac51-df382aac0af6", JWKSet.parse(jwks.getBody()).getKeys().getFirst().getKeyID());
+    assertThat(jwks).isNotEmpty();
+    assertEquals("6c101690-359f-422c-ac51-df382aac0af6",
+        JWKSet.parse(jwks.getFirst().getJwks().toString()).getKeys().getFirst().getKeyID());
   }
 
 }
