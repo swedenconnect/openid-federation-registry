@@ -24,6 +24,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -47,7 +48,8 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
-@Table(name = "organization")
+@Table(name = "organization",
+    uniqueConstraints = @UniqueConstraint(name = "uk_instance_org_number", columnNames = {"instance_id", "org_number"}))
 public class Organization extends BaseEntity {
   @Id
   @Column(name = "organization_id", columnDefinition = "char(36)", nullable = false)

@@ -23,7 +23,6 @@ import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.repository.OrganizationRepository;
 
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -52,35 +51,34 @@ public class OrganizationService {
   }
 
   /**
-   * Finds an existing organization entity by its organization number, or creates a new one if it does not exist. If a
-   * new organization is created, it is assigned to the default assignment instance and saved to the repository.
+   * Finds an existing organization entity by its organization number on the instance resolved for the given record,
+   * or creates a new one if it does not exist. The same organization number may be registered on more than one
+   * instance, so lookup and creation are always scoped to the resolved instance.
    *
    * @param organizationRecord the organization record used to search for or create an organization
    * @return the existing or newly created {@link Organization}
-   * @throws RuntimeException if no default assignment instance is configured
+   * @throws IllegalArgumentException if no instance was found for the given matcher config
    */
-
   public Organization findCreate(final OrganizationRecord organizationRecord) {
 
-    return this.organizationRepository.findByOrgNumber(organizationRecord.orgNumber()).or(() -> {
+    final Instance instanceEntity = this.instancePlacementService.resolveInstance(organizationRecord)
+        .orElseThrow(() ->
+            new IllegalArgumentException("No instance was found for the given matcher config"));
 
-      final Instance instanceEntity = this.instancePlacementService.resolveInstance(organizationRecord)
-          .orElseThrow(() ->
-              new IllegalArgumentException("No instance was found for the given matcher config"));
-
-      final Organization org = new Organization();
-      org.setOrganizationId(UUID.randomUUID());
-      org.setOrgNumber(organizationRecord.orgNumber());
-      org.setOrgName(organizationRecord.orgName());
-      org.setInstance(instanceEntity);
-      this.organizationRepository.save(org);
-      //TODO: This is a significand event that should trigger a audit event.
-      log.info("Creating a new organization. {}-{}-{} assigning to instanceid:{}",
-          org.getOrganizationId(), org.getOrgName(), org.getOrgNumber(),org.getInstance().getInstanceId());
-      return Optional.of(org);
-
-    }).orElseThrow();
-
+    return this.organizationRepository
+        .findByInstance_InstanceIdAndOrgNumber(instanceEntity.getInstanceId(), organizationRecord.orgNumber())
+        .orElseGet(() -> {
+          final Organization org = new Organization();
+          org.setOrganizationId(UUID.randomUUID());
+          org.setOrgNumber(organizationRecord.orgNumber());
+          org.setOrgName(organizationRecord.orgName());
+          org.setInstance(instanceEntity);
+          this.organizationRepository.save(org);
+          //TODO: This is a significand event that should trigger a audit event.
+          log.info("Creating a new organization. {}-{}-{} assigning to instanceid:{}",
+              org.getOrganizationId(), org.getOrgName(), org.getOrgNumber(), org.getInstance().getInstanceId());
+          return org;
+        });
   }
 
 }

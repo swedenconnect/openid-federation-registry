@@ -144,17 +144,20 @@ this registry. An instance maps a set of organisations to a specific federation 
 | Setting                                                                   | Required | Example Value                            | Description                                                                                                                                                                   |
 |---------------------------------------------------------------------------|----------|------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `openid.federation.registry.instances[i].instance_id`                     | Yes      | `123e4567-e89b-12d3-a456-426614174000`   | UUID that uniquely identifies this instance. Must match the instance record in the database.                                                                                  |
-| `openid.federation.registry.instances[i].name`                            | Yes      | `Swedenconnect`                          | Human-readable name for the instance.                                                                                                                                         |
+| `openid.federation.registry.instances[i].name`                            | Yes      | `Swedenconnect`                          | Human-readable name for the instance. Also identifies the tenant (see [Federation Instances](#federation-instances)); must be unique across instances.                       |
 | `openid.federation.registry.instances[i].base_url`                        | Yes      | `https://registry.swedenconnect.se/oidf` | Base URL for this instance. Used to compute the `entityPrefix` for every organisation assigned to it: `base_url/orgNumber`.                                                   |
 | `openid.federation.registry.instances[i].org_base_url_overrides`          | No       | See example below                        | Optional per-organisation override of `base_url`. When set for an org, its `entityPrefix` is computed as `override/orgNumber` instead of `base_url/orgNumber`.                |
-| `openid.federation.registry.instances[i].matchers`                        | Yes      | See below                                | Matcher configuration that determines which organisations are assigned to this instance.                                                                                      |
+| `openid.federation.registry.instances[i].function_group`                  | Yes      | `swedenconnect`                          | The single function group that administrates this tenant. Must be unique across instances; organisations are routed to the instance whose `function_group` matches.          |
 | `openid.federation.registry.instances[i].oidf_service_api_validation_key` | No       | See below                                | Public key used to verify signed JWT responses from the oidf-service node attached to this instance. See [OIDF Service API Validation Key](#oidf-service-api-validation-key). |
+
+An organisation number is no longer required to be globally unique — the same `org_number` may be
+registered on more than one instance; it is only required to be unique per instance.
 
 #### Entity prefix computation
 
 The `entityPrefix` for an organisation is resolved at request time — it is not stored in the token:
 
-1. The matching instance is found using `matchers` (see below).
+1. The matching instance is found by matching `function_group` against the tenant's function group.
 2. If the organisation number exists in `org_base_url_overrides`, the override URL is used as the base.
 3. Otherwise `base_url` is used.
 4. The final value is `<base>/orgNumber`, e.g. `https://registry.swedenconnect.se/oidf/5590026042`.
@@ -169,31 +172,13 @@ openid:
         - instance_id: "123e4567-e89b-12d3-a456-426614174000"
           name: "Swedenconnect"
           base_url: "https://registry.swedenconnect.se/oidf"
+          function_group: "swedenconnect"
           org_base_url_overrides:
             "5590026042": "https://dev.swedenconnect.se/oidf-test"
-          matchers:
-            useForDefaultAssignment: true
 ```
 
 In this example all organisations use `https://registry.swedenconnect.se/oidf/{orgNumber}` except
 `5590026042`, which resolves to `https://dev.swedenconnect.se/oidf-test/5590026042`.
-
-#### Matchers
-
-Matchers control which organisations are routed to a given instance.
-Exactly one of the three properties must be active per instance.
-
-| Setting                                                                    | Example Value       | Description                                                                                                                                                                                         |
-|----------------------------------------------------------------------------|---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `openid.federation.registry.instances[i].matchers.org_numbers`             | `["5590026042"]`    | Explicit list of organisation numbers assigned to this instance. Takes precedence over `functiongroups`.                                                                                            |
-| `openid.federation.registry.instances[i].matchers.functiongroups`          | `["swedenconnect"]` | List of function group identifiers. Matches after `org_numbers`. Cannot be combined with `useForDefaultAssignment`.                                                                                 |
-| `openid.federation.registry.instances[i].matchers.useForDefaultAssignment` | `true`              | When `true`, this instance receives all organisations that do not match any other instance. At most one instance may set this to `true`. Cannot be combined with `org_numbers` or `functiongroups`. |
-
-**Matching order** (evaluated per request, first match wins):
-
-1. `org_numbers` — exact match on organisation number.
-2. `functiongroups` — match on the organisation's function group.
-3. `useForDefaultAssignment` — catch-all fallback.
 
 #### OIDF Service API Validation Key
 
@@ -221,11 +206,10 @@ openid:
         - instance_id: "123e4567-e89b-12d3-a456-426614174000"
           name: "Swedenconnect"
           base_url: "https://registry.swedenconnect.se/oidf"
+          function_group: "swedenconnect"
           oidf_service_api_validation_key:
             name: OidfService
             base64_encoded_public_jwk: "<Base64-encoded JWK JSON>"
-          matchers:
-            useForDefaultAssignment: true
 ```
 
 **Example using a PEM certificate:**
@@ -238,14 +222,13 @@ openid:
         - instance_id: "123e4567-e89b-12d3-a456-426614174000"
           name: "Swedenconnect"
           base_url: "https://registry.swedenconnect.se/oidf"
+          function_group: "swedenconnect"
           oidf_service_api_validation_key:
             name: OidfService
             certificate: |
               -----BEGIN CERTIFICATE-----
               MIIBxT...
               -----END CERTIFICATE-----
-          matchers:
-            useForDefaultAssignment: true
 ```
 
 To generate the Base64-encoded JWK value, export the public JWK from your oidf-service node and
@@ -266,16 +249,12 @@ openid:
         - instance_id: "123e4567-e89b-12d3-a456-426614174000"
           name: "Swedenconnect"
           base_url: "https://registry.swedenconnect.se/oidf"
-          matchers:
-            useForDefaultAssignment: true
+          function_group: "swedenconnect"
 
         - instance_id: "223e4567-e89b-12d3-a456-426614174001"
           name: "ENA"
           base_url: "https://registry.ena.se/oidf"
-          matchers:
-            org_numbers:
-              - "2021002114"
-              - "5590026042"
+          function_group: "ena"
 ```
 
 ### Entity Configuration Loader

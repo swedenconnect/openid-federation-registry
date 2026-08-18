@@ -24,7 +24,6 @@ import se.swedenconnect.oidf.registry.infrastructure.config.RegistryProperties;
 import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
-import se.swedenconnect.oidf.registry.organization.repository.OrganizationRepository;
 
 import java.net.URI;
 import java.util.Optional;
@@ -41,21 +40,16 @@ public class InstancePlacementService {
 
   private final RegistryProperties registryProperties;
   private final InstanceRepository instanceRepository;
-  private final OrganizationRepository organizationRepository;
 
   /**
    * Constructor
    * @param registryProperties Properties where the instance configuration exists
    * @param instanceRepository Instance repository used to load a instance when found.
-   * @param organizationRepository Organization repository used to resolve an already-placed organization's
-   *     attached function group.
    */
   public InstancePlacementService(final RegistryProperties registryProperties,
-      final InstanceRepository instanceRepository,
-      final OrganizationRepository organizationRepository) {
+      final InstanceRepository instanceRepository) {
     this.registryProperties = registryProperties;
     this.instanceRepository = instanceRepository;
-    this.organizationRepository = organizationRepository;
   }
 
   /**
@@ -77,13 +71,12 @@ public class InstancePlacementService {
    * already attached to rather than one supplied by the caller. Use this when there is no tenant path variable
    * in scope (e.g. resolving the prefix for a different organization than the one making the request).
    *
-   * @param orgNumber organization number
-   * @return entity prefix on the form {@code baseUrl/orgNumber}, or empty if the organization is not yet
-   *     persisted or no instance matches
+   * @param organization the already-persisted organization, carrying the instance it is placed on
+   * @return entity prefix on the form {@code baseUrl/orgNumber}, or empty if no instance matches
    */
-  public Optional<String> resolveEntityPrefixForPlacedOrg(final String orgNumber) {
-    return this.resolveAttachedFunctionGroup(orgNumber)
-        .flatMap(functionGroup -> this.resolveEntityPrefix(orgNumber, functionGroup));
+  public Optional<String> resolveEntityPrefixForPlacedOrg(final Organization organization) {
+    return this.resolveAttachedFunctionGroup(organization)
+        .flatMap(functionGroup -> this.resolveEntityPrefix(organization.getOrgNumber(), functionGroup));
   }
 
   /**
@@ -182,19 +175,17 @@ public class InstancePlacementService {
 
   /**
    * Resolves the function group already attached to a persisted organization, i.e. the function group backing
-   * the instance the organization was placed on.
+   * the instance the organization was placed on. Pure config lookup — no database access.
    *
-   * @param orgNumber organization number
-   * @return the function group the organization is currently attached to, or empty if the organization is not
-   *     yet persisted (nothing attached to it yet)
+   * @param organization the already-persisted organization, carrying the instance it is placed on
+   * @return the function group the organization is currently attached to, or empty if no configured instance
+   *     matches the organization's instance
    */
-  public Optional<String> resolveAttachedFunctionGroup(final String orgNumber) {
-    return this.organizationRepository.findByOrgNumber(orgNumber)
-        .map(Organization::getInstance)
-        .map(Instance::getInstanceId)
-        .flatMap(instanceId -> this.registryProperties.instances().stream()
-            .filter(instance -> instance.instanceId().equals(instanceId))
-            .findFirst())
+  public Optional<String> resolveAttachedFunctionGroup(final Organization organization) {
+    final UUID instanceId = organization.getInstance().getInstanceId();
+    return this.registryProperties.instances().stream()
+        .filter(instance -> instance.instanceId().equals(instanceId))
+        .findFirst()
         .map(RegistryProperties.InstanceProperties::functionGroup);
   }
 

@@ -30,12 +30,15 @@ import java.util.UUID;
  */
 public interface OrganizationRepository extends JpaRepository<Organization, UUID> {
   /**
-   * Retrieves an organization entity based on its organization number.
+   * Retrieves an organization entity based on its organization number, scoped to a single instance. The same
+   * organization number may exist on more than one instance, so the instance must be given to resolve a single
+   * {@link Organization}.
    *
+   * @param instanceId the instance the organization is expected to be placed on
    * @param orgNumber the organization number used to identify the {@link Organization}
    * @return an {@link Optional} containing the found {@link Organization}, or an empty {@link Optional} if no
-   *     organization is found with the given number
+   *     organization is found with the given number on the given instance
    */
-  Optional<Organization> findByOrgNumber(String orgNumber);
+  Optional<Organization> findByInstance_InstanceIdAndOrgNumber(UUID instanceId, String orgNumber);
 
 }

@@ -135,7 +135,7 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter {
     final TrustAnchorIntermediateModule taIm = this.taImRepository.findById(taImId)
         .orElseThrow(() -> new IllegalStateException("TaIm not found: " + taImId));
     final String registryEntityPrefix = this.instancePlacementService
-        .resolveEntityPrefixForPlacedOrg(taIm.getOrganization().getOrgNumber())
+        .resolveEntityPrefixForPlacedOrg(taIm.getOrganization())
         .orElse(org.entityPrefix());
     final OrganizationRecord orgWithRegistryPrefix = new OrganizationRecord(
         org.orgNumber(), org.orgName(), registryEntityPrefix, org.tenant());
