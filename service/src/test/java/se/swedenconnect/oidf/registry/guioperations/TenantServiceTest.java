@@ -44,6 +44,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -199,9 +200,11 @@ class TenantServiceTest {
     when(orgRightsService.extractOrgRights(authentication)).thenReturn(new OrgRights(true, List.of()));
     when(instanceRepository.findAllById(Set.of(instanceId)))
         .thenReturn(List.of(instanceWithOrgs(instanceId, "4444", "55555")));
-    when(instancePlacementService.resolveEntityPrefixForPlacedOrg("4444"))
+    when(instancePlacementService.resolveEntityPrefixForPlacedOrg(
+        argThat(org -> org != null && "4444".equals(org.getOrgNumber()))))
         .thenReturn(Optional.of("https://registry.example.se/oidf/4444"));
-    when(instancePlacementService.resolveEntityPrefixForPlacedOrg("55555"))
+    when(instancePlacementService.resolveEntityPrefixForPlacedOrg(
+        argThat(org -> org != null && "55555".equals(org.getOrgNumber()))))
         .thenReturn(Optional.empty());
 
     final TenantsResponse result = service.resolveTenants(authentication);

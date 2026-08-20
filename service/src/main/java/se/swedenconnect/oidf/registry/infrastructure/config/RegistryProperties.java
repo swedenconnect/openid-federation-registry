@@ -163,9 +163,8 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
   }
 
   /**
-   * Represents properties for the instance within the registry. This record holds details such as an instance's unique
-   * identifier, name, a flag indicating if it should be used for default assignment, and a list of organizational
-   * numbers.
+   * Represents properties for the instance within the registry. This record holds details such as an instance's
+   * unique identifier, name, and the function group used to route organizations to it.
    *
    * @param instanceId the unique identifier for the instance must not be null
    * @param name the name of the instance must not be empty
@@ -186,7 +185,7 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
       @NestedConfigurationProperty KeyEntry oidfServiceApiValidationKey) {
     /**
      * Validates the instance properties to ensure all required fields are properly configured.
-     * Checks that instanceId and name are set. If org_numbers is empty, useForDefaultAssignment must be true.
+     * Checks that instanceId, name, baseUrl and functionGroup are set.
      */
     public void validate() {
       Assert.notNull(

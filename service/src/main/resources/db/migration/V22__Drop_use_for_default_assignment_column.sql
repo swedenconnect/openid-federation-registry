@@ -14,20 +14,7 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.organization.repository;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-import se.swedenconnect.oidf.registry.organization.model.Instance;
-
-import java.util.UUID;
-
-/**
- * Repository interface for managing Instance objects. Extends JpaRepository to provide standard CRUD operations
- * for the Instance.
- *
- * @author Per Fredrik Plars
- */
-@Repository
-public interface InstanceRepository extends JpaRepository<Instance, UUID> {
-}
+-- use_for_default_assignment is unused: instance placement is resolved from
+-- openid.federation.registry.instances[].function_group, not from this column.
+ALTER TABLE `instance`
+    DROP COLUMN `use_for_default_assignment`;

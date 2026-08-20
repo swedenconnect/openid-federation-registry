@@ -123,7 +123,7 @@ public class TenantService {
         .map(organization -> new TenantOrganizationDto(
             organization.getOrgNumber(),
             this.nameFromOrganization(organization).orElseGet(organization::getOrgNumber),
-            this.instancePlacementService.resolveEntityPrefixForPlacedOrg(organization.getOrgNumber())
+            this.instancePlacementService.resolveEntityPrefixForPlacedOrg(organization)
                 .orElse(null)))
         .sorted(Comparator.comparing(TenantOrganizationDto::orgNumber))
         .toList();

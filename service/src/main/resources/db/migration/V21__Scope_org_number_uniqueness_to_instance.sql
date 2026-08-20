@@ -14,20 +14,10 @@
  *  limitations under the License.
  */
 
-package se.swedenconnect.oidf.registry.organization.repository;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-import se.swedenconnect.oidf.registry.organization.model.Instance;
-
-import java.util.UUID;
-
-/**
- * Repository interface for managing Instance objects. Extends JpaRepository to provide standard CRUD operations
- * for the Instance.
- *
- * @author Per Fredrik Plars
- */
-@Repository
-public interface InstanceRepository extends JpaRepository<Instance, UUID> {
-}
+-- org_number was globally unique, which prevented the same organisation number from being
+-- registered on more than one instance (tenant). Scope the uniqueness to (instance_id, org_number)
+-- instead, so the same org_number can exist on multiple instances.
+ALTER TABLE `organization`
+    DROP KEY `org_number`;
+ALTER TABLE `organization`
+    ADD UNIQUE KEY `uk_instance_org_number` (`instance_id`, `org_number`);

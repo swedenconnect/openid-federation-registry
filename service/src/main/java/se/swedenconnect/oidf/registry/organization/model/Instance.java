@@ -57,9 +57,6 @@ public class Instance extends BaseEntity {
   @OneToMany(mappedBy = "instance", fetch = FetchType.EAGER, cascade = { CascadeType.ALL })
   private Set<Organization> organizations;
 
-  @Column(name = "use_for_default_assignment", nullable = false)
-  private boolean useForDefaultAssignment;
-
   /**
    * Adds an organization to the set of organizations associated with this instance and sets this instance as the parent
    * of the provided organization.

@@ -29,7 +29,6 @@ import se.swedenconnect.oidf.registry.infrastructure.auth.domain.Right;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryClaims;
 import se.swedenconnect.oidf.registry.infrastructure.config.RegistryProperties;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
-import se.swedenconnect.oidf.registry.organization.repository.OrganizationRepository;
 import se.swedenconnect.oidf.registry.organization.service.InstancePlacementService;
 
 import java.net.URI;
@@ -51,9 +50,6 @@ class OrgRightsServiceTest {
   @Mock
   private InstanceRepository instanceRepository;
 
-  @Mock
-  private OrganizationRepository organizationRepository;
-
   private RegistryProperties.InstanceProperties instanceProperties(
       final String name, final String functionGroup) {
     return new RegistryProperties.InstanceProperties(
@@ -66,7 +62,7 @@ class OrgRightsServiceTest {
 
   private OrgRightsService serviceWith(final RegistryProperties registryProperties) {
     return new OrgRightsService(
-        new InstancePlacementService(registryProperties, this.instanceRepository, this.organizationRepository));
+        new InstancePlacementService(registryProperties, this.instanceRepository));
   }
 
   private RegistryClaims authenticationWith(final OrgRights orgRights) {
