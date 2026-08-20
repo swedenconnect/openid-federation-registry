@@ -208,6 +208,23 @@ class EntityCRUDIT {
   }
 
   @Test
+  @DisplayName("A token holding rights on the tenant's second configured function group is granted access "
+      + "(Swedenconnect is configured with function_groups: swedenconnect, swedenconnect-secondary)")
+  void testAccessGrantedViaSecondConfiguredFunctionGroup() {
+    final ApiClient secondaryApiClient = new ApiClient();
+    secondaryApiClient.setBasePath("http://localhost:" + this.port);
+    secondaryApiClient.setBearerToken(this.jwtTestUtils.createJwt(
+        JwtTestUtils.OrganisationType.PM, "swedenconnect-secondary", "admin"));
+    final EntitiesApi secondaryEntitiesApi = new EntitiesApi(secondaryApiClient);
+
+    final FederationEntity created = secondaryEntitiesApi.createFederationEntity(
+        TENANT, JwtTestUtils.OrganisationType.PM.orgId, createFederationEntity());
+
+    assertThat(created).isNotNull();
+    assertThat(created.getEntityId()).isNotNull();
+  }
+
+  @Test
   void testEntityIsolationBetweenOrganizations() {
     // Arrange - Create entity with PM organization
     final UUID entityId = UUID.randomUUID();

@@ -68,9 +68,9 @@ class TenantServiceTest {
   private static final URI TEST_BASE_URL = URI.create("https://registry.example.se/oidf");
 
   private RegistryProperties.InstanceProperties instanceProperties(
-      final UUID id, final String name, final String functionGroup) {
+      final UUID id, final String name, final String... functionGroups) {
     return new RegistryProperties.InstanceProperties(id, name, TEST_BASE_URL, null,
-        functionGroup, null);
+        List.of(functionGroups), null);
   }
 
   private RegistryProperties registryPropertiesWith(final RegistryProperties.InstanceProperties... instances) {
@@ -329,6 +329,52 @@ class TenantServiceTest {
 
     assertThat(organizationsFor(result, "Swedenconnect"))
         .containsExactly(new TenantOrganizationDto("4444", "Org 4444", null));
+  }
+
+  @Test
+  @DisplayName("Two function-group hits belonging to the same tenant are merged into one tenant bucket, "
+      + "not duplicated")
+  void multipleFunctionGroupsOfTheSameTenantMergeIntoOneTenantBucket() {
+    final UUID instanceId = UUID.randomUUID();
+    service = new TenantService(
+        registryPropertiesWith(instanceProperties(instanceId, "Swedenconnect", "swedenconnect-a", "swedenconnect-b")),
+        instanceRepository, orgRightsService, instancePlacementService);
+
+    when(orgRightsService.extractOrgRights(authentication)).thenReturn(
+        orgRights(
+            orgEntry("4444", new FunctionRight("swedenconnect-a", Right.READ)),
+            orgEntry("55555", new FunctionRight("swedenconnect-b", Right.READ))));
+
+    final TenantsResponse result = service.resolveTenants(authentication);
+
+    assertThat(result.tenants()).extracting(TenantDto::tenant).containsExactly("Swedenconnect");
+    assertThat(organizationsFor(result, "Swedenconnect"))
+        .containsExactlyInAnyOrder(
+            new TenantOrganizationDto("4444", "Org 4444", null),
+            new TenantOrganizationDto("55555", "Org 55555", null));
+    verifyNoInteractions(instanceRepository);
+  }
+
+  @Test
+  @DisplayName("Tenant swedenconnect (function_groups: ena, sc, digg): org with a right on sc is included, "
+      + "org with a right only on an unrelated group (pm) is not")
+  void tenantWithMultipleFunctionGroupsOnlyIncludesOrgsMatchingOneOfThem() {
+    final UUID instanceId = UUID.randomUUID();
+    service = new TenantService(
+        registryPropertiesWith(instanceProperties(instanceId, "swedenconnect", "ena", "sc", "digg")),
+        instanceRepository, orgRightsService, instancePlacementService);
+
+    when(orgRightsService.extractOrgRights(authentication)).thenReturn(
+        orgRights(
+            orgEntry("44", new FunctionRight("sc", Right.READ)),
+            orgEntry("55", new FunctionRight("pm", Right.ADMIN))));
+
+    final TenantsResponse result = service.resolveTenants(authentication);
+
+    assertThat(result.tenants()).extracting(TenantDto::tenant).containsExactly("swedenconnect");
+    assertThat(organizationsFor(result, "swedenconnect"))
+        .containsExactly(new TenantOrganizationDto("44", "Org 44", null));
+    verifyNoInteractions(instanceRepository);
   }
 
   @Test

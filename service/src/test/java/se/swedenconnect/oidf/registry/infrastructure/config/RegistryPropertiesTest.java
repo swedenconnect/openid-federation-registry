@@ -30,9 +30,9 @@ class RegistryPropertiesTest {
 
   private static final URI TEST_BASE_URL = URI.create("https://registry.example.se/oidf");
 
-  private RegistryProperties.InstanceProperties instance(final String name, final String functionGroup) {
+  private RegistryProperties.InstanceProperties instance(final String name, final String... functionGroups) {
     return new RegistryProperties.InstanceProperties(UUID.randomUUID(), name, TEST_BASE_URL, null,
-        functionGroup, null);
+        List.of(functionGroups), null);
   }
 
   private RegistryProperties.FederationAPIProperties federationApiProperties() {
@@ -76,18 +76,52 @@ class RegistryPropertiesTest {
 
     assertThatIllegalArgumentException()
         .isThrownBy(properties::validate)
-        .withMessageContaining("function_group must not be reused")
+        .withMessageContaining("function_groups must not be reused")
         .withMessageContaining("swedenconnect");
   }
 
   @Test
-  @DisplayName("An instance without a function group fails validation, since a tenant must be backed by "
-      + "exactly one")
-  void missingFunctionGroupFailsValidation() {
-    final RegistryProperties properties = this.propertiesWith(this.instance("Swedenconnect", null));
+  @DisplayName("A function group reused across two instances' lists fails validation, even when each list "
+      + "also has other, distinct entries")
+  void duplicateFunctionGroupAcrossFlattenedListsFailsValidation() {
+    final RegistryProperties properties = this.propertiesWith(
+        this.instance("Swedenconnect", "a", "b"),
+        this.instance("Ena", "b"));
 
     assertThatIllegalArgumentException()
         .isThrownBy(properties::validate)
-        .withMessageContaining("function_group");
+        .withMessageContaining("function_groups must not be reused")
+        .withMessageContaining("b");
+  }
+
+  @Test
+  @DisplayName("A duplicate function group value within one instance's own list fails validation")
+  void duplicateFunctionGroupWithinSameInstanceFailsValidation() {
+    final RegistryProperties properties = this.propertiesWith(
+        this.instance("Swedenconnect", "swedenconnect", "swedenconnect"));
+
+    assertThatIllegalArgumentException()
+        .isThrownBy(properties::validate)
+        .withMessageContaining("must not contain duplicate values within the same instance")
+        .withMessageContaining("swedenconnect");
+  }
+
+  @Test
+  @DisplayName("A tenant may be backed by more than one function group")
+  void multipleFunctionGroupsPerTenantPassValidation() {
+    final RegistryProperties properties = this.propertiesWith(
+        this.instance("Swedenconnect", "ena", "sc", "digg"));
+
+    assertThatCode(properties::validate).doesNotThrowAnyException();
+  }
+
+  @Test
+  @DisplayName("An instance without any function group fails validation")
+  void missingFunctionGroupFailsValidation() {
+    final RegistryProperties properties = this.propertiesWith(this.instance("Swedenconnect"));
+
+    assertThatIllegalArgumentException()
+        .isThrownBy(properties::validate)
+        .withMessageContaining("function_groups");
   }
 }

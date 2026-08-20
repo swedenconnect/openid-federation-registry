@@ -51,9 +51,9 @@ class OrgRightsServiceTest {
   private InstanceRepository instanceRepository;
 
   private RegistryProperties.InstanceProperties instanceProperties(
-      final String name, final String functionGroup) {
+      final String name, final String... functionGroups) {
     return new RegistryProperties.InstanceProperties(
-        UUID.randomUUID(), name, TEST_BASE_URL, null, functionGroup, null);
+        UUID.randomUUID(), name, TEST_BASE_URL, null, List.of(functionGroups), null);
   }
 
   private RegistryProperties registryPropertiesWith(final RegistryProperties.InstanceProperties... instances) {
@@ -151,5 +151,42 @@ class OrgRightsServiceTest {
 
     assertThatThrownBy(() -> service.extractOrgRights(null))
         .isInstanceOf(AccessDeniedException.class);
+  }
+
+  @Test
+  @DisplayName("When a tenant has multiple function groups, the effective right is the max across whichever "
+      + "of them the org has rights on")
+  void multipleFunctionGroupsOnTheSameTenantGrantTheMaxRight() {
+    final OrgRightsService service = this.serviceWith(
+        this.registryPropertiesWith(
+            this.instanceProperties("swedenconnect-tenant", "swedenconnect-a", "swedenconnect-b")));
+    final OrgRights orgRights = new OrgRights(false, List.of(orgEntry("5566778899",
+        new FunctionRight("swedenconnect-a", Right.READ),
+        new FunctionRight("swedenconnect-b", Right.WRITE))));
+
+    final boolean canWrite =
+        service.canWrite(authenticationWith(orgRights), "5566778899", "swedenconnect-tenant");
+    final boolean canAdmin =
+        service.canAdmin(authenticationWith(orgRights), "5566778899", "swedenconnect-tenant");
+
+    assertThat(canWrite).isTrue();
+    assertThat(canAdmin).isFalse();
+  }
+
+  @Test
+  @DisplayName("Tenant swedenconnect (function_groups: ena, sc, digg) grants read when the org has read on sc, "
+      + "but a right on an unrelated function group (pm) does not grant access")
+  void matchesAgainstAnyConfiguredFunctionGroupOfTheTenant() {
+    final OrgRightsService service = this.serviceWith(
+        this.registryPropertiesWith(this.instanceProperties("swedenconnect", "ena", "sc", "digg")));
+    final OrgRights orgRights = new OrgRights(false, List.of(
+        orgEntry("44", new FunctionRight("sc", Right.READ)),
+        orgEntry("55", new FunctionRight("pm", Right.ADMIN))));
+
+    final boolean org44CanRead = service.canRead(authenticationWith(orgRights), "44", "swedenconnect");
+    final boolean org55CanRead = service.canRead(authenticationWith(orgRights), "55", "swedenconnect");
+
+    assertThat(org44CanRead).isTrue();
+    assertThat(org55CanRead).isFalse();
   }
 }

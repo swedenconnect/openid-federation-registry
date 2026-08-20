@@ -21,6 +21,7 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 import java.net.URI;
 import java.time.Duration;
@@ -65,8 +66,22 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
 
     this.instances.forEach(InstanceProperties::validate);
 
+    this.instances.forEach(instance -> {
+      final List<String> duplicatesWithinInstance = instance.functionGroups().stream()
+          .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+          .entrySet().stream()
+          .filter(entry -> entry.getValue() > 1)
+          .map(Map.Entry::getKey)
+          .toList();
+
+      Assert.isTrue(duplicatesWithinInstance.isEmpty(),
+          "openid.federation.registry.instances[].function_groups must not contain duplicate values "
+              + "within the same instance (" + instance.name() + "), duplicate(s) found: "
+              + duplicatesWithinInstance);
+    });
+
     final List<String> duplicatedFunctionGroups = this.instances.stream()
-        .map(InstanceProperties::functionGroup)
+        .flatMap(instance -> instance.functionGroups().stream())
         .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
         .entrySet().stream()
         .filter(entry -> entry.getValue() > 1)
@@ -74,7 +89,7 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
         .toList();
 
     Assert.isTrue(duplicatedFunctionGroups.isEmpty(),
-        "openid.federation.registry.instances[].function_group must not be reused across more than one "
+        "openid.federation.registry.instances[].function_groups must not be reused across more than one "
             + "instance, duplicate(s) found: " + duplicatedFunctionGroups);
 
     final List<String> duplicatedNames = this.instances.stream()
@@ -170,10 +185,9 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
    * @param name the name of the instance must not be empty
    * @param baseUrl the base URL for this instance, used to compute entity prefixes
    * @param orgBaseUrlOverrides optional per-org overrides on the form orgNumber → base URL
-   * @param functionGroup the single function group that administrates this tenant. A tenant can only be backed
-   *     by exactly one function group — read/write rights (including the {@code "*"} wildcard in the
-   *     {@code org_rights} claim, which grants a right on every function currently attached to an organization)
-   *     are only well-defined when each tenant maps to a single function group.
+   * @param functionGroups the function groups that administrate this tenant. A tenant may be backed by one or
+   *     more function groups; each function group value must still map unambiguously to exactly one tenant
+   *     (enforced across all instances by {@link RegistryProperties#validate()}).
    * @param oidfServiceApiValidationKey optional public key used to verify signed JWT responses from the oidf-service
    *     node attached to this instance
    */
@@ -181,18 +195,21 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
       String name,
       URI baseUrl,
       Map<String, URI> orgBaseUrlOverrides,
-      String functionGroup,
+      List<String> functionGroups,
       @NestedConfigurationProperty KeyEntry oidfServiceApiValidationKey) {
     /**
      * Validates the instance properties to ensure all required fields are properly configured.
-     * Checks that instanceId, name, baseUrl and functionGroup are set.
+     * Checks that instanceId, name, baseUrl and functionGroups are set.
      */
     public void validate() {
       Assert.notNull(
           this.instanceId, "Expected openid.federation.registry.instances[].instance_id");
       Assert.hasText(this.name, "Expected openid.federation.registry.instances[].name");
       Assert.notNull(this.baseUrl, "Expected openid.federation.registry.instances[].base_url");
-      Assert.hasText(this.functionGroup, "Expected openid.federation.registry.instances[].function_group");
+      Assert.notEmpty(
+          this.functionGroups, "Expected openid.federation.registry.instances[].function_groups");
+      Assert.isTrue(this.functionGroups.stream().allMatch(StringUtils::hasText),
+          "openid.federation.registry.instances[].function_groups must not contain blank entries");
 
       Optional.ofNullable(this.oidfServiceApiValidationKey).ifPresent(KeyEntry::validate);
     }
