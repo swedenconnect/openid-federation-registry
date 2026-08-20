@@ -26,6 +26,7 @@ import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -141,11 +142,14 @@ public class InstancePlacementService {
   }
 
   /**
-   * Resolves the function group backing the tenant with the given name, e.g. the tenant slug from a request
-   * path. Each tenant is backed by exactly one function group.
+   * Resolves a representative function group backing the tenant with the given name, e.g. the tenant slug from a
+   * request path. A tenant may be backed by more than one function group; this returns the first configured one,
+   * which is sufficient for pure config/instance lookups (any member of the tenant's function groups resolves to
+   * the same instance). Use {@link #resolveFunctionGroupsForTenant(String)} when the full set is needed, e.g. for
+   * rights evaluation.
    *
    * @param tenantName the tenant's configured {@link RegistryProperties.InstanceProperties#name()}
-   * @return the function group backing that tenant, or empty if no configured instance has that name
+   * @return a function group backing that tenant, or empty if no configured instance has that name
    */
   public Optional<String> resolveFunctionGroupForTenant(final String tenantName) {
     if (tenantName == null) {
@@ -153,13 +157,30 @@ public class InstancePlacementService {
     }
     return this.registryProperties.instances().stream()
         .filter(instance -> instance.name().equals(tenantName))
-        .map(RegistryProperties.InstanceProperties::functionGroup)
+        .map(instance -> instance.functionGroups().getFirst())
         .findFirst();
   }
 
   /**
-   * Finds the {@link RegistryProperties.InstanceProperties} backed by the given function group. Each tenant
-   * (instance) is backed by exactly one function group, so this is a straight equality match.
+   * Resolves all function groups backing the tenant with the given name, e.g. the tenant slug from a request path.
+   *
+   * @param tenantName the tenant's configured {@link RegistryProperties.InstanceProperties#name()}
+   * @return the function groups backing that tenant, or empty if no configured instance has that name
+   */
+  public Optional<List<String>> resolveFunctionGroupsForTenant(final String tenantName) {
+    if (tenantName == null) {
+      return Optional.empty();
+    }
+    return this.registryProperties.instances().stream()
+        .filter(instance -> instance.name().equals(tenantName))
+        .map(RegistryProperties.InstanceProperties::functionGroups)
+        .findFirst();
+  }
+
+  /**
+   * Finds the {@link RegistryProperties.InstanceProperties} backed by the given function group. A tenant
+   * (instance) may be backed by more than one function group, and each function group value must map
+   * unambiguously to exactly one instance, so this is a membership match.
    */
   private Optional<RegistryProperties.InstanceProperties> findMatchingInstance(
        final String functionGroup) {
@@ -169,16 +190,16 @@ public class InstancePlacementService {
     }
 
     return this.registryProperties.instances().stream()
-        .filter(instance -> instance.functionGroup().equals(functionGroup))
+        .filter(instance -> instance.functionGroups().contains(functionGroup))
         .findFirst();
   }
 
   /**
-   * Resolves the function group already attached to a persisted organization, i.e. the function group backing
-   * the instance the organization was placed on. Pure config lookup — no database access.
+   * Resolves a function group already attached to a persisted organization, i.e. one of the function groups
+   * backing the instance the organization was placed on. Pure config lookup — no database access.
    *
    * @param organization the already-persisted organization, carrying the instance it is placed on
-   * @return the function group the organization is currently attached to, or empty if no configured instance
+   * @return a function group the organization is currently attached to, or empty if no configured instance
    *     matches the organization's instance
    */
   public Optional<String> resolveAttachedFunctionGroup(final Organization organization) {
@@ -186,7 +207,7 @@ public class InstancePlacementService {
     return this.registryProperties.instances().stream()
         .filter(instance -> instance.instanceId().equals(instanceId))
         .findFirst()
-        .map(RegistryProperties.InstanceProperties::functionGroup);
+        .map(instance -> instance.functionGroups().getFirst());
   }
 
   private URI entityPrefixFrom(

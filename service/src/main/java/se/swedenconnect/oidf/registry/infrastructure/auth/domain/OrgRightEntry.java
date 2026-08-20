@@ -10,10 +10,12 @@
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
 package se.swedenconnect.oidf.registry.infrastructure.auth.domain;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +37,20 @@ public record OrgRightEntry(
     List<FunctionRight> functions) {
 
   /**
+   * Computes the effective right for a set of function groups by taking the highest right among all function entries
+   * whose {@link FunctionRight#function()} is a member of the given collection.
+   *
+   * @param functionGroups the function groups to evaluate
+   * @return the effective right, or empty if no matching entry exists
+   */
+  public Optional<Right> effectiveRight(final Collection<String> functionGroups) {
+    return this.functions.stream()
+        .filter(f -> functionGroups.contains(f.function()))
+        .map(FunctionRight::right)
+        .max(Comparator.naturalOrder());
+  }
+
+  /**
    * Computes the effective right for a specific function group by taking the highest right among all function
    * entries whose {@link FunctionRight#function()} matches it exactly.
    *
@@ -42,10 +58,20 @@ public record OrgRightEntry(
    * @return the effective right, or empty if no matching entry exists
    */
   public Optional<Right> effectiveRight(final String functionGroup) {
-    return this.functions.stream()
-        .filter(f -> f.function().equals(functionGroup))
-        .map(FunctionRight::right)
-        .max(Comparator.naturalOrder());
+    return this.effectiveRight(List.of(functionGroup));
+  }
+
+  /**
+   * Returns true if the user has at least the required right for any of the given function groups.
+   *
+   * @param functionGroups the function groups to check
+   * @param required the minimum required right level
+   * @return true if the effective right covers the required right
+   */
+  public boolean hasRight(final Collection<String> functionGroups, final Right required) {
+    return this.effectiveRight(functionGroups)
+        .map(r -> r.covers(required))
+        .orElse(false);
   }
 
   /**
@@ -56,8 +82,6 @@ public record OrgRightEntry(
    * @return true if the effective right covers the required right
    */
   public boolean hasRight(final String functionGroup, final Right required) {
-    return this.effectiveRight(functionGroup)
-        .map(r -> r.covers(required))
-        .orElse(false);
+    return this.hasRight(List.of(functionGroup), required);
   }
 }

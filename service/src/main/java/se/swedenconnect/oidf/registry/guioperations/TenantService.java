@@ -43,8 +43,8 @@ import java.util.stream.Collectors;
  * Resolves the tenants (configured instances) the current user has rights on, together with the organizations
  * registered under each of them.
  *
- * <p>A tenant is identified by {@link RegistryProperties.InstanceProperties#name()} and is backed by exactly one
- * {@link RegistryProperties.InstanceProperties#functionGroup()}.
+ * <p>A tenant is identified by {@link RegistryProperties.InstanceProperties#name()} and may be backed by one or
+ * more {@link RegistryProperties.InstanceProperties#functionGroups()}.
  *
  * <p>Resolution takes one of two independent paths, depending on the caller:
  * <ul>
@@ -137,7 +137,8 @@ public class TenantService {
   private TenantsResponse resolveFromOrgRights(final OrgRights orgRights) {
     final Map<String, RegistryProperties.InstanceProperties> instanceByFunctionGroup =
         this.registryProperties.instances().stream()
-            .collect(Collectors.toMap(RegistryProperties.InstanceProperties::functionGroup, Function.identity()));
+            .flatMap(instance -> instance.functionGroups().stream().map(fg -> Map.entry(fg, instance)))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
     final Map<String, Map<String, TenantOrganizationDto>> organizationsByTenant = new LinkedHashMap<>();
     for (final OrgRightEntry entry : orgRights.entries()) {
@@ -166,7 +167,8 @@ public class TenantService {
     return new TenantOrganizationDto(
         entry.organizationIdentifier(),
         this.resolveEntryName(entry),
-        this.instancePlacementService.resolveEntityPrefix(entry.organizationIdentifier(), instance.functionGroup())
+        this.instancePlacementService.resolveEntityPrefix(
+                entry.organizationIdentifier(), instance.functionGroups().getFirst())
             .orElse(null));
   }
 

@@ -46,11 +46,13 @@ openid:
         - instance_id: "20A0AAF5-6E2A-4612-AAEE-A489B86B7C25"
           name: "Example Organization"
           base_url: "https://registry.swedenconnect.se/oidf"
-          function_group: "example-organization"
+          function_groups:
+            - "example-organization"
         - instance_id: "34A03B18-C2EA-4659-9236-B983CD173C6F"
           name: "Example Organization 2"
           base_url: "https://registry.ena.se/oidf"
-          function_group: "example-organization-2"
+          function_groups:
+            - "example-organization-2"
 
 logging:
   level:

@@ -34,7 +34,6 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -84,6 +83,30 @@ public class JwtTestUtils {
    * @throws RuntimeException if an error occurs during the JWT creation or signing process.
    */
   public String createJwt(OrganisationType orgType) {
+    return this.createJwt(orgType, "swedenconnect", "admin");
+  }
+
+  /**
+   * Generates a token whose {@code org_rights} claim holds a single function right for the given organisation.
+   *
+   * @param orgType the organisation the token grants rights for
+   * @param functionGroup the function group name
+   * @param right the right level ("read", "write" or "admin")
+   * @return a serialized, signed JWT
+   */
+  public String createJwt(OrganisationType orgType, String functionGroup, String right) {
+    return this.createJwt(orgType, List.of(Map.of("function", functionGroup, "right", right)));
+  }
+
+  /**
+   * Generates a token whose {@code org_rights} claim holds the given function rights for the organisation — useful for
+   * exercising a tenant backed by more than one function group.
+   *
+   * @param orgType the organisation the token grants rights for
+   * @param functions the {@code functions} list entries, each a {@code {"function": ..., "right": ...}} map
+   * @return a serialized, signed JWT
+   */
+  public String createJwt(OrganisationType orgType, List<Map<String, String>> functions) {
     try {
 
       final String scopes = "read write";
@@ -101,7 +124,7 @@ public class JwtTestUtils {
               "organization_identifier", orgType.orgId,
               "organization_name#sv", orgType.name,
               "organization_name#en", orgType.name,
-              "functions", List.of(Map.of("function", "swedenconnect", "right", "admin")))))
+              "functions", functions)))
           .build();
 
       final RSASSASigner signer = new RSASSASigner(getPrivateKeyFromKeyStore());
