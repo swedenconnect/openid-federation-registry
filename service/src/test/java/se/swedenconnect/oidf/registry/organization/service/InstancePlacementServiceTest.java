@@ -59,9 +59,9 @@ class InstancePlacementServiceTest {
 
   private static final URI TEST_BASE_URL = URI.create("https://registry.example.se/oidf");
 
-  private RegistryProperties.InstanceProperties functionGroupInstance(final UUID id, final String group) {
+  private RegistryProperties.InstanceProperties functionGroupInstance(final UUID id, final String... groups) {
     return new RegistryProperties.InstanceProperties(id, "Instance " + id, TEST_BASE_URL, null,
-        group, null);
+        List.of(groups), null);
   }
 
   private RegistryProperties propertiesWith(final RegistryProperties.InstanceProperties... instances) {
@@ -154,11 +154,12 @@ class InstancePlacementServiceTest {
   // -------------------------------------------------------------------------
 
   @Test
-  @DisplayName("resolveFunctionGroupForTenant returns the function group of the instance with a matching name")
+  @DisplayName("resolveFunctionGroupForTenant returns the first configured function group of the instance "
+      + "with a matching name")
   void resolveFunctionGroupForTenant_returnsFunctionGroup() {
     service = new InstancePlacementService(
         propertiesWith(new RegistryProperties.InstanceProperties(
-            instanceId, "Swedenconnect", TEST_BASE_URL, null, "swedenconnect", null)), instanceRepository);
+            instanceId, "Swedenconnect", TEST_BASE_URL, null, List.of("swedenconnect"), null)), instanceRepository);
 
     final Optional<String> result = service.resolveFunctionGroupForTenant("Swedenconnect");
 
@@ -170,7 +171,7 @@ class InstancePlacementServiceTest {
   void resolveFunctionGroupForTenant_noMatchReturnsEmpty() {
     service = new InstancePlacementService(
         propertiesWith(new RegistryProperties.InstanceProperties(
-            instanceId, "Swedenconnect", TEST_BASE_URL, null, "swedenconnect", null)), instanceRepository);
+            instanceId, "Swedenconnect", TEST_BASE_URL, null, List.of("swedenconnect"), null)), instanceRepository);
 
     final Optional<String> result = service.resolveFunctionGroupForTenant("unknown-tenant");
 
@@ -185,6 +186,58 @@ class InstancePlacementServiceTest {
     final Optional<String> result = service.resolveFunctionGroupForTenant(null);
 
     assertThat(result).isEmpty();
+  }
+
+  // -------------------------------------------------------------------------
+  // resolveFunctionGroupsForTenant
+  // -------------------------------------------------------------------------
+
+  @Test
+  @DisplayName("resolveFunctionGroupsForTenant returns every function group of the instance with a matching name")
+  void resolveFunctionGroupsForTenant_returnsAllFunctionGroups() {
+    service = new InstancePlacementService(
+        propertiesWith(new RegistryProperties.InstanceProperties(
+            instanceId, "Swedenconnect", TEST_BASE_URL, null, List.of("ena", "sc", "digg"), null)),
+        instanceRepository);
+
+    final Optional<List<String>> result = service.resolveFunctionGroupsForTenant("Swedenconnect");
+
+    assertThat(result).contains(List.of("ena", "sc", "digg"));
+  }
+
+  @Test
+  @DisplayName("resolveFunctionGroupsForTenant returns empty when no instance has that name")
+  void resolveFunctionGroupsForTenant_noMatchReturnsEmpty() {
+    service = new InstancePlacementService(
+        propertiesWith(functionGroupInstance(instanceId, "swedenconnect")), instanceRepository);
+
+    final Optional<List<String>> result = service.resolveFunctionGroupsForTenant("unknown-tenant");
+
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  @DisplayName("resolveFunctionGroupsForTenant returns empty for a null tenant name")
+  void resolveFunctionGroupsForTenant_nullTenantReturnsEmpty() {
+    service = new InstancePlacementService(propertiesWith(), instanceRepository);
+
+    final Optional<List<String>> result = service.resolveFunctionGroupsForTenant(null);
+
+    assertThat(result).isEmpty();
+  }
+
+  @Test
+  @DisplayName("An instance backed by two function groups resolves the same instance via either one")
+  void multipleFunctionGroupsResolveTheSameInstance() {
+    service = new InstancePlacementService(
+        propertiesWith(functionGroupInstance(instanceId, "sc", "digg")), instanceRepository);
+    when(instanceRepository.findById(instanceId)).thenReturn(Optional.of(instance));
+
+    final Optional<Instance> viaFirst = service.resolveInstance(org("4444", "sc"));
+    final Optional<Instance> viaSecond = service.resolveInstance(org("4444", "digg"));
+
+    assertThat(viaFirst).contains(instance);
+    assertThat(viaSecond).contains(instance);
   }
 
   // -------------------------------------------------------------------------

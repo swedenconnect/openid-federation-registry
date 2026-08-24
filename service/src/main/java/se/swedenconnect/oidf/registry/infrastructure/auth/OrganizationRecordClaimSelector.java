@@ -43,9 +43,10 @@ import java.util.Objects;
  *
  * <p>The {@code {tenant}} path variable is the tenant's configured
  * {@link se.swedenconnect.oidf.registry.infrastructure.config.RegistryProperties.InstanceProperties#name()};
- * it is resolved to the tenant's function group via {@link InstancePlacementService#resolveFunctionGroupForTenant}
- * before being used any further. Throws {@link AccessDeniedException} (HTTP 403) if the tenant does not match
- * any configured instance.
+ * it is resolved to a representative one of the tenant's function groups via
+ * {@link InstancePlacementService#resolveFunctionGroupForTenant} before being used any further (any one of the
+ * tenant's configured function groups resolves to the same instance). Throws {@link AccessDeniedException}
+ * (HTTP 403) if the tenant does not match any configured instance.
  *
  * <p>Verifies that the authenticated user's {@code org_rights} claim contains an entry for the
  * requested {@code orgNumber}. Throws {@link AccessDeniedException} (HTTP 403) if not found.

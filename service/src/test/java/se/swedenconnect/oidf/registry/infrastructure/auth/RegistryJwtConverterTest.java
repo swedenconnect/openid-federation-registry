@@ -20,6 +20,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.FunctionRight;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrgRightEntry;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.Right;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryClaims;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryJwtConverter;
@@ -242,8 +245,8 @@ class RegistryJwtConverterTest {
   }
 
   @Test
-  @DisplayName("Missing org_rights claim throws IllegalArgumentException")
-  void missingOrgRightsClaimThrowsIllegalArgumentException() {
+  @DisplayName("Token with neither org_rights nor an org-scoped scope claim throws InvalidBearerTokenException")
+  void missingOrgRightsAndScopeClaimThrowsInvalidBearerTokenException() {
     final Jwt jwt = Jwt.withTokenValue("token")
         .header("alg", "RS256")
         .subject("test-subject")
@@ -253,7 +256,7 @@ class RegistryJwtConverterTest {
         .build();
 
     assertThatThrownBy(() -> converter.convert(jwt))
-        .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(InvalidBearerTokenException.class);
   }
 
   @Test
@@ -264,5 +267,93 @@ class RegistryJwtConverterTest {
     final AbstractAuthenticationToken token = converter.convert(jwt);
 
     assertThat(token.isAuthenticated()).isTrue();
+  }
+
+  // -------------------------------------------------------------------------
+  // Scope-based access-token flow (no org_rights claim)
+  // -------------------------------------------------------------------------
+
+  @Test
+  @DisplayName("A scope-only token is parsed into OrgRights with a blank org name")
+  void scopeOnlyTokenIsParsedIntoOrgRights() {
+    final Jwt jwt = Jwt.withTokenValue("token")
+        .header("alg", "RS256")
+        .subject("test-subject")
+        .issuedAt(Instant.now())
+        .expiresAt(Instant.now().plusSeconds(3600))
+        .claim("scope", "55555:demo:write")
+        .build();
+
+    final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
+
+    assertThat(claims.getOrgRights().superuser()).isFalse();
+    assertThat(claims.getOrgRights().entries()).containsExactly(
+        new OrgRightEntry("55555", "", "", List.of(new FunctionRight("demo", Right.WRITE))));
+  }
+
+  @Test
+  @DisplayName("When both org_rights and scope are present, org_rights wins")
+  void orgRightsTakesPriorityOverScope() {
+    final Jwt jwt = buildJwt(Map.of("scope", "66666:other-function:admin"));
+
+    final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
+
+    assertThat(claims.getOrgRights().entries())
+        .extracting(OrgRightEntry::organizationIdentifier)
+        .containsExactly("55555");
+  }
+
+  @Test
+  @DisplayName("Multiple function entries for the same org in one scope string are grouped into one entry")
+  void multipleFunctionsForSameOrgAreGrouped() {
+    final Jwt jwt = Jwt.withTokenValue("token")
+        .header("alg", "RS256")
+        .subject("test-subject")
+        .issuedAt(Instant.now())
+        .expiresAt(Instant.now().plusSeconds(3600))
+        .claim("scope", "55555:demo:write 55555:other-function:read")
+        .build();
+
+    final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
+
+    assertThat(claims.getOrgRights().entries()).hasSize(1);
+    assertThat(claims.getOrgRights().entries().getFirst().functions())
+        .containsExactlyInAnyOrder(
+            new FunctionRight("demo", Right.WRITE), new FunctionRight("other-function", Right.READ));
+  }
+
+  @Test
+  @DisplayName("Multiple orgs in one scope string produce separate entries")
+  void multipleOrgsInScopeProduceSeparateEntries() {
+    final Jwt jwt = Jwt.withTokenValue("token")
+        .header("alg", "RS256")
+        .subject("test-subject")
+        .issuedAt(Instant.now())
+        .expiresAt(Instant.now().plusSeconds(3600))
+        .claim("scope", "55555:demo:write 66666:other-function:read")
+        .build();
+
+    final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
+
+    assertThat(claims.getOrgRights().entries())
+        .extracting(OrgRightEntry::organizationIdentifier)
+        .containsExactlyInAnyOrder("55555", "66666");
+  }
+
+  @Test
+  @DisplayName("A generic non-org-scoped scope entry alongside an org-scoped one is ignored, not fatal")
+  void nonOrgScopedEntryIsIgnored() {
+    final Jwt jwt = Jwt.withTokenValue("token")
+        .header("alg", "RS256")
+        .subject("test-subject")
+        .issuedAt(Instant.now())
+        .expiresAt(Instant.now().plusSeconds(3600))
+        .claim("scope", "openid 55555:demo:write profile")
+        .build();
+
+    final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
+
+    assertThat(claims.getOrgRights().entries()).hasSize(1);
+    assertThat(claims.getOrgRights().entries().getFirst().organizationIdentifier()).isEqualTo("55555");
   }
 }

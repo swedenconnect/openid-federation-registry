@@ -34,9 +34,9 @@ import se.swedenconnect.oidf.registry.organization.service.InstancePlacementServ
  * {@link OrganizationRecordClaimSelector}; this service only verifies right level.
  *
  * <p>A right is granted when: the tenant slug from the request path resolves to a configured
- * {@link RegistryProperties.InstanceProperties#functionGroup()}, and the {@code org_rights} claim holds an entry
- * for the given organization number with a function right on that exact function group covering the required
- * level.
+ * {@link RegistryProperties.InstanceProperties#functionGroups()}, and the {@code org_rights} claim holds an entry
+ * for the given organization number with a function right on any of the tenant's configured function groups
+ * covering the required level.
  *
  * @author Per Fredrik Plars
  */
@@ -92,8 +92,8 @@ public class OrgRightsService {
 
   private boolean hasRight(
       final Authentication authentication, final String orgNumber, final String tenant, final Right required) {
-    return this.instancePlacementService.resolveFunctionGroupForTenant(tenant)
-        .map(functionGroup -> this.extractOrgRights(authentication).hasRight(orgNumber, functionGroup, required))
+    return this.instancePlacementService.resolveFunctionGroupsForTenant(tenant)
+        .map(functionGroups -> this.extractOrgRights(authentication).hasRight(orgNumber, functionGroups, required))
         .orElse(false);
   }
 

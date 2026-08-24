@@ -141,14 +141,14 @@ this registry. An instance maps a set of organisations to a specific federation 
 
 #### Instance properties
 
-| Setting                                                                   | Required | Example Value                            | Description                                                                                                                                                                   |
-|---------------------------------------------------------------------------|----------|------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `openid.federation.registry.instances[i].instance_id`                     | Yes      | `123e4567-e89b-12d3-a456-426614174000`   | UUID that uniquely identifies this instance. Must match the instance record in the database.                                                                                  |
-| `openid.federation.registry.instances[i].name`                            | Yes      | `Swedenconnect`                          | Human-readable name for the instance. Also identifies the tenant (see [Federation Instances](#federation-instances)); must be unique across instances.                       |
-| `openid.federation.registry.instances[i].base_url`                        | Yes      | `https://registry.swedenconnect.se/oidf` | Base URL for this instance. Used to compute the `entityPrefix` for every organisation assigned to it: `base_url/orgNumber`.                                                   |
-| `openid.federation.registry.instances[i].org_base_url_overrides`          | No       | See example below                        | Optional per-organisation override of `base_url`. When set for an org, its `entityPrefix` is computed as `override/orgNumber` instead of `base_url/orgNumber`.                |
-| `openid.federation.registry.instances[i].function_group`                  | Yes      | `swedenconnect`                          | The single function group that administrates this tenant. Must be unique across instances; organisations are routed to the instance whose `function_group` matches.          |
-| `openid.federation.registry.instances[i].oidf_service_api_validation_key` | No       | See below                                | Public key used to verify signed JWT responses from the oidf-service node attached to this instance. See [OIDF Service API Validation Key](#oidf-service-api-validation-key). |
+| Setting                                                                   | Required | Example Value                            | Description                                                                                                                                                                                                                                                                                                                                                                  |
+|---------------------------------------------------------------------------|----------|------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `openid.federation.registry.instances[i].instance_id`                     | Yes      | `123e4567-e89b-12d3-a456-426614174000`   | UUID that uniquely identifies this instance. Must match the instance record in the database.                                                                                                                                                                                                                                                                                 |
+| `openid.federation.registry.instances[i].name`                            | Yes      | `Swedenconnect`                          | Human-readable name for the instance. Also identifies the tenant (see [Federation Instances](#federation-instances)); must be unique across instances.                                                                                                                                                                                                                       |
+| `openid.federation.registry.instances[i].base_url`                        | Yes      | `https://registry.swedenconnect.se/oidf` | Base URL for this instance. Used to compute the `entityPrefix` for every organisation assigned to it: `base_url/orgNumber`.                                                                                                                                                                                                                                                  |
+| `openid.federation.registry.instances[i].org_base_url_overrides`          | No       | See example below                        | Optional per-organisation override of `base_url`. When set for an org, its `entityPrefix` is computed as `override/orgNumber` instead of `base_url/orgNumber`.                                                                                                                                                                                                               |
+| `openid.federation.registry.instances[i].function_groups`                 | Yes      | `["swedenconnect"]`                      | The function group(s) that administrate this tenant. A tenant may be backed by one or more function groups; each value must be unique across all instances (no value may appear on more than one instance's list, and a list may not contain a duplicate value). Organisations are routed to the instance whose `function_groups` list contains the matching function group. |
+| `openid.federation.registry.instances[i].oidf_service_api_validation_key` | No       | See below                                | Public key used to verify signed JWT responses from the oidf-service node attached to this instance. See [OIDF Service API Validation Key](#oidf-service-api-validation-key).                                                                                                                                                                                                |
 
 An organisation number is no longer required to be globally unique — the same `org_number` may be
 registered on more than one instance; it is only required to be unique per instance.
@@ -157,7 +157,8 @@ registered on more than one instance; it is only required to be unique per insta
 
 The `entityPrefix` for an organisation is resolved at request time — it is not stored in the token:
 
-1. The matching instance is found by matching `function_group` against the tenant's function group.
+1. The matching instance is found by matching the function group against one of the tenant's configured
+   `function_groups`.
 2. If the organisation number exists in `org_base_url_overrides`, the override URL is used as the base.
 3. Otherwise `base_url` is used.
 4. The final value is `<base>/orgNumber`, e.g. `https://registry.swedenconnect.se/oidf/5590026042`.
@@ -172,7 +173,8 @@ openid:
         - instance_id: "123e4567-e89b-12d3-a456-426614174000"
           name: "Swedenconnect"
           base_url: "https://registry.swedenconnect.se/oidf"
-          function_group: "swedenconnect"
+          function_groups:
+            - "swedenconnect"
           org_base_url_overrides:
             "5590026042": "https://dev.swedenconnect.se/oidf-test"
 ```
@@ -206,7 +208,8 @@ openid:
         - instance_id: "123e4567-e89b-12d3-a456-426614174000"
           name: "Swedenconnect"
           base_url: "https://registry.swedenconnect.se/oidf"
-          function_group: "swedenconnect"
+          function_groups:
+            - "swedenconnect"
           oidf_service_api_validation_key:
             name: OidfService
             base64_encoded_public_jwk: "<Base64-encoded JWK JSON>"
@@ -222,7 +225,8 @@ openid:
         - instance_id: "123e4567-e89b-12d3-a456-426614174000"
           name: "Swedenconnect"
           base_url: "https://registry.swedenconnect.se/oidf"
-          function_group: "swedenconnect"
+          function_groups:
+            - "swedenconnect"
           oidf_service_api_validation_key:
             name: OidfService
             certificate: |
@@ -249,12 +253,19 @@ openid:
         - instance_id: "123e4567-e89b-12d3-a456-426614174000"
           name: "Swedenconnect"
           base_url: "https://registry.swedenconnect.se/oidf"
-          function_group: "swedenconnect"
+          # A tenant may be backed by more than one function group: organisations reaching this
+          # instance under any of "ena", "sc" or "digg" are routed here, and their effective right
+          # is the highest right the caller holds across the matching function groups.
+          function_groups:
+            - "ena"
+            - "sc"
+            - "digg"
 
         - instance_id: "223e4567-e89b-12d3-a456-426614174001"
           name: "ENA"
           base_url: "https://registry.ena.se/oidf"
-          function_group: "ena"
+          function_groups:
+            - "ena-standalone"
 ```
 
 ### Entity Configuration Loader

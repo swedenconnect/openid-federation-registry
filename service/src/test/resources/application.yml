@@ -24,12 +24,15 @@ openid:
           base_url: "https://registry.swedenconnect.se/oidf"
           org-base-url-overrides:
             "55555": "https://www.pm.se/oidf"
-          function_group: "swedenconnect"
+          function_groups:
+            - "swedenconnect"
+            - "swedenconnect-secondary"
 
         - instance_id: "223e4567-e89b-12d3-a456-426614174001"
           name: "ENA"
           base_url: "https://registry.ena.se/oidf"
-          function_group: "ena"
+          function_groups:
+            - "ena"
 
 
 credential:
