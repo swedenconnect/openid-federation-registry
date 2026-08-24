@@ -40,6 +40,7 @@ import se.swedenconnect.oidf.registry.guioperations.dto.JwksPayloadDto;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -204,6 +205,45 @@ class EntityCRUDIT {
         .satisfies(exception -> {
           final RestClientResponseException restException = (RestClientResponseException) exception;
           assertThat(restException.getStatusCode().value()).isEqualTo(404);
+        });
+  }
+
+  // -------------------------------------------------------------------------
+  // Scope-based access-token flow (no org_rights claim)
+  // -------------------------------------------------------------------------
+
+  @Test
+  @DisplayName("A scope-only bearer token (no org_rights claim) is granted access through the full stack")
+  void testAccessGrantedViaScopeOnlyToken() {
+    final ApiClient scopeApiClient = new ApiClient();
+    scopeApiClient.setBasePath("http://localhost:" + this.port);
+    scopeApiClient.setBearerToken(
+        this.jwtTestUtils.createScopeJwt(JwtTestUtils.OrganisationType.PM, "swedenconnect", "admin"));
+    final EntitiesApi scopeEntitiesApi = new EntitiesApi(scopeApiClient);
+
+    final FederationEntity created = scopeEntitiesApi.createFederationEntity(
+        TENANT, JwtTestUtils.OrganisationType.PM.orgId, createFederationEntity());
+
+    assertThat(created).isNotNull();
+    assertThat(created.getEntityId()).isNotNull();
+  }
+
+  @Test
+  @DisplayName("A bearer token with a mismatched aud claim is rejected with 401")
+  void testTokenWithMismatchedAudienceIsRejected() {
+    final ApiClient badAudienceApiClient = new ApiClient();
+    badAudienceApiClient.setBasePath("http://localhost:" + this.port);
+    badAudienceApiClient.setBearerToken(this.jwtTestUtils.createJwt(
+        JwtTestUtils.OrganisationType.PM, "wrong-audience",
+        List.of(Map.of("function", "swedenconnect", "right", "admin"))));
+    final EntitiesApi badAudienceEntitiesApi = new EntitiesApi(badAudienceApiClient);
+
+    assertThatThrownBy(() -> badAudienceEntitiesApi.createFederationEntity(
+        TENANT, JwtTestUtils.OrganisationType.PM.orgId, createFederationEntity()))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(exception -> {
+          final RestClientResponseException restException = (RestClientResponseException) exception;
+          assertThat(restException.getStatusCode().value()).isEqualTo(401);
         });
   }
 

@@ -107,26 +107,62 @@ public class JwtTestUtils {
    * @return a serialized, signed JWT
    */
   public String createJwt(OrganisationType orgType, List<Map<String, String>> functions) {
+    return this.createJwt(orgType, "account", functions);
+  }
+
+  /**
+   * Generates a token whose {@code org_rights} claim holds the given function rights for the organisation, with a
+   * settable {@code aud} claim — useful for exercising audience-restriction rejection.
+   *
+   * @param orgType the organisation the token grants rights for
+   * @param audience the {@code aud} claim value
+   * @param functions the {@code functions} list entries, each a {@code {"function": ..., "right": ...}} map
+   * @return a serialized, signed JWT
+   */
+  public String createJwt(OrganisationType orgType, String audience, List<Map<String, String>> functions) {
+    final JWTClaimsSet claims = new com.nimbusds.jwt.JWTClaimsSet.Builder()
+        .subject("test-user-subject")
+        .audience(audience)
+        .claim("preferred_username", "test-user")
+        .issueTime(new java.util.Date())
+        .expirationTime(Date.from(Instant.now().plus(30, ChronoUnit.DAYS)))
+        .issuer("http://swedenconnect.se/op")
+        .claim("scope", "read write")
+        .claim("org_rights", List.of(Map.of(
+            "organization_identifier", orgType.orgId,
+            "organization_name#sv", orgType.name,
+            "organization_name#en", orgType.name,
+            "functions", functions)))
+        .build();
+    return this.sign(claims);
+  }
+
+  /**
+   * Generates a token whose {@code scope} claim holds org-scoped {@code "{orgId}:{function}:{right}"} entries and
+   * carries no {@code org_rights} claim — exercises the separate, non-OIDC access-token flow
+   * ({@link se.swedenconnect.oidf.registry.infrastructure.auth.ScopeRightsFactory}).
+   *
+   * @param orgType the organisation the token grants rights for
+   * @param function the function group name
+   * @param right the right level ("read", "write" or "admin")
+   * @return a serialized, signed JWT
+   */
+  public String createScopeJwt(OrganisationType orgType, String function, String right) {
+    final JWTClaimsSet claims = new com.nimbusds.jwt.JWTClaimsSet.Builder()
+        .subject("test-user-subject")
+        .audience("account")
+        .claim("preferred_username", "test-user")
+        .issueTime(new java.util.Date())
+        .expirationTime(Date.from(Instant.now().plus(30, ChronoUnit.DAYS)))
+        .issuer("http://swedenconnect.se/op")
+        .claim("scope", orgType.orgId + ":" + function + ":" + right)
+        .claim("organization_identifier", orgType.orgId)
+        .build();
+    return this.sign(claims);
+  }
+
+  private String sign(JWTClaimsSet claims) {
     try {
-
-      final String scopes = "read write";
-
-      final JWTClaimsSet claims = new com.nimbusds.jwt.JWTClaimsSet.Builder()
-          .subject("test-user-subject")
-          .audience("account")
-          .claim("preferred_username", "test-user")
-          .issueTime(new java.util.Date())
-          .expirationTime(Date.from(Instant.now().plus(30, ChronoUnit.DAYS)))
-          .issuer("http://swedenconnect.se/op")
-          .claim("scope", scopes)
-
-          .claim("org_rights", List.of(Map.of(
-              "organization_identifier", orgType.orgId,
-              "organization_name#sv", orgType.name,
-              "organization_name#en", orgType.name,
-              "functions", functions)))
-          .build();
-
       final RSASSASigner signer = new RSASSASigner(getPrivateKeyFromKeyStore());
       final SignedJWT signedJwt = new com.nimbusds.jwt.SignedJWT(
           new com.nimbusds.jose.JWSHeader(com.nimbusds.jose.JWSAlgorithm.RS256),

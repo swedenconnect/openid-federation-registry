@@ -10,6 +10,7 @@
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
 package se.swedenconnect.oidf.registry.infrastructure.auth.oauth;
@@ -17,12 +18,17 @@ package se.swedenconnect.oidf.registry.infrastructure.auth.oauth;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import se.swedenconnect.oidf.registry.infrastructure.auth.OrgRightsFactory;
+import se.swedenconnect.oidf.registry.infrastructure.auth.ScopeRightsFactory;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrgRights;
 
 /**
- * Converts a JWT into a {@link RegistryClaims} token by parsing the {@code org_rights} claim.
+ * Converts a JWT into a {@link RegistryClaims} token by parsing either the {@code org_rights} claim (ID
+ * token / OIDC login flow) or, when that claim is absent, the org-scoped {@code scope} claim (the separate
+ * access-token flow) — see {@link OrgRightsFactory} and {@link ScopeRightsFactory} respectively. When both are
+ * present, {@code org_rights} takes priority.
  *
  * @author Felix Hellman
  */
@@ -33,7 +39,15 @@ public class RegistryJwtConverter implements Converter<Jwt, AbstractAuthenticati
 
   @Override
   public AbstractAuthenticationToken convert(final Jwt jwt) {
-    final OrgRights orgRights = OrgRightsFactory.fromClaims(jwt.getClaims());
+    final OrgRights orgRights;
+    try {
+      orgRights = jwt.hasClaim("org_rights")
+          ? OrgRightsFactory.fromClaims(jwt.getClaims())
+          : ScopeRightsFactory.fromClaims(jwt.getClaims());
+    }
+    catch (final IllegalArgumentException e) {
+      throw new InvalidBearerTokenException(e.getMessage(), e);
+    }
 
     String username = jwt.getClaimAsString("preferred_username");
     if (username == null) {
