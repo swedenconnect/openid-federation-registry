@@ -26,6 +26,7 @@ import org.springframework.util.StringUtils;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -197,6 +198,32 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
       Map<String, URI> orgBaseUrlOverrides,
       List<String> functionGroups,
       @NestedConfigurationProperty KeyEntry oidfServiceApiValidationKey) {
+
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
+
+    /**
+     * The tenant slug for this instance: {@link #name()} lowercased with whitespace replaced by hyphens.
+     * This is the value that appears as the {@code {tenant\}} path variable, e.g. {@code "Sweden Connect"}
+     * is addressed as {@code sweden-connect} and {@code "SwedenConnect"} as {@code swedenconnect}.
+     *
+     * @return the tenant slug
+     */
+    public String slug() {
+      return toSlug(this.name());
+    }
+
+    /**
+     * Converts a tenant name to its slug form: trimmed, lowercased, with each run of whitespace replaced by a
+     * single hyphen. Applied to both the configured name and the incoming path variable, so a tenant may be
+     * addressed either by its slug or by its configured name.
+     *
+     * @param name the tenant name, may be {@code null}
+     * @return the slug, or {@code null} if {@code name} is {@code null}
+     */
+    public static String toSlug(final String name) {
+      return name == null ? null : WHITESPACE.matcher(name.trim()).replaceAll("-").toLowerCase(Locale.ROOT);
+    }
+
     /**
      * Validates the instance properties to ensure all required fields are properly configured.
      * Checks that instanceId, name, baseUrl and functionGroups are set.

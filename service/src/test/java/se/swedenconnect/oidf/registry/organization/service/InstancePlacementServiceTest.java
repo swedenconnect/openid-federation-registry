@@ -167,6 +167,18 @@ class InstancePlacementServiceTest {
   }
 
   @Test
+  @DisplayName("resolveFunctionGroupForTenant matches on the tenant slug: lowercased, spaces replaced by hyphens")
+  void resolveFunctionGroupForTenant_matchesOnSlug() {
+    service = new InstancePlacementService(
+        propertiesWith(new RegistryProperties.InstanceProperties(
+            instanceId, "Sweden Connect", TEST_BASE_URL, null, List.of("swedenconnect"), null)), instanceRepository);
+
+    assertThat(service.resolveFunctionGroupForTenant("sweden-connect")).contains("swedenconnect");
+    assertThat(service.resolveFunctionGroupForTenant("Sweden Connect")).contains("swedenconnect");
+    assertThat(service.resolveFunctionGroupForTenant("swedenconnect")).isEmpty();
+  }
+
+  @Test
   @DisplayName("resolveFunctionGroupForTenant returns empty when no instance has that name")
   void resolveFunctionGroupForTenant_noMatchReturnsEmpty() {
     service = new InstancePlacementService(

@@ -148,15 +148,17 @@ public class InstancePlacementService {
    * the same instance). Use {@link #resolveFunctionGroupsForTenant(String)} when the full set is needed, e.g. for
    * rights evaluation.
    *
-   * @param tenantName the tenant's configured {@link RegistryProperties.InstanceProperties#name()}
+   * @param tenantName the tenant's {@link RegistryProperties.InstanceProperties#slug()} or, equivalently, its
+   *     configured {@link RegistryProperties.InstanceProperties#name()}
    * @return a function group backing that tenant, or empty if no configured instance has that name
    */
   public Optional<String> resolveFunctionGroupForTenant(final String tenantName) {
     if (tenantName == null) {
       return Optional.empty();
     }
+    final String slug = RegistryProperties.InstanceProperties.toSlug(tenantName);
     return this.registryProperties.instances().stream()
-        .filter(instance -> instance.name().equals(tenantName))
+        .filter(instance -> instance.slug().equals(slug))
         .map(instance -> instance.functionGroups().getFirst())
         .findFirst();
   }
@@ -164,15 +166,17 @@ public class InstancePlacementService {
   /**
    * Resolves all function groups backing the tenant with the given name, e.g. the tenant slug from a request path.
    *
-   * @param tenantName the tenant's configured {@link RegistryProperties.InstanceProperties#name()}
+   * @param tenantName the tenant's {@link RegistryProperties.InstanceProperties#slug()} or, equivalently, its
+   *     configured {@link RegistryProperties.InstanceProperties#name()}
    * @return the function groups backing that tenant, or empty if no configured instance has that name
    */
   public Optional<List<String>> resolveFunctionGroupsForTenant(final String tenantName) {
     if (tenantName == null) {
       return Optional.empty();
     }
+    final String slug = RegistryProperties.InstanceProperties.toSlug(tenantName);
     return this.registryProperties.instances().stream()
-        .filter(instance -> instance.name().equals(tenantName))
+        .filter(instance -> instance.slug().equals(slug))
         .map(RegistryProperties.InstanceProperties::functionGroups)
         .findFirst();
   }
