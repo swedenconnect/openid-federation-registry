@@ -65,9 +65,12 @@ This document describes the configuration settings available for the OpenID Fede
 
 ## Security Configuration
 
-| Setting                                                         | Example Value        | Description                                             |
-|-----------------------------------------------------------------|----------------------|---------------------------------------------------------|
-| `spring.security.oauth2.resourceserver.jwt.public-key-location` | classpath:my-key.pub | Location of the public key for the JWT resource server. |
+| Setting                                                                        | Example Value             | Description                                                                                                                                                                                                                                                                                        |
+|--------------------------------------------------------------------------------|---------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `spring.security.oauth2.resourceserver.jwt.public-key-location`                | classpath:my-key.pub      | Location of the public key for the JWT resource server.                                                                                                                                                                                                                                            |
+| `spring.security.oauth2.client.registration.<id>.client-authentication-method` | private_key_jwt           | This registry authenticates to Keycloak's token endpoint with a signed JWT assertion instead of a client secret.                                                                                                                                                                                   |
+| `iam.security.client.credential.jks.store.location`                            | classpath:oidc-client.jks | Keystore holding this application's own OIDC client credential, used to sign `private_key_jwt` assertions and published (public part only) at `GET /jwks`. Also supports `pem`/`bundle` styles — see [`iam-security-spring-boot-starter`](https://github.com/swedenconnect/organizations-iam-app). |
+| `iam.security.function`                                                        | *(unset)*                 | Left unset — this registry runs in full/multi-function mode, since a tenant can be backed by several function groups.                                                                                                                                                                              |
 
 ## Logging Configuration
 

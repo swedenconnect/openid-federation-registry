@@ -120,6 +120,11 @@
             <artifactId>credentials-support-nimbus</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>se.swedenconnect.iam</groupId>
+            <artifactId>iam-security-spring-boot-starter</artifactId>
+        </dependency>
+
         <!-- Observability -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

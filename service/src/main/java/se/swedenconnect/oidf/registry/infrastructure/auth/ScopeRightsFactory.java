@@ -15,10 +15,9 @@
  */
 package se.swedenconnect.oidf.registry.infrastructure.auth;
 
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.FunctionRight;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrgRightEntry;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrgRights;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.Right;
+import se.swedenconnect.iam.commons.types.LocalizedString;
+import se.swedenconnect.iam.commons.types.OrganizationID;
+import se.swedenconnect.iam.security.claims.OrgRightsClaim;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -27,7 +26,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
- * Parses the {@code scope} claim of the org-scoped OAuth2 access-token flow into an {@link OrgRights} object, for
+ * Parses the {@code scope} claim of the org-scoped OAuth2 access-token flow into an {@link OrgRightsClaim}, for
  * tokens that carry no {@code org_rights} claim.
  *
  * <p>Expected claim format — a space-delimited string of {@code "{orgId}:{function}:{right}"} entries:
@@ -36,7 +35,10 @@ import java.util.regex.Pattern;
  * </pre>
  * Entries that don't split into exactly three {@code :}-separated parts (e.g. a generic {@code "openid"} or
  * {@code "profile"} scope) are ignored. This flow never grants superuser — that remains exclusive to the
- * {@code org_rights} claim parsed by {@link OrgRightsFactory}.
+ * {@code org_rights} claim parsed by {@link se.swedenconnect.iam.security.claims.OrgRightsClaimParser}.
+ *
+ * <p>Unlike the {@code org_rights} claim, this claim carries no organization display name — entries are built
+ * with an empty {@link LocalizedString}.
  *
  * @author Per Fredrik Plars
  */
@@ -45,35 +47,36 @@ public class ScopeRightsFactory {
   private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
   /**
-   * Parses the {@code scope} claim into an {@link OrgRights} object.
+   * Parses the {@code scope} claim into an {@link OrgRightsClaim}.
    *
    * @param claims the JWT claims map
    * @return the parsed org rights, never a superuser
    */
-  public static OrgRights fromClaims(final Map<String, Object> claims) {
+  public static OrgRightsClaim fromClaims(final Map<String, Object> claims) {
     final Object raw = claims.get("scope");
     if (!(raw instanceof final String scope) || scope.isBlank()) {
       throw new IllegalArgumentException("scope claim is missing from token");
     }
 
-    final Map<String, List<FunctionRight>> byOrg = new LinkedHashMap<>();
+    final Map<String, List<OrgRightsClaim.FunctionEntry>> byOrg = new LinkedHashMap<>();
     for (final String token : WHITESPACE.split(scope.trim())) {
       final String[] parts = token.split(":");
       if (parts.length != 3) {
         continue;
       }
-      final Right right = Right.valueOf(parts[2].toUpperCase());
-      byOrg.computeIfAbsent(parts[0], key -> new ArrayList<>()).add(new FunctionRight(parts[1], right));
+      byOrg.computeIfAbsent(parts[0], key -> new ArrayList<>())
+          .add(new OrgRightsClaim.FunctionEntry(parts[1], parts[2]));
     }
 
     if (byOrg.isEmpty()) {
       throw new IllegalArgumentException("scope claim does not contain any organization-scoped entries");
     }
 
-    final List<OrgRightEntry> entries = byOrg.entrySet().stream()
-        .map(entry -> new OrgRightEntry(entry.getKey(), "", "", List.copyOf(entry.getValue())))
+    final List<OrgRightsClaim.OrgEntry> entries = byOrg.entrySet().stream()
+        .map(entry -> new OrgRightsClaim.OrgEntry(
+            OrganizationID.of(entry.getKey()), new LocalizedString(), null, List.copyOf(entry.getValue())))
         .toList();
 
-    return new OrgRights(false, entries);
+    return new OrgRightsClaim(false, entries);
   }
 }

@@ -20,14 +20,14 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
-import se.swedenconnect.oidf.registry.infrastructure.auth.OrgRightsFactory;
+import se.swedenconnect.iam.security.claims.OrgRightsClaim;
+import se.swedenconnect.iam.security.claims.OrgRightsClaimParser;
 import se.swedenconnect.oidf.registry.infrastructure.auth.ScopeRightsFactory;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrgRights;
 
 /**
  * Converts a JWT into a {@link RegistryClaims} token by parsing either the {@code org_rights} claim (ID
  * token / OIDC login flow) or, when that claim is absent, the org-scoped {@code scope} claim (the separate
- * access-token flow) — see {@link OrgRightsFactory} and {@link ScopeRightsFactory} respectively. When both are
+ * access-token flow) — see {@link OrgRightsClaimParser} and {@link ScopeRightsFactory} respectively. When both are
  * present, {@code org_rights} takes priority.
  *
  * @author Felix Hellman
@@ -36,13 +36,14 @@ public class RegistryJwtConverter implements Converter<Jwt, AbstractAuthenticati
 
   private final JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter =
       new JwtGrantedAuthoritiesConverter();
+  private final OrgRightsClaimParser orgRightsClaimParser = new OrgRightsClaimParser();
 
   @Override
   public AbstractAuthenticationToken convert(final Jwt jwt) {
-    final OrgRights orgRights;
+    final OrgRightsClaim orgRights;
     try {
       orgRights = jwt.hasClaim("org_rights")
-          ? OrgRightsFactory.fromClaims(jwt.getClaims())
+          ? this.parseOrgRightsClaim(jwt)
           : ScopeRightsFactory.fromClaims(jwt.getClaims());
     }
     catch (final IllegalArgumentException e) {
@@ -61,5 +62,17 @@ public class RegistryJwtConverter implements Converter<Jwt, AbstractAuthenticati
         this.jwtGrantedAuthoritiesConverter.convert(jwt));
     registryClaims.setAuthenticated(true);
     return registryClaims;
+  }
+
+  /**
+   * Parses the {@code org_rights} claim, failing fast (like a missing claim) if it is present but carries no usable
+   * rights — {@link OrgRightsClaimParser#parse(Object)} otherwise returns an empty claim silently.
+   */
+  private OrgRightsClaim parseOrgRightsClaim(final Jwt jwt) {
+    final OrgRightsClaim parsed = this.orgRightsClaimParser.parse(jwt.getClaim("org_rights"));
+    if (!parsed.superuser() && parsed.orgEntries().isEmpty()) {
+      throw new IllegalArgumentException("org_rights claim is empty");
+    }
+    return parsed;
   }
 }

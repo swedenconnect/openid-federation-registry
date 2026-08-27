@@ -21,7 +21,6 @@ import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
-import se.swedenconnect.oidf.registry.infrastructure.auth.AuthConstants;
 
 /**
  * Test utility class for creating a RestClient instance for use in tests. Makes call to our test authorization server
@@ -43,7 +42,6 @@ public class TestRestClientFactory {
         .requestFactory(clientHttpRequestFactory)
         .defaultHeader(HttpHeaders.AUTHORIZATION,
             "Bearer " + new JwtTestUtils().createJwt(JwtTestUtils.OrganisationType.PM))
-        .defaultHeader(AuthConstants.SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE, JwtTestUtils.OrganisationType.PM.orgId)
         .baseUrl("http://localhost:%d".formatted(port))
         .build();
 /*

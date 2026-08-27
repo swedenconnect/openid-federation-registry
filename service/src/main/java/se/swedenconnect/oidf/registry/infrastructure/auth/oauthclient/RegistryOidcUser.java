@@ -19,8 +19,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
-import se.swedenconnect.oidf.registry.infrastructure.auth.OrgRightsFactory;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrgRights;
+import se.swedenconnect.iam.security.claims.OrgRightsClaim;
+import se.swedenconnect.iam.security.claims.OrgRightsClaimParser;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -32,6 +32,8 @@ import java.util.Map;
  * @author Per Fredrik Plars
  */
 public class RegistryOidcUser implements OidcUser, Serializable {
+
+  private static final OrgRightsClaimParser ORG_RIGHTS_CLAIM_PARSER = new OrgRightsClaimParser();
 
   private final OidcUser defaultOidcUser;
 
@@ -47,10 +49,10 @@ public class RegistryOidcUser implements OidcUser, Serializable {
   /**
    * Returns the parsed org_rights from the OIDC ID token claims.
    *
-   * @return parsed OrgRights
+   * @return parsed org rights claim
    */
-  public OrgRights getOrgRights() {
-    return OrgRightsFactory.fromClaims(this.getIdToken().getClaims());
+  public OrgRightsClaim getOrgRights() {
+    return ORG_RIGHTS_CLAIM_PARSER.parse(this.getIdToken().getClaims().get("org_rights"));
   }
 
   @Override

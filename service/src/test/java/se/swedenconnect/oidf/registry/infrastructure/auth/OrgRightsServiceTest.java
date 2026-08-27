@@ -22,10 +22,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.FunctionRight;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrgRightEntry;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrgRights;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.Right;
+import se.swedenconnect.iam.commons.types.LocalizedString;
+import se.swedenconnect.iam.commons.types.OrganizationID;
+import se.swedenconnect.iam.security.claims.OrgRightsClaim;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryClaims;
 import se.swedenconnect.oidf.registry.infrastructure.config.RegistryProperties;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
@@ -46,6 +45,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class OrgRightsServiceTest {
 
   private static final URI TEST_BASE_URL = URI.create("https://registry.example.se/oidf");
+  private static final String ORG_A = "5566778899";
+  private static final String ORG_44 = "5520009480";
+  private static final String ORG_55 = "5520010850";
 
   @Mock
   private InstanceRepository instanceRepository;
@@ -65,7 +67,7 @@ class OrgRightsServiceTest {
         new InstancePlacementService(registryProperties, this.instanceRepository));
   }
 
-  private RegistryClaims authenticationWith(final OrgRights orgRights) {
+  private RegistryClaims authenticationWith(final OrgRightsClaim orgRights) {
     final Jwt jwt = Jwt.withTokenValue("token")
         .header("alg", "RS256")
         .subject("test-subject")
@@ -76,8 +78,15 @@ class OrgRightsServiceTest {
     return new RegistryClaims(jwt, orgRights, "test-subject", List.of());
   }
 
-  private OrgRightEntry orgEntry(final String orgNumber, final FunctionRight... functions) {
-    return new OrgRightEntry(orgNumber, "Org " + orgNumber, "Org " + orgNumber, List.of(functions));
+  private OrgRightsClaim.OrgEntry orgEntry(final String orgNumber, final OrgRightsClaim.FunctionEntry... functions) {
+    final LocalizedString name = new LocalizedString();
+    name.add("sv", "Org " + orgNumber);
+    name.add("en", "Org " + orgNumber);
+    return new OrgRightsClaim.OrgEntry(OrganizationID.of(orgNumber), name, null, List.of(functions));
+  }
+
+  private static OrgRightsClaim.FunctionEntry functionRight(final String function, final String right) {
+    return new OrgRightsClaim.FunctionEntry(function, right);
   }
 
   @Test
@@ -85,10 +94,10 @@ class OrgRightsServiceTest {
   void canReadGrantsAccessWhenFunctionGroupMatches() {
     final OrgRightsService service = this.serviceWith(
         this.registryPropertiesWith(this.instanceProperties("swedenconnect-tenant", "swedenconnect")));
-    final OrgRights orgRights = new OrgRights(
-        false, List.of(orgEntry("5566778899", new FunctionRight("swedenconnect", Right.READ))));
+    final OrgRightsClaim orgRights = new OrgRightsClaim(
+        false, List.of(this.orgEntry(ORG_A, functionRight("swedenconnect", "read"))));
 
-    final boolean result = service.canRead(authenticationWith(orgRights), "5566778899", "swedenconnect-tenant");
+    final boolean result = service.canRead(authenticationWith(orgRights), ORG_A, "swedenconnect-tenant");
 
     assertThat(result).isTrue();
   }
@@ -98,10 +107,10 @@ class OrgRightsServiceTest {
   void canWriteDeniesAccessWhenRightIsInsufficient() {
     final OrgRightsService service = this.serviceWith(
         this.registryPropertiesWith(this.instanceProperties("swedenconnect-tenant", "swedenconnect")));
-    final OrgRights orgRights = new OrgRights(
-        false, List.of(orgEntry("5566778899", new FunctionRight("swedenconnect", Right.READ))));
+    final OrgRightsClaim orgRights = new OrgRightsClaim(
+        false, List.of(this.orgEntry(ORG_A, functionRight("swedenconnect", "read"))));
 
-    final boolean result = service.canWrite(authenticationWith(orgRights), "5566778899", "swedenconnect-tenant");
+    final boolean result = service.canWrite(authenticationWith(orgRights), ORG_A, "swedenconnect-tenant");
 
     assertThat(result).isFalse();
   }
@@ -111,10 +120,10 @@ class OrgRightsServiceTest {
   void rightOnUnrelatedFunctionGroupDoesNotGrantAccess() {
     final OrgRightsService service = this.serviceWith(
         this.registryPropertiesWith(this.instanceProperties("swedenconnect-tenant", "swedenconnect")));
-    final OrgRights orgRights = new OrgRights(
-        false, List.of(orgEntry("5566778899", new FunctionRight("other-function-group", Right.ADMIN))));
+    final OrgRightsClaim orgRights = new OrgRightsClaim(
+        false, List.of(this.orgEntry(ORG_A, functionRight("other-function-group", "admin"))));
 
-    final boolean result = service.canRead(authenticationWith(orgRights), "5566778899", "swedenconnect-tenant");
+    final boolean result = service.canRead(authenticationWith(orgRights), ORG_A, "swedenconnect-tenant");
 
     assertThat(result).isFalse();
   }
@@ -124,10 +133,10 @@ class OrgRightsServiceTest {
   void unknownTenantDeniesAccess() {
     final OrgRightsService service = this.serviceWith(
         this.registryPropertiesWith(this.instanceProperties("swedenconnect-tenant", "swedenconnect")));
-    final OrgRights orgRights = new OrgRights(
-        false, List.of(orgEntry("5566778899", new FunctionRight("swedenconnect", Right.ADMIN))));
+    final OrgRightsClaim orgRights = new OrgRightsClaim(
+        false, List.of(this.orgEntry(ORG_A, functionRight("swedenconnect", "admin"))));
 
-    final boolean result = service.canRead(authenticationWith(orgRights), "5566778899", "unconfigured-tenant");
+    final boolean result = service.canRead(authenticationWith(orgRights), ORG_A, "unconfigured-tenant");
 
     assertThat(result).isFalse();
   }
@@ -137,9 +146,9 @@ class OrgRightsServiceTest {
   void superuserAlwaysGrantsAccess() {
     final OrgRightsService service = this.serviceWith(
         this.registryPropertiesWith(this.instanceProperties("swedenconnect-tenant", "swedenconnect")));
-    final OrgRights orgRights = new OrgRights(true, List.of());
+    final OrgRightsClaim orgRights = new OrgRightsClaim(true, List.of());
 
-    final boolean result = service.canAdmin(authenticationWith(orgRights), "5566778899", "swedenconnect-tenant");
+    final boolean result = service.canAdmin(authenticationWith(orgRights), ORG_A, "swedenconnect-tenant");
 
     assertThat(result).isTrue();
   }
@@ -160,14 +169,14 @@ class OrgRightsServiceTest {
     final OrgRightsService service = this.serviceWith(
         this.registryPropertiesWith(
             this.instanceProperties("swedenconnect-tenant", "swedenconnect-a", "swedenconnect-b")));
-    final OrgRights orgRights = new OrgRights(false, List.of(orgEntry("5566778899",
-        new FunctionRight("swedenconnect-a", Right.READ),
-        new FunctionRight("swedenconnect-b", Right.WRITE))));
+    final OrgRightsClaim orgRights = new OrgRightsClaim(false, List.of(this.orgEntry(ORG_A,
+        functionRight("swedenconnect-a", "read"),
+        functionRight("swedenconnect-b", "write"))));
 
     final boolean canWrite =
-        service.canWrite(authenticationWith(orgRights), "5566778899", "swedenconnect-tenant");
+        service.canWrite(authenticationWith(orgRights), ORG_A, "swedenconnect-tenant");
     final boolean canAdmin =
-        service.canAdmin(authenticationWith(orgRights), "5566778899", "swedenconnect-tenant");
+        service.canAdmin(authenticationWith(orgRights), ORG_A, "swedenconnect-tenant");
 
     assertThat(canWrite).isTrue();
     assertThat(canAdmin).isFalse();
@@ -179,12 +188,12 @@ class OrgRightsServiceTest {
   void matchesAgainstAnyConfiguredFunctionGroupOfTheTenant() {
     final OrgRightsService service = this.serviceWith(
         this.registryPropertiesWith(this.instanceProperties("swedenconnect", "ena", "sc", "digg")));
-    final OrgRights orgRights = new OrgRights(false, List.of(
-        orgEntry("44", new FunctionRight("sc", Right.READ)),
-        orgEntry("55", new FunctionRight("pm", Right.ADMIN))));
+    final OrgRightsClaim orgRights = new OrgRightsClaim(false, List.of(
+        this.orgEntry(ORG_44, functionRight("sc", "read")),
+        this.orgEntry(ORG_55, functionRight("pm", "admin"))));
 
-    final boolean org44CanRead = service.canRead(authenticationWith(orgRights), "44", "swedenconnect");
-    final boolean org55CanRead = service.canRead(authenticationWith(orgRights), "55", "swedenconnect");
+    final boolean org44CanRead = service.canRead(authenticationWith(orgRights), ORG_44, "swedenconnect");
+    final boolean org55CanRead = service.canRead(authenticationWith(orgRights), ORG_55, "swedenconnect");
 
     assertThat(org44CanRead).isTrue();
     assertThat(org55CanRead).isFalse();

@@ -15,10 +15,23 @@ Two authentication paths feed the same authorization logic (`infrastructure.conf
 
 - **JWT bearer** (OAuth2 resource server) — for machine/API clients. `Authorization: Bearer <token>`. Parsed by
   `RegistryJwtConverter` into `RegistryClaims`.
-- **OIDC login** (OAuth2 client) — for the browser SPA. The session-backed principal is `RegistryOidcUser`.
+- **OIDC login** (OAuth2 client) — for the browser SPA. The session-backed principal is `RegistryOidcUser`. This
+  registry authenticates itself to Keycloak's token endpoint with `private_key_jwt` (see
+  `iam.security.client.credential`), not a client secret — Keycloak fetches this application's own public key from
+  its `GET /jwks` endpoint (`infrastructure.controller.JwksController`, permitted without authentication).
 
 Both expose the same parsed `org_rights` claim to `OrgRightsService`, so the authorization rules below apply
 identically regardless of which path a request came in on.
+
+Claim parsing and the right hierarchy are provided by
+[`se.swedenconnect.iam:iam-security-spring-boot-starter`](https://github.com/swedenconnect/organizations-iam-app)
+(`OrgRightsClaim`, `OrgRightsClaimParser`, `OrganizationRight`, package `se.swedenconnect.iam.security.claims`) —
+this registry supplies its own `RegistryJwtConverter`/`OrgRightsService` on top rather than the library's
+auto-configured resource-server converter, because it needs to (a) accept `org_rights` on bearer tokens too, not
+only the `scope` claim the library's `OrgRightsScopeConverter` expects, and (b) match a right against *any* of a
+tenant's several function groups (see below), which the library has no concept of. Organisation identifiers are
+validated by the library as Swedish organisation numbers (10 digits, Luhn checksum); an `org_rights`/`scope` entry
+for a non-conforming identifier is silently dropped by the parser.
 
 ## The `org_rights` claim
 
@@ -42,7 +55,7 @@ sessions), a JSON array with one entry per organisation the caller holds rights 
 - `functions` — one or more `{function, right}` pairs. `function` names a **function group** (a userfunktion); the
   same organisation can hold different rights on different function groups.
 - `right` is one of `read`, `write`, `admin` — hierarchical: `admin` implies `write` implies `read`
-  (`infrastructure.auth.domain.Right`).
+  (`se.swedenconnect.iam.security.claims.OrganizationRight`).
 
 A superuser token skips all of the above:
 

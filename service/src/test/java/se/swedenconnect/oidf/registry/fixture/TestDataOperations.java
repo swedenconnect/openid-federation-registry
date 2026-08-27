@@ -102,7 +102,9 @@ public class TestDataOperations {
    * @param baseUrl the base URL of the API (e.g., "https://localhost:8080")
    */
   public String createTestScenarioWithPolicyAndEntities(final ApiClient apiClient, final String baseUrl) {
-    return createTestScenarioWithPolicyAndEntities(apiClient, baseUrl, "Swedenconnect", "55555");
+    // Must match JwtTestUtils.OrganisationType.PM's orgId, since the default caller (see
+    // OidfServiceApiControllerIT) authenticates as PM.
+    return createTestScenarioWithPolicyAndEntities(apiClient, baseUrl, "Swedenconnect", "5520001263");
   }
 
   public String createTestScenarioWithPolicyAndEntities(
