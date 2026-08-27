@@ -22,6 +22,8 @@ import se.swedenconnect.oidf.registry.entity.service.EntityConfigService;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
+import se.swedenconnect.oidf.registry.organization.model.Organization;
+import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 import se.swedenconnect.oidf.registry.registrationflow.RegistrationFlowService;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationMapper;
@@ -49,6 +51,7 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
   private final RegistrationRepository registrationRepository;
   private final EntityConfigService entityConfigService;
   private final RegistrationFlowService registrationFlowService;
+  private final OrganizationService organizationService;
 
   /**
    * Constructor.
@@ -56,27 +59,53 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
    * @param registrationRepository repository for registration records
    * @param entityConfigService service for checking hosted entities
    * @param registrationFlowService service for resuming pipeline execution on step approval
+   * @param organizationService service for resolving the calling organization
    */
   public RegistrationAdminServiceImpl(final RegistrationRepository registrationRepository,
       final EntityConfigService entityConfigService,
-      final RegistrationFlowService registrationFlowService) {
+      final RegistrationFlowService registrationFlowService,
+      final OrganizationService organizationService) {
     this.registrationRepository = registrationRepository;
     this.entityConfigService = entityConfigService;
     this.registrationFlowService = registrationFlowService;
+    this.organizationService = organizationService;
+  }
+
+  /**
+   * Finds a registration by ID, verifying it is connected to an intermediate owned by the calling organization. Both
+   * "no such registration" and "registration belongs to another organization" collapse to the same not-found error, so
+   * a foreign registration ID is indistinguishable from a nonexistent one.
+   *
+   * @param organizationRecord the calling organization
+   * @param registrationId the registration ID
+   * @return the owned registration
+   */
+  private Registration findOwnedRegistrationOrThrow(final OrganizationRecord organizationRecord,
+      final UUID registrationId) {
+    final UUID organizationId = this.organizationService.find(organizationRecord)
+        .map(Organization::getOrganizationId)
+        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
+            "Registration not found: %s".formatted(registrationId)));
+    return this.registrationRepository
+        .findByRegistrationIdAndFlowAssignment_TaIm_Organization_OrganizationId(registrationId, organizationId)
+        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
+            "Registration not found: %s".formatted(registrationId)));
   }
 
   @Override
-  public long countPending(final UUID taimId) {
-    return this.registrationRepository
-        .countByFlowAssignment_TaIm_TaImIdAndStatus(taimId, RegistrationStatus.PENDING_APPROVAL);
+  public long countPending(final OrganizationRecord organizationRecord, final UUID taimId) {
+    return this.organizationService.find(organizationRecord)
+        .map(org -> this.registrationRepository
+            .countByFlowAssignment_TaIm_TaImIdAndFlowAssignment_TaIm_Organization_OrganizationIdAndStatus(
+                taimId, org.getOrganizationId(), RegistrationStatus.PENDING_APPROVAL))
+        .orElse(0L);
   }
 
   @Override
   @Transactional
-  public RegistrationDto reject(final UUID registrationId, final String rejectionReason) {
-    final Registration reg = this.registrationRepository.findById(registrationId)
-        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
-            "Registration not found: %s".formatted(registrationId)));
+  public RegistrationDto reject(final OrganizationRecord organizationRecord, final UUID registrationId,
+      final String rejectionReason) {
+    final Registration reg = this.findOwnedRegistrationOrThrow(organizationRecord, registrationId);
     if (reg.getStatus() != RegistrationStatus.PENDING_APPROVAL) {
       throw new RegistryServerException(ErrorTypes.CONFLICT,
           "Registration %s is not pending approval".formatted(registrationId));
@@ -94,14 +123,13 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
   @Override
   @Transactional(readOnly = true)
   public List<RegistrationDto> listRegistrationsConnectedToThisOrgIM(final OrganizationRecord organizationRecord) {
-    //TODO this is not the right way to handle organizations
     final Map<String, Map<String, Object>> hostedMetadataByEntityId = new HashMap<>();
     this.entityConfigService.listHostedEntity((String) null)
         .forEach(h -> hostedMetadataByEntityId.put(h.getEntityIdentifier(), h.getMetadata()));
-    final List<Registration> allRegs = this.registrationRepository.findAll().stream()
-        .filter(reg -> reg.getFlowAssignment().getTaIm().getOrganization().getOrgNumber()
-            .equals(organizationRecord.orgNumber()))
-        .toList();
+    final List<Registration> allRegs = this.organizationService.find(organizationRecord)
+        .map(org -> this.registrationRepository.findByFlowAssignment_TaIm_Organization_OrganizationId(
+            org.getOrganizationId()))
+        .orElse(List.of());
     final Map<UUID, Map<String, RegistrationStatus>> tmStatusByParent = allRegs.stream()
         .filter(r -> r.getRegistrationType() == RegistrationType.TRUST_MARK_SUBORDINATE)
         .filter(r -> r.getParentRegistration() != null)
@@ -118,10 +146,8 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
 
   @Override
   @Transactional(readOnly = true)
-  public RegistrationDto getRegistrationById(final UUID registrationId) {
-    final Registration reg = this.registrationRepository.findById(registrationId)
-        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
-            "Registration not found: %s".formatted(registrationId)));
+  public RegistrationDto getRegistrationById(final OrganizationRecord organizationRecord, final UUID registrationId) {
+    final Registration reg = this.findOwnedRegistrationOrThrow(organizationRecord, registrationId);
     final List<HostedEntityDto> hostedEntities = this.entityConfigService.listHostedEntity(reg.getEntityId());
     final boolean isHosted = !hostedEntities.isEmpty();
     final Map<String, Object> hostedMetadata = isHosted ? hostedEntities.getFirst().getMetadata() : null;
@@ -134,8 +160,10 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
 
   @Override
   @Transactional
-  public RegistrationDto approveStep(final UUID registrationId, final int stepIndex) {
-    this.registrationFlowService.approveStep(registrationId, stepIndex);
-    return this.getRegistrationById(registrationId);
+  public RegistrationDto approveStep(final OrganizationRecord organizationRecord, final UUID registrationId,
+      final int stepIndex) {
+    final Registration reg = this.findOwnedRegistrationOrThrow(organizationRecord, registrationId);
+    this.registrationFlowService.approveStep(reg, stepIndex);
+    return this.getRegistrationById(organizationRecord, registrationId);
   }
 }

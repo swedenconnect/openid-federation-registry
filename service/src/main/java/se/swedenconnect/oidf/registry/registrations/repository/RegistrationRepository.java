@@ -70,6 +70,36 @@ public interface RegistrationRepository extends JpaRepository<Registration, UUID
   long countByFlowAssignment_TaIm_TaImIdAndStatus(UUID taimId, RegistrationStatus status);
 
   /**
+   * Counts registrations for an intermediate with the given status, scoped to the organization that owns the
+   * intermediate.
+   *
+   * @param taimId the intermediate ID
+   * @param organizationId the ID of the organization that owns the intermediate
+   * @param status the registration status
+   * @return count of matching registrations
+   */
+  long countByFlowAssignment_TaIm_TaImIdAndFlowAssignment_TaIm_Organization_OrganizationIdAndStatus(
+      UUID taimId, UUID organizationId, RegistrationStatus status);
+
+  /**
+   * Finds a registration by ID, scoped to the organization that owns the intermediate its flow is assigned to.
+   *
+   * @param registrationId the registration ID
+   * @param organizationId the ID of the organization that owns the intermediate
+   * @return optional registration
+   */
+  Optional<Registration> findByRegistrationIdAndFlowAssignment_TaIm_Organization_OrganizationId(
+      UUID registrationId, UUID organizationId);
+
+  /**
+   * Finds all registrations connected to intermediates owned by the given organization.
+   *
+   * @param organizationId the ID of the organization that owns the intermediates
+   * @return list of matching registrations
+   */
+  List<Registration> findByFlowAssignment_TaIm_Organization_OrganizationId(UUID organizationId);
+
+  /**
    * Finds all registrations belonging to an organization with associations eagerly fetched for DTO mapping.
    *
    * @param orgNumber the organization number

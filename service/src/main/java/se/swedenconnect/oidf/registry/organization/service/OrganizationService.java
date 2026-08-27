@@ -23,6 +23,7 @@ import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.repository.OrganizationRepository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -65,8 +66,7 @@ public class OrganizationService {
         .orElseThrow(() ->
             new IllegalArgumentException("No instance was found for the given matcher config"));
 
-    return this.organizationRepository
-        .findByInstance_InstanceIdAndOrgNumber(instanceEntity.getInstanceId(), organizationRecord.orgNumber())
+    return this.find(organizationRecord)
         .orElseGet(() -> {
           final Organization org = new Organization();
           org.setOrganizationId(UUID.randomUUID());
@@ -79,6 +79,23 @@ public class OrganizationService {
               org.getOrganizationId(), org.getOrgName(), org.getOrgNumber(), org.getInstance().getInstanceId());
           return org;
         });
+  }
+
+  /**
+   * Finds an existing organization entity by its organization number on the instance resolved for the given record,
+   * without creating one if absent. Read-only counterpart to {@link #findCreate} — use this for authorization/ownership
+   * checks, where creating an organization as a side effect of a lookup would be incorrect.
+   *
+   * @param organizationRecord the organization record used to search for an organization
+   * @return the existing {@link Organization}, or empty if none exists for this record
+   * @throws IllegalArgumentException if no instance was found for the given matcher config
+   */
+  public Optional<Organization> find(final OrganizationRecord organizationRecord) {
+    final Instance instanceEntity = this.instancePlacementService.resolveInstance(organizationRecord)
+        .orElseThrow(() ->
+            new IllegalArgumentException("No instance was found for the given matcher config"));
+    return this.organizationRepository
+        .findByInstance_InstanceIdAndOrgNumber(instanceEntity.getInstanceId(), organizationRecord.orgNumber());
   }
 
 }

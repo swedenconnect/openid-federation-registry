@@ -16,6 +16,7 @@
 
 package se.swedenconnect.oidf.registry.registrationflow;
 
+import com.nimbusds.jose.jwk.JWKSet;
 import net.minidev.json.JSONObject;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +25,9 @@ import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
 import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
+import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
 import se.swedenconnect.oidf.registry.module.repository.TaImRepository;
+import se.swedenconnect.oidf.registry.module.repository.TrustmarkIssuerRepository;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 import se.swedenconnect.oidf.registry.registrationflow.dto.AssignFlowResponse;
@@ -42,24 +45,20 @@ import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
 import se.swedenconnect.oidf.registry.registrationflow.model.StepModel;
 import se.swedenconnect.oidf.registry.registrationflow.model.TrustMarkFlowAssignment;
 import se.swedenconnect.oidf.registry.registrationflow.model.TrustMarkIssuerFlowAssignment;
-import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
-import se.swedenconnect.oidf.registry.module.repository.TrustmarkIssuerRepository;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessEngine;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessFlow;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
-import se.swedenconnect.oidf.registry.registrationflow.process.StepDefinition;
 import se.swedenconnect.oidf.registry.registrationflow.process.SerializableList;
+import se.swedenconnect.oidf.registry.registrationflow.process.StepDefinition;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.MissingContextValueException;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.impl.DefaultConfig;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowRepository;
 import se.swedenconnect.oidf.registry.registrationflow.repository.TrustMarkFlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrationflow.repository.TrustMarkIssuerFlowAssignmentRepository;
-import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
-import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
-import com.nimbusds.jose.jwk.JWKSet;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationJoinRequestDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationMapper;
 import se.swedenconnect.oidf.registry.registrations.dto.StepExecutionRecordDto;
@@ -67,8 +66,9 @@ import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
 import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
-import se.swedenconnect.oidf.registry.registrationflow.process.step.impl.DefaultConfig;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
+import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
+import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
 
 import java.util.List;
 import java.util.Map;
@@ -330,15 +330,14 @@ public class RegistrationFlowService {
    * Approves a specific pending step, reconstructs the pipeline context from stored registration
    * data, and resumes execution from that step onwards.
    *
-   * @param registrationId the registration ID
+   * @param reg the registration to resume — the caller is responsible for verifying that this
+   *     registration belongs to an intermediate owned by the calling organization before invoking this
    * @param stepIndex the index of the pending step within the full step list
    * @return updated process report from the resumed run
    */
   @Transactional
-  public ProcessReport approveStep(final UUID registrationId, final int stepIndex) {
-    final Registration reg = this.registrationRepository.findById(registrationId)
-        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
-            "Registration not found: " + registrationId));
+  public ProcessReport approveStep(final Registration reg, final int stepIndex) {
+    final UUID registrationId = reg.getRegistrationId();
 
     if (reg.getStatus() != RegistrationStatus.PENDING_APPROVAL) {
       throw new RegistryServerException(ErrorTypes.CONFLICT,
