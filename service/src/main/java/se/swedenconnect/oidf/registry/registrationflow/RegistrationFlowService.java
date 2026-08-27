@@ -29,6 +29,7 @@ import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
 import se.swedenconnect.oidf.registry.module.repository.TaImRepository;
 import se.swedenconnect.oidf.registry.module.repository.TrustmarkIssuerRepository;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
+import se.swedenconnect.oidf.registry.organization.service.InstancePlacementService;
 import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 import se.swedenconnect.oidf.registry.registrationflow.dto.AssignFlowResponse;
 import se.swedenconnect.oidf.registry.registrationflow.dto.ConfigValueDto;
@@ -93,6 +94,7 @@ public class RegistrationFlowService {
   private final TrustmarkIssuerRepository trustmarkIssuerRepository;
   private final TrustMarkRepository trustMarkRepository;
   private final OrganizationService organizationService;
+  private final InstancePlacementService instancePlacementService;
   private final ProcessEngine processEngine;
   private final RegistrationRepository registrationRepository;
 
@@ -108,6 +110,7 @@ public class RegistrationFlowService {
    * @param trustMarkRepository repository of trust marks
    * @param trustmarkIssuerRepository repository of trust mark issuers
    * @param organizationService service for resolving organizations
+   * @param instancePlacementService service for resolving the function group attached to an organization
    * @param processEngine engine that handle the processing of a flow
    * @param registrationRepository repository for persisting step results
    */
@@ -118,7 +121,8 @@ public class RegistrationFlowService {
       final TrustMarkFlowAssignmentRepository tmFlowAssignmentRepository,
       final TrustmarkIssuerRepository trustmarkIssuerRepository,
       final TrustMarkRepository trustMarkRepository,
-      final OrganizationService organizationService, final ProcessEngine processEngine,
+      final OrganizationService organizationService,
+      final InstancePlacementService instancePlacementService, final ProcessEngine processEngine,
       final RegistrationRepository registrationRepository) {
     this.registrationStepRepository = registrationStepRepository;
     this.taImRepository = taImRepository;
@@ -129,8 +133,16 @@ public class RegistrationFlowService {
     this.trustmarkIssuerRepository = trustmarkIssuerRepository;
     this.trustMarkRepository = trustMarkRepository;
     this.organizationService = organizationService;
+    this.instancePlacementService = instancePlacementService;
     this.processEngine = processEngine;
     this.registrationRepository = registrationRepository;
+  }
+
+  private String resolveAttachedFunctionGroupOrThrow(final Organization organization) {
+    return this.instancePlacementService.resolveAttachedFunctionGroup(organization)
+        .orElseThrow(() -> new IllegalStateException(
+            "No configured instance matches organization %s's placement"
+                .formatted(organization.getOrganizationId())));
   }
 
   private Organization resolveOrganization(final OrganizationRecord organizationRecord) {
@@ -367,7 +379,8 @@ public class RegistrationFlowService {
     ctx.put(ContextKey.JOIN_ID, reg.getFlowAssignment().getAssignId());
     ctx.put(ContextKey.TAIM_ID, reg.getFlowAssignment().getTaIm().getTaImId());
     final se.swedenconnect.oidf.registry.organization.model.Organization org = reg.getOrganization();
-    ctx.put(ContextKey.ORG, new OrganizationRecord(org.getOrgNumber(), org.getOrgName(), null, null));
+    ctx.put(ContextKey.ORG, new OrganizationRecord(org.getOrgNumber(), org.getOrgName(), null,
+        this.resolveAttachedFunctionGroupOrThrow(org)));
     if (reg.getTrustmarksRequested() != null) {
       ctx.put(ContextKey.TRUSTMARKS_REQUESTED, new SerializableList<>(reg.getTrustmarksRequested()));
     }
@@ -440,7 +453,8 @@ public class RegistrationFlowService {
     ctx.put(ContextKey.JOIN_ID, reg.getFlowAssignment().getAssignId());
     ctx.put(ContextKey.TAIM_ID, reg.getFlowAssignment().getTaIm().getTaImId());
     final Organization org = reg.getOrganization();
-    ctx.put(ContextKey.ORG, new OrganizationRecord(org.getOrgNumber(), org.getOrgName(), null, null));
+    ctx.put(ContextKey.ORG, new OrganizationRecord(org.getOrgNumber(), org.getOrgName(), null,
+        this.resolveAttachedFunctionGroupOrThrow(org)));
     ctx.put(ContextKey.TRUSTMARKS_REQUESTED, new SerializableList<>(List.of(tmSource)));
     ctx.put(ContextKey.STEP_APPROVED, Boolean.TRUE);
 
