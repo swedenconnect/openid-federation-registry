@@ -35,24 +35,24 @@ import java.util.UUID;
 public interface ResolverRepository extends JpaRepository<Resolver, UUID> {
 
   /**
-   * Retrieves a resolver entity based on the given organization number and resolver ID.
+   * Retrieves a resolver entity based on the given organization ID and resolver ID.
    *
-   * @param orgNumber the organization number associated with the resolver
+   * @param organizationId the organization ID associated with the resolver
    * @param resolverId the unique identifier of the resolver
    * @return an Optional containing the Resolver if found, otherwise an empty Optional
    */
   @Query("SELECT r FROM Resolver r JOIN r.entity e JOIN e.organization o "
-      + "WHERE o.orgNumber = :orgNumber AND r.resolverId = :resolverId")
-  Optional<Resolver> findByOrgNumberAndResolverId(
-      @Param("orgNumber") String orgNumber, @Param("resolverId") UUID resolverId);
+      + "WHERE o.organizationId = :organizationId AND r.resolverId = :resolverId")
+  Optional<Resolver> findByOrganizationIdAndResolverId(
+      @Param("organizationId") UUID organizationId, @Param("resolverId") UUID resolverId);
 
   /**
-   * Retrieves a list of Resolver objects associated with the specified organization number.
+   * Retrieves a list of Resolver objects associated with the specified organization ID.
    *
-   * @param orgNumber the organization number to filter by.
-   * @return a list of Resolver objects matching the specified organization number.
+   * @param organizationId the organization ID to filter by.
+   * @return a list of Resolver objects matching the specified organization ID.
    */
   @Query("SELECT r FROM Resolver r JOIN r.entity e JOIN e.organization o "
-      + "WHERE o.orgNumber = :orgNumber")
-  List<Resolver> findByOrgNumber(@Param("orgNumber") String orgNumber);
+      + "WHERE o.organizationId = :organizationId")
+  List<Resolver> findByOrganizationId(@Param("organizationId") UUID organizationId);
 }

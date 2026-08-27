@@ -39,6 +39,7 @@ import se.swedenconnect.oidf.registry.subordinate.service.SubordinateService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -82,8 +83,11 @@ public class EntityConfigServiceImpl implements EntityConfigService {
 
   private FederationEntity findEntityOrThrow(final OrganizationRecord organizationRecord,
       final UUID id, final EntityType type) {
-    return this.entityRepository.findByOrgNumberAndEntityIdAndEntityKeyType(
-            organizationRecord.orgNumber(), id, type)
+    final UUID organizationId = this.organizationService.find(organizationRecord)
+        .map(Organization::getOrganizationId)
+        .orElseThrow(() -> new RegistryServerException(
+            ErrorTypes.NOT_FOUND, "No entity found for type %s and id %s".formatted(type, id)));
+    return this.entityRepository.findByOrganizationIdAndEntityIdAndEntityKeyType(organizationId, id, type)
         .orElseThrow(() -> new RegistryServerException(
             ErrorTypes.NOT_FOUND, "No entity found for type %s and id %s".formatted(type, id)));
   }
@@ -266,13 +270,18 @@ public class EntityConfigServiceImpl implements EntityConfigService {
       final String entityIdentifier) {
 
     final List<HostedEntityDto> results = new ArrayList<>();
+    final Optional<Organization> organization = this.organizationService.find(organizationRecord);
+    if (organization.isEmpty()) {
+      return results;
+    }
+    final UUID organizationId = organization.get().getOrganizationId();
     if (entityIdentifier != null && !entityIdentifier.isEmpty()) {
-      this.entityRepository.findByOrgNumberAndEntityKeyTypeAndIssuer(organizationRecord.orgNumber(),
+      this.entityRepository.findByOrganizationIdAndEntityKeyTypeAndIssuer(organizationId,
               EntityType.HOSTED_ENTITY, entityIdentifier).map(EntityToDtoMapper::toDtoHosted)
           .ifPresent(results::add);
     }
     else {
-      this.entityRepository.findByOrgNumberAndOptionalEntityKeyType(organizationRecord.orgNumber(),
+      this.entityRepository.findByOrganizationIdAndOptionalEntityKeyType(organizationId,
               EntityType.HOSTED_ENTITY)
           .stream()
           .map(EntityToDtoMapper::toDtoHosted)
@@ -342,8 +351,10 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   public EntityWithModulesDto listEntities(final OrganizationRecord organizationRecord,
       final String type, final boolean includeModules) {
     final EntityType entityType = this.parseEntityType(type);
-    final List<FederationEntity> entities = this.entityRepository
-        .findByOrgNumberAndOptionalEntityKeyType(organizationRecord.orgNumber(), entityType);
+    final List<FederationEntity> entities = this.organizationService.find(organizationRecord)
+        .map(org -> this.entityRepository
+            .findByOrganizationIdAndOptionalEntityKeyType(org.getOrganizationId(), entityType))
+        .orElse(List.of());
 
     final EntityWithModulesDto dto = new EntityWithModulesDto();
     dto.setFederationEntity(entities.stream()

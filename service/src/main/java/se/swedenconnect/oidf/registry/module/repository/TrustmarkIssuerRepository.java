@@ -35,26 +35,26 @@ import java.util.UUID;
 public interface TrustmarkIssuerRepository extends JpaRepository<TrustMarkIssuer, UUID> {
 
   /**
-   * Retrieves a trustmark issuer entity based on the given organization number and trustmark issuer ID.
+   * Retrieves a trustmark issuer entity based on the given organization ID and trustmark issuer ID.
    *
-   * @param orgNumber the organization number associated with the trustmark issuer
+   * @param organizationId the organization ID associated with the trustmark issuer
    * @param trustmarkIssuerId the unique identifier of the trustmark issuer
    * @return an Optional containing the TrustMarkIssuer if found, otherwise an empty Optional
    */
   @Query("SELECT ti FROM TrustMarkIssuer ti JOIN ti.entity e JOIN e.organization o "
-      + "WHERE o.orgNumber = :orgNumber AND ti.trustmarkIssuerId = :trustmarkIssuerId")
-  Optional<TrustMarkIssuer> findByOrgNumberAndTrustmarkIssuerId(
-      @Param("orgNumber") String orgNumber, @Param("trustmarkIssuerId") UUID trustmarkIssuerId);
+      + "WHERE o.organizationId = :organizationId AND ti.trustmarkIssuerId = :trustmarkIssuerId")
+  Optional<TrustMarkIssuer> findByOrganizationIdAndTrustmarkIssuerId(
+      @Param("organizationId") UUID organizationId, @Param("trustmarkIssuerId") UUID trustmarkIssuerId);
 
   /**
-   * Retrieves a list of TrustMarkIssuer objects associated with the specified organization number.
+   * Retrieves a list of TrustMarkIssuer objects associated with the specified organization ID.
    *
-   * @param orgNumber the organization number to filter by.
-   * @return a list of TrustMarkIssuer objects matching the specified organization number.
+   * @param organizationId the organization ID to filter by.
+   * @return a list of TrustMarkIssuer objects matching the specified organization ID.
    */
   @Query("SELECT ti FROM TrustMarkIssuer ti JOIN ti.entity e JOIN e.organization o "
-      + "WHERE o.orgNumber = :orgNumber")
-  List<TrustMarkIssuer> findByOrgNumber(@Param("orgNumber") String orgNumber);
+      + "WHERE o.organizationId = :organizationId")
+  List<TrustMarkIssuer> findByOrganizationId(@Param("organizationId") UUID organizationId);
 
   /**
    * Finds a trust mark issuer by its federation entity identifier.

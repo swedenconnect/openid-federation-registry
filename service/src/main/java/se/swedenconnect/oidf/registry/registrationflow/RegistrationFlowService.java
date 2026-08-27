@@ -139,8 +139,11 @@ public class RegistrationFlowService {
   }
 
   private RegistrationFlow findOwnedFlowOrThrow(final OrganizationRecord organizationRecord, final UUID flowId) {
+    final UUID organizationId = this.organizationService.find(organizationRecord)
+        .map(Organization::getOrganizationId)
+        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND, "Flow not found: " + flowId));
     return this.flowRepository
-        .findByOrganizationOrgNumberAndFlowId(organizationRecord.orgNumber(), flowId)
+        .findByOrganizationOrganizationIdAndFlowId(organizationId, flowId)
         .orElseThrow(() -> new RegistryServerException(
             ErrorTypes.NOT_FOUND, "Flow not found: " + flowId));
   }
@@ -245,7 +248,10 @@ public class RegistrationFlowService {
    * @return list of flow summaries (ID, name, description)
    */
   public List<FlowSummaryDto> listFlows(final OrganizationRecord organizationRecord) {
-    return this.flowRepository.findByOrganizationOrgNumber(organizationRecord.orgNumber()).stream()
+    return this.organizationService.find(organizationRecord)
+        .map(org -> this.flowRepository.findByOrganizationOrganizationId(org.getOrganizationId()))
+        .orElse(List.of())
+        .stream()
         .map(f -> new FlowSummaryDto(f.getFlowId(), f.getName(), f.getDescription(), f.getFlowType()))
         .toList();
   }

@@ -23,6 +23,8 @@ import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRec
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
 import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
+import se.swedenconnect.oidf.registry.organization.model.Organization;
+import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
 import se.swedenconnect.oidf.registry.trustmark.mapper.DtoToTrustmarkMapper;
 import se.swedenconnect.oidf.registry.trustmark.mapper.TrustmarkToDtoMapper;
@@ -44,6 +46,7 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
   private final TrustMarkSubjectRepository trustMarkSubjectRepository;
   private final TrustMarkRepository trustMarkRepository;
   private final RegistryAuditService auditService;
+  private final OrganizationService organizationService;
 
   /**
    * Constructor.
@@ -51,27 +54,39 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
    * @param trustMarkSubjectRepository the trust mark subject repository
    * @param trustMarkRepository the trust mark repository
    * @param auditService the audit service
+   * @param organizationService service for resolving the calling organization
    */
   public TrustmarkSubjectServiceImpl(final TrustMarkSubjectRepository trustMarkSubjectRepository,
       final TrustMarkRepository trustMarkRepository,
-      final RegistryAuditService auditService) {
+      final RegistryAuditService auditService,
+      final OrganizationService organizationService) {
     this.trustMarkSubjectRepository = trustMarkSubjectRepository;
     this.trustMarkRepository = trustMarkRepository;
     this.auditService = auditService;
+    this.organizationService = organizationService;
+  }
+
+  private UUID resolveOrganizationIdOrThrow(final OrganizationRecord organizationRecord,
+      final RegistryServerException notFound) {
+    return this.organizationService.find(organizationRecord)
+        .map(Organization::getOrganizationId)
+        .orElseThrow(() -> notFound);
   }
 
   private TrustMarkSubject findSubjectOrThrow(final OrganizationRecord organizationRecord, final UUID id) {
-    return this.trustMarkSubjectRepository.findByOrgNumberAndTrustmarkId(
-            organizationRecord.orgNumber(), id)
-        .orElseThrow(() -> new RegistryServerException(
-            ErrorTypes.NOT_FOUND, "No trust mark subject found for id %s".formatted(id)));
+    final RegistryServerException notFound = new RegistryServerException(
+        ErrorTypes.NOT_FOUND, "No trust mark subject found for id %s".formatted(id));
+    final UUID organizationId = this.resolveOrganizationIdOrThrow(organizationRecord, notFound);
+    return this.trustMarkSubjectRepository.findByOrganizationIdAndTrustmarkId(organizationId, id)
+        .orElseThrow(() -> notFound);
   }
 
   private TrustMark findTrustMarkOrThrow(final OrganizationRecord organizationRecord, final UUID trustmarkId) {
-    return this.trustMarkRepository.findByOrgNumberAndTrustmarkId(
-            organizationRecord.orgNumber(), trustmarkId)
-        .orElseThrow(() -> new RegistryServerException(
-            ErrorTypes.NOT_FOUND, "No trust mark found for id %s".formatted(trustmarkId)));
+    final RegistryServerException notFound = new RegistryServerException(
+        ErrorTypes.NOT_FOUND, "No trust mark found for id %s".formatted(trustmarkId));
+    final UUID organizationId = this.resolveOrganizationIdOrThrow(organizationRecord, notFound);
+    return this.trustMarkRepository.findByOrganizationIdAndTrustmarkId(organizationId, trustmarkId)
+        .orElseThrow(() -> notFound);
   }
 
   /**

@@ -38,36 +38,36 @@ public interface EntityRepository extends JpaRepository<FederationEntity, UUID> 
 
   /**
    * Queries the database to retrieve an optional {@link FederationEntity} based on the provided
-   * organization number, entity ID, and entity type.
+   * organization ID, entity ID, and entity type.
    *
-   * @param orgNumber the organization number to filter the results
+   * @param organizationId the organization ID to filter the results
    * @param entityId the unique identifier of the entity to filter the results
    * @param entityType the type of the entity to filter the results
    * @return an {@link Optional} containing the matching {@link FederationEntity} if found, or an empty {@link Optional}
    * if no match is found
    */
   @Query("SELECT e FROM FederationEntity e JOIN fetch e.organization o "
-      + "WHERE o.orgNumber = :orgNumber "
+      + "WHERE o.organizationId = :organizationId "
       + "AND e.entityId = :entityId "
       + "AND e.entityType = :entityType")
-  Optional<FederationEntity> findByOrgNumberAndEntityIdAndEntityKeyType(
-      @Param("orgNumber") String orgNumber,
+  Optional<FederationEntity> findByOrganizationIdAndEntityIdAndEntityKeyType(
+      @Param("organizationId") UUID organizationId,
       @Param("entityId") UUID entityId,
       @Param("entityType") EntityType entityType);
 
   /**
-   * Finds a list of {@link FederationEntity} objects based on the given organization number and entity type.
+   * Finds a list of {@link FederationEntity} objects based on the given organization ID and entity type.
    *
-   * @param orgNumber the organization number used to filter the query
+   * @param organizationId the organization ID used to filter the query
    * @param entityType the type of entity used to filter the query
    * @param issuer issuer
-   * @return a list of {@link FederationEntity} matching the specified organization number and entity type
+   * @return a list of {@link FederationEntity} matching the specified organization ID and entity type
    */
   @Query("SELECT e FROM FederationEntity e JOIN fetch e.organization o "
-      + "WHERE o.orgNumber = :orgNumber AND e.issuer = :issuer "
+      + "WHERE o.organizationId = :organizationId AND e.issuer = :issuer "
       + "AND e.entityType = :entityType")
-  Optional<FederationEntity> findByOrgNumberAndEntityKeyTypeAndIssuer(
-      @Param("orgNumber") String orgNumber,
+  Optional<FederationEntity> findByOrganizationIdAndEntityKeyTypeAndIssuer(
+      @Param("organizationId") UUID organizationId,
       @Param("entityType") EntityType entityType,
       @Param("issuer") String issuer
   );
@@ -90,20 +90,20 @@ public interface EntityRepository extends JpaRepository<FederationEntity, UUID> 
   );
 
   /**
-   * Finds all {@link FederationEntity} objects for the given organization number, optionally filtered by entity type.
+   * Finds all {@link FederationEntity} objects for the given organization ID, optionally filtered by entity type.
    *
-   * @param orgNumber the organization number used to filter the query
+   * @param organizationId the organization ID used to filter the query
    * @param entityType the type of entity used to filter the query (optional, null means all types)
-   * @return a list of {@link FederationEntity} matching the specified organization number and optional entity type
+   * @return a list of {@link FederationEntity} matching the specified organization ID and optional entity type
    */
   @Query("SELECT DISTINCT e FROM FederationEntity e JOIN fetch e.organization o "
       + "LEFT JOIN fetch e.trustanchorIntermediate m "
       + "LEFT JOIN fetch e.resolver r "
       + "LEFT JOIN fetch e.trustmarkIssuer tmi "
-      + "WHERE o.orgNumber = :orgNumber "
+      + "WHERE o.organizationId = :organizationId "
       + "AND (:entityType IS NULL OR e.entityType = :entityType)")
-  List<FederationEntity> findByOrgNumberAndOptionalEntityKeyType(
-      @Param("orgNumber") String orgNumber,
+  List<FederationEntity> findByOrganizationIdAndOptionalEntityKeyType(
+      @Param("organizationId") UUID organizationId,
       @Param("entityType") EntityType entityType);
 
   /**

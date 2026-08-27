@@ -29,6 +29,8 @@ import se.swedenconnect.oidf.registry.infrastructure.validation.CleanInput;
 import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.module.repository.TaImRepository;
+import se.swedenconnect.oidf.registry.organization.model.Organization;
+import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateMapper;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
@@ -49,6 +51,7 @@ public class SubordinateServiceImpl implements SubordinateService {
   private final TaImRepository taImRepository;
   private final EntityRepository entityRepository;
   private final RegistryAuditService auditService;
+  private final OrganizationService organizationService;
 
   /**
    * Constructor.
@@ -57,35 +60,47 @@ public class SubordinateServiceImpl implements SubordinateService {
    * @param taImRepository the TaIm repository
    * @param entityRepository the organization service
    * @param auditService the audit service
+   * @param organizationService service for resolving the calling organization
    */
   public SubordinateServiceImpl(final SubordinateRepository subordinateRepository,
       final TaImRepository taImRepository,
       final EntityRepository entityRepository,
-      final RegistryAuditService auditService) {
+      final RegistryAuditService auditService,
+      final OrganizationService organizationService) {
     this.subordinateRepository = subordinateRepository;
     this.taImRepository = taImRepository;
     this.entityRepository = entityRepository;
     this.auditService = auditService;
+    this.organizationService = organizationService;
   }
 
-
+  private UUID resolveOrganizationIdOrThrow(final OrganizationRecord organizationRecord,
+      final RegistryServerException notFound) {
+    return this.organizationService.find(organizationRecord)
+        .map(Organization::getOrganizationId)
+        .orElseThrow(() -> notFound);
+  }
 
   private TrustAnchorIntermediateModule findTaImOrThrow(final OrganizationRecord organizationRecord,
       final UUID taImId) {
-    return this.taImRepository.findByOrgNumberAndTaImId(
-        organizationRecord.orgNumber(), taImId).orElseThrow(() -> new RegistryServerException(
-        ErrorTypes.NOT_FOUND, "No TaIm found for id %s".formatted(taImId)));
+    final RegistryServerException notFound = new RegistryServerException(
+        ErrorTypes.NOT_FOUND, "No TaIm found for id %s".formatted(taImId));
+    final UUID organizationId = this.resolveOrganizationIdOrThrow(organizationRecord, notFound);
+    return this.taImRepository.findByOrganizationIdAndTaImId(organizationId, taImId)
+        .orElseThrow(() -> notFound);
   }
 
   private Subordinate findSubordinateOrThrow(final OrganizationRecord organizationRecord, final UUID id) {
     //TODO: Make this type of query in repository with a join sql command.
+    final RegistryServerException notFound = new RegistryServerException(
+        ErrorTypes.NOT_FOUND, "No subordinate found for id %s".formatted(id));
+    final UUID organizationId = this.resolveOrganizationIdOrThrow(organizationRecord, notFound);
     return this.subordinateRepository.findById(id)
         .filter(sub -> {
           final TrustAnchorIntermediateModule taIm = sub.getTaIm();
-          return taIm.getOrganization().getOrgNumber().equals(organizationRecord.orgNumber());
+          return taIm.getOrganization().getOrganizationId().equals(organizationId);
         })
-        .orElseThrow(() -> new RegistryServerException(
-            ErrorTypes.NOT_FOUND, "No subordinate found for id %s".formatted(id)));
+        .orElseThrow(() -> notFound);
   }
 
   @Override
