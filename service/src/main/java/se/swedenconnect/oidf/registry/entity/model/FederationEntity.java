@@ -21,6 +21,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.springframework.data.domain.Persistable;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.MapConverter;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.StringListConverter;
@@ -43,11 +44,20 @@ import java.util.UUID;
 @Entity
 @ToString(callSuper = true)
 @Table(name = "entities")
-public class FederationEntity extends BaseEntity {
+public class FederationEntity extends BaseEntity implements Persistable<UUID> {
   @Id
   @Column(name = "entity_id", columnDefinition = "char(36)", nullable = false)
   @JdbcTypeCode(SqlTypes.CHAR)
   private UUID entityId;
+
+  /**
+   * Tracks whether this instance has been persisted yet, so {@code save()} performs an insert for a freshly constructed
+   * entity and a proper update for one loaded from the database — {@code entityId} is caller-assignable (not
+   * {@code @GeneratedValue}), so Spring Data can't infer this from the ID alone the way it does for generated keys.
+   * Without this, a caller-selected ID matching an existing row would silently merge into it.
+   */
+  @Transient
+  private boolean isNew = true;
 
   @Column(name = "entity_type", nullable = false)
   @Enumerated(EnumType.STRING)
@@ -108,6 +118,22 @@ public class FederationEntity extends BaseEntity {
       return false;
     }
     return this.trustanchorIntermediate != null || this.resolver != null || this.trustmarkIssuer != null;
+  }
+
+  @Override
+  public UUID getId() {
+    return this.entityId;
+  }
+
+  @Override
+  public boolean isNew() {
+    return this.isNew;
+  }
+
+  @PostLoad
+  @PostPersist
+  void markNotNew() {
+    this.isNew = false;
   }
 
 }

@@ -26,6 +26,7 @@ import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
+import se.swedenconnect.oidf.registry.infrastructure.persistence.InsertOnly;
 import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
 import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ModuleDto;
@@ -153,7 +154,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
 
     final TrustAnchorIntermediateModule module = DtoToModuleMapper.toEntity(id, input, entityEntity, org);
 
-    this.moduleRepository.save(module);
+    InsertOnly.save(this.moduleRepository, module, "A trust anchor with this ID already exists: " + id);
     final TrustAnchorDto dto = ModuleToDtoMapper.toDto(module);
     this.auditService.trustAnchorCreated(id, org.getInstance().getInstanceId(), org.getOrganizationId(), null, dto);
     return dto;
@@ -245,7 +246,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
 
     final TrustAnchorIntermediateModule module = DtoToModuleMapper.toEntity(id, input, entityEntity, org);
 
-    this.moduleRepository.save(module);
+    InsertOnly.save(this.moduleRepository, module, "An intermediate with this ID already exists: " + id);
     final IntermediateDto dto = ModuleToDtoMapper.toDtoIntermediate(module);
     this.auditService.intermediateCreated(id, org.getInstance().getInstanceId(), org.getOrganizationId(), null, dto);
     return dto;
@@ -357,7 +358,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
 
     final Resolver entity = DtoToModuleMapper.toEntity(id, input, entityEntity);
 
-    this.resolverRepository.save(entity);
+    InsertOnly.save(this.resolverRepository, entity, "A resolver with this ID already exists: " + id);
     final ResolverDto dto = ModuleToDtoMapper.toDto(entity);
     this.auditService.resolverCreated(id, entityEntity.getOrganization().getInstance().getInstanceId(), orgId,
         null, dto);
@@ -449,7 +450,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
         .orElseThrow(() -> issuerNotFound);
 
     final TrustMark entity = DtoToTrustmarkMapper.toEntity(id, input, issuerModule);
-    this.trustMarkRepository.save(entity);
+    InsertOnly.save(this.trustMarkRepository, entity, "A trust mark with this ID already exists: " + id);
     final TrustmarkDto dto = TrustmarkToDtoMapper.toDto(entity);
     this.auditService.trustmarkCreated(id, issuerModule.getEntity().getOrganization().getInstance().getInstanceId(),
         issuerModule.getEntity().getOrganization().getOrganizationId(), null, dto);
@@ -537,7 +538,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
 
     final TrustMarkIssuer entity = DtoToModuleMapper.toEntity(id, input, entityEntity);
 
-    this.trustmarkIssuerRepository.save(entity);
+    InsertOnly.save(this.trustmarkIssuerRepository, entity, "A trust mark issuer with this ID already exists: " + id);
     final TrustmarkIssuerDto dto = ModuleToDtoMapper.toDto(entity);
     this.auditService.trustmarkIssuerCreated(id, entityEntity.getOrganization().getInstance().getInstanceId(),
         entityEntity.getOrganization().getOrganizationId(), null, dto);

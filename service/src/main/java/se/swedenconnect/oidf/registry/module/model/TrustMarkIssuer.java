@@ -16,15 +16,8 @@
 
 package se.swedenconnect.oidf.registry.module.model;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -32,6 +25,7 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.springframework.data.domain.Persistable;
 import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
@@ -52,12 +46,22 @@ import java.util.UUID;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @Table(name = "trustmark_issuer")
-public class TrustMarkIssuer extends BaseEntity {
+public class TrustMarkIssuer extends BaseEntity implements Persistable<UUID> {
 
   @Id
   @Column(name = "trustmark_issuer_id", columnDefinition = "char(36)", nullable = false)
   @JdbcTypeCode(SqlTypes.CHAR)
   private UUID trustmarkIssuerId;
+
+  /**
+   * Tracks whether this instance has been persisted yet, so {@code save()} performs an insert for a freshly constructed
+   * issuer and a proper update for one loaded from the database — {@code trustmarkIssuerId} is caller-assignable (not
+   * {@code @GeneratedValue}), so Spring Data can't infer this from the ID alone the way it does for generated keys.
+   * Without this, a caller-selected ID matching an existing row would silently merge into it.
+   */
+  @Transient
+  @Builder.Default
+  private boolean isNew = true;
 
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "entity_id", nullable = false)
@@ -71,4 +75,20 @@ public class TrustMarkIssuer extends BaseEntity {
 
   @OneToMany(mappedBy = "trustmarkIssuer", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
   private List<TrustMark> trustmarks;
+
+  @Override
+  public UUID getId() {
+    return this.trustmarkIssuerId;
+  }
+
+  @Override
+  public boolean isNew() {
+    return this.isNew;
+  }
+
+  @PostLoad
+  @PostPersist
+  void markNotNew() {
+    this.isNew = false;
+  }
 }

@@ -16,15 +16,8 @@
 
 package se.swedenconnect.oidf.registry.module.model;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -32,6 +25,7 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.springframework.data.domain.Persistable;
 import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.MapConverter;
@@ -52,12 +46,22 @@ import java.util.UUID;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @Table(name = "resolver")
-public class Resolver extends BaseEntity {
+public class Resolver extends BaseEntity implements Persistable<UUID> {
 
   @Id
   @Column(name = "resolver_id", columnDefinition = "char(36)", nullable = false)
   @JdbcTypeCode(SqlTypes.CHAR)
   private UUID resolverId;
+
+  /**
+   * Tracks whether this instance has been persisted yet, so {@code save()} performs an insert for a freshly constructed
+   * resolver and a proper update for one loaded from the database — {@code resolverId} is caller-assignable (not
+   * {@code @GeneratedValue}), so Spring Data can't infer this from the ID alone the way it does for generated keys.
+   * Without this, a caller-selected ID matching an existing row would silently merge into it.
+   */
+  @Transient
+  @Builder.Default
+  private boolean isNew = true;
 
   @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.DETACH)
   @JoinColumn(name = "entity_id", nullable = false)
@@ -81,4 +85,20 @@ public class Resolver extends BaseEntity {
 
   @Column(name = "step_cached_value_threshold", nullable = false)
   private Integer stepCachedValueThreshold;
+
+  @Override
+  public UUID getId() {
+    return this.resolverId;
+  }
+
+  @Override
+  public boolean isNew() {
+    return this.isNew;
+  }
+
+  @PostLoad
+  @PostPersist
+  void markNotNew() {
+    this.isNew = false;
+  }
 }

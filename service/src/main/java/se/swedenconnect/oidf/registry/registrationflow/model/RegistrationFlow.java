@@ -16,16 +16,8 @@
 
 package se.swedenconnect.oidf.registry.registrationflow.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Converter;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -33,6 +25,7 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.springframework.data.domain.Persistable;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.JsonConverter;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
@@ -57,12 +50,22 @@ import java.util.UUID;
 @NoArgsConstructor
 @SuperBuilder
 @Table(name = "registration_flow")
-public class RegistrationFlow extends BaseEntity {
+public class RegistrationFlow extends BaseEntity implements Persistable<UUID> {
 
   @Id
   @Column(name = "flow_id", columnDefinition = "char(36)", nullable = false, updatable = false)
   @JdbcTypeCode(SqlTypes.CHAR)
   private UUID flowId;
+
+  /**
+   * Tracks whether this instance has been persisted yet, so {@code save()} performs an insert for a freshly constructed
+   * flow and a proper update for one loaded from the database — {@code flowId} is caller-assignable (not
+   * {@code @GeneratedValue}), so Spring Data can't infer this from the ID alone the way it does for generated keys.
+   * Without this, a caller-selected ID matching an existing row would silently merge into it.
+   */
+  @Transient
+  @Builder.Default
+  private boolean isNew = true;
 
   @ManyToOne
   @JoinColumn(name = "organization_id")
@@ -91,6 +94,22 @@ public class RegistrationFlow extends BaseEntity {
   @Column(name = "flowDefinition", columnDefinition = "TEXT")
   @Convert(converter = RegistrationFlow.StepConverter.class)
   private List<StepModel> flowDefinition;
+
+  @Override
+  public UUID getId() {
+    return this.flowId;
+  }
+
+  @Override
+  public boolean isNew() {
+    return this.isNew;
+  }
+
+  @PostLoad
+  @PostPersist
+  void markNotNew() {
+    this.isNew = false;
+  }
 
   /** JPA converter for the flow definition list. */
   @Converter
