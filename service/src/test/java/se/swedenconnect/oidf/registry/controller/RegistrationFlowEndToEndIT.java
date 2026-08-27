@@ -11,7 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License.
+ *  limitations under the License.
  */
 package se.swedenconnect.oidf.registry.controller;
 
@@ -58,8 +58,6 @@ import se.swedenconnect.oidf.registry.api.model.StepDto;
 import se.swedenconnect.oidf.registry.api.model.TrustAnchor;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
 import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
-import se.swedenconnect.oidf.registry.infrastructure.auth.AuthConstants;
-import se.swedenconnect.oidf.registry.registrations.dto.FedRegStatus;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -278,8 +276,7 @@ class RegistrationFlowEndToEndIT {
         .baseUrl("http://localhost:" + this.port)
         .defaultHeader(HttpHeaders.AUTHORIZATION,
             "Bearer " + this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.PM))
-        .defaultHeader(AuthConstants.SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE,
-            JwtTestUtils.OrganisationType.PM.orgId)
+
         .build();
   }
 

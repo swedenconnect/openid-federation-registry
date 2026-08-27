@@ -21,7 +21,6 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
-import se.swedenconnect.oidf.registry.infrastructure.auth.AuthConstants;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,7 +58,6 @@ public class JwtTestUtils {
 
   public void setAuthHeaders(OrganisationType organizationType, HttpHeaders headers) {
     headers.set("Authorization", "Bearer " + this.createJwt(organizationType));
-    headers.set(AuthConstants.SELECTED_ORG_NUMBER_HEADER_ATTRIBUTE, organizationType.orgId);
   }
 
 
@@ -200,19 +198,19 @@ public class JwtTestUtils {
 
 
   public enum OrganisationType {
-    PM("Pensionsmyndigheten", "55555"),
-    AF("Arbetsförmedlingen", "66666"),
-    SKATT("Skatteverket", "77777"),
-    TESTORG1("TestOrg1", "10001"),
-    TESTORG2("TestOrg2", "10002"),
-    TESTORG3("TestOrg3", "10003"),
-    TESTORG4("TestOrg4", "10004"),
-    TESTORG5("TestOrg5", "10005"),
-    TESTORG6("TestOrg6", "10006"),
-    TESTORG7("TestOrg7", "10007"),
-    TESTORG8("TestOrg8", "10008"),
-    TESTORG9("TestOrg9", "10009"),
-    TESTORG10("TestOrg10", "10010"),
+    PM("Pensionsmyndigheten", "5520001263"),
+    AF("Arbetsförmedlingen", "5520002634"),
+    SKATT("Skatteverket", "5520004002"),
+    TESTORG1("TestOrg1", "5520012229"),
+    TESTORG2("TestOrg2", "5520013599"),
+    TESTORG3("TestOrg3", "5520014969"),
+    TESTORG4("TestOrg4", "5520016337"),
+    TESTORG5("TestOrg5", "5520017707"),
+    TESTORG6("TestOrg6", "5520019075"),
+    TESTORG7("TestOrg7", "5520020446"),
+    TESTORG8("TestOrg8", "5520021816"),
+    TESTORG9("TestOrg9", "5520023184"),
+    TESTORG10("TestOrg10", "5520024554"),
     ;
 
     public final String name;

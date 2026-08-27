@@ -19,12 +19,17 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrgRights;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.Right;
+import se.swedenconnect.iam.security.claims.OrgRightsClaim;
+import se.swedenconnect.iam.security.claims.OrganizationRight;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryClaims;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauthclient.RegistryOidcUser;
 import se.swedenconnect.oidf.registry.infrastructure.config.RegistryProperties;
 import se.swedenconnect.oidf.registry.organization.service.InstancePlacementService;
+
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Spring Security service for evaluating {@code org_rights} in {@code @PreAuthorize} expressions.
@@ -63,7 +68,7 @@ public class OrgRightsService {
    * @return true if read access is granted
    */
   public boolean canRead(final Authentication authentication, final String orgNumber, final String tenant) {
-    return this.hasRight(authentication, orgNumber, tenant, Right.READ);
+    return this.hasRight(authentication, orgNumber, tenant, OrganizationRight.READ);
   }
 
   /**
@@ -75,7 +80,7 @@ public class OrgRightsService {
    * @return true if write access is granted
    */
   public boolean canWrite(final Authentication authentication, final String orgNumber, final String tenant) {
-    return this.hasRight(authentication, orgNumber, tenant, Right.WRITE);
+    return this.hasRight(authentication, orgNumber, tenant, OrganizationRight.WRITE);
   }
 
   /**
@@ -87,14 +92,76 @@ public class OrgRightsService {
    * @return true if admin access is granted
    */
   public boolean canAdmin(final Authentication authentication, final String orgNumber, final String tenant) {
-    return this.hasRight(authentication, orgNumber, tenant, Right.ADMIN);
+    return this.hasRight(authentication, orgNumber, tenant, OrganizationRight.ADMIN);
   }
 
   private boolean hasRight(
-      final Authentication authentication, final String orgNumber, final String tenant, final Right required) {
+      final Authentication authentication, final String orgNumber, final String tenant,
+      final OrganizationRight required) {
     return this.instancePlacementService.resolveFunctionGroupsForTenant(tenant)
-        .map(functionGroups -> this.extractOrgRights(authentication).hasRight(orgNumber, functionGroups, required))
+        .map(functionGroups -> hasRight(this.extractOrgRights(authentication), orgNumber, functionGroups, required))
         .orElse(false);
+  }
+
+  /**
+   * Returns true if the claim grants at least the required right for the given organization on any of the given
+   * function groups. Superusers always return true.
+   *
+   * @param claim the parsed {@code org_rights} claim
+   * @param orgNumber organization number from the request path
+   * @param functionGroups the function groups backing the tenant from the request path
+   * @param required minimum required right level
+   * @return true if access is granted
+   */
+  public static boolean hasRight(
+      final OrgRightsClaim claim, final String orgNumber, final Collection<String> functionGroups,
+      final OrganizationRight required) {
+    if (claim.superuser()) {
+      return true;
+    }
+    return findOrgEntry(claim, orgNumber)
+        .flatMap(entry -> effectiveRight(entry, functionGroups))
+        .map(right -> right.compareTo(required) >= 0)
+        .orElse(false);
+  }
+
+  /**
+   * Finds the organization entry for the given organization number.
+   *
+   * @param claim the parsed {@code org_rights} claim
+   * @param orgNumber the organization number to look up
+   * @return the matching entry, or empty if not present
+   */
+  public static Optional<OrgRightsClaim.OrgEntry> findOrgEntry(final OrgRightsClaim claim, final String orgNumber) {
+    return claim.orgEntries().stream()
+        .filter(entry -> entry.orgIdentifier().getId().equals(orgNumber))
+        .findFirst();
+  }
+
+  /**
+   * Computes the effective right for a set of function groups by taking the highest right among all function entries
+   * whose function name is a member of the given collection. Entries carrying an unrecognized right value are skipped.
+   *
+   * @param entry the organization entry to evaluate
+   * @param functionGroups the function groups to evaluate
+   * @return the effective right, or empty if no matching entry exists
+   */
+  public static Optional<OrganizationRight> effectiveRight(
+      final OrgRightsClaim.OrgEntry entry, final Collection<String> functionGroups) {
+    return entry.functions().stream()
+        .filter(f -> functionGroups.contains(f.function()))
+        .map(f -> parseRight(f.right()))
+        .filter(Objects::nonNull)
+        .max(Comparator.naturalOrder());
+  }
+
+  private static OrganizationRight parseRight(final String right) {
+    try {
+      return OrganizationRight.parse(right);
+    }
+    catch (final IllegalArgumentException e) {
+      return null;
+    }
   }
 
   /**
@@ -105,8 +172,8 @@ public class OrgRightsService {
    * @return the parsed org rights
    * @throws AccessDeniedException if the authentication type is not supported
    */
-  public OrgRights extractOrgRights(final Authentication authentication) {
-    if(authentication == null) {
+  public OrgRightsClaim extractOrgRights(final Authentication authentication) {
+    if (authentication == null) {
       throw new AccessDeniedException("There is no authentication object given");
     }
     if (authentication instanceof final RegistryClaims registryClaims) {

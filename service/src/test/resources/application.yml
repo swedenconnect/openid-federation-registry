@@ -23,7 +23,7 @@ openid:
           name: "Swedenconnect"
           base_url: "https://registry.swedenconnect.se/oidf"
           org-base-url-overrides:
-            "55555": "https://www.pm.se/oidf"
+            "5520001263": "https://www.pm.se/oidf"
           function_groups:
             - "swedenconnect"
             - "swedenconnect-secondary"
@@ -49,6 +49,23 @@ credential:
         key:
           alias: rsa1
           key-password: Test1234
+
+# Reuses the same test-only keystore as the federation API signing key above — iam-security-spring-boot-starter's
+# client-side autoconfiguration (private_key_jwt) instantiates its oidcClientJwk bean eagerly at context startup
+# whenever the starter is on the classpath, so a credential must be present here regardless of whether any test
+# actually exercises the OIDC login flow.
+iam:
+  security:
+    client:
+      credential:
+        jks:
+          store:
+            location: classpath:rsa1.jks
+            password: Test1234
+            type: JKS
+          key:
+            alias: rsa1
+            key-password: Test1234
 
 
 spring:

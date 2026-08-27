@@ -17,13 +17,11 @@ package se.swedenconnect.oidf.registry.guioperations;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import se.swedenconnect.iam.security.claims.OrgRightsClaim;
 import se.swedenconnect.oidf.registry.guioperations.dto.TenantDto;
 import se.swedenconnect.oidf.registry.guioperations.dto.TenantOrganizationDto;
 import se.swedenconnect.oidf.registry.guioperations.dto.TenantsResponse;
 import se.swedenconnect.oidf.registry.infrastructure.auth.OrgRightsService;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.FunctionRight;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrgRightEntry;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrgRights;
 import se.swedenconnect.oidf.registry.infrastructure.config.RegistryProperties;
 import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
@@ -91,7 +89,7 @@ public class TenantService {
    * @return the tenants the caller has rights on, with the organizations registered under each
    */
   public TenantsResponse resolveTenants(final Authentication authentication) {
-    final OrgRights orgRights = this.orgRightsService.extractOrgRights(authentication);
+    final OrgRightsClaim orgRights = this.orgRightsService.extractOrgRights(authentication);
     return orgRights.superuser() ? this.resolveForSuperuser() : this.resolveFromOrgRights(orgRights);
   }
 
@@ -134,21 +132,22 @@ public class TenantService {
    * looked up against the configured instances to find the tenant it grants access to; the right-holding entry is
    * itself surfaced as one of that tenant's organizations.
    */
-  private TenantsResponse resolveFromOrgRights(final OrgRights orgRights) {
+  private TenantsResponse resolveFromOrgRights(final OrgRightsClaim orgRights) {
     final Map<String, RegistryProperties.InstanceProperties> instanceByFunctionGroup =
         this.registryProperties.instances().stream()
             .flatMap(instance -> instance.functionGroups().stream().map(fg -> Map.entry(fg, instance)))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
     final Map<String, Map<String, TenantOrganizationDto>> organizationsByTenant = new LinkedHashMap<>();
-    for (final OrgRightEntry entry : orgRights.entries()) {
-      for (final FunctionRight functionRight : entry.functions()) {
+    for (final OrgRightsClaim.OrgEntry entry : orgRights.orgEntries()) {
+      final String orgNumber = entry.orgIdentifier().getId();
+      for (final OrgRightsClaim.FunctionEntry functionRight : entry.functions()) {
         final RegistryProperties.InstanceProperties instance = instanceByFunctionGroup.get(functionRight.function());
         if (instance == null) {
           continue;
         }
         organizationsByTenant.computeIfAbsent(instance.name(), key -> new LinkedHashMap<>())
-            .putIfAbsent(entry.organizationIdentifier(), this.organizationFromEntry(entry, instance));
+            .putIfAbsent(orgNumber, this.organizationFromEntry(entry, orgNumber, instance));
       }
     }
 
@@ -163,12 +162,12 @@ public class TenantService {
   }
 
   private TenantOrganizationDto organizationFromEntry(
-      final OrgRightEntry entry, final RegistryProperties.InstanceProperties instance) {
+      final OrgRightsClaim.OrgEntry entry, final String orgNumber,
+      final RegistryProperties.InstanceProperties instance) {
     return new TenantOrganizationDto(
-        entry.organizationIdentifier(),
-        this.resolveEntryName(entry),
-        this.instancePlacementService.resolveEntityPrefix(
-                entry.organizationIdentifier(), instance.functionGroups().getFirst())
+        orgNumber,
+        this.resolveEntryName(entry, orgNumber),
+        this.instancePlacementService.resolveEntityPrefix(orgNumber, instance.functionGroups().getFirst())
             .orElse(null));
   }
 
@@ -181,16 +180,18 @@ public class TenantService {
    * Resolves the display name for a right-holder organization: the {@code org_rights} token claim's Swedish name
    * first, then its English name, falling back to the organization number itself.
    */
-  private String resolveEntryName(final OrgRightEntry entry) {
-    return nameFromEntry(entry).orElseGet(entry::organizationIdentifier);
+  private String resolveEntryName(final OrgRightsClaim.OrgEntry entry, final String orgNumber) {
+    return nameFromEntry(entry).orElse(orgNumber);
   }
 
-  private static Optional<String> nameFromEntry(final OrgRightEntry entry) {
-    if (entry.organizationNameSv() != null && !entry.organizationNameSv().isBlank()) {
-      return Optional.of(entry.organizationNameSv());
+  private static Optional<String> nameFromEntry(final OrgRightsClaim.OrgEntry entry) {
+    final String nameSv = entry.name().get("sv");
+    if (nameSv != null && !nameSv.isBlank()) {
+      return Optional.of(nameSv);
     }
-    if (entry.organizationNameEn() != null && !entry.organizationNameEn().isBlank()) {
-      return Optional.of(entry.organizationNameEn());
+    final String nameEn = entry.name().get("en");
+    if (nameEn != null && !nameEn.isBlank()) {
+      return Optional.of(nameEn);
     }
     return Optional.empty();
   }

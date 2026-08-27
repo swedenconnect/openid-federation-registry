@@ -16,6 +16,7 @@
 package se.swedenconnect.oidf.registry.infrastructure.config;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -27,6 +28,9 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.oauth2.client.endpoint.NimbusJwtClientAuthenticationParametersConverter;
+import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
+import org.springframework.security.oauth2.client.endpoint.RestClientAuthorizationCodeTokenResponseClient;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
@@ -35,8 +39,11 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.SecurityFilterChain;
+import se.swedenconnect.iam.security.client.ResourceParameterConverter;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryJwtConverter;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauthclient.RegistryOidcUser;
+
+import java.util.Optional;
 
 /**
  * Security configuration class that defines security-related settings for the application. This class integrates OAuth2
@@ -53,10 +60,13 @@ import se.swedenconnect.oidf.registry.infrastructure.auth.oauthclient.RegistryOi
 public class SecurityConfig {
 
 
+
   @Bean
   @Order(1)
-  SecurityFilterChain apiSecurityFilterChain(final HttpSecurity http, final OidcUserService oidcUserService,
-      final ClientRegistrationRepository clientRegistrationRepository) {
+  SecurityFilterChain apiSecurityFilterChain(final HttpSecurity http,
+      final ClientRegistrationRepository clientRegistrationRepository,
+      final OidcUserService orgRightsOidcUserService,
+      final ObjectProvider<RestClientAuthorizationCodeTokenResponseClient> authCodeTokenResponseClient) {
 
     final OidcClientInitiatedLogoutSuccessHandler logoutSuccessHandler =
         new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
@@ -68,18 +78,23 @@ public class SecurityConfig {
                 jwtConfigurer.jwtAuthenticationConverter(this.customJwtAuthenticationConverter()))
         )
         .csrf(AbstractHttpConfigurer::disable)
-
-        .oauth2Login(login -> login
-                .loginPage("/")
-                .defaultSuccessUrl("/", true)
-                .failureHandler((request, response, exception) -> {
-                  log.error("Authentication failed", exception);
-                  response.sendRedirect("/login?errorcode=backend.login.failed");
-                })
-            .userInfoEndpoint(userInfo -> userInfo
-                .oidcUserService(oidcUserService)
-            )
-        )
+        .oauth2Login(login -> {
+          login
+              .loginPage("/")
+              .defaultSuccessUrl("/", true)
+              .failureHandler((request, response, exception) -> {
+                log.error("Authentication failed", exception);
+                response.sendRedirect("/login?errorcode=backend.login.failed");
+              })
+              .userInfoEndpoint(userInfo -> userInfo
+                  .oidcUserService(orgRightsOidcUserService)
+              );
+          // iam.security.client.credential (private_key_jwt) is rolled out per environment, coordinated with a
+          // Keycloak-side client change — fall back to Spring's default (client_secret) token endpoint client
+          // wherever it isn't configured yet, rather than failing application startup entirely.
+          this.resolvePrivateKeyJwtTokenResponseClient(authCodeTokenResponseClient)
+              .ifPresent(client -> login.tokenEndpoint(token -> token.accessTokenResponseClient(client)));
+        })
         .logout(logout -> logout
             .logoutUrl("/logout")
             .logoutSuccessHandler(logoutSuccessHandler)
@@ -87,7 +102,6 @@ public class SecurityConfig {
             .invalidateHttpSession(true)
             .deleteCookies("JSESSIONID", "SESSION")
         )
-
         .authorizeHttpRequests(auth -> auth
             // Registry API — right-level enforced by @PreAuthorize(@orgRightsService) on controllers
             .requestMatchers("/registry/v1/**").authenticated()
@@ -99,18 +113,18 @@ public class SecurityConfig {
             .requestMatchers("/registration-admin/v1/**").authenticated()
 
             .requestMatchers(HttpMethod.GET, "/logout/frontchannel").permitAll()
+            .requestMatchers(HttpMethod.GET, "/jwks").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/v1/federationservice/**").permitAll()
             .requestMatchers(HttpMethod.OPTIONS).permitAll()
             .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/assets/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/entities/**",
-                "/registration-flows/**", "/registrations/**").permitAll()
+                "/registration-flows/**", "/registrations/**").authenticated()
             .requestMatchers(HttpMethod.GET, "/*").permitAll()
 
             .requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**")
             .authenticated()
             .requestMatchers(HttpMethod.GET, "/userinfo").authenticated()
-            .requestMatchers(HttpMethod.PUT, "/userinfo").authenticated()
             .requestMatchers(HttpMethod.GET, "/tenants").authenticated()
 
             .anyRequest().denyAll()
@@ -121,6 +135,43 @@ public class SecurityConfig {
   @Bean
   Converter<Jwt, AbstractAuthenticationToken> customJwtAuthenticationConverter() {
     return new RegistryJwtConverter();
+  }
+
+  /**
+   * Resolves the {@code private_key_jwt} token response client, if {@code iam.security.client.credential} is
+   * configured. The underlying bean chain (via {@code IamSecurityClientAutoConfiguration}) throws at instantiation time
+   * — not bean-definition time — when the credential is missing, so resolution happens here, behind a try/catch, rather
+   * than through required constructor/method injection.
+   */
+  private Optional<RestClientAuthorizationCodeTokenResponseClient> resolvePrivateKeyJwtTokenResponseClient(
+      final ObjectProvider<RestClientAuthorizationCodeTokenResponseClient> authCodeTokenResponseClient) {
+    try {
+      return Optional.ofNullable(authCodeTokenResponseClient.getIfAvailable());
+    }
+    catch (final RuntimeException e) {
+      log.debug("iam.security.client.credential is not configured — using default client authentication", e);
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Token response client for the {@code authorization_code} grant, authenticating to Keycloak's token endpoint with
+   * {@code private_key_jwt} instead of a client secret. {@code authCodeJwtConverter} and
+   * {@code resourceParameterConverter} are auto-configured by {@code IamSecurityClientAutoConfiguration} from
+   * {@code iam.security.client.credential}.
+   *
+   * @param authCodeJwtConverter signs the {@code client_assertion} sent to the token endpoint
+   * @param resourceParameterConverter adds the RFC 8707 {@code resource} parameter, when requested
+   * @return the token response client, wired into {@code oauth2Login}'s token endpoint
+   */
+  @Bean
+  RestClientAuthorizationCodeTokenResponseClient authCodeTokenResponseClient(
+      final NimbusJwtClientAuthenticationParametersConverter<OAuth2AuthorizationCodeGrantRequest> authCodeJwtConverter,
+      final ResourceParameterConverter resourceParameterConverter) {
+    final RestClientAuthorizationCodeTokenResponseClient client = new RestClientAuthorizationCodeTokenResponseClient();
+    client.addParametersConverter(authCodeJwtConverter);
+    client.addParametersConverter(resourceParameterConverter);
+    return client;
   }
 
   @Bean

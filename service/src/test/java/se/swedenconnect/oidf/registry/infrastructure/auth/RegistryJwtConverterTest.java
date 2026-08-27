@@ -21,9 +21,8 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.FunctionRight;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrgRightEntry;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.Right;
+import se.swedenconnect.iam.commons.types.OrganizationID;
+import se.swedenconnect.iam.security.claims.OrganizationRight;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryClaims;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryJwtConverter;
 
@@ -39,9 +38,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 class RegistryJwtConverterTest {
 
+  private static final String ORG_1 = "5520001263";
+  private static final String ORG_2 = "5520002634";
+  private static final String UNKNOWN_ORG = "99999";
+
   private static final List<Map<String, Object>> SINGLE_ORG_RIGHTS = List.of(
       Map.of(
-          "organization_identifier", "55555",
+          "organization_identifier", ORG_1,
           "organization_name#sv", "Pensionsmyndigheten",
           "organization_name#en", "Pensionsmyndigheten",
           "functions", List.of(Map.of("function", "demo", "right", "read"))
@@ -149,8 +152,8 @@ class RegistryJwtConverterTest {
 
     assertThat(token).isInstanceOf(RegistryClaims.class);
     final RegistryClaims claims = (RegistryClaims) token;
-    assertThat(claims.getOrgRights().entries()).hasSize(1);
-    assertThat(claims.getOrgRights().entries().getFirst().organizationIdentifier()).isEqualTo("55555");
+    assertThat(claims.getOrgRights().orgEntries()).hasSize(1);
+    assertThat(claims.getOrgRights().orgEntries().getFirst().orgIdentifier().getId()).isEqualTo(ORG_1);
   }
 
   @Test
@@ -163,13 +166,13 @@ class RegistryJwtConverterTest {
         .expiresAt(Instant.now().plusSeconds(3600))
         .claim("org_rights", List.of(
             Map.of(
-                "organization_identifier", "55555",
+                "organization_identifier", ORG_1,
                 "organization_name#sv", "Pensionsmyndigheten",
                 "organization_name#en", "Pensionsmyndigheten",
                 "functions", List.of(Map.of("function", "*", "right", "read"))
             ),
             Map.of(
-                "organization_identifier", "66666",
+                "organization_identifier", ORG_2,
                 "organization_name#sv", "Arbetsförmedlingen",
                 "organization_name#en", "Employment Agency",
                 "functions", List.of(Map.of("function", "*", "right", "write"))
@@ -180,31 +183,31 @@ class RegistryJwtConverterTest {
 
     final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
 
-    assertThat(claims.getOrgRights().entries())
-        .extracting(e -> e.organizationIdentifier())
-        .containsExactlyInAnyOrder("55555", "66666");
+    assertThat(claims.getOrgRights().orgEntries())
+        .extracting(e -> e.orgIdentifier().getId())
+        .containsExactlyInAnyOrder(ORG_1, ORG_2);
   }
 
   @Test
-  @DisplayName("findOrg returns present entry for known org")
-  void findOrgReturnsPresentEntryForKnownOrg() {
+  @DisplayName("findOrgEntry returns present entry for known org")
+  void findOrgEntryReturnsPresentEntryForKnownOrg() {
     final Jwt jwt = buildJwt(Map.of("scope", List.of("read"), "preferred_username", "alice"));
 
     final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
 
-    assertThat(claims.getOrgRights().findOrg("55555")).isPresent();
-    assertThat(claims.getOrgRights().findOrg("55555").get().organizationNameSv())
+    assertThat(OrgRightsService.findOrgEntry(claims.getOrgRights(), ORG_1)).isPresent();
+    assertThat(OrgRightsService.findOrgEntry(claims.getOrgRights(), ORG_1).get().name().get("sv"))
         .isEqualTo("Pensionsmyndigheten");
   }
 
   @Test
-  @DisplayName("findOrg returns empty for unknown org")
-  void findOrgReturnsEmptyForUnknownOrg() {
+  @DisplayName("findOrgEntry returns empty for unknown org")
+  void findOrgEntryReturnsEmptyForUnknownOrg() {
     final Jwt jwt = buildJwt(Map.of("scope", List.of("read"), "preferred_username", "alice"));
 
     final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
 
-    assertThat(claims.getOrgRights().findOrg("99999")).isEmpty();
+    assertThat(OrgRightsService.findOrgEntry(claims.getOrgRights(), UNKNOWN_ORG)).isEmpty();
   }
 
   @Test
@@ -214,7 +217,8 @@ class RegistryJwtConverterTest {
 
     final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
 
-    assertThat(claims.getOrgRights().hasRight("55555", "demo", Right.READ)).isTrue();
+    assertThat(OrgRightsService.hasRight(claims.getOrgRights(), ORG_1, List.of("demo"), OrganizationRight.READ))
+        .isTrue();
   }
 
   @Test
@@ -224,7 +228,8 @@ class RegistryJwtConverterTest {
 
     final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
 
-    assertThat(claims.getOrgRights().hasRight("55555", "demo", Right.WRITE)).isFalse();
+    assertThat(OrgRightsService.hasRight(claims.getOrgRights(), ORG_1, List.of("demo"), OrganizationRight.WRITE))
+        .isFalse();
   }
 
   @Test
@@ -241,7 +246,8 @@ class RegistryJwtConverterTest {
     final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
 
     assertThat(claims.getOrgRights().superuser()).isTrue();
-    assertThat(claims.getOrgRights().hasRight("any-org", "any-tenant", Right.ADMIN)).isTrue();
+    assertThat(OrgRightsService.hasRight(claims.getOrgRights(), "any-org", List.of("any-tenant"),
+        OrganizationRight.ADMIN)).isTrue();
   }
 
   @Test
@@ -281,26 +287,28 @@ class RegistryJwtConverterTest {
         .subject("test-subject")
         .issuedAt(Instant.now())
         .expiresAt(Instant.now().plusSeconds(3600))
-        .claim("scope", "55555:demo:write")
+        .claim("scope", ORG_1 + ":demo:write")
         .build();
 
     final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
 
     assertThat(claims.getOrgRights().superuser()).isFalse();
-    assertThat(claims.getOrgRights().entries()).containsExactly(
-        new OrgRightEntry("55555", "", "", List.of(new FunctionRight("demo", Right.WRITE))));
+    assertThat(claims.getOrgRights().orgEntries()).hasSize(1);
+    assertThat(claims.getOrgRights().orgEntries().getFirst().orgIdentifier()).isEqualTo(OrganizationID.of(ORG_1));
+    assertThat(claims.getOrgRights().orgEntries().getFirst().functions())
+        .containsExactly(new se.swedenconnect.iam.security.claims.OrgRightsClaim.FunctionEntry("demo", "write"));
   }
 
   @Test
   @DisplayName("When both org_rights and scope are present, org_rights wins")
   void orgRightsTakesPriorityOverScope() {
-    final Jwt jwt = buildJwt(Map.of("scope", "66666:other-function:admin"));
+    final Jwt jwt = buildJwt(Map.of("scope", ORG_2 + ":other-function:admin"));
 
     final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
 
-    assertThat(claims.getOrgRights().entries())
-        .extracting(OrgRightEntry::organizationIdentifier)
-        .containsExactly("55555");
+    assertThat(claims.getOrgRights().orgEntries())
+        .extracting(e -> e.orgIdentifier().getId())
+        .containsExactly(ORG_1);
   }
 
   @Test
@@ -311,15 +319,16 @@ class RegistryJwtConverterTest {
         .subject("test-subject")
         .issuedAt(Instant.now())
         .expiresAt(Instant.now().plusSeconds(3600))
-        .claim("scope", "55555:demo:write 55555:other-function:read")
+        .claim("scope", ORG_1 + ":demo:write " + ORG_1 + ":other-function:read")
         .build();
 
     final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
 
-    assertThat(claims.getOrgRights().entries()).hasSize(1);
-    assertThat(claims.getOrgRights().entries().getFirst().functions())
+    assertThat(claims.getOrgRights().orgEntries()).hasSize(1);
+    assertThat(claims.getOrgRights().orgEntries().getFirst().functions())
         .containsExactlyInAnyOrder(
-            new FunctionRight("demo", Right.WRITE), new FunctionRight("other-function", Right.READ));
+            new se.swedenconnect.iam.security.claims.OrgRightsClaim.FunctionEntry("demo", "write"),
+            new se.swedenconnect.iam.security.claims.OrgRightsClaim.FunctionEntry("other-function", "read"));
   }
 
   @Test
@@ -330,14 +339,14 @@ class RegistryJwtConverterTest {
         .subject("test-subject")
         .issuedAt(Instant.now())
         .expiresAt(Instant.now().plusSeconds(3600))
-        .claim("scope", "55555:demo:write 66666:other-function:read")
+        .claim("scope", ORG_1 + ":demo:write " + ORG_2 + ":other-function:read")
         .build();
 
     final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
 
-    assertThat(claims.getOrgRights().entries())
-        .extracting(OrgRightEntry::organizationIdentifier)
-        .containsExactlyInAnyOrder("55555", "66666");
+    assertThat(claims.getOrgRights().orgEntries())
+        .extracting(e -> e.orgIdentifier().getId())
+        .containsExactlyInAnyOrder(ORG_1, ORG_2);
   }
 
   @Test
@@ -348,12 +357,12 @@ class RegistryJwtConverterTest {
         .subject("test-subject")
         .issuedAt(Instant.now())
         .expiresAt(Instant.now().plusSeconds(3600))
-        .claim("scope", "openid 55555:demo:write profile")
+        .claim("scope", "openid " + ORG_1 + ":demo:write profile")
         .build();
 
     final RegistryClaims claims = (RegistryClaims) converter.convert(jwt);
 
-    assertThat(claims.getOrgRights().entries()).hasSize(1);
-    assertThat(claims.getOrgRights().entries().getFirst().organizationIdentifier()).isEqualTo("55555");
+    assertThat(claims.getOrgRights().orgEntries()).hasSize(1);
+    assertThat(claims.getOrgRights().orgEntries().getFirst().orgIdentifier().getId()).isEqualTo(ORG_1);
   }
 }

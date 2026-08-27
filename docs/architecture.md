@@ -93,16 +93,21 @@ Requests are authorized in two steps, both keyed off the `{tenant}/{orgNumber}` 
    function group(s), then checks the caller's `org_rights` JWT claim has an entry for `{orgNumber}`. Unknown
    tenant or missing org → HTTP 403.
 2. **Right level** — `@PreAuthorize("@orgRightsService.canRead/canWrite/canAdmin(...)")` on the controller method
-   checks whether the org's entry holds at least the required `Right` (`READ` < `WRITE` < `ADMIN`, hierarchical) on
-   any of the tenant's configured function groups. A tenant may be backed by more than one function group; the
-   effective right is the highest held across all of them.
+   checks whether the org's entry holds at least the required `OrganizationRight` (`READ` < `WRITE` < `ADMIN`,
+   hierarchical) on any of the tenant's configured function groups. A tenant may be backed by more than one
+   function group; the effective right is the highest held across all of them.
 
 A token carrying `org_rights: [{"superuser": true}]` bypasses both checks entirely.
 
 Authentication itself supports two paths through the same Spring Security filter chain
 (`infrastructure.config.SecurityConfig`): OAuth2 **resource server** (JWT bearer, for machine/API clients — parsed
 by `RegistryJwtConverter` into `RegistryClaims`) and OAuth2 **login/OIDC** (browser session, for the SPA —
-`RegistryOidcUser`). Both expose the same `org_rights`-derived rights to `OrgRightsService`. See
+`RegistryOidcUser`, authenticated to Keycloak with `private_key_jwt`, publishing its own key at `GET /jwks`). Both
+expose the same `org_rights`-derived rights to `OrgRightsService`. Claim parsing and the right/authority types
+(`OrgRightsClaim`, `OrgRightsClaimParser`, `OrganizationRight`) come from
+`se.swedenconnect.iam:iam-security-spring-boot-starter`; the tenant/multi-function-group matching and the
+dual `org_rights`-or-`scope` bearer-token handling above remain this registry's own, since the library has no
+tenant concept and its auto-configured resource-server converter only understands the `scope` claim. See
 [Authorization Model](oauth.md) for the full JWT claim shape and endpoint-by-endpoint access rules.
 
 ## Data Model

@@ -26,6 +26,7 @@ spring:
     name: oidf-registry
     version: '@project.version@'
 
+
   threads:
     virtual:
       enabled: true

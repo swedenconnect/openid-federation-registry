@@ -28,8 +28,7 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.servlet.HandlerMapping;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrgRightEntry;
-import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrgRights;
+import se.swedenconnect.iam.security.claims.OrgRightsClaim;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryClaims;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauthclient.RegistryOidcUser;
@@ -99,20 +98,20 @@ public class OrganizationRecordClaimSelector implements HandlerMethodArgumentRes
     final String functionGroup = this.instancePlacementService.resolveFunctionGroupForTenant(tenant)
         .orElseThrow(() -> new AccessDeniedException("Unknown tenant '" + tenant + "'"));
 
-    final OrgRights orgRights = this.extractOrgRights(SecurityContextHolder.getContext().getAuthentication());
+    final OrgRightsClaim orgRights = this.extractOrgRights(SecurityContextHolder.getContext().getAuthentication());
 
     if (orgRights.superuser()) {
       return this.buildSuperuserRecord(orgNumber, functionGroup);
     }
 
-    final OrgRightEntry entry = orgRights.findOrg(orgNumber)
+    final OrgRightsClaim.OrgEntry entry = OrgRightsService.findOrgEntry(orgRights, orgNumber)
         .orElseThrow(() -> new AccessDeniedException(
             "Organization '" + orgNumber + "' not found in token claims"));
 
     return this.buildOrganizationRecord(entry, functionGroup);
   }
 
-  private OrgRights extractOrgRights(final Authentication authentication) {
+  private OrgRightsClaim extractOrgRights(final Authentication authentication) {
     if (authentication instanceof RegistryClaims registryClaims) {
       return registryClaims.getOrgRights();
     }
@@ -131,13 +130,14 @@ public class OrganizationRecordClaimSelector implements HandlerMethodArgumentRes
     return new OrganizationRecord(orgNumber, orgNumber, entityPrefix, functionGroup);
   }
 
-  private OrganizationRecord buildOrganizationRecord(final OrgRightEntry entry, final String functionGroup) {
+  private OrganizationRecord buildOrganizationRecord(final OrgRightsClaim.OrgEntry entry, final String functionGroup) {
+    final String orgNumber = entry.orgIdentifier().getId();
     final String entityPrefix = this.instancePlacementService
-        .resolveEntityPrefix(entry.organizationIdentifier(), functionGroup)
+        .resolveEntityPrefix(orgNumber, functionGroup)
         .orElse(null);
     return new OrganizationRecord(
-        entry.organizationIdentifier(),
-        entry.organizationNameSv(),
+        orgNumber,
+        entry.name().get("sv"),
         entityPrefix,
         functionGroup);
   }
