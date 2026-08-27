@@ -29,21 +29,25 @@ import java.util.UUID;
 public interface RegistrationAdminService {
 
   /**
-   * Counts registrations with PENDING_APPROVAL status for a given intermediate.
+   * Counts registrations with PENDING_APPROVAL status for a given intermediate. Scoped to
+   * intermediates owned by the calling organization.
    *
+   * @param organizationRecord the calling organization
    * @param taimId the intermediate ID
    * @return count of pending registrations
    */
-  long countPending(UUID taimId);
+  long countPending(OrganizationRecord organizationRecord, UUID taimId);
 
   /**
-   * Rejects a pending registration.
+   * Rejects a pending registration. The registration must be connected to an intermediate owned
+   * by the calling organization.
    *
+   * @param organizationRecord the calling organization
    * @param id the registration ID
    * @param rejectionReason the reason for rejection
    * @return the updated registration DTO
    */
-  RegistrationDto reject(UUID id, String rejectionReason);
+  RegistrationDto reject(OrganizationRecord organizationRecord, UUID id, String rejectionReason);
 
   /**
    * Return all registrations that is done towards this organization intermidiate:s
@@ -54,20 +58,24 @@ public interface RegistrationAdminService {
   List<RegistrationDto> listRegistrationsConnectedToThisOrgIM(OrganizationRecord organizationRecord);
 
   /**
-   * Getting registration no organization validation
+   * Getting a registration by ID. The registration must be connected to an intermediate owned by
+   * the calling organization.
    *
+   * @param organizationRecord the calling organization
    * @param registrationId the registration ID
    * @return the registration DTO
    */
-  RegistrationDto getRegistrationById(UUID registrationId);
+  RegistrationDto getRegistrationById(OrganizationRecord organizationRecord, UUID registrationId);
 
   /**
-   * Approves a specific pending step, resumes pipeline execution from that step.
+   * Approves a specific pending step, resumes pipeline execution from that step. The registration
+   * must be connected to an intermediate owned by the calling organization.
    *
+   * @param organizationRecord the calling organization
    * @param registrationId the registration ID
    * @param stepIndex the index of the step to approve
    * @return the updated registration DTO after resumption
    */
-  RegistrationDto approveStep(UUID registrationId, int stepIndex);
+  RegistrationDto approveStep(OrganizationRecord organizationRecord, UUID registrationId, int stepIndex);
 
 }

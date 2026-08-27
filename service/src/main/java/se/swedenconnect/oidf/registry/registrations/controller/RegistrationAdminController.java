@@ -71,7 +71,8 @@ public class RegistrationAdminController {
       @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
       @Parameter(description = "Intermediate ID") @RequestParam("taimId") final UUID taimId) {
-    return ResponseEntity.ok(Map.of("count", this.registrationAdminService.countPending(taimId)));
+    return ResponseEntity.ok(
+        Map.of("count", this.registrationAdminService.countPending(organizationRecord, taimId)));
   }
 
   /**
@@ -109,7 +110,7 @@ public class RegistrationAdminController {
       @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
       @Parameter(description = "Registration ID") @PathVariable("registrationId") final UUID registrationId) {
-    return ResponseEntity.ok(this.registrationAdminService.getRegistrationById(registrationId));
+    return ResponseEntity.ok(this.registrationAdminService.getRegistrationById(organizationRecord, registrationId));
   }
 
   /**
@@ -131,7 +132,8 @@ public class RegistrationAdminController {
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
       @Parameter(description = "Registration ID") @PathVariable("registrationId") final UUID registrationId,
       @RequestBody final RejectRegistrationDto body) {
-    return ResponseEntity.ok(this.registrationAdminService.reject(registrationId, body.rejectionReason()));
+    return ResponseEntity.ok(
+        this.registrationAdminService.reject(organizationRecord, registrationId, body.rejectionReason()));
   }
 
   /**
@@ -153,6 +155,7 @@ public class RegistrationAdminController {
       @Parameter(hidden = true) final OrganizationRecord organizationRecord,
       @Parameter(description = "Registration ID") @PathVariable("registrationId") final UUID registrationId,
       @Parameter(description = "Step index") @PathVariable("stepIndex") final int stepIndex) {
-    return ResponseEntity.ok(this.registrationAdminService.approveStep(registrationId, stepIndex));
+    return ResponseEntity.ok(
+        this.registrationAdminService.approveStep(organizationRecord, registrationId, stepIndex));
   }
 }
