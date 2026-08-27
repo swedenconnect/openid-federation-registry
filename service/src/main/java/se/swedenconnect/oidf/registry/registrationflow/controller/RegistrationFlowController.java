@@ -225,7 +225,7 @@ public class RegistrationFlowController {
       @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("taImId") final UUID taImId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    return ResponseEntity.ok(this.registrationFlowService.getFlowsForIntermediate(taImId));
+    return ResponseEntity.ok(this.registrationFlowService.getFlowsForIntermediate(organizationRecord, taImId));
   }
 
   /**
@@ -245,7 +245,8 @@ public class RegistrationFlowController {
       @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("taImId") final UUID taImId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    return ResponseEntity.ok(this.registrationFlowService.getFlowAssignmentsForIntermediate(taImId));
+    return ResponseEntity.ok(
+        this.registrationFlowService.getFlowAssignmentsForIntermediate(organizationRecord, taImId));
   }
 
   /**
@@ -268,7 +269,7 @@ public class RegistrationFlowController {
       @RequestBody final AssignFlowRequest request,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(this.registrationFlowService.assignFlow(taImId, request.flowId()));
+        .body(this.registrationFlowService.assignFlow(organizationRecord, taImId, request.flowId()));
   }
 
   /**
@@ -290,7 +291,7 @@ public class RegistrationFlowController {
       @PathVariable("taImId") final UUID taImId,
       @PathVariable("assignId") final UUID assignId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    this.registrationFlowService.unassignFlow(taImId, assignId);
+    this.registrationFlowService.unassignFlow(organizationRecord, taImId, assignId);
     return ResponseEntity.noContent().build();
   }
 
@@ -311,7 +312,8 @@ public class RegistrationFlowController {
       @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("tmIssuerId") final UUID tmIssuerId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    return ResponseEntity.ok(this.registrationFlowService.getFlowAssignmentsForTrustMarkIssuer(tmIssuerId));
+    return ResponseEntity.ok(
+        this.registrationFlowService.getFlowAssignmentsForTrustMarkIssuer(organizationRecord, tmIssuerId));
   }
 
   /**
@@ -334,7 +336,8 @@ public class RegistrationFlowController {
       @RequestBody final AssignFlowRequest request,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(this.registrationFlowService.assignFlowToTrustMarkIssuer(tmIssuerId, request.flowId()));
+        .body(this.registrationFlowService.assignFlowToTrustMarkIssuer(organizationRecord, tmIssuerId,
+            request.flowId()));
   }
 
   /**
@@ -356,7 +359,7 @@ public class RegistrationFlowController {
       @PathVariable("tmIssuerId") final UUID tmIssuerId,
       @PathVariable("assignId") final UUID assignId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    this.registrationFlowService.unassignFlowFromTrustMarkIssuer(tmIssuerId, assignId);
+    this.registrationFlowService.unassignFlowFromTrustMarkIssuer(organizationRecord, tmIssuerId, assignId);
     return ResponseEntity.noContent().build();
   }
 
@@ -378,7 +381,7 @@ public class RegistrationFlowController {
       @PathVariable("tmIssuerId") final UUID tmIssuerId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(
-        this.registrationFlowService.getFlowAssignmentsForTrustMarkIssuerTrustmarks(tmIssuerId));
+        this.registrationFlowService.getFlowAssignmentsForTrustMarkIssuerTrustmarks(organizationRecord, tmIssuerId));
   }
 
   /**
@@ -401,7 +404,7 @@ public class RegistrationFlowController {
       @RequestBody final AssignFlowRequest request,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.status(HttpStatus.CREATED)
-        .body(this.registrationFlowService.assignFlowToTrustMark(trustmarkId, request.flowId()));
+        .body(this.registrationFlowService.assignFlowToTrustMark(organizationRecord, trustmarkId, request.flowId()));
   }
 
   /**
@@ -423,7 +426,7 @@ public class RegistrationFlowController {
       @PathVariable("trustmarkId") final UUID trustmarkId,
       @PathVariable("assignId") final UUID assignId,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    this.registrationFlowService.unassignFlowFromTrustMark(trustmarkId, assignId);
+    this.registrationFlowService.unassignFlowFromTrustMark(organizationRecord, trustmarkId, assignId);
     return ResponseEntity.noContent().build();
   }
 }

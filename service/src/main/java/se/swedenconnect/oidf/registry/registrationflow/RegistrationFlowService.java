@@ -476,59 +476,103 @@ public class RegistrationFlowService {
     return resumeReport;
   }
 
+  private UUID resolveOrganizationIdOrThrow(final OrganizationRecord organizationRecord,
+      final RegistryServerException notFound) {
+    return this.organizationService.find(organizationRecord)
+        .map(Organization::getOrganizationId)
+        .orElseThrow(() -> notFound);
+  }
+
+  private Optional<TrustAnchorIntermediateModule> findOwnedTaIm(final OrganizationRecord organizationRecord,
+      final UUID taImId) {
+    return this.organizationService.find(organizationRecord)
+        .flatMap(org -> this.taImRepository.findByOrganizationIdAndTaImId(org.getOrganizationId(), taImId));
+  }
+
+  private Optional<TrustMarkIssuer> findOwnedTrustMarkIssuer(final OrganizationRecord organizationRecord,
+      final UUID tmIssuerId) {
+    return this.organizationService.find(organizationRecord)
+        .flatMap(org -> this.trustmarkIssuerRepository
+            .findByOrganizationIdAndTrustmarkIssuerId(org.getOrganizationId(), tmIssuerId));
+  }
+
+  private Optional<TrustMark> findOwnedTrustMark(final OrganizationRecord organizationRecord,
+      final UUID trustmarkId) {
+    return this.organizationService.find(organizationRecord)
+        .flatMap(org -> this.trustMarkRepository
+            .findByOrganizationIdAndTrustmarkId(org.getOrganizationId(), trustmarkId));
+  }
+
   /**
-   * Returns all flows assigned to the given intermediate.
+   * Returns all flows assigned to the given intermediate. The intermediate must belong to the calling organization;
+   * otherwise an empty list is returned, matching the existing behavior for an unknown intermediate.
    *
+   * @param organizationRecord the calling organization
    * @param taImId the intermediate ID
    * @return list of flow DTOs
    */
   @Transactional(readOnly = true)
-  public List<RegistrationFlowDto> getFlowsForIntermediate(final UUID taImId) {
-    return this.flowAssignmentRepository.findByTaImTaImId(taImId).stream()
-        .map(a -> {
-          final RegistrationFlow f = a.getRegistrationFlow();
-          return new RegistrationFlowDto(f.getFlowId(), f.getName(), f.getDescription(),
-              f.getDescriptionSv(), f.getTechnology(), f.getEntityType(), List.of(), f.getFlowType());
-        })
-        .toList();
+  public List<RegistrationFlowDto> getFlowsForIntermediate(final OrganizationRecord organizationRecord,
+      final UUID taImId) {
+    return this.findOwnedTaIm(organizationRecord, taImId)
+        .map(taIm -> this.flowAssignmentRepository.findByTaImTaImId(taIm.getTaImId()).stream()
+            .map(a -> {
+              final RegistrationFlow f = a.getRegistrationFlow();
+              return new RegistrationFlowDto(f.getFlowId(), f.getName(), f.getDescription(),
+                  f.getDescriptionSv(), f.getTechnology(), f.getEntityType(), List.of(), f.getFlowType());
+            })
+            .toList())
+        .orElse(List.of());
   }
 
   /**
-   * Returns all flow assignments for the given intermediate, including the assign ID required
-   * for unassign calls.
+   * Returns all flow assignments for the given intermediate, including the assign ID required for unassign calls.
+   * The intermediate must belong to the calling organization; otherwise an empty list is returned, matching the
+   * existing behavior for an unknown intermediate.
    *
+   * @param organizationRecord the calling organization
    * @param taImId the intermediate ID
    * @return list of assignment summaries
    */
   @Transactional(readOnly = true)
-  public List<IntermediateFlowAssignmentDto> getFlowAssignmentsForIntermediate(final UUID taImId) {
-    return this.flowAssignmentRepository.findByTaImTaImId(taImId).stream()
-        .map(a -> {
-          final RegistrationFlow f = a.getRegistrationFlow();
-          return new IntermediateFlowAssignmentDto(a.getAssignId(), f.getFlowId(), f.getName(), f.getDescription());
-        })
-        .toList();
+  public List<IntermediateFlowAssignmentDto> getFlowAssignmentsForIntermediate(
+      final OrganizationRecord organizationRecord, final UUID taImId) {
+    return this.findOwnedTaIm(organizationRecord, taImId)
+        .map(taIm -> this.flowAssignmentRepository.findByTaImTaImId(taIm.getTaImId()).stream()
+            .map(a -> {
+              final RegistrationFlow f = a.getRegistrationFlow();
+              return new IntermediateFlowAssignmentDto(a.getAssignId(), f.getFlowId(), f.getName(),
+                  f.getDescription());
+            })
+            .toList())
+        .orElse(List.of());
   }
 
   /**
-   * Assigns a flow to an intermediate. Idempotent: returns the existing assignment ID if the
-   * flow is already assigned.
+   * Assigns a flow to an intermediate. Both must belong to the calling organization. Idempotent: returns the
+   * existing assignment ID if the flow is already assigned.
    *
+   * @param organizationRecord the calling organization
    * @param taImId the intermediate ID
    * @param flowId the flow ID to assign
    * @return the assignment response containing the assign ID
    */
   @Transactional
-  public AssignFlowResponse assignFlow(final UUID taImId, final UUID flowId) {
+  public AssignFlowResponse assignFlow(final OrganizationRecord organizationRecord, final UUID taImId,
+      final UUID flowId) {
+    final RegistryServerException taImNotFound = new RegistryServerException(
+        ErrorTypes.NOT_FOUND, "Intermediate not found: " + taImId);
+    final UUID organizationId = this.resolveOrganizationIdOrThrow(organizationRecord, taImNotFound);
+    final TrustAnchorIntermediateModule taIm = this.taImRepository
+        .findByOrganizationIdAndTaImId(organizationId, taImId)
+        .orElseThrow(() -> taImNotFound);
+    final RegistrationFlow flow = this.flowRepository
+        .findByOrganizationOrganizationIdAndFlowId(organizationId, flowId)
+        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND, "Flow not found: " + flowId));
     return this.flowAssignmentRepository
-        .findByTaImTaImIdAndRegistrationFlowFlowId(taImId, flowId)
+        .findByTaImTaImIdAndRegistrationFlowFlowId(taIm.getTaImId(), flow.getFlowId())
         .map(existing -> new AssignFlowResponse(existing.getAssignId()))
         .orElseGet(() -> {
-          final TrustAnchorIntermediateModule taIm = this.taImRepository.findById(taImId)
-              .orElseThrow(() -> new RegistryServerException(
-                  ErrorTypes.NOT_FOUND, "Intermediate not found: " + taImId));
-          final RegistrationFlow flow = this.flowRepository.findById(flowId)
-              .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND, "Flow not found: " + flowId));
           final FlowAssignment assignment = new FlowAssignment(UUID.randomUUID(), taIm, flow);
           this.flowAssignmentRepository.save(assignment);
           return new AssignFlowResponse(assignment.getAssignId());
@@ -536,57 +580,74 @@ public class RegistrationFlowService {
   }
 
   /**
-   * Removes a flow assignment from an intermediate. Throws 404 if either the assign ID or the
-   * intermediate ID does not match an existing assignment.
+   * Removes a flow assignment from an intermediate. The intermediate must belong to the calling organization.
+   * Throws 404 if either the assign ID or the intermediate ID does not match an existing, owned assignment.
    *
+   * @param organizationRecord the calling organization
    * @param taImId the intermediate ID
    * @param assignId the assignment ID to remove
    */
   @Transactional
-  public void unassignFlow(final UUID taImId, final UUID assignId) {
+  public void unassignFlow(final OrganizationRecord organizationRecord, final UUID taImId, final UUID assignId) {
+    final RegistryServerException notFound = new RegistryServerException(ErrorTypes.NOT_FOUND,
+        "Assignment not found: " + assignId + " for intermediate: " + taImId);
+    this.findOwnedTaIm(organizationRecord, taImId).orElseThrow(() -> notFound);
     final FlowAssignment assignment = this.flowAssignmentRepository
         .findByAssignIdAndTaImTaImId(assignId, taImId)
-        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
-            "Assignment not found: " + assignId + " for intermediate: " + taImId));
+        .orElseThrow(() -> notFound);
     this.flowAssignmentRepository.delete(assignment);
   }
 
   /**
-   * Returns all flow assignments for the given trust mark issuer, including the assign ID required
-   * for unassign calls.
+   * Returns all flow assignments for the given trust mark issuer, including the assign ID required for unassign
+   * calls. The issuer must belong to the calling organization; otherwise an empty list is returned, matching the
+   * existing behavior for an unknown issuer.
    *
+   * @param organizationRecord the calling organization
    * @param tmIssuerId the trust mark issuer ID
    * @return list of assignment summaries
    */
   @Transactional(readOnly = true)
-  public List<TrustMarkIssuerFlowAssignmentDto> getFlowAssignmentsForTrustMarkIssuer(final UUID tmIssuerId) {
-    return this.tmIssuerFlowAssignmentRepository.findByTrustMarkIssuerTrustmarkIssuerId(tmIssuerId).stream()
-        .map(a -> {
-          final RegistrationFlow f = a.getRegistrationFlow();
-          return new TrustMarkIssuerFlowAssignmentDto(a.getAssignId(), f.getFlowId(), f.getName(), f.getDescription());
-        })
-        .toList();
+  public List<TrustMarkIssuerFlowAssignmentDto> getFlowAssignmentsForTrustMarkIssuer(
+      final OrganizationRecord organizationRecord, final UUID tmIssuerId) {
+    return this.findOwnedTrustMarkIssuer(organizationRecord, tmIssuerId)
+        .map(issuer -> this.tmIssuerFlowAssignmentRepository
+            .findByTrustMarkIssuerTrustmarkIssuerId(issuer.getTrustmarkIssuerId()).stream()
+            .map(a -> {
+              final RegistrationFlow f = a.getRegistrationFlow();
+              return new TrustMarkIssuerFlowAssignmentDto(a.getAssignId(), f.getFlowId(), f.getName(),
+                  f.getDescription());
+            })
+            .toList())
+        .orElse(List.of());
   }
 
   /**
-   * Assigns a flow to a trust mark issuer. Idempotent: returns the existing assignment ID if the
-   * flow is already assigned.
+   * Assigns a flow to a trust mark issuer. Both must belong to the calling organization. Idempotent: returns the
+   * existing assignment ID if the flow is already assigned.
    *
+   * @param organizationRecord the calling organization
    * @param tmIssuerId the trust mark issuer ID
    * @param flowId the flow ID to assign
    * @return the assignment response containing the assign ID
    */
   @Transactional
-  public AssignFlowResponse assignFlowToTrustMarkIssuer(final UUID tmIssuerId, final UUID flowId) {
+  public AssignFlowResponse assignFlowToTrustMarkIssuer(final OrganizationRecord organizationRecord,
+      final UUID tmIssuerId, final UUID flowId) {
+    final RegistryServerException issuerNotFound = new RegistryServerException(
+        ErrorTypes.NOT_FOUND, "Trust mark issuer not found: " + tmIssuerId);
+    final UUID organizationId = this.resolveOrganizationIdOrThrow(organizationRecord, issuerNotFound);
+    final TrustMarkIssuer issuer = this.trustmarkIssuerRepository
+        .findByOrganizationIdAndTrustmarkIssuerId(organizationId, tmIssuerId)
+        .orElseThrow(() -> issuerNotFound);
+    final RegistrationFlow flow = this.flowRepository
+        .findByOrganizationOrganizationIdAndFlowId(organizationId, flowId)
+        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND, "Flow not found: " + flowId));
     return this.tmIssuerFlowAssignmentRepository
-        .findByTrustMarkIssuerTrustmarkIssuerIdAndRegistrationFlowFlowId(tmIssuerId, flowId)
+        .findByTrustMarkIssuerTrustmarkIssuerIdAndRegistrationFlowFlowId(issuer.getTrustmarkIssuerId(),
+            flow.getFlowId())
         .map(existing -> new AssignFlowResponse(existing.getAssignId()))
         .orElseGet(() -> {
-          final TrustMarkIssuer issuer = this.trustmarkIssuerRepository.findById(tmIssuerId)
-              .orElseThrow(() -> new RegistryServerException(
-                  ErrorTypes.NOT_FOUND, "Trust mark issuer not found: " + tmIssuerId));
-          final RegistrationFlow flow = this.flowRepository.findById(flowId)
-              .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND, "Flow not found: " + flowId));
           final TrustMarkIssuerFlowAssignment assignment =
               new TrustMarkIssuerFlowAssignment(UUID.randomUUID(), issuer, flow);
           this.tmIssuerFlowAssignmentRepository.save(assignment);
@@ -595,59 +656,74 @@ public class RegistrationFlowService {
   }
 
   /**
-   * Removes a flow assignment from a trust mark issuer. Throws 404 if the assignment is not found.
+   * Removes a flow assignment from a trust mark issuer. The issuer must belong to the calling organization. Throws
+   * 404 if the assignment is not found.
    *
+   * @param organizationRecord the calling organization
    * @param tmIssuerId the trust mark issuer ID
    * @param assignId the assignment ID to remove
    */
   @Transactional
-  public void unassignFlowFromTrustMarkIssuer(final UUID tmIssuerId, final UUID assignId) {
+  public void unassignFlowFromTrustMarkIssuer(final OrganizationRecord organizationRecord, final UUID tmIssuerId,
+      final UUID assignId) {
+    final RegistryServerException notFound = new RegistryServerException(ErrorTypes.NOT_FOUND,
+        "Assignment not found: " + assignId + " for trust mark issuer: " + tmIssuerId);
+    this.findOwnedTrustMarkIssuer(organizationRecord, tmIssuerId).orElseThrow(() -> notFound);
     final TrustMarkIssuerFlowAssignment assignment = this.tmIssuerFlowAssignmentRepository
         .findByAssignIdAndTrustMarkIssuerTrustmarkIssuerId(assignId, tmIssuerId)
-        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
-            "Assignment not found: " + assignId + " for trust mark issuer: " + tmIssuerId));
+        .orElseThrow(() -> notFound);
     this.tmIssuerFlowAssignmentRepository.delete(assignment);
   }
 
   /**
-   * Returns all flow assignments for trust marks belonging to the given issuer.
+   * Returns all flow assignments for trust marks belonging to the given issuer. The issuer must belong to the
+   * calling organization; otherwise an empty list is returned, matching the existing behavior for an unknown issuer.
    *
+   * @param organizationRecord the calling organization
    * @param tmIssuerId the trust mark issuer module ID
    * @return list of assignment DTOs
    */
   @Transactional(readOnly = true)
-  public List<TrustMarkFlowAssignmentDto> getFlowAssignmentsForTrustMarkIssuerTrustmarks(final UUID tmIssuerId) {
-    return this.tmFlowAssignmentRepository
-        .findByTrustMarkTrustmarkIssuerTrustmarkIssuerId(tmIssuerId).stream()
-        .map(a -> new TrustMarkFlowAssignmentDto(
-            a.getAssignId(),
-            a.getTrustMark().getTrustmarkId(),
-            a.getTrustMark().getTrustmarkType(),
-            a.getRegistrationFlow().getFlowId(),
-            a.getRegistrationFlow().getName(),
-            a.getRegistrationFlow().getDescription()))
-        .toList();
+  public List<TrustMarkFlowAssignmentDto> getFlowAssignmentsForTrustMarkIssuerTrustmarks(
+      final OrganizationRecord organizationRecord, final UUID tmIssuerId) {
+    return this.findOwnedTrustMarkIssuer(organizationRecord, tmIssuerId)
+        .map(issuer -> this.tmFlowAssignmentRepository
+            .findByTrustMarkTrustmarkIssuerTrustmarkIssuerId(issuer.getTrustmarkIssuerId()).stream()
+            .map(a -> new TrustMarkFlowAssignmentDto(
+                a.getAssignId(),
+                a.getTrustMark().getTrustmarkId(),
+                a.getTrustMark().getTrustmarkType(),
+                a.getRegistrationFlow().getFlowId(),
+                a.getRegistrationFlow().getName(),
+                a.getRegistrationFlow().getDescription()))
+            .toList())
+        .orElse(List.of());
   }
 
   /**
-   * Assigns a flow to a specific trust mark. Idempotent.
+   * Assigns a flow to a specific trust mark. Both must belong to the calling organization. Idempotent.
    *
+   * @param organizationRecord the calling organization
    * @param trustmarkId the trust mark ID
    * @param flowId the flow to assign
    * @return assign response with the assignment ID
    */
   @Transactional
-  public AssignFlowResponse assignFlowToTrustMark(final UUID trustmarkId, final UUID flowId) {
+  public AssignFlowResponse assignFlowToTrustMark(final OrganizationRecord organizationRecord,
+      final UUID trustmarkId, final UUID flowId) {
+    final RegistryServerException trustmarkNotFound = new RegistryServerException(ErrorTypes.NOT_FOUND,
+        "Trust mark not found: " + trustmarkId);
+    final UUID organizationId = this.resolveOrganizationIdOrThrow(organizationRecord, trustmarkNotFound);
+    final TrustMark tm = this.trustMarkRepository
+        .findByOrganizationIdAndTrustmarkId(organizationId, trustmarkId)
+        .orElseThrow(() -> trustmarkNotFound);
+    final RegistrationFlow flow = this.flowRepository
+        .findByOrganizationOrganizationIdAndFlowId(organizationId, flowId)
+        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND, "Flow not found: " + flowId));
     return this.tmFlowAssignmentRepository
-        .findByTrustMarkTrustmarkIdAndRegistrationFlowFlowId(trustmarkId, flowId)
+        .findByTrustMarkTrustmarkIdAndRegistrationFlowFlowId(tm.getTrustmarkId(), flow.getFlowId())
         .map(existing -> new AssignFlowResponse(existing.getAssignId()))
         .orElseGet(() -> {
-          final TrustMark tm = this.trustMarkRepository.findById(trustmarkId)
-              .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
-                  "Trust mark not found: " + trustmarkId));
-          final RegistrationFlow flow = this.flowRepository.findById(flowId)
-              .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
-                  "Flow not found: " + flowId));
           final TrustMarkFlowAssignment assignment =
               new TrustMarkFlowAssignment(UUID.randomUUID(), tm, flow);
           this.tmFlowAssignmentRepository.save(assignment);
@@ -656,17 +732,21 @@ public class RegistrationFlowService {
   }
 
   /**
-   * Removes a flow assignment from a trust mark.
+   * Removes a flow assignment from a trust mark. The trust mark must belong to the calling organization.
    *
+   * @param organizationRecord the calling organization
    * @param trustmarkId the trust mark ID
    * @param assignId the assignment ID
    */
   @Transactional
-  public void unassignFlowFromTrustMark(final UUID trustmarkId, final UUID assignId) {
+  public void unassignFlowFromTrustMark(final OrganizationRecord organizationRecord, final UUID trustmarkId,
+      final UUID assignId) {
+    final RegistryServerException notFound = new RegistryServerException(ErrorTypes.NOT_FOUND,
+        "Assignment not found: " + assignId + " for trust mark: " + trustmarkId);
+    this.findOwnedTrustMark(organizationRecord, trustmarkId).orElseThrow(() -> notFound);
     final TrustMarkFlowAssignment assignment = this.tmFlowAssignmentRepository.findById(assignId)
         .filter(a -> a.getTrustMark().getTrustmarkId().equals(trustmarkId))
-        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
-            "Assignment not found: " + assignId + " for trust mark: " + trustmarkId));
+        .orElseThrow(() -> notFound);
     this.tmFlowAssignmentRepository.delete(assignment);
   }
 
