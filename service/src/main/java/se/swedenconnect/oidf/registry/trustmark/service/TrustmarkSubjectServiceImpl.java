@@ -22,6 +22,7 @@ import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
+import se.swedenconnect.oidf.registry.infrastructure.persistence.InsertOnly;
 import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
@@ -109,7 +110,7 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
     final TrustMarkSubject entity =
         DtoToTrustmarkMapper.toEntity(id, input, trustMarkEntity);
 
-    this.trustMarkSubjectRepository.save(entity);
+    InsertOnly.save(this.trustMarkSubjectRepository, entity, "A trust mark subject with this ID already exists: " + id);
     final TrustmarkSubjectDto dto = TrustmarkToDtoMapper.toDto(entity);
     this.auditService.trustmarkSubjectCreated(id,
         trustMarkEntity.getTrustmarkIssuer().getEntity().getOrganization().getInstance().getInstanceId(),

@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
+import se.swedenconnect.oidf.registry.infrastructure.persistence.InsertOnly;
 import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
@@ -178,7 +179,7 @@ public class RegistrationFlowService {
         registrationFlowDto.steps(), registrationFlowDto.flowType());
     final RegistrationFlow registrationFlow = Mapper.toModel(dtoWithId, flowId, org,
         this.registrationStepRepository);
-    this.flowRepository.save(registrationFlow);
+    InsertOnly.save(this.flowRepository, registrationFlow, "A flow with this ID already exists: " + flowId);
     return dtoWithId;
   }
 

@@ -15,20 +15,15 @@
  */
 package se.swedenconnect.oidf.registry.trustmark.model;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.springframework.data.domain.Persistable;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 
@@ -46,12 +41,22 @@ import java.util.UUID;
 @NoArgsConstructor
 @SuperBuilder
 @Table(name = "trustmark_subject")
-public class TrustMarkSubject extends BaseEntity {
+public class TrustMarkSubject extends BaseEntity implements Persistable<UUID> {
 
   @Id
   @Column(name = "trustmarksubject_id", columnDefinition = "char(36)", nullable = false, updatable = false)
   @JdbcTypeCode(SqlTypes.CHAR)
   private UUID trustmarksubjectId;
+
+  /**
+   * Tracks whether this instance has been persisted yet, so {@code save()} performs an insert for a freshly constructed
+   * subject and a proper update for one loaded from the database — {@code trustmarksubjectId} is caller-assignable (not
+   * {@code @GeneratedValue}), so Spring Data can't infer this from the ID alone the way it does for generated keys.
+   * Without this, a caller-selected ID matching an existing row would silently merge into it.
+   */
+  @Transient
+  @Builder.Default
+  private boolean isNew = true;
 
   @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
   @JoinColumn(name = "trustmark_id", referencedColumnName = "trustmark_id")
@@ -91,6 +96,22 @@ public class TrustMarkSubject extends BaseEntity {
   public void setTrustMark(final TrustMark trustMark) {
     this.trustMark = trustMark;
     trustMark.getTrustmarksubjects().add(this);
+  }
+
+  @Override
+  public UUID getId() {
+    return this.trustmarksubjectId;
+  }
+
+  @Override
+  public boolean isNew() {
+    return this.isNew;
+  }
+
+  @PostLoad
+  @PostPersist
+  void markNotNew() {
+    this.isNew = false;
   }
 
 }

@@ -32,6 +32,7 @@ import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
+import se.swedenconnect.oidf.registry.infrastructure.persistence.InsertOnly;
 import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
@@ -114,7 +115,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     final Organization org = this.resolveOrganization(organizationRecord);
 
     final FederationEntity entity = DtoToEntityMapper.toEntity(id, input, EntityType.FEDERATION_ENTITY, org);
-    this.entityRepository.save(entity);
+    InsertOnly.save(this.entityRepository, entity, "A federation entity with this ID already exists: " + id);
     final FederationEntityDto dto = EntityToDtoMapper.toFederationEntity(entity, false);
     this.auditService.federationEntityCreated(id, org.getInstance().getInstanceId(), org.getOrganizationId(),
         dto.getEntityIdentifier(), dto.getEntityIdentifier(), null, dto);
@@ -208,7 +209,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     final FederationEntity entity = DtoToEntityMapper.toEntity(
         id, input, EntityType.HOSTED_ENTITY, org);
     entity.setSubject(organizationRecord.entityPrefix());
-    this.entityRepository.save(entity);
+    InsertOnly.save(this.entityRepository, entity, "A hosted entity with this ID already exists: " + id);
     final HostedEntityDto dto = EntityToDtoMapper.toDtoHosted(entity);
     this.auditService.hostedEntityCreated(id, org.getInstance().getInstanceId(), org.getOrganizationId(), null, dto);
     return dto;

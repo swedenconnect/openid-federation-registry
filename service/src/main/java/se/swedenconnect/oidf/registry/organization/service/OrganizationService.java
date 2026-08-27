@@ -73,11 +73,12 @@ public class OrganizationService {
           org.setOrgNumber(organizationRecord.orgNumber());
           org.setOrgName(organizationRecord.orgName());
           org.setInstance(instanceEntity);
-          this.organizationRepository.save(org);
+          final Organization saved = this.organizationRepository.save(org);
           //TODO: This is a significand event that should trigger a audit event.
           log.info("Creating a new organization. {}-{}-{} assigning to instanceid:{}",
-              org.getOrganizationId(), org.getOrgName(), org.getOrgNumber(), org.getInstance().getInstanceId());
-          return org;
+              saved.getOrganizationId(), saved.getOrgName(), saved.getOrgNumber(),
+              saved.getInstance().getInstanceId());
+          return saved;
         });
   }
 

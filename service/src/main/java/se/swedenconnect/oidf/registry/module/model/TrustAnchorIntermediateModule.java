@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.springframework.data.domain.Persistable;
 import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.StringListConverter;
@@ -42,11 +43,20 @@ import java.util.UUID;
 @Setter
 @Entity
 @Table(name = "TrustanchorIntermediate")
-public class TrustAnchorIntermediateModule extends BaseEntity {
+public class TrustAnchorIntermediateModule extends BaseEntity implements Persistable<UUID> {
   @Id
   @Column(name = "ta_im_id", columnDefinition = "char(36)", nullable = false)
   @JdbcTypeCode(SqlTypes.CHAR)
   private UUID taImId;
+
+  /**
+   * Tracks whether this instance has been persisted yet, so {@code save()} performs an insert for a freshly constructed
+   * module and a proper update for one loaded from the database — {@code taImId} is caller-assignable (not
+   * {@code @GeneratedValue}), so Spring Data can't infer this from the ID alone the way it does for generated keys.
+   * Without this, a caller-selected ID matching an existing row would silently merge into it.
+   */
+  @Transient
+  private boolean isNew = true;
 
   @NotNull
   @Column(name = "module_type", nullable = false)
@@ -84,6 +94,22 @@ public class TrustAnchorIntermediateModule extends BaseEntity {
   public boolean isOfType(final ModuleType type) {
     return this.moduleType.equals(type);
 
+  }
+
+  @Override
+  public UUID getId() {
+    return this.taImId;
+  }
+
+  @Override
+  public boolean isNew() {
+    return this.isNew;
+  }
+
+  @PostLoad
+  @PostPersist
+  void markNotNew() {
+    this.isNew = false;
   }
 
 }
