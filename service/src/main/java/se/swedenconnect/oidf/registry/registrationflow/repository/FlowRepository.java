@@ -35,18 +35,18 @@ public interface FlowRepository extends JpaRepository<RegistrationFlow, UUID> {
   /**
    * Returns all flows belonging to the given organization.
    *
-   * @param orgNumber the organization number
+   * @param organizationId the organization ID
    * @return list of flows
    */
-  List<RegistrationFlow> findByOrganizationOrgNumber(String orgNumber);
+  List<RegistrationFlow> findByOrganizationOrganizationId(UUID organizationId);
 
   /**
-   * Returns a flow by org number and flow ID, or empty if not found or owned by another org.
+   * Returns a flow by organization ID and flow ID, or empty if not found or owned by another org.
    *
-   * @param orgNumber the organization number
+   * @param organizationId the organization ID
    * @param flowId the flow ID
    * @return the flow if it exists and belongs to the org
    */
-  Optional<RegistrationFlow> findByOrganizationOrgNumberAndFlowId(String orgNumber, UUID flowId);
+  Optional<RegistrationFlow> findByOrganizationOrganizationIdAndFlowId(UUID organizationId, UUID flowId);
 
 }

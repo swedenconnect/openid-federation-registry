@@ -34,28 +34,28 @@ import java.util.UUID;
 @Repository
 public interface TrustMarkRepository extends JpaRepository<TrustMark, UUID> {
   /**
-   * Executes the SQL query to retrieve trust marks based on the organization number.
+   * Executes the SQL query to retrieve trust marks based on the organization ID.
    *
-   * @param orgNumber the organization number
+   * @param organizationId the organization ID
    * @param trustmarkIssuerId optional trustmarkIssuerId
    * @return a list of TrustMark
    */
   @Query("""
-      SELECT t FROM TrustMark t 
-            JOIN t.trustmarkIssuer tmi 
-            JOIN tmi.entity e 
-            JOIN e.organization o 
-            WHERE o.orgNumber = :orgNumber
+      SELECT t FROM TrustMark t
+            JOIN t.trustmarkIssuer tmi
+            JOIN tmi.entity e
+            JOIN e.organization o
+            WHERE o.organizationId = :organizationId
             AND (:trustmarkIssuerId IS NULL OR tmi.trustmarkIssuerId = :trustmarkIssuerId)
       """)
-  List<TrustMark> findByOrgNumber(@Param("orgNumber") String orgNumber,
+  List<TrustMark> findByOrganizationId(@Param("organizationId") UUID organizationId,
       @Param("trustmarkIssuerId") UUID trustmarkIssuerId);
 
   /**
-   * Executes the SQL query to retrieve trust marks with subjects based on the organization number. Uses LEFT JOIN FETCH
+   * Executes the SQL query to retrieve trust marks with subjects based on the organization ID. Uses LEFT JOIN FETCH
    * to eagerly load trustmark subjects, including trustmarks without subjects.
    *
-   * @param orgNumber the organization number
+   * @param organizationId the organization ID
    * @param trustmarkIssuerId trustmarkIssuerId
    * @return a list of TrustMark with subjects loaded
    */
@@ -65,28 +65,28 @@ public interface TrustMarkRepository extends JpaRepository<TrustMark, UUID> {
           JOIN t.trustmarkIssuer tmi
           JOIN tmi.entity e
           JOIN e.organization o
-          WHERE o.orgNumber = :orgNumber
+          WHERE o.organizationId = :organizationId
           AND (:trustmarkIssuerId IS NULL OR tmi.trustmarkIssuerId = :trustmarkIssuerId)
       """)
-  List<TrustMark> findByOrgNumberWithSubjects(@Param("orgNumber") String orgNumber,
+  List<TrustMark> findByOrganizationIdWithSubjects(@Param("organizationId") UUID organizationId,
       @Param("trustmarkIssuerId") UUID trustmarkIssuerId);
 
   /**
-   * Finds a {@link TrustMark} based on the organization's number and the trustmark's ID.
+   * Finds a {@link TrustMark} based on the organization's ID and the trustmark's ID.
    *
-   * @param orgNumber the unique number of the organization
+   * @param organizationId the unique ID of the organization
    * @param trustmarkId the unique identifier of the trustmark
    * @return an {@link Optional} containing the matching {@link TrustMark} if found, otherwise an empty
    */
   @Query("""
-      SELECT t FROM TrustMark t 
+      SELECT t FROM TrustMark t
       JOIN t.trustmarkIssuer tmi
-      JOIN tmi.entity e 
-      JOIN e.organization o 
-      WHERE o.orgNumber = :orgNumber 
+      JOIN tmi.entity e
+      JOIN e.organization o
+      WHERE o.organizationId = :organizationId
       AND t.trustmarkId = :trustmarkId
       """)
-  Optional<TrustMark> findByOrgNumberAndTrustmarkId(@Param("orgNumber") String orgNumber,
+  Optional<TrustMark> findByOrganizationIdAndTrustmarkId(@Param("organizationId") UUID organizationId,
       @Param("trustmarkId") UUID trustmarkId);
 
   /**

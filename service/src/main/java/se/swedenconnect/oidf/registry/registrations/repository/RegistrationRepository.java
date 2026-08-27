@@ -16,8 +16,6 @@
 package se.swedenconnect.oidf.registry.registrations.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 
@@ -100,16 +98,22 @@ public interface RegistrationRepository extends JpaRepository<Registration, UUID
   List<Registration> findByFlowAssignment_TaIm_Organization_OrganizationId(UUID organizationId);
 
   /**
-   * Finds all registrations belonging to an organization with associations eagerly fetched for DTO mapping.
+   * Finds all registrations for which the given organization is the registrant.
    *
-   * @param orgNumber the organization number
+   * @param organizationId the ID of the registrant organization
    * @return list of matching registrations
    */
-  @Query("""
-      SELECT r FROM Registration r
-      WHERE r.organization.orgNumber = :orgNumber
-      """)
-  List<Registration> findAllByOrganizationOrgNumber(@Param("orgNumber") String orgNumber);
+  List<Registration> findByOrganization_OrganizationId(UUID organizationId);
+
+  /**
+   * Finds a registration by ID, scoped to the registrant organization.
+   *
+   * @param registrationId the registration ID
+   * @param organizationId the ID of the registrant organization
+   * @return optional registration
+   */
+  Optional<Registration> findByRegistrationIdAndOrganization_OrganizationId(
+      UUID registrationId, UUID organizationId);
 
   /**
    * Finds all trust mark subordinate registrations that were generated for the given parent registration.

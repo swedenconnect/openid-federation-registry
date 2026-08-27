@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
+import se.swedenconnect.oidf.registry.organization.service.InstancePlacementService;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
@@ -31,8 +32,6 @@ import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
-import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
-import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
 import se.swedenconnect.oidf.registry.subordinate.service.SubordinateService;
 
 import java.util.List;
@@ -56,17 +55,22 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
 
   private final RegistrationRepository registrationRepository;
   private final SubordinateService subordinateService;
+  private final InstancePlacementService instancePlacementService;
 
   /**
    * Constructs a new ManualValidationStep.
    *
    * @param registrationRepository repository for persisting registrations
    * @param subordinateService subordinate service for creating and updating subordinates
+   * @param instancePlacementService service for resolving the function group attached to the intermediate's
+   * organization
    */
   public PublishSubordinateStatementStep(final RegistrationRepository registrationRepository,
-      final SubordinateService subordinateService) {
+      final SubordinateService subordinateService,
+      final InstancePlacementService instancePlacementService) {
     this.registrationRepository = registrationRepository;
     this.subordinateService = subordinateService;
+    this.instancePlacementService = instancePlacementService;
   }
 
   @Override
@@ -93,8 +97,12 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
     final boolean isHosted = ctx.get(ContextKey.REQUEST_METADATA).isPresent();
 
     final Organization imOrganization = registration.getFlowAssignment().getTaIm().getOrganization();
+    final String functionGroup = this.instancePlacementService.resolveAttachedFunctionGroup(imOrganization)
+        .orElseThrow(() -> new IllegalStateException(
+            "No configured instance matches organization %s's placement"
+                .formatted(imOrganization.getOrganizationId())));
     final OrganizationRecord org = new OrganizationRecord(imOrganization.getOrgNumber(), imOrganization.getOrgName(),
-        null, null);
+        null, functionGroup);
 
     this.subordinateService.getByEntityidentifierAndTaIm(entityId,
         registration.getFlowAssignment().getTaIm().getTaImId())

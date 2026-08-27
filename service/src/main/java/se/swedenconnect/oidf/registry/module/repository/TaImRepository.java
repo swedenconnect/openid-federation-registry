@@ -36,58 +36,58 @@ import java.util.UUID;
 public interface TaImRepository extends JpaRepository<TrustAnchorIntermediateModule, UUID> {
 
   /**
-   * Retrieves a TrustAnchorIntermediateModule entity based on the given organization number, TaIm ID, and module type.
+   * Retrieves a TrustAnchorIntermediateModule entity based on the given organization ID, TaIm ID, and module type.
    *
-   * @param orgNumber the organization number associated with the module
+   * @param organizationId the organization ID associated with the module
    * @param taImId the unique identifier of the module
    * @param moduleType the type of the module
    * @return an Optional containing the TrustAnchorIntermediateModule if found, otherwise an empty Optional
    */
   @Query("SELECT m FROM TrustAnchorIntermediateModule m JOIN m.organization o "
-      + "WHERE o.orgNumber = :orgNumber AND m.moduleType = :moduleType AND m.taImId=:taImId")
-  Optional<TrustAnchorIntermediateModule> findByOrgNumberAndTaImIdAndModuleType(
-      @Param("orgNumber") String orgNumber,
+      + "WHERE o.organizationId = :organizationId AND m.moduleType = :moduleType AND m.taImId=:taImId")
+  Optional<TrustAnchorIntermediateModule> findByOrganizationIdAndTaImIdAndModuleType(
+      @Param("organizationId") UUID organizationId,
       @Param("taImId") UUID taImId,
       @Param("moduleType") ModuleType moduleType);
 
   /**
-   * Retrieves a TrustAnchorIntermediateModule entity based on the given organization number, TaIm ID
+   * Retrieves a TrustAnchorIntermediateModule entity based on the given organization ID, TaIm ID
    *
-   * @param orgNumber the organization number associated with the module
+   * @param organizationId the organization ID associated with the module
    * @param taImId the unique identifier of the module
    * @return an Optional containing the TrustAnchorIntermediateModule if found, otherwise an empty Optional
    */
   @Query("SELECT m FROM TrustAnchorIntermediateModule m JOIN m.organization o "
-      + "WHERE o.orgNumber = :orgNumber  AND m.taImId=:taImId")
-  Optional<TrustAnchorIntermediateModule> findByOrgNumberAndTaImId(
-      @Param("orgNumber") String orgNumber,
+      + "WHERE o.organizationId = :organizationId  AND m.taImId=:taImId")
+  Optional<TrustAnchorIntermediateModule> findByOrganizationIdAndTaImId(
+      @Param("organizationId") UUID organizationId,
       @Param("taImId") UUID taImId);
 
   /**
-   * Retrieves a list of TrustAnchorIntermediateModule objects associated with the specified organization number and
+   * Retrieves a list of TrustAnchorIntermediateModule objects associated with the specified organization ID and
    * module type.
    *
-   * @param orgNumber the organization number to filter by.
+   * @param organizationId the organization ID to filter by.
    * @param moduleType the type of module to filter by.
-   * @return a list of TrustAnchorIntermediateModule objects matching the specified organization number and module type.
+   * @return a list of TrustAnchorIntermediateModule objects matching the specified organization ID and module type.
    */
   @Query("SELECT m FROM TrustAnchorIntermediateModule m JOIN m.organization o "
-      + "WHERE o.orgNumber = :orgNumber AND m.moduleType = :moduleType")
-  List<TrustAnchorIntermediateModule> findByOrgNumberAndModuleType(
-      @Param("orgNumber") String orgNumber, @Param("moduleType") ModuleType moduleType);
+      + "WHERE o.organizationId = :organizationId AND m.moduleType = :moduleType")
+  List<TrustAnchorIntermediateModule> findByOrganizationIdAndModuleType(
+      @Param("organizationId") UUID organizationId, @Param("moduleType") ModuleType moduleType);
 
   /**
-   * Retrieves a list of TrustAnchorIntermediateModule objects associated with the specified organization number,
+   * Retrieves a list of TrustAnchorIntermediateModule objects associated with the specified organization ID,
    * optionally filtered by module type.
    *
-   * @param orgNumber the organization number to filter by.
+   * @param organizationId the organization ID to filter by.
    * @param moduleType the type of module to filter by (optional, null means all types).
-   * @return a list of TrustAnchorIntermediateModule objects matching the specified organization number and optional
+   * @return a list of TrustAnchorIntermediateModule objects matching the specified organization ID and optional
    *     module type.
    */
   @Query("SELECT m FROM TrustAnchorIntermediateModule m JOIN m.organization o "
-      + "WHERE o.orgNumber = :orgNumber "
+      + "WHERE o.organizationId = :organizationId "
       + "AND (:moduleType IS NULL OR m.moduleType = :moduleType)")
-  List<TrustAnchorIntermediateModule> findByOrgNumberAndOptionalModuleType(
-      @Param("orgNumber") String orgNumber, @Param("moduleType") ModuleType moduleType);
+  List<TrustAnchorIntermediateModule> findByOrganizationIdAndOptionalModuleType(
+      @Param("organizationId") UUID organizationId, @Param("moduleType") ModuleType moduleType);
 }

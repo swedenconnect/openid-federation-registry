@@ -124,8 +124,8 @@ public class FederationMetadataCreator {
    * @return Issuer for subordinate statement if there is one.
    */
   private List<String> authorityHint(final FederationEntity entity) {
-    return this.subordinateRepository.findByOrgNumberAndEntityidentifier(entity.getOrganization().getOrgNumber(),
-            entity.getIssuer())
+    return this.subordinateRepository.findByOrganizationIdAndEntityidentifier(
+            entity.getOrganization().getOrganizationId(), entity.getIssuer())
         .stream()
         .map(Subordinate::getTaIm)
         .map(taImEntity -> taImEntity.getEntity().getSubject())

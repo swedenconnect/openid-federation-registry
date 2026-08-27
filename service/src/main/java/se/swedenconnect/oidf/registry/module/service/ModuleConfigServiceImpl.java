@@ -51,6 +51,7 @@ import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
 import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -100,22 +101,30 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     return this.organizationService.findCreate(organizationRecord);
   }
 
+  private UUID resolveOrganizationIdOrThrow(final OrganizationRecord organizationRecord,
+      final RegistryServerException notFound) {
+    return this.organizationService.find(organizationRecord)
+        .map(Organization::getOrganizationId)
+        .orElseThrow(() -> notFound);
+  }
+
   private FederationEntity findFederationEntityOrThrow(final OrganizationRecord organizationRecord,
       final UUID entityId) {
-    return this.entityRepository.findByOrgNumberAndEntityIdAndEntityKeyType(
-            organizationRecord.orgNumber(), entityId, EntityType.FEDERATION_ENTITY)
-        .orElseThrow(() -> new RegistryServerException(
-            ErrorTypes.RELATION_NOT_FOUND,
-            "No federation entity found for id %s".formatted(entityId)));
+    final RegistryServerException notFound = new RegistryServerException(
+        ErrorTypes.RELATION_NOT_FOUND, "No federation entity found for id %s".formatted(entityId));
+    final UUID organizationId = this.resolveOrganizationIdOrThrow(organizationRecord, notFound);
+    return this.entityRepository.findByOrganizationIdAndEntityIdAndEntityKeyType(
+            organizationId, entityId, EntityType.FEDERATION_ENTITY)
+        .orElseThrow(() -> notFound);
   }
 
   private TrustAnchorIntermediateModule findModuleOrThrow(final OrganizationRecord organizationRecord,
       final UUID id, final ModuleType type) {
-    return this.moduleRepository.findByOrgNumberAndTaImIdAndModuleType(
-            organizationRecord.orgNumber(), id, type)
-        .orElseThrow(() -> new RegistryServerException(
-            ErrorTypes.NOT_FOUND,
-            "No module of type %s found for id %s".formatted(type, id)));
+    final RegistryServerException notFound = new RegistryServerException(
+        ErrorTypes.NOT_FOUND, "No module of type %s found for id %s".formatted(type, id));
+    final UUID organizationId = this.resolveOrganizationIdOrThrow(organizationRecord, notFound);
+    return this.moduleRepository.findByOrganizationIdAndTaImIdAndModuleType(organizationId, id, type)
+        .orElseThrow(() -> notFound);
   }
 
   /**
@@ -304,10 +313,28 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   // Resolver
   // ---------------------------------------------------------------------------
 
+  private TrustMarkIssuer findTrustmarkIssuerOrThrow(final OrganizationRecord organizationRecord, final UUID id) {
+    final RegistryServerException notFound = new RegistryServerException(
+        ErrorTypes.NOT_FOUND, "No trust mark issuer found for id %s".formatted(id));
+    final UUID organizationId = this.resolveOrganizationIdOrThrow(organizationRecord, notFound);
+    return this.trustmarkIssuerRepository.findByOrganizationIdAndTrustmarkIssuerId(organizationId, id)
+        .orElseThrow(() -> notFound);
+  }
+
+  private TrustMark findTrustmarkOrThrow(final OrganizationRecord organizationRecord, final UUID id) {
+    final RegistryServerException notFound = new RegistryServerException(
+        ErrorTypes.NOT_FOUND, "No trust mark found for id %s".formatted(id));
+    final UUID organizationId = this.resolveOrganizationIdOrThrow(organizationRecord, notFound);
+    return this.trustMarkRepository.findByOrganizationIdAndTrustmarkId(organizationId, id)
+        .orElseThrow(() -> notFound);
+  }
+
   private Resolver findResolverOrThrow(final OrganizationRecord organizationRecord, final UUID id) {
-    return this.resolverRepository.findByOrgNumberAndResolverId(organizationRecord.orgNumber(), id)
-        .orElseThrow(() -> new RegistryServerException(
-            ErrorTypes.NOT_FOUND, "No resolver found for id %s".formatted(id)));
+    final RegistryServerException notFound = new RegistryServerException(
+        ErrorTypes.NOT_FOUND, "No resolver found for id %s".formatted(id));
+    final UUID organizationId = this.resolveOrganizationIdOrThrow(organizationRecord, notFound);
+    return this.resolverRepository.findByOrganizationIdAndResolverId(organizationId, id)
+        .orElseThrow(() -> notFound);
   }
 
   /**
@@ -414,11 +441,12 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
 
     // trustmarkissuerId is a module UUID (TRUSTMARKISSUER)
     final UUID inputTrustmarkissuerId = input.getTrustmarkissuerId();
+    final RegistryServerException issuerNotFound = new RegistryServerException(
+        ErrorTypes.RELATION_NOT_FOUND, "No TRUSTMARKISSUER  found for id %s".formatted(inputTrustmarkissuerId));
+    final UUID createTrustmarkOrgId = this.resolveOrganizationIdOrThrow(organizationRecord, issuerNotFound);
     final TrustMarkIssuer issuerModule = this.trustmarkIssuerRepository
-        .findByOrgNumberAndTrustmarkIssuerId(organizationRecord.orgNumber(), inputTrustmarkissuerId)
-        .orElseThrow(() -> new RegistryServerException(
-            ErrorTypes.RELATION_NOT_FOUND,
-            "No TRUSTMARKISSUER  found for id %s".formatted(inputTrustmarkissuerId)));
+        .findByOrganizationIdAndTrustmarkIssuerId(createTrustmarkOrgId, inputTrustmarkissuerId)
+        .orElseThrow(() -> issuerNotFound);
 
     final TrustMark entity = DtoToTrustmarkMapper.toEntity(id, input, issuerModule);
     this.trustMarkRepository.save(entity);
@@ -442,10 +470,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
       final UUID id, final TrustmarkDto input) {
     ValidateDto.init(organizationRecord).validate(input);
 
-    final TrustMark existing = this.trustMarkRepository
-        .findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), id)
-        .orElseThrow(() -> new RegistryServerException(
-            ErrorTypes.NOT_FOUND, "No trust mark found for id %s".formatted(id)));
+    final TrustMark existing = this.findTrustmarkOrThrow(organizationRecord, id);
     final TrustmarkDto oldDto = TrustmarkToDtoMapper.toDto(existing);
 
     DtoToTrustmarkMapper.updateEntity(existing, input);
@@ -468,11 +493,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Override
   @Transactional(readOnly = true)
   public TrustmarkDto getTrustmark(final OrganizationRecord organizationRecord, final UUID id) {
-    final TrustMark entity = this.trustMarkRepository
-        .findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), id)
-        .orElseThrow(() -> new RegistryServerException(
-            ErrorTypes.NOT_FOUND, "No trust mark found for id %s".formatted(id)));
-
+    final TrustMark entity = this.findTrustmarkOrThrow(organizationRecord, id);
     return TrustmarkToDtoMapper.toDto(entity);
   }
 
@@ -485,10 +506,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Override
   @Transactional
   public void deleteTrustmark(final OrganizationRecord organizationRecord, final UUID id) {
-    final TrustMark entity = this.trustMarkRepository
-        .findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), id)
-        .orElseThrow(() -> new RegistryServerException(
-            ErrorTypes.NOT_FOUND, "No trust mark found for id %s".formatted(id)));
+    final TrustMark entity = this.findTrustmarkOrThrow(organizationRecord, id);
     final TrustmarkDto dto = TrustmarkToDtoMapper.toDto(entity);
     this.trustMarkRepository.delete(entity);
     this.auditService.trustmarkDeleted(id,
@@ -540,10 +558,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
       final UUID id, final TrustmarkIssuerDto input) {
     ValidateDto.init(organizationRecord).validate(input);
 
-    final TrustMarkIssuer existing = this.trustmarkIssuerRepository
-        .findByOrgNumberAndTrustmarkIssuerId(organizationRecord.orgNumber(), id)
-        .orElseThrow(() -> new RegistryServerException(
-            ErrorTypes.NOT_FOUND, "No trust mark issuer found for id %s".formatted(id)));
+    final TrustMarkIssuer existing = this.findTrustmarkIssuerOrThrow(organizationRecord, id);
     final TrustmarkIssuerDto oldDto = ModuleToDtoMapper.toDto(existing);
 
     DtoToModuleMapper.updateEntity(existing, input);
@@ -565,11 +580,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Override
   @Transactional(readOnly = true)
   public TrustmarkIssuerDto getTrustmarkIssuer(final OrganizationRecord organizationRecord, final UUID id) {
-    final TrustMarkIssuer entity = this.trustmarkIssuerRepository
-        .findByOrgNumberAndTrustmarkIssuerId(organizationRecord.orgNumber(), id)
-        .orElseThrow(() -> new RegistryServerException(
-            ErrorTypes.NOT_FOUND, "No trust mark issuer found for id %s".formatted(id)));
-
+    final TrustMarkIssuer entity = this.findTrustmarkIssuerOrThrow(organizationRecord, id);
     return ModuleToDtoMapper.toDto(entity);
   }
 
@@ -582,10 +593,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Override
   @Transactional
   public void deleteTrustmarkIssuer(final OrganizationRecord organizationRecord, final UUID id) {
-    final TrustMarkIssuer entity = this.trustmarkIssuerRepository
-        .findByOrgNumberAndTrustmarkIssuerId(organizationRecord.orgNumber(), id)
-        .orElseThrow(() -> new RegistryServerException(
-            ErrorTypes.NOT_FOUND, "No trust mark issuer found for id %s".formatted(id)));
+    final TrustMarkIssuer entity = this.findTrustmarkIssuerOrThrow(organizationRecord, id);
     final TrustmarkIssuerDto dto = ModuleToDtoMapper.toDto(entity);
     entity.getEntity().setTrustmarkIssuer(null);
     this.trustmarkIssuerRepository.delete(entity);
@@ -609,11 +617,14 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   public ModuleDto listModules(final OrganizationRecord organizationRecord, final String type) {
     final FkKeyType moduleType = this.parseModuleType(type);
     final ModuleDto moduleDto = new ModuleDto();
+    final Optional<UUID> organizationId = this.organizationService.find(organizationRecord)
+        .map(Organization::getOrganizationId);
 
     // Add TrustAnchor modules
     if (moduleType == null || moduleType == FkKeyType.TRUSTANCHOR) {
-      final List<TrustAnchorIntermediateModule> trustAnchorModules = this.moduleRepository
-          .findByOrgNumberAndOptionalModuleType(organizationRecord.orgNumber(), ModuleType.TRUSTANCHOR);
+      final List<TrustAnchorIntermediateModule> trustAnchorModules = organizationId
+          .map(id -> this.moduleRepository.findByOrganizationIdAndOptionalModuleType(id, ModuleType.TRUSTANCHOR))
+          .orElse(List.of());
       final List<TrustAnchorDto> trustAnchors = trustAnchorModules.stream()
           .map(ModuleToDtoMapper::toDto)
           .toList();
@@ -622,8 +633,9 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
 
     // Add Intermediate modules
     if (moduleType == null || moduleType == FkKeyType.INTERMEDIATE) {
-      final List<TrustAnchorIntermediateModule> intermediateModules = this.moduleRepository
-          .findByOrgNumberAndOptionalModuleType(organizationRecord.orgNumber(), ModuleType.INTERMEDIATE);
+      final List<TrustAnchorIntermediateModule> intermediateModules = organizationId
+          .map(id -> this.moduleRepository.findByOrganizationIdAndOptionalModuleType(id, ModuleType.INTERMEDIATE))
+          .orElse(List.of());
       final List<IntermediateDto> intermediates = intermediateModules.stream()
           .map(ModuleToDtoMapper::toDtoIntermediate)
           .toList();
@@ -632,8 +644,9 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
 
     // Add Resolver modules
     if (moduleType == null || moduleType == FkKeyType.RESOLVER) {
-      final List<Resolver> resolverModules = this.resolverRepository
-          .findByOrgNumber(organizationRecord.orgNumber());
+      final List<Resolver> resolverModules = organizationId
+          .map(this.resolverRepository::findByOrganizationId)
+          .orElse(List.of());
       final List<ResolverDto> resolvers = resolverModules.stream()
           .map(ModuleToDtoMapper::toDto)
           .toList();
@@ -642,8 +655,9 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
 
     // Add TrustmarkIssuer modules
     if (moduleType == null || moduleType == FkKeyType.TRUSTMARKISSUER) {
-      final List<TrustMarkIssuer> trustmarkIssuerModules = this.trustmarkIssuerRepository
-          .findByOrgNumber(organizationRecord.orgNumber());
+      final List<TrustMarkIssuer> trustmarkIssuerModules = organizationId
+          .map(this.trustmarkIssuerRepository::findByOrganizationId)
+          .orElse(List.of());
       final List<TrustmarkIssuerDto> trustmarkIssuers = trustmarkIssuerModules.stream()
           .map(ModuleToDtoMapper::toDto)
           .toList();
@@ -664,17 +678,21 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional(readOnly = true)
   public List<TrustmarkWithSubjectsDto> listTrustmarks(final OrganizationRecord organizationRecord,
       final UUID trustmarkIssuerId, final boolean includeSubjects) {
+    final Optional<UUID> organizationId = this.organizationService.find(organizationRecord)
+        .map(Organization::getOrganizationId);
     final List<TrustMark> trustMarkEntities;
 
     if (includeSubjects) {
       // Fetch trustmarks with subjects using FETCH JOIN
-      trustMarkEntities = this.trustMarkRepository
-          .findByOrgNumberWithSubjects(organizationRecord.orgNumber(), trustmarkIssuerId);
+      trustMarkEntities = organizationId
+          .map(id -> this.trustMarkRepository.findByOrganizationIdWithSubjects(id, trustmarkIssuerId))
+          .orElse(List.of());
     }
     else {
       // Fetch trustmarks without subjects
-      trustMarkEntities = this.trustMarkRepository
-          .findByOrgNumber(organizationRecord.orgNumber(), trustmarkIssuerId);
+      trustMarkEntities = organizationId
+          .map(id -> this.trustMarkRepository.findByOrganizationId(id, trustmarkIssuerId))
+          .orElse(List.of());
     }
 
     // Convert to DTOs - always use TrustmarkWithSubjectsDto, but only populate subjects if requested
@@ -696,11 +714,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional(readOnly = true)
   public TrustmarkWithSubjectsDto getTrustmarkWithSubjects(final OrganizationRecord organizationRecord,
       final UUID trustmarkId) {
-    final TrustMark entity = this.trustMarkRepository
-        .findByOrgNumberAndTrustmarkId(organizationRecord.orgNumber(), trustmarkId)
-        .orElseThrow(() -> new RegistryServerException(
-            ErrorTypes.NOT_FOUND, "No trust mark found for id %s".formatted(trustmarkId)));
-
+    final TrustMark entity = this.findTrustmarkOrThrow(organizationRecord, trustmarkId);
     return TrustmarkToDtoMapper.toDtoWithSubjects(entity);
   }
 
