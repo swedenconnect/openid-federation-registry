@@ -62,7 +62,8 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
    *
    * @param registrationRepository repository for persisting registrations
    * @param subordinateService subordinate service for creating and updating subordinates
-   * @param instancePlacementService service for resolving the function group attached to the intermediate's organization
+   * @param instancePlacementService service for resolving the function group attached to the intermediate's
+   * organization
    */
   public PublishSubordinateStatementStep(final RegistrationRepository registrationRepository,
       final SubordinateService subordinateService,
