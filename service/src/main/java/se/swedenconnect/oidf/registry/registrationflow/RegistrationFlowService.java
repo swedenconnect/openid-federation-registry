@@ -139,8 +139,8 @@ public class RegistrationFlowService {
     this.registrationRepository = registrationRepository;
   }
 
-  private String resolveAttachedFunctionGroupOrThrow(final Organization organization) {
-    return this.instancePlacementService.resolveAttachedFunctionGroup(organization)
+  private String resolveTenantOrThrow(final Organization organization) {
+    return this.instancePlacementService.resolveTenantForPlacedOrg(organization)
         .orElseThrow(() -> new IllegalStateException(
             "No configured instance matches organization %s's placement"
                 .formatted(organization.getOrganizationId())));
@@ -381,7 +381,7 @@ public class RegistrationFlowService {
     ctx.put(ContextKey.TAIM_ID, reg.getFlowAssignment().getTaIm().getTaImId());
     final se.swedenconnect.oidf.registry.organization.model.Organization org = reg.getOrganization();
     ctx.put(ContextKey.ORG, new OrganizationRecord(org.getOrgNumber(), org.getOrgName(), null,
-        this.resolveAttachedFunctionGroupOrThrow(org)));
+        this.resolveTenantOrThrow(org)));
     if (reg.getTrustmarksRequested() != null) {
       ctx.put(ContextKey.TRUSTMARKS_REQUESTED, new SerializableList<>(reg.getTrustmarksRequested()));
     }
@@ -455,7 +455,7 @@ public class RegistrationFlowService {
     ctx.put(ContextKey.TAIM_ID, reg.getFlowAssignment().getTaIm().getTaImId());
     final Organization org = reg.getOrganization();
     ctx.put(ContextKey.ORG, new OrganizationRecord(org.getOrgNumber(), org.getOrgName(), null,
-        this.resolveAttachedFunctionGroupOrThrow(org)));
+        this.resolveTenantOrThrow(org)));
     ctx.put(ContextKey.TRUSTMARKS_REQUESTED, new SerializableList<>(List.of(tmSource)));
     ctx.put(ContextKey.STEP_APPROVED, Boolean.TRUE);
 

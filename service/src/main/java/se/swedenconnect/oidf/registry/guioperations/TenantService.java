@@ -49,9 +49,10 @@ import java.util.stream.Collectors;
  *   <li><b>Superuser</b> — every configured tenant is returned, with its organizations read straight from the
  *   database ({@link InstanceRepository}).
  *   <li><b>Regular user</b> — only the {@code org_rights} claim is consulted. Each function right names a
- *   "userfunktion" (function group), which is looked up against the configured instances to find the tenant it
- *   grants access to; the tenant's organizations are the right-holding entries themselves, exactly as carried in
- *   the token. The database is not read on this path.
+ *   "userfunktion" (function group), which is looked up against the configured instances to find the tenant(s)
+ *   it grants access to — the same function group may back more than one tenant, in which case the right grants
+ *   access to all of them; each tenant's organizations are the right-holding entries themselves, exactly as
+ *   carried in the token. The database is not read on this path.
  * </ul>
  *
  * @author Per Fredrik Plars
@@ -128,26 +129,28 @@ public class TenantService {
   }
 
   /**
-   * Regular-user leg: no database access. Each {@code org_rights} function right names a userfunktion (function group),
-   * looked up against the configured instances to find the tenant it grants access to; the right-holding entry is
-   * itself surfaced as one of that tenant's organizations.
+   * Regular-user leg: no database access. Each {@code org_rights} function right names a userfunktion (function
+   * group), looked up against the configured instances to find every tenant it grants access to; the
+   * right-holding entry is itself surfaced as one of each such tenant's organizations.
    */
   private TenantsResponse resolveFromOrgRights(final OrgRightsClaim orgRights) {
-    final Map<String, RegistryProperties.InstanceProperties> instanceByFunctionGroup =
+    // A function group may back several tenants, so this is a one-to-many mapping: holding a right on it grants
+    // access to every tenant configured with it.
+    final Map<String, List<RegistryProperties.InstanceProperties>> instancesByFunctionGroup =
         this.registryProperties.instances().stream()
             .flatMap(instance -> instance.functionGroups().stream().map(fg -> Map.entry(fg, instance)))
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            .collect(Collectors.groupingBy(Map.Entry::getKey, LinkedHashMap::new,
+                Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
 
     final Map<String, Map<String, TenantOrganizationDto>> organizationsByTenant = new LinkedHashMap<>();
     for (final OrgRightsClaim.OrgEntry entry : orgRights.orgEntries()) {
       final String orgNumber = entry.orgIdentifier().getId();
       for (final OrgRightsClaim.FunctionEntry functionRight : entry.functions()) {
-        final RegistryProperties.InstanceProperties instance = instanceByFunctionGroup.get(functionRight.function());
-        if (instance == null) {
-          continue;
+        for (final RegistryProperties.InstanceProperties instance :
+            instancesByFunctionGroup.getOrDefault(functionRight.function(), List.of())) {
+          organizationsByTenant.computeIfAbsent(instance.name(), key -> new LinkedHashMap<>())
+              .putIfAbsent(orgNumber, this.organizationFromEntry(entry, orgNumber, instance));
         }
-        organizationsByTenant.computeIfAbsent(instance.name(), key -> new LinkedHashMap<>())
-            .putIfAbsent(orgNumber, this.organizationFromEntry(entry, orgNumber, instance));
       }
     }
 
@@ -167,7 +170,7 @@ public class TenantService {
     return new TenantOrganizationDto(
         orgNumber,
         this.resolveEntryName(entry, orgNumber),
-        this.instancePlacementService.resolveEntityPrefix(orgNumber, instance.functionGroups().getFirst())
+        this.instancePlacementService.resolveEntityPrefix(orgNumber, instance.slug())
             .orElse(null));
   }
 

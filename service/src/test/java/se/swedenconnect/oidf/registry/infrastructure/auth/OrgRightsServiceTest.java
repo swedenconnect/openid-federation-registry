@@ -183,6 +183,35 @@ class OrgRightsServiceTest {
   }
 
   @Test
+  @DisplayName("The same function group may back two tenants: a right on it grants access to both")
+  void sharedFunctionGroupGrantsAccessToEveryTenantBackedByIt() {
+    final OrgRightsService service = this.serviceWith(
+        this.registryPropertiesWith(
+            this.instanceProperties("swedenconnect-tenant", "shared", "sc"),
+            this.instanceProperties("ena-tenant", "shared", "ena")));
+    final OrgRightsClaim orgRights = new OrgRightsClaim(
+        false, List.of(this.orgEntry(ORG_A, functionRight("shared", "write"))));
+
+    assertThat(service.canWrite(authenticationWith(orgRights), ORG_A, "swedenconnect-tenant")).isTrue();
+    assertThat(service.canWrite(authenticationWith(orgRights), ORG_A, "ena-tenant")).isTrue();
+  }
+
+  @Test
+  @DisplayName("Rights are still evaluated per tenant: a right held only on one tenant's own function group "
+      + "does not leak to the tenant that merely shares another one")
+  void rightsRemainScopedPerTenantDespiteASharedFunctionGroup() {
+    final OrgRightsService service = this.serviceWith(
+        this.registryPropertiesWith(
+            this.instanceProperties("swedenconnect-tenant", "shared", "sc"),
+            this.instanceProperties("ena-tenant", "shared", "ena")));
+    final OrgRightsClaim orgRights = new OrgRightsClaim(
+        false, List.of(this.orgEntry(ORG_A, functionRight("sc", "admin"))));
+
+    assertThat(service.canAdmin(authenticationWith(orgRights), ORG_A, "swedenconnect-tenant")).isTrue();
+    assertThat(service.canRead(authenticationWith(orgRights), ORG_A, "ena-tenant")).isFalse();
+  }
+
+  @Test
   @DisplayName("Tenant swedenconnect (function_groups: ena, sc, digg) grants read when the org has read on sc, "
       + "but a right on an unrelated function group (pm) does not grant access")
   void matchesAgainstAnyConfiguredFunctionGroupOfTheTenant() {

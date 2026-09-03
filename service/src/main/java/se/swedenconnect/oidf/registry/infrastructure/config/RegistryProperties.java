@@ -50,8 +50,9 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
 
   /**
    * Validates the registry properties to ensure all required fields are properly configured.
-   * Checks that federationServiceApi and instances are not null, instances list is not empty,
-   * and that at most one instance is marked for default assignment.
+   * Checks that federationServiceApi and instances are not null, that the instances list is not empty, that no
+   * instance repeats a function group within its own list, and that every instance resolves to a distinct
+   * tenant slug. A function group shared between two instances is legal — it grants rights on both tenants.
    */
   @PostConstruct
   public void validate() {
@@ -81,29 +82,17 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
               + duplicatesWithinInstance);
     });
 
-    final List<String> duplicatedFunctionGroups = this.instances.stream()
-        .flatMap(instance -> instance.functionGroups().stream())
+    final List<String> duplicatedSlugs = this.instances.stream()
+        .map(InstanceProperties::slug)
         .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
         .entrySet().stream()
         .filter(entry -> entry.getValue() > 1)
         .map(Map.Entry::getKey)
         .toList();
 
-    Assert.isTrue(duplicatedFunctionGroups.isEmpty(),
-        "openid.federation.registry.instances[].function_groups must not be reused across more than one "
-            + "instance, duplicate(s) found: " + duplicatedFunctionGroups);
-
-    final List<String> duplicatedNames = this.instances.stream()
-        .map(InstanceProperties::name)
-        .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
-        .entrySet().stream()
-        .filter(entry -> entry.getValue() > 1)
-        .map(Map.Entry::getKey)
-        .toList();
-
-    Assert.isTrue(duplicatedNames.isEmpty(),
-        "openid.federation.registry.instances[].name must be unique, since it identifies the tenant, "
-            + "duplicate(s) found: " + duplicatedNames);
+    Assert.isTrue(duplicatedSlugs.isEmpty(),
+        "openid.federation.registry.instances[].name must resolve to a unique tenant slug, since the slug "
+            + "identifies the tenant in request paths, duplicate slug(s) found: " + duplicatedSlugs);
 
     Optional.ofNullable(this.entityConfigurationLoader).ifPresent(EntityConfigurationLoaderProperties::validate);
   }
@@ -187,8 +176,9 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
    * @param baseUrl the base URL for this instance, used to compute entity prefixes
    * @param orgBaseUrlOverrides optional per-org overrides on the form orgNumber → base URL
    * @param functionGroups the function groups that administrate this tenant. A tenant may be backed by one or
-   *     more function groups; each function group value must still map unambiguously to exactly one tenant
-   *     (enforced across all instances by {@link RegistryProperties#validate()}).
+   *     more function groups, and the same function group value may back several tenants — function groups
+   *     carry authorization only, never instance routing, which is keyed off {@link #slug()}. Only duplicates
+   *     within a single instance's own list are rejected (see {@link RegistryProperties#validate()}).
    * @param oidfServiceApiValidationKey optional public key used to verify signed JWT responses from the oidf-service
    *     node attached to this instance
    */

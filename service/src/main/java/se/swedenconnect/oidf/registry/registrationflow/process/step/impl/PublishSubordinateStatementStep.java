@@ -97,12 +97,12 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
     final boolean isHosted = ctx.get(ContextKey.REQUEST_METADATA).isPresent();
 
     final Organization imOrganization = registration.getFlowAssignment().getTaIm().getOrganization();
-    final String functionGroup = this.instancePlacementService.resolveAttachedFunctionGroup(imOrganization)
+    final String tenant = this.instancePlacementService.resolveTenantForPlacedOrg(imOrganization)
         .orElseThrow(() -> new IllegalStateException(
             "No configured instance matches organization %s's placement"
                 .formatted(imOrganization.getOrganizationId())));
     final OrganizationRecord org = new OrganizationRecord(imOrganization.getOrgNumber(), imOrganization.getOrgName(),
-        null, functionGroup);
+        null, tenant);
 
     this.subordinateService.getByEntityidentifierAndTaIm(entityId,
         registration.getFlowAssignment().getTaIm().getTaImId())

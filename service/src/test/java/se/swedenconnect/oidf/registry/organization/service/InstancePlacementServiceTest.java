@@ -59,17 +59,18 @@ class InstancePlacementServiceTest {
 
   private static final URI TEST_BASE_URL = URI.create("https://registry.example.se/oidf");
 
-  private RegistryProperties.InstanceProperties functionGroupInstance(final UUID id, final String... groups) {
-    return new RegistryProperties.InstanceProperties(id, "Instance " + id, TEST_BASE_URL, null,
-        List.of(groups), null);
+  private RegistryProperties.InstanceProperties tenant(
+      final UUID id, final String name, final String... functionGroups) {
+    return new RegistryProperties.InstanceProperties(id, name, TEST_BASE_URL, null,
+        List.of(functionGroups), null);
   }
 
   private RegistryProperties propertiesWith(final RegistryProperties.InstanceProperties... instances) {
     return new RegistryProperties(null, List.of(instances), null);
   }
 
-  private OrganizationRecord org(final String orgNumber, final String functionGroup) {
-    return new OrganizationRecord(orgNumber, "Test Org", "https://example.com/", functionGroup);
+  private OrganizationRecord org(final String orgNumber, final String tenant) {
+    return new OrganizationRecord(orgNumber, "Test Org", "https://example.com/", tenant);
   }
 
   @Test
@@ -78,126 +79,163 @@ class InstancePlacementServiceTest {
     service = new InstancePlacementService(
         new RegistryProperties(null, List.of(), null), instanceRepository);
 
-    final Optional<Instance> result = service.resolveInstance(org("5566778899", "digg-admin"));
+    final Optional<Instance> result = service.resolveInstance(org("5566778899", "digg"));
 
     assertThat(result).isEmpty();
     verify(instanceRepository, never()).findById(instanceId);
   }
 
   @Test
-  @DisplayName("Function group match returns the corresponding instance")
-  void functionGroupMatchReturnsInstance() {
+  @DisplayName("Tenant match returns the corresponding instance")
+  void tenantMatchReturnsInstance() {
     service = new InstancePlacementService(
-        propertiesWith(functionGroupInstance(instanceId, "digg-admin")), instanceRepository);
+        propertiesWith(tenant(instanceId, "Digg", "digg-admin")), instanceRepository);
     when(instanceRepository.findById(instanceId)).thenReturn(Optional.of(instance));
 
-    final Optional<Instance> result = service.resolveInstance(org("9999999999", "digg-admin"));
+    final Optional<Instance> result = service.resolveInstance(org("9999999999", "digg"));
 
     assertThat(result).contains(instance);
   }
 
   @Test
-  @DisplayName("Returns empty when function group does not match any instance")
+  @DisplayName("Returns empty when the tenant does not match any instance")
   void noMatchReturnsEmpty() {
     service = new InstancePlacementService(
-        propertiesWith(functionGroupInstance(instanceId, "digg-admin")), instanceRepository);
+        propertiesWith(tenant(instanceId, "Digg", "digg-admin")), instanceRepository);
 
-    final Optional<Instance> result = service.resolveInstance(org("0000000000", "unknown-group"));
+    final Optional<Instance> result = service.resolveInstance(org("0000000000", "unknown-tenant"));
 
     assertThat(result).isEmpty();
     verify(instanceRepository, never()).findById(instanceId);
+  }
+
+  @Test
+  @DisplayName("A function group name is not a tenant name: it does not resolve an instance")
+  void functionGroupIsNotATenantKey() {
+    service = new InstancePlacementService(
+        propertiesWith(tenant(instanceId, "Digg", "digg-admin")), instanceRepository);
+
+    final Optional<Instance> result = service.resolveInstance(org("9999999999", "digg-admin"));
+
+    assertThat(result).isEmpty();
+    verify(instanceRepository, never()).findById(instanceId);
+  }
+
+  @Test
+  @DisplayName("Two tenants sharing a function group each resolve to their own instance, keyed on the tenant")
+  void sharedFunctionGroupResolvesPerTenant() {
+    final UUID otherInstanceId = UUID.randomUUID();
+    final Instance otherInstance = new Instance();
+    otherInstance.setInstanceId(otherInstanceId);
+    service = new InstancePlacementService(
+        propertiesWith(
+            tenant(instanceId, "Swedenconnect", "shared"),
+            tenant(otherInstanceId, "Ena", "shared")),
+        instanceRepository);
+    when(instanceRepository.findById(instanceId)).thenReturn(Optional.of(instance));
+    when(instanceRepository.findById(otherInstanceId)).thenReturn(Optional.of(otherInstance));
+
+    assertThat(service.resolveInstance(org("4444", "swedenconnect"))).contains(instance);
+    assertThat(service.resolveInstance(org("4444", "ena"))).contains(otherInstance);
   }
 
   @Test
   @DisplayName("Repository returning empty propagates as empty optional")
   void repositoryReturningEmptyPropagates() {
     service = new InstancePlacementService(
-        propertiesWith(functionGroupInstance(instanceId, "digg-admin")), instanceRepository);
+        propertiesWith(tenant(instanceId, "Digg", "digg-admin")), instanceRepository);
     when(instanceRepository.findById(instanceId)).thenReturn(Optional.empty());
 
-    final Optional<Instance> result = service.resolveInstance(org("5566778899", "digg-admin"));
+    final Optional<Instance> result = service.resolveInstance(org("5566778899", "digg"));
 
     assertThat(result).isEmpty();
   }
 
   // -------------------------------------------------------------------------
-  // resolveAttachedFunctionGroup
+  // resolveTenantForPlacedOrg
   // -------------------------------------------------------------------------
 
   @Test
-  @DisplayName("resolveAttachedFunctionGroup returns the function group of the org's persisted instance")
-  void resolveAttachedFunctionGroup_returnsFunctionGroup() {
+  @DisplayName("resolveTenantForPlacedOrg returns the tenant slug of the org's persisted instance")
+  void resolveTenantForPlacedOrg_returnsTenantSlug() {
     service = new InstancePlacementService(
-        propertiesWith(functionGroupInstance(instanceId, "digg-admin")), instanceRepository);
+        propertiesWith(tenant(instanceId, "Sweden Connect", "digg-admin")), instanceRepository);
     final Organization organization = new Organization();
     organization.setInstance(instance);
 
-    final Optional<String> result = service.resolveAttachedFunctionGroup(organization);
+    final Optional<String> result = service.resolveTenantForPlacedOrg(organization);
 
-    assertThat(result).contains("digg-admin");
+    assertThat(result).contains("sweden-connect");
   }
 
   @Test
-  @DisplayName("resolveAttachedFunctionGroup returns empty when no configured instance matches")
-  void resolveAttachedFunctionGroup_noMatchReturnsEmpty() {
+  @DisplayName("resolveTenantForPlacedOrg returns empty when no configured instance matches")
+  void resolveTenantForPlacedOrg_noMatchReturnsEmpty() {
     service = new InstancePlacementService(propertiesWith(), instanceRepository);
     final Organization organization = new Organization();
     organization.setInstance(instance);
 
-    final Optional<String> result = service.resolveAttachedFunctionGroup(organization);
+    final Optional<String> result = service.resolveTenantForPlacedOrg(organization);
 
     assertThat(result).isEmpty();
   }
 
   // -------------------------------------------------------------------------
-  // resolveFunctionGroupForTenant
+  // resolveEntityPrefixForPlacedOrg
   // -------------------------------------------------------------------------
 
   @Test
-  @DisplayName("resolveFunctionGroupForTenant returns the first configured function group of the instance "
-      + "with a matching name")
-  void resolveFunctionGroupForTenant_returnsFunctionGroup() {
+  @DisplayName("resolveEntityPrefixForPlacedOrg builds the prefix from the instance the org is placed on")
+  void resolveEntityPrefixForPlacedOrg_buildsPrefix() {
     service = new InstancePlacementService(
-        propertiesWith(new RegistryProperties.InstanceProperties(
-            instanceId, "Swedenconnect", TEST_BASE_URL, null, List.of("swedenconnect"), null)), instanceRepository);
+        propertiesWith(tenant(instanceId, "Swedenconnect", "swedenconnect")), instanceRepository);
+    final Organization organization = new Organization();
+    organization.setInstance(instance);
+    organization.setOrgNumber("4444");
 
-    final Optional<String> result = service.resolveFunctionGroupForTenant("Swedenconnect");
+    assertThat(service.resolveEntityPrefixForPlacedOrg(organization))
+        .contains("https://registry.example.se/oidf/4444");
+  }
 
-    assertThat(result).contains("swedenconnect");
+  // -------------------------------------------------------------------------
+  // resolveTenant
+  // -------------------------------------------------------------------------
+
+  @Test
+  @DisplayName("resolveTenant canonicalises the configured name to the tenant slug")
+  void resolveTenant_returnsSlug() {
+    service = new InstancePlacementService(
+        propertiesWith(tenant(instanceId, "Swedenconnect", "swedenconnect")), instanceRepository);
+
+    assertThat(service.resolveTenant("Swedenconnect")).contains("swedenconnect");
   }
 
   @Test
-  @DisplayName("resolveFunctionGroupForTenant matches on the tenant slug: lowercased, spaces replaced by hyphens")
-  void resolveFunctionGroupForTenant_matchesOnSlug() {
+  @DisplayName("resolveTenant matches on the tenant slug: lowercased, spaces replaced by hyphens")
+  void resolveTenant_matchesOnSlug() {
     service = new InstancePlacementService(
-        propertiesWith(new RegistryProperties.InstanceProperties(
-            instanceId, "Sweden Connect", TEST_BASE_URL, null, List.of("swedenconnect"), null)), instanceRepository);
+        propertiesWith(tenant(instanceId, "Sweden Connect", "swedenconnect")), instanceRepository);
 
-    assertThat(service.resolveFunctionGroupForTenant("sweden-connect")).contains("swedenconnect");
-    assertThat(service.resolveFunctionGroupForTenant("Sweden Connect")).contains("swedenconnect");
-    assertThat(service.resolveFunctionGroupForTenant("swedenconnect")).isEmpty();
+    assertThat(service.resolveTenant("sweden-connect")).contains("sweden-connect");
+    assertThat(service.resolveTenant("Sweden Connect")).contains("sweden-connect");
+    assertThat(service.resolveTenant("swedenconnect")).isEmpty();
   }
 
   @Test
-  @DisplayName("resolveFunctionGroupForTenant returns empty when no instance has that name")
-  void resolveFunctionGroupForTenant_noMatchReturnsEmpty() {
+  @DisplayName("resolveTenant returns empty when no instance has that name")
+  void resolveTenant_noMatchReturnsEmpty() {
     service = new InstancePlacementService(
-        propertiesWith(new RegistryProperties.InstanceProperties(
-            instanceId, "Swedenconnect", TEST_BASE_URL, null, List.of("swedenconnect"), null)), instanceRepository);
+        propertiesWith(tenant(instanceId, "Swedenconnect", "swedenconnect")), instanceRepository);
 
-    final Optional<String> result = service.resolveFunctionGroupForTenant("unknown-tenant");
-
-    assertThat(result).isEmpty();
+    assertThat(service.resolveTenant("unknown-tenant")).isEmpty();
   }
 
   @Test
-  @DisplayName("resolveFunctionGroupForTenant returns empty for a null tenant name")
-  void resolveFunctionGroupForTenant_nullTenantReturnsEmpty() {
+  @DisplayName("resolveTenant returns empty for a null tenant name")
+  void resolveTenant_nullTenantReturnsEmpty() {
     service = new InstancePlacementService(propertiesWith(), instanceRepository);
 
-    final Optional<String> result = service.resolveFunctionGroupForTenant(null);
-
-    assertThat(result).isEmpty();
+    assertThat(service.resolveTenant(null)).isEmpty();
   }
 
   // -------------------------------------------------------------------------
@@ -208,9 +246,7 @@ class InstancePlacementServiceTest {
   @DisplayName("resolveFunctionGroupsForTenant returns every function group of the instance with a matching name")
   void resolveFunctionGroupsForTenant_returnsAllFunctionGroups() {
     service = new InstancePlacementService(
-        propertiesWith(new RegistryProperties.InstanceProperties(
-            instanceId, "Swedenconnect", TEST_BASE_URL, null, List.of("ena", "sc", "digg"), null)),
-        instanceRepository);
+        propertiesWith(tenant(instanceId, "Swedenconnect", "ena", "sc", "digg")), instanceRepository);
 
     final Optional<List<String>> result = service.resolveFunctionGroupsForTenant("Swedenconnect");
 
@@ -218,10 +254,23 @@ class InstancePlacementServiceTest {
   }
 
   @Test
+  @DisplayName("Two tenants sharing a function group each report it as their own")
+  void resolveFunctionGroupsForTenant_sharedFunctionGroup() {
+    service = new InstancePlacementService(
+        propertiesWith(
+            tenant(instanceId, "Swedenconnect", "shared", "sc"),
+            tenant(UUID.randomUUID(), "Ena", "shared", "ena")),
+        instanceRepository);
+
+    assertThat(service.resolveFunctionGroupsForTenant("swedenconnect")).contains(List.of("shared", "sc"));
+    assertThat(service.resolveFunctionGroupsForTenant("ena")).contains(List.of("shared", "ena"));
+  }
+
+  @Test
   @DisplayName("resolveFunctionGroupsForTenant returns empty when no instance has that name")
   void resolveFunctionGroupsForTenant_noMatchReturnsEmpty() {
     service = new InstancePlacementService(
-        propertiesWith(functionGroupInstance(instanceId, "swedenconnect")), instanceRepository);
+        propertiesWith(tenant(instanceId, "Swedenconnect", "swedenconnect")), instanceRepository);
 
     final Optional<List<String>> result = service.resolveFunctionGroupsForTenant("unknown-tenant");
 
@@ -238,43 +287,29 @@ class InstancePlacementServiceTest {
     assertThat(result).isEmpty();
   }
 
-  @Test
-  @DisplayName("An instance backed by two function groups resolves the same instance via either one")
-  void multipleFunctionGroupsResolveTheSameInstance() {
-    service = new InstancePlacementService(
-        propertiesWith(functionGroupInstance(instanceId, "sc", "digg")), instanceRepository);
-    when(instanceRepository.findById(instanceId)).thenReturn(Optional.of(instance));
-
-    final Optional<Instance> viaFirst = service.resolveInstance(org("4444", "sc"));
-    final Optional<Instance> viaSecond = service.resolveInstance(org("4444", "digg"));
-
-    assertThat(viaFirst).contains(instance);
-    assertThat(viaSecond).contains(instance);
-  }
-
   // -------------------------------------------------------------------------
   // resolveBaseUrl
   // -------------------------------------------------------------------------
 
   @Test
-  @DisplayName("resolveBaseUrl returns base URL for function group match")
-  void resolveBaseUrl_functionGroupMatch() {
+  @DisplayName("resolveBaseUrl returns base URL for a tenant match")
+  void resolveBaseUrl_tenantMatch() {
     service = new InstancePlacementService(
-        propertiesWith(functionGroupInstance(instanceId, "digg-admin")), instanceRepository);
+        propertiesWith(tenant(instanceId, "Digg", "digg-admin")), instanceRepository);
 
-    final Optional<URI> result = service.resolveBaseUrl(org("9999999999", "digg-admin"));
+    final Optional<URI> result = service.resolveBaseUrl(org("9999999999", "digg"));
 
     assertThat(result).contains(TEST_BASE_URL);
     verify(instanceRepository, never()).findById(any());
   }
 
   @Test
-  @DisplayName("resolveBaseUrl returns empty when no function group matches")
+  @DisplayName("resolveBaseUrl returns empty when no tenant matches")
   void resolveBaseUrl_noMatchReturnsEmpty() {
     service = new InstancePlacementService(
-        propertiesWith(functionGroupInstance(instanceId, "digg-admin")), instanceRepository);
+        propertiesWith(tenant(instanceId, "Digg", "digg-admin")), instanceRepository);
 
-    final Optional<URI> result = service.resolveBaseUrl(org("0000000000", "unknown-group"));
+    final Optional<URI> result = service.resolveBaseUrl(org("0000000000", "unknown-tenant"));
 
     assertThat(result).isEmpty();
   }
@@ -284,7 +319,7 @@ class InstancePlacementServiceTest {
   void resolveBaseUrl_emptyInstancesReturnsEmpty() {
     service = new InstancePlacementService(new RegistryProperties(null, List.of(), null), instanceRepository);
 
-    final Optional<URI> result = service.resolveBaseUrl(org("5566778899", "digg-admin"));
+    final Optional<URI> result = service.resolveBaseUrl(org("5566778899", "digg"));
 
     assertThat(result).isEmpty();
   }
@@ -293,9 +328,9 @@ class InstancePlacementServiceTest {
   @DisplayName("resolveBaseUrl does not access the database")
   void resolveBaseUrl_noDatabaseAccess() {
     service = new InstancePlacementService(
-        propertiesWith(functionGroupInstance(instanceId, "digg-admin")), instanceRepository);
+        propertiesWith(tenant(instanceId, "Digg", "digg-admin")), instanceRepository);
 
-    service.resolveBaseUrl(org("9999999999", "digg-admin"));
+    service.resolveBaseUrl(org("9999999999", "digg"));
 
     verifyNoInteractions(instanceRepository);
   }
@@ -304,7 +339,7 @@ class InstancePlacementServiceTest {
   @DisplayName("resolveBaseUrl by instanceId returns the base URL of the matching instance")
   void resolveBaseUrl_byInstanceId() {
     service = new InstancePlacementService(
-        propertiesWith(functionGroupInstance(instanceId, "digg-admin")), instanceRepository);
+        propertiesWith(tenant(instanceId, "Digg", "digg-admin")), instanceRepository);
 
     final Optional<URI> result = service.resolveBaseUrl(instanceId);
 
@@ -315,7 +350,7 @@ class InstancePlacementServiceTest {
   @DisplayName("resolveBaseUrl by instanceId returns empty when no instance matches")
   void resolveBaseUrl_byInstanceId_noMatchReturnsEmpty() {
     service = new InstancePlacementService(
-        propertiesWith(functionGroupInstance(instanceId, "digg-admin")), instanceRepository);
+        propertiesWith(tenant(instanceId, "Digg", "digg-admin")), instanceRepository);
 
     final Optional<URI> result = service.resolveBaseUrl(UUID.randomUUID());
 

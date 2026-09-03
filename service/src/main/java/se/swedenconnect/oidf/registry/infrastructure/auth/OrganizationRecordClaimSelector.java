@@ -41,11 +41,12 @@ import java.util.Objects;
  * Resolves {@link OrganizationRecord} from the {@code {orgNumber}} and {@code {tenant}} path variables.
  *
  * <p>The {@code {tenant}} path variable is the tenant's configured
- * {@link se.swedenconnect.oidf.registry.infrastructure.config.RegistryProperties.InstanceProperties#name()};
- * it is resolved to a representative one of the tenant's function groups via
- * {@link InstancePlacementService#resolveFunctionGroupForTenant} before being used any further (any one of the
- * tenant's configured function groups resolves to the same instance). Throws {@link AccessDeniedException}
- * (HTTP 403) if the tenant does not match any configured instance.
+ * {@link se.swedenconnect.oidf.registry.infrastructure.config.RegistryProperties.InstanceProperties#name()}
+ * or its {@code slug()}; it is canonicalised to the tenant slug via
+ * {@link InstancePlacementService#resolveTenant} and carried on the resolved {@link OrganizationRecord} as
+ * such. The tenant — never a function group — is what identifies the instance, since the same function group
+ * may back more than one tenant. Throws {@link AccessDeniedException} (HTTP 403) if the tenant does not match
+ * any configured instance.
  *
  * <p>Verifies that the authenticated user's {@code org_rights} claim contains an entry for the
  * requested {@code orgNumber}. Throws {@link AccessDeniedException} (HTTP 403) if not found.
@@ -95,20 +96,20 @@ public class OrganizationRecordClaimSelector implements HandlerMethodArgumentRes
 
     log.debug("Resolving OrganizationRecord for orgNumber='{}' tenant='{}'", orgNumber, tenant);
 
-    final String functionGroup = this.instancePlacementService.resolveFunctionGroupForTenant(tenant)
+    final String tenantSlug = this.instancePlacementService.resolveTenant(tenant)
         .orElseThrow(() -> new AccessDeniedException("Unknown tenant '" + tenant + "'"));
 
     final OrgRightsClaim orgRights = this.extractOrgRights(SecurityContextHolder.getContext().getAuthentication());
 
     if (orgRights.superuser()) {
-      return this.buildSuperuserRecord(orgNumber, functionGroup);
+      return this.buildSuperuserRecord(orgNumber, tenantSlug);
     }
 
     final OrgRightsClaim.OrgEntry entry = OrgRightsService.findOrgEntry(orgRights, orgNumber)
         .orElseThrow(() -> new AccessDeniedException(
             "Organization '" + orgNumber + "' not found in token claims"));
 
-    return this.buildOrganizationRecord(entry, functionGroup);
+    return this.buildOrganizationRecord(entry, tenantSlug);
   }
 
   private OrgRightsClaim extractOrgRights(final Authentication authentication) {
@@ -123,22 +124,22 @@ public class OrganizationRecordClaimSelector implements HandlerMethodArgumentRes
         "Unsupported authentication type: " + authentication.getClass().getSimpleName());
   }
 
-  private OrganizationRecord buildSuperuserRecord(final String orgNumber, final String functionGroup) {
+  private OrganizationRecord buildSuperuserRecord(final String orgNumber, final String tenantSlug) {
     final String entityPrefix = this.instancePlacementService
-        .resolveEntityPrefix(orgNumber, functionGroup)
+        .resolveEntityPrefix(orgNumber, tenantSlug)
         .orElse(null);
-    return new OrganizationRecord(orgNumber, orgNumber, entityPrefix, functionGroup);
+    return new OrganizationRecord(orgNumber, orgNumber, entityPrefix, tenantSlug);
   }
 
-  private OrganizationRecord buildOrganizationRecord(final OrgRightsClaim.OrgEntry entry, final String functionGroup) {
+  private OrganizationRecord buildOrganizationRecord(final OrgRightsClaim.OrgEntry entry, final String tenantSlug) {
     final String orgNumber = entry.orgIdentifier().getId();
     final String entityPrefix = this.instancePlacementService
-        .resolveEntityPrefix(orgNumber, functionGroup)
+        .resolveEntityPrefix(orgNumber, tenantSlug)
         .orElse(null);
     return new OrganizationRecord(
         orgNumber,
         entry.name().get("sv"),
         entityPrefix,
-        functionGroup);
+        tenantSlug);
   }
 }

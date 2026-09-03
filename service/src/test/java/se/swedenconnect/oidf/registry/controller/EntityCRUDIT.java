@@ -63,6 +63,12 @@ class EntityCRUDIT {
 
   private static final String TENANT = "Swedenconnect";
 
+  /**
+   * A second tenant, configured with function_groups: ena, swedenconnect — it shares "swedenconnect" with
+   * {@link #TENANT}.
+   */
+  private static final String SHARED_FUNCTION_GROUP_TENANT = "ENA";
+
   @Container
   @ServiceConnection
   public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
@@ -99,6 +105,15 @@ class EntityCRUDIT {
 
   private FederationEntity createFederationEntity() {
     return new FederationEntity().entityIdentifier("https://www.pm.se/oidf/ta/" + UUID.randomUUID());
+  }
+
+  /**
+   * An entity identifier under the ENA tenant's entity prefix, which is derived from that tenant's own
+   * base_url rather than the Swedenconnect org_base_url_overrides entry.
+   */
+  private FederationEntity createEnaFederationEntity() {
+    return new FederationEntity().entityIdentifier(
+        "https://registry.ena.se/oidf/" + JwtTestUtils.OrganisationType.PM.orgId + "/ta/" + UUID.randomUUID());
   }
 
   @Test
@@ -262,6 +277,62 @@ class EntityCRUDIT {
 
     assertThat(created).isNotNull();
     assertThat(created.getEntityId()).isNotNull();
+  }
+
+  @Test
+  @DisplayName("The same function group backs two tenants: a token holding a right on it is granted access "
+      + "under either one (Swedenconnect and ENA both list function_groups: swedenconnect)")
+  void testAccessGrantedOnBothTenantsSharingAFunctionGroup() {
+    final FederationEntity createdOnSwedenconnect = this.entitiesApi.createFederationEntity(
+        TENANT, JwtTestUtils.OrganisationType.PM.orgId, createFederationEntity());
+    final FederationEntity createdOnEna = this.entitiesApi.createFederationEntity(
+        SHARED_FUNCTION_GROUP_TENANT, JwtTestUtils.OrganisationType.PM.orgId, createEnaFederationEntity());
+
+    assertThat(createdOnSwedenconnect.getEntityId()).isNotNull();
+    assertThat(createdOnEna.getEntityId()).isNotNull();
+  }
+
+  @Test
+  @DisplayName("The entity prefix comes from the tenant in the path, not from the function group: the same "
+      + "org and the same function group resolve to a different instance under each tenant")
+  void testEntityPrefixFollowsTheTenantNotTheFunctionGroup() {
+    // Swedenconnect places org 55555 under its org_base_url_overrides entry, ENA under its own base_url.
+    // Both are reached with the very same token, whose only right is on the shared "swedenconnect" group.
+    assertThatThrownBy(() -> this.entitiesApi.createFederationEntity(
+        SHARED_FUNCTION_GROUP_TENANT, JwtTestUtils.OrganisationType.PM.orgId, createFederationEntity()))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(exception -> {
+          final RestClientResponseException restException = (RestClientResponseException) exception;
+          assertThat(restException.getStatusCode().value()).isEqualTo(400);
+          assertThat(restException.getResponseBodyAsString())
+              .contains("https://registry.ena.se/oidf/" + JwtTestUtils.OrganisationType.PM.orgId);
+        });
+
+    assertThat(this.entitiesApi.createFederationEntity(
+        SHARED_FUNCTION_GROUP_TENANT, JwtTestUtils.OrganisationType.PM.orgId, createEnaFederationEntity()))
+        .isNotNull();
+  }
+
+  @Test
+  @DisplayName("A right on a function group backing neither tenant is denied on both")
+  void testUnrelatedFunctionGroupIsDeniedOnBothTenants() {
+    final ApiClient unrelatedApiClient = new ApiClient();
+    unrelatedApiClient.setBasePath("http://localhost:" + this.port);
+    unrelatedApiClient.setBearerToken(
+        this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.PM, "unrelated-group", "admin"));
+    final EntitiesApi unrelatedEntitiesApi = new EntitiesApi(unrelatedApiClient);
+
+    assertThatThrownBy(() -> unrelatedEntitiesApi.createFederationEntity(
+        TENANT, JwtTestUtils.OrganisationType.PM.orgId, createFederationEntity()))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(exception -> assertThat(
+            ((RestClientResponseException) exception).getStatusCode().value()).isEqualTo(403));
+
+    assertThatThrownBy(() -> unrelatedEntitiesApi.createFederationEntity(
+        SHARED_FUNCTION_GROUP_TENANT, JwtTestUtils.OrganisationType.PM.orgId, createFederationEntity()))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(exception -> assertThat(
+            ((RestClientResponseException) exception).getStatusCode().value()).isEqualTo(403));
   }
 
   @Test

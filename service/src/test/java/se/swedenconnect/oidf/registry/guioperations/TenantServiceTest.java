@@ -399,6 +399,48 @@ class TenantServiceTest {
   }
 
   @Test
+  @DisplayName("A function group backing two tenants surfaces the organization under both of them")
+  void sharedFunctionGroupListsTheOrganizationUnderEveryTenantBackedByIt() {
+    service = new TenantService(
+        registryPropertiesWith(
+            instanceProperties(UUID.randomUUID(), "Swedenconnect", "shared", "sc"),
+            instanceProperties(UUID.randomUUID(), "Ena", "shared", "ena")),
+        instanceRepository, orgRightsService, instancePlacementService);
+
+    when(orgRightsService.extractOrgRights(authentication)).thenReturn(
+        orgRights(orgEntry(ORG_4444, functionRight("shared", "read"))));
+
+    final TenantsResponse result = service.resolveTenants(authentication);
+
+    assertThat(result.tenants()).extracting(TenantDto::tenant).containsExactlyInAnyOrder("Swedenconnect", "Ena");
+    assertThat(organizationsFor(result, "Swedenconnect"))
+        .containsExactly(new TenantOrganizationDto(ORG_4444, "Org " + ORG_4444, null));
+    assertThat(organizationsFor(result, "Ena"))
+        .containsExactly(new TenantOrganizationDto(ORG_4444, "Org " + ORG_4444, null));
+    verifyNoInteractions(instanceRepository);
+  }
+
+  @Test
+  @DisplayName("With a shared function group, an org holding a right only on one tenant's own group is listed "
+      + "under that tenant alone")
+  void rightOnATenantsOwnFunctionGroupDoesNotLeakToTheTenantSharingAnother() {
+    service = new TenantService(
+        registryPropertiesWith(
+            instanceProperties(UUID.randomUUID(), "Swedenconnect", "shared", "sc"),
+            instanceProperties(UUID.randomUUID(), "Ena", "shared", "ena")),
+        instanceRepository, orgRightsService, instancePlacementService);
+
+    when(orgRightsService.extractOrgRights(authentication)).thenReturn(
+        orgRights(orgEntry(ORG_4444, functionRight("sc", "read"))));
+
+    final TenantsResponse result = service.resolveTenants(authentication);
+
+    assertThat(result.tenants()).extracting(TenantDto::tenant).containsExactly("Swedenconnect");
+    assertThat(organizationsFor(result, "Swedenconnect"))
+        .containsExactly(new TenantOrganizationDto(ORG_4444, "Org " + ORG_4444, null));
+  }
+
+  @Test
   @DisplayName("Organization entityPrefix is resolved via InstancePlacementService's config-only lookup")
   void organizationEntityPrefixIsResolvedPerOrganization() {
     final UUID instanceId = UUID.randomUUID();

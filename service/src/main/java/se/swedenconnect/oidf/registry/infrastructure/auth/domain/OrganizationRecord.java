@@ -23,9 +23,9 @@ import java.io.Serializable;
  * @param orgNumber Organization Number
  * @param orgName OrganizationName
  * @param entityPrefix EntityPrefix ex https://www.digg.se/oidf/
- * @param tenant One of the tenant's configured function groups, used for instance placement matching. A tenant
- *     may be backed by more than one function group; any one of them resolves to the same instance, so this
- *     field carries a single representative value rather than the tenant slug itself
+ * @param tenant The tenant slug, i.e. the tenant path variable canonicalised. This identifies the instance the
+ *     organization is placed on — never a function group, since the same function group may back more than one
+ *     tenant
  * @author Felix Hellman
  */
 public record OrganizationRecord(String orgNumber, String orgName, String entityPrefix,

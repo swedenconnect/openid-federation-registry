@@ -67,15 +67,20 @@ A superuser token skips all of the above:
 
 A **tenant** is a configured federation instance (`openid.federation.registry.instances[]`, see
 [Application Configuration](configuration.md#federation-instances)). Each tenant is backed by one or more
-**function groups** (`instances[i].function_groups`), and every function group value is unique across all
-tenants.
+**function groups** (`instances[i].function_groups`), and the same function group value may back more than one
+tenant.
+
+Function groups carry **authorization only** — which rights a caller holds. They are never a routing key: the
+instance a request acts on is identified by the `{tenant}` path variable alone (matched against the tenant
+slug, i.e. the configured `name` lowercased with whitespace replaced by hyphens). This is what lets two tenants
+share a function group without becoming ambiguous.
 
 Most endpoints take `{tenant}` and `{orgNumber}` as path variables, e.g.
 `GET /registry/v1/{tenant}/{orgNumber}/entities`. Two checks run for such a request:
 
-1. **Org membership** (`infrastructure.auth.OrganizationRecordClaimSelector`) — the tenant slug is resolved to the
-   instance's configured function groups; if the tenant is unknown, or the caller's `org_rights` claim has no
-   entry for `{orgNumber}`, the request is denied with **403**.
+1. **Org membership** (`infrastructure.auth.OrganizationRecordClaimSelector`) — the tenant slug is resolved to a
+   configured instance; if the tenant is unknown, or the caller's `org_rights` claim has no entry for
+   `{orgNumber}`, the request is denied with **403**.
 2. **Right level** (`@PreAuthorize("@orgRightsService.canRead/canWrite/canAdmin(...)")`,
    `infrastructure.auth.OrgRightsService`) — the organisation's `functions` entries are matched against the
    tenant's configured function groups; a match is any function name that appears in **both**. The granted right
@@ -89,6 +94,16 @@ access to this tenant — `pm` isn't in its list.
 
 A tenant having more than one function group lets it aggregate organisations arriving under different userfunktion
 names into a single administrative tenant.
+
+**Example (shared function group):** tenant `swedenconnect` is configured with `function_groups: [sc, shared]`
+and tenant `ena` with `function_groups: [ena, shared]`. A caller holding `{"function": "shared", "right":
+"write"}` for organisation `44` has write access to that organisation under **both** `.../swedenconnect/44/...`
+and `.../ena/44/...`, because `shared` appears in both tenants' lists. The two tenants remain distinct
+instances: each request acts on the instance named by its own `{tenant}` path variable, with that instance's
+`base_url` and entity prefixes. A right on `sc` alone grants access under `swedenconnect` only.
+
+The same organisation number may be registered on more than one instance (it is unique per instance, not
+globally), so an organisation reachable under two tenants gets one organisation record per instance.
 
 ## Protected endpoints
 

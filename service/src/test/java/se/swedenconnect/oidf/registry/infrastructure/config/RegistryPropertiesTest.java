@@ -55,7 +55,7 @@ class RegistryPropertiesTest {
   }
 
   @Test
-  @DisplayName("Duplicate instance names fail validation, since name identifies the tenant")
+  @DisplayName("Duplicate instance names fail validation, since the tenant slug identifies the tenant")
   void duplicateInstanceNamesFailValidation() {
     final RegistryProperties properties = this.propertiesWith(
         this.instance("Swedenconnect", "swedenconnect"),
@@ -63,35 +63,43 @@ class RegistryPropertiesTest {
 
     assertThatIllegalArgumentException()
         .isThrownBy(properties::validate)
-        .withMessageContaining("name must be unique")
-        .withMessageContaining("Swedenconnect");
-  }
-
-  @Test
-  @DisplayName("Duplicate function groups across instances fail validation")
-  void duplicateFunctionGroupsFailValidation() {
-    final RegistryProperties properties = this.propertiesWith(
-        this.instance("Swedenconnect", "swedenconnect"),
-        this.instance("Ena", "swedenconnect"));
-
-    assertThatIllegalArgumentException()
-        .isThrownBy(properties::validate)
-        .withMessageContaining("function_groups must not be reused")
+        .withMessageContaining("unique tenant slug")
         .withMessageContaining("swedenconnect");
   }
 
   @Test
-  @DisplayName("A function group reused across two instances' lists fails validation, even when each list "
-      + "also has other, distinct entries")
-  void duplicateFunctionGroupAcrossFlattenedListsFailsValidation() {
+  @DisplayName("Two names that differ only in case or whitespace collide on the same tenant slug and fail "
+      + "validation")
+  void namesCollidingOnTheSameSlugFailValidation() {
+    final RegistryProperties properties = this.propertiesWith(
+        this.instance("Sweden Connect", "a"),
+        this.instance("sweden connect", "b"));
+
+    assertThatIllegalArgumentException()
+        .isThrownBy(properties::validate)
+        .withMessageContaining("unique tenant slug")
+        .withMessageContaining("sweden-connect");
+  }
+
+  @Test
+  @DisplayName("The same function group may back two different tenants — it carries rights, not routing")
+  void sameFunctionGroupOnTwoTenantsPassesValidation() {
+    final RegistryProperties properties = this.propertiesWith(
+        this.instance("Swedenconnect", "swedenconnect"),
+        this.instance("Ena", "swedenconnect"));
+
+    assertThatCode(properties::validate).doesNotThrowAnyException();
+  }
+
+  @Test
+  @DisplayName("A function group shared between two instances passes validation even when each list also has "
+      + "other, distinct entries")
+  void sharedFunctionGroupAcrossFlattenedListsPassesValidation() {
     final RegistryProperties properties = this.propertiesWith(
         this.instance("Swedenconnect", "a", "b"),
         this.instance("Ena", "b"));
 
-    assertThatIllegalArgumentException()
-        .isThrownBy(properties::validate)
-        .withMessageContaining("function_groups must not be reused")
-        .withMessageContaining("b");
+    assertThatCode(properties::validate).doesNotThrowAnyException();
   }
 
   @Test

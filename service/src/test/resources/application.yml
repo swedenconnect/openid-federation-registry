@@ -31,8 +31,11 @@ openid:
         - instance_id: "223e4567-e89b-12d3-a456-426614174001"
           name: "ENA"
           base_url: "https://registry.ena.se/oidf"
+          # "swedenconnect" is deliberately shared with the Swedenconnect instance above: the same function
+          # group may back more than one tenant, and rights held on it apply to each of them.
           function_groups:
             - "ena"
+            - "swedenconnect"
 
 
 credential:

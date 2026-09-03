@@ -89,13 +89,18 @@ for the full property reference. Each `Organization` row is scoped to exactly on
 
 Requests are authorized in two steps, both keyed off the `{tenant}/{orgNumber}` path variables most endpoints take:
 
-1. **Org membership** — `OrganizationRecordClaimSelector` resolves the tenant slug to the instance's configured
-   function group(s), then checks the caller's `org_rights` JWT claim has an entry for `{orgNumber}`. Unknown
-   tenant or missing org → HTTP 403.
+1. **Org membership** — `OrganizationRecordClaimSelector` resolves the tenant slug to a configured instance, then
+   checks the caller's `org_rights` JWT claim has an entry for `{orgNumber}`. Unknown tenant or missing org →
+   HTTP 403.
 2. **Right level** — `@PreAuthorize("@orgRightsService.canRead/canWrite/canAdmin(...)")` on the controller method
    checks whether the org's entry holds at least the required `OrganizationRight` (`READ` < `WRITE` < `ADMIN`,
    hierarchical) on any of the tenant's configured function groups. A tenant may be backed by more than one
    function group; the effective right is the highest held across all of them.
+
+Function groups are an authorization key, not a routing key: the same function group may back several tenants, in
+which case a right on it applies under each of them. Instance resolution keys off the tenant slug alone
+(`InstancePlacementService`), so tenants sharing a function group stay separate instances with their own
+`base_url` and entity prefixes.
 
 A token carrying `org_rights: [{"superuser": true}]` bypasses both checks entirely.
 
