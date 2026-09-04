@@ -275,7 +275,6 @@ Modules are configured using expansion panels. Each module type has its own pane
     - Resolve Response Duration (text field, e.g., PT1H)
     - Trust Anchor URL (text field)
     - Trusted Keys (textarea, JWKS format, monospace font)
-    - Step Retry Duration (text field, e.g., PT1M)
     - Status indicator chip: Active (green), Inactive (yellow), or Not configured (grey)
 
 4. **Trustmark Issuer**

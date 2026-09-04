@@ -170,7 +170,6 @@ class DtoToEntityMapperTest {
     dto.setResolveResponseDuration("PT30S");
     dto.setTrustAnchor("https://ta.example.com");
     dto.setTrustedKeys(TestDataOperations.genJWKS().toJSONObject());
-    dto.setStepRetryDuration("PT10S");
     dto.setStepCachedValueThreshold(5);
     final FederationEntity entityEntity = createEntityEntity();
 
@@ -182,7 +181,6 @@ class DtoToEntityMapperTest {
     assertThat(entity.getResolveResponseDuration()).isEqualTo("PT30S");
     assertThat(entity.getTrustAnchor()).isEqualTo("https://ta.example.com");
     assertThat(entity.getTrustedKeys()).isEqualTo(dto.getTrustedKeys());
-    assertThat(entity.getStepRetryDuration()).isEqualTo("PT10S");
     assertThat(entity.getStepCachedValueThreshold()).isEqualTo(5);
   }
 
@@ -407,7 +405,6 @@ class DtoToEntityMapperTest {
     dto.setTrustAnchor("https://new-ta.example.com");
     dto.setTrustedKeys(TestDataOperations.genJWKS().toJSONObject());
 
-    dto.setStepRetryDuration("PT5S");
 
     DtoToModuleMapper.updateEntity(entity, dto);
 
@@ -415,7 +412,6 @@ class DtoToEntityMapperTest {
     assertThat(entity.getResolveResponseDuration()).isEqualTo("PT60S");
     assertThat(entity.getTrustAnchor()).isEqualTo("https://new-ta.example.com");
     assertThat(entity.getTrustedKeys()).isEqualTo(dto.getTrustedKeys());
-    assertThat(entity.getStepRetryDuration()).isEqualTo("PT5S");
   }
 
   // -------------------------------------------------------------------------

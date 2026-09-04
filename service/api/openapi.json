@@ -4493,10 +4493,6 @@
             "additionalProperties": {},
             "description": "Trusted keys as JWKS JSON of the trust anchor"
           },
-          "stepRetryDuration": {
-            "type": "string",
-            "description": "Step retry duration (ISO-8601 duration, e.g. PT1H)"
-          },
           "stepCachedValueThreshold": {
             "type": "integer",
             "format": "int32",

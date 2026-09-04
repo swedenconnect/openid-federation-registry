@@ -148,7 +148,6 @@ public class TestDataOperations {
 
         .resolveResponseDuration("PT1H")
         .stepCachedValueThreshold(10)
-        .stepRetryDuration("PT2M")
         .active(true)
         .build();
     final Resolver createdResolver = modulesApi.createResolver(tenant, orgNumber, resolverInput);

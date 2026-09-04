@@ -51,9 +51,6 @@ public class ResolverDto {
   @Schema(description = "Trusted keys as JWKS JSON of the trust anchor")
   private Map<String,Object> trustedKeys;
 
-  @Schema(description = "Step retry duration (ISO-8601 duration, e.g. PT1H)")
-  private String stepRetryDuration;
-
   @Schema(description = "Step Cached Value Threshold")
   private Integer stepCachedValueThreshold;
 }

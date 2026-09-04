@@ -269,7 +269,6 @@ public class OidfApiService {
 
         .trustAnchor(resolverEntity.getTrustAnchor())
         .trustedKeys(this.toJwksSet(resolverEntity.getTrustedKeys()))
-        .stepRetryTime(this.toDuration(resolverEntity.getStepRetryDuration()))
         .useCachedValue(resolverEntity.getStepCachedValueThreshold())
         .build();
   }

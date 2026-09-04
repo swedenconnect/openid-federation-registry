@@ -174,10 +174,6 @@ public class RecordFields {
      */
     public static final String ENTITY_IDENTIFIER = "entity_identifier";
     /**
-     * Step Retry Time Field.
-     */
-    public static final String STEP_RETRY_TIME = "step_retry_time";
-    /**
      * Step cached value threshold field.
      */
     public static final String STEP_CACHED_VALUE_THRESHOLD = "step_cached_value_threshold";

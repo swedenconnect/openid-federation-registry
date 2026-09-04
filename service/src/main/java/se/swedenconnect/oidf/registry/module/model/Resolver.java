@@ -80,9 +80,6 @@ public class Resolver extends BaseEntity implements Persistable<UUID> {
   @Convert(converter = MapConverter.class)
   private Map<String,Object> trustedKeys;
 
-  @Column(name = "step_retry_duration", nullable = false)
-  private String stepRetryDuration;
-
   @Column(name = "step_cached_value_threshold", nullable = false)
   private Integer stepCachedValueThreshold;
 

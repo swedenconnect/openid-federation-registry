@@ -106,7 +106,6 @@ public final class ModuleToDtoMapper {
     dto.setResolveResponseDuration(resolverEntity.getResolveResponseDuration());
     dto.setTrustAnchor(resolverEntity.getTrustAnchor());
     dto.setTrustedKeys(resolverEntity.getTrustedKeys());
-    dto.setStepRetryDuration(resolverEntity.getStepRetryDuration());
     dto.setStepCachedValueThreshold(resolverEntity.getStepCachedValueThreshold());
     return dto;
   }

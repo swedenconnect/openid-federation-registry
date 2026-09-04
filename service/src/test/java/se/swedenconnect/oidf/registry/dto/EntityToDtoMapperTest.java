@@ -109,7 +109,6 @@ class EntityToDtoMapperTest {
         .resolveResponseDuration("PT30S")
         .trustAnchor("https://ta.example.com")
         .trustedKeys(Collections.emptyMap())
-        .stepRetryDuration("PT10S")
         .build();
     entity.setResolver(resolver);
 
@@ -299,7 +298,6 @@ class EntityToDtoMapperTest {
         .resolveResponseDuration("PT30S")
         .trustAnchor("https://ta.example.com")
         .trustedKeys(TestDataOperations.genJWKS().toJSONObject())
-        .stepRetryDuration("PT10S")
         .build();
 
     final ResolverDto dto = ModuleToDtoMapper.toDto(resolver);
@@ -310,7 +308,6 @@ class EntityToDtoMapperTest {
     assertThat(dto.getResolveResponseDuration()).isEqualTo("PT30S");
     assertThat(dto.getTrustAnchor()).isEqualTo("https://ta.example.com");
     assertThat(dto.getTrustedKeys()).isEqualTo(resolver.getTrustedKeys());
-    assertThat(dto.getStepRetryDuration()).isEqualTo("PT10S");
   }
 
   // -------------------------------------------------------------------------

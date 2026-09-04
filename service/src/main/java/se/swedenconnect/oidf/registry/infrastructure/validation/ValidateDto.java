@@ -223,11 +223,6 @@ public class ValidateDto {
         .ifFailThrow("trustedKeys", dto.getTrustedKeys());
 
     this.v.required()
-        .duration()
-        .build()
-        .ifFailThrow("stepRetryDuration", dto.getStepRetryDuration());
-
-    this.v.required()
         .build()
         .ifFailThrow("stepCachedValueThreshold", dto.getStepCachedValueThreshold());
   }

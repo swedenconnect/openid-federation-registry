@@ -378,14 +378,6 @@
                   Load JWKS
                 </v-btn>
                 <v-text-field
-                    v-model="modules.resolver.stepRetryDuration"
-                    label="Step Retry Duration"
-                    :disabled="savingModule"
-                    hint="Time between a failed step and retry (e.g., PT1M)"
-                    persistent-hint
-                    class="mb-4"
-                ></v-text-field>
-                <v-text-field
                     v-model.number="modules.resolver.stepCachedValueThreshold"
                     label="Step Cached Value Threshold"
                     type="number"
@@ -645,7 +637,6 @@ const modules = ref({
     resolveResponseDuration: 'PT1H',
     trustAnchor: '',
     trustedKeys: '',
-    stepRetryDuration: 'PT1M',
     stepCachedValueThreshold: null,
   },
   trustmarkissuer: {
@@ -715,7 +706,6 @@ async function loadEntity() {
         resolveResponseDuration: response.resolver.resolveResponseDuration || 'PT1H',
         trustAnchor: response.resolver.trustAnchor || '',
         trustedKeys: response.resolver.trustedKeys ? JSON.stringify(response.resolver.trustedKeys, null, 2) : '',
-        stepRetryDuration: response.resolver.stepRetryDuration || 'PT1M',
         stepCachedValueThreshold: response.resolver.stepCachedValueThreshold ?? null,
       };
     }
@@ -873,7 +863,6 @@ async function saveModule(moduleType) {
           resolveResponseDuration: module.resolveResponseDuration,
           trustAnchor: module.trustAnchor,
           trustedKeys: module.trustedKeys && module.trustedKeys.trim() ? JSON.parse(module.trustedKeys) : null,
-          stepRetryDuration: module.stepRetryDuration,
           stepCachedValueThreshold: module.stepCachedValueThreshold ?? null,
         };
         if (module.id) {
@@ -975,8 +964,7 @@ async function confirmDeleteModule() {
             resolveResponseDuration: 'PT1H',
             trustAnchor: '',
             trustedKeys: '',
-            stepRetryDuration: 'PT1M',
-            stepCachedValueThreshold: null,
+                    stepCachedValueThreshold: null,
           };
           break;
         case 'trustmarkissuer':

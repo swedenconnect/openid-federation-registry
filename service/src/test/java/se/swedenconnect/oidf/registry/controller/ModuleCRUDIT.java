@@ -347,7 +347,6 @@ class ModuleCRUDIT {
         .active(true)
         .trustAnchor("https://www.pm.se/oidf/ta")
         .trustedKeys(TestDataOperations.genJWKS().toJSONObject())
-        .stepRetryDuration("PT30M")
         .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT1H");
 
@@ -376,7 +375,6 @@ class ModuleCRUDIT {
         .active(false)
         .trustAnchor("https://www.pm.se/oidf/ta")
         .trustedKeys(TestDataOperations.genJWKS().toJSONObject())
-        .stepRetryDuration("PT5M")
         .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT2H");
 
@@ -402,7 +400,6 @@ class ModuleCRUDIT {
         .active(true)
         .trustAnchor("https://www.pm.se/oidf/ta")
         .trustedKeys(TestDataOperations.genJWKS().toJSONObject())
-        .stepRetryDuration("PT5M")
         .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT1H");
     this.modulesApi.createResolverWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, resolverId, input);
@@ -429,7 +426,6 @@ class ModuleCRUDIT {
         .active(true)
         .trustAnchor("https://www.pm.se/oidf/ta")
         .trustedKeys(TestDataOperations.genJWKS().toJSONObject())
-        .stepRetryDuration("PT5M")
         .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT1H");
     this.modulesApi.createResolverWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, resolverId, createInput);
@@ -439,7 +435,6 @@ class ModuleCRUDIT {
         .active(false)
         .trustAnchor("https://www.pm.se/oidf/ta-updated")
         .trustedKeys(TestDataOperations.genJWKS().toJSONObject())
-        .stepRetryDuration("PT5M")
         .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT3H");
 
@@ -466,7 +461,6 @@ class ModuleCRUDIT {
         .active(true)
         .trustAnchor("https://www.pm.se/oidf/ta")
         .trustedKeys(TestDataOperations.genJWKS().toJSONObject())
-        .stepRetryDuration("PT5M")
         .stepCachedValueThreshold(10)
         .resolveResponseDuration("PT1H");
     this.modulesApi.createResolverWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, resolverId, input);

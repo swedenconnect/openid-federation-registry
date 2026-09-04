@@ -103,7 +103,6 @@ public final class DtoToModuleMapper {
         .resolveResponseDuration(dto.getResolveResponseDuration())
         .trustAnchor(dto.getTrustAnchor())
         .trustedKeys(dto.getTrustedKeys())
-        .stepRetryDuration(dto.getStepRetryDuration())
         .stepCachedValueThreshold(dto.getStepCachedValueThreshold())
         .build();
   }
@@ -140,7 +139,6 @@ public final class DtoToModuleMapper {
     entity.setResolveResponseDuration(dto.getResolveResponseDuration());
     entity.setTrustAnchor(dto.getTrustAnchor());
     entity.setTrustedKeys(dto.getTrustedKeys());
-    entity.setStepRetryDuration(dto.getStepRetryDuration());
     entity.setStepCachedValueThreshold(dto.getStepCachedValueThreshold());
   }
 

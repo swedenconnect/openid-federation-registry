@@ -42,8 +42,6 @@ public final class ResolverProperties {
   private JWKSet trustedKeys;
   @SerializedName("entity-identifier")
   private String entityIdentifier;
-  @SerializedName("step-retry-time")
-  private Duration stepRetryTime;
   @SerializedName("use-cached-value")
   private int useCachedValue;
 
@@ -52,7 +50,6 @@ public final class ResolverProperties {
    * @param resolveResponseDuration The validity duration of issued resolve responses
    * @param trustedKeys Keys trusted by this resolver to validate Entity Statement chains
    * @param entityIdentifier for the resolver
-   * @param stepRetryTime time to wait before retrying a step that has failed
    * @param useCachedValue threshold for error context
    */
   public ResolverProperties(
@@ -60,13 +57,11 @@ public final class ResolverProperties {
       final Duration resolveResponseDuration,
       final JWKSet trustedKeys,
       final String entityIdentifier,
-      final Duration stepRetryTime,
       final int useCachedValue) {
     this.trustAnchor = trustAnchor;
     this.resolveResponseDuration = resolveResponseDuration;
     this.trustedKeys = trustedKeys;
     this.entityIdentifier = entityIdentifier;
-    this.stepRetryTime = stepRetryTime;
     this.useCachedValue = useCachedValue;
   }
 }
