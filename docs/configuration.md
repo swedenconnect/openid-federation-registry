@@ -20,6 +20,7 @@ This document describes the configuration settings available for the OpenID Fede
   - [Federation Instances](#federation-instances)
     - [OIDF Service API Validation Key](#oidf-service-api-validation-key)
   - [Entity Configuration Loader](#entity-configuration-loader)
+  - [Registration](#registration)
 
 ---
 
@@ -298,6 +299,27 @@ openid:
         block-hostname:
           - ".*\\.internal\\.example\\.com"
           - "localhost"
+```
+
+### Registration
+
+Controls how incoming registration requests are checked before the flow engine runs.
+
+| Setting                                                             | Required | Default | Description                                                                                                                                                                                             |
+|---------------------------------------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `openid.federation.registry.registration.require-registered-domain` | No       | `true`  | Requires the host of a registration request's `entityIdentifier` to equal, or be a subdomain of, one of the registering organization's `PENDING`/`VALIDATED` domains. Applies to superusers too. See [Organizations and Domains](organization.md). |
+
+Turning this off lets any organization register any entity identifier it can prove control of by other means —
+only do so where entity ownership is established outside the registry.
+
+#### Example
+
+```yaml
+openid:
+  federation:
+    registry:
+      registration:
+        require-registered-domain: true
 ```
 
 ---

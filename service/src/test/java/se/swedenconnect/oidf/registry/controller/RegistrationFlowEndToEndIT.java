@@ -46,9 +46,11 @@ import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.api.EntitiesApi;
 import se.swedenconnect.oidf.registry.api.FederationRegistrationApi;
 import se.swedenconnect.oidf.registry.api.ModulesApi;
+import se.swedenconnect.oidf.registry.api.OrganizationApi;
 import se.swedenconnect.oidf.registry.api.RegistrationFlowApi;
 import se.swedenconnect.oidf.registry.api.model.AssignFlowRequest;
 import se.swedenconnect.oidf.registry.api.model.AssignFlowResponse;
+import se.swedenconnect.oidf.registry.api.model.CreateOrganizationRequest;
 import se.swedenconnect.oidf.registry.api.model.FederationEntity;
 import se.swedenconnect.oidf.registry.api.model.Registration;
 import se.swedenconnect.oidf.registry.api.model.RegistrationFlowDto;
@@ -78,7 +80,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <ol>
  *   <li>orgA (PM) creates a registration flow backed by PredefinedDirectRegisterFlow</li>
  *   <li>orgA creates an intermediate (TrustAnchor) and assigns the flow to it</li>
- *   <li>Ten separate organisations (testOrg1-10) each verify the flow is available and execute it</li>
+ *   <li>Ten separate organisations (testOrg1-10) bootstrap their organisation record, then verify the flow is
+ *       available and execute it</li>
  *   <li>WireMock (HTTPS) serves a valid entity-statement JWT for each registering entity</li>
  *   <li>Verifies that orgA ends up with 10 approved registrations and 10 subordinates</li>
  * </ol>
@@ -89,6 +92,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     properties = {
+        // Every one of the ten applicants registers an entity under the single host WireMock can serve,
+        // "localhost", and only one organization on a tenant may hold a given domain at a time. Domain
+        // enforcement is therefore switched off here; it has its own coverage in
+        // DomainEnforcementAndCascadeIT and DomainUniquenessIT.
+        "openid.federation.registry.registration.require-registered-domain=false",
         "openid.federation.registry.entity-configuration-loader.enabled=true",
         "openid.federation.registry.entity-configuration-loader.enable-local-ip-address-ranges=true",
         "openid.federation.registry.entity-configuration-loader.trust-bundle-alias=wiremock-trust",
@@ -160,6 +168,10 @@ class RegistrationFlowEndToEndIT {
       final ApiClient orgApiClient = buildApiClient(org);
       final FederationRegistrationApi registrationApi = new FederationRegistrationApi(orgApiClient);
 
+      // Each applicant bootstraps its organisation record first, the same order a real applicant goes
+      // through. Domain enforcement is off for this class, see the properties on the class above.
+      this.bootstrapOrganisation(orgApiClient, org);
+
       final List<RegistrationFlowInformation> availableFlows = registrationApi.listFlows();
       assertThat(availableFlows)
           .as("testOrg%d should see the flow assigned by PM", orgNumber)
@@ -180,6 +192,12 @@ class RegistrationFlowEndToEndIT {
     }
 
     verifyOrgASeesAllRegistrationsAndSubordinates();
+  }
+
+  private void bootstrapOrganisation(final ApiClient orgApiClient, final JwtTestUtils.OrganisationType org) {
+    final OrganizationApi organizationApi = new OrganizationApi(orgApiClient);
+    organizationApi.createOrganization(TENANT, org.orgId,
+        new CreateOrganizationRequest().legalName(org.name + " AB"));
   }
 
   private void verifyOrgASeesAllRegistrationsAndSubordinates() {

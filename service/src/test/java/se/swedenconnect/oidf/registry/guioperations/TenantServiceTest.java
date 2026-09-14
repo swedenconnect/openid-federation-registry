@@ -81,7 +81,7 @@ class TenantServiceTest {
   }
 
   private RegistryProperties registryPropertiesWith(final RegistryProperties.InstanceProperties... instances) {
-    return new RegistryProperties(null, List.of(instances), null);
+    return new RegistryProperties(null, List.of(instances), null, null);
   }
 
   // Superuser-leg fixtures: these organization numbers are persisted DB data (Organization.orgNumber), never

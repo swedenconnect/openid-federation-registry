@@ -121,4 +121,22 @@ public interface TrustMarkRepository extends JpaRepository<TrustMark, UUID> {
       WHERE t.trustmarkType = :trustmarkType
       """)
   List<TrustMark> findAllByTrustmarkType(@Param("trustmarkType") String trustmarkType);
+
+  /**
+   * Retrieves the trust mark types of every trust mark whose issuing entity belongs to an organization placed on
+   * the given instance. This is what a tenant operator may pre-approve for an organization: the types its own
+   * federation actually issues.
+   *
+   * @param instanceId the instance the issuing organizations are placed on
+   * @return the trust mark types found on that instance, distinct but unordered
+   */
+  @Query("""
+      SELECT DISTINCT t.trustmarkType FROM TrustMark t
+      JOIN t.trustmarkIssuer tmi
+      JOIN tmi.entity e
+      JOIN e.organization o
+      WHERE o.instance.instanceId = :instanceId
+      AND t.trustmarkType IS NOT NULL
+      """)
+  List<String> findTrustmarkTypesByInstanceId(@Param("instanceId") UUID instanceId);
 }

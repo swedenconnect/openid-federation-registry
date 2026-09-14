@@ -37,6 +37,7 @@ import se.swedenconnect.oidf.registry.registrationflow.dto.ConfigValueDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.FlowSummaryDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.IntermediateFlowAssignmentDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.Mapper;
+import se.swedenconnect.oidf.registry.organization.repository.OrganizationTrustMarkRepository;
 import se.swedenconnect.oidf.registry.registrationflow.dto.RegistrationFlowDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.StepDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.TrustMarkFlowAssignmentDto;
@@ -98,6 +99,7 @@ public class RegistrationFlowService {
   private final InstancePlacementService instancePlacementService;
   private final ProcessEngine processEngine;
   private final RegistrationRepository registrationRepository;
+  private final OrganizationTrustMarkRepository organizationTrustMarkRepository;
 
   /**
    * Constructs a new RegistrationFlowService.
@@ -114,6 +116,7 @@ public class RegistrationFlowService {
    * @param instancePlacementService service for resolving the function group attached to an organization
    * @param processEngine engine that handle the processing of a flow
    * @param registrationRepository repository for persisting step results
+   * @param organizationTrustMarkRepository repository of the trust mark types pre-approved per organization
    */
   public RegistrationFlowService(final RegistrationStepRepository registrationStepRepository,
       final TaImRepository taImRepository, final FlowRepository flowRepository,
@@ -124,7 +127,8 @@ public class RegistrationFlowService {
       final TrustMarkRepository trustMarkRepository,
       final OrganizationService organizationService,
       final InstancePlacementService instancePlacementService, final ProcessEngine processEngine,
-      final RegistrationRepository registrationRepository) {
+      final RegistrationRepository registrationRepository,
+      final OrganizationTrustMarkRepository organizationTrustMarkRepository) {
     this.registrationStepRepository = registrationStepRepository;
     this.taImRepository = taImRepository;
     this.flowRepository = flowRepository;
@@ -137,6 +141,7 @@ public class RegistrationFlowService {
     this.instancePlacementService = instancePlacementService;
     this.processEngine = processEngine;
     this.registrationRepository = registrationRepository;
+    this.organizationTrustMarkRepository = organizationTrustMarkRepository;
   }
 
   private String resolveTenantOrThrow(final Organization organization) {
@@ -176,7 +181,7 @@ public class RegistrationFlowService {
     final RegistrationFlowDto dtoWithId = new RegistrationFlowDto(flowId, registrationFlowDto.name(),
         registrationFlowDto.description(), registrationFlowDto.descriptionSv(),
         registrationFlowDto.technology(), registrationFlowDto.entityType(),
-        registrationFlowDto.steps(), registrationFlowDto.flowType());
+        registrationFlowDto.steps(), registrationFlowDto.flowType(), Mapper.isEnabled(registrationFlowDto));
     final RegistrationFlow registrationFlow = Mapper.toModel(dtoWithId, flowId, org,
         this.registrationStepRepository);
     InsertOnly.save(this.flowRepository, registrationFlow, "A flow with this ID already exists: " + flowId);
@@ -200,7 +205,7 @@ public class RegistrationFlowService {
     this.flowRepository.save(existing);
     return new RegistrationFlowDto(existing.getFlowId(), existing.getName(), existing.getDescription(),
         existing.getDescriptionSv(), existing.getTechnology(), existing.getEntityType(), List.of(),
-        existing.getFlowType());
+        existing.getFlowType(), existing.isEnabled());
   }
 
   /**
@@ -229,7 +234,8 @@ public class RegistrationFlowService {
         .map(this::resolveStep)
         .toList();
     return new RegistrationFlowDto(flow.getFlowId(), flow.getName(), flow.getDescription(),
-        flow.getDescriptionSv(), flow.getTechnology(), flow.getEntityType(), steps, flow.getFlowType());
+        flow.getDescriptionSv(), flow.getTechnology(), flow.getEntityType(), steps, flow.getFlowType(),
+        flow.isEnabled());
   }
 
   private StepDto resolveStep(final StepModel storedStep) {
@@ -265,7 +271,8 @@ public class RegistrationFlowService {
         .map(org -> this.flowRepository.findByOrganizationOrganizationId(org.getOrganizationId()))
         .orElse(List.of())
         .stream()
-        .map(f -> new FlowSummaryDto(f.getFlowId(), f.getName(), f.getDescription(), f.getFlowType()))
+        .map(f -> new FlowSummaryDto(f.getFlowId(), f.getName(), f.getDescription(), f.getFlowType(),
+            f.isEnabled()))
         .toList();
   }
 
@@ -289,11 +296,14 @@ public class RegistrationFlowService {
   }
 
   /**
-   * Trigger registration flow engine
+   * Trigger registration flow engine. The flow behind the requested join ID must be enabled: a disabled flow is
+   * refused with a {@link ErrorTypes#CONFLICT} before any registration is created, both for a first submission and
+   * for a re-run of an existing request.
    *
    * @param organizationRecord the organization initiating the registration
    * @param registrationRequestDto the registration request data
    * @return join ID string for the created registration flow
+   * @throws RegistryServerException if the flow behind the join ID is disabled
    */
   public ProcessReport executeRegistrationFlow(final OrganizationRecord organizationRecord,
       final RegistrationJoinRequestDto registrationRequestDto) {
@@ -303,6 +313,10 @@ public class RegistrationFlowService {
         .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND, "Join flow not found"));
 
     final RegistrationFlow registrationFlow = flowAssignment.getRegistrationFlow();
+    if (!registrationFlow.isEnabled()) {
+      throw new RegistryServerException(ErrorTypes.CONFLICT,
+          "Registration flow is disabled: " + registrationFlow.getName());
+    }
     final ProcessFlow processFlow = Mapper.toProcessFlow(registrationFlow, this.registrationStepRepository);
 
     final ProcessContext processContext = new ProcessContext();
@@ -458,6 +472,12 @@ public class RegistrationFlowService {
         this.resolveTenantOrThrow(org)));
     ctx.put(ContextKey.TRUSTMARKS_REQUESTED, new SerializableList<>(List.of(tmSource)));
     ctx.put(ContextKey.STEP_APPROVED, Boolean.TRUE);
+    // STEP_APPROVED only lets the step being resumed past the gate. Re-apply the pre-validation flag so a later
+    // gated step in the same sub-flow is auto-approved too, exactly as it would have been on the first run.
+    if (this.organizationTrustMarkRepository.existsByOrganization_OrganizationIdAndTrustMarkType(
+        org.getOrganizationId(), trustmarkType)) {
+      ctx.put(ContextKey.TRUST_MARK_PRE_VALIDATED, Boolean.TRUE);
+    }
 
     final List<StepDefinition> remaining = allSubSteps.subList(stepIndex, allSubSteps.size());
     final ProcessReport resumeReport = this.processEngine.run(remaining, ctx);
@@ -520,7 +540,8 @@ public class RegistrationFlowService {
             .map(a -> {
               final RegistrationFlow f = a.getRegistrationFlow();
               return new RegistrationFlowDto(f.getFlowId(), f.getName(), f.getDescription(),
-                  f.getDescriptionSv(), f.getTechnology(), f.getEntityType(), List.of(), f.getFlowType());
+                  f.getDescriptionSv(), f.getTechnology(), f.getEntityType(), List.of(), f.getFlowType(),
+                  f.isEnabled());
             })
             .toList())
         .orElse(List.of());

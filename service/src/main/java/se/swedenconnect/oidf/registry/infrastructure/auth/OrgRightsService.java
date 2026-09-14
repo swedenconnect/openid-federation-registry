@@ -17,6 +17,7 @@ package se.swedenconnect.oidf.registry.infrastructure.auth;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 import se.swedenconnect.iam.security.claims.OrgRightsClaim;
@@ -93,6 +94,22 @@ public class OrgRightsService {
    */
   public boolean canAdmin(final Authentication authentication, final String orgNumber, final String tenant) {
     return this.hasRight(authentication, orgNumber, tenant, OrganizationRight.ADMIN);
+  }
+
+  /**
+   * Checks whether the request currently being served was authenticated with a superuser token. Superusers pass
+   * every {@code canRead}/{@code canWrite}/{@code canAdmin} check, so a service-level rule that goes beyond right
+   * level — such as "the caller's organization must own a trust anchor" — has to ask separately whether it is
+   * looking at a superuser.
+   *
+   * @return true if the current authentication carries {@code org_rights: [{superuser: true}]}
+   */
+  public boolean isCurrentUserSuperuser() {
+    final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication == null) {
+      return false;
+    }
+    return this.extractOrgRights(authentication).superuser();
   }
 
   private boolean hasRight(

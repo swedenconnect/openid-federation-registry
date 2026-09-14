@@ -53,7 +53,18 @@
         </thead>
         <tbody>
         <tr v-for="flow in flows" :key="flow.flowId">
-          <td>{{ flow.name || 'N/A' }}</td>
+          <td>
+            {{ flow.name || 'N/A' }}
+            <v-chip
+                v-if="flow.enabled === false"
+                color="grey"
+                size="x-small"
+                variant="flat"
+                class="ml-2"
+            >
+              Disabled
+            </v-chip>
+          </td>
           <td>{{ flow.description || '' }}</td>
           <td class="text-right">
             <v-btn

@@ -30,6 +30,8 @@ import RegistrationFlowsListView from '../views/RegistrationFlowsListView.vue';
 import RegistrationFlowFormView from '../views/RegistrationFlowFormView.vue';
 import RegistrationsListView from '../views/RegistrationsListView.vue';
 import RegistrationDetailView from '../views/RegistrationDetailView.vue';
+import DomainRequestDetailView from '../views/DomainRequestDetailView.vue';
+import OrganizationsListView from '../views/OrganizationsListView.vue';
 import TriggerRegistrationView from '../views/TriggerRegistrationView.vue';
 import {useAuthorizationStatusStore} from '@/authorization/stores/authorizationStatusStore';
 
@@ -166,10 +168,22 @@ const router = createRouter({
             meta: {title: 'Trigger Registration'},
         },
         {
+            path: '/registrations/domain/:domainId',
+            name: 'domain-request-detail',
+            component: DomainRequestDetailView,
+            meta: {title: 'Domain Request'},
+        },
+        {
             path: '/registrations/:id',
             name: 'registration-detail',
             component: RegistrationDetailView,
             meta: {title: 'Registration Detail'},
+        },
+        {
+            path: '/organizations',
+            name: 'organizations-list',
+            component: OrganizationsListView,
+            meta: {title: 'Organizations'},
         },
     ],
 });

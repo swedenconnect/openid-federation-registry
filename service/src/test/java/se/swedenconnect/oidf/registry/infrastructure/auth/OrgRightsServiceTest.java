@@ -59,7 +59,7 @@ class OrgRightsServiceTest {
   }
 
   private RegistryProperties registryPropertiesWith(final RegistryProperties.InstanceProperties... instances) {
-    return new RegistryProperties(null, List.of(instances), null);
+    return new RegistryProperties(null, List.of(instances), null, null);
   }
 
   private OrgRightsService serviceWith(final RegistryProperties registryProperties) {

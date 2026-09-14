@@ -21,6 +21,8 @@ import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
+import se.swedenconnect.oidf.registry.organization.dto.DomainDto;
+import se.swedenconnect.oidf.registry.organization.dto.OrganizationDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
@@ -354,6 +356,78 @@ public interface RegistryAuditService {
    * @param deletedData the data of the deleted subordinate.
    */
   void subordinateDeleted(UUID subordinateId, UUID instanceId, UUID organizationId, SubordinateDto deletedData);
+
+  /**
+   * Audits the creation of an organization's registry record.
+   *
+   * @param id the unique identifier of the organization being created.
+   * @param instanceId the unique identifier of the instance that owns the organization.
+   * @param organizationId the unique identifier of the organization.
+   * @param oldData the previous state of the organization. Typically null during creation.
+   * @param newData the new state of the organization after it has been created.
+   */
+  void organizationCreated(UUID id, UUID instanceId, UUID organizationId, OrganizationDto oldData,
+      OrganizationDto newData);
+
+  /**
+   * Audits an update of an organization's registry record, including a replacement of its pre-validated trust
+   * mark types.
+   *
+   * @param id the unique identifier of the organization being updated.
+   * @param instanceId the unique identifier of the instance that owns the organization.
+   * @param organizationId the unique identifier of the organization.
+   * @param oldData the previous state of the organization.
+   * @param newData the new state of the organization after the update.
+   */
+  void organizationUpdated(UUID id, UUID instanceId, UUID organizationId, OrganizationDto oldData,
+      OrganizationDto newData);
+
+  /**
+   * Audits an organization claiming a domain, either for the first time or by re-opening a rejected one.
+   *
+   * @param id the unique identifier of the domain being requested.
+   * @param instanceId the unique identifier of the instance that owns the organization.
+   * @param organizationId the unique identifier of the organization claiming the domain.
+   * @param oldData the previous state of the domain, null unless a rejected domain was re-opened.
+   * @param newData the new state of the domain.
+   */
+  void organizationDomainRequested(UUID id, UUID instanceId, UUID organizationId, DomainDto oldData,
+      DomainDto newData);
+
+  /**
+   * Audits an organization withdrawing one of its domains.
+   *
+   * @param id the unique identifier of the domain being deleted.
+   * @param instanceId the unique identifier of the instance that owns the organization.
+   * @param organizationId the unique identifier of the organization the domain belonged to.
+   * @param deletedData the data of the deleted domain.
+   */
+  void organizationDomainDeleted(UUID id, UUID instanceId, UUID organizationId, DomainDto deletedData);
+
+  /**
+   * Audits a tenant operator approving a pending domain.
+   *
+   * @param id the unique identifier of the domain being approved.
+   * @param instanceId the unique identifier of the instance that owns the organization.
+   * @param organizationId the unique identifier of the organization the domain belongs to.
+   * @param oldData the previous state of the domain.
+   * @param newData the new state of the domain after approval.
+   */
+  void organizationDomainApproved(UUID id, UUID instanceId, UUID organizationId, DomainDto oldData,
+      DomainDto newData);
+
+  /**
+   * Audits a tenant operator rejecting a pending domain. Registrations rejected by the resulting cascade are
+   * audited through the domain's {@code newData}, not as separate registration events.
+   *
+   * @param id the unique identifier of the domain being rejected.
+   * @param instanceId the unique identifier of the instance that owns the organization.
+   * @param organizationId the unique identifier of the organization the domain belongs to.
+   * @param oldData the previous state of the domain.
+   * @param newData the new state of the domain after rejection.
+   */
+  void organizationDomainRejected(UUID id, UUID instanceId, UUID organizationId, DomainDto oldData,
+      DomainDto newData);
 
   /**
    * Trigger when a entity configuration resolve is made

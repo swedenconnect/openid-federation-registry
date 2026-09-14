@@ -30,6 +30,13 @@ There are two flow types (`Step.FlowType`):
 
 ## Preconditions
 
+- **UC-0 — the member has bootstrapped its organization and registered the entity's domain** (see
+  [Organizations and Domains](organization.md)): `POST /organization/v1/{tenant}/{orgNumber}` with a `legalName`,
+  then `POST /organization/v1/{tenant}/{orgNumber}/domains` with the hostname the entity identifiers live under.
+  The claim only has to be `PENDING`, not yet approved, for registrations to be accepted. Without it, every
+  registration request below is refused with `400` — see
+  [domain enforcement](organization.md#domain-enforcement-on-registration-requests). The check can be turned off
+  with `openid.federation.registry.registration.require-registered-domain=false`.
 - The federation member is authenticated and authorized for the target `tenant`/`orgNumber` (
   `@orgRightsService.canWrite`).
 - The entity to register either:
@@ -51,25 +58,33 @@ There are two flow types (`Step.FlowType`):
 ### Main flow
 
 1. The member lists available flows: `GET /registration/v1/flows` (unscoped — an applicant browsing flows need not
-   belong to a tenant/org yet).
+   belong to a tenant/org yet). Only assignments whose flow is **enabled** are listed; a flow the operator has
+   disabled (UC-5) is not offered.
 2. The member submits a join request: `POST /registration/v1/{tenant}/{orgNumber}/{joinId}` with:
     - `entityIdentifier` — the entity's URL
     - `trustmarksRequested` — desired trust marks, grouped by issuer (optional)
     - `metadata` — federation metadata for a hosted entity (optional; presence selects the hosted path)
-3. **PRE — `InternalPreRegistrationStep`:** finds or creates a `Registration` (status `STARTED`, type `SUBORDINATE`)
+3. **Before the pipeline runs:** the system checks that the host of `entityIdentifier` equals, or is a subdomain
+   of, one of the member's `PENDING`/`VALIDATED` domains, and refuses the request with `400` otherwise.
+4. **Before the pipeline runs:** the system checks that the flow behind `joinId` is enabled, and refuses the request
+   with `409 Conflict` (`Registration flow is disabled: <name>`) otherwise — before any `Registration` row is created.
+   The same check guards the re-run path (`PUT /registration/v1/{tenant}/{orgNumber}/{registrationId}`), which runs
+   the flow again under the registration's existing assignment.
+5. **PRE — `InternalPreRegistrationStep`:** finds or creates a `Registration` (status `STARTED`, type `SUBORDINATE`)
    keyed by `entityId`. Fails the pipeline if a registration for this entity is already `PENDING_APPROVAL`.
-4. **MID — hosted or remote path (mutually exclusive via `canApply`):**
+6. **MID — hosted or remote path (mutually exclusive via `canApply`):**
     - `HostedEntityRegistrationStep` runs when the request body contains `metadata`: creates/updates the hosted entity (
       via `EntityConfigService`, so audit fires) and fetches the federation JWKS from the org's service node.
     - `LoadEntityConfigurationStep` runs otherwise: fetches and signature-validates the entity statement at `entityId`,
       extracting `metadata` and JWKS.
-5. **MID — `TrustMarkIssuerRegistrationStep`** (only if trust marks were requested): for each requested trust mark type,
+7. **MID — `TrustMarkIssuerRegistrationStep`** (only if trust marks were requested): for each requested trust mark type,
    resolves the assigned `TRUST_MARK_ISSUER` flow and dispatches a sub-pipeline (see UC-6). Trust marks with no assigned
-   flow, or that don't exist, are skipped with a warning rather than failing the parent registration.
-6. **POST — `PublishSubordinateStatementStep`:** creates (or updates, if one already exists for this entity +
+   flow, whose assigned flow is disabled, or that don't exist, are skipped with a warning rather than failing the
+   parent registration.
+8. **POST — `PublishSubordinateStatementStep`:** creates (or updates, if one already exists for this entity +
    Intermediate) a subordinate statement with the loaded JWKS and metadata policy, and sets
    `Registration.status = APPROVED`.
-7. The system returns a `RegistrationDto` with `successful = true`, `statusFedreg = APPROVED`, and the full `steps`
+9. The system returns a `RegistrationDto` with `successful = true`, `statusFedreg = APPROVED`, and the full `steps`
    execution trail.
 
 **Result:** The entity is a subordinate of the Intermediate and visible in the federation. Any successfully processed
@@ -144,6 +159,16 @@ continuing.
 
 **Result:** The request is rejected. The member sees `rejectionReason` and may resubmit.
 
+### Alternative flow — rejected as a consequence of a domain rejection
+
+A registration is also rejected without anyone opening it, when the tenant operator rejects the domain it was
+accepted under (`POST /registration-admin/v1/{tenant}/{orgNumber}/domains/{domainId}/reject`). Every `STARTED` or
+`PENDING_APPROVAL` registration of that organization whose entity host is covered by the rejected domain — and by
+no other `PENDING`/`VALIDATED` domain of the same organization — is set to `REJECTED` with the exact reason
+`Not Accepted Domain`, together with its non-settled `TRUST_MARK_SUBORDINATE` children. The rejection response
+lists them in `cascadedRegistrationIds`. See
+[Organizations and Domains](organization.md#cascading-a-domain-rejection).
+
 ### Error flow
 
 - If the registration is not currently `PENDING_APPROVAL`, the system returns `409 Conflict`.
@@ -187,6 +212,9 @@ continuing.
    `/flow/{flowid}` variant) with:
     - `name`, `description`, `descriptionSv`, `technology` (`OIDC`/`SAML`), `entityType`
     - `flowType` (`INTERMEDIATE` or `TRUST_MARK_ISSUER`)
+    - `enabled` — whether the flow may be used. Optional; a request that omits it describes an enabled flow, so
+      clients written before the flag keep working. `PUT .../flow/{flowid}` is a full replacement and follows the
+      same rule, so a client that wants a flow to stay disabled must send `enabled: false` on every update.
     - `steps` — an ordered list of selected `MID` steps, each with `config` key/value pairs (e.g.
       `manualreview: "true"`). If omitted for an `INTERMEDIATE` flow, the system defaults to
       `HostedEntityRegistrationStep` + `LoadEntityConfigurationStep`.
@@ -202,6 +230,22 @@ continuing.
 
 **Result:** The flow is assigned; `assignId`/`joinId` can be distributed. Flows, steps, and assignments can also be
 updated (`PUT .../flow/{flowid}`) or removed (`DELETE .../flow/{flowid}`, `DELETE .../{type}/{id}/assign/{assignId}`).
+
+### Taking a flow out of service
+
+Setting `enabled = false` retires a flow without deleting it or unassigning it, which is what an operator wants when a
+flow is being replaced or paused rather than withdrawn:
+
+- `GET /registration/v1/flows` stops listing the flow's assignments, so applicants are no longer offered it.
+- `POST /registration/v1/{tenant}/{orgNumber}/{joinId}` and the `PUT` re-run path are refused with `409 Conflict`
+  (`Registration flow is disabled: <name>`) before anything is created (UC-1).
+- A disabled `TRUST_MARK_ISSUER` flow is treated exactly like an unassigned one: the trust mark type is skipped with a
+  warning and the parent registration still completes (UC-6).
+- **Work already accepted is unaffected.** Registrations submitted while the flow was enabled can still be approved
+  step by step (UC-2) or rejected (UC-3) — disabling a flow closes the door to new applicants, it does not strand the
+  queue behind it.
+- The operator's own `GET /registration-flow/v1/{tenant}/{orgNumber}/flows` keeps listing the flow, with
+  `enabled = false`, so it can be found and switched back on.
 
 ---
 
@@ -224,15 +268,31 @@ and, once approved, create a `TrustMarkSubject`.
    `buildContext`; `FAILURE` aborts this trust mark's sub-flow only). If `manualreview=true` on this step, the sub-flow
    pauses the same way as UC-2, with its own `pendingStepIndex` on the child registration. Otherwise it signals
    `TRUSTMARK_SUBJECT_PROCEED` and continues.
+    - **Exception — the organization is pre-validated for this type.** If the applicant organization holds the
+      requested `trustmarkType` among its pre-validated trust marks
+      (`PUT /registration-admin/v1/{tenant}/{orgNumber}/organizations/{targetOrgNumber}/trustmarks`), the operator
+      has already taken this decision and the sub-flow does not pause for it. `TrustMarkIssuerRegistrationStep`
+      sets `ContextKey.TRUST_MARK_PRE_VALIDATED` on the sub-flow context, and the engine's approval gate passes
+      the gated step — recording a `WARNING` result reading *"Auto-approved: organization holds a pre-validated
+      trust mark for this enrollment"* — instead of returning `pendingApproval`. Everything else is unchanged:
+      the same flow, the same steps, the same child registration and step trail. The flag applies to the
+      sub-flow only and is never set on the parent registration's context. See
+      [Organizations and Domains](organization.md#effect-on-trust-mark-enrollment).
 4. **POST — `CreateTrustMarkSubjectStep`:** runs only when the proceed signal is set. Creates a `TrustMarkSubject` (
    idempotent — a no-op if one already exists for this trust mark + subject), fires an audit event, and sets the child
    registration's status to `APPROVED`.
 5. Each trust mark's outcome (`pending`, `failed`, `not found`, `no flow assigned`) is aggregated into the parent step's
    result message; a failure or pending trust mark does **not** fail the parent `SUBORDINATE` registration.
-6. Approving a paused trust mark step uses the same admin endpoint as UC-2 (
+6. A domain rejection also settles a paused trust mark sub-flow: when the parent `SUBORDINATE` registration is
+   rejected because the domain it was accepted under was rejected, its non-settled `TRUST_MARK_SUBORDINATE`
+   children are rejected with it, reason `Not Accepted Domain`. See
+   [Organizations and Domains](organization.md#cascading-a-domain-rejection).
+7. Approving a paused trust mark step uses the same admin endpoint as UC-2 (
    `.../{registrationId}/steps/{stepIndex}/approve}`), addressed by the **child** registration's ID —
    `RegistrationAdminServiceImpl.approveStep` detects `registrationType = TRUST_MARK_SUBORDINATE` and re-dispatches
-   through the trust mark sub-flow instead of the parent flow.
+   through the trust mark sub-flow instead of the parent flow. The pre-validation flag is re-applied when that
+   context is rebuilt, so a later gated step in the same sub-flow auto-passes exactly as it would have on the
+   first run.
 
 **Result:** Each requested trust mark ends up as its own `TRUST_MARK_SUBORDINATE` registration with an independent
 status, surfaced on the parent registration's `statusTrustmarks` (member view) or listed as its own row (admin view,
@@ -344,6 +404,11 @@ All endpoints are scoped under `/{tenant}/{orgNumber}` except where noted, and g
 | `GET`    | `/registration-admin/v1/{tenant}/{orgNumber}/count?taimId=`                                      | Count unhandled `PENDING_APPROVAL` registrations for an Intermediate      |
 | `POST`   | `/registration-admin/v1/{tenant}/{orgNumber}/{registrationId}/reject`                            | Reject a pending registration                                             |
 | `POST`   | `/registration-admin/v1/{tenant}/{orgNumber}/{registrationId}/steps/{stepIndex}/approve`         | Approve the pending step and resume the pipeline                          |
+| `POST`   | `/organization/v1/{tenant}/{orgNumber}`                                                          | Bootstrap the organization's registry record (UC-0)                       |
+| `POST`   | `/organization/v1/{tenant}/{orgNumber}/domains`                                                  | Claim a domain to register entities under (UC-0)                          |
+| `GET`    | `/registration-admin/v1/{tenant}/{orgNumber}/domains?status=`                                    | List domain claims on this tenant (operator)                              |
+| `POST`   | `/registration-admin/v1/{tenant}/{orgNumber}/domains/{domainId}/approve`                         | Approve a pending domain claim                                            |
+| `POST`   | `/registration-admin/v1/{tenant}/{orgNumber}/domains/{domainId}/reject`                          | Reject a domain claim and cascade to dependent registrations              |
 | `GET`    | `/registration-flow/v1/{tenant}/{orgNumber}/flows`                                               | List registration flows owned by this org                                 |
 | `GET`    | `/registration-flow/v1/{tenant}/{orgNumber}/steps`                                               | List selectable (`public`, `MID`) pipeline steps                          |
 | `GET`    | `/registration-flow/v1/{tenant}/{orgNumber}/flow/{flowId}`                                       | Get a flow                                                                |

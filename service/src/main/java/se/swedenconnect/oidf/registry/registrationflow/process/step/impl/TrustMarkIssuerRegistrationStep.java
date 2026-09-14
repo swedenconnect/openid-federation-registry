@@ -19,6 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
+import se.swedenconnect.oidf.registry.organization.model.Organization;
+import se.swedenconnect.oidf.registry.organization.repository.OrganizationTrustMarkRepository;
+import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 import se.swedenconnect.oidf.registry.registrationflow.RegistrationStepRepository;
 import se.swedenconnect.oidf.registry.registrationflow.dto.Mapper;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
@@ -48,7 +52,8 @@ import java.util.UUID;
 /**
  * MID step that triggers the configured registration flow for each requested trust mark.
  * Each trust mark sub-flow runs as a MID-only pipeline so that framework PRE/POST steps
- * are not duplicated. Trust marks with no assigned flow are skipped with a warning.
+ * are not duplicated. Trust marks with no assigned flow, or whose assigned flow is disabled, are skipped with a
+ * warning.
  *
  * @author Felix Hellman
  */
@@ -63,6 +68,8 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
   private final RegistrationRepository registrationRepository;
   private final InternalPreTrustMarkRegistrationStep preTmStep;
   private final CreateTrustMarkSubjectStep postTmStep;
+  private final OrganizationService organizationService;
+  private final OrganizationTrustMarkRepository organizationTrustMarkRepository;
 
   /**
    * Constructor.
@@ -74,6 +81,8 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
    * @param registrationRepository repository for persisting sub-flow step results
    * @param preTmStep auto-injected PRE step that creates the TM_SUBORDINATE registration
    * @param postTmStep auto-injected POST step that creates the TrustMarkSubject
+   * @param organizationService service resolving the applicant organization from the context
+   * @param organizationTrustMarkRepository repository of the trust mark types pre-approved per organization
    */
   public TrustMarkIssuerRegistrationStep(final TrustMarkRepository trustMarkRepository,
       final TrustMarkFlowAssignmentRepository tmFlowAssignmentRepository,
@@ -81,7 +90,9 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
       final ProcessEngine processEngine,
       final RegistrationRepository registrationRepository,
       final InternalPreTrustMarkRegistrationStep preTmStep,
-      final CreateTrustMarkSubjectStep postTmStep) {
+      final CreateTrustMarkSubjectStep postTmStep,
+      final OrganizationService organizationService,
+      final OrganizationTrustMarkRepository organizationTrustMarkRepository) {
     this.trustMarkRepository = trustMarkRepository;
     this.tmFlowAssignmentRepository = tmFlowAssignmentRepository;
     this.registrationStepRepository = registrationStepRepository;
@@ -89,6 +100,8 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
     this.registrationRepository = registrationRepository;
     this.preTmStep = preTmStep;
     this.postTmStep = postTmStep;
+    this.organizationService = organizationService;
+    this.organizationTrustMarkRepository = organizationTrustMarkRepository;
   }
 
   @Override
@@ -118,6 +131,12 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
     final List<String> skippedNoFlow = new ArrayList<>();
     final List<String> failed = new ArrayList<>();
     final List<String> pendingApproval = new ArrayList<>();
+    final List<String> preValidated = new ArrayList<>();
+
+    // The applicant's own organization, needed to tell whether it is pre-validated for a requested type.
+    final Optional<UUID> applicantOrganizationId = ctx.<OrganizationRecord>get(ContextKey.ORG)
+        .flatMap(this.organizationService::find)
+        .map(Organization::getOrganizationId);
 
     final Optional<UUID> parentRegId = ctx.get(ContextKey.REGISTRATION_ID);
 
@@ -144,6 +163,15 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
           continue;
         }
 
+        // A disabled flow is no more usable than an unassigned one: skip the type rather than failing the
+        // registration, so the entity still joins the federation with whatever trust marks remain available.
+        if (!assignment.get().getRegistrationFlow().isEnabled()) {
+          log.warn("TrustMarkIssuerRegistrationStep: flow assigned to trust mark type='{}' is disabled",
+              trustmarkType);
+          skippedNoFlow.add(trustmarkType);
+          continue;
+        }
+
         // Build the sub-flow: [PRE (auto)] + [user MID steps] + [POST (auto)]
         final List<StepDefinition> midSteps = Mapper.toMidOnlyProcessFlow(
             assignment.get().getRegistrationFlow(), this.registrationStepRepository).getProcessFlow();
@@ -165,6 +193,18 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
         final ProcessContext subCtx = ctx.copy();
         subCtx.put(ContextKey.TRUSTMARKS_REQUESTED, new SerializableList<>(List.of(
             new TrustmarkSource(resolvedIssuerId, List.of(tmStatus)))));
+
+        // A type the tenant operator has already pre-approved for this organization needs no manual review.
+        // The flag goes on the sub-context only: pre-validation is per trust mark type, never for the
+        // registration as a whole.
+        final boolean isPreValidated = applicantOrganizationId
+            .map(organizationId -> this.organizationTrustMarkRepository
+                .existsByOrganization_OrganizationIdAndTrustMarkType(organizationId, trustmarkType))
+            .orElse(false);
+        if (isPreValidated) {
+          subCtx.put(ContextKey.TRUST_MARK_PRE_VALIDATED, Boolean.TRUE);
+          preValidated.add(trustmarkType);
+        }
 
         final List<StepDefinition> stepsToRun;
         final int stepOffset;
@@ -217,12 +257,14 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
 
     if (!failed.isEmpty()) {
       return StepResult.success(
-          "Trust mark flows completed with failures for: %s. Pending: %s. Not found: %s. No flow assigned: %s"
-              .formatted(failed, pendingApproval, skippedNotFound, skippedNoFlow));
+          ("Trust mark flows completed with failures for: %s. Pending: %s. Auto-approved (pre-validated): %s. "
+              + "Not found: %s. No flow assigned: %s")
+              .formatted(failed, pendingApproval, preValidated, skippedNotFound, skippedNoFlow));
     }
     return StepResult.success(
-        "Trust mark flows dispatched. Pending approval: %s. Not found: %s. No flow assigned: %s"
-            .formatted(pendingApproval, skippedNotFound, skippedNoFlow));
+        ("Trust mark flows dispatched. Pending approval: %s. Auto-approved (pre-validated): %s. "
+            + "Not found: %s. No flow assigned: %s")
+            .formatted(pendingApproval, preValidated, skippedNotFound, skippedNoFlow));
   }
 
   @Override

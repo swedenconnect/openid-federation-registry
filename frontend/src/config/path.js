@@ -88,5 +88,19 @@ export const registrationAdminItemPath = (tenant, orgNumber, id) => getAbsoluteP
 export const registrationAdminRejectPath = (tenant, orgNumber, id) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/${id}/reject`);
 export const registrationAdminApproveStepPath = (tenant, orgNumber, id, stepIndex) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/${id}/steps/${stepIndex}/approve`);
 
+export const registrationAdminDomainsPath = (tenant, orgNumber) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/domains`);
+export const registrationAdminDomainsCountPath = (tenant, orgNumber) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/domains/count`);
+export const registrationAdminDomainApprovePath = (tenant, orgNumber, domainId) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/domains/${domainId}/approve`);
+export const registrationAdminDomainRejectPath = (tenant, orgNumber, domainId) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/domains/${domainId}/reject`);
+
+export const registrationAdminOrganizationsPath = (tenant, orgNumber) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/organizations`);
+export const registrationAdminOrganizationPath = (tenant, orgNumber, targetOrgNumber) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/organizations/${targetOrgNumber}`);
+export const registrationAdminOrganizationTrustmarksPath = (tenant, orgNumber, targetOrgNumber) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/organizations/${targetOrgNumber}/trustmarks`);
+export const registrationAdminTrustmarkTypesPath = (tenant, orgNumber) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/trustmark-types`);
+
+export const organizationPath = (tenant, orgNumber) => getAbsolutePath(`organization/v1/${tenant}/${orgNumber}`);
+export const organizationDomainsPath = (tenant, orgNumber) => getAbsolutePath(`organization/v1/${tenant}/${orgNumber}/domains`);
+export const organizationDomainPath = (tenant, orgNumber, domainId) => getAbsolutePath(`organization/v1/${tenant}/${orgNumber}/domains/${domainId}`);
+
 export const registrationPublicFlowsPath = getAbsolutePath('registration/v1/flows');
 export const registrationTriggerPath = (tenant, orgNumber, joinId) => getAbsolutePath(`registration/v1/${tenant}/${orgNumber}/${joinId}`);

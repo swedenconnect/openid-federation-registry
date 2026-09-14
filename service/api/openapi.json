@@ -51,6 +51,10 @@
       "description": "Loading entity configurations"
     },
     {
+      "name": "Organization",
+      "description": "Organization bootstrap and domain registration"
+    },
+    {
       "name": "Trustmarks",
       "description": "CRUD for trustmarks and trust mark subjects"
     },
@@ -2162,6 +2166,197 @@
         }
       }
     },
+    "/registration-admin/v1/{tenant}/{orgNumber}/organizations/{targetOrgNumber}/trustmarks": {
+      "put": {
+        "tags": [
+          "RegistrationAdmin"
+        ],
+        "summary": "Replace an organization's pre-validated trust mark types",
+        "operationId": "replacePreValidatedTrustMarks",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "targetOrgNumber",
+            "in": "path",
+            "description": "Target organization number",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreValidatedTrustMarksRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organization"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organization/v1/{tenant}/{orgNumber}": {
+      "get": {
+        "tags": [
+          "Organization"
+        ],
+        "summary": "Get the organization's registry record",
+        "operationId": "getOrganization",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organization"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Organization"
+        ],
+        "summary": "Update the organization's legal name",
+        "operationId": "updateOrganization",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrganizationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organization"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Organization"
+        ],
+        "summary": "Bootstrap the organization's registry record",
+        "operationId": "createOrganization",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrganizationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organization"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/registry/v1/{tenant}/{orgNumber}/trustmarks": {
       "get": {
         "tags": [
@@ -3199,6 +3394,203 @@
         }
       }
     },
+    "/registration-admin/v1/{tenant}/{orgNumber}/domains/{domainId}/reject": {
+      "post": {
+        "tags": [
+          "RegistrationAdmin"
+        ],
+        "summary": "Reject a pending domain and cascade to dependent registrations",
+        "operationId": "rejectDomain",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "domainId",
+            "in": "path",
+            "description": "Domain ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectRegistrationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainRejectionResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-admin/v1/{tenant}/{orgNumber}/domains/{domainId}/approve": {
+      "post": {
+        "tags": [
+          "RegistrationAdmin"
+        ],
+        "summary": "Approve a pending domain",
+        "operationId": "approveDomain",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "domainId",
+            "in": "path",
+            "description": "Domain ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminDomain"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/organization/v1/{tenant}/{orgNumber}/domains": {
+      "get": {
+        "tags": [
+          "Organization"
+        ],
+        "summary": "List the organization's domains",
+        "operationId": "listDomains",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Domain"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Organization"
+        ],
+        "summary": "Claim a domain for the organization",
+        "operationId": "requestDomain",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DomainRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Domain"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/tenants": {
       "get": {
         "tags": [
@@ -3969,6 +4361,237 @@
         }
       }
     },
+    "/registration-admin/v1/{tenant}/{orgNumber}/trustmark-types": {
+      "get": {
+        "tags": [
+          "RegistrationAdmin"
+        ],
+        "summary": "List the trust mark types issued on this tenant",
+        "operationId": "listTrustMarkTypes",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-admin/v1/{tenant}/{orgNumber}/organizations": {
+      "get": {
+        "tags": [
+          "RegistrationAdmin"
+        ],
+        "summary": "List the organizations on this tenant",
+        "operationId": "listOrganizations",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminOrganization"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-admin/v1/{tenant}/{orgNumber}/organizations/{targetOrgNumber}": {
+      "get": {
+        "tags": [
+          "RegistrationAdmin"
+        ],
+        "summary": "Get a single organization on this tenant",
+        "operationId": "getOrganizationOnTenant",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "targetOrgNumber",
+            "in": "path",
+            "description": "Target organization number",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Organization"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-admin/v1/{tenant}/{orgNumber}/domains": {
+      "get": {
+        "tags": [
+          "RegistrationAdmin"
+        ],
+        "summary": "List domains claimed by organizations on this tenant",
+        "operationId": "listDomains_1",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Domain status to filter on",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDING",
+                "VALIDATED",
+                "REJECTED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminDomain"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-admin/v1/{tenant}/{orgNumber}/domains/count": {
+      "get": {
+        "tags": [
+          "RegistrationAdmin"
+        ],
+        "summary": "Count domains awaiting review on this tenant",
+        "operationId": "countPendingDomains",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/registration-admin/v1/{tenant}/{orgNumber}/count": {
       "get": {
         "tags": [
@@ -4238,6 +4861,48 @@
           {
             "name": "assignId",
             "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/organization/v1/{tenant}/{orgNumber}/domains/{domainId}": {
+      "delete": {
+        "tags": [
+          "Organization"
+        ],
+        "summary": "Withdraw one of the organization's domains",
+        "operationId": "deleteDomain",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "domainId",
+            "in": "path",
+            "description": "Domain ID",
             "required": true,
             "schema": {
               "type": "string",
@@ -4965,6 +5630,9 @@
               "INTERMEDIATE",
               "TRUST_MARK_ISSUER"
             ]
+          },
+          "enabled": {
+            "type": "boolean"
           }
         }
       },
@@ -4993,6 +5661,113 @@
               "INTERMEDIATE",
               "TRUST_MARK_ISSUER"
             ]
+          }
+        }
+      },
+      "PreValidatedTrustMarksRequest": {
+        "type": "object",
+        "description": "Replaces the pre-validated trust mark types of an organization",
+        "properties": {
+          "preValidatedTrustMarks": {
+            "type": "array",
+            "description": "Trust mark types to pre-approve for the organization",
+            "example": [
+              "https://tm.example.com/tm/x"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Domain": {
+        "type": "object",
+        "description": "A domain claimed by an organization",
+        "properties": {
+          "domainId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Domain identifier",
+            "example": "6f1b4f7e-1f4c-4e3f-8c7f-2d43b0f6a0f1"
+          },
+          "domain": {
+            "type": "string",
+            "description": "Bare, lower-cased hostname",
+            "example": "example.com"
+          },
+          "status": {
+            "type": "string",
+            "description": "Review state of the domain",
+            "enum": [
+              "PENDING",
+              "VALIDATED",
+              "REJECTED"
+            ]
+          },
+          "rejectionReason": {
+            "type": "string",
+            "description": "Operator's reason for rejecting the domain, null unless rejected"
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the domain was first requested"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the domain was approved or rejected, null while pending"
+          }
+        }
+      },
+      "Organization": {
+        "type": "object",
+        "description": "An organization's registry record",
+        "properties": {
+          "orgNumber": {
+            "type": "string",
+            "description": "Organization number",
+            "example": 5520012229
+          },
+          "orgName": {
+            "type": "string",
+            "description": "Organization name from the token claim, may be null",
+            "example": "TestOrg1"
+          },
+          "legalName": {
+            "type": "string",
+            "description": "Legal name posted at bootstrap, may be null",
+            "example": "TestOrg1 AB"
+          },
+          "tenant": {
+            "type": "string",
+            "description": "Tenant slug the organization is placed on",
+            "example": "swedenconnect"
+          },
+          "domains": {
+            "type": "array",
+            "description": "The organization's domains, in every status",
+            "items": {
+              "$ref": "#/components/schemas/Domain"
+            }
+          },
+          "preValidatedTrustMarks": {
+            "type": "array",
+            "description": "Trust mark types pre-approved for this organization by the tenant operator",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CreateOrganizationRequest": {
+        "type": "object",
+        "description": "Organization data posted by the portal",
+        "properties": {
+          "legalName": {
+            "type": "string",
+            "description": "The organization's legal name",
+            "example": "TestOrg1 AB"
           }
         }
       },
@@ -5054,6 +5829,135 @@
             "type": "string",
             "description": "Human-readable explanation shown to the applicant",
             "example": "Entity configuration could not be fetched from the provided entity ID."
+          }
+        }
+      },
+      "DomainRejectionResult": {
+        "type": "object",
+        "description": "The rejected domain plus the registrations the rejection cascaded to",
+        "properties": {
+          "domainId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Domain identifier",
+            "example": "6f1b4f7e-1f4c-4e3f-8c7f-2d43b0f6a0f1"
+          },
+          "domain": {
+            "type": "string",
+            "description": "Bare, lower-cased hostname",
+            "example": "example.com"
+          },
+          "status": {
+            "type": "string",
+            "description": "Review state of the domain",
+            "enum": [
+              "PENDING",
+              "VALIDATED",
+              "REJECTED"
+            ]
+          },
+          "rejectionReason": {
+            "type": "string",
+            "description": "Operator's reason for rejecting the domain"
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the domain was first requested"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the domain was rejected"
+          },
+          "orgNumber": {
+            "type": "string",
+            "description": "Owning organization's number",
+            "example": 5520012229
+          },
+          "orgName": {
+            "type": "string",
+            "description": "Owning organization's name from its token claim",
+            "example": "TestOrg1"
+          },
+          "legalName": {
+            "type": "string",
+            "description": "Owning organization's legal name",
+            "example": "TestOrg1 AB"
+          },
+          "cascadedRegistrationIds": {
+            "type": "array",
+            "description": "Registrations rejected as a consequence of this domain rejection",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "AdminDomain": {
+        "type": "object",
+        "description": "A domain as seen by the tenant operator reviewing it",
+        "properties": {
+          "domainId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Domain identifier",
+            "example": "6f1b4f7e-1f4c-4e3f-8c7f-2d43b0f6a0f1"
+          },
+          "domain": {
+            "type": "string",
+            "description": "Bare, lower-cased hostname",
+            "example": "example.com"
+          },
+          "status": {
+            "type": "string",
+            "description": "Review state of the domain",
+            "enum": [
+              "PENDING",
+              "VALIDATED",
+              "REJECTED"
+            ]
+          },
+          "rejectionReason": {
+            "type": "string",
+            "description": "Operator's reason for rejecting the domain, null unless rejected"
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the domain was first requested"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the domain was approved or rejected, null while pending"
+          },
+          "orgNumber": {
+            "type": "string",
+            "description": "Owning organization's number",
+            "example": 5520012229
+          },
+          "orgName": {
+            "type": "string",
+            "description": "Owning organization's name from its token claim",
+            "example": "TestOrg1"
+          },
+          "legalName": {
+            "type": "string",
+            "description": "Owning organization's legal name",
+            "example": "TestOrg1 AB"
+          }
+        }
+      },
+      "DomainRequest": {
+        "type": "object",
+        "description": "A domain an organization claims",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "description": "Bare hostname, no scheme, path, port or wildcard",
+            "example": "example.com"
           }
         }
       },
@@ -5276,12 +6180,12 @@
           "description": {
             "type": "string",
             "description": "Description of the flow and its purpose",
-            "example": "QA-miljÃ¶ fÃ¶r Sweden Connect"
+            "example": "QA-miljö för Sweden Connect"
           },
           "descriptionSv": {
             "type": "string",
             "description": "Description#Sv of the flow and its purpose",
-            "example": "QA-miljÃ¶ fÃ¶r Sweden Connect"
+            "example": "QA-miljö för Sweden Connect"
           },
           "entityType": {
             "type": "string",
@@ -5378,6 +6282,49 @@
               "INTERMEDIATE",
               "TRUST_MARK_ISSUER"
             ]
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AdminOrganization": {
+        "type": "object",
+        "description": "An organization as seen by the tenant operator",
+        "properties": {
+          "orgNumber": {
+            "type": "string",
+            "description": "Organization number",
+            "example": 5520012229
+          },
+          "orgName": {
+            "type": "string",
+            "description": "Organization name from the token claim, may be null",
+            "example": "TestOrg1"
+          },
+          "legalName": {
+            "type": "string",
+            "description": "Legal name posted at bootstrap, may be null",
+            "example": "TestOrg1 AB"
+          },
+          "domainCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Number of domains claimed by the organization, in every status",
+            "example": 3
+          },
+          "pendingDomainCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Number of the organization's domains still awaiting review",
+            "example": 1
+          },
+          "preValidatedTrustMarks": {
+            "type": "array",
+            "description": "Trust mark types pre-approved for this organization by the tenant operator",
+            "items": {
+              "type": "string"
+            }
           }
         }
       }
