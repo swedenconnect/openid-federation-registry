@@ -41,12 +41,40 @@ import java.util.stream.Collectors;
  * @param federationServiceApi federation API settings.
  * @param instances InstanceProperties that is managed by this registry
  * @param entityConfigurationLoader EntityConfigurationLoader configuration
+ * @param registration registration request settings
  * @author Per Fredrik Plars
  */
 @ConfigurationProperties("openid.federation.registry")
 public record RegistryProperties(FederationAPIProperties federationServiceApi,
     List<InstanceProperties> instances,
-    EntityConfigurationLoaderProperties entityConfigurationLoader) {
+    EntityConfigurationLoaderProperties entityConfigurationLoader,
+    RegistrationProperties registration) {
+
+  /**
+   * Whether a registration request's entity identifier must resolve to a host covered by one of the registering
+   * organization's registered domains. Enabled unless explicitly turned off, so an installation that has not
+   * configured anything still enforces the rule.
+   *
+   * @return true if the domain check is enforced on registration requests
+   */
+  public boolean requireRegisteredDomain() {
+    return Optional.ofNullable(this.registration)
+        .map(RegistrationProperties::requireRegisteredDomain)
+        .orElse(true);
+  }
+
+  /**
+   * Whether entity identifiers resolving to local/private address ranges — and therefore {@code localhost} as an
+   * organization domain — are accepted. Mirrors
+   * {@code openid.federation.registry.entity-configuration-loader.enable-local-ip-address-ranges}.
+   *
+   * @return true if local address ranges are enabled
+   */
+  public boolean localAddressRangesEnabled() {
+    return Optional.ofNullable(this.entityConfigurationLoader)
+        .map(EntityConfigurationLoaderProperties::isEnableLocalIpAddressRanges)
+        .orElse(false);
+  }
 
   /**
    * Validates the registry properties to ensure all required fields are properly configured.
@@ -230,6 +258,16 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
 
       Optional.ofNullable(this.oidfServiceApiValidationKey).ifPresent(KeyEntry::validate);
     }
+  }
+
+  /**
+   * Settings governing incoming registration requests.
+   *
+   * @param requireRegisteredDomain whether the host of a registration request's entity identifier must be
+   *     covered by one of the registering organization's PENDING/VALIDATED domains. Defaults to {@code true}
+   *     when unset — see {@link RegistryProperties#requireRegisteredDomain()}.
+   */
+  public record RegistrationProperties(Boolean requireRegisteredDomain) {
   }
 
   /**

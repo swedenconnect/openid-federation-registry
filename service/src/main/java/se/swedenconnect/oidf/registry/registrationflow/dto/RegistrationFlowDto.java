@@ -31,6 +31,8 @@ import java.util.UUID;
  * @param entityType entity type as defined in OpenID Federation
  * @param steps ordered list of step definitions
  * @param flowType the type of flow (INTERMEDIATE or TRUST_MARK_ISSUER)
+ * @param enabled whether the flow may be used; a disabled flow is hidden from applicants and refuses new
+ *     registrations. Absent means enabled, so clients written before the flag keep working.
  * @author Per Fredrik Plars
  */
 public record RegistrationFlowDto(
@@ -41,6 +43,7 @@ public record RegistrationFlowDto(
     Technology technology,
     String entityType,
     List<StepDto> steps,
-    Step.FlowType flowType
+    Step.FlowType flowType,
+    Boolean enabled
 ) {
 }

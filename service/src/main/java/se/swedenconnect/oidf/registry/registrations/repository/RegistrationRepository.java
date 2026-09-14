@@ -20,6 +20,7 @@ import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -104,6 +105,17 @@ public interface RegistrationRepository extends JpaRepository<Registration, UUID
    * @return list of matching registrations
    */
   List<Registration> findByOrganization_OrganizationId(UUID organizationId);
+
+  /**
+   * Finds all registrations for which the given organization is the registrant, restricted to the given
+   * statuses. Backs the cascade of a domain rejection, which only touches registrations still in flight.
+   *
+   * @param organizationId the ID of the registrant organization
+   * @param statuses the statuses to include
+   * @return list of matching registrations
+   */
+  List<Registration> findByOrganization_OrganizationIdAndStatusIn(UUID organizationId,
+      Collection<RegistrationStatus> statuses);
 
   /**
    * Finds a registration by ID, scoped to the registrant organization.

@@ -26,7 +26,10 @@ import java.util.UUID;
  * @param name display name
  * @param description human-readable description
  * @param flowType the type of flow (INTERMEDIATE or TRUST_MARK_ISSUER)
+ * @param enabled whether the flow may be used; a disabled flow is hidden from applicants and refuses new
+ *     registrations
  * @author Per Fredrik Plars
  */
-public record FlowSummaryDto(UUID flowId, String name, String description, Step.FlowType flowType) {
+public record FlowSummaryDto(UUID flowId, String name, String description, Step.FlowType flowType,
+    Boolean enabled) {
 }

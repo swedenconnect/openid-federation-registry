@@ -22,6 +22,8 @@ import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
+import se.swedenconnect.oidf.registry.organization.dto.DomainDto;
+import se.swedenconnect.oidf.registry.organization.dto.OrganizationDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
@@ -431,6 +433,89 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
             .organizationId(organizationId.toString())
             .extId(subordinateId.toString())
             .oldData(this.toJson(deletedData))
+            .build());
+  }
+
+  @Override
+  public void organizationCreated(final UUID id, final UUID instanceId, final UUID organizationId,
+      final OrganizationDto oldData, final OrganizationDto newData) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(RegistryAuditEventType.ORGANIZATION_CREATED)
+            .instanceId(instanceId.toString())
+            .organizationId(organizationId.toString())
+            .extId(id.toString())
+            .oldData(this.toJson(oldData))
+            .newData(this.toJson(newData))
+            .build());
+  }
+
+  @Override
+  public void organizationUpdated(final UUID id, final UUID instanceId, final UUID organizationId,
+      final OrganizationDto oldData, final OrganizationDto newData) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(RegistryAuditEventType.ORGANIZATION_UPDATED)
+            .instanceId(instanceId.toString())
+            .organizationId(organizationId.toString())
+            .extId(id.toString())
+            .oldData(this.toJson(oldData))
+            .newData(this.toJson(newData))
+            .build());
+  }
+
+  @Override
+  public void organizationDomainRequested(final UUID id, final UUID instanceId, final UUID organizationId,
+      final DomainDto oldData, final DomainDto newData) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(RegistryAuditEventType.ORGANIZATION_DOMAIN_REQUESTED)
+            .instanceId(instanceId.toString())
+            .organizationId(organizationId.toString())
+            .extId(id.toString())
+            .oldData(this.toJson(oldData))
+            .newData(this.toJson(newData))
+            .build());
+  }
+
+  @Override
+  public void organizationDomainDeleted(final UUID id, final UUID instanceId, final UUID organizationId,
+      final DomainDto deletedData) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(RegistryAuditEventType.ORGANIZATION_DOMAIN_DELETED)
+            .instanceId(instanceId.toString())
+            .organizationId(organizationId.toString())
+            .extId(id.toString())
+            .oldData(this.toJson(deletedData))
+            .build());
+  }
+
+  @Override
+  public void organizationDomainApproved(final UUID id, final UUID instanceId, final UUID organizationId,
+      final DomainDto oldData, final DomainDto newData) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(RegistryAuditEventType.ORGANIZATION_DOMAIN_APPROVED)
+            .instanceId(instanceId.toString())
+            .organizationId(organizationId.toString())
+            .extId(id.toString())
+            .oldData(this.toJson(oldData))
+            .newData(this.toJson(newData))
+            .build());
+  }
+
+  @Override
+  public void organizationDomainRejected(final UUID id, final UUID instanceId, final UUID organizationId,
+      final DomainDto oldData, final DomainDto newData) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(RegistryAuditEventType.ORGANIZATION_DOMAIN_REJECTED)
+            .instanceId(instanceId.toString())
+            .organizationId(organizationId.toString())
+            .extId(id.toString())
+            .oldData(this.toJson(oldData))
+            .newData(this.toJson(newData))
             .build());
   }
 

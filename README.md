@@ -73,6 +73,7 @@ The service uses a **MariaDB** database for robust and persistent storage, enabl
 - **[Developer Guide](docs/developer.md)** - Setup instructions for development environment
 - **[Configuration Guide](docs/configuration.md)** - Application configuration reference
 - **[OAuth Scopes](docs/oauth.md)** - OAuth2 scope definitions and API access control
+- **[Organizations and Domains](docs/organization.md)** - Organization bootstrap, domain claims and registration domain enforcement
 - **[Audit Events](docs/audit.md)** - Audit event documentation
 - **[Validation Rules](docs/validation.md)** - Input validation rules and syntax
 

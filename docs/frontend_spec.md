@@ -776,6 +776,75 @@ Delete functionality for trustmark subjects with confirmation dialog.
 - Trustmark Subjects List View is refreshed
 - Success: Trustmark subject removed from list
 
+## Registrations List View
+
+Route `/registrations`. One review queue for everything an operator has to approve or reject: registration
+requests and domain requests are listed in the same table, distinguished only by their type chip.
+
+**Loading**: the view loads `GET /registration-admin/v1/{tenant}/{orgNumber}` and
+`GET /registration-admin/v1/{tenant}/{orgNumber}/domains` in parallel. The domain list is operator-only — a
+caller without a review queue gets a `404` there, which leaves the domain rows empty without raising an error
+banner over the registrations the caller may see.
+
+### Filters
+
+- **Search**: free text over entity ID, intermediate entity ID, subordinate entity ID and organization name for
+  registration rows, and over domain, organization name and organization number for domain rows.
+- **Type toggle**: `All` / `IM` (`SUBORDINATE`) / `TM` (`TRUST_MARK_SUBORDINATE`) / `Domain` (`DOMAIN`). Domain
+  rows carry their own chip colour so the two kinds of request stay visually distinct.
+- **Show history switch**: off by default, in which case only unhandled work is listed — registrations in
+  `PENDING_APPROVAL` or `STARTED`, domains in `PENDING`. Switched on, handled items
+  (`APPROVED`/`VALIDATED`, `REJECTED`) are listed too. The choice is persisted in `localStorage` under
+  `oidf.registrations.showHistory`, in the same style as the userStore's tenant/organization keys.
+
+### Table Structure
+
+| Column | Registration row | Domain row |
+|--------|------------------|------------|
+| Entity ID / Subordinate Entity ID / Domain | entity ID, or the subordinate entity ID for a TM row | the domain |
+| Intermediate / Trust Mark Type / Organization | intermediate entity ID, or the trust mark type for a TM row | the requesting organization — legal name, falling back to org name, then org number |
+| Type | `IM` or `TM` | `Domain` |
+| Status | `statusFedreg` | mapped onto the same chips: `PENDING → PENDING_APPROVAL`, `VALIDATED → APPROVED`, `REJECTED → REJECTED` |
+| Requested | — | `createdDate` |
+| Reason | rejection reason, when present | rejection reason, when present |
+
+Rows are sorted pending first, then by date. Clicking a registration row opens `/registrations/:id`; clicking a
+domain row opens `/registrations/domain/:domainId`.
+
+**Empty state**: with history hidden the empty table reads "No pending requests. History is hidden — turn on
+Show history to see handled requests."; with history shown it reads "No registrations found."
+
+### Query parameters
+
+- `?type=` preselects the type toggle (`SUBORDINATE`, `TRUST_MARK_SUBORDINATE`, `DOMAIN`).
+- `?org=` seeds the search box with an organization number.
+- `?status=` filters domain rows to one domain status; `ALL` means every status.
+- `?history=1` forces the Show history switch on without changing the stored default, so a deep link may target
+  an already handled item.
+
+The Organizations view links here as `/registrations?type=DOMAIN&org=<orgNumber>&status=ALL&history=1`.
+
+### Navigation badge
+
+The **Registrations** nav link carries a warning badge with the number of requests awaiting review: pending
+domains (`GET .../domains/count`) plus registrations in `PENDING_APPROVAL` derived from the loaded list, since
+`/count` is scoped to a single intermediate.
+
+## Domain Request Detail View
+
+Route `/registrations/domain/:domainId`, reached by clicking a domain row. Modelled on the Registration Detail
+View: a header with the actions, and a summary table listing domain, organization, organization number, status,
+requested date, reviewed date and reviewer when present, and the rejection reason when present. The domain is
+resolved from the operator domain list — there is no single-domain operator endpoint.
+
+**Actions** (shown only while the domain is `PENDING`):
+
+- **Approve**: `POST .../domains/{domainId}/approve`, then the page reloads the domain and shows a snackbar.
+- **Reject**: opens a dialog that requires a rejection reason, then `POST .../domains/{domainId}/reject`. The
+  snackbar reports how many registrations the rejection cascaded to
+  (`cascadedRegistrationIds`). The page stays open with the updated status.
+- **Back**: returns to `/registrations?type=DOMAIN`.
+
 ## Error Handling
 
 ### Error Banner

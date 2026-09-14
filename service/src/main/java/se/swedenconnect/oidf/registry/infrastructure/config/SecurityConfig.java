@@ -111,6 +111,8 @@ public class SecurityConfig {
             .requestMatchers("/registration/v1/**").authenticated()
             // Registration-Admin — right-level enforced by @PreAuthorize(@orgRightsService) on controllers
             .requestMatchers("/registration-admin/v1/**").authenticated()
+            // Organization — right-level enforced by @PreAuthorize(@orgRightsService) on controllers
+            .requestMatchers("/organization/v1/**").authenticated()
 
             .requestMatchers(HttpMethod.GET, "/logout/frontchannel").permitAll()
             .requestMatchers(HttpMethod.GET, "/jwks").permitAll()

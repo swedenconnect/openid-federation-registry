@@ -99,7 +99,19 @@
         <nav v-if="userStore.isAuthorized" aria-label="Main navigation" class="nav-bar">
           <RouterLink to="/" class="nav-link" :class="{ active: isEntityRoute }">Entity</RouterLink>
           <RouterLink to="/registration-flows" class="nav-link" :class="{ active: isRegistrationFlowsRoute }">Registration Flows</RouterLink>
-          <RouterLink to="/registrations" class="nav-link" :class="{ active: isRegistrationsRoute }">Registrations</RouterLink>
+          <RouterLink to="/registrations" class="nav-link" :class="{ active: isRegistrationsRoute }">
+            Registrations
+            <v-badge
+                v-if="pendingReviewCount > 0"
+                :content="pendingReviewCount"
+                color="warning"
+                inline
+                :aria-label="`${pendingReviewCount} requests awaiting review`"
+            ></v-badge>
+          </RouterLink>
+          <RouterLink to="/organizations" class="nav-link" :class="{ active: isOrganizationsRoute }">
+            Organizations
+          </RouterLink>
           <a :href="swaggerUiPath" rel="noopener" class="nav-link" target="_blank"
              aria-label="API documentation (opens in new tab)">
             API
@@ -148,7 +160,14 @@ import {computed, onBeforeMount, ref} from 'vue';
 import {RouterLink, RouterView, useRoute, useRouter} from 'vue-router';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
-import {adminAuthenticatePath, logoutPath, swaggerUiPath} from '@/config/path';
+import {useRequest} from '@/api/composables/request';
+import {
+  adminAuthenticatePath,
+  logoutPath,
+  registrationAdminDomainsCountPath,
+  registrationAdminPath,
+  swaggerUiPath,
+} from '@/config/path';
 
 const route = useRoute();
 const router = useRouter();
@@ -158,6 +177,7 @@ const userStore = useUserStore();
 const isEntityRoute = computed(() => route.path === '/');
 const isRegistrationFlowsRoute = computed(() => route.path.startsWith('/registration-flows'));
 const isRegistrationsRoute = computed(() => route.path.startsWith('/registrations'));
+const isOrganizationsRoute = computed(() => route.path.startsWith('/organizations'));
 const currentPageTitle = computed(() => route.meta.title ?? String(route.name ?? ''));
 
 const errorMessage = computed(() => errorStore.message);
@@ -186,10 +206,35 @@ function logout() {
 
 const ready = ref(false);
 
+// Badge on the Registrations nav link: everything waiting for this operator to act, registrations and domain
+// requests alike, since both are reviewed from the same view. Only a tenant operator has a domain review queue
+// at all, so a 404 there is the normal answer for everyone else — that part of the count stays at zero and no
+// error is raised. The registrations part is derived from the list because /count is per intermediate.
+const {requestGet: requestDomainCount, ok: domainCountOk} = useRequest(false);
+const {requestGet: requestRegistrations, ok: registrationsOk} = useRequest(false);
+const pendingDomainCount = ref(0);
+const pendingRegistrationCount = ref(0);
+const pendingReviewCount = computed(() => pendingDomainCount.value + pendingRegistrationCount.value);
+
+async function loadPendingReviewCount() {
+  if (!userStore.selectedTenant || !userStore.orgNumber) {
+    return;
+  }
+  const [domainResponse, registrationResponse] = await Promise.all([
+    requestDomainCount(registrationAdminDomainsCountPath(userStore.selectedTenant, userStore.orgNumber)),
+    requestRegistrations(registrationAdminPath(userStore.selectedTenant, userStore.orgNumber)),
+  ]);
+  pendingDomainCount.value = domainCountOk.value ? (domainResponse?.count ?? 0) : 0;
+  pendingRegistrationCount.value = registrationsOk.value && Array.isArray(registrationResponse)
+      ? registrationResponse.filter(registration => registration.statusFedreg === 'PENDING_APPROVAL').length
+      : 0;
+}
+
 onBeforeMount(async () => {
   if (route.name !== 'login') {
     await userStore.fetchUser();
     await userStore.fetchTenants();
+    await loadPendingReviewCount();
   }
   ready.value = true;
 });

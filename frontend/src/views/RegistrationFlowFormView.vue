@@ -33,6 +33,17 @@
       <v-card-text>
         <v-form ref="form" @submit.prevent="submitForm">
 
+          <!-- Enabled -->
+          <v-switch
+              v-model="enabled"
+              label="Enabled"
+              color="primary"
+              :disabled="saving"
+              hint="A disabled flow is hidden from applicants and refuses new registrations; work already submitted is unaffected."
+              persistent-hint
+              class="mb-4"
+          ></v-switch>
+
           <!-- Name & Description -->
           <v-text-field
               v-model="name"
@@ -293,6 +304,7 @@ const descriptionSv = ref('');
 const technology = ref(null);
 const entityType = ref(null);
 const flowType = ref('INTERMEDIATE');
+const enabled = ref(true);
 const availableSteps = ref([]);
 const selectedSteps = ref([]);
 const stepToAdd = ref(null);
@@ -401,6 +413,7 @@ async function loadFlow() {
     technology.value = response.technology || null;
     entityType.value = response.entityType || null;
     flowType.value = response.flowType || 'INTERMEDIATE';
+    enabled.value = response.enabled !== false;
     // Wait for the flowType watcher to fire and clear selectedSteps, then set them.
     await nextTick();
     if (Array.isArray(response.steps) && response.steps.length > 0) {
@@ -431,6 +444,7 @@ async function submitForm() {
       technology: technology.value || null,
       entityType: entityType.value || null,
       flowType: flowType.value,
+      enabled: enabled.value,
       steps: selectedSteps.value.map(step => ({
         stepId: step.stepId,
         name: step.name,

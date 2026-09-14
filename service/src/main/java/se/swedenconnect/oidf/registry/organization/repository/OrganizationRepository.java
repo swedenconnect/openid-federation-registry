@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.registry.organization.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -40,5 +41,14 @@ public interface OrganizationRepository extends JpaRepository<Organization, UUID
    *     organization is found with the given number on the given instance
    */
   Optional<Organization> findByInstance_InstanceIdAndOrgNumber(UUID instanceId, String orgNumber);
+
+  /**
+   * Retrieves every organization placed on the given instance. This is the tenant operator's administration
+   * scope: an operator administers the organizations of its whole tenant, not only its own.
+   *
+   * @param instanceId the instance the organizations are placed on
+   * @return the organizations on that instance
+   */
+  List<Organization> findByInstance_InstanceId(UUID instanceId);
 
 }

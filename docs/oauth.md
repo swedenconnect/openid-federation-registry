@@ -113,6 +113,7 @@ globally), so an organisation reachable under two tenants gets one organisation 
 | `/registration-flow/v1/**`                 |           Yes           | Per-method `@PreAuthorize`                                                                                 |
 | `/registration-admin/v1/**`                |           Yes           | Per-method `@PreAuthorize`                                                                                 |
 | `/registration/v1/{tenant}/{orgNumber}/**` |           Yes           | Per-method `@PreAuthorize` (`canRead`/`canWrite`)                                                          |
+| `/organization/v1/**`                      |           Yes           | Per-method `@PreAuthorize` (`canRead`/`canWrite`) — see [Organizations and Domains](organization.md)       |
 | `/registration/v1/flows`                   |           Yes           | None beyond authentication — browsing available registration flows doesn't require belonging to an org yet |
 | `/tenants`, `/userinfo`                    |           Yes           | Resolved from the caller's own `org_rights`, no path-variable tenant/org                                   |
 | `/swagger-ui/**`, `/v3/api-docs/**`        |           Yes           | —                                                                                                          |

@@ -91,6 +91,14 @@ public class RegistrationFlow extends BaseEntity implements Persistable<UUID> {
   @Column(name = "flow_type", length = 30, nullable = false)
   private Step.FlowType flowType = Step.FlowType.INTERMEDIATE;
 
+  /**
+   * Whether the flow may be used. A disabled flow is hidden from applicants browsing joinable flows and refuses new
+   * registrations; work already accepted under it is unaffected and can still be approved or rejected.
+   */
+  @Column(name = "enabled", nullable = false)
+  @Builder.Default
+  private boolean enabled = true;
+
   @Column(name = "flowDefinition", columnDefinition = "TEXT")
   @Convert(converter = RegistrationFlow.StepConverter.class)
   private List<StepModel> flowDefinition;

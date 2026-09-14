@@ -183,6 +183,7 @@ public class Mapper {
     registrationFlow.setTechnology(dto.technology());
     registrationFlow.setEntityType(dto.entityType());
     registrationFlow.setFlowType(dto.flowType() != null ? dto.flowType() : Step.FlowType.INTERMEDIATE);
+    registrationFlow.setEnabled(isEnabled(dto));
     registrationFlow.setFlowDefinition(stepModels);
 
     return registrationFlow;
@@ -216,8 +217,20 @@ public class Mapper {
     if (dto.flowType() != null) {
       existing.setFlowType(dto.flowType());
     }
+    existing.setEnabled(isEnabled(dto));
     existing.setFlowDefinition(stepModels);
     return existing;
+  }
+
+  /**
+   * Resolves the {@code enabled} flag of a DTO. The field is optional: a request that omits it describes a flow that
+   * may be used, which is what clients written before the flag expect on both create and update.
+   *
+   * @param dto the source DTO
+   * @return {@code true} unless the DTO explicitly says the flow is disabled
+   */
+  public static boolean isEnabled(final RegistrationFlowDto dto) {
+    return dto.enabled() == null || dto.enabled();
   }
 
 }

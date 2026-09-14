@@ -16,6 +16,12 @@
 package se.swedenconnect.oidf.registry.registrations.service;
 
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
+import se.swedenconnect.oidf.registry.organization.dto.AdminDomainDto;
+import se.swedenconnect.oidf.registry.organization.dto.AdminOrganizationDto;
+import se.swedenconnect.oidf.registry.organization.dto.DomainRejectionResultDto;
+import se.swedenconnect.oidf.registry.organization.dto.OrganizationDto;
+import se.swedenconnect.oidf.registry.organization.dto.PreValidatedTrustMarksDto;
+import se.swedenconnect.oidf.registry.organization.model.DomainStatus;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
 
 import java.util.List;
@@ -78,4 +84,80 @@ public interface RegistrationAdminService {
    */
   RegistrationDto approveStep(OrganizationRecord organizationRecord, UUID registrationId, int stepIndex);
 
+  /**
+   * Lists the domains claimed by every organization on the calling tenant operator's instance. Domain review is
+   * a tenant-wide duty, so the listing is not limited to the reviewing organization's own domains.
+   *
+   * @param organizationRecord the calling tenant operator
+   * @param status optional status to filter on, {@code null} for every status
+   * @return the matching domains
+   */
+  List<AdminDomainDto> listDomains(OrganizationRecord organizationRecord, DomainStatus status);
+
+  /**
+   * Counts the domains still awaiting review on the calling tenant operator's instance.
+   *
+   * @param organizationRecord the calling tenant operator
+   * @return the number of pending domains
+   */
+  long countPendingDomains(OrganizationRecord organizationRecord);
+
+  /**
+   * Approves a pending domain.
+   *
+   * @param organizationRecord the calling tenant operator
+   * @param domainId the domain to approve
+   * @return the approved domain
+   */
+  AdminDomainDto approveDomain(OrganizationRecord organizationRecord, UUID domainId);
+
+  /**
+   * Rejects a pending domain and cascades the rejection to the registrations that depended on it.
+   *
+   * @param organizationRecord the calling tenant operator
+   * @param domainId the domain to reject
+   * @param rejectionReason the reason shown to the organization
+   * @return the rejected domain together with the registrations the rejection cascaded to
+   */
+  DomainRejectionResultDto rejectDomain(OrganizationRecord organizationRecord, UUID domainId,
+      String rejectionReason);
+
+  /**
+   * Replaces the pre-validated trust mark types of an organization on the calling tenant operator's instance.
+   *
+   * @param organizationRecord the calling tenant operator
+   * @param targetOrgNumber the organization number whose trust mark types are replaced
+   * @param request the trust mark types to pre-approve
+   * @return the updated organization
+   */
+  OrganizationDto replacePreValidatedTrustMarks(OrganizationRecord organizationRecord, String targetOrgNumber,
+      PreValidatedTrustMarksDto request);
+
+  /**
+   * Lists every organization placed on the calling tenant operator's instance, ordered by the name the operator
+   * reads them under. Administration is a tenant-wide duty, so the listing is not limited to the operator's own
+   * organization.
+   *
+   * @param organizationRecord the calling tenant operator
+   * @return the organizations on the operator's instance
+   */
+  List<AdminOrganizationDto> listOrganizations(OrganizationRecord organizationRecord);
+
+  /**
+   * Returns a single organization on the calling tenant operator's instance, with its domains.
+   *
+   * @param organizationRecord the calling tenant operator
+   * @param targetOrgNumber the organization number to look up
+   * @return the organization
+   */
+  OrganizationDto getOrganizationOnTenant(OrganizationRecord organizationRecord, String targetOrgNumber);
+
+  /**
+   * Lists the trust mark types issued on the calling tenant operator's instance — the types the operator can
+   * pre-approve for an organization without inventing one.
+   *
+   * @param organizationRecord the calling tenant operator
+   * @return the distinct trust mark types on the operator's instance, sorted
+   */
+  List<String> listTrustMarkTypes(OrganizationRecord organizationRecord);
 }
