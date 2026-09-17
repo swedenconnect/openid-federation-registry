@@ -67,4 +67,8 @@ public class SubordinateDto {
   @Schema(description = "Metadata policy for this subordinate statement. Optional. Must be valid JSON if provided.",
       example = "{\"openid_provider\": {\"subject_types_supported\": {\"value\": [\"pairwise\"]}}}")
   private Map<String, Object> metadataPolicy;
+
+  @Schema(description = "Metadata for this subordinate statement. Optional. Must be valid JSON if provided.",
+      example = "{\"openid_provider\": {\"subject_types_supported\": [\"pairwise\"]}}")
+  private Map<String, Object> metadata;
 }

@@ -230,6 +230,7 @@ public class OidfApiService {
       metadataPolicy = (Map<String, Object>) metadataPolicy.get("metadata_policy");
     }
     sub.setPolicy(new PolicyRecord(subDto.getSubordinateId().toString(), metadataPolicy));
+    sub.setMetadata(subDto.getMetadata());
     sub.setJwks(this.toJwksSet(subDto.getJwks()));
     sub.setMetadataPolicyCrit(subDto.getMetadataPolicyCrit());
     sub.setCrit(Optional.ofNullable(subDto.getCrit()).orElse(new ArrayList<>(1)));
