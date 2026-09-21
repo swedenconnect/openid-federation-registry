@@ -38,7 +38,6 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -208,6 +207,51 @@ class OidfApiServiceToSubordinatesTest {
 
     assertThat(result).isNotNull();
     assertThat(result.getVirtualEntityId()).isNotNull();
+  }
+
+  @Test
+  void metadataIsCopiedFromSubordinate() {
+    final Subordinate sub = subordinate("https://entity.example.com", false);
+    final Map<String, Object> metadata = Map.of("openid_provider", Map.of(
+        "subject_types_supported", List.of("pairwise")));
+    sub.setMetadata(metadata);
+
+    final TrustAnchorProperties.SubordinateListingProperty result = this.service.toSubordinates(sub);
+
+    assertThat(result).isNotNull();
+    assertThat(result.getMetadata()).isEqualTo(metadata);
+  }
+
+  @Test
+  void nullMetadataStaysNull() {
+    final Subordinate sub = subordinate("https://entity.example.com", false);
+
+    final TrustAnchorProperties.SubordinateListingProperty result = this.service.toSubordinates(sub);
+
+    assertThat(result).isNotNull();
+    assertThat(result.getMetadata()).isNull();
+  }
+
+  @Test
+  void metadataSurvivesAutoResolve() {
+    final Subordinate sub = subordinate("https://entity.example.com", true);
+    final Map<String, Object> metadata = Map.of("openid_provider", Map.of(
+        "subject_types_supported", List.of("pairwise")));
+    sub.setMetadata(metadata);
+
+    final FederationEntity hosted = new FederationEntity();
+    hosted.setEntityType(EntityType.HOSTED_ENTITY);
+    hosted.setIssuer("https://entity.example.com");
+    hosted.setSubject("https://entity.example.com");
+
+    when(this.entityRepository.findByEntityTypeAndOptionalIssuer(
+        eq(EntityType.HOSTED_ENTITY), eq("https://entity.example.com")))
+        .thenReturn(List.of(hosted));
+
+    final TrustAnchorProperties.SubordinateListingProperty result = this.service.toSubordinates(sub);
+
+    assertThat(result).isNotNull();
+    assertThat(result.getMetadata()).isEqualTo(metadata);
   }
 
   @Test

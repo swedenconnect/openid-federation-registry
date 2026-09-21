@@ -48,7 +48,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Integration tests for Subordinate CRUD operations, including the metadataPolicy field.
+ * Integration tests for Subordinate CRUD operations, including the metadataPolicy and metadata fields.
  *
  * @author Per Fredrik Plars
  */
@@ -201,6 +201,116 @@ class SubordinateCRUDIT {
         .metadataPolicy(null));
 
     assertThat(updated.getMetadataPolicy()).isNull();
+  }
+
+  // ========== metadata CRUD ==========
+
+  @Test
+  @DisplayName("Create subordinate with metadata stores the JSON field")
+  void createSubordinateWithMetadataStoresJson() {
+    final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-metadata-create");
+    final Map<String, Object> metadata = Map.of("openid_provider", Map.of(
+        "subject_types_supported", List.of("pairwise")));
+
+    final Subordinate created =
+        this.subordinatesApi.createSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, new Subordinate()
+            .taImId(trustAnchorId)
+            .entityIdentifier("https://sub.example.se/metadata-create")
+            .jwks(TestDataOperations.genJWKS().toJSONObject())
+            .metadata(metadata));
+
+    assertThat(created).isNotNull();
+    assertThat(created.getSubordinateId()).isNotNull();
+    assertThat(created.getMetadata()).isEqualTo(metadata);
+  }
+
+  @Test
+  @DisplayName("Create subordinate without metadata stores null")
+  void createSubordinateWithoutMetadataStoresNull() {
+    final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-metadata-null");
+
+    final Subordinate created =
+        this.subordinatesApi.createSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, new Subordinate()
+            .taImId(trustAnchorId)
+            .entityIdentifier("https://sub.example.se/no-metadata")
+            .jwks(TestDataOperations.genJWKS().toJSONObject()));
+
+    assertThat(created.getMetadata()).isEqualTo(Collections.emptyMap());
+  }
+
+  @Test
+  @DisplayName("Get subordinate returns stored metadata")
+  void getSubordinateReturnsMetadata() {
+    final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-metadata-get");
+    final Map<String, Object> metadata = Map.of("federation_entity", Map.of(
+        "organization_name", "Test Org"));
+
+    final UUID subordinateId = UUID.randomUUID();
+    this.subordinatesApi.createSubordinateWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId,
+        new Subordinate()
+            .taImId(trustAnchorId)
+            .entityIdentifier("https://sub.example.se/metadata-get")
+            .jwks(TestDataOperations.genJWKS().toJSONObject())
+            .metadata(metadata));
+
+    final Subordinate retrieved =
+        this.subordinatesApi.getSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId);
+
+    assertThat(retrieved.getMetadata()).isEqualTo(metadata);
+  }
+
+  @Test
+  @DisplayName("Update subordinate sets a new metadata")
+  void updateSubordinateSetsNewMetadata() {
+    final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-metadata-update");
+    final Map<String, Object> initialMetadata = Map.of("openid_provider", Map.of(
+        "subject_types_supported", List.of("public")));
+    final Map<String, Object> updatedMetadata = Map.of("openid_provider", Map.of(
+        "subject_types_supported", List.of("pairwise")));
+
+    final UUID subordinateId = UUID.randomUUID();
+    this.subordinatesApi.createSubordinateWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId,
+        new Subordinate()
+            .taImId(trustAnchorId)
+            .entityIdentifier("https://sub.example.se/metadata-update")
+            .jwks(TestDataOperations.genJWKS().toJSONObject())
+            .metadata(initialMetadata));
+
+    final Subordinate updated =
+        this.subordinatesApi.updateSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId,
+            new Subordinate()
+                .taImId(trustAnchorId)
+                .entityIdentifier("https://sub.example.se/metadata-update")
+                .jwks(TestDataOperations.genJWKS().toJSONObject())
+                .metadata(updatedMetadata));
+
+    assertThat(updated.getMetadata()).isEqualTo(updatedMetadata);
+  }
+
+  @Test
+  @DisplayName("Update subordinate clears metadata when set to null")
+  void updateSubordinateClearsMetadata() {
+    final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-metadata-clear");
+    final Map<String, Object> metadata = Map.of("openid_provider", Map.of(
+        "subject_types_supported", List.of("public")));
+
+    final UUID subordinateId = UUID.randomUUID();
+    this.subordinatesApi.createSubordinateWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId,
+        new Subordinate()
+            .taImId(trustAnchorId)
+            .entityIdentifier("https://sub.example.se/metadata-clear")
+            .jwks(TestDataOperations.genJWKS().toJSONObject())
+            .metadata(metadata));
+
+    final Subordinate updated =
+        this.subordinatesApi.updateSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId,
+            new Subordinate()
+                .taImId(trustAnchorId)
+                .entityIdentifier("https://sub.example.se/metadata-clear")
+                .jwks(TestDataOperations.genJWKS().toJSONObject())
+                .metadata(null));
+
+    assertThat(updated.getMetadata()).isNull();
   }
 
   @Test
