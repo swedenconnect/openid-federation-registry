@@ -38,8 +38,6 @@ subordinate entity statements by the underlying federation service.
 
 - [Validation](validation.md) — The property validation rule DSL used across DTOs.
 
-- [Frontend Spec](frontend_spec.md) — SPA technology choices and UI conventions.
-
 ---
 
 Copyright &copy; 2026, [Sweden Connect](https://www.swedenconnect.se). Licensed under version 2.0 of
