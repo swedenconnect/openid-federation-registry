@@ -18,7 +18,7 @@ This document provides instructions on how to set up a development environment f
 
 Before you begin, ensure you have the following installed:
 
-*   **Java SDK 21**
+* **Java SDK 25**
 *   **Maven** (3.6.3 or later)
 *   **Docker** (with Docker Compose)
 *   **Git**
@@ -126,13 +126,6 @@ Read more in the [Contributing Guide](../CONTRIBUTING.md).
 The Maven-driven code style rules can be viewed at the
 [openid-federation-commons](https://github.com/swedenconnect/openid-federation-commons/blob/main/pom.xml#L156) repository.
 *   This project uses **Lombok**. Ensure your IDE has the Lombok plugin installed and annotation processing enabled.
-
----
-## Additional Resources
-- [Configuration guide](configuration.md)
-- [Audit Event documentation](audit.md)
-- [Validation documentation](validation.md)
----
 
 Copyright &copy; 2025, [SwedenConnect](https://www.swedenconnect.se). Licensed under version 2.0 of
 the [Apache License](https://www.apache.org/licenses/LICENSE-2.0).
