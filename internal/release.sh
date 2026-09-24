@@ -29,9 +29,10 @@ REMOTE="origin"
 
 echo "== Release branch preparation =="
 
-if [ -n "$(git status --porcelain)" ]; then
-  echo "Working tree has untracked or modified files. Clean up or commit before releasing." >&2
-  git status --short >&2
+# Untracked files are allowed; only staged or modified tracked files block the release.
+if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+  echo "Working tree has uncommitted changes. Commit or stash them before releasing." >&2
+  git status --short --untracked-files=no >&2
   exit 1
 fi
 
