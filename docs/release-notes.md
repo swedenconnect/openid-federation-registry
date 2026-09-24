@@ -6,11 +6,11 @@
 
 ---
 
-### Version 0.9.3
+### Version 0.9.4
 
-**Date:** <ToDeSet>
+**Date:** 2026-09-24
 
-- First release
+- Metadata on subordinate is now added. Database update will be made.
 
 ---
 
