@@ -67,7 +67,7 @@
     <properties>
         <!-- Project properties -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <service-revision>0.5.10-SNAPSHOT</service-revision>
+        <service-revision>0.9.5-SNAPSHOT</service-revision>
         <java.version>25</java.version>
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
