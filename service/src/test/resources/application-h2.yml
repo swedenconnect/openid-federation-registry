@@ -31,11 +31,16 @@ openid:
           base_url: "https://registry.swedenconnect.se/oidf"
           function_groups:
             - "swedenconnect"
+          operator_organizations:
+            - "5520001263"
+            - "5520004002"
         - instance_id: "223e4567-e89b-12d3-a456-426614174001"
           name: "ENA"
           base_url: "https://registry.ena.se/oidf"
           function_groups:
             - "ena"
+          operator_organizations:
+            - "5520001263"
 
 logging:
   level:

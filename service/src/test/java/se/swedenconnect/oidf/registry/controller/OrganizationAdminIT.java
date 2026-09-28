@@ -40,7 +40,6 @@ import se.swedenconnect.oidf.registry.api.model.DomainRequest;
 import se.swedenconnect.oidf.registry.api.model.FederationEntity;
 import se.swedenconnect.oidf.registry.api.model.Organization;
 import se.swedenconnect.oidf.registry.api.model.PreValidatedTrustMarksRequest;
-import se.swedenconnect.oidf.registry.api.model.TrustAnchor;
 import se.swedenconnect.oidf.registry.api.model.Trustmark;
 import se.swedenconnect.oidf.registry.api.model.TrustmarkIssuer;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
@@ -88,11 +87,7 @@ class OrganizationAdminIT {
     final EntitiesApi entitiesApi = new EntitiesApi(operatorClient);
     final ModulesApi modulesApi = new ModulesApi(operatorClient);
 
-    // The tenant operator is recognised by owning a trust anchor on this tenant, so give PM one.
-    final FederationEntity taEntity = entitiesApi.createFederationEntity(TENANT, OPERATOR.orgId,
-        FederationEntity.builder().entityIdentifier("https://www.pm.se/oidf/ta/" + UUID.randomUUID()).build());
-    modulesApi.createTrustAnchor(TENANT, OPERATOR.orgId,
-        TrustAnchor.builder().entityId(taEntity.getEntityId()).active(true).build());
+    // PM is the tenant operator through operator_organizations (see application.yml).
 
     // The trust mark type picker is fed from the trust marks the tenant's own issuers hold, so issue one.
     final String issuerSuffix = UUID.randomUUID().toString();
@@ -254,8 +249,8 @@ class OrganizationAdminIT {
   }
 
   @Test
-  @DisplayName("An organization owning no trust anchor sees no organization administration at all")
-  void organizationWithoutATrustAnchorSeesNoOrganizationAdmin() {
+  @DisplayName("An organization not listed as operator sees no organization administration at all")
+  void organizationNotListedAsOperatorSeesNoOrganizationAdmin() {
     final RegistrationAdminApi outsiderApi = new RegistrationAdminApi(this.apiClient(NOT_AN_OPERATOR));
 
     assertThatThrownBy(() -> outsiderApi.listOrganizations(TENANT, NOT_AN_OPERATOR.orgId))

@@ -62,7 +62,13 @@ class InstancePlacementServiceTest {
   private RegistryProperties.InstanceProperties tenant(
       final UUID id, final String name, final String... functionGroups) {
     return new RegistryProperties.InstanceProperties(id, name, TEST_BASE_URL, null,
-        List.of(functionGroups), null);
+        List.of(functionGroups), null, null);
+  }
+
+  private RegistryProperties.InstanceProperties operatedTenant(
+      final UUID id, final String name, final String... operatorOrganizations) {
+    return new RegistryProperties.InstanceProperties(id, name, TEST_BASE_URL, null,
+        List.of("digg-admin"), List.of(operatorOrganizations), null);
   }
 
   private RegistryProperties propertiesWith(final RegistryProperties.InstanceProperties... instances) {
@@ -355,5 +361,30 @@ class InstancePlacementServiceTest {
     final Optional<URI> result = service.resolveBaseUrl(UUID.randomUUID());
 
     assertThat(result).isEmpty();
+  }
+
+  @Test
+  @DisplayName("An organization is an operator only of the tenant that lists it in operator_organizations")
+  void operatorIsResolvedPerTenantFromConfiguration() {
+    service = new InstancePlacementService(
+        propertiesWith(
+            operatedTenant(instanceId, "Digg", "5520001263"),
+            operatedTenant(UUID.randomUUID(), "Ena")),
+        instanceRepository);
+
+    assertThat(service.isOperator("5520001263", "digg")).isTrue();
+    assertThat(service.isOperator("5520001263", "Digg")).isTrue();
+    assertThat(service.isOperator("5520002634", "digg")).isFalse();
+    assertThat(service.isOperator("5520001263", "ena")).isFalse();
+    assertThat(service.isOperator("5520001263", "unknown-tenant")).isFalse();
+  }
+
+  @Test
+  @DisplayName("A tenant without operator_organizations has no operator")
+  void tenantWithoutOperatorOrganizationsHasNoOperator() {
+    service = new InstancePlacementService(
+        propertiesWith(tenant(instanceId, "Digg", "digg-admin")), instanceRepository);
+
+    assertThat(service.isOperator("5520001263", "digg")).isFalse();
   }
 }

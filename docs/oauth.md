@@ -105,13 +105,33 @@ instances: each request acts on the instance named by its own `{tenant}` path va
 The same organisation number may be registered on more than one instance (it is unique per instance, not
 globally), so an organisation reachable under two tenants gets one organisation record per instance.
 
+## Tenant operator
+
+Some features belong to whoever runs the tenant, not to every organisation on it. A tenant's operators are the
+organisations listed in `openid.federation.registry.instances[i].operator_organizations` (see
+[Application Configuration](configuration.md#instance-properties)); holding a right on the tenant, or owning a
+trust anchor, does not make an organisation an operator. `OrgRightsService.canReadAsOperator`/`canWriteAsOperator`
+are `canRead`/`canWrite` plus "the path organisation is a configured operator" (a superuser passes), and guard:
+
+- creating, updating and deleting **federation entities** (`/registry/v1/{tenant}/{orgNumber}/entities/federation/**`);
+  reading them and everything about hosted entities stays with `canRead`/`canWrite`;
+- **registration flows** (`/registration-flow/v1/**`), including assigning flows to intermediates and trust marks;
+- **registration management** (`/registration-admin/v1/**`) — the review queue, approve and reject.
+
+A caller failing one of these gets `403`. The domain review and organization administration endpoints under
+`/registration-admin/v1` keep their service-level check and answer `404` instead
+([Organizations and Domains](organization.md#who-reviews-domains)).
+
+The member-facing registration API `/registration/v1/{tenant}/{orgNumber}/**` is **not** operator-only: the
+portal calls it with each member organisation's own token to register that organisation's entities.
+
 ## Protected endpoints
 
 | API Path                                   | Authentication required | Right-level enforcement                                                                                    |
 |--------------------------------------------|:-----------------------:|------------------------------------------------------------------------------------------------------------|
-| `/registry/v1/**`                          |           Yes           | Per-method `@PreAuthorize` (`canRead`/`canWrite`/`canAdmin`)                                               |
-| `/registration-flow/v1/**`                 |           Yes           | Per-method `@PreAuthorize`                                                                                 |
-| `/registration-admin/v1/**`                |           Yes           | Per-method `@PreAuthorize`                                                                                 |
+| `/registry/v1/**`                          |           Yes           | Per-method `@PreAuthorize` (`canRead`/`canWrite`/`canAdmin`); federation entity writes need `canWriteAsOperator` |
+| `/registration-flow/v1/**`                 |           Yes           | Per-method `@PreAuthorize` (`canReadAsOperator`/`canWriteAsOperator`) — tenant operator only              |
+| `/registration-admin/v1/**`                |           Yes           | Per-method `@PreAuthorize` (`canReadAsOperator`/`canWriteAsOperator`), domain/organization endpoints via the service-level operator check (`404`) |
 | `/registration/v1/{tenant}/{orgNumber}/**` |           Yes           | Per-method `@PreAuthorize` (`canRead`/`canWrite`)                                                          |
 | `/organization/v1/**`                      |           Yes           | Per-method `@PreAuthorize` (`canRead`/`canWrite`) — see [Organizations and Domains](organization.md)       |
 | `/registration/v1/flows`                   |           Yes           | None beyond authentication — browsing available registration flows doesn't require belonging to an org yet |
@@ -125,7 +145,7 @@ globally), so an organisation reachable under two tenants gets one organisation 
 | `GET /api/v1/federationservice/**`                                | Public API the external oidf-service federation node reads from |
 | `GET /actuator/**`                                                | Health / metrics endpoints                                      |
 | `GET /assets/**`                                                  | Static frontend assets                                          |
-| `GET /entities/**`, `/registration-flows/**`, `/registrations/**` | Public read-only UI pages                                       |
+| `GET /*`                                                          | Top-level SPA entry points (`/`, `/login`, ...)                 |
 | `GET /logout/frontchannel`                                        | OIDC front-channel logout                                       |
 
 See [Architecture Overview](architecture.md#multi-tenancy-and-authorization-model) for how this fits into the

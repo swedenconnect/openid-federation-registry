@@ -71,7 +71,7 @@ public class RegistrationAdminController {
    * @return map containing the count
    */
   @GetMapping("/count")
-  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
+  @PreAuthorize("@orgRightsService.canReadAsOperator(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Count unhandled PENDING registrations for an intermediate")
   public ResponseEntity<Map<String, Long>> countPending(
       @PathVariable("tenant") @P("tenant") final String tenant,
@@ -91,7 +91,7 @@ public class RegistrationAdminController {
    * @return list of registration DTOs
    */
   @GetMapping
-  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
+  @PreAuthorize("@orgRightsService.canReadAsOperator(authentication, #orgNumber, #tenant)")
   @Operation(summary = "List all registration records for current organization")
   public ResponseEntity<List<RegistrationDto>> listRegistrations(
       @PathVariable("tenant") @P("tenant") final String tenant,
@@ -110,7 +110,7 @@ public class RegistrationAdminController {
    * @return the registration DTO
    */
   @GetMapping("/{registrationId}")
-  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
+  @PreAuthorize("@orgRightsService.canReadAsOperator(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Get a single registration by ID")
   public ResponseEntity<RegistrationDto> getById(
       @PathVariable("tenant") @P("tenant") final String tenant,
@@ -131,7 +131,7 @@ public class RegistrationAdminController {
    * @return the updated registration DTO
    */
   @PostMapping("/{registrationId}/reject")
-  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
+  @PreAuthorize("@orgRightsService.canWriteAsOperator(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Reject a pending registration request")
   public ResponseEntity<RegistrationDto> reject(
       @PathVariable("tenant") @P("tenant") final String tenant,
@@ -154,7 +154,7 @@ public class RegistrationAdminController {
    * @return the updated registration DTO after resumption
    */
   @PostMapping("/{registrationId}/steps/{stepIndex}/approve")
-  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
+  @PreAuthorize("@orgRightsService.canWriteAsOperator(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Approve a specific pending pipeline step and resume execution")
   public ResponseEntity<RegistrationDto> approveStep(
       @PathVariable("tenant") @P("tenant") final String tenant,

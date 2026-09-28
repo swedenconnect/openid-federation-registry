@@ -29,9 +29,9 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.api.EntitiesApi;
-import se.swedenconnect.oidf.registry.api.ModulesApi;
 import se.swedenconnect.oidf.registry.api.OrganizationApi;
 import se.swedenconnect.oidf.registry.api.RegistrationAdminApi;
+import se.swedenconnect.oidf.registry.api.RegistrationFlowApi;
 import se.swedenconnect.oidf.registry.api.model.AdminDomain;
 import se.swedenconnect.oidf.registry.api.model.CreateOrganizationRequest;
 import se.swedenconnect.oidf.registry.api.model.Domain;
@@ -41,7 +41,6 @@ import se.swedenconnect.oidf.registry.api.model.FederationEntity;
 import se.swedenconnect.oidf.registry.api.model.Organization;
 import se.swedenconnect.oidf.registry.api.model.PreValidatedTrustMarksRequest;
 import se.swedenconnect.oidf.registry.api.model.RejectRegistrationRequest;
-import se.swedenconnect.oidf.registry.api.model.TrustAnchor;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
 
 import java.util.List;
@@ -80,14 +79,9 @@ class DomainRegistrationIT {
 
   @BeforeEach
   void setUp() {
-    // The tenant operator is recognised by owning a trust anchor on this tenant, so give PM one.
-    final ApiClient operatorClient = this.apiClient(OPERATOR);
-    final FederationEntity taEntity = new EntitiesApi(operatorClient).createFederationEntity(TENANT,
-        OPERATOR.orgId,
-        FederationEntity.builder().entityIdentifier("https://www.pm.se/oidf/ta/" + UUID.randomUUID()).build());
-    new ModulesApi(operatorClient).createTrustAnchor(TENANT, OPERATOR.orgId,
-        TrustAnchor.builder().entityId(taEntity.getEntityId()).active(true).build());
-    this.operatorAdminApi = new RegistrationAdminApi(operatorClient);
+    // PM is listed in the tenant's operator_organizations (see application.yml), which is what makes it the
+    // tenant operator.
+    this.operatorAdminApi = new RegistrationAdminApi(this.apiClient(OPERATOR));
   }
 
   private ApiClient apiClient(final JwtTestUtils.OrganisationType org) {
@@ -235,9 +229,26 @@ class DomainRegistrationIT {
   }
 
   @Test
-  @DisplayName("An organization owning no trust anchor sees no domain review at all")
-  void organizationWithoutATrustAnchorSeesNoDomainReview() {
-    final RegistrationAdminApi outsiderApi = new RegistrationAdminApi(this.apiClient(NOT_AN_OPERATOR));
+  @DisplayName("An organization not listed as operator gets none of the operator features: no federation "
+      + "entities, registration flows or registration review (403), and no domain review (404)")
+  void organizationNotListedAsOperatorGetsNoOperatorFeatures() {
+    // Holding write on the tenant is not enough; only operator_organizations may use these.
+    final ApiClient outsiderClient = this.apiClient(NOT_AN_OPERATOR);
+    final String federationEntityId = "https://registry.swedenconnect.se/oidf/%s/ta/%s"
+        .formatted(NOT_AN_OPERATOR.orgId, UUID.randomUUID());
+    assertThatThrownBy(() -> new EntitiesApi(outsiderClient).createFederationEntity(TENANT, NOT_AN_OPERATOR.orgId,
+        FederationEntity.builder().entityIdentifier(federationEntityId).build()))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(ex -> assertThat(statusOf(ex)).isEqualTo(403));
+    assertThatThrownBy(() -> new RegistrationFlowApi(outsiderClient).listFlows1(TENANT, NOT_AN_OPERATOR.orgId))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(ex -> assertThat(statusOf(ex)).isEqualTo(403));
+    assertThatThrownBy(() -> new RegistrationAdminApi(outsiderClient).listRegistrations1(TENANT,
+        NOT_AN_OPERATOR.orgId))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(ex -> assertThat(statusOf(ex)).isEqualTo(403));
+
+    final RegistrationAdminApi outsiderApi = new RegistrationAdminApi(outsiderClient);
     final UUID someDomainId = UUID.randomUUID();
 
     assertThatThrownBy(() -> outsiderApi.listDomains1(TENANT, NOT_AN_OPERATOR.orgId, null))

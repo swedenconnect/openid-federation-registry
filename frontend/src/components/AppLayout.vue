@@ -98,8 +98,8 @@
       <template #extension>
         <nav v-if="userStore.isAuthorized" aria-label="Main navigation" class="nav-bar">
           <RouterLink to="/" class="nav-link" :class="{ active: isEntityRoute }">Entity</RouterLink>
-          <RouterLink to="/registration-flows" class="nav-link" :class="{ active: isRegistrationFlowsRoute }">Registration Flows</RouterLink>
-          <RouterLink to="/registrations" class="nav-link" :class="{ active: isRegistrationsRoute }">
+          <RouterLink v-if="userStore.isOperator" to="/registration-flows" class="nav-link" :class="{ active: isRegistrationFlowsRoute }">Registration Flows</RouterLink>
+          <RouterLink v-if="userStore.isOperator" to="/registrations" class="nav-link" :class="{ active: isRegistrationsRoute }">
             Registrations
             <v-badge
                 v-if="pendingReviewCount > 0"
@@ -109,7 +109,7 @@
                 :aria-label="`${pendingReviewCount} requests awaiting review`"
             ></v-badge>
           </RouterLink>
-          <RouterLink to="/organizations" class="nav-link" :class="{ active: isOrganizationsRoute }">
+          <RouterLink v-if="userStore.isOperator" to="/organizations" class="nav-link" :class="{ active: isOrganizationsRoute }">
             Organizations
           </RouterLink>
           <a :href="swaggerUiPath" rel="noopener" class="nav-link" target="_blank"
@@ -207,9 +207,9 @@ function logout() {
 const ready = ref(false);
 
 // Badge on the Registrations nav link: everything waiting for this operator to act, registrations and domain
-// requests alike, since both are reviewed from the same view. Only a tenant operator has a domain review queue
-// at all, so a 404 there is the normal answer for everyone else — that part of the count stays at zero and no
-// error is raised. The registrations part is derived from the list because /count is per intermediate.
+// requests alike, since both are reviewed from the same view. The tab only exists while the selected organization
+// is one of the tenant's configured operators (the /tenants `operator` flag), so nothing is asked for otherwise.
+// The registrations part is derived from the list because /count is per intermediate.
 const {requestGet: requestDomainCount, ok: domainCountOk} = useRequest(false);
 const {requestGet: requestRegistrations, ok: registrationsOk} = useRequest(false);
 const pendingDomainCount = ref(0);
@@ -217,7 +217,7 @@ const pendingRegistrationCount = ref(0);
 const pendingReviewCount = computed(() => pendingDomainCount.value + pendingRegistrationCount.value);
 
 async function loadPendingReviewCount() {
-  if (!userStore.selectedTenant || !userStore.orgNumber) {
+  if (!userStore.selectedTenant || !userStore.orgNumber || !userStore.isOperator) {
     return;
   }
   const [domainResponse, registrationResponse] = await Promise.all([
@@ -235,6 +235,9 @@ onBeforeMount(async () => {
     await userStore.fetchUser();
     await userStore.fetchTenants();
     await loadPendingReviewCount();
+    if (!userStore.isOperator && route.meta.operatorOnly) {
+      await router.replace('/');
+    }
   }
   ready.value = true;
 });

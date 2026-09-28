@@ -121,7 +121,7 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/assets/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/entities/**",
-                "/registration-flows/**", "/registrations/**").authenticated()
+                "/registration-flows/**", "/registrations/**", "/organizations/**").authenticated()
             .requestMatchers(HttpMethod.GET, "/*").permitAll()
 
             .requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**")

@@ -5986,6 +5986,9 @@
           },
           "entityPrefix": {
             "type": "string"
+          },
+          "operator": {
+            "type": "boolean"
           }
         }
       },

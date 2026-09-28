@@ -75,7 +75,7 @@
               class="mb-4"
           ></v-textarea>
 
-          <template v-if="isEdit">
+          <template v-if="isEdit && userStore.isOperator">
             <v-divider class="mb-4"></v-divider>
             <div class="text-subtitle-2 mb-2">Registration Flow</div>
 
@@ -204,7 +204,8 @@ const rules = {
 };
 
 async function loadFlowData() {
-  if (!trustmarkIssuerId.value || !trustmarkId.value) return;
+  // Registration flows are operator-only; the backend refuses the flow endpoints for anyone else.
+  if (!userStore.isOperator || !trustmarkIssuerId.value || !trustmarkId.value) return;
   const [flows, assignments] = await Promise.all([
     requestGet(registrationFlowsPath(userStore.selectedTenant, userStore.orgNumber)),
     requestGet(tmIssuerTrustmarkAssignmentsPath(userStore.selectedTenant, userStore.orgNumber, trustmarkIssuerId.value)),

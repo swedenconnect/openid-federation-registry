@@ -97,9 +97,44 @@ public class OrgRightsService {
   }
 
   /**
+   * Checks whether the authentication has read access to the given organization under the given tenant <b>and</b>
+   * that organization is one of the tenant's configured {@code operator_organizations}. Guards the features only
+   * the tenant operator uses: registration flows, registration management and federation entity writes. A superuser
+   * passes.
+   *
+   * @param authentication the current authentication
+   * @param orgNumber the organization number
+   * @param tenant the tenant identifier
+   * @return true if read access is granted and the organization operates the tenant
+   */
+  public boolean canReadAsOperator(final Authentication authentication, final String orgNumber,
+      final String tenant) {
+    return this.canRead(authentication, orgNumber, tenant) && this.isOperator(authentication, orgNumber, tenant);
+  }
+
+  /**
+   * Checks whether the authentication has write access to the given organization under the given tenant <b>and</b>
+   * that organization is one of the tenant's configured {@code operator_organizations}. A superuser passes.
+   *
+   * @param authentication the current authentication
+   * @param orgNumber the organization number
+   * @param tenant the tenant identifier
+   * @return true if write access is granted and the organization operates the tenant
+   */
+  public boolean canWriteAsOperator(final Authentication authentication, final String orgNumber,
+      final String tenant) {
+    return this.canWrite(authentication, orgNumber, tenant) && this.isOperator(authentication, orgNumber, tenant);
+  }
+
+  private boolean isOperator(final Authentication authentication, final String orgNumber, final String tenant) {
+    return this.extractOrgRights(authentication).superuser()
+        || this.instancePlacementService.isOperator(orgNumber, tenant);
+  }
+
+  /**
    * Checks whether the request currently being served was authenticated with a superuser token. Superusers pass
    * every {@code canRead}/{@code canWrite}/{@code canAdmin} check, so a service-level rule that goes beyond right
-   * level — such as "the caller's organization must own a trust anchor" — has to ask separately whether it is
+   * level — such as "the caller's organization must be a configured operator" — has to ask separately whether it is
    * looking at a superuser.
    *
    * @return true if the current authentication carries {@code org_rights: [{superuser: true}]}

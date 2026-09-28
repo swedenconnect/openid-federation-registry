@@ -175,6 +175,21 @@ public class InstancePlacementService {
   }
 
   /**
+   * Whether the given organization is a configured operator of the given tenant (see
+   * {@link RegistryProperties.InstanceProperties#operatorOrganizations()}). Pure config lookup — no database access.
+   *
+   * @param orgNumber the organization number
+   * @param tenantName the tenant's {@link RegistryProperties.InstanceProperties#slug()} or, equivalently, its
+   *     configured {@link RegistryProperties.InstanceProperties#name()}
+   * @return true if the organization operates that tenant, false otherwise or if the tenant is unknown
+   */
+  public boolean isOperator(final String orgNumber, final String tenantName) {
+    return this.findInstanceByTenant(tenantName)
+        .map(instance -> instance.isOperator(orgNumber))
+        .orElse(false);
+  }
+
+  /**
    * Resolves the tenant slug of the instance a persisted organization is placed on. Pure config lookup — no
    * database access.
    *

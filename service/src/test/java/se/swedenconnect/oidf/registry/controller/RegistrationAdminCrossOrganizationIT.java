@@ -84,7 +84,9 @@ class RegistrationAdminCrossOrganizationIT {
 
   private static final String TENANT = "Swedenconnect";
   private static final JwtTestUtils.OrganisationType ALICE = JwtTestUtils.OrganisationType.PM;
-  private static final JwtTestUtils.OrganisationType CHARLIE = JwtTestUtils.OrganisationType.AF;
+  // Both are operators of the tenant (operator_organizations in application.yml): the operator-only endpoints must
+  // still keep one operator organization out of another's data.
+  private static final JwtTestUtils.OrganisationType CHARLIE = JwtTestUtils.OrganisationType.SKATT;
   private static final UUID PREDEFINED_DIRECT_REGISTER_FLOW_STEP_ID =
       UUID.fromString("AE67B1D8-2DCF-4A8C-9E6B-FC972CC65DEA");
 

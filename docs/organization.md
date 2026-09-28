@@ -188,17 +188,19 @@ parent registrations and the trust mark children that were rejected with them.
 review domains when it is
 
 - a **superuser**, or
-- an organization with `canWrite` on `{orgNumber}` under `{tenant}` **that owns at least one
-  `TrustAnchorIntermediateModule` of `ModuleType.TRUSTANCHOR` on that tenant's instance**.
+- an organization with `canWrite` on `{orgNumber}` under `{tenant}` **that is listed in that tenant's
+  `operator_organizations`** (`openid.federation.registry.instances[i].operator_organizations`, see
+  [Application Configuration](configuration.md#instance-properties)).
 
-Owning the tenant's trust anchor is the existing, durable marker of "this organization runs this federation", so
-it is reused rather than adding a separate operator role. This is a deliberate choice, not a placeholder: if a
-dedicated operator role is introduced later, `RegistrationAdminServiceImpl.requireReviewerInstance` is the single
-place that changes.
+The operator is named explicitly in configuration rather than derived from data. An earlier version treated
+"owns a trust anchor on the tenant" as the operator marker, but any organization with `write` can create a trust
+anchor, so that let any organization make itself operator. A tenant with no `operator_organizations` has no
+operator besides a superuser. `RegistrationAdminServiceImpl.requireReviewerInstance` remains the single place the
+rule is enforced.
 
 Mechanically this is `@PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")` on the
-controller plus a service-level check. A caller that passes the rights check but owns no trust anchor gets a
-**404**, following the same "foreign looks like missing" convention as `findOwnedRegistrationOrThrow` — an
+controller plus a service-level check. A caller that passes the rights check but is not a configured operator gets
+a **404**, following the same "foreign looks like missing" convention as `findOwnedRegistrationOrThrow` — an
 endpoint you have no business calling should not confirm that it exists.
 
 A reviewer sees the domains of **every organization on its own tenant's instance**, not just its own. Review is a
@@ -232,6 +234,13 @@ with its domain counts and current pre-approvals, and an *Edit* dialog whose pic
 `/trustmark-types` while still accepting a type typed in by hand. The domain count links to
 `/registrations?type=DOMAIN&org=<orgNumber>&status=ALL&history=1` — that organization's domains, every status,
 in the merged registrations view.
+
+The **Organizations**, **Registrations** and **Registration Flows** nav tabs are shown only while the *selected*
+organization is an operator of the selected tenant — the `operator` flag on that organization's `/tenants` entry.
+The same flag hides *Add Federation Entity*, the Edit/Delete actions on federation entities and the trust mark's
+flow assignment. A user who holds the right access but has another organization selected sees none of these (a
+superuser included); routes marked `operatorOnly` in the router redirect to the Entity view. The backend enforces
+the same rule, see [Authorization Model](oauth.md#tenant-operator).
 
 ### Effect on trust mark enrollment
 

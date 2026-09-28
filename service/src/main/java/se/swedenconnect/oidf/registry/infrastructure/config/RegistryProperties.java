@@ -207,6 +207,8 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
    *     more function groups, and the same function group value may back several tenants — function groups
    *     carry authorization only, never instance routing, which is keyed off {@link #slug()}. Only duplicates
    *     within a single instance's own list are rejected (see {@link RegistryProperties#validate()}).
+   * @param operatorOrganizations organization numbers of the organizations that operate this tenant: they review
+   *     domain requests and manage the tenant's organizations. Optional; when empty only a superuser can do so
    * @param oidfServiceApiValidationKey optional public key used to verify signed JWT responses from the oidf-service
    *     node attached to this instance
    */
@@ -215,6 +217,7 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
       URI baseUrl,
       Map<String, URI> orgBaseUrlOverrides,
       List<String> functionGroups,
+      List<String> operatorOrganizations,
       @NestedConfigurationProperty KeyEntry oidfServiceApiValidationKey) {
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
@@ -231,6 +234,17 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
     }
 
     /**
+     * Whether the given organization operates this tenant, i.e. is listed in {@link #operatorOrganizations()}.
+     *
+     * @param orgNumber the organization number, may be {@code null}
+     * @return true if the organization is a configured operator of this tenant
+     */
+    public boolean isOperator(final String orgNumber) {
+      return orgNumber != null && this.operatorOrganizations != null
+          && this.operatorOrganizations.contains(orgNumber);
+    }
+
+    /**
      * Converts a tenant name to its slug form: trimmed, lowercased, with each run of whitespace replaced by a
      * single hyphen. Applied to both the configured name and the incoming path variable, so a tenant may be
      * addressed either by its slug or by its configured name.
@@ -244,7 +258,8 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
 
     /**
      * Validates the instance properties to ensure all required fields are properly configured.
-     * Checks that instanceId, name, baseUrl and functionGroups are set.
+     * Checks that instanceId, name, baseUrl and functionGroups are set, and that operatorOrganizations, when
+     * given, holds no blank entries.
      */
     public void validate() {
       Assert.notNull(
@@ -255,6 +270,9 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
           this.functionGroups, "Expected openid.federation.registry.instances[].function_groups");
       Assert.isTrue(this.functionGroups.stream().allMatch(StringUtils::hasText),
           "openid.federation.registry.instances[].function_groups must not contain blank entries");
+      Optional.ofNullable(this.operatorOrganizations).ifPresent(operators -> Assert.isTrue(
+          operators.stream().allMatch(StringUtils::hasText),
+          "openid.federation.registry.instances[].operator_organizations must not contain blank entries"));
 
       Optional.ofNullable(this.oidfServiceApiValidationKey).ifPresent(KeyEntry::validate);
     }

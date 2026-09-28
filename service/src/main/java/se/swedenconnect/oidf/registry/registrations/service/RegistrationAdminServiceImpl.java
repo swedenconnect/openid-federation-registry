@@ -25,8 +25,6 @@ import se.swedenconnect.oidf.registry.infrastructure.auth.OrgRightsService;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
-import se.swedenconnect.oidf.registry.module.model.ModuleType;
-import se.swedenconnect.oidf.registry.module.repository.TaImRepository;
 import se.swedenconnect.oidf.registry.organization.dto.AdminDomainDto;
 import se.swedenconnect.oidf.registry.organization.dto.AdminOrganizationDto;
 import se.swedenconnect.oidf.registry.organization.dto.DomainDto;
@@ -92,7 +90,6 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
   private final OrganizationTrustMarkRepository organizationTrustMarkRepository;
   private final TrustMarkRepository trustMarkRepository;
   private final InstancePlacementService instancePlacementService;
-  private final TaImRepository taImRepository;
   private final OrgRightsService orgRightsService;
   private final AuditorAware<String> auditorAware;
   private final RegistryAuditService auditService;
@@ -108,8 +105,7 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
    * @param organizationDomainRepository repository for the domains organizations have claimed
    * @param organizationTrustMarkRepository repository for pre-validated trust mark types
    * @param trustMarkRepository repository the trust mark types issued on an instance are read from
-   * @param instancePlacementService service resolving the instance a tenant is backed by
-   * @param taImRepository repository used to establish that the caller owns a trust anchor
+   * @param instancePlacementService service resolving the instance a tenant is backed by and its operators
    * @param orgRightsService service used to recognise a superuser caller
    * @param auditorAware supplies the principal recorded as the reviewer
    * @param auditService the audit service domain review events are emitted through
@@ -123,7 +119,6 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
       final OrganizationTrustMarkRepository organizationTrustMarkRepository,
       final TrustMarkRepository trustMarkRepository,
       final InstancePlacementService instancePlacementService,
-      final TaImRepository taImRepository,
       final OrgRightsService orgRightsService,
       final AuditorAware<String> auditorAware,
       final RegistryAuditService auditService) {
@@ -136,7 +131,6 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
     this.organizationTrustMarkRepository = organizationTrustMarkRepository;
     this.trustMarkRepository = trustMarkRepository;
     this.instancePlacementService = instancePlacementService;
-    this.taImRepository = taImRepository;
     this.orgRightsService = orgRightsService;
     this.auditorAware = auditorAware;
     this.auditService = auditService;
@@ -528,8 +522,8 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
 
   /**
    * Resolves the instance whose domains the caller may review, having established that the caller is a tenant
-   * operator: a superuser, or an organization owning at least one trust anchor on the tenant's instance. A caller
-   * that is neither is told the resource does not exist, the same convention foreign registrations follow.
+   * operator: a superuser, or an organization listed in the tenant's configured {@code operator_organizations}. A
+   * caller that is neither is told the resource does not exist, the same convention foreign registrations follow.
    *
    * @param organizationRecord the calling organization
    * @return the instance the review is scoped to
@@ -544,13 +538,7 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
       return instanceId;
     }
 
-    final boolean ownsTrustAnchor = this.organizationService.find(organizationRecord)
-        .map(organization -> !this.taImRepository
-            .findByOrganizationIdAndModuleType(organization.getOrganizationId(), ModuleType.TRUSTANCHOR)
-            .isEmpty())
-        .orElse(false);
-
-    if (!ownsTrustAnchor) {
+    if (!this.instancePlacementService.isOperator(organizationRecord.orgNumber(), organizationRecord.tenant())) {
       throw new RegistryServerException(ErrorTypes.NOT_FOUND,
           "No domain review available for organization %s on tenant %s"
               .formatted(organizationRecord.orgNumber(), organizationRecord.tenant()));

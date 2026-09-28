@@ -88,7 +88,7 @@ public class EntityConfigController {
    * @return the created federation entity
    */
   @PostMapping("/federation")
-  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
+  @PreAuthorize("@orgRightsService.canWriteAsOperator(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create federation entity with auto-generated ID")
   public ResponseEntity<FederationEntityDto> createFederationEntity(
       @PathVariable("tenant") @P("tenant") final String tenant,
@@ -110,7 +110,7 @@ public class EntityConfigController {
    * @return the created federation entity
    */
   @PostMapping("/federation/{entityId}")
-  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
+  @PreAuthorize("@orgRightsService.canWriteAsOperator(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Create federation entity with specified ID")
   public ResponseEntity<FederationEntityDto> createFederationEntityWithId(
       @PathVariable("tenant") @P("tenant") final String tenant,
@@ -132,7 +132,7 @@ public class EntityConfigController {
    * @return the updated federation entity
    */
   @PutMapping("/federation/{entityId}")
-  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
+  @PreAuthorize("@orgRightsService.canWriteAsOperator(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Update federation entity")
   public ResponseEntity<FederationEntityDto> updateFederationEntity(
       @PathVariable("tenant") @P("tenant") final String tenant,
@@ -176,7 +176,7 @@ public class EntityConfigController {
    * @return empty response
    */
   @DeleteMapping("/federation/{entityId}")
-  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
+  @PreAuthorize("@orgRightsService.canWriteAsOperator(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Delete federation entity")
   public ResponseEntity<Void> deleteFederationEntity(
       @PathVariable("tenant") @P("tenant") final String tenant,

@@ -22,7 +22,9 @@ package se.swedenconnect.oidf.registry.guioperations.dto;
  * @param orgName the organization name
  * @param entityPrefix entityPrefix for this organization ex https://www.ppm.nu/oidf, {@code null} if the
  *     organization is not yet placed on any instance
+ * @param operator whether the organization is a configured operator of the tenant, i.e. may review domains and
+ *     manage the tenant's organizations when selected
  * @author Per Fredrik Plars
  */
-public record TenantOrganizationDto(String orgNumber, String orgName, String entityPrefix) {
+public record TenantOrganizationDto(String orgNumber, String orgName, String entityPrefix, boolean operator) {
 }
