@@ -153,7 +153,7 @@ this registry. An instance maps a set of organisations to a specific federation 
 | `openid.federation.registry.instances[i].base_url`                        | Yes      | `https://registry.swedenconnect.se/oidf` | Base URL for this instance. Used to compute the `entityPrefix` for every organisation assigned to it: `base_url/orgNumber`.                                                                                                                                                                                                                                                  |
 | `openid.federation.registry.instances[i].org_base_url_overrides`          | No       | See example below                        | Optional per-organisation override of `base_url`. When set for an org, its `entityPrefix` is computed as `override/orgNumber` instead of `base_url/orgNumber`.                                                                                                                                                                                                               |
 | `openid.federation.registry.instances[i].function_groups`                 | Yes      | `["swedenconnect"]`                      | The function group(s) that administrate this tenant. A tenant may be backed by one or more function groups, and the same value may back several tenants — a caller holding a right on it then has that right under each of them. A single list may not repeat a value. Function groups carry authorization only; the instance a request acts on is identified by the tenant path variable (the `name` slugged), never by the function group. |
-| `openid.federation.registry.instances[i].operator_organizations`          | No       | `["5590026042"]`                         | Organisation numbers of the organisations that operate this tenant: they review domain requests and manage the tenant's organisations (see [Organizations and Domains](organization.md#who-reviews-domains)). When empty, only a superuser can. Holding a right on the tenant or owning a trust anchor does not make an organisation an operator. |
+| `openid.federation.registry.instances[i].operator_organizations`          | No       | `["5590026042"]`                         | Organization numbers of the organizations that operate this tenant. Operators review domain requests and manage the tenant's organizations (see [Organizations and Domains](organization.md#who-reviews-domains)). When empty, only a superuser can do this. A right on the tenant or a trust anchor does not make an organization an operator. |
 | `openid.federation.registry.instances[i].oidf_service_api_validation_key` | No       | See below                                | Public key used to verify signed JWT responses from the oidf-service node attached to this instance. See [OIDF Service API Validation Key](#oidf-service-api-validation-key).                                                                                                                                                                                                |
 
 An organisation number is no longer required to be globally unique — the same `org_number` may be
@@ -304,14 +304,14 @@ openid:
 
 ### Registration
 
-Controls how incoming registration requests are checked before the flow engine runs.
+Controls the checks on registration requests before the flow engine runs.
 
 | Setting                                                             | Required | Default | Description                                                                                                                                                                                             |
 |---------------------------------------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `openid.federation.registry.registration.require-registered-domain` | No       | `true`  | Requires the host of a registration request's `entityIdentifier` to equal, or be a subdomain of, one of the registering organization's `PENDING`/`VALIDATED` domains. Applies to superusers too. See [Organizations and Domains](organization.md). |
 
-Turning this off lets any organization register any entity identifier it can prove control of by other means —
-only do so where entity ownership is established outside the registry.
+When `false`, any organization can register any entity identifier it can prove control of. Set it to `false` only
+where entity ownership is established outside the registry.
 
 #### Example
 

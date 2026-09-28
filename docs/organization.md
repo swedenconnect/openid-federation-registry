@@ -1,14 +1,13 @@
 ![Logo](../docs/images/sweden-connect.png)
 
-# Organizations and Domains
+# Organizations and domains
 
-This document describes how an organization bootstraps its record in the registry, how it claims the domains it
-registers entities under, how the tenant operator reviews those claims, and what happens to registrations when a
-claim is withdrawn or rejected.
+This document covers how an organization creates its registry record, claims domains and has them reviewed. It
+also covers what happens to registrations when a domain claim is rejected or deleted.
 
 ## Table of Contents
 
-- [Why domains](#why-domains)
+- [Purpose of domains](#purpose-of-domains)
 - [Organization bootstrap](#organization-bootstrap)
 - [Domain lifecycle](#domain-lifecycle)
 - [One holder per domain](#one-holder-per-domain)
@@ -23,47 +22,45 @@ claim is withdrawn or rejected.
 
 ---
 
-## Why domains
+## Purpose of domains
 
-Anyone holding write rights on an organization can submit a registration request for any entity identifier. Taken
-alone, that lets organization A ask the federation to publish a subordinate statement for an entity living under
-organization B's domain. Claimed domains close that gap: an organization states up front which hostnames it
-controls, the tenant operator confirms the claim, and every later registration request is checked against the
-claim rather than against the caller's rights alone.
+A registration request is accepted only for an entity identifier under a domain the organization has claimed.
+Without this check, any organization with write rights could register an entity under another organization's
+domain.
 
-Two things follow from that:
-
-- A domain is **per organization, per tenant** — it hangs off the `organization` row, which is already scoped to
-  one instance, and the claim row carries that instance too. Within one tenant a hostname has at most one holder
-  (see [One holder per domain](#one-holder-per-domain)); across tenants the same hostname claimed by two
-  organizations is two independent claims.
-- A claim is evidence, not a grant. A `PENDING` claim already lets registrations through (see
-  [enforcement](#domain-enforcement-on-registration-requests)); what the operator's review adds is the durable
-  `VALIDATED` verdict, and the ability to say "no" and have the registrations that depended on it fall with it.
+- A domain claim belongs to one organization on one tenant. The `organization_domain` row carries the instance
+  of its organization. The same hostname on two tenants is two independent claims.
+- A `PENDING` claim already lets registrations through (see
+  [enforcement](#domain-enforcement-on-registration-requests)). Review sets the claim to `VALIDATED`, or rejects it
+  together with the registrations that depend on it.
 
 ## Organization bootstrap
 
-`Organization` (table `organization`) is created in one of two ways:
+An `Organization` (table `organization`) is created in one of two ways:
 
-1. **Implicitly**, by `OrganizationService.findCreate`, the first time some other flow needs an organization row —
-   creating an entity, running a registration flow. `legalName` stays `null` for these.
-2. **Explicitly**, by the portal posting `POST /organization/v1/{tenant}/{orgNumber}` with a `legalName`. This is
-   the path an onboarding portal drives.
+1. **Implicitly**, by `OrganizationService.findCreate`, when another flow first needs the row, for example when
+   creating an entity or running a registration flow. `legalName` stays `null`.
+2. **Explicitly**, when the portal calls `POST /organization/v1/{tenant}/{orgNumber}` with a `legalName`.
 
-`orgNumber` and the tenant come from the request path, `orgName` from the caller's `org_rights` token claim, and
-`legalName` from the request body — the organization's own statement of its registered name, which the token claim
-does not carry. The organization API never creates a record as a side effect of a read: `GET` on an organization
-that has not bootstrapped is a **404**, which is what lets a portal distinguish "not onboarded" from "onboarded".
+The values come from these sources:
+
+| Field        | Source                                  |
+|--------------|-----------------------------------------|
+| `orgNumber`  | Request path                            |
+| tenant       | Request path                            |
+| `orgName`    | The caller's `org_rights` token claim   |
+| `legalName`  | Request body                            |
+
+A read never creates a record. `GET` on an organization that is not bootstrapped returns `404`, so a portal can
+tell whether the organization is onboarded.
 
 Both paths emit `ORGANIZATION_CREATED`.
 
 ## Domain lifecycle
 
-A domain (`organization_domain`, entity `OrganizationDomain`) is a bare hostname — lower-cased, with no scheme, no
-path, no port and no wildcard. An IP address is not a domain. A single-label name is rejected as well, except
-`localhost`, which is accepted only where
-`openid.federation.registry.entity-configuration-loader.enable-local-ip-address-ranges` is `true` — the same
-switch that lets the entity configuration loader reach a `https://localhost:6890/...` entity identifier at all.
+A domain (`organization_domain`, entity `OrganizationDomain`) is a bare hostname in lower case. It has no scheme,
+path, port or wildcard. IP addresses and single-label names are rejected. The exception is `localhost`, which is
+accepted when `openid.federation.registry.entity-configuration-loader.enable-local-ip-address-ranges` is `true`.
 
 ```
                     POST /domains
@@ -80,211 +77,196 @@ switch that lets the entity configuration loader reach a `https://localhost:6890
       │                               PENDING  (same row re-opened; rejectionReason,
       │                                         reviewedAt and reviewedBy cleared)
       │
-      └──── DELETE /domains/{domainId} ────► (absent)     — allowed from any status
+      └──── DELETE /domains/{domainId} ────► (absent)     (allowed from any status)
 ```
 
-- **Request** (`POST .../domains`) creates the domain as `PENDING`. Claiming a domain the organization already
-  claims is a **409**, *unless* the existing claim was `REJECTED`: that row is re-opened as `PENDING` with its
-  review outcome cleared, and the call returns **201** with the same `domainId`. An organization can therefore
-  correct and re-submit without the operator having to delete anything — provided the domain is still free, see
-  [One holder per domain](#one-holder-per-domain).
-- **Approve** (`POST /registration-admin/v1/.../domains/{domainId}/approve`) moves `PENDING → VALIDATED` and
-  stamps `reviewedAt`/`reviewedBy`. Approving or rejecting a domain that is not `PENDING` is a **409** — a
-  reviewed domain returns to `PENDING` only by being requested again.
-- **Reject** (`POST /registration-admin/v1/.../domains/{domainId}/reject`) moves `PENDING → REJECTED`, stores the
-  `rejectionReason`, and cascades (below).
-- **Delete** (`DELETE .../domains/{domainId}`) removes the claim in any status. Deleting is the organization's own
-  action and does **not** cascade — registrations already accepted under the domain are left alone. A domain ID
-  belonging to another organization reads as a 404, the same as a nonexistent one.
+The transitions work as follows:
+
+- **Request** (`POST .../domains`) creates the domain as `PENDING`. A domain the organization already claims
+  returns `409`. The exception is a `REJECTED` claim: the row is re-opened as `PENDING`, its review outcome is
+  cleared, and the call returns `201` with the same `domainId`. The domain must still be free (see
+  [One holder per domain](#one-holder-per-domain)).
+- **Approve** (`POST /registration-admin/v1/.../domains/{domainId}/approve`) moves `PENDING` to `VALIDATED` and
+  sets `reviewedAt` and `reviewedBy`.
+- **Reject** (`POST /registration-admin/v1/.../domains/{domainId}/reject`) moves `PENDING` to `REJECTED`, stores
+  the `rejectionReason` and cascades (see [Cascading a domain rejection](#cascading-a-domain-rejection)).
+- **Delete** (`DELETE .../domains/{domainId}`) removes the claim in any status. Deletion does not cascade:
+  registrations accepted under the domain stay. A domain ID of another organization returns `404`.
+
+Approving or rejecting a domain that is not `PENDING` returns `409`. A reviewed domain returns to `PENDING` only
+when it is requested again.
 
 ## One holder per domain
 
-**Only one organization on a tenant may hold a given domain at a time.** Holding means having a claim in status
-`PENDING` or `VALIDATED`; a `REJECTED` claim, or a deleted one, releases the domain for somebody else to claim.
+Only one organization on a tenant can hold a given domain. A claim in status `PENDING` or `VALIDATED` holds the
+domain. A `REJECTED` or deleted claim releases it.
 
-The rule is on the **exact domain string** only. There is no hierarchical check: while one organization holds
-`example.se`, another organization may hold `a.example.se`, and neither claim blocks the other. Deciding who
-really controls a name hierarchy is the operator's job at review time, not something the registry guesses at.
+The rule compares the exact domain string. While one organization holds `example.se`, another can hold
+`a.example.se`. The operator decides who controls a name hierarchy at review time.
 
-The scope is the **instance (tenant)**, not the registry as a whole. Two tenants are two federations; the same
-organization number under tenant `ENA` may hold `example.se` while a different organization holds it under
-tenant `Swedenconnect`.
+The rule applies per instance (tenant). Under tenant `ENA` one organization can hold `example.se` while a
+different organization holds it under tenant `Swedenconnect`.
 
-Claiming a domain another organization on the tenant already holds is
+Claiming a domain that another organization on the tenant holds returns:
 
 ```
 409 Conflict
 Domain <domain> is already held by another organization
 ```
 
-(`ErrorTypes.CONFLICT`). The same answer comes back when the claim is a re-open of the organization's own
-`REJECTED` row — a released claim is not a reservation, so re-requesting a domain somebody else has taken in the
-meantime is refused exactly like a first claim would be. The operator gets the same 409 when approving a
-`PENDING` claim on a domain another organization has come to hold since it was made.
+(`ErrorTypes.CONFLICT`). The same response applies in two more cases:
 
-Two organizations claiming the same free domain at the same instant both pass that check, so the database has
-the final say: `organization_domain` carries an `instance_id` denormalized from the organization and a
-persistent generated column
+- Re-opening an own `REJECTED` claim after another organization has claimed the domain.
+- Approving a `PENDING` claim after another organization has come to hold the domain.
+
+The database enforces the rule for concurrent claims. `organization_domain` carries an `instance_id` copied from
+the organization and a persistent generated column:
 
 ```sql
 held_domain varchar(255) AS (CASE WHEN status IN ('PENDING','VALIDATED') THEN domain ELSE NULL END) PERSISTENT
 ```
 
-under `UNIQUE KEY uk_instance_held_domain (instance_id, held_domain)`. A released claim stores `NULL` there, and
-`NULL`s do not collide, so any number of `REJECTED` rows for the same domain coexist. The loser of the race is
-handed the same 409 message as the pre-check would have given it, never a generic constraint error. The
-per-organization `uk_organization_domain (organization_id, domain)` key is unchanged: an organization still has
-at most one row per domain, whatever its status.
+`UNIQUE KEY uk_instance_held_domain (instance_id, held_domain)` covers it. A released claim stores `NULL`, so any
+number of `REJECTED` rows for the same domain can exist. The losing request gets the same `409` message, not a
+constraint error. `uk_organization_domain (organization_id, domain)` still limits an organization to one row per
+domain.
 
 ## Domain enforcement on registration requests
 
-`RegistrationServiceImpl.createRegistrationRequest` and `updateRegistrationRequest` check the request before the
-flow engine runs at all:
+`RegistrationServiceImpl.createRegistrationRequest` and `updateRegistrationRequest` check each request before the
+flow engine runs:
 
 > The host of `entityIdentifier` must **equal**, or be a **subdomain of**, one of the calling organization's
 > domains in status `PENDING` or `VALIDATED`.
 
-"Subdomain of" means a label boundary, not a string suffix: `sp.example.com` matches `example.com`,
-`notexample.com` does not. The rule lives in `organization/service/DomainMatcher`, which is pure and shared with
-the cascade, so enforcement and cascade can never drift apart.
+A subdomain match follows label boundaries: `sp.example.com` matches `example.com`, `notexample.com` does not.
+`organization/service/DomainMatcher` holds the rule and is shared with the cascade.
 
-A request that fails the check is rejected with
+A request that fails the check returns a problem detail (`ErrorTypes.INVALID_PARAMETER`):
 
 ```
 400 Bad Request
 Entity identifier host '<host>' is not a registered domain of organization <orgNumber>
 ```
 
-as a problem detail (`ErrorTypes.INVALID_PARAMETER`). A **superuser is not exempt** — owning the registry does not
-make somebody else's hostname yours to register.
+The check also applies to superusers.
 
 ## Cascading a domain rejection
 
-Rejecting a domain the operator has decided the organization does not control has to reach the registrations that
-were accepted on the strength of that claim. In the same transaction as the rejection, the registry rejects every
-`Registration` that
+A domain rejection also rejects the registrations accepted under that domain, in the same transaction. A
+`Registration` is rejected when it:
 
-- belongs to the domain's organization, and
-- is `STARTED` or `PENDING_APPROVAL` (settled registrations are left alone), and
-- is not a `TRUST_MARK_SUBORDINATE` (those follow their parent rather than being selected on their own), and
-- has an `entityId` whose host matches the rejected domain **and matches no other `PENDING`/`VALIDATED` domain of
-  the same organization.
+- belongs to the domain's organization
+- is `STARTED` or `PENDING_APPROVAL`
+- is not a `TRUST_MARK_SUBORDINATE` (these follow their parent)
+- has an `entityId` host that matches the rejected domain **and no other `PENDING`/`VALIDATED` domain of the same
+  organization**
 
-That last clause is what keeps a registration alive when it is covered twice over: an organization holding both
-`example.com` and `sp.example.com` does not lose `https://sp.example.com/oidf` when only one of the two is
-rejected.
+The last condition keeps registrations covered by another domain. If an organization holds `example.com` and
+`sp.example.com`, rejecting one of them does not reject `https://sp.example.com/oidf`.
 
-Each affected registration gets `status = REJECTED`, `rejectionReason = "Not Accepted Domain"`
-(`RegistrationRejectionReasons.NOT_ACCEPTED_DOMAIN` — an exact string the portal matches on), plus `reviewedAt`
-and `reviewedBy`. Its child `TRUST_MARK_SUBORDINATE` registrations that are not already `APPROVED` or `REJECTED`
-are rejected with the same reason.
+Each affected registration gets `status = REJECTED`, `reviewedAt`, `reviewedBy` and
+`rejectionReason = "Not Accepted Domain"` (`RegistrationRejectionReasons.NOT_ACCEPTED_DOMAIN`). The portal
+matches on this exact string. Child `TRUST_MARK_SUBORDINATE` registrations that are not `APPROVED` or `REJECTED`
+get the same reason.
 
-The `/reject` response is the updated `AdminDomainDto` fields plus `cascadedRegistrationIds`, which lists both the
-parent registrations and the trust mark children that were rejected with them.
+The `/reject` response contains the `AdminDomainDto` fields and `cascadedRegistrationIds`. The list holds both
+the parent registrations and their rejected trust mark children.
 
 ## Who reviews domains
 
-**Decision (confirmed with the product owner):** the reviewer is the **tenant operator**. Concretely, a caller may
-review domains when it is
+The tenant operator reviews domains. A caller can review when it is:
 
 - a **superuser**, or
-- an organization with `canWrite` on `{orgNumber}` under `{tenant}` **that is listed in that tenant's
-  `operator_organizations`** (`openid.federation.registry.instances[i].operator_organizations`, see
+- an organization with `canWrite` on `{orgNumber}` under `{tenant}` that is listed in the tenant's
+  `openid.federation.registry.instances[i].operator_organizations` (see
   [Application Configuration](configuration.md#instance-properties)).
 
-The operator is named explicitly in configuration rather than derived from data. An earlier version treated
-"owns a trust anchor on the tenant" as the operator marker, but any organization with `write` can create a trust
-anchor, so that let any organization make itself operator. A tenant with no `operator_organizations` has no
-operator besides a superuser. `RegistrationAdminServiceImpl.requireReviewerInstance` remains the single place the
-rule is enforced.
+Owning a trust anchor does not make an organization an operator, because any organization with `write` can create
+one. A tenant without `operator_organizations` has only superusers as operators.
+`RegistrationAdminServiceImpl.requireReviewerInstance` enforces the rule.
 
-Mechanically this is `@PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")` on the
-controller plus a service-level check. A caller that passes the rights check but is not a configured operator gets
-a **404**, following the same "foreign looks like missing" convention as `findOwnedRegistrationOrThrow` — an
-endpoint you have no business calling should not confirm that it exists.
+The controller carries `@PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")`, and
+the service checks the operator. A caller that passes the rights check but is not an operator gets `404`, the
+same as `findOwnedRegistrationOrThrow` returns for a foreign registration.
 
-A reviewer sees the domains of **every organization on its own tenant's instance**, not just its own. Review is a
-tenant-wide duty.
+A reviewer sees the domains of every organization on its tenant.
 
-In the admin UI a domain request is reviewed from the **Registrations** view (`/registrations`), not a view of
-its own: domain requests are listed alongside registration requests under the type **Domain**, next to `IM` and
-`TM` in the type filter. A domain row shows the domain, the requesting organization, its status mapped onto the
-registration status chips (`PENDING → Pending Approval`, `VALIDATED → Approved`, `REJECTED → Rejected`), when it
-was requested and, once handled, the rejection reason. A **Show history** switch — off by default, persisted
-under `oidf.registrations.showHistory` — decides whether handled requests are listed at all; with it off the
-view is the unhandled queue only.
+### Review in the admin UI
 
-Clicking a domain row opens `/registrations/domain/{domainId}`, where the operator sees the full claim and
-approves or rejects it. Rejection requires a reason and reports how many registrations the rejection cascaded
-to (see [Cascading a domain rejection](#cascading-a-domain-rejection)).
+Domain requests are reviewed in the **Registrations** view (`/registrations`), listed with registration requests
+under the type **Domain**. A domain row shows:
+
+- the domain and the requesting organization
+- the status, mapped onto the registration chips: `PENDING` to Pending Approval, `VALIDATED` to Approved,
+  `REJECTED` to Rejected
+- the request date
+- the rejection reason, when there is one
+
+The **Show history** switch is disabled by default and stored under `oidf.registrations.showHistory`. When
+disabled, the view lists only unhandled requests.
+
+Selecting a domain row opens `/registrations/domain/{domainId}`, where the operator approves or rejects the
+claim. A rejection requires a reason. The result shows how many registrations the rejection cascaded to.
 
 ## Pre-validated trust marks
 
-`organization_trust_mark` holds trust mark types the tenant operator has pre-approved for an organization. They
-are set with `PUT /registration-admin/v1/{tenant}/{orgNumber}/organizations/{targetOrgNumber}/trustmarks`, which
-**replaces** the list wholesale, and are exposed on `OrganizationDto.preValidatedTrustMarks`.
+`organization_trust_mark` holds the trust mark types the tenant operator has pre-approved for an organization.
+`PUT /registration-admin/v1/{tenant}/{orgNumber}/organizations/{targetOrgNumber}/trustmarks` replaces the whole
+list. `OrganizationDto.preValidatedTrustMarks` exposes it.
 
-Every entry is a trust mark type URI and is held to the same shape as an entity identifier — `https`, no query,
-no fragment. A blank entry is a `400`, and so is the same type listed twice: the stored list is a set keyed on
-`(organization, trustMarkType)`, so a duplicate is a mistake in the request rather than something to quietly
-collapse. An empty list is valid and is how the operator withdraws every pre-approval.
+Each entry is a trust mark type URI with the same shape rules as an entity identifier: `https`, no query, no
+fragment. A blank or duplicate entry returns `400`. An empty list is valid and removes every pre-approval.
 
-In the admin UI this is the **Organizations** view (`/organizations`): one row per organization on the tenant,
-with its domain counts and current pre-approvals, and an *Edit* dialog whose picker is filled from
-`/trustmark-types` while still accepting a type typed in by hand. The domain count links to
-`/registrations?type=DOMAIN&org=<orgNumber>&status=ALL&history=1` — that organization's domains, every status,
-in the merged registrations view.
+### Operator views in the admin UI
 
-The **Organizations**, **Registrations** and **Registration Flows** nav tabs are shown only while the *selected*
-organization is an operator of the selected tenant — the `operator` flag on that organization's `/tenants` entry.
-The same flag hides *Add Federation Entity*, the Edit/Delete actions on federation entities and the trust mark's
-flow assignment. A user who holds the right access but has another organization selected sees none of these (a
-superuser included); routes marked `operatorOnly` in the router redirect to the Entity view. The backend enforces
-the same rule, see [Authorization Model](oauth.md#tenant-operator).
+The **Organizations** view (`/organizations`) has one row per organization on the tenant. A row shows its domain
+counts and pre-approvals, and has an *Edit* dialog. The dialog's picker lists the types from `/trustmark-types`
+and also accepts a typed value. The domain count links to
+`/registrations?type=DOMAIN&org=<orgNumber>&status=ALL&history=1`.
+
+The admin UI shows operator features only when the *selected* organization is an operator of the selected
+tenant. The `operator` flag on the organization's `/tenants` entry controls this. Operator features are:
+
+- the **Organizations**, **Registrations** and **Registration Flows** nav tabs
+- *Add Federation Entity*, and the Edit and Delete actions on federation entities
+- the trust mark's flow assignment
+
+A user with another organization selected sees none of these, superusers included. Routes marked `operatorOnly`
+redirect to the Entity view. The backend enforces the same rule (see
+[Authorization Model](oauth.md#tenant-operator)).
 
 ### Effect on trust mark enrollment
 
-Pre-approving a type is a decision taken once, in advance, about an organization. Making the operator take it
-again for every registration would be the same decision twice, so a registration that requests a type the
-organization is already pre-approved for **does not stop for manual review**.
+A registration that requests a pre-approved trust mark type skips manual review. The trust mark sub-flow still
+runs with the same flow, steps, `TRUST_MARK_SUBORDINATE` row and step trail. Only the approval gate changes:
 
-Nothing else changes. The trust mark sub-flow still runs — the same flow, the same steps, the same
-`TRUST_MARK_SUBORDINATE` registration row and step trail. Only the manual-approval gate is passed instead of
-halting:
+1. `TrustMarkIssuerRegistrationStep` checks, per requested type, whether `organization_trust_mark` holds that
+   exact `trustMarkType` for the organization. If it does, the step sets `ContextKey.TRUST_MARK_PRE_VALIDATED` on
+   the **sub-flow** context. The parent context never gets the flag.
+2. The approval gate in `ProcessEngine` (the `manualreview=true` check) reads the flag. When set, the engine
+   runs the step's `execute` and records a `WARNING` result: *"Auto-approved: organization holds a pre-validated
+   trust mark for this enrollment"*. This applies to any step in the sub-flow with `manualreview=true`.
+3. `approveStep` on a `TRUST_MARK_SUBORDINATE` registration sets the flag again when it rebuilds the context.
+   A later gated step in the same sub-flow then passes as well.
 
-1. `TrustMarkIssuerRegistrationStep` looks up, per requested type, whether the applicant organization holds that
-   exact `trustMarkType` in `organization_trust_mark`. If it does, the step sets
-   `ContextKey.TRUST_MARK_PRE_VALIDATED` on the **sub-flow's** context. The flag never reaches the parent
-   context: pre-validation is per trust mark type, not a property of the registration as a whole.
-2. `ProcessEngine`'s approval gate — the `manualreview=true` check — consults that flag. With it set, the engine
-   does not return `pendingApproval`; it records the gated step with a `WARNING` result reading
-   *"Auto-approved: organization holds a pre-validated trust mark for this enrollment"* and runs the step's
-   `execute` as normal. The gate is engine-level, so it applies to whichever step in the sub-flow carries
-   `manualreview=true`, not to one designated step.
-3. Resuming an approved step (`approveStep` on a `TRUST_MARK_SUBORDINATE` registration) re-applies the flag when
-   it rebuilds the context, so a *later* gated step in the same sub-flow auto-passes too, exactly as it would
-   have on the first run.
+An organization without the pre-approval waits for the operator. The parent step trail lists the auto-approved
+types (`Auto-approved (pre-validated): [...]`), and the child registration's trail carries the engine's note.
 
-An organization without the pre-approval runs the identical flow and waits for the operator, as before. The
-parent step trail names which types were auto-approved (`Auto-approved (pre-validated): [...]`), and the child
-registration's own trail carries the engine's note — so "this was never reviewed" is always visible after the
-fact.
-
-Withdrawing a type from the list stops future enrollments from skipping review; it does not revoke trust marks
-already issued.
+Removing a type from the list affects future enrollments only. Trust marks already issued stay.
 
 ## API reference
 
-### Portal API — `/organization/v1/{tenant}/{orgNumber}`
+### Portal API: `/organization/v1/{tenant}/{orgNumber}`
 
 | Method   | Path                   | Right      | Behaviour                                                                                                                                                         |
 |----------|------------------------|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `GET`    | ``                     | `canRead`  | `200` `OrganizationDto`. `404` if the organization has not bootstrapped. Never auto-creates.                                                                      |
-| `POST`   | ``                     | `canWrite` | Body `CreateOrganizationDto`. `201` `OrganizationDto`. `409` if it already exists, `400` on a blank legal name. Audit `ORGANIZATION_CREATED`.                     |
-| `PUT`    | ``                     | `canWrite` | Body `CreateOrganizationDto`. Updates `legalName` only. `200`, `404` if missing. Audit `ORGANIZATION_UPDATED`.                                                    |
+| `GET`    | ``                     | `canRead`  | `200` `OrganizationDto`. `404` if the organization is not bootstrapped. Never creates a record.                                                                   |
+| `POST`   | ``                     | `canWrite` | Body `CreateOrganizationDto`. `201` `OrganizationDto`. `409` if it exists, `400` on a blank legal name. Audit `ORGANIZATION_CREATED`.                             |
+| `PUT`    | ``                     | `canWrite` | Body `CreateOrganizationDto`. Updates `legalName` only. `200`, or `404` if missing. Audit `ORGANIZATION_UPDATED`.                                                 |
 | `GET`    | `/domains`             | `canRead`  | `200` `List<DomainDto>`, every status. `404` if the organization is missing.                                                                                      |
-| `POST`   | `/domains`             | `canWrite` | Body `DomainRequestDto`. `201` `DomainDto` (`PENDING`). `404` org missing, `400` invalid domain, `409` duplicate — except a `REJECTED` one, re-opened as `PENDING` — and `409` *`Domain <domain> is already held by another organization`* if another organization on the tenant holds it ([above](#one-holder-per-domain)). Audit `ORGANIZATION_DOMAIN_REQUESTED`. |
-| `DELETE` | `/domains/{domainId}`  | `canWrite` | `204`. `404` if not owned by this organization. Any status may be deleted. Audit `ORGANIZATION_DOMAIN_DELETED`.                                                   |
+| `POST`   | `/domains`             | `canWrite` | Body `DomainRequestDto`. `201` `DomainDto` (`PENDING`). `404` if the organization is missing, `400` on an invalid domain, `409` on a duplicate (a `REJECTED` claim is re-opened as `PENDING` instead). `409` *`Domain <domain> is already held by another organization`* if another organization on the tenant holds it ([one holder per domain](#one-holder-per-domain)). Audit `ORGANIZATION_DOMAIN_REQUESTED`. |
+| `DELETE` | `/domains/{domainId}`  | `canWrite` | `204`. `404` if another organization owns it. Any status can be deleted. Audit `ORGANIZATION_DOMAIN_DELETED`.                                                     |
 
 ```json
 OrganizationDto {
@@ -305,24 +287,24 @@ DomainDto {
 }
 ```
 
-### Operator API — `/registration-admin/v1/{tenant}/{orgNumber}`
+### Operator API: `/registration-admin/v1/{tenant}/{orgNumber}`
 
-Every endpoint below additionally requires the caller to be a tenant operator
-([above](#who-reviews-domains)); a caller that is not gets a `404`.
+Each endpoint below requires the caller to be a tenant operator ([who reviews domains](#who-reviews-domains)).
+Other callers get `404`.
 
 | Method | Path                                              | Behaviour                                                                                                                       |
 |--------|---------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
-| `GET`  | `/domains?status=PENDING`                         | `List<AdminDomainDto>` for every organization on the tenant's instance; `status` optional. `AdminDomainDto` = `DomainDto` + `orgNumber`, `orgName`, `legalName`. |
-| `GET`  | `/domains/count`                                  | `{ "count": n }` — domains still `PENDING` on the tenant.                                                                       |
-| `POST` | `/domains/{domainId}/approve`                     | `PENDING → VALIDATED`, sets `reviewedAt`/`reviewedBy`. `409` if not `PENDING`, and `409` *`Domain <domain> is already held by another organization`* if another organization on the tenant has come to hold it. Audit `ORGANIZATION_DOMAIN_APPROVED`. |
-| `POST` | `/domains/{domainId}/reject`                      | Body `RejectRegistrationDto`. `PENDING → REJECTED`, then cascades. `409` if not `PENDING`. Audit `ORGANIZATION_DOMAIN_REJECTED`. |
-| `GET`  | `/organizations`                                  | `List<AdminOrganizationDto>` — every organization on the tenant's instance, ordered by legal name, then organization name, then organization number. |
-| `GET`  | `/organizations/{targetOrgNumber}`                | `OrganizationDto` for one organization on the tenant, domains included. `404` if it is not placed on this instance.              |
-| `GET`  | `/trustmark-types`                                | `List<String>` — the distinct trust mark types issued on the tenant's instance, sorted. Populates the operator's trust mark picker. |
-| `PUT`  | `/organizations/{targetOrgNumber}/trustmarks`     | Body `{ "preValidatedTrustMarks": [...] }` — replaces the list. `404` if the target organization is missing, `400` if an entry is blank, not an `https` URI, or listed twice. Audit `ORGANIZATION_UPDATED`. |
+| `GET`  | `/domains?status=PENDING`                         | `List<AdminDomainDto>` for every organization on the tenant. `status` is optional. `AdminDomainDto` is `DomainDto` plus `orgNumber`, `orgName` and `legalName`. |
+| `GET`  | `/domains/count`                                  | `{ "count": n }`: the number of `PENDING` domains on the tenant.                                                                |
+| `POST` | `/domains/{domainId}/approve`                     | `PENDING` to `VALIDATED`, sets `reviewedAt` and `reviewedBy`. `409` if not `PENDING`. `409` *`Domain <domain> is already held by another organization`* if another organization on the tenant holds it. Audit `ORGANIZATION_DOMAIN_APPROVED`. |
+| `POST` | `/domains/{domainId}/reject`                      | Body `RejectRegistrationDto`. `PENDING` to `REJECTED`, then cascades. `409` if not `PENDING`. Audit `ORGANIZATION_DOMAIN_REJECTED`. |
+| `GET`  | `/organizations`                                  | `List<AdminOrganizationDto>` for every organization on the tenant, ordered by legal name, organization name and organization number. |
+| `GET`  | `/organizations/{targetOrgNumber}`                | `OrganizationDto` for one organization on the tenant, with domains. `404` if it is not on this instance.                         |
+| `GET`  | `/trustmark-types`                                | `List<String>`: the distinct trust mark types issued on the tenant, sorted. Fills the operator's trust mark picker.             |
+| `PUT`  | `/organizations/{targetOrgNumber}/trustmarks`     | Body `{ "preValidatedTrustMarks": [...] }`. Replaces the list. `404` if the target organization is missing, `400` if an entry is blank, not an `https` URI, or duplicated. Audit `ORGANIZATION_UPDATED`. |
 
-`AdminOrganizationDto` is the listing row, deliberately without the domains themselves — the operator fetches a
-single organization to see those, so a tenant-wide listing stays one row per organization:
+`AdminOrganizationDto` is the listing row. It has domain counts but no domains; fetch a single organization to
+see them:
 
 ```json
 {
@@ -335,10 +317,9 @@ single organization to see those, so a tenant-wide listing stays one row per org
 }
 ```
 
-`/trustmark-types` answers "what can I pre-approve here": the types of every trust mark whose issuing entity
-belongs to an organization on this instance. It is a suggestion list, not a constraint — the `PUT` accepts a type
-that is not on it, because an organization may legitimately be pre-approved for a type its federation has not
-issued yet.
+`/trustmark-types` returns the types of every trust mark whose issuing entity belongs to an organization on this
+instance. The list is a suggestion. The `PUT` also accepts other types, because an organization can be
+pre-approved for a type the federation has not issued yet.
 
 The `/reject` response body:
 
@@ -361,7 +342,7 @@ The `/reject` response body:
 
 | Setting                                                              | Required | Default | Description                                                                                                              |
 |----------------------------------------------------------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------|
-| `openid.federation.registry.registration.require-registered-domain`  | No       | `true`  | Enforce the domain check on registration requests. Set to `false` only for an installation that manages entity ownership elsewhere. |
+| `openid.federation.registry.registration.require-registered-domain`  | No       | `true`  | Enforces the domain check on registration requests. Set to `false` only where entity ownership is managed outside the registry. |
 
 See [Application Configuration](configuration.md#registration).
 
@@ -369,10 +350,10 @@ See [Application Configuration](configuration.md#registration).
 
 | Event                          | Emitted when                                                                                        |
 |--------------------------------|-------------------------------------------------------------------------------------------------------|
-| `ORGANIZATION_CREATED`         | An organization record is created — by the portal, or implicitly by `OrganizationService.findCreate`. |
+| `ORGANIZATION_CREATED`         | An organization record is created, by the portal or by `OrganizationService.findCreate`.            |
 | `ORGANIZATION_UPDATED`         | An organization's legal name or pre-validated trust mark list changes.                               |
-| `ORGANIZATION_DOMAIN_REQUESTED`| An organization claims a domain, or re-opens a rejected claim.                                       |
-| `ORGANIZATION_DOMAIN_DELETED`  | An organization withdraws one of its domains.                                                        |
+| `ORGANIZATION_DOMAIN_REQUESTED`| An organization claims a domain or re-opens a rejected claim.                                         |
+| `ORGANIZATION_DOMAIN_DELETED`  | An organization deletes one of its domains.                                                          |
 | `ORGANIZATION_DOMAIN_APPROVED` | The tenant operator approves a pending domain.                                                       |
 | `ORGANIZATION_DOMAIN_REJECTED` | The tenant operator rejects a pending domain.                                                        |
 
@@ -380,27 +361,21 @@ See [Audit Events](audit.md) for the event structure.
 
 ## Contract deviations
 
-The API contract is implemented as specified, with these clarifications where the specification left the detail
-open:
+The implementation follows the API contract. Where the contract left details open, the implementation does the
+following:
 
-- **`reviewedAt`/`reviewedBy` are cleared, not only `rejectionReason`, when a `REJECTED` domain is re-requested.**
-  A re-opened domain reads as `PENDING`, and a pending domain carries no review outcome; leaving a stale
-  `reviewedAt` behind would contradict `DomainDto`'s own documented shape. The JSON shape is unchanged.
-- **`cascadedRegistrationIds` includes the rejected trust mark children**, not only their parent registrations.
-  The field is a list of every registration the rejection changed, which is what a caller reporting "n
-  registrations were rejected" needs.
-- **`createdDate`/`reviewedAt` are serialized with a UTC offset** (`OffsetDateTime`, e.g.
-  `2026-09-11T12:34:56.789+02:00`) rather than as a zone-less local timestamp. Both are ISO-8601 as the contract
-  requires; the offset makes the value unambiguous for a consumer in another zone. Stored values remain
-  `LocalDateTime`, resolved against the service's own zone at the mapper boundary.
+- **Re-requesting a `REJECTED` domain clears `reviewedAt` and `reviewedBy` as well as `rejectionReason`.** A
+  `PENDING` domain carries no review outcome. The JSON shape is unchanged.
+- **`cascadedRegistrationIds` includes the rejected trust mark children** as well as their parents. The list
+  holds every registration the rejection changed.
+- **`createdDate` and `reviewedAt` carry a UTC offset** (`OffsetDateTime`, for example
+  `2026-09-11T12:34:56.789+02:00`). Both are ISO-8601 as the contract requires. The database stores
+  `LocalDateTime`, and the mapper applies the service's time zone.
 - **`PUT /organizations/{targetOrgNumber}/trustmarks` returns `200` with the updated `OrganizationDto`.** The
-  contract did not state a response body; returning the updated organization saves the caller a follow-up read.
+  contract did not specify a response body.
 - **The engine's auto-approval note does not name the trust mark type.** `ContextKey.TRUST_MARK_PRE_VALIDATED`
-  carries `Boolean.TRUE`, so the gate itself has no type to quote; naming it there would have made the generic
-  process engine read trust mark structures out of the context. The concrete types are named one level up
-  instead, in `TrustMarkIssuerRegistrationStep`'s own step result
-  (`Auto-approved (pre-validated): [<type>, ...]`), which is where an operator reading the parent registration
-  sees them.
+  holds `Boolean.TRUE` only. `TrustMarkIssuerRegistrationStep` names the types in its own step result
+  (`Auto-approved (pre-validated): [<type>, ...]`), which the operator sees on the parent registration.
 
 ---
 
