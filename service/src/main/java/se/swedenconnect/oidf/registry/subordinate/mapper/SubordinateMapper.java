@@ -58,6 +58,7 @@ public final class SubordinateMapper {
     }
     entity.setEcLocationAutomatic(Optional.ofNullable(dto.getEcLocationAutomaticResolve()).orElse(false));
     entity.setMetadataPolicy(dto.getMetadataPolicy());
+    entity.setMetadata(dto.getMetadata());
     return entity;
   }
 
@@ -77,6 +78,7 @@ public final class SubordinateMapper {
     entity.setEcLocation(dto.getEcLocation());
     entity.setEcLocationAutomatic(Optional.ofNullable(dto.getEcLocationAutomaticResolve()).orElse(false));
     entity.setMetadataPolicy(dto.getMetadataPolicy());
+    entity.setMetadata(dto.getMetadata());
   }
 
   /**
@@ -98,6 +100,7 @@ public final class SubordinateMapper {
     dto.setEcLocation(subordinate.getEcLocation());
     dto.setEcLocationAutomaticResolve(subordinate.isEcLocationAutomatic());
     dto.setMetadataPolicy(subordinate.getMetadataPolicy());
+    dto.setMetadata(subordinate.getMetadata());
     return dto;
   }
 }

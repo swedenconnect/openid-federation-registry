@@ -112,6 +112,8 @@ public class TrustAnchorProperties {
     private String virtualEntityId;
     @SerializedName("policy")
     private PolicyRecord policy;
+    @SerializedName("metadata")
+    private Map<String, Object> metadata;
     @SerializedName("jwks")
     private JWKSet jwks;
     @SerializedName("constraints")

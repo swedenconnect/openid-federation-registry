@@ -105,6 +105,19 @@
               style="font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;"
           ></v-textarea>
 
+          <v-textarea
+              v-model="metadata"
+              label="Metadata"
+              :rules="[rules.json]"
+              :disabled="saving"
+              :rows="5"
+              auto-grow
+              hint="Metadata for this subordinate statement (optional, JSON)"
+              persistent-hint
+              class="mb-4"
+              style="font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;"
+          ></v-textarea>
+
           <ListField
               v-model="crit"
               label="Crit"
@@ -219,6 +232,7 @@ const jwks = ref('');
 const metadataPolicyCrit = ref([]);
 const crit = ref([]);
 const metadataPolicy = ref('');
+const metadata = ref('');
 const ecLocation = ref('');
 const ecLocationAutomaticResolve = ref(false);
 const effectiveEcLocation = ref('');
@@ -280,6 +294,9 @@ async function loadSubordinate() {
     metadataPolicy.value = response.metadataPolicy
         ? JSON.stringify(response.metadataPolicy, null, 2)
         : '';
+    metadata.value = response.metadata
+        ? JSON.stringify(response.metadata, null, 2)
+        : '';
     ecLocation.value = response.ecLocation || '';
     ecLocationAutomaticResolve.value = response.ecLocationAutomaticResolve || false;
     effectiveEcLocation.value = response.effectiveEcLocation || '';
@@ -308,6 +325,9 @@ async function submitForm() {
       ecLocationAutomaticResolve: ecLocationAutomaticResolve.value || false,
       metadataPolicy: metadataPolicy.value && metadataPolicy.value.trim()
           ? JSON.parse(metadataPolicy.value)
+          : null,
+      metadata: metadata.value && metadata.value.trim()
+          ? JSON.parse(metadata.value)
           : null,
     };
 
