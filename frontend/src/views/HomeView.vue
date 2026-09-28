@@ -20,6 +20,7 @@
       <h2>Entities</h2>
       <div class="d-flex gap-2">
         <v-btn
+            v-if="userStore.isOperator"
             id="btn-add-federation-entity"
             color="primary"
             @click="addFederationEntity"
@@ -119,7 +120,7 @@
           </td>
           <td class="text-right">
             <v-btn
-                v-if="getEntityType(entity) === 'federation' || getEntityType(entity) === 'hosted'"
+                v-if="canModify(entity)"
                 :id="'btn-edit-entity-' + index"
                 color="primary"
                 variant="text"
@@ -130,7 +131,7 @@
               Edit
             </v-btn>
             <v-btn
-                v-if="getEntityType(entity) === 'federation' || getEntityType(entity) === 'hosted'"
+                v-if="canModify(entity)"
                 :id="'btn-delete-entity-' + index"
                 color="error"
                 variant="text"
@@ -232,6 +233,13 @@ function getEntityType(entity) {
     return 'subordinate';
   }
   return null;
+}
+
+// Federation entities are written only by the tenant operator (the backend enforces the same rule); hosted entities
+// stay editable by every organization.
+function canModify(entity) {
+  const type = getEntityType(entity);
+  return type === 'hosted' || (type === 'federation' && userStore.isOperator);
 }
 
 function getEntityId(entity) {

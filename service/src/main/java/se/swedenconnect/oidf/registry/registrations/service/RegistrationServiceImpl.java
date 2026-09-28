@@ -134,6 +134,7 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     request.setJoinId(joinId);
     ValidateDto.init(organizationRecord).validate(request);
+    this.organizationService.requireRegisteredDomain(organizationRecord, request.getEntityIdentifier());
     final ProcessReport report = this.registrationFlowService.executeRegistrationFlow(organizationRecord, request);
     final Registration registration = this.registrationRepository.findByEntityId(request.getEntityIdentifier())
         .orElseThrow(() -> new IllegalArgumentException("No registration found for this registrationid"));
@@ -189,6 +190,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     final Registration existing = this.findOwnedRegistrationOrThrow(organizationRecord, registrationId);
     request.setJoinId(existing.getFlowAssignment().getAssignId());
     ValidateDto.init(organizationRecord).validate(request);
+    this.organizationService.requireRegisteredDomain(organizationRecord, request.getEntityIdentifier());
     final ProcessReport report = this.registrationFlowService.executeRegistrationFlow(organizationRecord, request);
     final Registration registration = this.registrationRepository.findByEntityId(request.getEntityIdentifier())
         .orElseThrow(() -> new IllegalArgumentException("No registration found for this entity id"));
@@ -204,6 +206,7 @@ public class RegistrationServiceImpl implements RegistrationService {
   public List<RegistrationFlowInformationDto> listRegistrationFlows() {
     return this.flowAssignmentRepository.findAll()
         .stream()
+        .filter(assignment -> assignment.getRegistrationFlow().isEnabled())
         .map(RegistrationMapper::toRegistrationFlowDto)
         .toList();
   }

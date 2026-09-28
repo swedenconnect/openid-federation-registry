@@ -77,11 +77,17 @@ class TenantServiceTest {
   private RegistryProperties.InstanceProperties instanceProperties(
       final UUID id, final String name, final String... functionGroups) {
     return new RegistryProperties.InstanceProperties(id, name, TEST_BASE_URL, null,
-        List.of(functionGroups), null);
+        List.of(functionGroups), null, null);
+  }
+
+  private RegistryProperties.InstanceProperties operatedInstanceProperties(
+      final UUID id, final String name, final List<String> operatorOrganizations, final String... functionGroups) {
+    return new RegistryProperties.InstanceProperties(id, name, TEST_BASE_URL, null,
+        List.of(functionGroups), operatorOrganizations, null);
   }
 
   private RegistryProperties registryPropertiesWith(final RegistryProperties.InstanceProperties... instances) {
-    return new RegistryProperties(null, List.of(instances), null);
+    return new RegistryProperties(null, List.of(instances), null, null);
   }
 
   // Superuser-leg fixtures: these organization numbers are persisted DB data (Organization.orgNumber), never
@@ -169,9 +175,9 @@ class TenantServiceTest {
     // Superuser leg never reads org_rights, so persisted names (or the org number, absent one) are used as-is.
     assertThat(organizationsFor(result, "Swedenconnect"))
         .containsExactlyInAnyOrder(
-            new TenantOrganizationDto("4444", "4444", null),
-            new TenantOrganizationDto("55555", "55555", null));
-    assertThat(organizationsFor(result, "Ena")).containsExactly(new TenantOrganizationDto("7777", "7777", null));
+            new TenantOrganizationDto("4444", "4444", null, false),
+            new TenantOrganizationDto("55555", "55555", null, false));
+    assertThat(organizationsFor(result, "Ena")).containsExactly(new TenantOrganizationDto("7777", "7777", null, false));
   }
 
   @Test
@@ -207,7 +213,7 @@ class TenantServiceTest {
     final TenantsResponse result = service.resolveTenants(authentication);
 
     assertThat(organizationsFor(result, "Swedenconnect"))
-        .containsExactly(new TenantOrganizationDto("4444", "Persisted Org Name", null));
+        .containsExactly(new TenantOrganizationDto("4444", "Persisted Org Name", null, false));
   }
 
   @Test
@@ -232,8 +238,8 @@ class TenantServiceTest {
 
     assertThat(organizationsFor(result, "Swedenconnect"))
         .containsExactlyInAnyOrder(
-            new TenantOrganizationDto("4444", "4444", "https://registry.example.se/oidf/4444"),
-            new TenantOrganizationDto("55555", "55555", null));
+            new TenantOrganizationDto("4444", "4444", "https://registry.example.se/oidf/4444", false),
+            new TenantOrganizationDto("55555", "55555", null, false));
   }
 
   // --- Regular-user leg: tenants and organizations come exclusively from org_rights (no database access) ---
@@ -256,8 +262,8 @@ class TenantServiceTest {
     assertThat(result.tenants()).extracting(TenantDto::tenant).containsExactly("Swedenconnect");
     assertThat(organizationsFor(result, "Swedenconnect"))
         .containsExactlyInAnyOrder(
-            new TenantOrganizationDto(ORG_4444, "Org " + ORG_4444, null),
-            new TenantOrganizationDto(ORG_55555, "Org " + ORG_55555, null));
+            new TenantOrganizationDto(ORG_4444, "Org " + ORG_4444, null, false),
+            new TenantOrganizationDto(ORG_55555, "Org " + ORG_55555, null, false));
     verifyNoInteractions(instanceRepository);
   }
 
@@ -293,7 +299,7 @@ class TenantServiceTest {
     final TenantsResponse result = service.resolveTenants(authentication);
 
     assertThat(organizationsFor(result, "Swedenconnect"))
-        .containsExactly(new TenantOrganizationDto(ORG_4444, "Svenskt namn", null));
+        .containsExactly(new TenantOrganizationDto(ORG_4444, "Svenskt namn", null, false));
     verifyNoInteractions(instanceRepository);
   }
 
@@ -312,7 +318,7 @@ class TenantServiceTest {
     final TenantsResponse result = service.resolveTenants(authentication);
 
     assertThat(organizationsFor(result, "Swedenconnect"))
-        .containsExactly(new TenantOrganizationDto(ORG_4444, "English name", null));
+        .containsExactly(new TenantOrganizationDto(ORG_4444, "English name", null, false));
   }
 
   @Test
@@ -330,7 +336,7 @@ class TenantServiceTest {
     final TenantsResponse result = service.resolveTenants(authentication);
 
     assertThat(organizationsFor(result, "Swedenconnect"))
-        .containsExactly(new TenantOrganizationDto(ORG_4444, ORG_4444, null));
+        .containsExactly(new TenantOrganizationDto(ORG_4444, ORG_4444, null, false));
   }
 
   @Test
@@ -349,7 +355,7 @@ class TenantServiceTest {
     final TenantsResponse result = service.resolveTenants(authentication);
 
     assertThat(organizationsFor(result, "Swedenconnect"))
-        .containsExactly(new TenantOrganizationDto(ORG_4444, "Org " + ORG_4444, null));
+        .containsExactly(new TenantOrganizationDto(ORG_4444, "Org " + ORG_4444, null, false));
   }
 
   @Test
@@ -371,8 +377,8 @@ class TenantServiceTest {
     assertThat(result.tenants()).extracting(TenantDto::tenant).containsExactly("Swedenconnect");
     assertThat(organizationsFor(result, "Swedenconnect"))
         .containsExactlyInAnyOrder(
-            new TenantOrganizationDto(ORG_4444, "Org " + ORG_4444, null),
-            new TenantOrganizationDto(ORG_55555, "Org " + ORG_55555, null));
+            new TenantOrganizationDto(ORG_4444, "Org " + ORG_4444, null, false),
+            new TenantOrganizationDto(ORG_55555, "Org " + ORG_55555, null, false));
     verifyNoInteractions(instanceRepository);
   }
 
@@ -394,7 +400,7 @@ class TenantServiceTest {
 
     assertThat(result.tenants()).extracting(TenantDto::tenant).containsExactly("swedenconnect");
     assertThat(organizationsFor(result, "swedenconnect"))
-        .containsExactly(new TenantOrganizationDto(ORG_44, "Org " + ORG_44, null));
+        .containsExactly(new TenantOrganizationDto(ORG_44, "Org " + ORG_44, null, false));
     verifyNoInteractions(instanceRepository);
   }
 
@@ -414,9 +420,9 @@ class TenantServiceTest {
 
     assertThat(result.tenants()).extracting(TenantDto::tenant).containsExactlyInAnyOrder("Swedenconnect", "Ena");
     assertThat(organizationsFor(result, "Swedenconnect"))
-        .containsExactly(new TenantOrganizationDto(ORG_4444, "Org " + ORG_4444, null));
+        .containsExactly(new TenantOrganizationDto(ORG_4444, "Org " + ORG_4444, null, false));
     assertThat(organizationsFor(result, "Ena"))
-        .containsExactly(new TenantOrganizationDto(ORG_4444, "Org " + ORG_4444, null));
+        .containsExactly(new TenantOrganizationDto(ORG_4444, "Org " + ORG_4444, null, false));
     verifyNoInteractions(instanceRepository);
   }
 
@@ -437,7 +443,7 @@ class TenantServiceTest {
 
     assertThat(result.tenants()).extracting(TenantDto::tenant).containsExactly("Swedenconnect");
     assertThat(organizationsFor(result, "Swedenconnect"))
-        .containsExactly(new TenantOrganizationDto(ORG_4444, "Org " + ORG_4444, null));
+        .containsExactly(new TenantOrganizationDto(ORG_4444, "Org " + ORG_4444, null, false));
   }
 
   @Test
@@ -461,7 +467,50 @@ class TenantServiceTest {
 
     assertThat(organizationsFor(result, "Swedenconnect"))
         .containsExactlyInAnyOrder(
-            new TenantOrganizationDto(ORG_4444, "Org " + ORG_4444, "https://registry.example.se/oidf/4444"),
-            new TenantOrganizationDto(ORG_55555, "Org " + ORG_55555, null));
+            new TenantOrganizationDto(ORG_4444, "Org " + ORG_4444, "https://registry.example.se/oidf/4444", false),
+            new TenantOrganizationDto(ORG_55555, "Org " + ORG_55555, null, false));
+  }
+
+  @Test
+  @DisplayName("Only the tenant's configured operator organizations are flagged as operator")
+  void operatorFlagFollowsConfiguredOperatorOrganizations() {
+    final UUID instanceId = UUID.randomUUID();
+    service = new TenantService(
+        registryPropertiesWith(
+            operatedInstanceProperties(instanceId, "Swedenconnect", List.of(ORG_4444), "swedenconnect")),
+        instanceRepository, orgRightsService, instancePlacementService);
+
+    when(orgRightsService.extractOrgRights(authentication)).thenReturn(
+        orgRights(
+            orgEntry(ORG_4444, functionRight("swedenconnect", "write")),
+            orgEntry(ORG_55555, functionRight("swedenconnect", "write"))));
+
+    final TenantsResponse result = service.resolveTenants(authentication);
+
+    assertThat(organizationsFor(result, "Swedenconnect"))
+        .containsExactlyInAnyOrder(
+            new TenantOrganizationDto(ORG_4444, "Org " + ORG_4444, null, true),
+            new TenantOrganizationDto(ORG_55555, "Org " + ORG_55555, null, false));
+  }
+
+  @Test
+  @DisplayName("Superuser: only the tenant's configured operator organizations are flagged as operator")
+  void superuserOperatorFlagFollowsConfiguredOperatorOrganizations() {
+    final UUID instanceId = UUID.randomUUID();
+    service = new TenantService(
+        registryPropertiesWith(
+            operatedInstanceProperties(instanceId, "Swedenconnect", List.of("4444"), "swedenconnect")),
+        instanceRepository, orgRightsService, instancePlacementService);
+
+    when(orgRightsService.extractOrgRights(authentication)).thenReturn(new OrgRightsClaim(true, List.of()));
+    when(instanceRepository.findAllById(Set.of(instanceId)))
+        .thenReturn(List.of(instanceWithOrgs(instanceId, "4444", "55555")));
+
+    final TenantsResponse result = service.resolveTenants(authentication);
+
+    assertThat(organizationsFor(result, "Swedenconnect"))
+        .containsExactlyInAnyOrder(
+            new TenantOrganizationDto("4444", "4444", null, true),
+            new TenantOrganizationDto("55555", "55555", null, false));
   }
 }

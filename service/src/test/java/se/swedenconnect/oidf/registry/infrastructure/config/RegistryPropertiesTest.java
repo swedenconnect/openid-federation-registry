@@ -32,7 +32,7 @@ class RegistryPropertiesTest {
 
   private RegistryProperties.InstanceProperties instance(final String name, final String... functionGroups) {
     return new RegistryProperties.InstanceProperties(UUID.randomUUID(), name, TEST_BASE_URL, null,
-        List.of(functionGroups), null);
+        List.of(functionGroups), null, null);
   }
 
   private RegistryProperties.FederationAPIProperties federationApiProperties() {
@@ -41,7 +41,7 @@ class RegistryPropertiesTest {
   }
 
   private RegistryProperties propertiesWith(final RegistryProperties.InstanceProperties... instances) {
-    return new RegistryProperties(this.federationApiProperties(), List.of(instances), null);
+    return new RegistryProperties(this.federationApiProperties(), List.of(instances), null, null);
   }
 
   @Test
@@ -131,5 +131,17 @@ class RegistryPropertiesTest {
     assertThatIllegalArgumentException()
         .isThrownBy(properties::validate)
         .withMessageContaining("function_groups");
+  }
+
+  @Test
+  @DisplayName("A blank operator organization fails validation")
+  void blankOperatorOrganizationFailsValidation() {
+    final RegistryProperties properties = this.propertiesWith(new RegistryProperties.InstanceProperties(
+        UUID.randomUUID(), "Swedenconnect", TEST_BASE_URL, null, List.of("swedenconnect"),
+        List.of("5520001263", " "), null));
+
+    assertThatIllegalArgumentException()
+        .isThrownBy(properties::validate)
+        .withMessageContaining("operator_organizations");
   }
 }

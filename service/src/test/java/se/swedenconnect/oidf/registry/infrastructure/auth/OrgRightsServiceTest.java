@@ -55,11 +55,11 @@ class OrgRightsServiceTest {
   private RegistryProperties.InstanceProperties instanceProperties(
       final String name, final String... functionGroups) {
     return new RegistryProperties.InstanceProperties(
-        UUID.randomUUID(), name, TEST_BASE_URL, null, List.of(functionGroups), null);
+        UUID.randomUUID(), name, TEST_BASE_URL, null, List.of(functionGroups), null, null);
   }
 
   private RegistryProperties registryPropertiesWith(final RegistryProperties.InstanceProperties... instances) {
-    return new RegistryProperties(null, List.of(instances), null);
+    return new RegistryProperties(null, List.of(instances), null, null);
   }
 
   private OrgRightsService serviceWith(final RegistryProperties registryProperties) {
@@ -226,5 +226,48 @@ class OrgRightsServiceTest {
 
     assertThat(org44CanRead).isTrue();
     assertThat(org55CanRead).isFalse();
+  }
+
+  private RegistryProperties.InstanceProperties operatedInstanceProperties(
+      final String name, final String operatorOrgNumber, final String functionGroup) {
+    return new RegistryProperties.InstanceProperties(
+        UUID.randomUUID(), name, TEST_BASE_URL, null, List.of(functionGroup), List.of(operatorOrgNumber), null);
+  }
+
+  @Test
+  @DisplayName("canReadAsOperator/canWriteAsOperator grant access only to a configured operator organization")
+  void asOperatorChecksRequireConfiguredOperator() {
+    final OrgRightsService service = this.serviceWith(this.registryPropertiesWith(
+        this.operatedInstanceProperties("swedenconnect-tenant", ORG_44, "swedenconnect")));
+    final RegistryClaims authentication = authenticationWith(new OrgRightsClaim(false, List.of(
+        this.orgEntry(ORG_44, functionRight("swedenconnect", "write")),
+        this.orgEntry(ORG_55, functionRight("swedenconnect", "write")))));
+
+    assertThat(service.canReadAsOperator(authentication, ORG_44, "swedenconnect-tenant")).isTrue();
+    assertThat(service.canWriteAsOperator(authentication, ORG_44, "swedenconnect-tenant")).isTrue();
+    assertThat(service.canReadAsOperator(authentication, ORG_55, "swedenconnect-tenant")).isFalse();
+    assertThat(service.canWriteAsOperator(authentication, ORG_55, "swedenconnect-tenant")).isFalse();
+  }
+
+  @Test
+  @DisplayName("canWriteAsOperator still requires write: an operator organization holding only read is denied")
+  void asOperatorWriteStillRequiresWriteRight() {
+    final OrgRightsService service = this.serviceWith(this.registryPropertiesWith(
+        this.operatedInstanceProperties("swedenconnect-tenant", ORG_44, "swedenconnect")));
+    final RegistryClaims authentication = authenticationWith(new OrgRightsClaim(false, List.of(
+        this.orgEntry(ORG_44, functionRight("swedenconnect", "read")))));
+
+    assertThat(service.canReadAsOperator(authentication, ORG_44, "swedenconnect-tenant")).isTrue();
+    assertThat(service.canWriteAsOperator(authentication, ORG_44, "swedenconnect-tenant")).isFalse();
+  }
+
+  @Test
+  @DisplayName("A superuser passes the operator checks for any organization")
+  void superuserPassesOperatorChecks() {
+    final OrgRightsService service = this.serviceWith(this.registryPropertiesWith(
+        this.operatedInstanceProperties("swedenconnect-tenant", ORG_44, "swedenconnect")));
+    final RegistryClaims authentication = authenticationWith(new OrgRightsClaim(true, List.of()));
+
+    assertThat(service.canWriteAsOperator(authentication, ORG_55, "swedenconnect-tenant")).isTrue();
   }
 }

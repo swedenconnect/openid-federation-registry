@@ -27,6 +27,9 @@ openid:
           function_groups:
             - "swedenconnect"
             - "swedenconnect-secondary"
+          operator_organizations:
+            - "5520001263"
+            - "5520004002"
 
         - instance_id: "223e4567-e89b-12d3-a456-426614174001"
           name: "ENA"
@@ -36,6 +39,8 @@ openid:
           function_groups:
             - "ena"
             - "swedenconnect"
+          operator_organizations:
+            - "5520001263"
 
 
 credential:

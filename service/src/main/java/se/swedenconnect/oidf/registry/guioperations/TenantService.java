@@ -107,14 +107,15 @@ public class TenantService {
 
     final List<TenantDto> tenantDtos = tenants.stream()
         .map(instance -> new TenantDto(
-            instance.name(), this.persistedOrganizations(instancesById.get(instance.instanceId()))))
+            instance.name(), this.persistedOrganizations(instance, instancesById.get(instance.instanceId()))))
         .sorted(Comparator.comparing(TenantDto::tenant))
         .toList();
 
     return new TenantsResponse(tenantDtos);
   }
 
-  private List<TenantOrganizationDto> persistedOrganizations(final Instance instance) {
+  private List<TenantOrganizationDto> persistedOrganizations(
+      final RegistryProperties.InstanceProperties instanceProperties, final Instance instance) {
     if (instance == null) {
       return List.of();
     }
@@ -123,7 +124,8 @@ public class TenantService {
             organization.getOrgNumber(),
             this.nameFromOrganization(organization).orElseGet(organization::getOrgNumber),
             this.instancePlacementService.resolveEntityPrefixForPlacedOrg(organization)
-                .orElse(null)))
+                .orElse(null),
+            instanceProperties.isOperator(organization.getOrgNumber())))
         .sorted(Comparator.comparing(TenantOrganizationDto::orgNumber))
         .toList();
   }
@@ -171,7 +173,8 @@ public class TenantService {
         orgNumber,
         this.resolveEntryName(entry, orgNumber),
         this.instancePlacementService.resolveEntityPrefix(orgNumber, instance.slug())
-            .orElse(null));
+            .orElse(null),
+        instance.isOperator(orgNumber));
   }
 
   private Optional<String> nameFromOrganization(final Organization organization) {

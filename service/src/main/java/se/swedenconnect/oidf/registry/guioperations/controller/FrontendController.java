@@ -42,7 +42,9 @@ public class FrontendController {
       "/registration-flows",
       "/registration-flows/**",
       "/registrations",
-      "/registrations/**"
+      "/registrations/**",
+      "/organizations",
+      "/organizations/**"
   })
   public String forwardToFrontend() {
     return "forward:/";

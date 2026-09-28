@@ -111,6 +111,8 @@ public class SecurityConfig {
             .requestMatchers("/registration/v1/**").authenticated()
             // Registration-Admin — right-level enforced by @PreAuthorize(@orgRightsService) on controllers
             .requestMatchers("/registration-admin/v1/**").authenticated()
+            // Organization — right-level enforced by @PreAuthorize(@orgRightsService) on controllers
+            .requestMatchers("/organization/v1/**").authenticated()
 
             .requestMatchers(HttpMethod.GET, "/logout/frontchannel").permitAll()
             .requestMatchers(HttpMethod.GET, "/jwks").permitAll()
@@ -119,7 +121,7 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/assets/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/entities/**",
-                "/registration-flows/**", "/registrations/**").authenticated()
+                "/registration-flows/**", "/registrations/**", "/organizations/**").authenticated()
             .requestMatchers(HttpMethod.GET, "/*").permitAll()
 
             .requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**")

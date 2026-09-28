@@ -41,6 +41,14 @@ public final class ContextKey {
   public static final String STEP_APPROVED = "stepApproved";
   public static final String TRUSTMARK_SUBJECT_PROCEED = "trustmarkSubjectProceed";
 
+  /**
+   * Set on a trust mark sub-flow context when the applicant organization already holds the trust mark type
+   * as a pre-validated trust mark. A gated step in that sub-flow is then auto-approved instead of pausing
+   * for manual review. Never set on the parent (INTERMEDIATE) context — the pre-validation is per trust
+   * mark type, so it must not leak to the registration as a whole.
+   */
+  public static final String TRUST_MARK_PRE_VALIDATED = "trustMarkPreValidated";
+
   private ContextKey() {
   }
 }

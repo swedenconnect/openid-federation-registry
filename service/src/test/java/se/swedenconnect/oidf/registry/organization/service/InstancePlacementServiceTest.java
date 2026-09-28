@@ -62,11 +62,17 @@ class InstancePlacementServiceTest {
   private RegistryProperties.InstanceProperties tenant(
       final UUID id, final String name, final String... functionGroups) {
     return new RegistryProperties.InstanceProperties(id, name, TEST_BASE_URL, null,
-        List.of(functionGroups), null);
+        List.of(functionGroups), null, null);
+  }
+
+  private RegistryProperties.InstanceProperties operatedTenant(
+      final UUID id, final String name, final String... operatorOrganizations) {
+    return new RegistryProperties.InstanceProperties(id, name, TEST_BASE_URL, null,
+        List.of("digg-admin"), List.of(operatorOrganizations), null);
   }
 
   private RegistryProperties propertiesWith(final RegistryProperties.InstanceProperties... instances) {
-    return new RegistryProperties(null, List.of(instances), null);
+    return new RegistryProperties(null, List.of(instances), null, null);
   }
 
   private OrganizationRecord org(final String orgNumber, final String tenant) {
@@ -77,7 +83,7 @@ class InstancePlacementServiceTest {
   @DisplayName("Empty instances list returns empty")
   void emptyInstancesReturnsEmpty() {
     service = new InstancePlacementService(
-        new RegistryProperties(null, List.of(), null), instanceRepository);
+        new RegistryProperties(null, List.of(), null, null), instanceRepository);
 
     final Optional<Instance> result = service.resolveInstance(org("5566778899", "digg"));
 
@@ -317,7 +323,7 @@ class InstancePlacementServiceTest {
   @Test
   @DisplayName("resolveBaseUrl returns empty when instance list is empty")
   void resolveBaseUrl_emptyInstancesReturnsEmpty() {
-    service = new InstancePlacementService(new RegistryProperties(null, List.of(), null), instanceRepository);
+    service = new InstancePlacementService(new RegistryProperties(null, List.of(), null, null), instanceRepository);
 
     final Optional<URI> result = service.resolveBaseUrl(org("5566778899", "digg"));
 
@@ -355,5 +361,30 @@ class InstancePlacementServiceTest {
     final Optional<URI> result = service.resolveBaseUrl(UUID.randomUUID());
 
     assertThat(result).isEmpty();
+  }
+
+  @Test
+  @DisplayName("An organization is an operator only of the tenant that lists it in operator_organizations")
+  void operatorIsResolvedPerTenantFromConfiguration() {
+    service = new InstancePlacementService(
+        propertiesWith(
+            operatedTenant(instanceId, "Digg", "5520001263"),
+            operatedTenant(UUID.randomUUID(), "Ena")),
+        instanceRepository);
+
+    assertThat(service.isOperator("5520001263", "digg")).isTrue();
+    assertThat(service.isOperator("5520001263", "Digg")).isTrue();
+    assertThat(service.isOperator("5520002634", "digg")).isFalse();
+    assertThat(service.isOperator("5520001263", "ena")).isFalse();
+    assertThat(service.isOperator("5520001263", "unknown-tenant")).isFalse();
+  }
+
+  @Test
+  @DisplayName("A tenant without operator_organizations has no operator")
+  void tenantWithoutOperatorOrganizationsHasNoOperator() {
+    service = new InstancePlacementService(
+        propertiesWith(tenant(instanceId, "Digg", "digg-admin")), instanceRepository);
+
+    assertThat(service.isOperator("5520001263", "digg")).isFalse();
   }
 }

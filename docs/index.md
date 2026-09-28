@@ -18,6 +18,10 @@ subordinate entity statements by the underlying federation service.
   organisation's entity joins the federation via an Intermediate: from entity configuration
   loading through validation to subordinate statement publication.
 
+- [Organizations and Domains](organization.md): Organization bootstrap, the domain claim
+  lifecycle, the domain check on registration requests, and how a domain rejection affects
+  registrations.
+
 ### Integration
 
 - [Authorization Model](oauth.md) — The `org_rights` JWT claim, tenant/function-group matching,

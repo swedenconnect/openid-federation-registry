@@ -30,8 +30,11 @@ import RegistrationFlowsListView from '../views/RegistrationFlowsListView.vue';
 import RegistrationFlowFormView from '../views/RegistrationFlowFormView.vue';
 import RegistrationsListView from '../views/RegistrationsListView.vue';
 import RegistrationDetailView from '../views/RegistrationDetailView.vue';
+import DomainRequestDetailView from '../views/DomainRequestDetailView.vue';
+import OrganizationsListView from '../views/OrganizationsListView.vue';
 import TriggerRegistrationView from '../views/TriggerRegistrationView.vue';
 import {useAuthorizationStatusStore} from '@/authorization/stores/authorizationStatusStore';
+import {useUserStore} from '@/stores/userStore';
 
 let base = import.meta.env.BASE_URL;
 const baseHref = document.getElementById('base-href-id');
@@ -61,13 +64,13 @@ const router = createRouter({
             path: '/entities/federation/new',
             name: 'federation-entity-new',
             component: FederationEntityNewView,
-            meta: {title: 'New Federation Entity'},
+            meta: {operatorOnly: true, title: 'New Federation Entity'},
         },
         {
             path: '/entities/federation/:id/edit',
             name: 'federation-entity-edit',
             component: FederationEntityEditView,
-            meta: {title: 'Edit Federation Entity'},
+            meta: {operatorOnly: true, title: 'Edit Federation Entity'},
         },
         {
             path: '/entities/hosted/new',
@@ -139,37 +142,49 @@ const router = createRouter({
             path: '/registration-flows',
             name: 'registration-flows-list',
             component: RegistrationFlowsListView,
-            meta: {title: 'Registration Flows'},
+            meta: {operatorOnly: true, title: 'Registration Flows'},
         },
         {
             path: '/registration-flows/new',
             name: 'registration-flow-new',
             component: RegistrationFlowFormView,
-            meta: {title: 'New Registration Flow'},
+            meta: {operatorOnly: true, title: 'New Registration Flow'},
         },
         {
             path: '/registration-flows/:id/edit',
             name: 'registration-flow-edit',
             component: RegistrationFlowFormView,
-            meta: {title: 'Edit Registration Flow'},
+            meta: {operatorOnly: true, title: 'Edit Registration Flow'},
         },
         {
             path: '/registrations',
             name: 'registrations-list',
             component: RegistrationsListView,
-            meta: {title: 'Registrations'},
+            meta: {operatorOnly: true, title: 'Registrations'},
         },
         {
             path: '/registrations/trigger',
             name: 'registration-trigger',
             component: TriggerRegistrationView,
-            meta: {title: 'Trigger Registration'},
+            meta: {operatorOnly: true, title: 'Trigger Registration'},
+        },
+        {
+            path: '/registrations/domain/:domainId',
+            name: 'domain-request-detail',
+            component: DomainRequestDetailView,
+            meta: {operatorOnly: true, title: 'Domain Request'},
         },
         {
             path: '/registrations/:id',
             name: 'registration-detail',
             component: RegistrationDetailView,
-            meta: {title: 'Registration Detail'},
+            meta: {operatorOnly: true, title: 'Registration Detail'},
+        },
+        {
+            path: '/organizations',
+            name: 'organizations-list',
+            component: OrganizationsListView,
+            meta: {operatorOnly: true, title: 'Organizations'},
         },
     ],
 });
@@ -184,6 +199,12 @@ router.beforeEach((to) => {
     const authStore = useAuthorizationStatusStore();
     if (authStore.isAuthorized === false) {
         return {name: 'login'};
+    }
+    // Operator-only views (see userStore.isOperator). Until /tenants has loaded nothing is known about the
+    // selection yet; AppLayout performs the same check once it has, which covers a hard refresh.
+    const userStore = useUserStore();
+    if (to.meta.operatorOnly && userStore.tenants.length > 0 && !userStore.isOperator) {
+        return {name: 'home'};
     }
     return true;
 });

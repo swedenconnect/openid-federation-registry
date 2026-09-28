@@ -44,7 +44,7 @@ import java.security.interfaces.ECPublicKey;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.UUID;
 
 /**
  * oidf-entity-registry
@@ -66,7 +66,7 @@ public class TestDataOperations {
       final KeyPair keyPair = keyGen.generateKeyPair();
 
       return new ECKey.Builder(Curve.P_256, (ECPublicKey) keyPair.getPublic()).privateKey(keyPair.getPrivate())
-          .keyID("ec-key-id" + new Random().nextInt(1000))
+          .keyID("ec-key-id-" + UUID.randomUUID())
           .keyUse(KeyUse.SIGNATURE)
           .build();
     }

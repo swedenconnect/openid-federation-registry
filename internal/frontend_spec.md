@@ -115,7 +115,7 @@ When pressed logout is performed and the startpage is displayed to the user.
 
 ## Organization selection
 
-There shall be a dropdown menu filled with different organisations that is loaded from backend. When an organization is
+There shall be a dropdown menu filled with different organizations that is loaded from backend. When an organization is
 selected it must be written to the server then navigate to entity view and reload data from server.
 
 Organization dropdown menu should be placed in the top bar to the right.
@@ -775,6 +775,78 @@ Delete functionality for trustmark subjects with confirmation dialog.
 - Dialog closes
 - Trustmark Subjects List View is refreshed
 - Success: Trustmark subject removed from list
+
+## Registrations List View
+
+Route `/registrations`. One review queue for registration requests and domain requests. The type chip shows the
+kind of request.
+
+**Loading**: the view loads `GET /registration-admin/v1/{tenant}/{orgNumber}` and
+`GET /registration-admin/v1/{tenant}/{orgNumber}/domains` in parallel. The domain list is for operators only. For
+other callers it returns `404`, and the view shows no domain rows and no error banner.
+
+### Filters
+
+- **Search**: free text. Registration rows match on entity ID, intermediate entity ID, subordinate entity ID and
+  organization name. Domain rows match on domain, organization name and organization number.
+- **Type toggle**: `All` / `IM` (`SUBORDINATE`) / `TM` (`TRUST_MARK_SUBORDINATE`) / `Domain` (`DOMAIN`). Domain
+  rows have their own chip colour.
+- **Show history switch**: disabled by default. When disabled, the view lists only unhandled work: registrations
+  in `PENDING_APPROVAL` or `STARTED`, and domains in `PENDING`. When enabled, it also lists handled items
+  (`APPROVED`/`VALIDATED`, `REJECTED`). The choice is stored in `localStorage` under
+  `oidf.registrations.showHistory`, like the userStore's tenant and organization keys.
+
+### Table Structure
+
+| Column | Registration row | Domain row |
+|--------|------------------|------------|
+| Entity ID / Subordinate Entity ID / Domain | Entity ID, or the subordinate entity ID for a TM row | The domain |
+| Intermediate / Trust Mark Type / Organization | Intermediate entity ID, or the trust mark type for a TM row | The requesting organization: legal name, else org name, else org number |
+| Type | `IM` or `TM` | `Domain` |
+| Status | `statusFedreg` | Mapped onto the same chips: `PENDING` to `PENDING_APPROVAL`, `VALIDATED` to `APPROVED`, `REJECTED` to `REJECTED` |
+| Requested | Empty | `createdDate` |
+| Reason | Rejection reason, if any | Rejection reason, if any |
+
+Rows are sorted with pending items first, then by date. Selecting a registration row opens `/registrations/:id`.
+Selecting a domain row opens `/registrations/domain/:domainId`.
+
+**Empty state**: with history hidden, the table reads "No pending requests. History is hidden — turn on
+Show history to see handled requests." With history shown, it reads "No registrations found."
+
+### Query parameters
+
+- `?type=` preselects the type toggle (`SUBORDINATE`, `TRUST_MARK_SUBORDINATE`, `DOMAIN`).
+- `?org=` fills the search box with an organization number.
+- `?status=` filters domain rows to one domain status. `ALL` means every status.
+- `?history=1` enables Show history without changing the stored default, so a link can point to a handled item.
+
+The Organizations view links here as `/registrations?type=DOMAIN&org=<orgNumber>&status=ALL&history=1`.
+
+### Navigation badge
+
+The **Registrations** nav link has a warning badge with the number of requests awaiting review. The number is
+the pending domains (`GET .../domains/count`) plus the registrations in `PENDING_APPROVAL` in the loaded list.
+`/count` is not used for registrations because it counts a single intermediate only.
+
+## Domain Request Detail View
+
+Route `/registrations/domain/:domainId`, opened from a domain row. The layout follows the Registration Detail
+View: a header with actions and a summary table. The table lists:
+
+- domain, organization and organization number
+- status and request date
+- review date and reviewer, if reviewed
+- rejection reason, if rejected
+
+The view reads the domain from the operator domain list, as there is no endpoint for a single domain.
+
+**Actions** (only while the domain is `PENDING`):
+
+- **Approve**: `POST .../domains/{domainId}/approve`. The page then reloads the domain and shows a snackbar.
+- **Reject**: opens a dialog that requires a rejection reason, then calls `POST .../domains/{domainId}/reject`.
+  The snackbar shows how many registrations the rejection cascaded to (`cascadedRegistrationIds`). The page
+  stays open with the new status.
+- **Back**: returns to `/registrations?type=DOMAIN`.
 
 ## Error Handling
 

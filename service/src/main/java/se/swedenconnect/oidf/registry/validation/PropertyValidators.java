@@ -33,6 +33,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -49,6 +50,16 @@ import java.util.regex.PatternSyntaxException;
 public class PropertyValidators {
 
   public static final JsonMapper mapper = new JsonMapper();
+
+  /** Hostname of at most 253 characters, each label 1–63 characters of letters, digits and hyphens. */
+  private static final Pattern HOSTNAME = Pattern.compile(
+      "^(?=.{1,253}$)[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$");
+
+  /** Dotted-quad IPv4 literal — rejected as a domain, since a domain must be a name. */
+  private static final Pattern IPV4 = Pattern.compile("^\\d{1,3}(\\.\\d{1,3}){3}$");
+
+  private static final String LOCALHOST = "localhost";
+
   private final Map<String, PropertyValidatorPlugin> validatorRegistry = new HashMap<>();
 
   /**
@@ -256,6 +267,35 @@ public class PropertyValidators {
   // ---------------------------------------------------------------------------
   // Parameterized validators — factory methods that close over configuration
   // ---------------------------------------------------------------------------
+
+  /**
+   * Validates that the value is a bare hostname usable as an organization domain: no scheme, no path, no port
+   * and no wildcard, and never a bare IP address. A single-label name is rejected as well, with the single
+   * exception of {@code localhost}, which is only accepted when local address ranges are enabled — the same
+   * switch that lets the entity configuration loader reach {@code https://localhost:.../} entity identifiers.
+   *
+   * @param allowLocalhost whether {@code localhost} is an acceptable domain
+   * @return the validator
+   */
+  private PropertyValidator validateDomain(final boolean allowLocalhost) {
+    return (key, value) -> {
+      if (value == null || value.isBlank()) {
+        return ValidationStatusImpl.noEval(key, "domain");
+      }
+      final String candidate = value.toLowerCase(Locale.ROOT);
+      this.throwIf(() -> candidate.contains("://") || candidate.contains("/"),
+          key, "Domain must not contain a scheme or a path", value);
+      this.throwIf(() -> candidate.contains(":"), key, "Domain must not contain a port", value);
+      this.throwIf(() -> candidate.contains("*"), key, "Wildcard domains are not allowed", value);
+      this.throwIf(() -> !HOSTNAME.matcher(candidate).matches(),
+          key, "Domain is not a valid hostname", value);
+      this.throwIf(() -> IPV4.matcher(candidate).matches(),
+          key, "Domain must be a hostname, not an IP address", value);
+      this.throwIf(() -> !candidate.contains(".") && !(allowLocalhost && LOCALHOST.equals(candidate)),
+          key, "Domain must be a fully qualified hostname", value);
+      return ValidationStatusImpl.ok(key, "domain");
+    };
+  }
 
   private PropertyValidator validateEndsWith(final String suffix) {
     if (suffix == null || suffix.isBlank()) {
@@ -635,6 +675,18 @@ public class PropertyValidators {
      */
     public ValidationBuilder matches(final String regex) {
       this.addValidator(PropertyValidators.this.validateMatches(this.variabelResolver.insertTemplateValues(regex)));
+      return this;
+    }
+
+    /**
+     * Adds a domain (bare hostname) validation rule.
+     *
+     * @param allowLocalhost whether {@code localhost} is an acceptable domain, mirroring the entity
+     *     configuration loader's local-address-range switch
+     * @return this builder
+     */
+    public ValidationBuilder domain(final boolean allowLocalhost) {
+      this.addValidator(PropertyValidators.this.validateDomain(allowLocalhost));
       return this;
     }
 

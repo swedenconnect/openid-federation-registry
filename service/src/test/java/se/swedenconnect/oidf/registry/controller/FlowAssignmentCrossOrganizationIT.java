@@ -67,7 +67,9 @@ class FlowAssignmentCrossOrganizationIT {
 
   private static final String TENANT = "Swedenconnect";
   private static final JwtTestUtils.OrganisationType ALICE = JwtTestUtils.OrganisationType.PM;
-  private static final JwtTestUtils.OrganisationType CHARLIE = JwtTestUtils.OrganisationType.AF;
+  // Both are operators of the tenant (operator_organizations in application.yml): the operator-only endpoints must
+  // still keep one operator organization out of another's data.
+  private static final JwtTestUtils.OrganisationType CHARLIE = JwtTestUtils.OrganisationType.SKATT;
 
   @Container
   @ServiceConnection

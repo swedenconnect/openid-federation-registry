@@ -23,6 +23,9 @@ import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
+import se.swedenconnect.oidf.registry.organization.dto.CreateOrganizationDto;
+import se.swedenconnect.oidf.registry.organization.dto.DomainRequestDto;
+import se.swedenconnect.oidf.registry.organization.dto.PreValidatedTrustMarksDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.RegistrationFlowDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationJoinRequestDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
@@ -34,8 +37,11 @@ import se.swedenconnect.oidf.registry.validation.VariableValueResolver;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Validator for DTO objects using PropertyValidators framework.
@@ -49,6 +55,10 @@ public class ValidateDto {
   private static final int MIN_POLICY_CRIT_LENGTH = 2;
   private static final int MAX_POLICY_CRIT_LENGTH = 150;
   private static final String ENTITY_PREFIX = "@{entityprefix}";
+  private static final int MIN_DOMAIN_LENGTH = 1;
+  private static final int MAX_DOMAIN_LENGTH = 255;
+  private static final int MIN_LEGAL_NAME_LENGTH = 1;
+  private static final int MAX_LEGAL_NAME_LENGTH = 255;
 
   private final PropertyValidators.ValidationBuilder v;
 
@@ -105,6 +115,66 @@ public class ValidateDto {
               .ifFailThrow("trustmarktype", trustmarks.getTrustmarkType());
         });
 
+  }
+
+  /**
+   * Validates DomainRequestDto. The domain is expected to already be trimmed and lower-cased by the caller, the
+   * form in which it is stored.
+   *
+   * @param dto the domain request DTO
+   * @param allowLocalhost whether {@code localhost} is an acceptable domain, mirroring
+   *     {@code openid.federation.registry.entity-configuration-loader.enable-local-ip-address-ranges}
+   * @throws PropertyValidationFailException if validation fails
+   */
+  public void validate(final DomainRequestDto dto, final boolean allowLocalhost) {
+    Objects.requireNonNull(dto, "DomainRequestDto cannot be null");
+
+    this.v.required()
+        .length(MIN_DOMAIN_LENGTH, MAX_DOMAIN_LENGTH)
+        .domain(allowLocalhost)
+        .build()
+        .ifFailThrow("domain", dto.domain());
+  }
+
+  /**
+   * Validates CreateOrganizationDto.
+   *
+   * @param dto the create organization DTO
+   * @throws PropertyValidationFailException if validation fails
+   */
+  public void validate(final CreateOrganizationDto dto) {
+    Objects.requireNonNull(dto, "CreateOrganizationDto cannot be null");
+
+    this.v.required()
+        .length(MIN_LEGAL_NAME_LENGTH, MAX_LEGAL_NAME_LENGTH)
+        .build()
+        .ifFailThrow("legalName", dto.legalName());
+  }
+
+  /**
+   * Validates PreValidatedTrustMarksDto. A trust mark type is a URI naming the trust mark, so each entry is held
+   * to the same shape as an entity identifier. An empty list is valid — it is how the operator withdraws every
+   * pre-approval — but a blank entry is not, and neither is the same type listed twice: the stored list is a set,
+   * so a duplicate is a mistake in the request rather than something to silently collapse.
+   *
+   * @param dto the pre-validated trust marks DTO
+   * @throws PropertyValidationFailException if validation fails
+   */
+  public void validate(final PreValidatedTrustMarksDto dto) {
+    Objects.requireNonNull(dto, "PreValidatedTrustMarksDto cannot be null");
+
+    final List<String> trustMarkTypes = Optional.ofNullable(dto.preValidatedTrustMarks()).orElse(List.of());
+    final Set<String> seen = new HashSet<>();
+    trustMarkTypes.forEach(trustMarkType -> {
+      this.v.required()
+          .entityid()
+          .build()
+          .ifFailThrow("preValidatedTrustMarks", trustMarkType);
+      if (!seen.add(trustMarkType)) {
+        throw new PropertyValidationFailException("preValidatedTrustMarks", trustMarkType,
+            "Trust mark type is listed more than once");
+      }
+    });
   }
 
   /**

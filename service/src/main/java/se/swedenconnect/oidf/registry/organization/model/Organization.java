@@ -64,6 +64,15 @@ public class Organization extends BaseEntity {
   @Column(name = "org_name")
   private String orgName;
 
+  /**
+   * The organization's legal name, as posted by the portal when the organization bootstraps its registry
+   * record. Distinct from {@link #orgName}, which comes from the caller's token claim, and {@code null} for
+   * organizations auto-created by some other path.
+   */
+  @Size(max = 255)
+  @Column(name = "legal_name")
+  private String legalName;
+
   @ManyToOne
   @JoinColumn(name = "instance_id", nullable = false)
   private Instance instance;

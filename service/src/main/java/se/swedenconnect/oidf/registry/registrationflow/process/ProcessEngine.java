@@ -35,6 +35,13 @@ import java.util.Objects;
 public class ProcessEngine {
 
   /**
+   * Recorded on a gated step that was passed because the organization holds the trust mark as pre-validated.
+   * The concrete trust mark type is named by {@code TrustMarkIssuerRegistrationStep} in the parent step trail.
+   */
+  static final String AUTO_APPROVED_MESSAGE =
+      "Auto-approved: organization holds a pre-validated trust mark for this enrollment";
+
+  /**
    * Executes the pipeline sequentially using a four-phase lifecycle per step:
    * <ol>
    *   <li>{@code canApply} — skip the step if not applicable</li>
@@ -71,6 +78,7 @@ public class ProcessEngine {
       // Read the approval flag — do NOT remove yet so execute (and any sub-flows it spawns)
       // can still propagate it. Flag is removed after execute returns.
       final boolean alreadyApproved = ctx.<Boolean>get(ContextKey.STEP_APPROVED).orElse(false);
+      String autoApprovalMessage = null;
 
       if (!alreadyApproved) {
         // Phase 2: buildContext
@@ -82,19 +90,25 @@ public class ProcessEngine {
           return ProcessReport.skipped(records);
         }
 
-        // Phase 3: approval gate
+        // Phase 3: approval gate. A trust mark the organization is already pre-validated for needs no second
+        // look: the sub-flow runs in full, the gated step just does not stop at the gate.
         if (def.config().getBoolean("manualreview")) {
-          log.info("Step {} requires manual approval — pausing pipeline", def.name());
-          final List<ContextDiffEntry> diff = computeDiff(before, ctx.snapshot());
-          records.add(new StepExecutionRecord(def.name(),
-              StepResult.pendingApproval("Step requires manual approval"), diff));
-          return ProcessReport.pendingApproval(records);
+          if (!ctx.<Boolean>get(ContextKey.TRUST_MARK_PRE_VALIDATED).orElse(false)) {
+            log.info("Step {} requires manual approval — pausing pipeline", def.name());
+            final List<ContextDiffEntry> diff = computeDiff(before, ctx.snapshot());
+            records.add(new StepExecutionRecord(def.name(),
+                StepResult.pendingApproval("Step requires manual approval"), diff));
+            return ProcessReport.pendingApproval(records);
+          }
+          log.info("Step {} requires manual approval, but the organization holds a pre-validated trust mark "
+              + "for this enrollment — auto-approving", def.name());
+          autoApprovalMessage = AUTO_APPROVED_MESSAGE;
         }
       }
 
       // Phase 4: execute
       log.info("Running step: {}", def.name());
-      final StepResult result = def.run(ctx);
+      final StepResult result = withAutoApprovalNote(def.run(ctx), autoApprovalMessage);
       // Consume flag after execute so sub-pipelines inside execute can propagate it
       ctx.remove(ContextKey.STEP_APPROVED);
       final List<ContextDiffEntry> diff = computeDiff(before, ctx.snapshot());
@@ -112,6 +126,25 @@ public class ProcessEngine {
     }
 
     return ProcessReport.completed(records);
+  }
+
+  /**
+   * Folds the auto-approval note into the executed step's own result, so the step trail shows both why the gate
+   * was passed and what the step then did — without inserting a synthetic extra step, which would shift the step
+   * indices that a later resume is addressed by.
+   *
+   * @param result the step's own result
+   * @param autoApprovalMessage the note, or {@code null} when the step was not gated
+   * @return the result to record
+   */
+  private static StepResult withAutoApprovalNote(final StepResult result, final String autoApprovalMessage) {
+    if (autoApprovalMessage == null) {
+      return result;
+    }
+    final String message = result.message() == null
+        ? autoApprovalMessage
+        : autoApprovalMessage + " — " + result.message();
+    return new StepResult(StepStatus.WARNING, message, result.issues());
   }
 
   private static List<ContextDiffEntry> computeDiff(

@@ -48,6 +48,8 @@ resource kind) plus two system-level events.
 | Trustmark subject   | `TRUSTMARK_SUBJECT_CREATED`, `TRUSTMARK_SUBJECT_UPDATED`, `TRUSTMARK_SUBJECT_DELETED`                                                                                                                                                             |
 | Trustmark issuer    | `TRUSTMARK_ISSUER_CREATED`, `TRUSTMARK_ISSUER_UPDATED`, `TRUSTMARK_ISSUER_DELETED`                                                                                                                                                                |
 | Subordinate         | `SUBORDINATE_CREATED`, `SUBORDINATE_UPDATED`, `SUBORDINATE_DELETED`                                                                                                                                                                               |
+| Organization        | `ORGANIZATION_CREATED`, `ORGANIZATION_UPDATED`. `ORGANIZATION_UPDATED` also covers a new list of pre-validated trust mark types.                                                                                                                  |
+| Organization domain | `ORGANIZATION_DOMAIN_REQUESTED`, `ORGANIZATION_DOMAIN_DELETED`, `ORGANIZATION_DOMAIN_APPROVED`, `ORGANIZATION_DOMAIN_REJECTED`. See [Organizations and Domains](organization.md#audit-events).                                                   |
 
 System-level (no organization/instance scope):
 
@@ -55,6 +57,10 @@ System-level (no organization/instance scope):
 |---------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
 | `RESOLVED_ENTITY_CONFIGURATION` | The entity configuration loader fetches and resolves an entity's own `.well-known` configuration. `extId` is the location fetched. |
 | `LOADED_SERVICE_KEYS`           | JWKS keys are loaded from an oidf-service node. `extId` is the JWKS URI; `newData` is the list of loaded key IDs.                  |
+
+> Domain events are named after review outcomes (`_REQUESTED`, `_APPROVED`, `_REJECTED`, `_DELETED`), not
+> `_CREATED`/`_UPDATED`/`_DELETED`. `extId` is the domain's UUID and `organizationId` is the organization that
+> claimed it. The audit log therefore holds the full domain review history of a tenant.
 
 > `SUBORDINATE_ENTITY_*` is defined in the enum but has no emitting call site in `RegistryAuditServiceAdapter` at
 > the time of writing — subordinate lifecycle events are emitted as plain `SUBORDINATE_*` instead. Treat the enum

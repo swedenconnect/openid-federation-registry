@@ -39,6 +39,7 @@ export const useUserStore = defineStore('userStore', () => {
     const orgNumber = ref('');
     const orgName = ref('');
     const entityPrefix = ref('');
+    const isOperator = ref(false);
     const tenants = ref([]);
     const selectedTenant = ref('');
 
@@ -99,6 +100,7 @@ export const useUserStore = defineStore('userStore', () => {
         const org = organizations.value.find((o) => o.orgNumber === orgNumber.value);
         orgName.value = org?.orgName || '';
         entityPrefix.value = org?.entityPrefix || '';
+        isOperator.value = org?.operator === true;
 
         if (globalThis.localStorage) {
             globalThis.localStorage.setItem(SELECTED_TENANT_STORAGE_KEY, selectedTenant.value);
@@ -132,6 +134,7 @@ export const useUserStore = defineStore('userStore', () => {
         orgNumber,
         orgName,
         entityPrefix,
+        isOperator,
         tenants,
         selectedTenant,
         organizations,
