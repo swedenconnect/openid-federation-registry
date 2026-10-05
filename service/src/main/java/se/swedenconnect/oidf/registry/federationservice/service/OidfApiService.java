@@ -50,7 +50,6 @@ import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateReposito
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -232,8 +231,8 @@ public class OidfApiService {
     sub.setPolicy(new PolicyRecord(subDto.getSubordinateId().toString(), metadataPolicy));
     sub.setMetadata(subDto.getMetadata());
     sub.setJwks(this.toJwksSet(subDto.getJwks()));
-    sub.setMetadataPolicyCrit(subDto.getMetadataPolicyCrit());
-    sub.setCrit(Optional.ofNullable(subDto.getCrit()).orElse(new ArrayList<>(1)));
+    sub.setMetadataPolicyCrit(EmptyToNull.list(subDto.getMetadataPolicyCrit()));
+    sub.setCrit(EmptyToNull.list(subDto.getCrit()));
     //TODO Implement naming constraints
     //sub.setConstraints();
     sub.setEntityIdentifier(new EntityID(subDto.getEntityIdentifier()));
@@ -246,7 +245,7 @@ public class OidfApiService {
           .stream().findFirst()
           .map(EntityToDtoMapper::toDtoHosted)
           .map(dto -> {
-            sub.setCrit(Optional.ofNullable(dto.getCrit()).map(ArrayList::new).orElse(new ArrayList<>(1)));
+            sub.setCrit(EmptyToNull.list(dto.getCrit()));
             final String ecLocation = dto.getEffectiveEcLocation();
             sub.setVirtualEntityId(Optional.ofNullable(ecLocation).orElse(dto.getEntityIdentifier()));
             if (ecLocation != null) {

@@ -48,6 +48,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Integration test for the OIDF Federation Service API
@@ -117,6 +118,15 @@ class OidfServiceApiControllerIT {
     assertEquals("https://www.pm.se/oidf/www_polisen_se_op_sverigeid",
         polisen.getEcLocation());
     assertEquals(this.taEntityId, polisen.getAuthorityHints().getFirst());
+
+    // A parameter without data must be null, never an empty array.
+    entityRecords.forEach(record -> {
+      assertTrue(record.getCrit() == null || !record.getCrit().isEmpty(), "crit is empty for " + record);
+      assertTrue(record.getAuthorityHints() == null || !record.getAuthorityHints().isEmpty(),
+          "authority-hints is empty for " + record);
+      assertTrue(record.getTrustMarkSource() == null || !record.getTrustMarkSource().isEmpty(),
+          "trust-mark-source is empty for " + record);
+    });
 
   }
 
