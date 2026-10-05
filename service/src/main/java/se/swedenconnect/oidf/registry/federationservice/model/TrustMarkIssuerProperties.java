@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * Properties for TrustMarkIssuer
  *
- * @param trustMarkValidityDuration The validity duration of issued Trust Marks
+ * @param trustMarkValidityDuration The validity duration of issued Trust Marks, if empty they never expire
  * @param entityIdentifier IssuerEntityId
  * @param trustMarks TrustMark Issuer
  * @author Per Fredrik Plars
@@ -46,12 +46,14 @@ public record TrustMarkIssuerProperties(
    */
   @PostConstruct
   public void validate() throws IllegalArgumentException {
-    FederationAssert.assertNotEmpty(this.trustMarkValidityDuration, "TrustMarkValidityDuration is expected");
     FederationAssert.assertNotEmpty(this.entityIdentifier, "IssuerEntityId is expected");
     FederationAssert.assertNotEmpty(this.trustMarks, "TrustMarks is expected");
-    FederationAssert.assertTrue(this.trustMarkValidityDuration.minus(Duration.ofMinutes(4)).isPositive(),
-        "Expect trustMarkValidityDuration to be grater than 5 minutes. Current value:'%s'"
-            .formatted(this.trustMarkValidityDuration));
+    // No duration means that the issued trust marks never expire.
+    if (this.trustMarkValidityDuration != null) {
+      FederationAssert.assertTrue(this.trustMarkValidityDuration.minus(Duration.ofMinutes(4)).isPositive(),
+          "Expect trustMarkValidityDuration to be grater than 5 minutes. Current value:'%s'"
+              .formatted(this.trustMarkValidityDuration));
+    }
 
     this.trustMarks.forEach(TrustMarkProperties::validate);
   }

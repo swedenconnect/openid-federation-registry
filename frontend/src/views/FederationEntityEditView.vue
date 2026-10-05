@@ -449,8 +449,9 @@
                     v-model="modules.trustmarkissuer.trustMarkTokenValidityDuration"
                     label="Trust Mark Token Validity Duration"
                     :disabled="savingModule"
-                    hint="Validity for the token representing the trustmark (e.g., PT1H)"
+                    hint="Validity for the token representing the trustmark (e.g., PT1H). Leave empty for trustmarks that never expire."
                     persistent-hint
+                    clearable
                     class="mb-4"
                 ></v-text-field>
 
@@ -715,7 +716,7 @@ async function loadEntity() {
       modules.value.trustmarkissuer = {
         id: tmIssuerId,
         active: response.trustmarkIssuer.active !== false,
-        trustMarkTokenValidityDuration: response.trustmarkIssuer.trustMarkTokenValidityDuration || 'PT1H',
+        trustMarkTokenValidityDuration: response.trustmarkIssuer.trustMarkTokenValidityDuration || '',
       };
     }
   }
@@ -882,7 +883,8 @@ async function saveModule(moduleType) {
         moduleData = {
           entityId: entityId.value,
           active: module.active,
-          trustMarkTokenValidityDuration: module.trustMarkTokenValidityDuration,
+          // Empty means that the trustmarks never expire.
+          trustMarkTokenValidityDuration: module.trustMarkTokenValidityDuration?.trim() || null,
         };
         if (module.id) {
           endpoint = trustmarkIssuerModulePath(userStore.selectedTenant, userStore.orgNumber, module.id);
