@@ -163,8 +163,7 @@ public class EntityConfigurationController {
       @RequestBody final String entityId) {
     log.debug("Fetching entity configuration for view: {}", entityId);
     try {
-      final EntityStatement statement =
-          this.oidfServiceIntegration.entityConfigurationOnStandardLocation(EntityID.parse(entityId));
+      final EntityStatement statement = this.oidfService.loadEntityStatement(EntityID.parse(entityId));
       final com.nimbusds.jwt.SignedJWT signedJWT = statement.getSignedStatement();
 
       final EntityConfigurationViewDto dto = new EntityConfigurationViewDto();
