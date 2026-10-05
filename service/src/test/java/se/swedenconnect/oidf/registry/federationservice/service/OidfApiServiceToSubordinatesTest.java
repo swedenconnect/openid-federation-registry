@@ -102,14 +102,27 @@ class OidfApiServiceToSubordinatesTest {
   }
 
   @Test
-  void nullCritDefaultsToEmptyList() {
+  void nullCritStaysNull() {
     final Subordinate sub = subordinate("https://entity.example.com", false);
     sub.setCrit(null);
 
     final TrustAnchorProperties.SubordinateListingProperty result = this.service.toSubordinates(sub);
 
     assertThat(result).isNotNull();
-    assertThat(result.getCrit()).isNotNull().isEmpty();
+    assertThat(result.getCrit()).isNull();
+  }
+
+  @Test
+  void emptyCritAndMetadataPolicyCritBecomeNull() {
+    final Subordinate sub = subordinate("https://entity.example.com", false);
+    sub.setCrit(List.of());
+    sub.setMetadataPolicyCrit(List.of());
+
+    final TrustAnchorProperties.SubordinateListingProperty result = this.service.toSubordinates(sub);
+
+    assertThat(result).isNotNull();
+    assertThat(result.getCrit()).isNull();
+    assertThat(result.getMetadataPolicyCrit()).isNull();
   }
 
   @Test
