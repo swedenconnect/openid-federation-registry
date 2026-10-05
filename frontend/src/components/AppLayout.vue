@@ -96,7 +96,7 @@
       </v-btn>
 
       <template #extension>
-        <nav v-if="userStore.isAuthorized" aria-label="Main navigation" class="nav-bar">
+        <nav v-if="userStore.isAuthorized && !userStore.hasNoAccess" aria-label="Main navigation" class="nav-bar">
           <RouterLink to="/" class="nav-link" :class="{ active: isEntityRoute }">Entity</RouterLink>
           <RouterLink v-if="userStore.isOperator" to="/registration-flows" class="nav-link" :class="{ active: isRegistrationFlowsRoute }">Registration Flows</RouterLink>
           <RouterLink v-if="userStore.isOperator" to="/registrations" class="nav-link" :class="{ active: isRegistrationsRoute }">
@@ -234,6 +234,11 @@ onBeforeMount(async () => {
   if (route.name !== 'login') {
     await userStore.fetchUser();
     await userStore.fetchTenants();
+    if (userStore.hasNoAccess) {
+      await router.replace({name: 'no-access'});
+    } else if (route.name === 'no-access' && userStore.tenantsLoaded) {
+      await router.replace('/');
+    }
     await loadPendingReviewCount();
     if (!userStore.isOperator && route.meta.operatorOnly) {
       await router.replace('/');

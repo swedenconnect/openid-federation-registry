@@ -33,6 +33,7 @@ import RegistrationDetailView from '../views/RegistrationDetailView.vue';
 import DomainRequestDetailView from '../views/DomainRequestDetailView.vue';
 import OrganizationsListView from '../views/OrganizationsListView.vue';
 import TriggerRegistrationView from '../views/TriggerRegistrationView.vue';
+import NoAccessView from '../views/NoAccessView.vue';
 import {useAuthorizationStatusStore} from '@/authorization/stores/authorizationStatusStore';
 import {useUserStore} from '@/stores/userStore';
 
@@ -53,6 +54,12 @@ const router = createRouter({
             name: 'login',
             component: LoginView,
             meta: {public: true, title: 'Login'},
+        },
+        {
+            path: '/no-access',
+            name: 'no-access',
+            component: NoAccessView,
+            meta: {title: 'No access'},
         },
         {
             path: '/',
@@ -203,6 +210,13 @@ router.beforeEach((to) => {
     // Operator-only views (see userStore.isOperator). Until /tenants has loaded nothing is known about the
     // selection yet; AppLayout performs the same check once it has, which covers a hard refresh.
     const userStore = useUserStore();
+    // A user without rights on any tenant has nothing to use, only the no-access page can be shown.
+    if (userStore.hasNoAccess && to.name !== 'no-access') {
+        return {name: 'no-access'};
+    }
+    if (to.name === 'no-access' && userStore.tenantsLoaded && !userStore.hasNoAccess) {
+        return {name: 'home'};
+    }
     if (to.meta.operatorOnly && userStore.tenants.length > 0 && !userStore.isOperator) {
         return {name: 'home'};
     }
