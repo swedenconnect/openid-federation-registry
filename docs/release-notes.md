@@ -6,11 +6,12 @@
 
 ---
 
-### Version 0.9.3
+### Version 0.9.5
 
-**Date:** <ToDeSet>
+**Date:** 2026-10-05
 
-- First release
+- EntityStatement load now works for hosted entities
+- Flyway has a new baseline for new installations
 
 ---
 
