@@ -79,12 +79,12 @@ public class FederationMetadataCreator {
         entityData.setEntityIdentifier(new EntityID(dto.getEntityIdentifier()));
         entityData.setMetadata(dto.getMetadata());
         entityData.setEcLocation(Optional.ofNullable(dto.getEffectiveEcLocation()).orElse(dto.getEntityIdentifier()));
-        entityData.setCrit(dto.getCrit());
-      entityData.setTrustMarkSource(dto.getTrustMarkSources().stream()
+        entityData.setCrit(EmptyToNull.list(dto.getCrit()));
+      entityData.setTrustMarkSource(EmptyToNull.list(dto.getTrustMarkSources().stream()
           .map(trustmarkSourceDto ->
               new TrustMarkSourceProperty(new EntityID(trustmarkSourceDto.getTrustMarkIssuer()),
-                  trustmarkSourceDto.getTrustmarkId())).toList());
-      entityData.setAuthorityHints(this.authorityHint(entityEntity));
+                  trustmarkSourceDto.getTrustmarkId())).toList()));
+      entityData.setAuthorityHints(EmptyToNull.list(this.authorityHint(entityEntity)));
       Optional.ofNullable(dto.getSigningKeyId())
           .filter(ids -> !ids.isEmpty())
           .map(ids -> String.join(",", ids))
@@ -98,13 +98,13 @@ public class FederationMetadataCreator {
       final FederationEntityDto dto = EntityToDtoMapper.toFederationEntity(entityEntity, false);
         entityData.setEntityIdentifier(new EntityID(dto.getEntityIdentifier()));
         entityData.setEcLocation(dto.getEntityIdentifier());
-        entityData.setCrit(dto.getCrit());
+        entityData.setCrit(EmptyToNull.list(dto.getCrit()));
         entityData.setMetadata(Map.of("federation_entity", this.createFederationMetadata(entityEntity)));
       Optional.ofNullable(dto.getSigningKeyId())
           .filter(ids -> !ids.isEmpty())
           .map(ids -> String.join(",", ids))
           .ifPresent(entityData::setJwks);
-      entityData.setAuthorityHints(this.authorityHint(entityEntity));
+      entityData.setAuthorityHints(EmptyToNull.list(this.authorityHint(entityEntity)));
 
       //TODO Implement TrustMarkSources or TrustMarkIsssuers
       //entityData.setTrustMarkSource(
