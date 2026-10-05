@@ -28,6 +28,8 @@ import se.swedenconnect.oidf.registry.infrastructure.validation.CleanInput;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Service that makes OIDF service operation calls.
@@ -69,13 +71,32 @@ public class OidfService {
   }
 
   /**
-   * Loading entitystatment from standard location. It will verify that JWKS i included and that it is properly signed.
+   * Loads the entitystatement for an entity. If the entity exists in the database as a hosted entity with an
+   * ec_location, the entitystatement is loaded from that location. Otherwise it is loaded from the standard location.
+   * It will verify that JWKS is included and that it is properly signed.
    *
    * @param entityID EntityId of the entitystatement to load
    * @return EntityStatement with all the data needed.
    */
   public EntityStatement loadEntityStatement(final EntityID entityID) {
-    return this.oidfServiceIntegration.entityConfigurationOnStandardLocation(entityID);
+    return this.hostedEntityStatementUri(entityID)
+        .map(this.oidfServiceIntegration::callEntityStatementAndVerifyJwks)
+        .orElseGet(() -> this.oidfServiceIntegration.entityConfigurationOnStandardLocation(entityID));
+  }
+
+  private Optional<URI> hostedEntityStatementUri(final EntityID entityID) {
+    return this.entityConfigService.listHostedEntity(entityID.toString()).stream()
+        .map(HostedEntityDto::getEffectiveEcLocation)
+        .filter(Objects::nonNull)
+        .findFirst()
+        .map(OidfService::entityStatementUri);
+  }
+
+  /**
+   * The ec_location of a hosted entity is the base location. The entitystatement is served below it.
+   */
+  private static URI entityStatementUri(final String ecLocation) {
+    return UriComponentsBuilder.fromUriString(ecLocation).path("/.well-known/openid-federation").build().toUri();
   }
 
   private List<JwksLoadedDto> loadJwksFromHostedEntity(final EntityID entityID) {
@@ -86,7 +107,7 @@ public class OidfService {
 
           final String effectiveEcLocation = dto.getEffectiveEcLocation();
           final EntityStatement entityStatement =
-              this.oidfServiceIntegration.callEntityStatementAndVerifyJwks(URI.create(effectiveEcLocation));
+              this.oidfServiceIntegration.callEntityStatementAndVerifyJwks(entityStatementUri(effectiveEcLocation));
           final JwksLoadedDto jwksLoadedDto = new JwksLoadedDto();
           jwksLoadedDto.setEntityId(entityID.toString());
           jwksLoadedDto.setJwks(this.removeExpIatNbfInJwks(entityStatement));
