@@ -19,6 +19,9 @@ import {useFetch} from "./fetch";
 import {useErrorStore} from "@/stores/errorStore";
 
 function _errorMap(error) {
+    if (error === 'forbidden') {
+        return 'You do not have permission to perform this action.';
+    }
     if (error.includes("Value is not a valid JSON.")) {
         return 'Invalid JSON format.';
     } else if (error.includes("invalid")) {
@@ -51,6 +54,9 @@ export function useRequest(logError = true) {
                 if (status.value === 401) {
                     console.info("401 redirects to login — no error banner");
                     return;
+                } else if (status.value === 403) {
+                    // Show a fixed message, the body of a 403 does not contain anything meant for the user.
+                    errorStore.setError(errorMessage);
                 } else if (err.message.includes('Failed to fetch')) {
                     errorStore.setError('Failed to connect to server. Please check your connection.');
                 } else {
