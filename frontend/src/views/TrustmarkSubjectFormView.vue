@@ -70,7 +70,7 @@
               label="Expires"
               type="datetime-local"
               :disabled="saving"
-              hint="Date and time of expiry"
+              hint="Date and time of expiry. Leave empty if the trustmark should be valid forever."
               persistent-hint
               clearable
               class="mb-4"
