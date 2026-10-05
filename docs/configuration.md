@@ -55,6 +55,28 @@ This document describes the configuration settings available for the OpenID Fede
 |-------------------------|---------------|------------------------------------|
 | `spring.flyway.enabled` | true          | Enables Flyway database migration. |
 
+#### Migration scripts
+
+The migration scripts live in three locations under `service/src/main/resources/db`. The application chooses
+between them at startup (see `FlywayLocationsConfiguration`), so no manual step is needed when upgrading.
+
+| Location        | Used when                                  | Content                                                        |
+|-----------------|--------------------------------------------|----------------------------------------------------------------|
+| `db/baseline/`  | The database has no Flyway history table   | `V28__baseline.sql`, the complete schema in one script.        |
+| `db/legacy/`    | The database already has a history table   | `V1` - `V28`, the original migrations, upgrades older installs.|
+| `db/migration/` | Always                                     | New migrations, `V29` and later.                               |
+
+`V28__baseline.sql` and the last legacy migration `V28__Normalize_constraint_names.sql` give the same schema, and
+`FlywayMigrationPathsIT` verifies this. A service on, for example, V20 runs V21 - V28 from `db/legacy/`, and a new
+installation runs only the baseline. Neither path needs `flyway repair`.
+
+New migrations are always added to `db/migration/` with the next version number. Never edit the scripts in
+`db/legacy/`, since their checksums are recorded in existing databases. When the oldest supported installation has
+passed V28, `db/legacy/` can be removed and `FlywayLocationsConfiguration` simplified.
+
+Give every new constraint and index an explicit name (`fk_<table>_<referenced>`, `uq_...`, `uk_...`), because
+automatically generated names differ between environments.
+
 ### Spring JPA
 
 | Setting                                      | Example Value                        | Description                                                                                                      |
