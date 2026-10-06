@@ -13,66 +13,78 @@
  * See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package se.swedenconnect.oidf.registry.infrastructure.validation;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
+import se.swedenconnect.oidf.registry.subordinate.dto.ConstraintsDto;
+import se.swedenconnect.oidf.registry.subordinate.dto.NamingConstraintsDto;
 import se.swedenconnect.oidf.registry.validation.PropertyValidationFailException;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 class ValidateDtoConstraintsTest {
+
+  private static ConstraintsDto constraints(final Integer maxPathLength, final List<String> permitted,
+      final List<String> excluded, final List<String> entityTypes) {
+    final ConstraintsDto dto = new ConstraintsDto();
+    dto.setMaxPathLength(maxPathLength);
+    if (permitted != null || excluded != null) {
+      final NamingConstraintsDto naming = new NamingConstraintsDto();
+      naming.setPermitted(permitted);
+      naming.setExcluded(excluded);
+      dto.setNamingConstraints(naming);
+    }
+    dto.setAllowedEntityTypes(entityTypes);
+    return dto;
+  }
 
   @Test
   void nothingIsRequired() {
     assertThatCode(() -> ValidateDto.validateConstraints(null)).doesNotThrowAnyException();
-    assertThatCode(() -> ValidateDto.validateConstraints(Map.of())).doesNotThrowAnyException();
+    assertThatCode(() -> ValidateDto.validateConstraints(new ConstraintsDto())).doesNotThrowAnyException();
   }
 
   @Test
   void validConstraintsAreAccepted() {
-    assertThatCode(() -> ValidateDto.validateConstraints(Map.of(
-        "max_path_length", 0,
-        "naming_constraints", Map.of("permitted", List.of(".example.com"), "excluded", List.of("a.example.com")),
-        "allowed_entity_types", List.of("openid_provider", "openid_relying_party"))))
+    assertThatCode(() -> ValidateDto.validateConstraints(constraints(2, List.of(".example.com"),
+        List.of("east.example.com"), List.of("openid_provider", "openid_relying_party"))))
         .doesNotThrowAnyException();
-    assertThatCode(() -> ValidateDto.validateConstraints(Map.of("max_path_length", 3L))).doesNotThrowAnyException();
-    assertThatCode(() -> ValidateDto.validateConstraints(Map.of("naming_constraints", Map.of("permitted", List.of()))))
+    assertThatCode(() -> ValidateDto.validateConstraints(constraints(0, null, null, null)))
+        .doesNotThrowAnyException();
+    assertThatCode(() -> ValidateDto.validateConstraints(constraints(null, List.of(), null, List.of())))
         .doesNotThrowAnyException();
   }
 
   @Test
-  void unknownKeysAreRejected() {
-    assertThatThrownBy(() -> ValidateDto.validateConstraints(Map.of("max-path-length", 1)))
-        .isInstanceOf(PropertyValidationFailException.class);
+  void maxPathLengthMustNotBeNegative() {
+    assertThatThrownBy(() -> ValidateDto.validateConstraints(constraints(-1, null, null, null)))
+        .isInstanceOf(PropertyValidationFailException.class)
+        .hasMessageContaining("max_path_length");
+  }
+
+  @Test
+  void allowedEntityTypesMustNotBeBlank() {
     assertThatThrownBy(() -> ValidateDto.validateConstraints(
-        Map.of("naming_constraints", Map.of("allowed", List.of("x")))))
+        constraints(null, null, null, List.of("openid_provider", " "))))
+        .isInstanceOf(PropertyValidationFailException.class)
+        .hasMessageContaining("allowed_entity_types");
+    assertThatThrownBy(() -> ValidateDto.validateConstraints(
+        constraints(null, null, null, Arrays.asList("openid_provider", null))))
         .isInstanceOf(PropertyValidationFailException.class);
   }
 
   @Test
-  void maxPathLengthMustBeANonNegativeInteger() {
-    assertThatThrownBy(() -> ValidateDto.validateConstraints(Map.of("max_path_length", -1)))
-        .isInstanceOf(PropertyValidationFailException.class);
-    assertThatThrownBy(() -> ValidateDto.validateConstraints(Map.of("max_path_length", "2")))
-        .isInstanceOf(PropertyValidationFailException.class);
-    assertThatThrownBy(() -> ValidateDto.validateConstraints(Map.of("max_path_length", 1.5)))
-        .isInstanceOf(PropertyValidationFailException.class);
-  }
-
-  @Test
-  void listsMustContainNonEmptyStrings() {
-    assertThatThrownBy(() -> ValidateDto.validateConstraints(Map.of("allowed_entity_types", "openid_provider")))
-        .isInstanceOf(PropertyValidationFailException.class);
-    assertThatThrownBy(() -> ValidateDto.validateConstraints(Map.of("allowed_entity_types", List.of(" "))))
-        .isInstanceOf(PropertyValidationFailException.class);
-    assertThatThrownBy(() -> ValidateDto.validateConstraints(
-        Map.of("naming_constraints", Map.of("excluded", List.of(1)))))
-        .isInstanceOf(PropertyValidationFailException.class);
-    assertThatThrownBy(() -> ValidateDto.validateConstraints(Map.of("naming_constraints", "permitted")))
-        .isInstanceOf(PropertyValidationFailException.class);
+  void namingConstraintsMustNotBeBlank() {
+    assertThatThrownBy(() -> ValidateDto.validateConstraints(constraints(null, List.of(""), null, null)))
+        .isInstanceOf(PropertyValidationFailException.class)
+        .hasMessageContaining("naming_constraints.permitted");
+    assertThatThrownBy(() -> ValidateDto.validateConstraints(constraints(null, null, List.of(" "), null)))
+        .isInstanceOf(PropertyValidationFailException.class)
+        .hasMessageContaining("naming_constraints.excluded");
   }
 }

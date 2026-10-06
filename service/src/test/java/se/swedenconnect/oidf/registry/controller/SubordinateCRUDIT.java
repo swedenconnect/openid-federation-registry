@@ -33,7 +33,9 @@ import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.api.EntitiesApi;
 import se.swedenconnect.oidf.registry.api.ModulesApi;
 import se.swedenconnect.oidf.registry.api.SubordinatesApi;
+import se.swedenconnect.oidf.registry.api.model.Constraints;
 import se.swedenconnect.oidf.registry.api.model.FederationEntity;
+import se.swedenconnect.oidf.registry.api.model.NamingConstraints;
 import se.swedenconnect.oidf.registry.api.model.Subordinate;
 import se.swedenconnect.oidf.registry.api.model.TrustAnchor;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
@@ -120,21 +122,36 @@ class SubordinateCRUDIT {
 
   // ========== constraints CRUD ==========
 
+  private Subordinate subordinateWith(final UUID trustAnchorId, final String entityIdentifier,
+      final Constraints constraints) {
+    return new Subordinate()
+        .taImId(trustAnchorId)
+        .entityIdentifier(entityIdentifier)
+        .jwks(TestDataOperations.genJWKS().toJSONObject())
+        .constraints(constraints);
+  }
+
+  private void assertCreateRejected(final UUID trustAnchorId, final String entityIdentifier,
+      final Constraints constraints) {
+    assertThatThrownBy(() -> this.subordinatesApi.createSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        this.subordinateWith(trustAnchorId, entityIdentifier, constraints)))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(ex -> assertThat(((RestClientResponseException) ex).getStatusCode().value()).isEqualTo(400));
+  }
+
   @Test
-  @DisplayName("Create subordinate with constraints stores and returns the JSON field")
-  void createSubordinateWithConstraintsStoresJson() {
+  @DisplayName("Create subordinate with constraints stores and returns the typed fields")
+  void createSubordinateWithConstraints() {
     final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-constraints-create");
-    final Map<String, Object> constraints = Map.of(
-        "max_path_length", 2,
-        "naming_constraints", Map.of("permitted", List.of(".example.com"), "excluded", List.of("east.example.com")),
-        "allowed_entity_types", List.of("openid_provider", "openid_relying_party"));
+    final Constraints constraints = new Constraints()
+        .maxPathLength(2)
+        .namingConstraints(new NamingConstraints()
+            .permitted(List.of(".example.com"))
+            .excluded(List.of("east.example.com")))
+        .allowedEntityTypes(List.of("openid_provider", "openid_relying_party"));
 
     final Subordinate created = this.subordinatesApi.createSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
-        new Subordinate()
-            .taImId(trustAnchorId)
-            .entityIdentifier("https://sub.example.se/constraints")
-            .jwks(TestDataOperations.genJWKS().toJSONObject())
-            .constraints(constraints));
+        this.subordinateWith(trustAnchorId, "https://sub.example.se/constraints", constraints));
 
     assertThat(created.getConstraints()).isEqualTo(constraints);
     assertThat(this.subordinatesApi.getSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
@@ -142,18 +159,32 @@ class SubordinateCRUDIT {
   }
 
   @Test
-  @DisplayName("Create subordinate with invalid constraints is rejected")
+  @DisplayName("Constraints can be given in parts")
+  void createSubordinateWithSomeConstraints() {
+    final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-constraints-part");
+
+    final Subordinate created = this.subordinatesApi.createSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        this.subordinateWith(trustAnchorId, "https://sub.example.se/constraints-part",
+            new Constraints().maxPathLength(0)));
+
+    assertThat(created.getConstraints().getMaxPathLength()).isZero();
+    assertThat(created.getConstraints().getNamingConstraints()).isNull();
+    assertThat(created.getConstraints().getAllowedEntityTypes()).isNullOrEmpty();
+  }
+
+  @Test
+  @DisplayName("Invalid constraints are rejected")
   void createSubordinateWithInvalidConstraintsIsRejected() {
     final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-constraints-invalid");
 
-    assertThatThrownBy(() -> this.subordinatesApi.createSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
-        new Subordinate()
-            .taImId(trustAnchorId)
-            .entityIdentifier("https://sub.example.se/constraints-invalid")
-            .jwks(TestDataOperations.genJWKS().toJSONObject())
-            .constraints(Map.of("max_path_length", -1))))
-        .isInstanceOf(RestClientResponseException.class)
-        .satisfies(ex -> assertThat(((RestClientResponseException) ex).getStatusCode().value()).isEqualTo(400));
+    this.assertCreateRejected(trustAnchorId, "https://sub.example.se/constraints-negative",
+        new Constraints().maxPathLength(-1));
+    this.assertCreateRejected(trustAnchorId, "https://sub.example.se/constraints-blank-type",
+        new Constraints().allowedEntityTypes(List.of("openid_provider", " ")));
+    this.assertCreateRejected(trustAnchorId, "https://sub.example.se/constraints-blank-permitted",
+        new Constraints().namingConstraints(new NamingConstraints().permitted(List.of(""))));
+    this.assertCreateRejected(trustAnchorId, "https://sub.example.se/constraints-blank-excluded",
+        new Constraints().namingConstraints(new NamingConstraints().excluded(List.of(" "))));
   }
 
   @Test
@@ -161,20 +192,21 @@ class SubordinateCRUDIT {
   void updateSubordinateClearsConstraints() {
     final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-constraints-clear");
     final Subordinate created = this.subordinatesApi.createSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
-        new Subordinate()
-            .taImId(trustAnchorId)
-            .entityIdentifier("https://sub.example.se/constraints-clear")
-            .jwks(TestDataOperations.genJWKS().toJSONObject())
-            .constraints(Map.of("max_path_length", 1)));
+        this.subordinateWith(trustAnchorId, "https://sub.example.se/constraints-clear",
+            new Constraints().maxPathLength(1).allowedEntityTypes(List.of("openid_provider"))));
 
     this.subordinatesApi.updateSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, created.getSubordinateId(),
-        new Subordinate()
-            .taImId(trustAnchorId)
-            .entityIdentifier("https://sub.example.se/constraints-clear")
-            .jwks(TestDataOperations.genJWKS().toJSONObject()));
+        this.subordinateWith(trustAnchorId, "https://sub.example.se/constraints-clear", null));
 
-    assertThat(this.subordinatesApi.getSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
-        created.getSubordinateId()).getConstraints()).isEmpty();
+    // The generated client fills in an empty Constraints object when the field is missing in the response.
+    final Constraints cleared = this.subordinatesApi.getSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        created.getSubordinateId()).getConstraints();
+    assertThat(cleared.getMaxPathLength()).isNull();
+    assertThat(cleared.getAllowedEntityTypes()).isNullOrEmpty();
+    if (cleared.getNamingConstraints() != null) {
+      assertThat(cleared.getNamingConstraints().getPermitted()).isNullOrEmpty();
+      assertThat(cleared.getNamingConstraints().getExcluded()).isNullOrEmpty();
+    }
   }
 
   @Test

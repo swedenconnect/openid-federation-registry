@@ -115,10 +115,10 @@ class OidfApiServiceToSubordinatesTest {
   @Test
   void constraintsAreMappedToConstraintRecord() {
     final Subordinate sub = subordinate("https://entity.example.com", false);
-    sub.setConstraints(Map.of(
-        "max_path_length", 2,
-        "naming_constraints", Map.of("permitted", List.of(".example.com"), "excluded", List.of("east.example.com")),
-        "allowed_entity_types", List.of("openid_provider")));
+    sub.setConstraintsMaxPathLength(2);
+    sub.setConstraintsNamingPermitted(List.of(".example.com"));
+    sub.setConstraintsNamingExcluded(List.of("east.example.com"));
+    sub.setConstraintsAllowedEntityTypes(List.of("openid_provider"));
 
     final TrustAnchorProperties.SubordinateListingProperty result = this.service.toSubordinates(sub);
 
@@ -130,11 +130,20 @@ class OidfApiServiceToSubordinatesTest {
   }
 
   @Test
-  void missingOrEmptyConstraintsBecomeNull() {
+  void partOfTheConstraintsIsMapped() {
     final Subordinate sub = subordinate("https://entity.example.com", false);
-    assertThat(this.service.toSubordinates(sub).getConstraints()).isNull();
+    sub.setConstraintsMaxPathLength(0);
 
-    sub.setConstraints(Map.of());
+    final TrustAnchorProperties.SubordinateListingProperty result = this.service.toSubordinates(sub);
+
+    assertThat(result.getConstraints().getMaxPathLength()).isZero();
+    assertThat(result.getConstraints().getNaming()).isNull();
+    assertThat(result.getConstraints().getAllowedEntityTypes()).isNull();
+  }
+
+  @Test
+  void noConstraintsBecomeNull() {
+    final Subordinate sub = subordinate("https://entity.example.com", false);
     assertThat(this.service.toSubordinates(sub).getConstraints()).isNull();
   }
 

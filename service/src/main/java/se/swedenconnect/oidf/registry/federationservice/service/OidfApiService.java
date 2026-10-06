@@ -31,6 +31,7 @@ import se.swedenconnect.oidf.registry.federationservice.model.EntityRecord;
 import se.swedenconnect.oidf.registry.federationservice.model.ModuleRecord;
 import se.swedenconnect.oidf.registry.federationservice.model.PolicyRecord;
 import se.swedenconnect.oidf.registry.federationservice.model.ConstraintRecord;
+import se.swedenconnect.oidf.registry.federationservice.model.NamingConstraints;
 import se.swedenconnect.oidf.registry.federationservice.model.ResolverProperties;
 import se.swedenconnect.oidf.registry.federationservice.model.TrustAnchorProperties;
 import se.swedenconnect.oidf.registry.federationservice.model.TrustMarkDelegation;
@@ -43,6 +44,7 @@ import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule
 import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
 import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
+import se.swedenconnect.oidf.registry.subordinate.dto.ConstraintsDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateMapper;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
@@ -234,10 +236,7 @@ public class OidfApiService {
     sub.setJwks(this.toJwksSet(subDto.getJwks()));
     sub.setMetadataPolicyCrit(EmptyToNull.list(subDto.getMetadataPolicyCrit()));
     sub.setCrit(EmptyToNull.list(subDto.getCrit()));
-    Optional.ofNullable(subDto.getConstraints())
-        .filter(constraints -> !constraints.isEmpty())
-        .map(ConstraintRecord::fromJson)
-        .ifPresent(sub::setConstraints);
+    Optional.ofNullable(subDto.getConstraints()).map(this::toConstraintRecord).ifPresent(sub::setConstraints);
     sub.setEntityIdentifier(new EntityID(subDto.getEntityIdentifier()));
     // if autoresolve is marked true. System tries to get the hosted entity.
     // If not found this subordinate relation is removed since it can not be resolved
@@ -317,6 +316,19 @@ public class OidfApiService {
     catch (final java.text.ParseException e) {
       throw new RuntimeException("Unable to create JWKSet", e);
     }
+  }
+
+  private ConstraintRecord toConstraintRecord(final ConstraintsDto constraints) {
+    return ConstraintRecord.builder()
+        .maxPathLength(Optional.ofNullable(constraints.getMaxPathLength()).map(Integer::longValue).orElse(null))
+        .naming(Optional.ofNullable(constraints.getNamingConstraints())
+            .map(naming -> NamingConstraints.builder()
+                .permitted(naming.getPermitted())
+                .excluded(naming.getExcluded())
+                .build())
+            .orElse(null))
+        .allowedEntityTypes(constraints.getAllowedEntityTypes())
+        .build();
   }
 
   private Instant toInstant(final OffsetDateTime offsetDateTime) {

@@ -73,10 +73,6 @@ public class SubordinateDto {
   private Map<String, Object> metadata;
 
   @Schema(description = "Constraints for this subordinate statement, see OpenID Federation 1.0 section 6.2. "
-      + "Optional. Allowed keys are max_path_length, naming_constraints (permitted, excluded) and "
-      + "allowed_entity_types.",
-      example = "{\"max_path_length\": 2, \"naming_constraints\": {\"permitted\": [\".example.com\"], "
-          + "\"excluded\": [\"east.example.com\"]}, "
-          + "\"allowed_entity_types\": [\"openid_provider\", \"openid_relying_party\"]}")
-  private Map<String, Object> constraints;
+      + "Optional.")
+  private ConstraintsDto constraints;
 }

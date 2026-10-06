@@ -99,9 +99,20 @@ public class Subordinate extends BaseEntity implements Persistable<UUID> {
   @Convert(converter = MapConverter.class)
   private Map<String, Object> metadata;
 
-  @Column(name = "constraints", columnDefinition = "TEXT")
-  @Convert(converter = MapConverter.class)
-  private Map<String, Object> constraints;
+  @Column(name = "constraints_max_path_length")
+  private Integer constraintsMaxPathLength;
+
+  @Column(name = "constraints_naming_permitted", columnDefinition = "TEXT")
+  @Convert(converter = StringListConverter.class)
+  private List<String> constraintsNamingPermitted;
+
+  @Column(name = "constraints_naming_excluded", columnDefinition = "TEXT")
+  @Convert(converter = StringListConverter.class)
+  private List<String> constraintsNamingExcluded;
+
+  @Column(name = "constraints_allowed_entity_types", columnDefinition = "TEXT")
+  @Convert(converter = StringListConverter.class)
+  private List<String> constraintsAllowedEntityTypes;
 
   @Override
   public UUID getId() {
