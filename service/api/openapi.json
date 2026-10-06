@@ -4988,6 +4988,60 @@
           }
         }
       },
+      "Constraints": {
+        "type": "object",
+        "description": "Constraints for a subordinate statement, see OpenID Federation 1.0 section 6.2. Everything is optional.",
+        "properties": {
+          "max_path_length": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0,
+            "description": "Maximum number of intermediate entities between the subordinate and a leaf. A non-negative integer.",
+            "example": 2
+          },
+          "naming_constraints": {
+            "$ref": "#/components/schemas/NamingConstraints",
+            "description": "Constraints on the entity identifiers below the subordinate."
+          },
+          "allowed_entity_types": {
+            "type": "array",
+            "description": "Entity types that are allowed below the subordinate. Strings that are not empty.",
+            "example": [
+              "openid_provider",
+              "openid_relying_party"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "NamingConstraints": {
+        "type": "object",
+        "description": "Naming constraints for the entities below a subordinate.",
+        "properties": {
+          "permitted": {
+            "type": "array",
+            "description": "Permitted names. Strings that are not empty.",
+            "example": [
+              ".example.com"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "excluded": {
+            "type": "array",
+            "description": "Excluded names. Strings that are not empty.",
+            "example": [
+              "east.example.com"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "Subordinate": {
         "type": "object",
         "properties": {
@@ -5073,6 +5127,10 @@
                 ]
               }
             }
+          },
+          "constraints": {
+            "$ref": "#/components/schemas/Constraints",
+            "description": "Constraints for this subordinate statement, see OpenID Federation 1.0 section 6.2. Optional."
           }
         }
       },

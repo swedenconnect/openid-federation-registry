@@ -71,4 +71,8 @@ public class SubordinateDto {
   @Schema(description = "Metadata for this subordinate statement. Optional. Must be valid JSON if provided.",
       example = "{\"openid_provider\": {\"subject_types_supported\": [\"pairwise\"]}}")
   private Map<String, Object> metadata;
+
+  @Schema(description = "Constraints for this subordinate statement, see OpenID Federation 1.0 section 6.2. "
+      + "Optional.")
+  private ConstraintsDto constraints;
 }

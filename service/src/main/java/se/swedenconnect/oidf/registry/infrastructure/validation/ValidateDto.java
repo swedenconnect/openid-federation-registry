@@ -28,6 +28,8 @@ import se.swedenconnect.oidf.registry.organization.dto.DomainRequestDto;
 import se.swedenconnect.oidf.registry.organization.dto.PreValidatedTrustMarksDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.RegistrationFlowDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationJoinRequestDto;
+import se.swedenconnect.oidf.registry.subordinate.dto.ConstraintsDto;
+import se.swedenconnect.oidf.registry.subordinate.dto.NamingConstraintsDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
@@ -457,6 +459,38 @@ public class ValidateDto {
     this.v.oidfPolicy()
         .build()
         .ifFailThrow("metadataPolicy", dto.getMetadataPolicy());
+
+    validateConstraints(dto.getConstraints());
+  }
+
+  /**
+   * Validates constraints for a subordinate statement, see OpenID Federation 1.0 section 6.2. Nothing is required.
+   * What is given must be a non-negative max_path_length and lists of strings that are not empty.
+   *
+   * @param constraints the constraints, may be null
+   * @throws PropertyValidationFailException if validation fails
+   */
+  static void validateConstraints(final ConstraintsDto constraints) {
+    if (constraints == null) {
+      return;
+    }
+    final Integer maxPathLength = constraints.getMaxPathLength();
+    if (maxPathLength != null && maxPathLength < 0) {
+      throw new PropertyValidationFailException("constraints.max_path_length", String.valueOf(maxPathLength),
+          "Expected a non-negative integer");
+    }
+    final NamingConstraintsDto naming = constraints.getNamingConstraints();
+    if (naming != null) {
+      validateStringList("constraints.naming_constraints.permitted", naming.getPermitted());
+      validateStringList("constraints.naming_constraints.excluded", naming.getExcluded());
+    }
+    validateStringList("constraints.allowed_entity_types", constraints.getAllowedEntityTypes());
+  }
+
+  private static void validateStringList(final String key, final List<String> list) {
+    if (list != null && list.stream().anyMatch(item -> item == null || item.isBlank())) {
+      throw new PropertyValidationFailException(key, "Expected an array of strings that are not empty");
+    }
   }
 
 }

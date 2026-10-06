@@ -17,10 +17,14 @@
 package se.swedenconnect.oidf.registry.subordinate.mapper;
 
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
+import se.swedenconnect.oidf.registry.subordinate.dto.ConstraintsDto;
+import se.swedenconnect.oidf.registry.subordinate.dto.NamingConstraintsDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -59,6 +63,7 @@ public final class SubordinateMapper {
     entity.setEcLocationAutomatic(Optional.ofNullable(dto.getEcLocationAutomaticResolve()).orElse(false));
     entity.setMetadataPolicy(dto.getMetadataPolicy());
     entity.setMetadata(dto.getMetadata());
+    applyConstraints(entity, dto.getConstraints());
     return entity;
   }
 
@@ -79,6 +84,7 @@ public final class SubordinateMapper {
     entity.setEcLocationAutomatic(Optional.ofNullable(dto.getEcLocationAutomaticResolve()).orElse(false));
     entity.setMetadataPolicy(dto.getMetadataPolicy());
     entity.setMetadata(dto.getMetadata());
+    applyConstraints(entity, dto.getConstraints());
   }
 
   /**
@@ -101,6 +107,38 @@ public final class SubordinateMapper {
     dto.setEcLocationAutomaticResolve(subordinate.isEcLocationAutomatic());
     dto.setMetadataPolicy(subordinate.getMetadataPolicy());
     dto.setMetadata(subordinate.getMetadata());
+    dto.setConstraints(toConstraintsDto(subordinate));
     return dto;
+  }
+
+  private static void applyConstraints(final Subordinate entity, final ConstraintsDto constraints) {
+    final NamingConstraintsDto naming = constraints == null ? null : constraints.getNamingConstraints();
+    entity.setConstraintsMaxPathLength(constraints == null ? null : constraints.getMaxPathLength());
+    entity.setConstraintsNamingPermitted(naming == null ? null : emptyToNull(naming.getPermitted()));
+    entity.setConstraintsNamingExcluded(naming == null ? null : emptyToNull(naming.getExcluded()));
+    entity.setConstraintsAllowedEntityTypes(constraints == null ? null
+        : emptyToNull(constraints.getAllowedEntityTypes()));
+  }
+
+  /**
+   * Builds the constraints of a subordinate, or null if there are none.
+   */
+  private static ConstraintsDto toConstraintsDto(final Subordinate subordinate) {
+    final ConstraintsDto constraints = new ConstraintsDto();
+    constraints.setMaxPathLength(subordinate.getConstraintsMaxPathLength());
+    constraints.setAllowedEntityTypes(subordinate.getConstraintsAllowedEntityTypes());
+    if (subordinate.getConstraintsNamingPermitted() != null || subordinate.getConstraintsNamingExcluded() != null) {
+      final NamingConstraintsDto naming = new NamingConstraintsDto();
+      naming.setPermitted(subordinate.getConstraintsNamingPermitted());
+      naming.setExcluded(subordinate.getConstraintsNamingExcluded());
+      constraints.setNamingConstraints(naming);
+    }
+    final boolean empty = constraints.getMaxPathLength() == null && constraints.getNamingConstraints() == null
+        && constraints.getAllowedEntityTypes() == null;
+    return empty ? null : constraints;
+  }
+
+  private static List<String> emptyToNull(final List<String> list) {
+    return list == null || list.isEmpty() ? null : list;
   }
 }
