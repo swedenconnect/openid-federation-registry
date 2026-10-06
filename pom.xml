@@ -23,7 +23,7 @@
     <groupId>se.swedenconnect.oidf</groupId>
 
     <packaging>pom</packaging>
-    <version>${service-revision}</version>
+    <version>0.9.7-SNAPSHOT</version>
 
     <name>Sweden Connect :: OpenID Federation :: Entity Registry :: Parent POM</name>
     <description>Parent POM for Sweden Connect OpenID Federation Entity Registry</description>
@@ -67,7 +67,6 @@
     <properties>
         <!-- Project properties -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <service-revision>0.9.7-SNAPSHOT</service-revision>
         <java.version>25</java.version>
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
