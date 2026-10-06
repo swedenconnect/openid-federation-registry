@@ -46,6 +46,32 @@ class FlywayMigrationPathsIT {
   @Container
   static MariaDBContainer<?> upgraded = new MariaDBContainer<>("mariadb:11.7");
 
+  @Container
+  static MariaDBContainer<?> restarted = new MariaDBContainer<>("mariadb:11.7");
+
+  @Container
+  static MariaDBContainer<?> legacyRestarted = new MariaDBContainer<>("mariadb:11.7");
+
+  @Test
+  void restartAfterBaselineInstallKeepsUsingBaseline() {
+    final String table = "flyway_schema_history";
+    assertThat(FlywayLocationsConfiguration.isLegacyInstallation(dataSource(restarted), table)).isFalse();
+    flyway(restarted, null, FlywayLocationsConfiguration.BASELINE).migrate();
+
+    // Second node / restart: the history table now exists but holds only the baseline.
+    assertThat(FlywayLocationsConfiguration.isLegacyInstallation(dataSource(restarted), table)).isFalse();
+    final Flyway second = flyway(restarted, null, FlywayLocationsConfiguration.BASELINE);
+    second.validate();
+    assertThat(second.migrate().migrationsExecuted).isZero();
+  }
+
+  @Test
+  void databaseWithPreBaselineHistoryIsLegacy() {
+    final String table = "flyway_schema_history";
+    flyway(legacyRestarted, "20", FlywayLocationsConfiguration.LEGACY).migrate();
+    assertThat(FlywayLocationsConfiguration.isLegacyInstallation(dataSource(legacyRestarted), table)).isTrue();
+  }
+
   @Test
   void freshInstallAndLegacyPathProduceSameSchema() throws SQLException {
     assertThat(FlywayLocationsConfiguration.hasHistoryTable(dataSource(baseline), "flyway_schema_history")).isFalse();
