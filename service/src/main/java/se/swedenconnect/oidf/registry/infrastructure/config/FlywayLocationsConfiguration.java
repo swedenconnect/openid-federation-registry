@@ -29,11 +29,12 @@ import java.sql.SQLException;
 /**
  * Chooses which Flyway migrations to run.
  * <ul>
- *   <li>A database without a Flyway history table is a fresh installation and gets the consolidated baseline
- *   ({@value #BASELINE}) followed by the migrations in {@value #MIGRATION}.</li>
- *   <li>A database that already has a history table continues with the historical migrations in {@value #LEGACY},
- *   so that a service on, for example, V20 is upgraded step by step, followed by the migrations in
- *   {@value #MIGRATION}.</li>
+ *   <li>A database without a Flyway history table, or one whose history starts at the baseline (no applied version
+ *   below {@value #BASELINE_VERSION}), gets the consolidated baseline ({@value #BASELINE}) followed by the migrations
+ *   in {@value #MIGRATION}. This keeps a second node, or a restart, on the same path as the first start.</li>
+ *   <li>A database whose history contains a version below {@value #BASELINE_VERSION} continues with the historical
+ *   migrations in {@value #LEGACY}, so that a service on, for example, V20 is upgraded step by step, followed by the
+ *   migrations in {@value #MIGRATION}.</li>
  * </ul>
  * The baseline and the last legacy migration have the same version, which means that both paths end up with the same
  * schema and the same version in the history table.
@@ -46,32 +47,63 @@ public class FlywayLocationsConfiguration {
   static final String BASELINE = "classpath:db/baseline";
   static final String LEGACY = "classpath:db/legacy";
   static final String MIGRATION = "classpath:db/migration";
+  static final int BASELINE_VERSION = 28;
 
   private static final Logger log = LoggerFactory.getLogger(FlywayLocationsConfiguration.class);
 
   @Bean
   FlywayConfigurationCustomizer flywayLocationsCustomizer() {
     return configuration -> {
-      final boolean existing = hasHistoryTable(configuration.getDataSource(), configuration.getTable());
-      if (existing) {
-        log.info("Flyway history table found, using legacy migrations");
+      final boolean legacy = isLegacyInstallation(configuration.getDataSource(), configuration.getTable());
+      if (legacy) {
+        log.info("Flyway history contains versions before {}, using legacy migrations", BASELINE_VERSION);
         configuration.locations(LEGACY, MIGRATION);
       }
       else {
-        log.info("No Flyway history table found, using baseline migration");
+        log.info("No Flyway history before {} found, using baseline migration", BASELINE_VERSION);
         configuration.locations(BASELINE, MIGRATION);
       }
     };
   }
 
+  /**
+   * Tells whether the database was created by the historical migrations, i.e. its history table holds an applied
+   * version lower than the baseline version.
+   *
+   * @param dataSource the data source
+   * @param table the name of the Flyway history table
+   * @return true if the historical migrations should be used
+   */
+  static boolean isLegacyInstallation(final DataSource dataSource, final String table) {
+    try (final Connection connection = dataSource.getConnection()) {
+      if (!hasHistoryTable(connection, table)) {
+        return false;
+      }
+      final String quote = connection.getMetaData().getIdentifierQuoteString().trim();
+      final String sql = "select 1 from " + quote + table + quote
+          + " where version is not null and cast(version as decimal(20,6)) < " + BASELINE_VERSION;
+      try (final var statement = connection.createStatement(); final ResultSet rs = statement.executeQuery(sql)) {
+        return rs.next();
+      }
+    }
+    catch (final SQLException e) {
+      throw new IllegalStateException("Could not read Flyway history table '" + table + "'", e);
+    }
+  }
+
   static boolean hasHistoryTable(final DataSource dataSource, final String table) {
-    try (final Connection connection = dataSource.getConnection();
-        final ResultSet tables = connection.getMetaData()
-            .getTables(connection.getCatalog(), connection.getSchema(), table, new String[] { "TABLE" })) {
-      return tables.next();
+    try (final Connection connection = dataSource.getConnection()) {
+      return hasHistoryTable(connection, table);
     }
     catch (final SQLException e) {
       throw new IllegalStateException("Could not check for Flyway history table '" + table + "'", e);
+    }
+  }
+
+  private static boolean hasHistoryTable(final Connection connection, final String table) throws SQLException {
+    try (final ResultSet tables = connection.getMetaData()
+        .getTables(connection.getCatalog(), connection.getSchema(), table, new String[] { "TABLE" })) {
+      return tables.next();
     }
   }
 
