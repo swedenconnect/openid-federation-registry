@@ -29,15 +29,20 @@ The script will:
 9. Pause and remind you to update [`docs/release-notes.md`](../docs/release-notes.md) with the changes in this release —
    do this now, before continuing.
 10. Commit the version bump and release notes as `choir: Prepare release X.Y.Z`.
-11. Ask whether to push the branch to `origin`.
-12. Pause again and wait for you to open a pull request from `release_X_Y_Z` into `main`, get it reviewed, and merge it.
-    Press Enter once it's merged (or Ctrl+C to abort here — nothing below this point has run yet).
-13. Check out `main`, pull the latest, tag the merge commit `vX.Y.Z`, and push the tag to `origin`. Pushing the tag
-    triggers the Docker release workflow (`.github/workflows/release.yml` → `docker-release.yml`).
-14. Bump `service-revision` in every `pom.xml` to the next patch version with a `-SNAPSHOT` suffix, commit as
-    `choir: new version`, and push directly to `main`.
+11. Ask whether to tag that commit `vX.Y.Z` and push the tag. Pushing the tag triggers the Docker release workflow
+    (`.github/workflows/release.yml` → `docker-release.yml`).
+12. Bump `service-revision` in every `pom.xml` to the next patch version with a `-SNAPSHOT` suffix and commit it on the
+    same branch as `choir: new version X.Y.Z-SNAPSHOT`.
+13. Ask whether to push the branch. Open the pull request into `main` yourself (the push prints a link).
 
-That's the whole release — nothing to run manually afterward.
+Every command is printed before it runs. If a command fails, the script asks whether to run it again; answering no
+aborts the script.
+
+**Merge the pull request with a merge commit** (not squash or rebase). The tag points at the release commit on the
+branch, and only a merge commit keeps that commit reachable from `main`. `main` then ends up on the next
+`-SNAPSHOT` version.
+
+That's the whole release — nothing to run manually afterward, apart from merging the pull request.
 
 ## Version scheme
 
@@ -49,7 +54,7 @@ That's the whole release — nothing to run manually afterward.
 
 ## Troubleshooting
 
-- **"Working tree has untracked or modified files"** — the script refuses to start with a dirty working tree. Commit,
+- **"Working tree has uncommitted changes"** — the script refuses to start with a dirty working tree. Commit,
   stash, or clean up first.
 - **"This script must be run from 'main'"** — switch to `main` (`git checkout main`) before running the script.
 - **"Branch ... already exists"** — a `release_X_Y_Z` branch already exists locally or on `origin`. Delete it or pick a
@@ -58,6 +63,5 @@ That's the whole release — nothing to run manually afterward.
   release was already cut for that version, or a previous run of the script got interrupted after tagging.
 - If `mvn clean install` fails during step 8, fix the issue on the release branch, commit, and re-run
   `mvn versions:set-property` / `mvn clean install` manually — no need to restart the whole script.
-- If the script is interrupted after the branch was merged but before tagging (step 13–14), you can safely re-run
-  `./internal/release.sh` from `main`: since `release_X_Y_Z` already exists it will fail fast at branch creation, so
-  instead run the tag/version-bump commands shown in step 13–14 above by hand.
+- If the script is interrupted after the tag was pushed, do not run it again. Finish by hand on the release branch:
+  set the next `-SNAPSHOT` version with `mvn versions:set-property`, commit, push the branch, and open the pull request.

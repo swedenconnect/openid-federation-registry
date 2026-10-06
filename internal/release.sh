@@ -16,16 +16,37 @@
 #
 
 #
-# Prepares a release branch: works out the next version from existing git tags,
+# Prepares and tags a release: works out the next version from existing git tags,
 # lets you confirm or override it, creates a release_<version> branch, bumps
 # the service-revision property in all pom.xml files, builds the project,
-# commits, and pushes the branch to origin.
+# commits, tags the release commit, bumps to the next development version on
+# the same branch, and pushes. The branch is then merged into main with a merge
+# commit (not squash/rebase) so that the tag stays reachable from main.
+#
+# Every command is printed before it runs. If a command fails you are asked
+# whether to run it again.
 set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
 REMOTE="origin"
+
+# run <command...>: prints the command, runs it, and on failure asks whether to run it again.
+run() {
+  while true; do
+    echo "\$ $*"
+    if "$@"; then
+      return 0
+    fi
+    echo "Command failed: $*" >&2
+    read -r -p "Run it again? [y/N]: " RETRY
+    case "$RETRY" in
+      y|Y|yes|Yes|YES) ;;
+      *) echo "Aborting." >&2; exit 1 ;;
+    esac
+  done
+}
 
 echo "== Release branch preparation =="
 
@@ -43,10 +64,10 @@ if [ "$CURRENT_BRANCH" != "main" ]; then
 fi
 
 echo "Pulling latest changes on main ..."
-git pull "$REMOTE" main
+run git pull --ff-only "$REMOTE" main
 
 echo "Fetching tags from $REMOTE ..."
-git fetch --tags --quiet "$REMOTE" || echo "Warning: could not fetch tags from $REMOTE, using local tags."
+run git fetch --tags --quiet "$REMOTE"
 
 LATEST_TAG="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -1)"
 
@@ -94,61 +115,67 @@ if git show-ref --verify --quiet "refs/heads/$BRANCH" || git ls-remote --exit-co
   exit 1
 fi
 
-echo "Creating branch '$BRANCH' from '$(git branch --show-current)' ..."
-git checkout -b "$BRANCH"
+echo "Creating branch '$BRANCH' ..."
+run git checkout -b "$BRANCH"
 
 echo "Setting service-revision to $VERSION in all pom.xml files ..."
-mvn versions:set-property -Dproperty=service-revision -DnewVersion="$VERSION" -DgenerateBackupPoms=false
+run mvn versions:set-property -Dproperty=service-revision -DnewVersion="$VERSION" -DgenerateBackupPoms=false
 
 echo "Building the project ..."
-mvn clean install
+run mvn clean install
 
 echo
 echo "== Reminder =="
 echo "Remember to update docs/release-notes.md with the release notes for version $VERSION before continuing."
 read -r -p "Press Enter once the release notes are updated (or Ctrl+C to abort here) ..." _
 
-git add -- '**/pom.xml' pom.xml docs/release-notes.md
-git commit -m "choir: Prepare release $VERSION"
-
-echo
-read -r -p "Push branch '$BRANCH' to $REMOTE? [y/N]: " PUSH_ANSWER
-case "$PUSH_ANSWER" in
-  y|Y|yes|Yes|YES)
-    git push -u "$REMOTE" "$BRANCH"
-    echo "Branch '$BRANCH' has been pushed to $REMOTE."
-    ;;
-  *)
-    echo "Push skipped. Branch '$BRANCH' exists locally but has not been pushed."
-    ;;
-esac
+run git add -- '**/pom.xml' pom.xml docs/release-notes.md
+run git commit -m "choir: Prepare release $VERSION"
 
 echo
 echo "== Tagging =="
-echo "Open a pull request from '$BRANCH' into main, get it reviewed, and merge it."
-read -r -p "Press Enter once '$BRANCH' has been merged into main (or Ctrl+C to abort here) ..." _
-
 if git show-ref --verify --quiet "refs/tags/v$VERSION" || git ls-remote --exit-code --tags "$REMOTE" "v$VERSION" >/dev/null 2>&1; then
   echo "Tag 'v$VERSION' already exists locally or on $REMOTE." >&2
   exit 1
 fi
 
-echo "Checking out main and pulling latest ..."
-git checkout main
-git pull "$REMOTE" main
-
-echo "Tagging v$VERSION and pushing the tag ..."
-git tag "v$VERSION"
-git push "$REMOTE" "v$VERSION"
+echo "Tagging the release commit on '$BRANCH' as v$VERSION."
+echo "Pushing the tag triggers the Docker release workflow."
+read -r -p "Tag and push v$VERSION to $REMOTE? [y/N]: " TAG_ANSWER
+case "$TAG_ANSWER" in
+  y|Y|yes|Yes|YES)
+    run git tag "v$VERSION"
+    run git push "$REMOTE" "v$VERSION"
+    ;;
+  *)
+    echo "Tagging skipped. Aborting before the development version is set." >&2
+    exit 1
+    ;;
+esac
 
 echo
 echo "== Next development version =="
 echo "Setting service-revision to $NEXT_DEV_VERSION in all pom.xml files ..."
-mvn versions:set-property -Dproperty=service-revision -DnewVersion="$NEXT_DEV_VERSION" -DgenerateBackupPoms=false
-
-git add -- '**/pom.xml' pom.xml
-git commit -m "choir: new version"
-git push "$REMOTE" main
+run mvn versions:set-property -Dproperty=service-revision -DnewVersion="$NEXT_DEV_VERSION" -DgenerateBackupPoms=false
+run git add -- '**/pom.xml' pom.xml
+run git commit -m "choir: new version $NEXT_DEV_VERSION"
 
 echo
-echo "Done. Released version: $VERSION (tag v$VERSION), main is now on $NEXT_DEV_VERSION."
+read -r -p "Push branch '$BRANCH' to $REMOTE? [y/N]: " PUSH_ANSWER
+case "$PUSH_ANSWER" in
+  y|Y|yes|Yes|YES)
+    run git push -u "$REMOTE" "$BRANCH"
+    ;;
+  *)
+    echo "Push skipped. Branch '$BRANCH' exists locally but has not been pushed." >&2
+    exit 1
+    ;;
+esac
+
+echo
+echo "== Pull request =="
+echo "Open a pull request from '$BRANCH' into main (e.g. via the link printed by the push above)."
+
+echo
+echo "Done. Tag v$VERSION is pushed and '$BRANCH' is on $NEXT_DEV_VERSION."
+echo "Merge the pull request with a MERGE COMMIT (not squash/rebase); main then ends up on $NEXT_DEV_VERSION."
