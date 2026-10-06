@@ -118,6 +118,57 @@
               style="font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;"
           ></v-textarea>
 
+          <v-card variant="outlined" class="mb-4 pa-4" role="group" aria-labelledby="constraints-title">
+            <h3 id="constraints-title" class="text-subtitle-1 mb-1">Constraints</h3>
+            <p class="text-caption mb-4">
+              Optional constraints on the subordinate statement, applied to the entities below the subordinate.
+              Leave empty for no constraints.
+            </p>
+
+            <v-text-field
+                id="constraints-max-path-length"
+                v-model="maxPathLength"
+                label="Max Path Length"
+                type="number"
+                min="0"
+                step="1"
+                :rules="[rules.nonNegativeInteger]"
+                :disabled="saving"
+                hint="Maximum number of intermediates below this subordinate (0 or more)"
+                persistent-hint
+                class="mb-4"
+            ></v-text-field>
+
+            <ListField
+                id="constraints-permitted"
+                v-model="namingPermitted"
+                label="Naming Constraints - Permitted"
+                hint="Permitted name constraints, e.g. .example.com"
+                :disabled="saving"
+            />
+
+            <ListField
+                id="constraints-excluded"
+                v-model="namingExcluded"
+                label="Naming Constraints - Excluded"
+                hint="Excluded name constraints, e.g. east.example.com"
+                :disabled="saving"
+            />
+
+            <v-combobox
+                id="constraints-allowed-entity-types"
+                v-model="allowedEntityTypes"
+                :items="entityTypeSuggestions"
+                label="Allowed Entity Types"
+                multiple
+                chips
+                closable-chips
+                :disabled="saving"
+                hint="Entity types that are allowed below this subordinate. Pick from the list or type your own and press Enter."
+                persistent-hint
+            ></v-combobox>
+          </v-card>
+
           <ListField
               v-model="crit"
               label="Crit"
@@ -233,6 +284,17 @@ const metadataPolicyCrit = ref([]);
 const crit = ref([]);
 const metadataPolicy = ref('');
 const metadata = ref('');
+const maxPathLength = ref('');
+const namingPermitted = ref([]);
+const namingExcluded = ref([]);
+const allowedEntityTypes = ref([]);
+const entityTypeSuggestions = [
+  'openid_provider',
+  'openid_relying_party',
+  'oauth_authorization_server',
+  'oauth_client',
+  'oauth_resource',
+];
 const ecLocation = ref('');
 const ecLocationAutomaticResolve = ref(false);
 const effectiveEcLocation = ref('');
@@ -251,6 +313,10 @@ const rules = {
       return !!value.trim() || 'This field is required.';
     }
     return !!value || 'This field is required.';
+  },
+  nonNegativeInteger: (value) => {
+    if (value === '' || value === null || value === undefined) return true;
+    return /^\d+$/.test(String(value)) || 'Must be a whole number, 0 or more.';
   },
   json: (value) => {
     if (!value || !value.trim()) return true;
@@ -297,10 +363,40 @@ async function loadSubordinate() {
     metadata.value = response.metadata
         ? JSON.stringify(response.metadata, null, 2)
         : '';
+    loadConstraints(response.constraints);
     ecLocation.value = response.ecLocation || '';
     ecLocationAutomaticResolve.value = response.ecLocationAutomaticResolve || false;
     effectiveEcLocation.value = response.effectiveEcLocation || '';
   }
+}
+
+// The constraints are stored in the format of the OpenID Federation specification, section 6.2.
+function loadConstraints(constraints) {
+  maxPathLength.value = constraints?.max_path_length ?? '';
+  namingPermitted.value = constraints?.naming_constraints?.permitted || [];
+  namingExcluded.value = constraints?.naming_constraints?.excluded || [];
+  allowedEntityTypes.value = constraints?.allowed_entity_types || [];
+}
+
+function cleanList(list) {
+  return Array.isArray(list) ? list.map(item => String(item).trim()).filter(item => item !== '') : [];
+}
+
+// Only what is set is sent, and null when nothing is set.
+function buildConstraints() {
+  const constraints = {};
+  if (maxPathLength.value !== '' && maxPathLength.value !== null) {
+    constraints.max_path_length = Number(maxPathLength.value);
+  }
+  const naming = {};
+  const permitted = cleanList(namingPermitted.value);
+  const excluded = cleanList(namingExcluded.value);
+  if (permitted.length > 0) naming.permitted = permitted;
+  if (excluded.length > 0) naming.excluded = excluded;
+  if (Object.keys(naming).length > 0) constraints.naming_constraints = naming;
+  const entityTypes = cleanList(allowedEntityTypes.value);
+  if (entityTypes.length > 0) constraints.allowed_entity_types = entityTypes;
+  return Object.keys(constraints).length > 0 ? constraints : null;
 }
 
 async function submitForm() {
@@ -329,6 +425,7 @@ async function submitForm() {
       metadata: metadata.value && metadata.value.trim()
           ? JSON.parse(metadata.value)
           : null,
+      constraints: buildConstraints(),
     };
 
     if (isEdit.value) {
