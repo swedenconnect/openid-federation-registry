@@ -44,7 +44,7 @@ public class TrustmarkIssuerDto {
   @NotNull
   private Boolean active;
 
-  @Schema(description = "Trust mark token validity duration (ISO-8601 duration, e.g. PT1H)")
-  @NotNull
+  @Schema(description = "Trust mark token validity duration (ISO-8601 duration, e.g. PT1H). "
+      + "If left empty the issued trust marks never expire.")
   private String trustMarkTokenValidityDuration;
 }

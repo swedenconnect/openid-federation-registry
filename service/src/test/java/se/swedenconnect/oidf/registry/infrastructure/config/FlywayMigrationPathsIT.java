@@ -74,7 +74,7 @@ class FlywayMigrationPathsIT {
   private static Flyway flyway(final MariaDBContainer<?> db, final String target, final String location) {
     return Flyway.configure()
         .dataSource(db.getJdbcUrl(), db.getUsername(), db.getPassword())
-        .locations(location)
+        .locations(location, FlywayLocationsConfiguration.MIGRATION)
         .target(target == null ? "latest" : target)
         .load();
   }

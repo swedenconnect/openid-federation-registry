@@ -289,6 +289,50 @@ class TrustmarkSubjectCRUDIT {
   }
 
   @Test
+  void testTrustmarkSubjectWithoutExpiresIsValidForever() {
+    // Arrange
+    final UUID trustmarkId = this.createTrustmark();
+    final UUID subjectId = UUID.randomUUID();
+    final TrustmarkSubject input = new TrustmarkSubject()
+        .trustmarkId(trustmarkId)
+        .subject("https://www.pm.se/oidf/subject-forever")
+        .revoked(false);
+
+    // Act
+    final TrustmarkSubject created =
+        this.trustmarksApi.createTrustmarkSubjectWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subjectId, input);
+
+    // Assert
+    assertThat(created.getExpires()).isNull();
+    assertThat(this.trustmarksApi.getTrustmarkSubject(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subjectId)
+        .getExpires()).isNull();
+  }
+
+  @Test
+  void testTrustmarkSubjectExpiresCanBeCleared() {
+    // Arrange
+    final UUID trustmarkId = this.createTrustmark();
+    final UUID subjectId = UUID.randomUUID();
+    this.trustmarksApi.createTrustmarkSubjectWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subjectId,
+        new TrustmarkSubject()
+            .trustmarkId(trustmarkId)
+            .subject("https://www.pm.se/oidf/subject-cleared")
+            .revoked(false)
+            .expires(OffsetDateTime.parse("2030-01-01T00:00:00+00:00")));
+
+    // Act
+    this.trustmarksApi.updateTrustmarkSubject(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subjectId,
+        new TrustmarkSubject()
+            .trustmarkId(trustmarkId)
+            .subject("https://www.pm.se/oidf/subject-cleared")
+            .revoked(false));
+
+    // Assert
+    assertThat(this.trustmarksApi.getTrustmarkSubject(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subjectId)
+        .getExpires()).isNull();
+  }
+
+  @Test
   void testTrustmarkSubjectIsolationBetweenOrganizations() {
     // Arrange - Create trustmark subject with PM organization
     final UUID trustmarkId = this.createTrustmark();

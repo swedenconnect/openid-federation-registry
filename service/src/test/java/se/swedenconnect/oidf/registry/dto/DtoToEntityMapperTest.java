@@ -255,6 +255,19 @@ class DtoToEntityMapperTest {
     assertThat(entity.getTrustMarkTokenValidityDuration()).isEqualTo("PT1H");
   }
 
+  @Test
+  void toEntity_trustmarkIssuerDto_withoutValidityDuration() {
+    final TrustmarkIssuerDto dto = new TrustmarkIssuerDto();
+    dto.setActive(true);
+
+    assertThat(DtoToModuleMapper.toEntity(ID, dto, createEntityEntity()).getTrustMarkTokenValidityDuration())
+        .isNull();
+
+    dto.setTrustMarkTokenValidityDuration("  ");
+    assertThat(DtoToModuleMapper.toEntity(ID, dto, createEntityEntity()).getTrustMarkTokenValidityDuration())
+        .isNull();
+  }
+
   // -------------------------------------------------------------------------
   // toEntity — SubordinateDto
   // -------------------------------------------------------------------------
@@ -473,6 +486,18 @@ class DtoToEntityMapperTest {
 
     assertThat(entity.getActive()).isFalse();
     assertThat(entity.getTrustMarkTokenValidityDuration()).isEqualTo("PT2H");
+  }
+
+  @Test
+  void updateEntity_trustmarkIssuerDto_clearsValidityDuration() {
+    final TrustMarkIssuer entity = TrustMarkIssuer.builder().trustMarkTokenValidityDuration("PT2H").build();
+    final TrustmarkIssuerDto dto = new TrustmarkIssuerDto();
+    dto.setActive(true);
+    dto.setTrustMarkTokenValidityDuration("");
+
+    DtoToModuleMapper.updateEntity(entity, dto);
+
+    assertThat(entity.getTrustMarkTokenValidityDuration()).isNull();
   }
 
   // -------------------------------------------------------------------------
