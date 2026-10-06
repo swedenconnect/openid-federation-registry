@@ -140,7 +140,7 @@ public class EntityConfigurationController {
 
     }
     catch (final SecurityException | ResourceAccessException e) {
-      log.info("Error loading jwks from entitystatement {}", entityId);
+      log.info("Error loading jwks from entitystatement {}", entityId, e);
       throw new IllegalArgumentException("Unable to get entity configuration.", e);
     }
 
