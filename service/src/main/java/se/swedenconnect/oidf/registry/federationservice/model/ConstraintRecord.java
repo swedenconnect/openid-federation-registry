@@ -75,7 +75,7 @@ public class ConstraintRecord {
     final ConstraintRecordBuilder builder = ConstraintRecord.builder();
 
     Optional.ofNullable(json.get("max_path_length")).ifPresent(length -> {
-      builder.maxPathLength((long) length);
+      builder.maxPathLength(((Number) length).longValue());
     });
 
     Optional.ofNullable(json.get("naming_constraints")).ifPresent(namingConstraints -> {

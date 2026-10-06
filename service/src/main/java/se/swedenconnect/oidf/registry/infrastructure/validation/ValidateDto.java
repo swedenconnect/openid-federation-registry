@@ -39,6 +39,7 @@ import tools.jackson.databind.json.JsonMapper;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -55,6 +56,9 @@ public class ValidateDto {
   private static final int MIN_POLICY_CRIT_LENGTH = 2;
   private static final int MAX_POLICY_CRIT_LENGTH = 150;
   private static final String ENTITY_PREFIX = "@{entityprefix}";
+  private static final String CONSTRAINTS_MAX_PATH_LENGTH = "max_path_length";
+  private static final String CONSTRAINTS_NAMING = "naming_constraints";
+  private static final String CONSTRAINTS_ENTITY_TYPES = "allowed_entity_types";
   private static final int MIN_DOMAIN_LENGTH = 1;
   private static final int MAX_DOMAIN_LENGTH = 255;
   private static final int MIN_LEGAL_NAME_LENGTH = 1;
@@ -457,6 +461,66 @@ public class ValidateDto {
     this.v.oidfPolicy()
         .build()
         .ifFailThrow("metadataPolicy", dto.getMetadataPolicy());
+
+    validateConstraints(dto.getConstraints());
+  }
+
+  /**
+   * Validates constraints for a subordinate statement, see OpenID Federation 1.0 section 6.2. Nothing is required, but
+   * what is given must have the right type and only the defined keys are accepted.
+   *
+   * @param constraints the constraints, may be null
+   * @throws PropertyValidationFailException if validation fails
+   */
+  static void validateConstraints(final Map<String, Object> constraints) {
+    if (constraints == null || constraints.isEmpty()) {
+      return;
+    }
+    final Set<String> allowedKeys = Set.of(CONSTRAINTS_MAX_PATH_LENGTH, CONSTRAINTS_NAMING, CONSTRAINTS_ENTITY_TYPES);
+    constraints.keySet().stream()
+        .filter(key -> !allowedKeys.contains(key))
+        .findFirst()
+        .ifPresent(key -> {
+          throw new PropertyValidationFailException("constraints", "Unknown key '" + key + "'. Allowed keys are "
+              + String.join(", ", new java.util.TreeSet<>(allowedKeys)));
+        });
+
+    final Object maxPathLength = constraints.get(CONSTRAINTS_MAX_PATH_LENGTH);
+    if (maxPathLength != null && !(maxPathLength instanceof final Integer i && i >= 0)
+        && !(maxPathLength instanceof final Long l && l >= 0)) {
+      throw new PropertyValidationFailException("constraints." + CONSTRAINTS_MAX_PATH_LENGTH,
+          "Expected a non-negative integer");
+    }
+
+    final Object naming = constraints.get(CONSTRAINTS_NAMING);
+    if (naming != null) {
+      if (!(naming instanceof final Map<?, ?> namingMap)) {
+        throw new PropertyValidationFailException("constraints." + CONSTRAINTS_NAMING, "Expected an object");
+      }
+      namingMap.keySet().stream()
+          .filter(key -> !"permitted".equals(key) && !"excluded".equals(key))
+          .findFirst()
+          .ifPresent(key -> {
+            throw new PropertyValidationFailException("constraints." + CONSTRAINTS_NAMING,
+                "Unknown key '" + key + "'. Allowed keys are excluded, permitted");
+          });
+      validateStringList("constraints." + CONSTRAINTS_NAMING + ".permitted", namingMap.get("permitted"));
+      validateStringList("constraints." + CONSTRAINTS_NAMING + ".excluded", namingMap.get("excluded"));
+    }
+
+    validateStringList("constraints." + CONSTRAINTS_ENTITY_TYPES, constraints.get(CONSTRAINTS_ENTITY_TYPES));
+  }
+
+  private static void validateStringList(final String key, final Object value) {
+    if (value == null) {
+      return;
+    }
+    if (!(value instanceof final List<?> list)) {
+      throw new PropertyValidationFailException(key, "Expected an array of strings");
+    }
+    if (list.stream().anyMatch(item -> !(item instanceof final String text) || text.isBlank())) {
+      throw new PropertyValidationFailException(key, "Expected an array of non-empty strings");
+    }
   }
 
 }

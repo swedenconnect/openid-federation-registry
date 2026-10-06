@@ -118,6 +118,65 @@ class SubordinateCRUDIT {
     assertThat(created.getMetadataPolicy()).isEqualTo(policy);
   }
 
+  // ========== constraints CRUD ==========
+
+  @Test
+  @DisplayName("Create subordinate with constraints stores and returns the JSON field")
+  void createSubordinateWithConstraintsStoresJson() {
+    final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-constraints-create");
+    final Map<String, Object> constraints = Map.of(
+        "max_path_length", 2,
+        "naming_constraints", Map.of("permitted", List.of(".example.com"), "excluded", List.of("east.example.com")),
+        "allowed_entity_types", List.of("openid_provider", "openid_relying_party"));
+
+    final Subordinate created = this.subordinatesApi.createSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        new Subordinate()
+            .taImId(trustAnchorId)
+            .entityIdentifier("https://sub.example.se/constraints")
+            .jwks(TestDataOperations.genJWKS().toJSONObject())
+            .constraints(constraints));
+
+    assertThat(created.getConstraints()).isEqualTo(constraints);
+    assertThat(this.subordinatesApi.getSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        created.getSubordinateId()).getConstraints()).isEqualTo(constraints);
+  }
+
+  @Test
+  @DisplayName("Create subordinate with invalid constraints is rejected")
+  void createSubordinateWithInvalidConstraintsIsRejected() {
+    final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-constraints-invalid");
+
+    assertThatThrownBy(() -> this.subordinatesApi.createSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        new Subordinate()
+            .taImId(trustAnchorId)
+            .entityIdentifier("https://sub.example.se/constraints-invalid")
+            .jwks(TestDataOperations.genJWKS().toJSONObject())
+            .constraints(Map.of("max_path_length", -1))))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(ex -> assertThat(((RestClientResponseException) ex).getStatusCode().value()).isEqualTo(400));
+  }
+
+  @Test
+  @DisplayName("Update subordinate without constraints clears them")
+  void updateSubordinateClearsConstraints() {
+    final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-constraints-clear");
+    final Subordinate created = this.subordinatesApi.createSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        new Subordinate()
+            .taImId(trustAnchorId)
+            .entityIdentifier("https://sub.example.se/constraints-clear")
+            .jwks(TestDataOperations.genJWKS().toJSONObject())
+            .constraints(Map.of("max_path_length", 1)));
+
+    this.subordinatesApi.updateSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, created.getSubordinateId(),
+        new Subordinate()
+            .taImId(trustAnchorId)
+            .entityIdentifier("https://sub.example.se/constraints-clear")
+            .jwks(TestDataOperations.genJWKS().toJSONObject()));
+
+    assertThat(this.subordinatesApi.getSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        created.getSubordinateId()).getConstraints()).isEmpty();
+  }
+
   @Test
   @DisplayName("Create subordinate without metadataPolicy stores null")
   void createSubordinateWithoutSubordinatePolicyStoresNull() {

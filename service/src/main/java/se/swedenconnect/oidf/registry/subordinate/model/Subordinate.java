@@ -99,6 +99,10 @@ public class Subordinate extends BaseEntity implements Persistable<UUID> {
   @Convert(converter = MapConverter.class)
   private Map<String, Object> metadata;
 
+  @Column(name = "constraints", columnDefinition = "TEXT")
+  @Convert(converter = MapConverter.class)
+  private Map<String, Object> constraints;
+
   @Override
   public UUID getId() {
     return this.subordinateId;

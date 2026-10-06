@@ -21,6 +21,7 @@ import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -59,6 +60,7 @@ public final class SubordinateMapper {
     entity.setEcLocationAutomatic(Optional.ofNullable(dto.getEcLocationAutomaticResolve()).orElse(false));
     entity.setMetadataPolicy(dto.getMetadataPolicy());
     entity.setMetadata(dto.getMetadata());
+    entity.setConstraints(emptyToNull(dto.getConstraints()));
     return entity;
   }
 
@@ -79,6 +81,7 @@ public final class SubordinateMapper {
     entity.setEcLocationAutomatic(Optional.ofNullable(dto.getEcLocationAutomaticResolve()).orElse(false));
     entity.setMetadataPolicy(dto.getMetadataPolicy());
     entity.setMetadata(dto.getMetadata());
+    entity.setConstraints(emptyToNull(dto.getConstraints()));
   }
 
   /**
@@ -101,6 +104,11 @@ public final class SubordinateMapper {
     dto.setEcLocationAutomaticResolve(subordinate.isEcLocationAutomatic());
     dto.setMetadataPolicy(subordinate.getMetadataPolicy());
     dto.setMetadata(subordinate.getMetadata());
+    dto.setConstraints(subordinate.getConstraints());
     return dto;
+  }
+
+  private static Map<String, Object> emptyToNull(final Map<String, Object> map) {
+    return map == null || map.isEmpty() ? null : map;
   }
 }

@@ -30,6 +30,7 @@ import se.swedenconnect.oidf.registry.entity.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.federationservice.model.EntityRecord;
 import se.swedenconnect.oidf.registry.federationservice.model.ModuleRecord;
 import se.swedenconnect.oidf.registry.federationservice.model.PolicyRecord;
+import se.swedenconnect.oidf.registry.federationservice.model.ConstraintRecord;
 import se.swedenconnect.oidf.registry.federationservice.model.ResolverProperties;
 import se.swedenconnect.oidf.registry.federationservice.model.TrustAnchorProperties;
 import se.swedenconnect.oidf.registry.federationservice.model.TrustMarkDelegation;
@@ -233,8 +234,10 @@ public class OidfApiService {
     sub.setJwks(this.toJwksSet(subDto.getJwks()));
     sub.setMetadataPolicyCrit(EmptyToNull.list(subDto.getMetadataPolicyCrit()));
     sub.setCrit(EmptyToNull.list(subDto.getCrit()));
-    //TODO Implement naming constraints
-    //sub.setConstraints();
+    Optional.ofNullable(subDto.getConstraints())
+        .filter(constraints -> !constraints.isEmpty())
+        .map(ConstraintRecord::fromJson)
+        .ifPresent(sub::setConstraints);
     sub.setEntityIdentifier(new EntityID(subDto.getEntityIdentifier()));
     // if autoresolve is marked true. System tries to get the hosted entity.
     // If not found this subordinate relation is removed since it can not be resolved

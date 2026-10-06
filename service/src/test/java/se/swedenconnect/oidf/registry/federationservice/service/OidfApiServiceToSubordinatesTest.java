@@ -113,6 +113,32 @@ class OidfApiServiceToSubordinatesTest {
   }
 
   @Test
+  void constraintsAreMappedToConstraintRecord() {
+    final Subordinate sub = subordinate("https://entity.example.com", false);
+    sub.setConstraints(Map.of(
+        "max_path_length", 2,
+        "naming_constraints", Map.of("permitted", List.of(".example.com"), "excluded", List.of("east.example.com")),
+        "allowed_entity_types", List.of("openid_provider")));
+
+    final TrustAnchorProperties.SubordinateListingProperty result = this.service.toSubordinates(sub);
+
+    assertThat(result.getConstraints()).isNotNull();
+    assertThat(result.getConstraints().getMaxPathLength()).isEqualTo(2L);
+    assertThat(result.getConstraints().getNaming().getPermitted()).containsExactly(".example.com");
+    assertThat(result.getConstraints().getNaming().getExcluded()).containsExactly("east.example.com");
+    assertThat(result.getConstraints().getAllowedEntityTypes()).containsExactly("openid_provider");
+  }
+
+  @Test
+  void missingOrEmptyConstraintsBecomeNull() {
+    final Subordinate sub = subordinate("https://entity.example.com", false);
+    assertThat(this.service.toSubordinates(sub).getConstraints()).isNull();
+
+    sub.setConstraints(Map.of());
+    assertThat(this.service.toSubordinates(sub).getConstraints()).isNull();
+  }
+
+  @Test
   void emptyCritAndMetadataPolicyCritBecomeNull() {
     final Subordinate sub = subordinate("https://entity.example.com", false);
     sub.setCrit(List.of());
