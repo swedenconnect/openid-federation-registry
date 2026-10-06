@@ -18,7 +18,7 @@
 #
 # Prepares and tags a release: works out the next version from existing git tags,
 # lets you confirm or override it, creates a release_<version> branch, bumps
-# the service-revision property in all pom.xml files, builds the project,
+# the project version in all pom.xml files, builds the project,
 # commits, tags the release commit, bumps to the next development version on
 # the same branch, and pushes. The branch is then merged into main with a merge
 # commit (not squash/rebase) so that the tag stays reachable from main.
@@ -118,8 +118,8 @@ fi
 echo "Creating branch '$BRANCH' ..."
 run git checkout -b "$BRANCH"
 
-echo "Setting service-revision to $VERSION in all pom.xml files ..."
-run mvn versions:set-property -Dproperty=service-revision -DnewVersion="$VERSION" -DgenerateBackupPoms=false
+echo "Setting the version to $VERSION in all pom.xml files ..."
+run ./internal/set-version.sh "$VERSION"
 
 echo "Building the project ..."
 run mvn clean install
@@ -131,6 +131,19 @@ read -r -p "Press Enter once the release notes are updated (or Ctrl+C to abort h
 
 run git add -- '**/pom.xml' pom.xml docs/release-notes.md
 run git commit -m "choir: Prepare release $VERSION"
+
+echo
+echo "The release commit must be on $REMOTE before it can be tagged."
+read -r -p "Push branch '$BRANCH' to $REMOTE? [y/N]: " PUSH_ANSWER
+case "$PUSH_ANSWER" in
+  y|Y|yes|Yes|YES)
+    run git push -u "$REMOTE" "$BRANCH"
+    ;;
+  *)
+    echo "Push skipped. Aborting before tagging; '$BRANCH' exists locally only." >&2
+    exit 1
+    ;;
+esac
 
 echo
 echo "== Tagging =="
@@ -155,22 +168,14 @@ esac
 
 echo
 echo "== Next development version =="
-echo "Setting service-revision to $NEXT_DEV_VERSION in all pom.xml files ..."
-run mvn versions:set-property -Dproperty=service-revision -DnewVersion="$NEXT_DEV_VERSION" -DgenerateBackupPoms=false
+echo "Setting the version to $NEXT_DEV_VERSION in all pom.xml files ..."
+run ./internal/set-version.sh "$NEXT_DEV_VERSION"
 run git add -- '**/pom.xml' pom.xml
 run git commit -m "choir: new version $NEXT_DEV_VERSION"
 
 echo
-read -r -p "Push branch '$BRANCH' to $REMOTE? [y/N]: " PUSH_ANSWER
-case "$PUSH_ANSWER" in
-  y|Y|yes|Yes|YES)
-    run git push -u "$REMOTE" "$BRANCH"
-    ;;
-  *)
-    echo "Push skipped. Branch '$BRANCH' exists locally but has not been pushed." >&2
-    exit 1
-    ;;
-esac
+echo "Pushing the development version commit on '$BRANCH' ..."
+run git push "$REMOTE" "$BRANCH"
 
 echo
 echo "== Pull request =="

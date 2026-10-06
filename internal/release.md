@@ -24,16 +24,16 @@ The script will:
 4. Fetch tags from `origin` and suggest the next version (latest `vX.Y.Z` tag, patch bumped by one).
 5. Ask you to confirm the suggested version or enter a different one.
 6. Create a `release_X_Y_Z` branch (underscores, e.g. `release_0_11_15`).
-7. Set the `service-revision` property to the new version in every `pom.xml`, via `mvn versions:set-property`.
+7. Set the new version in every `pom.xml` with `./internal/set-version.sh` (`mvn versions:set` plus the `guitest` parent reference).
 8. Run `mvn clean install` to build and test the release version.
 9. Pause and remind you to update [`docs/release-notes.md`](../docs/release-notes.md) with the changes in this release —
    do this now, before continuing.
 10. Commit the version bump and release notes as `choir: Prepare release X.Y.Z`.
-11. Ask whether to tag that commit `vX.Y.Z` and push the tag. Pushing the tag triggers the Docker release workflow
+11. Ask whether to push the branch (the release commit must be on `origin` before it can be tagged), then whether to tag that commit `vX.Y.Z` and push the tag. Pushing the tag triggers the Docker release workflow
     (`.github/workflows/release.yml` → `docker-release.yml`).
-12. Bump `service-revision` in every `pom.xml` to the next patch version with a `-SNAPSHOT` suffix and commit it on the
+12. Set the version in every `pom.xml` to the next patch version with a `-SNAPSHOT` suffix and commit it on the
     same branch as `choir: new version X.Y.Z-SNAPSHOT`.
-13. Ask whether to push the branch. Open the pull request into `main` yourself (the push prints a link).
+13. Push the branch again with the development version commit. Open the pull request into `main` yourself (the push prints a link).
 
 Every command is printed before it runs. If a command fails, the script asks whether to run it again; answering no
 aborts the script.
@@ -47,7 +47,7 @@ That's the whole release — nothing to run manually afterward, apart from mergi
 ## Version scheme
 
 - Tags are `vX.Y.Z` (e.g. `v0.11.14`).
-- The `service-revision` property (declared independently in every module's `pom.xml`) always matches the tag without
+- The project version in every `pom.xml` always matches the tag without
   the `v` prefix, with a `-SNAPSHOT` suffix while in development.
 - Releases are patch bumps unless a change explicitly warrants a minor/major bump — if so, just answer the version
   prompt in `release.sh` with the version you want instead of accepting the suggestion.
@@ -62,6 +62,6 @@ That's the whole release — nothing to run manually afterward, apart from mergi
 - **"Tag ... already exists"** — `vX.Y.Z` is already tagged locally or on `origin`. This shouldn't happen unless a
   release was already cut for that version, or a previous run of the script got interrupted after tagging.
 - If `mvn clean install` fails during step 8, fix the issue on the release branch, commit, and re-run
-  `mvn versions:set-property` / `mvn clean install` manually — no need to restart the whole script.
+  `./internal/set-version.sh <version>` / `mvn clean install` manually — no need to restart the whole script.
 - If the script is interrupted after the tag was pushed, do not run it again. Finish by hand on the release branch:
-  set the next `-SNAPSHOT` version with `mvn versions:set-property`, commit, push the branch, and open the pull request.
+  set the next `-SNAPSHOT` version with `./internal/set-version.sh`, commit, push the branch, and open the pull request.
