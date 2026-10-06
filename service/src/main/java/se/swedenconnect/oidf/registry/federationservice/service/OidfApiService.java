@@ -324,6 +324,6 @@ public class OidfApiService {
   }
 
   private Duration toDuration(final String duration) {
-    return duration == null ? null : Duration.parse(duration);
+    return duration == null || duration.isBlank() ? null : Duration.parse(duration);
   }
 }

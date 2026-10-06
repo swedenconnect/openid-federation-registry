@@ -417,8 +417,8 @@ public class ValidateDto {
         .build()
         .ifFailThrow("active", dto.getActive());
 
-    this.v.required()
-        .duration()
+    // Optional, no duration means that the trust marks never expire.
+    this.v.duration()
         .build()
         .ifFailThrow("trustMarkTokenValidityDuration", dto.getTrustMarkTokenValidityDuration());
   }

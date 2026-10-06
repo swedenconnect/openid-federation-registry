@@ -54,27 +54,23 @@
               class="mb-4"
           ></v-switch>
 
-          <v-text-field
+          <DateTimeField
+              id="field-granted"
               v-model="granted"
               label="Granted"
-              type="datetime-local"
-              :disabled="saving"
               hint="Date and time granted"
-              persistent-hint
-              clearable
+              :disabled="saving"
               class="mb-4"
-          ></v-text-field>
+          ></DateTimeField>
 
-          <v-text-field
+          <DateTimeField
+              id="field-expires"
               v-model="expires"
               label="Expires"
-              type="datetime-local"
+              hint="Date and time of expiry. Leave empty if the trustmark should be valid forever."
               :disabled="saving"
-              hint="Date and time of expiry"
-              persistent-hint
-              clearable
               class="mb-4"
-          ></v-text-field>
+          ></DateTimeField>
 
           <v-card-actions>
             <v-spacer></v-spacer>
@@ -107,6 +103,7 @@
 import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
+import DateTimeField from '@/components/DateTimeField.vue';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
 import {trustmarkSubjectsPath} from '@/config/path';
