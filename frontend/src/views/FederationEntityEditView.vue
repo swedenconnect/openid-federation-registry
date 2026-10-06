@@ -449,7 +449,7 @@
                     v-model="modules.trustmarkissuer.trustMarkTokenValidityDuration"
                     label="Trust Mark Token Validity Duration"
                     :disabled="savingModule"
-                    hint="Validity for the token representing the trustmark (e.g., PT1H). Leave empty for trustmarks that never expire."
+                    hint="Validity for the token representing the trustmark (e.g., P2D for two days or PT1H). Leave empty for trustmarks that never expire."
                     persistent-hint
                     clearable
                     class="mb-4"
@@ -643,7 +643,7 @@ const modules = ref({
   trustmarkissuer: {
     id: null,
     active: true,
-    trustMarkTokenValidityDuration: 'PT1H',
+    trustMarkTokenValidityDuration: 'P2D',
   },
 });
 
@@ -973,7 +973,7 @@ async function confirmDeleteModule() {
           modules.value.trustmarkissuer = {
             id: null,
             active: true,
-            trustMarkTokenValidityDuration: 'PT1H',
+            trustMarkTokenValidityDuration: 'P2D',
           };
           break;
       }
