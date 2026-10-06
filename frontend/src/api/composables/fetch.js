@@ -67,6 +67,11 @@ export function useFetch() {
                 router.push({name: 'login'});
                 throw new Error('unauthorized');
             }
+            if (status.value === 403) {
+                // The body of a 403 is not guaranteed to be JSON.
+                json.value = await response.json().catch(() => null);
+                throw new Error('forbidden');
+            }
             const errData = await response.json();
             json.value = errData;
             if (status.value === 400) {

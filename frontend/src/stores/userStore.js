@@ -41,9 +41,13 @@ export const useUserStore = defineStore('userStore', () => {
     const entityPrefix = ref('');
     const isOperator = ref(false);
     const tenants = ref([]);
+    const tenantsLoaded = ref(false);
     const selectedTenant = ref('');
 
     const isAuthorized = computed(() => authorizationStatusStore.isAuthorized === true);
+
+    // An empty answer from /tenants means the user has no rights on any tenant, and so nothing to use in the service.
+    const hasNoAccess = computed(() => tenantsLoaded.value && tenants.value.length === 0);
 
     const organizations = computed(() =>
         tenants.value.find((tenant) => tenant.tenant === selectedTenant.value)?.organizations || []);
@@ -65,6 +69,7 @@ export const useUserStore = defineStore('userStore', () => {
         const response = await requestGet(tenantsPath);
         if (ok.value && response) {
             tenants.value = response.tenants || [];
+            tenantsLoaded.value = true;
             if (tenants.value.length > 0) {
                 applySelection(resolveInitialSelection());
             }
@@ -136,6 +141,8 @@ export const useUserStore = defineStore('userStore', () => {
         entityPrefix,
         isOperator,
         tenants,
+        tenantsLoaded,
+        hasNoAccess,
         selectedTenant,
         organizations,
         isAuthorized,
