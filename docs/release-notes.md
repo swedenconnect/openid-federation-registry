@@ -6,6 +6,14 @@
 
 ---
 
+### Version 0.9.7
+
+**Date:** 2026-10-07
+
+- The `/submodules` response no longer contains null values or empty objects and arrays.
+
+---
+
 ### Version 0.9.6
 
 **Date:** 2026-10-06

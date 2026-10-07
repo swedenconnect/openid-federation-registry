@@ -23,7 +23,7 @@
   <parent>
     <groupId>se.swedenconnect.oidf</groupId>
     <artifactId>oidf-entity-registry-parent</artifactId>
-    <version>0.9.7-SNAPSHOT</version>
+    <version>0.9.7</version>
   </parent>
 
   <artifactId>oidf-entity-registry-guitest</artifactId>
