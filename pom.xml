@@ -23,7 +23,7 @@
     <groupId>se.swedenconnect.oidf</groupId>
 
     <packaging>pom</packaging>
-    <version>0.9.7</version>
+    <version>0.9.8-SNAPSHOT</version>
 
     <name>Sweden Connect :: OpenID Federation :: Entity Registry :: Parent POM</name>
     <description>Parent POM for Sweden Connect OpenID Federation Entity Registry</description>
