@@ -42,12 +42,19 @@ export const useUserStore = defineStore('userStore', () => {
     const isOperator = ref(false);
     const tenants = ref([]);
     const tenantsLoaded = ref(false);
+    const tenantsFailed = ref(false);
     const selectedTenant = ref('');
 
     const isAuthorized = computed(() => authorizationStatusStore.isAuthorized === true);
 
-    // An empty answer from /tenants means the user has no rights on any tenant, and so nothing to use in the service.
+    // An empty answer from /tenants means the user has no rights on any tenant, i.e. none of the user's
+    // function groups is supported by this service, and so nothing to use in the service.
     const hasNoAccess = computed(() => tenantsLoaded.value && tenants.value.length === 0);
+
+    // A regular user only gets a tenant back when one of their organizations matches it, so a tenant without
+    // organizations only happens for a superuser in a tenant where no organization has been registered yet.
+    const hasNoOrganization = computed(() =>
+        tenantsLoaded.value && tenants.value.length > 0 && !orgNumber.value);
 
     const organizations = computed(() =>
         tenants.value.find((tenant) => tenant.tenant === selectedTenant.value)?.organizations || []);
@@ -70,9 +77,12 @@ export const useUserStore = defineStore('userStore', () => {
         if (ok.value && response) {
             tenants.value = response.tenants || [];
             tenantsLoaded.value = true;
+            tenantsFailed.value = false;
             if (tenants.value.length > 0) {
                 applySelection(resolveInitialSelection());
             }
+        } else {
+            tenantsFailed.value = true;
         }
     }
 
@@ -88,6 +98,11 @@ export const useUserStore = defineStore('userStore', () => {
             : null;
         if (storedTenantEntry?.organizations?.some((org) => org.orgNumber === storedOrgNumber)) {
             return {tenant: storedTenant, orgNumber: storedOrgNumber};
+        }
+        // A tenant without organizations (superuser, nothing registered yet) has no organization to match,
+        // keep the stored tenant so the selection is not reset to the first tenant on every load.
+        if (storedTenantEntry && !storedTenantEntry.organizations?.length) {
+            return {tenant: storedTenant, orgNumber: ''};
         }
 
         const tenant = tenants.value[0];
@@ -142,7 +157,9 @@ export const useUserStore = defineStore('userStore', () => {
         isOperator,
         tenants,
         tenantsLoaded,
+        tenantsFailed,
         hasNoAccess,
+        hasNoOrganization,
         selectedTenant,
         organizations,
         isAuthorized,
