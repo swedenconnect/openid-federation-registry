@@ -21,6 +21,9 @@ import com.nimbusds.jose.shaded.gson.ExclusionStrategy;
 import com.nimbusds.jose.shaded.gson.FieldAttributes;
 import com.nimbusds.jose.shaded.gson.Gson;
 import com.nimbusds.jose.shaded.gson.GsonBuilder;
+import com.nimbusds.jose.shaded.gson.JsonArray;
+import com.nimbusds.jose.shaded.gson.JsonElement;
+import com.nimbusds.jose.shaded.gson.JsonObject;
 import com.nimbusds.jose.shaded.gson.TypeAdapter;
 import com.nimbusds.jose.shaded.gson.reflect.TypeToken;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
@@ -30,7 +33,9 @@ import se.swedenconnect.oidf.registry.federationservice.model.ModuleRecord;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Parses and loads json from registry.
@@ -99,11 +104,59 @@ public class JsonRegistryLoader {
   }
 
   /**
+   * Serializes the module record. Values without content (null, empty objects and empty arrays) are left out
+   * everywhere below the three top level lists, which are always present.
+   *
    * @param moduleRecord
    * @return json string
    */
   public String toJson(final ModuleRecord moduleRecord) {
-    return this.GSON.getAdapter(ModuleRecord.class).toJson(moduleRecord);
+    final JsonObject root = this.GSON.toJsonTree(moduleRecord, ModuleRecord.class).getAsJsonObject();
+    for (final Map.Entry<String, JsonElement> entry : root.entrySet()) {
+      if (entry.getValue().isJsonArray()) {
+        final JsonArray pruned = new JsonArray();
+        entry.getValue().getAsJsonArray().forEach(element -> pruned.add(prune(element)));
+        entry.setValue(pruned);
+      }
+    }
+    return this.GSON.toJson(root);
+  }
+
+  /**
+   * Removes null values, empty objects and empty arrays from the given element, recursively.
+   *
+   * @param element to prune
+   * @return the pruned element
+   */
+  private static JsonElement prune(final JsonElement element) {
+    if (element.isJsonObject()) {
+      final JsonObject object = element.getAsJsonObject();
+      for (final String name : new ArrayList<>(object.keySet())) {
+        final JsonElement pruned = prune(object.get(name));
+        if (isEmpty(pruned)) {
+          object.remove(name);
+        }
+        else {
+          object.add(name, pruned);
+        }
+      }
+    }
+    else if (element.isJsonArray()) {
+      final JsonArray array = element.getAsJsonArray();
+      final List<JsonElement> kept = new ArrayList<>();
+      array.forEach(item -> kept.add(prune(item)));
+      kept.removeIf(JsonRegistryLoader::isEmpty);
+      final JsonArray result = new JsonArray();
+      kept.forEach(result::add);
+      return result;
+    }
+    return element;
+  }
+
+  private static boolean isEmpty(final JsonElement element) {
+    return element.isJsonNull()
+        || (element.isJsonObject() && element.getAsJsonObject().size() == 0)
+        || (element.isJsonArray() && element.getAsJsonArray().size() == 0);
   }
 
   /**
