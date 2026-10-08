@@ -113,7 +113,8 @@ class OidfServiceApiControllerIT {
 
     final EntityRecord polisen = entityRecordMap.get(EntityID.parse("https://www.polisen.se/op/sverigeid"));
     assertEquals("https://www.polisen.se/op/sverigeid", polisen.getEntityIdentifier().toString());
-    assertEquals("ec_location", polisen.getCrit().getFirst());
+    assertTrue(polisen.getCrit() == null || polisen.getCrit().isEmpty(),
+        "ec_location must not be added to crit, was " + polisen.getCrit());
     assertNull(polisen.getJwks());
     assertEquals("https://www.pm.se/oidf/www_polisen_se_op_sverigeid",
         polisen.getEcLocation());
@@ -158,7 +159,8 @@ class OidfServiceApiControllerIT {
         .orElseThrow();
     assertEquals("https://www.pm.se/oidf/www_polisen_se_op_sverigeid/.well-known/openid-federation",
         sub.getOverrideConfigurationLocation());
-    assertEquals("ec_location", sub.getCrit().getFirst());
+    assertTrue(sub.getCrit() == null || sub.getCrit().isEmpty(),
+        "ec_location must not be added to crit, was " + sub.getCrit());
 
     assertNotNull(moduleRecord.getTrustMarkIssuers());
 

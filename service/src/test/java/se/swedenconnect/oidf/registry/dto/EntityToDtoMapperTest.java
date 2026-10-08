@@ -160,7 +160,8 @@ class EntityToDtoMapperTest {
 
     assertThat(dto.getEffectiveEcLocation()).isNotNull();
     assertThat(dto.getEffectiveEcLocation()).doesNotContain(".well-known/openid-federation");
-    assertThat(dto.getCrit()).contains("ec_location");
+    // ec_location must not be forced on the receiver through crit, only the crit values set on the entity remain.
+    assertThat(dto.getCrit()).containsExactly("crit1");
   }
 
   @Test

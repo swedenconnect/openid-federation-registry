@@ -6,6 +6,13 @@
 
 ---
 
+### Unreleased
+
+- `ec_location` is no longer added to `crit` for hosted entities whose entity identifier lies outside the registry's
+  entity prefix. The location is still calculated and used to fetch the entity configuration.
+
+---
+
 ### Version 0.9.6
 
 **Date:** 2026-10-06

@@ -122,7 +122,6 @@ public final class EntityToDtoMapper {
           || entity.getIssuer().startsWith(subjectPathPrefix);
       if (!isUnderRegistryPrefix) {
         dto.setEffectiveEcLocation(calculatedEcLocation(entity.getSubject(), entity.getIssuer()));
-        dto.getCrit().add("ec_location");
       }
     }
     dto.setMetadata(entity.getMetadata());
