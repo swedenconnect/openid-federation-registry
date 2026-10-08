@@ -6,8 +6,6 @@
 
 ---
 
-
-=======
 ### Version 0.9.8 Unreleased
 **Date:** <ToBeSet>
 
@@ -40,6 +38,9 @@
   lists the entity identifiers of the issuers, and the trust mark types are taken from the trust marks of each issuer,
   which has to be an active trust mark issuer in the registry. An issuer outside the registry is left out with a
   warning in the log.
+- The frontend is now built by the frontend-maven-plugin as part of the Maven build and copied into the static resources
+  of the service. The built frontend files are no longer checked into git, and the GitHub Actions workflows no longer
+  build the frontend by hand. Use `-Dfrontend.skip=true` to leave the frontend out of a build.
 
 ---
 

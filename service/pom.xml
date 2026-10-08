@@ -33,6 +33,11 @@
     <description>REST Service for Sweden Connect OpenID Federation Entity Registry</description>
     <url>https://www.swedenconnect.se</url>
 
+    <properties>
+        <!-- The frontend sources, built by the frontend-maven-plugin below -->
+        <frontend.dir>${project.basedir}/../frontend</frontend.dir>
+    </properties>
+
     <dependencies>
 
         <!-- Spring -->
@@ -235,6 +240,87 @@
             </resource>
         </resources>
         <plugins>
+
+            <!-- Builds the frontend. Node is installed under target, and the build is skipped with
+                 -Dfrontend.skip=true. The result is copied to the static resources by the resources plugin below. -->
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>${frontend.maven.plugin.version}</version>
+                <configuration>
+                    <skip>${frontend.skip}</skip>
+                    <workingDirectory>${frontend.dir}</workingDirectory>
+                    <installDirectory>${project.build.directory}/frontend-node</installDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>install-node-and-npm</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>install-node-and-npm</goal>
+                        </goals>
+                        <configuration>
+                            <nodeVersion>${frontend.node.version}</nodeVersion>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-ci</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>ci</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-build</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>run build</arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- The built frontend is copied to src/main/resources/static (ignored by git), so that the normal copy of
+                 resources puts it in the classes and the service also finds it when it is started from the sources.
+                 It runs after the frontend plugin above, in the same phase. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-frontend</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.basedir}/src/main/resources/static</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${frontend.dir}/dist</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- The built files have hashed names, so clean removes the old ones. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-clean-plugin</artifactId>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>${project.basedir}/src/main/resources/static</directory>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
 
             <plugin>
                 <groupId>org.openapitools</groupId>
