@@ -90,10 +90,22 @@
 
           <TrustmarkSourcesField
               v-model="trustmarkSources"
+              suggest
+              :subject="entityIdentifier"
               :disabled="saving"
           />
 
           <v-card-actions>
+            <v-btn
+                v-if="isEdit"
+                id="btn-delete-entity"
+                color="error"
+                variant="text"
+                :disabled="saving"
+                @click="deleteDialog = true"
+            >
+              Delete Entity
+            </v-btn>
             <v-spacer></v-spacer>
             <v-btn
                 id="btn-cancel"
@@ -118,6 +130,50 @@
       </v-card-text>
     </v-card>
 
+    <!-- Delete Confirmation Dialog -->
+    <v-dialog v-model="deleteDialog" max-width="500" aria-labelledby="delete-entity-dialog-title">
+      <v-card>
+        <v-card-title id="delete-entity-dialog-title" class="text-h5">Confirm Delete</v-card-title>
+        <v-card-text>
+          Are you sure you want to delete entity "{{ entityIdentifier }}"? This action cannot be undone.
+          <v-checkbox
+              v-if="hasTrustmarkSources"
+              id="chk-delete-trustmark-subjects"
+              v-model="deleteTrustmarkSubjects"
+              :disabled="deleting"
+              density="compact"
+              hide-details
+              class="mt-2"
+              label="Also remove the entity as subject of the trustmarks in its trustmark sources"
+          ></v-checkbox>
+          <div v-if="hasTrustmarkSources" class="text-caption text-medium-emphasis ml-8">
+            Only trustmarks that belong to this organization are affected.
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+              id="btn-delete-entity-cancel"
+              color="grey"
+              variant="text"
+              @click="deleteDialog = false"
+              :disabled="deleting"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+              id="btn-delete-entity-confirm"
+              color="error"
+              @click="deleteEntity"
+              :loading="deleting"
+              :disabled="deleting"
+          >
+            Yes, Delete
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
   </div>
 </template>
 
@@ -134,7 +190,7 @@ import {hostedEntitiesPath, hostedEntityPath} from '@/config/path';
 
 const route = useRoute();
 const router = useRouter();
-const {requestGet, requestPost, requestPut, loading, ok} = useRequest();
+const {requestGet, requestPost, requestPut, requestDelete, loading, ok} = useRequest();
 const errorStore = useErrorStore();
 const userStore = useUserStore();
 
@@ -142,6 +198,11 @@ const {signingKeys, fetchSigningKeys} = useSigningKeys();
 
 const form = ref(null);
 const saving = ref(false);
+const deleteDialog = ref(false);
+const deleting = ref(false);
+const deleteTrustmarkSubjects = ref(false);
+const hasTrustmarkSources = computed(() =>
+    trustmarkSources.value.some((source) => source.trustMarkIssuer && source.trustmarkId));
 const entityId = ref(null);
 const entityIdentifier = ref('');
 const metadata = ref('{}');
@@ -213,7 +274,7 @@ async function saveEntity() {
     }
 
     if (ok.value) {
-      router.push('/');
+      router.push({name: 'hosted-entities'});
     }
   } catch (error) {
     console.error('Error saving hosted entity:', error);
@@ -222,8 +283,27 @@ async function saveEntity() {
   }
 }
 
+async function deleteEntity() {
+  deleting.value = true;
+  errorStore.clearError();
+  try {
+    const path = hostedEntityPath(userStore.selectedTenant, userStore.orgNumber, entityId.value);
+    await requestDelete(deleteTrustmarkSubjects.value && hasTrustmarkSources.value
+        ? `${path}?deleteTrustmarkSubjects=true`
+        : path);
+    if (ok.value) {
+      deleteDialog.value = false;
+      router.push({name: 'hosted-entities'});
+    }
+  } catch (error) {
+    console.error('Error deleting hosted entity:', error);
+  } finally {
+    deleting.value = false;
+  }
+}
+
 function cancel() {
-  router.push('/');
+  router.push({name: 'hosted-entities'});
 }
 
 onMounted(async () => {

@@ -38,6 +38,10 @@ public class FrontendController {
    */
   @GetMapping({
       "/login",
+      "/federation",
+      "/federation/**",
+      "/hosted",
+      "/hosted/**",
       "/entities/**",
       "/registration-flows",
       "/registration-flows/**",

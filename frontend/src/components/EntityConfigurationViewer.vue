@@ -17,6 +17,18 @@
 <template>
   <div>
     <v-btn
+        v-if="iconOnly"
+        id="btn-view-ec"
+        icon="mdi-file-document-outline"
+        variant="text"
+        size="small"
+        :loading="loading"
+        aria-label="View entity configuration"
+        title="View entity configuration"
+        @click="open"
+    ></v-btn>
+    <v-btn
+        v-else
         id="btn-view-ec"
         color="secondary"
         variant="outlined"
@@ -85,6 +97,11 @@ const props = defineProps({
   entityId: {
     type: String,
     required: true,
+  },
+  // Compact icon button, for use in a card header.
+  iconOnly: {
+    type: Boolean,
+    default: false,
   },
 });
 

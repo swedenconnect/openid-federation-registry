@@ -1625,6 +1625,7 @@
           "Entities"
         ],
         "summary": "Delete hosted entity",
+        "description": "Deletes a hosted entity. With deleteTrustmarkSubjects=true the entity is also removed as subject of the trust marks pointed out by its trust mark sources, but only for trust marks that belong to the organization.",
         "operationId": "deleteHostedEntity",
         "parameters": [
           {
@@ -1650,6 +1651,15 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "deleteTrustmarkSubjects",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -5344,6 +5354,11 @@
             "description": "EntityIdentifier",
             "example": "https://ta.example.se/ta"
           },
+          "name": {
+            "type": "string",
+            "description": "Optional display name. The entityIdentifier is shown when no name is set.",
+            "example": "Sweden Connect Trust Anchor"
+          },
           "crit": {
             "type": "array",
             "description": "crit ",
@@ -6186,6 +6201,11 @@
                 "type": "string",
                 "description": "EntityIdentifier",
                 "example": "https://ta.example.se/ta"
+              },
+              "name": {
+                "type": "string",
+                "description": "Optional display name. The entityIdentifier is shown when no name is set.",
+                "example": "Sweden Connect Trust Anchor"
               },
               "crit": {
                 "type": "array",

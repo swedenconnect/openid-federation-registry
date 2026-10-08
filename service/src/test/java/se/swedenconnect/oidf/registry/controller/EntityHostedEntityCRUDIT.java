@@ -157,7 +157,7 @@ class EntityHostedEntityCRUDIT {
     assertThat(beforeDelete).isNotNull();
 
     // Act
-    this.entitiesApi.deleteHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId);
+    this.entitiesApi.deleteHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, false);
 
     // Assert
     assertThatThrownBy(() -> this.entitiesApi.getHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId))

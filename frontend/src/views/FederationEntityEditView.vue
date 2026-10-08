@@ -22,7 +22,7 @@
       <v-btn
           id="btn-back"
           color="grey"
-          @click="router.push('/')"
+          @click="router.push({name: 'federation-entities'})"
       >
         Back
       </v-btn>
@@ -63,6 +63,18 @@
             />
           </div>
 
+          <v-text-field
+              id="entity-name"
+              v-model="name"
+              label="Name"
+              :rules="[rules.maxName]"
+              :disabled="saving"
+              hint="Optional name shown in the federation list. The entity identifier is shown when no name is set."
+              persistent-hint
+              counter="255"
+              class="mb-4"
+          ></v-text-field>
+
           <v-select
               v-model="signingKeyId"
               :items="signingKeys"
@@ -91,6 +103,15 @@
           />
 
           <v-card-actions class="px-0">
+            <v-btn
+                id="btn-delete-entity"
+                color="error"
+                variant="text"
+                :disabled="saving"
+                @click="deleteEntityDialog = true"
+            >
+              Delete Entity
+            </v-btn>
             <v-spacer></v-spacer>
             <v-btn
                 id="btn-cancel"
@@ -542,6 +563,37 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Delete Entity Confirmation Dialog -->
+    <v-dialog v-model="deleteEntityDialog" max-width="500" aria-labelledby="delete-entity-dialog-title">
+      <v-card>
+        <v-card-title id="delete-entity-dialog-title" class="text-h5">Confirm Delete</v-card-title>
+        <v-card-text>
+          Are you sure you want to delete entity "{{ name || entityIdentifier }}"? This action cannot be undone.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+              id="btn-delete-entity-cancel"
+              color="grey"
+              variant="text"
+              @click="deleteEntityDialog = false"
+              :disabled="deletingEntity"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+              id="btn-delete-entity-confirm"
+              color="error"
+              @click="deleteEntity"
+              :loading="deletingEntity"
+              :disabled="deletingEntity"
+          >
+            Yes, Delete
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -579,6 +631,9 @@ const form = ref(null);
 const saving = ref(false);
 const entityId = ref(null);
 const entityIdentifier = ref('');
+const name = ref('');
+const deleteEntityDialog = ref(false);
+const deletingEntity = ref(false);
 const crit = ref([]);
 const signingKeyId = ref(null);
 const originalSigningKeyId = ref(null);
@@ -649,6 +704,7 @@ const modules = ref({
 
 const rules = {
   required: (value) => !!value || 'This field is required.',
+  maxName: (value) => !value || value.length <= 255 || 'The name can be at most 255 characters.',
 };
 
 function applyResolverJwks(item) {
@@ -676,6 +732,7 @@ async function loadEntity() {
     // Response can be FederationEntityWithModules or FederationEntity
     const entity = response.federationEntity || response;
     entityIdentifier.value = entity.entityIdentifier || '';
+    name.value = entity.name || '';
     crit.value = entity.crit || [];
     signingKeyId.value = entity.signingKeyId?.[0] || null;
     originalSigningKeyId.value = signingKeyId.value;
@@ -775,6 +832,7 @@ async function saveEntity() {
   try {
     const entityData = {
       entityIdentifier: entityIdentifier.value,
+      name: name.value?.trim() || null,
       crit: crit.value.filter(c => c && c.trim() !== ''),
       signingKeyId: signingKeyId.value ? [signingKeyId.value] : [],
     };
@@ -989,8 +1047,24 @@ async function confirmDeleteModule() {
   }
 }
 
+async function deleteEntity() {
+  deletingEntity.value = true;
+  errorStore.clearError();
+  try {
+    await requestDelete(federationEntityPath(userStore.selectedTenant, userStore.orgNumber, entityId.value));
+    if (ok.value) {
+      deleteEntityDialog.value = false;
+      router.push({name: 'federation-entities'});
+    }
+  } catch (error) {
+    console.error('Error deleting federation entity:', error);
+  } finally {
+    deletingEntity.value = false;
+  }
+}
+
 function cancel() {
-  router.push('/');
+  router.push({name: 'federation-entities'});
 }
 
 onMounted(async () => {

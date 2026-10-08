@@ -35,16 +35,29 @@
       </v-card-title>
       <v-card-text>
         <v-form ref="form" @submit.prevent="submitForm">
-          <v-text-field
+          <v-combobox
+              id="trustmark-subject"
               v-model="subject"
+              :items="suggestions"
+              item-title="value"
+              item-value="value"
+              :return-object="false"
               label="Subject"
               :rules="[rules.required]"
               :disabled="saving"
+              :loading="loadingSuggestions"
+              :hide-no-data="true"
               required
-              hint="Subject entity identifier (required)"
+              :hint="isEdit
+                  ? 'Subject entity identifier (required)'
+                  : 'Subject entity identifier (required). Hosted entities are suggested.'"
               persistent-hint
               class="mb-4"
-          ></v-text-field>
+          >
+            <template #item="{ props, item }">
+              <v-list-item v-bind="props" :subtitle="item.raw.type"></v-list-item>
+            </template>
+          </v-combobox>
 
           <v-switch
               v-model="revoked"
@@ -106,7 +119,7 @@ import {useRequest} from '@/api/composables/request';
 import DateTimeField from '@/components/DateTimeField.vue';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
-import {trustmarkSubjectsPath} from '@/config/path';
+import {hostedEntitiesPath, trustmarkSubjectsPath} from '@/config/path';
 
 const route = useRoute();
 const router = useRouter();
@@ -123,6 +136,10 @@ const subject = ref('');
 const revoked = ref(false);
 const granted = ref('');
 const expires = ref('');
+
+// Suggestions for the subject when creating: the organization's hosted entities.
+const suggestions = ref([]);
+const loadingSuggestions = ref(false);
 
 const isEdit = computed(() => !!route.params.id);
 const entityId = computed(() => route.params.entityId);
@@ -147,6 +164,20 @@ const rules = {
     return !!value || 'This field is required.';
   },
 };
+
+async function loadSuggestions() {
+  loadingSuggestions.value = true;
+  try {
+    const response = await requestGet(hostedEntitiesPath(userStore.selectedTenant, userStore.orgNumber));
+    if (!Array.isArray(response)) return;
+
+    suggestions.value = [...new Set(response.map((entity) => entity.entityIdentifier).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b))
+        .map((value) => ({value, type: 'Hosted entity'}));
+  } finally {
+    loadingSuggestions.value = false;
+  }
+}
 
 async function loadSubject() {
   errorStore.clearError();
@@ -208,8 +239,11 @@ onMounted(() => {
   errorStore.clearError();
   if (isEdit.value) {
     loadSubject();
-  } else if (route.query.subject) {
-    subject.value = route.query.subject;
+  } else {
+    if (route.query.subject) {
+      subject.value = route.query.subject;
+    }
+    loadSuggestions();
   }
 });
 </script>

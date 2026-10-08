@@ -9,6 +9,23 @@
 ### Version 0.9.8 Unreleased
 **Date:** <ToBeSet>
 
+- The Entity menu item is replaced by **Federation** (operators) and **Hosted Entities**. Federation entities are
+  shown as cards with a link to the entity configuration, an edit button and one button per role (Subordinates,
+  Trustmarks, Resolver). The hosted entities are shown as a sortable list with a search field on the entity
+  identifier. Deleting an entity, a trustmark or a subordinate is done from its edit page.
+- Federation entities have an optional `name`, set in the create and edit forms and exposed in the API. The entity
+  identifier is shown when no name is set. Database migration V31 adds the column.
+- Fixed `GET .../entities?type=federation|hosted`, which rejected the documented values with a 400 error.
+- In the trustmark list a click on a row opens its subjects and a cog icon opens the edit page. In the subordinate list a
+  click on a row opens the edit page.
+- Creating a subordinate checks automatically that the entity configuration of the entered entity can be loaded, and
+  shows a green check or a red cross.
+- Creating a trustmark subject suggests the hosted entities of the organization.
+- The trustmark sources of a hosted entity suggest the trustmark issuers of the organization and their trustmarks,
+  and mark whether the trustmark is assigned to the entity.
+- `DELETE .../entities/hosted/{entityId}` takes an optional `deleteTrustmarkSubjects` flag (default `false`). When set,
+  the entity is also removed as subject of the trustmarks pointed out by its trustmark sources, as far as those
+  trustmarks belong to the same organization.
 - The no-access page now explains that the account has no function group supported by the registry, and offers a
   logout button.
 - The frontend shows an error with retry and logout when the user's permissions cannot be loaded, instead of an empty

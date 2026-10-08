@@ -128,6 +128,16 @@
           </template>
 
           <v-card-actions>
+            <v-btn
+                v-if="isEdit"
+                id="btn-delete-trustmark"
+                color="error"
+                variant="text"
+                :disabled="saving"
+                @click="deleteDialog = true"
+            >
+              Delete Trustmark
+            </v-btn>
             <v-spacer></v-spacer>
             <v-btn
                 id="btn-cancel"
@@ -151,6 +161,37 @@
         </v-form>
       </v-card-text>
     </v-card>
+
+    <!-- Delete Confirmation Dialog -->
+    <v-dialog v-model="deleteDialog" max-width="500" aria-labelledby="delete-trustmark-dialog-title">
+      <v-card>
+        <v-card-title id="delete-trustmark-dialog-title" class="text-h5">Confirm Delete</v-card-title>
+        <v-card-text>
+          Are you sure you want to delete trustmark "{{ trustmarkType || 'N/A' }}"? This action cannot be undone.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+              id="btn-delete-trustmark-cancel"
+              color="grey"
+              variant="text"
+              @click="deleteDialog = false"
+              :disabled="deleting"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+              id="btn-delete-trustmark-confirm"
+              color="error"
+              @click="deleteTrustmark"
+              :loading="deleting"
+              :disabled="deleting"
+          >
+            Yes, Delete
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -176,6 +217,8 @@ const userStore = useUserStore();
 
 const form = ref(null);
 const saving = ref(false);
+const deleteDialog = ref(false);
+const deleting = ref(false);
 
 const trustmarkId = ref(null);
 const trustmarkissuerId = ref(null);
@@ -293,6 +336,22 @@ async function submitForm() {
     console.error('Error saving trustmark:', error);
   } finally {
     saving.value = false;
+  }
+}
+
+async function deleteTrustmark() {
+  deleting.value = true;
+  errorStore.clearError();
+  try {
+    await requestDelete(`${trustmarksPath(userStore.selectedTenant, userStore.orgNumber)}/${trustmarkId.value}`);
+    if (ok.value) {
+      deleteDialog.value = false;
+      navigateBack();
+    }
+  } catch (error) {
+    console.error('Error deleting trustmark:', error);
+  } finally {
+    deleting.value = false;
   }
 }
 
