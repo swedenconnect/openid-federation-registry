@@ -179,7 +179,7 @@
                     chips
                     closable-chips
                     :disabled="savingModule"
-                    hint="Trust Mark Issuers"
+                    hint="Entity identifiers of trust mark issuers in this registry. The trust anchor trusts every trust mark type of each issuer. Issuers outside the registry are not exported."
                     persistent-hint
                     class="mb-4"
                 ></v-combobox>

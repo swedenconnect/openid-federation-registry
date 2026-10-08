@@ -49,11 +49,14 @@ import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateMapper;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
+import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -209,18 +212,57 @@ public class OidfApiService {
 
   }
 
-  private TrustAnchorProperties toTaIm(final TrustAnchorIntermediateModule taImModuleEntity) {
+  TrustAnchorProperties toTaIm(final TrustAnchorIntermediateModule taImModuleEntity) {
     return TrustAnchorProperties.builder()
         .entityIdentifier(new EntityID(taImModuleEntity.getEntity().getIssuer()))
         //.trustMarkOwners()
-        // TODO: Add trustMarkIssuers
-        //.trustMarkIssuers(taImModuleEntity.getTrustMarkIssuers())
+        .trustMarkIssuers(this.toTrustMarkIssuers(taImModuleEntity))
         .subordinates(taImModuleEntity.getSubordinates()
             .stream()
             .map(this::toSubordinates)
             .filter(Objects::nonNull)
             .toList())
         .build();
+  }
+
+  /**
+   * Builds the trust_mark_issuers claim: for each trust mark type, the issuers that are trusted to issue it.
+   * <p>
+   * The module only lists the entity identifiers of the issuers. The trust mark types are taken from the trust marks
+   * of the issuer, which therefore has to be an active trust mark issuer in this registry. An issuer that is not, for
+   * example an external one, cannot be mapped to any trust mark type and is left out with a warning.
+   *
+   * @param taImModuleEntity the trust anchor module
+   * @return trust mark type to issuers, or {@code null} if there is nothing to export
+   */
+  private Map<EntityID, List<EntityID>> toTrustMarkIssuers(final TrustAnchorIntermediateModule taImModuleEntity) {
+    final List<String> issuers = taImModuleEntity.getTrustMarkIssuers();
+    if (issuers == null || issuers.isEmpty()) {
+      return null;
+    }
+
+    final Map<EntityID, List<EntityID>> trustMarkIssuers = new LinkedHashMap<>();
+    for (final String issuer : issuers.stream().filter(Objects::nonNull).distinct().toList()) {
+      final List<String> trustMarkTypes = this.entityRepository
+          .findByEntityTypeAndOptionalIssuer(EntityType.FEDERATION_ENTITY, issuer)
+          .stream()
+          .map(FederationEntity::getTrustmarkIssuer)
+          .filter(Objects::nonNull)
+          .filter(tmi -> Boolean.TRUE.equals(tmi.getActive()))
+          .flatMap(tmi -> tmi.getTrustmarks().stream())
+          .map(TrustMark::getTrustmarkType)
+          .filter(Objects::nonNull)
+          .distinct()
+          .toList();
+      if (trustMarkTypes.isEmpty()) {
+        log.warn("Trust mark issuer {} of trust anchor {} is not an active trust mark issuer with trust marks in "
+            + "this registry, it is left out of trust_mark_issuers", issuer, taImModuleEntity.getEntity().getIssuer());
+        continue;
+      }
+      trustMarkTypes.forEach(type ->
+          trustMarkIssuers.computeIfAbsent(new EntityID(type), key -> new ArrayList<>()).add(new EntityID(issuer)));
+    }
+    return trustMarkIssuers.isEmpty() ? null : trustMarkIssuers;
   }
 
   protected TrustAnchorProperties.SubordinateListingProperty toSubordinates(final Subordinate subordinateEntity) {

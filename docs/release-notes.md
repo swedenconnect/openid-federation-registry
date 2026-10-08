@@ -36,6 +36,10 @@
   page.
 - A superuser in a tenant without registered organizations now sees an explanatory message, and the selected tenant is
   kept across page loads.
+- The trust mark issuers of a trust anchor are now exported to oidf-service as `trust_mark_issuers`. The module still
+  lists the entity identifiers of the issuers, and the trust mark types are taken from the trust marks of each issuer,
+  which has to be an active trust mark issuer in the registry. An issuer outside the registry is left out with a
+  warning in the log.
 
 ---
 
