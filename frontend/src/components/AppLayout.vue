@@ -145,6 +145,19 @@
         <v-row v-if="!ready" justify="center" class="mt-8">
           <v-progress-circular indeterminate color="primary"/>
         </v-row>
+        <v-alert v-else-if="userStore.isAuthorized && userStore.tenantsFailed" type="error" role="alert" class="mt-4">
+          Your permissions could not be loaded. Try again, or log out and log in again.
+          <template #append>
+            <v-btn variant="outlined" class="mr-2" @click="reload">Retry</v-btn>
+            <v-btn variant="outlined" @click="logout">Log out</v-btn>
+          </template>
+        </v-alert>
+        <!-- Superuser in a tenant with no registered organizations: views need an organization to work against. -->
+        <v-alert v-else-if="userStore.hasNoOrganization && route.name !== 'no-access'" type="info" class="mt-4">
+          No organizations are registered in tenant "{{ userStore.selectedTenant }}" yet.
+          <template v-if="userStore.tenants.length > 1">Select another tenant above, or register an organization first.</template>
+          <template v-else>Register an organization first.</template>
+        </v-alert>
         <RouterView v-else/>
       </v-container>
     </v-main>
@@ -208,6 +221,10 @@ function login() {
 
 function logout() {
   globalThis.location.href = logoutPath;
+}
+
+function reload() {
+  globalThis.location.reload();
 }
 
 const ready = ref(false);

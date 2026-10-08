@@ -6,7 +6,8 @@
 
 ---
 
-### Unreleased
+### Version 0.9.8 Unreleased
+**Date:** <ToBeSet>
 
 - The Entity menu item is replaced by **Federation** (operators) and **Hosted Entities**. Federation entities are
   shown as cards with a link to the entity configuration, an edit button and one button per role (Subordinates,
@@ -25,6 +26,21 @@
 - `DELETE .../entities/hosted/{entityId}` takes an optional `deleteTrustmarkSubjects` flag (default `false`). When set,
   the entity is also removed as subject of the trustmarks pointed out by its trustmark sources, as far as those
   trustmarks belong to the same organization.
+- The no-access page now explains that the account has no function group supported by the registry, and offers a
+  logout button.
+- The frontend shows an error with retry and logout when the user's permissions cannot be loaded, instead of an empty
+  page.
+- A superuser in a tenant without registered organizations now sees an explanatory message, and the selected tenant is
+  kept across page loads.
+
+---
+
+### Version 0.9.7
+
+**Date:** 2026-10-07
+
+- The `/submodules` response no longer contains null values or empty objects and arrays.
+
 
 ---
 
