@@ -9,4 +9,3 @@ jobs:
     secrets: inherit
     with:
       service-path: service
-      frontend-path: frontend

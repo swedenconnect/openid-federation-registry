@@ -36,6 +36,9 @@
   page.
 - A superuser in a tenant without registered organizations now sees an explanatory message, and the selected tenant is
   kept across page loads.
+- The frontend is now built by the frontend-maven-plugin as part of the Maven build and copied into the static resources
+  of the service. The built frontend files are no longer checked into git, and the GitHub Actions workflows no longer
+  build the frontend by hand. Use `-Dfrontend.skip=true` to leave the frontend out of a build.
 
 ---
 

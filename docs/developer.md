@@ -28,6 +28,7 @@ Before you begin, ensure you have the following installed:
 The project is organized as follows:
 
 *   `service`: Contains the Spring Boot application source code.
+*   `frontend`: The Vue 3 and Vite frontend. It is built by Maven and served from the static resources of the service.
 *   `config/local`: Contains Docker Compose configuration for setting up local dependencies.
 *   `docs`: Project documentation.
 
@@ -37,6 +38,21 @@ To build the project and run the unit tests, run the following command from the 
 ```shell
 mvn clean install
 ```
+
+The frontend is built by the [frontend-maven-plugin](https://github.com/eirslett/frontend-maven-plugin) as part of the
+build of the `service` module. The plugin installs Node under `service/target`, runs `npm ci` and `npm run build` in
+`frontend`, and copies `frontend/dist` into `static` in the classes of the service. Nothing has to be installed or
+copied by hand, and the built files are not checked into git. The Node version is `frontend.node.version` in the parent
+`pom.xml`.
+
+For backend work that does not touch the frontend, leave the frontend out of the build to save time:
+```shell
+mvn clean install -Dfrontend.skip=true
+```
+The service then contains the content of `frontend/dist` from the latest earlier build, if there is one.
+
+For frontend work, run the Vite dev server in `frontend` (`npm install`, then `npm run dev`). It proxies the API calls
+to the service on port 8020.
 
 
 ## Running Locally

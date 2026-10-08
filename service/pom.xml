@@ -33,6 +33,11 @@
     <description>REST Service for Sweden Connect OpenID Federation Entity Registry</description>
     <url>https://www.swedenconnect.se</url>
 
+    <properties>
+        <!-- The frontend sources, built by the frontend-maven-plugin below -->
+        <frontend.dir>${project.basedir}/../frontend</frontend.dir>
+    </properties>
+
     <dependencies>
 
         <!-- Spring -->
@@ -231,10 +236,78 @@
                 <excludes>
                     <exclude>application.yaml</exclude>
                     <exclude>banner.txt</exclude>
+                    <!-- The frontend is built into target/classes/static, see frontend-maven-plugin -->
+                    <exclude>static/**</exclude>
                 </excludes>
             </resource>
         </resources>
         <plugins>
+
+            <!-- Builds the frontend and puts it in the static resources of the service. Node is installed under
+                 target, and the build is skipped with -Dfrontend.skip=true. -->
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>${frontend.maven.plugin.version}</version>
+                <configuration>
+                    <skip>${frontend.skip}</skip>
+                    <workingDirectory>${frontend.dir}</workingDirectory>
+                    <installDirectory>${project.build.directory}/frontend-node</installDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>install-node-and-npm</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>install-node-and-npm</goal>
+                        </goals>
+                        <configuration>
+                            <nodeVersion>${frontend.node.version}</nodeVersion>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-ci</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>ci</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-build</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>run build</arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-frontend</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.outputDirectory}/static</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${frontend.dir}/dist</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
             <plugin>
                 <groupId>org.openapitools</groupId>
