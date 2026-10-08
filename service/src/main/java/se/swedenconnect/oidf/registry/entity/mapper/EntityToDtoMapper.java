@@ -57,6 +57,7 @@ public final class EntityToDtoMapper {
     final FederationEntityWithModulesDto dto = new FederationEntityWithModulesDto();
     dto.setEntityId(entity.getEntityId());
     dto.setEntityIdentifier(entity.getIssuer());
+    dto.setName(entity.getName());
     dto.setAuthorityhints(entity.getAuthorityhints());
     dto.setCrit(entity.getCrit());
     dto.setSigningKeyId(entity.getSigningKeyIds());

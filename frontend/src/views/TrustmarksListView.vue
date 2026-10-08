@@ -65,42 +65,30 @@
         <thead>
         <tr>
           <th class="text-left">Trustmark Type</th>
-          <th class="text-right">Actions</th>
+          <th class="text-right"><span class="sr-only">Actions</span></th>
         </tr>
         </thead>
         <tbody>
-        <tr v-for="trustmark in trustmarks" :key="trustmark.trustmarkId">
+        <tr
+            v-for="trustmark in trustmarks"
+            :key="trustmark.trustmarkId"
+            class="clickable-row"
+            tabindex="0"
+            @click="viewSubjects(trustmark.trustmarkId)"
+            @keydown.enter="viewSubjects(trustmark.trustmarkId)"
+        >
           <td>{{ trustmark.trustmarkType || 'N/A' }}</td>
           <td class="text-right">
             <v-btn
                 :id="'btn-edit-trustmark-' + trustmark.trustmarkId"
-                color="primary"
+                icon="mdi-cog-outline"
                 variant="text"
                 size="small"
-                @click="editTrustmark(trustmark.trustmarkId)"
-                class="mr-2"
-            >
-              Edit
-            </v-btn>
-            <v-btn
-                :id="'btn-subjects-trustmark-' + trustmark.trustmarkId"
-                color="secondary"
-                variant="text"
-                size="small"
-                @click="viewSubjects(trustmark.trustmarkId)"
-                class="mr-2"
-            >
-              Subjects
-            </v-btn>
-            <v-btn
-                :id="'btn-delete-trustmark-' + trustmark.trustmarkId"
-                color="error"
-                variant="text"
-                size="small"
-                @click="confirmDelete(trustmark)"
-            >
-              Delete
-            </v-btn>
+                aria-label="Edit trustmark"
+                title="Edit trustmark"
+                @click.stop="editTrustmark(trustmark.trustmarkId)"
+                @keydown.enter.stop
+            ></v-btn>
           </td>
         </tr>
         </tbody>
@@ -114,37 +102,6 @@
         </div>
       </v-card-text>
     </v-card>
-
-    <!-- Delete Confirmation Dialog -->
-    <v-dialog v-model="deleteDialog" max-width="500" aria-labelledby="delete-trustmark-dialog-title">
-      <v-card>
-        <v-card-title id="delete-trustmark-dialog-title" class="text-h5">Confirm Delete</v-card-title>
-        <v-card-text>
-          Are you sure you want to delete trustmark "{{ deleteTrustmarkLabel }}"? This action cannot be undone.
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn
-              id="btn-delete-trustmark-cancel"
-              color="grey"
-              variant="text"
-              @click="deleteDialog = false"
-              :disabled="deleting"
-          >
-            Cancel
-          </v-btn>
-          <v-btn
-              id="btn-delete-trustmark-confirm"
-              color="error"
-              @click="deleteTrustmark"
-              :loading="deleting"
-              :disabled="deleting"
-          >
-            Yes, Delete
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 
@@ -154,27 +111,19 @@ import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
-import {federationEntityPath, trustmarksListingPath, trustmarksPath} from '@/config/path';
+import {federationEntityPath, trustmarksListingPath} from '@/config/path';
 
 const route = useRoute();
 const router = useRouter();
-const {requestGet, requestDelete, loading, ok} = useRequest();
+const {requestGet, loading} = useRequest();
 const errorStore = useErrorStore();
 const userStore = useUserStore();
 
 const trustmarks = ref([]);
 const entityIdentifier = ref(null);
-const deleteDialog = ref(false);
-const deleting = ref(false);
-const trustmarkToDelete = ref(null);
 
 const entityId = computed(() => route.params.entityId);
 const trustmarkIssuerId = computed(() => route.query.trustmarkIssuerId || null);
-
-const deleteTrustmarkLabel = computed(() => {
-  if (!trustmarkToDelete.value) return '';
-  return trustmarkToDelete.value.trustmarkType || 'N/A';
-});
 
 function listBasePath() {
   return `/entities/${entityId.value}/modules/trustmarkissuer/trustmarks`;
@@ -215,42 +164,8 @@ function viewSubjects(trustmarkId) {
   router.push(`${listBasePath()}/${trustmarkId}/subjects?${queryParams()}`);
 }
 
-function confirmDelete(trustmark) {
-  trustmarkToDelete.value = trustmark;
-  deleteDialog.value = true;
-}
-
-async function deleteTrustmark() {
-  if (!trustmarkToDelete.value) return;
-
-  deleting.value = true;
-  errorStore.clearError();
-
-  try {
-    const trustmarkId = trustmarkToDelete.value.trustmarkId;
-
-    if (!trustmarkId) {
-      errorStore.setError('Trustmark ID not found');
-      deleting.value = false;
-      return;
-    }
-
-    await requestDelete(`${trustmarksPath(userStore.selectedTenant, userStore.orgNumber)}/${trustmarkId}`);
-
-    if (ok.value) {
-      deleteDialog.value = false;
-      trustmarkToDelete.value = null;
-      await loadTrustmarks();
-    }
-  } catch (error) {
-    console.error('Error deleting trustmark:', error);
-  } finally {
-    deleting.value = false;
-  }
-}
-
 function goBack() {
-  router.push('/');
+  router.push({name: 'federation-entities'});
 }
 
 async function loadEntityIdentifier() {
@@ -266,3 +181,9 @@ onMounted(() => {
   loadTrustmarks();
 });
 </script>
+
+<style scoped>
+.clickable-row {
+  cursor: pointer;
+}
+</style>

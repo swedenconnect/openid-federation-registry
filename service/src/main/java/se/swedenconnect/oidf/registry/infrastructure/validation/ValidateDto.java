@@ -52,6 +52,8 @@ import java.util.Set;
  */
 public class ValidateDto {
   private static final JsonMapper MAPPER = new JsonMapper();
+  private static final int MIN_ENTITY_NAME_LENGTH = 1;
+  private static final int MAX_ENTITY_NAME_LENGTH = 255;
   private static final int MIN_CRIT_LENGTH = 1;
   private static final int MAX_CRIT_LENGTH = 500;
   private static final int MIN_POLICY_CRIT_LENGTH = 2;
@@ -223,6 +225,10 @@ public class ValidateDto {
         .entityid()
         .build()
         .ifFailThrow("entityIdentifier", dto.getEntityIdentifier());
+
+    this.v.length(MIN_ENTITY_NAME_LENGTH, MAX_ENTITY_NAME_LENGTH)
+        .build()
+        .ifFailThrow("name", dto.getName());
 
     this.v.length(MIN_CRIT_LENGTH, MAX_CRIT_LENGTH)
         .build()

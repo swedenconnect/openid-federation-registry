@@ -43,6 +43,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -196,6 +197,25 @@ class TenantServiceTest {
 
     assertThat(result.tenants()).extracting(TenantDto::tenant).containsExactly("Ena");
     assertThat(organizationsFor(result, "Ena")).isEmpty();
+  }
+
+  @Test
+  @DisplayName("Superuser: configured tenants that are not persisted yet are all returned with empty organizations")
+  void superuserGetsEveryTenantWithEmptyOrganizationsWhenNothingIsPersisted() {
+    service = new TenantService(
+        registryPropertiesWith(
+            instanceProperties(UUID.randomUUID(), "Samordnad Identitet och Behörighet", "sib"),
+            instanceProperties(UUID.randomUUID(), "Swedenconnect Prod", "swedenconnect")),
+        instanceRepository, orgRightsService, instancePlacementService);
+
+    when(orgRightsService.extractOrgRights(authentication)).thenReturn(new OrgRightsClaim(true, List.of()));
+    when(instanceRepository.findAllById(any())).thenReturn(List.of());
+
+    final TenantsResponse result = service.resolveTenants(authentication);
+
+    assertThat(result.tenants()).extracting(TenantDto::tenant)
+        .containsExactly("Samordnad Identitet och Behörighet", "Swedenconnect Prod");
+    assertThat(result.tenants()).allSatisfy(tenant -> assertThat(tenant.organizations()).isEmpty());
   }
 
   @Test

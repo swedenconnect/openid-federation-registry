@@ -71,11 +71,18 @@
         <tr>
           <th class="text-left">Entity Identifier</th>
           <th class="text-left">Status</th>
-          <th class="text-right">Actions</th>
         </tr>
         </thead>
         <tbody>
-        <tr v-for="subordinate in subordinates" :key="subordinate.subordinateId">
+        <tr
+            v-for="subordinate in subordinates"
+            :key="subordinate.subordinateId"
+            :id="'row-subordinate-' + subordinate.subordinateId"
+            class="clickable-row"
+            tabindex="0"
+            @click="editSubordinate(subordinate.subordinateId)"
+            @keydown.enter="editSubordinate(subordinate.subordinateId)"
+        >
           <td>{{ subordinate.entityIdentifier || 'N/A' }}</td>
           <td>
             <v-tooltip v-if="hasEcLocation(subordinate)" text="EC Location configured" location="top">
@@ -93,27 +100,6 @@
               </template>
             </v-tooltip>
           </td>
-          <td class="text-right">
-            <v-btn
-                :id="'btn-edit-subordinate-' + subordinate.subordinateId"
-                color="primary"
-                variant="text"
-                size="small"
-                @click="editSubordinate(subordinate.subordinateId)"
-                class="mr-2"
-            >
-              Edit
-            </v-btn>
-            <v-btn
-                :id="'btn-delete-subordinate-' + subordinate.subordinateId"
-                color="error"
-                variant="text"
-                size="small"
-                @click="confirmDelete(subordinate)"
-            >
-              Delete
-            </v-btn>
-          </td>
         </tr>
         </tbody>
       </v-table>
@@ -126,37 +112,6 @@
         </div>
       </v-card-text>
     </v-card>
-
-    <!-- Delete Confirmation Dialog -->
-    <v-dialog v-model="deleteDialog" max-width="500" aria-labelledby="delete-subordinate-dialog-title">
-      <v-card>
-        <v-card-title id="delete-subordinate-dialog-title" class="text-h5">Confirm Delete</v-card-title>
-        <v-card-text>
-          Are you sure you want to delete subordinate "{{ deleteSubordinateLabel }}"? This action cannot be undone.
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn
-              id="btn-delete-subordinate-cancel"
-              color="grey"
-              variant="text"
-              @click="deleteDialog = false"
-              :disabled="deleting"
-          >
-            Cancel
-          </v-btn>
-          <v-btn
-              id="btn-delete-subordinate-confirm"
-              color="error"
-              @click="deleteSubordinate"
-              :loading="deleting"
-              :disabled="deleting"
-          >
-            Yes, Delete
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 
@@ -166,28 +121,20 @@ import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
-import {federationEntityPath, intermediateModulePath, subordinatePath, trustAnchorModulePath} from '@/config/path';
+import {federationEntityPath, intermediateModulePath, trustAnchorModulePath} from '@/config/path';
 
 const route = useRoute();
 const router = useRouter();
-const {requestGet, requestDelete, loading, ok} = useRequest();
+const {requestGet, loading} = useRequest();
 const errorStore = useErrorStore();
 const userStore = useUserStore();
 
 const subordinates = ref([]);
 const entityIdentifier = ref(null);
-const deleteDialog = ref(false);
-const deleting = ref(false);
-const subordinateToDelete = ref(null);
 
 const entityId = computed(() => route.params.entityId);
 const moduleType = computed(() => route.params.moduleType);
 const taImId = computed(() => route.query.taImId || null);
-
-const deleteSubordinateLabel = computed(() => {
-  if (!subordinateToDelete.value) return '';
-  return subordinateToDelete.value.entityIdentifier || 'N/A';
-});
 
 function listBasePath() {
   return `/entities/${entityId.value}/modules/${moduleType.value}/subordinates`;
@@ -247,42 +194,8 @@ function editSubordinate(subordinateId) {
   router.push(`${listBasePath()}/${subordinateId}/edit?${queryParams()}`);
 }
 
-function confirmDelete(subordinate) {
-  subordinateToDelete.value = subordinate;
-  deleteDialog.value = true;
-}
-
-async function deleteSubordinate() {
-  if (!subordinateToDelete.value) return;
-
-  deleting.value = true;
-  errorStore.clearError();
-
-  try {
-    const subordinateId = subordinateToDelete.value.subordinateId;
-
-    if (!subordinateId) {
-      errorStore.setError('Subordinate ID not found');
-      deleting.value = false;
-      return;
-    }
-
-    await requestDelete(subordinatePath(userStore.selectedTenant, userStore.orgNumber, subordinateId));
-
-    if (ok.value) {
-      deleteDialog.value = false;
-      subordinateToDelete.value = null;
-      await loadSubordinates();
-    }
-  } catch (error) {
-    console.error('Error deleting subordinate:', error);
-  } finally {
-    deleting.value = false;
-  }
-}
-
 function goBack() {
-  router.push('/');
+  router.push({name: 'federation-entities'});
 }
 
 async function loadEntityIdentifier() {
@@ -298,3 +211,9 @@ onMounted(() => {
   loadSubordinates();
 });
 </script>
+
+<style scoped>
+.clickable-row {
+  cursor: pointer;
+}
+</style>

@@ -97,7 +97,8 @@
 
       <template #extension>
         <nav v-if="userStore.isAuthorized && !userStore.hasNoAccess" aria-label="Main navigation" class="nav-bar">
-          <RouterLink to="/" class="nav-link" :class="{ active: isEntityRoute }">Entity</RouterLink>
+          <RouterLink v-if="userStore.isOperator" to="/federation" class="nav-link" :class="{ active: isFederationRoute }">Federation</RouterLink>
+          <RouterLink to="/hosted" class="nav-link" :class="{ active: isHostedRoute }">Hosted Entities</RouterLink>
           <RouterLink v-if="userStore.isOperator" to="/registration-flows" class="nav-link" :class="{ active: isRegistrationFlowsRoute }">Registration Flows</RouterLink>
           <RouterLink v-if="userStore.isOperator" to="/registrations" class="nav-link" :class="{ active: isRegistrationsRoute }">
             Registrations
@@ -144,6 +145,19 @@
         <v-row v-if="!ready" justify="center" class="mt-8">
           <v-progress-circular indeterminate color="primary"/>
         </v-row>
+        <v-alert v-else-if="userStore.isAuthorized && userStore.tenantsFailed" type="error" role="alert" class="mt-4">
+          Your permissions could not be loaded. Try again, or log out and log in again.
+          <template #append>
+            <v-btn variant="outlined" class="mr-2" @click="reload">Retry</v-btn>
+            <v-btn variant="outlined" @click="logout">Log out</v-btn>
+          </template>
+        </v-alert>
+        <!-- Superuser in a tenant with no registered organizations: views need an organization to work against. -->
+        <v-alert v-else-if="userStore.hasNoOrganization && route.name !== 'no-access'" type="info" class="mt-4">
+          No organizations are registered in tenant "{{ userStore.selectedTenant }}" yet.
+          <template v-if="userStore.tenants.length > 1">Select another tenant above, or register an organization first.</template>
+          <template v-else>Register an organization first.</template>
+        </v-alert>
         <RouterView v-else/>
       </v-container>
     </v-main>
@@ -174,7 +188,12 @@ const router = useRouter();
 const errorStore = useErrorStore();
 const userStore = useUserStore();
 
-const isEntityRoute = computed(() => route.path === '/');
+// Federation entities and their edit/module views live under /entities/federation and /entities/:entityId/modules;
+// hosted entities under /hosted and /entities/hosted.
+const isFederationRoute = computed(() => route.path.startsWith('/federation')
+    || route.path.startsWith('/entities/federation')
+    || route.path.includes('/modules/'));
+const isHostedRoute = computed(() => route.path.startsWith('/hosted') || route.path.startsWith('/entities/hosted'));
 const isRegistrationFlowsRoute = computed(() => route.path.startsWith('/registration-flows'));
 const isRegistrationsRoute = computed(() => route.path.startsWith('/registrations'));
 const isOrganizationsRoute = computed(() => route.path.startsWith('/organizations'));
@@ -202,6 +221,10 @@ function login() {
 
 function logout() {
   globalThis.location.href = logoutPath;
+}
+
+function reload() {
+  globalThis.location.reload();
 }
 
 const ready = ref(false);

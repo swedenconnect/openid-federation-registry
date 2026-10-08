@@ -37,6 +37,7 @@ import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 import se.swedenconnect.oidf.registry.subordinate.service.SubordinateService;
+import se.swedenconnect.oidf.registry.trustmark.service.TrustmarkSubjectService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +57,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   private final RegistryAuditService auditService;
   private final SubordinateService subordinateService;
   private final JwksKeysCacheService jwksKeysCacheService;
+  private final TrustmarkSubjectService trustmarkSubjectService;
 
   /**
    * Constructor.
@@ -65,17 +67,20 @@ public class EntityConfigServiceImpl implements EntityConfigService {
    * @param subordinateService the subordinate service
    * @param auditService the audit service
    * @param jwksKeysCacheService the JWKS key cache service for signing key validation
+   * @param trustmarkSubjectService the trust mark subject service
    */
   public EntityConfigServiceImpl(final EntityRepository entityRepository,
       final OrganizationService organizationService,
       final RegistryAuditService auditService,
       final SubordinateService subordinateService,
-      final JwksKeysCacheService jwksKeysCacheService) {
+      final JwksKeysCacheService jwksKeysCacheService,
+      final TrustmarkSubjectService trustmarkSubjectService) {
     this.entityRepository = entityRepository;
     this.organizationService = organizationService;
     this.auditService = auditService;
     this.subordinateService = subordinateService;
     this.jwksKeysCacheService = jwksKeysCacheService;
+    this.trustmarkSubjectService = trustmarkSubjectService;
   }
 
   private Organization resolveOrganization(final OrganizationRecord organizationRecord) {
@@ -312,10 +317,15 @@ public class EntityConfigServiceImpl implements EntityConfigService {
    */
   @Override
   @Transactional
-  public void deleteHostedEntity(final OrganizationRecord organizationRecord, final UUID id) {
+  public void deleteHostedEntity(final OrganizationRecord organizationRecord, final UUID id,
+      final boolean deleteTrustmarkSubjects) {
     final FederationEntity entity = this.findEntityOrThrow(
         organizationRecord, id, EntityType.HOSTED_ENTITY);
     final HostedEntityDto dto = EntityToDtoMapper.toDtoHosted(entity);
+    if (deleteTrustmarkSubjects) {
+      this.trustmarkSubjectService.deleteSubjectsForTrustmarkSources(organizationRecord, dto.getEntityIdentifier(),
+          dto.getTrustMarkSources());
+    }
     this.entityRepository.delete(entity);
     this.auditService.hostedEntityDeleted(id, entity.getOrganization().getInstance().getInstanceId(),
         entity.getOrganization().getOrganizationId(), dto);
@@ -343,7 +353,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
    * Lists all entities for the organization, optionally filtered by type and with modules included.
    *
    * @param organizationRecord the organization record
-   * @param type optional entity type filter (federation, hosted, subordinate)
+   * @param type optional entity type filter (federation, hosted)
    * @param includeModules whether to include modules (trustanchor, intermediate, resolver, trustmarkissuer)
    * @return list of entities with optional modules
    */
@@ -406,13 +416,12 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     if (type == null || type.isBlank()) {
       return null;
     }
-    try {
-      return EntityType.valueOf(type.toUpperCase());
-    }
-    catch (final IllegalArgumentException e) {
-      throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
-          "Invalid entity type: %s. Valid values are: federation, hosted, subordinate".formatted(type));
-    }
+    return switch (type.trim().toLowerCase()) {
+      case "federation" -> EntityType.FEDERATION_ENTITY;
+      case "hosted" -> EntityType.HOSTED_ENTITY;
+      default -> throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
+          "Invalid entity type: %s. Valid values are: federation, hosted".formatted(type));
+    };
   }
 
 }

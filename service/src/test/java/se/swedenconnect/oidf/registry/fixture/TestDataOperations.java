@@ -34,7 +34,6 @@ import se.swedenconnect.oidf.registry.api.model.Resolver;
 import se.swedenconnect.oidf.registry.api.model.Subordinate;
 import se.swedenconnect.oidf.registry.api.model.TrustAnchor;
 import se.swedenconnect.oidf.registry.api.model.TrustmarkIssuer;
-import se.swedenconnect.oidf.registry.entity.model.EntityType;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
@@ -115,7 +114,7 @@ public class TestDataOperations {
     final ModulesApi modulesApi = new ModulesApi(apiClient);
     final SubordinatesApi subordinatesApi = new SubordinatesApi(apiClient);
 
-    final EntityWithModules e = entitiesApi.listEntities(tenant, orgNumber, EntityType.FEDERATION_ENTITY.toString(), true);
+    final EntityWithModules e = entitiesApi.listEntities(tenant, orgNumber, "federation", true);
     final String taEntityid = "https://www.pm.se/oidf/ta/";
     if (e.getFederationEntity().stream()
         .map(FederationEntityWithModules::getEntityIdentifier)

@@ -65,6 +65,7 @@ class EntityToDtoMapperTest {
 
     assertThat(dto.getEntityId()).isEqualTo(entity.getEntityId());
     assertThat(dto.getEntityIdentifier()).isEqualTo(entity.getIssuer());
+    assertThat(dto.getName()).isEqualTo(entity.getName());
     assertThat(dto.getAuthorityhints()).isEqualTo(entity.getAuthorityhints());
     assertThat(dto.getCrit()).isEqualTo(entity.getCrit());
     assertThat(dto.getTrustAnchor()).isNull();
@@ -482,6 +483,7 @@ class EntityToDtoMapperTest {
     final FederationEntity entity = new FederationEntity();
     entity.setEntityId(UUID.randomUUID());
     entity.setEntityType(EntityType.FEDERATION_ENTITY);
+    entity.setName("Federation");
     entity.setIssuer("https://federation.example.com");
     entity.setSubject("https://federation.example.com");
     entity.setCrit(List.of("crit1"));

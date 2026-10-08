@@ -124,12 +124,24 @@ public interface EntityConfigService {
 
 
   /**
-   * Deletes a hosted entity.
+   * Deletes a hosted entity, leaving the trust mark subject entries alone.
    *
    * @param organizationRecord the organization record
    * @param id the entity ID
    */
-  void deleteHostedEntity(OrganizationRecord organizationRecord, UUID id);
+  default void deleteHostedEntity(final OrganizationRecord organizationRecord, final UUID id) {
+    this.deleteHostedEntity(organizationRecord, id, false);
+  }
+
+  /**
+   * Deletes a hosted entity.
+   *
+   * @param organizationRecord the organization record
+   * @param id the entity ID
+   * @param deleteTrustmarkSubjects if {@code true} the entity is also removed as subject of the trust marks pointed
+   *     out by its trust mark sources, as far as those trust marks belong to the organization
+   */
+  void deleteHostedEntity(OrganizationRecord organizationRecord, UUID id, boolean deleteTrustmarkSubjects);
 
   /**
    * Deletes a subordinate entity.
@@ -143,7 +155,7 @@ public interface EntityConfigService {
    * Lists all entities for the organization, optionally filtered by type and with modules included.
    *
    * @param organizationRecord the organization record
-   * @param type optional entity type filter (federation, hosted, subordinate)
+   * @param type optional entity type filter (federation, hosted)
    * @param includeModules whether to include modules (trustanchor, intermediate, resolver, trustmarkissuer)
    * @return list of entities with optional modules
    */

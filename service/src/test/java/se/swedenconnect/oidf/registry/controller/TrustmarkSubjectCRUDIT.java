@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.registry.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
@@ -33,8 +34,10 @@ import se.swedenconnect.oidf.registry.api.EntitiesApi;
 import se.swedenconnect.oidf.registry.api.ModulesApi;
 import se.swedenconnect.oidf.registry.api.TrustmarksApi;
 import se.swedenconnect.oidf.registry.api.model.FederationEntity;
+import se.swedenconnect.oidf.registry.api.model.HostedEntity;
 import se.swedenconnect.oidf.registry.api.model.Trustmark;
 import se.swedenconnect.oidf.registry.api.model.TrustmarkIssuer;
+import se.swedenconnect.oidf.registry.api.model.TrustmarkSource;
 import se.swedenconnect.oidf.registry.api.model.TrustmarkSubject;
 import se.swedenconnect.oidf.registry.api.model.TrustmarkWithSubjects;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
@@ -485,5 +488,122 @@ class TrustmarkSubjectCRUDIT {
           assertThat(restException.getStatusCode().value()).isEqualTo(404);
         });
   }
-}
 
+  // -------------------------------------------------------------------------
+  // Deleting a hosted entity together with its trustmark subjects
+  // -------------------------------------------------------------------------
+
+  /** A trustmark issuer entity and one trustmark of the given organization, returned as issuer id and trustmark id. */
+  private record IssuedTrustmark(String issuerEntityIdentifier, String trustmarkType, UUID trustmarkId) {
+  }
+
+  private IssuedTrustmark createIssuedTrustmark(final JwtTestUtils.OrganisationType organisation) {
+    final ApiClient client = new ApiClient();
+    client.setBasePath("http://localhost:" + this.port);
+    client.setBearerToken(this.jwtTestUtils.createJwt(organisation));
+    final EntitiesApi entities = new EntitiesApi(client);
+    final ModulesApi modules = new ModulesApi(client);
+    final TrustmarksApi trustmarks = new TrustmarksApi(client);
+
+    final UUID entityId = UUID.randomUUID();
+    // Pensionsmyndigheten has its own entity prefix, the other organizations share the tenant's base url.
+    final String issuerEntityIdentifier = (organisation == JwtTestUtils.OrganisationType.PM
+        ? "https://www.pm.se/oidf/tmi-entity/"
+        : "https://registry.swedenconnect.se/oidf/" + organisation.orgId + "/tmi/") + UUID.randomUUID();
+    entities.createFederationEntityWithId(TENANT, organisation.orgId, entityId,
+        new FederationEntity().entityIdentifier(issuerEntityIdentifier));
+    final UUID issuerId = modules.createTrustmarkIssuerWithId(TENANT, organisation.orgId, UUID.randomUUID(),
+        new TrustmarkIssuer().entityId(entityId).active(true).trustMarkTokenValidityDuration("PT1H"))
+        .getTrustmarkIssuerId();
+
+    final UUID trustmarkId = UUID.randomUUID();
+    final String trustmarkType = "https://www.pm.se/oidf/loa/" + UUID.randomUUID();
+    trustmarks.createTrustmarkWithId(TENANT, organisation.orgId, trustmarkId,
+        new Trustmark().trustmarkissuerId(issuerId).trustmarkType(trustmarkType));
+    return new IssuedTrustmark(issuerEntityIdentifier, trustmarkType, trustmarkId);
+  }
+
+  private UUID createSubject(final UUID trustmarkId, final String subject) {
+    return this.trustmarksApi.createTrustmarkSubject(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        new TrustmarkSubject().trustmarkId(trustmarkId).subject(subject).revoked(false)).getTrustmarksubjectId();
+  }
+
+  private UUID createHostedEntityWithSources(final String entityIdentifier, final IssuedTrustmark... sources) {
+    final UUID hostedId = UUID.randomUUID();
+    final HostedEntity hosted = new HostedEntity().entityIdentifier(entityIdentifier)
+        .metadata(java.util.Map.of("hosted_entity", java.util.Map.of("name", "Hosted")));
+    for (final IssuedTrustmark source : sources) {
+      hosted.addTrustMarkSourcesItem(new TrustmarkSource()
+          .trustMarkIssuer(source.issuerEntityIdentifier()).trustmarkId(source.trustmarkType()));
+    }
+    this.entitiesApi.createHostedEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, hostedId, hosted);
+    return hostedId;
+  }
+
+  private boolean subjectExists(final UUID subjectId) {
+    try {
+      this.trustmarksApi.getTrustmarkSubject(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subjectId);
+      return true;
+    }
+    catch (final RestClientResponseException e) {
+      assertThat(e.getStatusCode().value()).isEqualTo(404);
+      return false;
+    }
+  }
+
+  @Test
+  @DisplayName("Deleting a hosted entity with deleteTrustmarkSubjects removes it as subject of the trustmarks in its "
+      + "sources, but keeps other subjects and trustmarks outside the sources")
+  void testDeleteHostedEntityWithTrustmarkSubjects() {
+    final String hostedIdentifier = "https://www.pm.se/oidf/hosted/" + UUID.randomUUID();
+    final IssuedTrustmark inSources = this.createIssuedTrustmark(JwtTestUtils.OrganisationType.PM);
+    final IssuedTrustmark notInSources = this.createIssuedTrustmark(JwtTestUtils.OrganisationType.PM);
+    final UUID hostedId = this.createHostedEntityWithSources(hostedIdentifier, inSources);
+
+    final UUID removed = this.createSubject(inSources.trustmarkId(), hostedIdentifier);
+    final UUID otherSubject = this.createSubject(inSources.trustmarkId(), "https://www.pm.se/oidf/other/" + UUID.randomUUID());
+    final UUID outsideSources = this.createSubject(notInSources.trustmarkId(), hostedIdentifier);
+
+    this.entitiesApi.deleteHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, hostedId, true);
+
+    assertThat(this.subjectExists(removed)).isFalse();
+    assertThat(this.subjectExists(otherSubject)).isTrue();
+    assertThat(this.subjectExists(outsideSources)).isTrue();
+  }
+
+  @Test
+  @DisplayName("Deleting a hosted entity without the flag keeps its trustmark subjects")
+  void testDeleteHostedEntityKeepsTrustmarkSubjectsByDefault() {
+    final String hostedIdentifier = "https://www.pm.se/oidf/hosted/" + UUID.randomUUID();
+    final IssuedTrustmark inSources = this.createIssuedTrustmark(JwtTestUtils.OrganisationType.PM);
+    final UUID hostedId = this.createHostedEntityWithSources(hostedIdentifier, inSources);
+    final UUID subjectId = this.createSubject(inSources.trustmarkId(), hostedIdentifier);
+
+    this.entitiesApi.deleteHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, hostedId, false);
+
+    assertThat(this.subjectExists(subjectId)).isTrue();
+  }
+
+  @Test
+  @DisplayName("The flag never removes subject entries on trustmarks that belong to another organization")
+  void testDeleteHostedEntityLeavesOtherOrganizationsTrustmarkSubjects() {
+    final String hostedIdentifier = "https://www.pm.se/oidf/hosted/" + UUID.randomUUID();
+    final IssuedTrustmark otherOrganization = this.createIssuedTrustmark(JwtTestUtils.OrganisationType.SKATT);
+    final UUID hostedId = this.createHostedEntityWithSources(hostedIdentifier, otherOrganization);
+
+    // The subject entry is created by the organization that owns the trustmark.
+    final ApiClient otherClient = new ApiClient();
+    otherClient.setBasePath("http://localhost:" + this.port);
+    otherClient.setBearerToken(this.jwtTestUtils.createJwt(JwtTestUtils.OrganisationType.SKATT));
+    final UUID otherSubjectId = new TrustmarksApi(otherClient).createTrustmarkSubject(TENANT,
+        JwtTestUtils.OrganisationType.SKATT.orgId,
+        new TrustmarkSubject().trustmarkId(otherOrganization.trustmarkId()).subject(hostedIdentifier).revoked(false))
+        .getTrustmarksubjectId();
+
+    this.entitiesApi.deleteHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, hostedId, true);
+
+    final TrustmarkSubject stillThere = new TrustmarksApi(otherClient)
+        .getTrustmarkSubject(TENANT, JwtTestUtils.OrganisationType.SKATT.orgId, otherSubjectId);
+    assertThat(stillThere.getSubject()).isEqualTo(hostedIdentifier);
+  }
+}
