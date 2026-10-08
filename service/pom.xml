@@ -236,15 +236,13 @@
                 <excludes>
                     <exclude>application.yaml</exclude>
                     <exclude>banner.txt</exclude>
-                    <!-- The frontend is built into target/classes/static, see frontend-maven-plugin -->
-                    <exclude>static/**</exclude>
                 </excludes>
             </resource>
         </resources>
         <plugins>
 
-            <!-- Builds the frontend and puts it in the static resources of the service. Node is installed under
-                 target, and the build is skipped with -Dfrontend.skip=true. -->
+            <!-- Builds the frontend. Node is installed under target, and the build is skipped with
+                 -Dfrontend.skip=true. The result is copied to the static resources by the resources plugin below. -->
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
@@ -287,18 +285,21 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- The built frontend is copied to src/main/resources/static (ignored by git), so that the normal copy of
+                 resources puts it in the classes and the service also finds it when it is started from the sources.
+                 It runs after the frontend plugin above, in the same phase. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
                 <executions>
                     <execution>
                         <id>copy-frontend</id>
-                        <phase>process-resources</phase>
+                        <phase>generate-resources</phase>
                         <goals>
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${project.build.outputDirectory}/static</outputDirectory>
+                            <outputDirectory>${project.basedir}/src/main/resources/static</outputDirectory>
                             <resources>
                                 <resource>
                                     <directory>${frontend.dir}/dist</directory>
@@ -307,6 +308,18 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <!-- The built files have hashed names, so clean removes the old ones. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-clean-plugin</artifactId>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>${project.basedir}/src/main/resources/static</directory>
+                        </fileset>
+                    </filesets>
+                </configuration>
             </plugin>
 
             <plugin>

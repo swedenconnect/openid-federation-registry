@@ -41,15 +41,16 @@ mvn clean install
 
 The frontend is built by the [frontend-maven-plugin](https://github.com/eirslett/frontend-maven-plugin) as part of the
 build of the `service` module. The plugin installs Node under `service/target`, runs `npm ci` and `npm run build` in
-`frontend`, and copies `frontend/dist` into `static` in the classes of the service. Nothing has to be installed or
-copied by hand, and the built files are not checked into git. The Node version is `frontend.node.version` in the parent
+`frontend`, and copies `frontend/dist` into `service/src/main/resources/static`. From there the normal build puts it in
+the classes of the service, and the service also finds it when it is started from the sources. Nothing has to be
+installed or copied by hand. The directory is ignored by git, and `mvn clean` empties it. The Node version is `frontend.node.version` in the parent
 `pom.xml`.
 
 For backend work that does not touch the frontend, leave the frontend out of the build to save time:
 ```shell
 mvn clean install -Dfrontend.skip=true
 ```
-The service then contains the content of `frontend/dist` from the latest earlier build, if there is one.
+The static files already in `service/src/main/resources/static` are used as they are, if there are any.
 
 For frontend work, run the Vite dev server in `frontend` (`npm install`, then `npm run dev`). It proxies the API calls
 to the service on port 8020.
