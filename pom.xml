@@ -76,6 +76,11 @@
         <tomcat.version>11.0.25</tomcat.version>
         <iam.security.version>0.9.2</iam.security.version>
 
+        <!-- Frontend build, see service/pom.xml. Use -Dfrontend.skip=true to leave the frontend out of a build. -->
+        <frontend.skip>false</frontend.skip>
+        <frontend.maven.plugin.version>2.0.2</frontend.maven.plugin.version>
+        <frontend.node.version>v24.21.0</frontend.node.version>
+
     </properties>
 
     <repositories>

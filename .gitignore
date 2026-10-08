@@ -40,3 +40,6 @@ hs_err_pid*
 
 **/.vite
 dev.sh
+
+# The frontend is built by the frontend-maven-plugin into target/classes/static
+service/src/main/resources/static/

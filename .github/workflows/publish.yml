@@ -27,6 +27,13 @@ jobs:
           distribution: 'temurin'
           java-version: '25'
           cache: 'maven'
+      # The frontend is built by the frontend-maven-plugin as part of the Maven build.
+      - name: Cache npm packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: npm-
       - name: Install dependencies
         run: mvn clean install --no-transfer-progress
         env:
