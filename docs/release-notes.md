@@ -6,9 +6,13 @@
 
 ---
 
+
+=======
 ### Version 0.9.8 Unreleased
 **Date:** <ToBeSet>
 
+- `ec_location` is no longer added to `crit` for hosted entities whose entity identifier lies outside the registry's
+  entity prefix. The location is still calculated and used to fetch the entity configuration.
 - The Entity menu item is replaced by **Federation** (operators) and **Hosted Entities**. Federation entities are
   shown as cards with a link to the entity configuration, an edit button and one button per role (Subordinates,
   Trustmarks, Resolver). The hosted entities are shown as a sortable list with a search field on the entity
