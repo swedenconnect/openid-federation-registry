@@ -6,11 +6,24 @@
 
 ---
 
+### Version 0.9.8 Unreleased
+**Date:** <ToBeSet>
+
+- The no-access page now explains that the account has no function group supported by the registry, and offers a
+  logout button.
+- The frontend shows an error with retry and logout when the user's permissions cannot be loaded, instead of an empty
+  page.
+- A superuser in a tenant without registered organizations now sees an explanatory message, and the selected tenant is
+  kept across page loads.
+
+---
+
 ### Version 0.9.7
 
 **Date:** 2026-10-07
 
 - The `/submodules` response no longer contains null values or empty objects and arrays.
+
 
 ---
 

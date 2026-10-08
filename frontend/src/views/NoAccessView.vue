@@ -23,16 +23,27 @@
         <p class="mb-2">
           <template v-if="userStore.fullName">You are logged in as {{ userStore.fullName }}, but your</template>
           <template v-else>Your</template>
-          account has no permissions in the OpenID Federation Registry.
+          account has no function group that is supported by the OpenID Federation Registry.
+        </p>
+        <p class="mb-2">
+          Read access to a supported function group is enough to log in and view your organization.
         </p>
         <p>Contact your administrator if you believe you should have access.</p>
       </v-card-text>
+      <v-card-actions class="justify-center">
+        <v-btn variant="outlined" prepend-icon="mdi-logout" @click="logout">Log out</v-btn>
+      </v-card-actions>
     </v-card>
   </div>
 </template>
 
 <script setup>
 import {useUserStore} from '@/stores/userStore';
+import {logoutPath} from '@/config/path';
 
 const userStore = useUserStore();
+
+function logout() {
+  globalThis.location.href = logoutPath;
+}
 </script>
