@@ -140,7 +140,7 @@
 </template>
 
 <script setup>
-import {computed, onMounted, ref, watch} from 'vue';
+import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue';
 import {useUserStore} from '@/stores/userStore';
 import {adminPath, trustmarksListingPath, trustmarksPath} from '@/config/path';
 
@@ -304,13 +304,11 @@ async function ensureTrustmarks(issuer) {
       .set(issuer, Array.isArray(response) ? response : []);
 }
 
-async function ensureSubjects(trustmarkId) {
-  const key = 'sub:' + trustmarkId;
-  if (requested.has(key)) return;
-  requested.add(key);
+// The subjects are never cached: they change whenever a trustmark is assigned or revoked, so each check fetches them
+// again. The endpoint answers with the trustmark and its subjects in `trustmarkSubjects`; null if the lookup failed.
+async function fetchSubjects(trustmarkId) {
   const response = await getJson(`${trustmarksPath(userStore.selectedTenant, userStore.orgNumber)}/${trustmarkId}/subjects`);
-  subjectsByTrustmark.value = new Map(subjectsByTrustmark.value)
-      .set(trustmarkId, Array.isArray(response) ? response : []);
+  return Array.isArray(response?.trustmarkSubjects) ? response.trustmarkSubjects : null;
 }
 
 function findTrustmark(issuer, type) {
@@ -340,20 +338,39 @@ function status(issuer, type) {
   return {ok: false, text: 'The trustmark is assigned to this entity but is revoked, expired or not yet granted'};
 }
 
+let refreshTimer = null;
+let refreshSeq = 0;
+
+// Fetches the subjects of every entered trustmark that belongs to one of the organization's issuers. A response for an
+// older set of values is dropped when the values have changed again in the meantime.
+async function refreshSubjects() {
+  const seq = ++refreshSeq;
+  const wanted = new Set();
+  for (const group of groups.value) {
+    if (!issuers.value.has(group.issuer)) continue;
+    for (const type of group.trustmarks) {
+      const trustmark = findTrustmark(group.issuer, type);
+      if (trustmark) wanted.add(trustmark.trustmarkId);
+    }
+  }
+  const results = await Promise.all([...wanted].map(async (id) => [id, await fetchSubjects(id)]));
+  if (seq === refreshSeq) {
+    subjectsByTrustmark.value = new Map(results.filter(([, list]) => list !== null));
+  }
+}
+
 // Load what the entered values need: the trustmarks of a chosen issuer (also the suggestions for its trustmark
-// fields) and the subjects of each trustmark that is entered.
+// fields), and fresh subjects for each trustmark that is entered.
 watch([groups, issuers, trustmarksByIssuer], () => {
   if (!props.suggest) return;
   for (const group of groups.value) {
-    if (!issuers.value.has(group.issuer)) continue;
-    ensureTrustmarks(group.issuer).then(() => {
-      for (const type of group.trustmarks) {
-        const trustmark = findTrustmark(group.issuer, type);
-        if (trustmark) ensureSubjects(trustmark.trustmarkId);
-      }
-    });
+    if (issuers.value.has(group.issuer)) ensureTrustmarks(group.issuer);
   }
+  clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(refreshSubjects, 300);
 }, {deep: true});
+
+onBeforeUnmount(() => clearTimeout(refreshTimer));
 
 onMounted(() => {
   if (props.suggest) loadIssuers();
