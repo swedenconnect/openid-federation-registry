@@ -182,11 +182,13 @@ class EntityCRUDIT {
   }
 
   @Test
-  @DisplayName("Listing entities with an unknown type is rejected")
+  @DisplayName("Listing entities with an unknown type is rejected, only federation and hosted are valid")
   void testListEntitiesWithInvalidTypeFails() {
-    assertThatThrownBy(() ->
-        this.entitiesApi.listEntities(TENANT, JwtTestUtils.OrganisationType.PM.orgId, "subordinate", false))
-        .hasMessageContaining("Invalid entity type");
+    for (final String invalid : List.of("subordinate", "FEDERATION_ENTITY", "HOSTED_ENTITY")) {
+      assertThatThrownBy(() ->
+          this.entitiesApi.listEntities(TENANT, JwtTestUtils.OrganisationType.PM.orgId, invalid, false))
+          .hasMessageContaining("Invalid entity type");
+    }
   }
 
   @Test
