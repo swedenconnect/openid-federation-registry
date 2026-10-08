@@ -76,6 +76,7 @@ public final class DtoToEntityMapper {
     entity.setEntityId(id);
     entity.setEntityType(entityType);
     entity.setOrganization(organization);
+    entity.setName(dto.getName());
     entity.setIssuer(dto.getEntityIdentifier());
     entity.setSubject(dto.getEntityIdentifier());
     entity.setCrit(dto.getCrit());
@@ -105,6 +106,7 @@ public final class DtoToEntityMapper {
    * @param dto the federation entity DTO
    */
   public static void updateEntity(final FederationEntity entity, final FederationEntityDto dto) {
+    entity.setName(dto.getName());
     entity.setIssuer(dto.getEntityIdentifier());
     entity.setSubject(dto.getEntityIdentifier());
     entity.setCrit(dto.getCrit());

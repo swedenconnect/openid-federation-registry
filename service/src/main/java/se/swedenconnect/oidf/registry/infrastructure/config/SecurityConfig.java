@@ -120,7 +120,7 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.OPTIONS).permitAll()
             .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/assets/**").permitAll()
-            .requestMatchers(HttpMethod.GET, "/entities/**",
+            .requestMatchers(HttpMethod.GET, "/entities/**", "/federation/**", "/hosted/**",
                 "/registration-flows/**", "/registrations/**", "/organizations/**").authenticated()
             .requestMatchers(HttpMethod.GET, "/*").permitAll()
 

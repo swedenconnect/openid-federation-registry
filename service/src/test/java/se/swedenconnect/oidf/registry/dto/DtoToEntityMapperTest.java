@@ -63,6 +63,7 @@ class DtoToEntityMapperTest {
   void toEntity_federationEntityDto() {
     final FederationEntityDto dto = new FederationEntityDto();
     dto.setEntityIdentifier("https://federation.example.com");
+    dto.setName("Federation");
     dto.setCrit(List.of("crit1"));
     dto.setAuthorityhints(List.of("https://ta.example.com"));
     final Organization org = createOrganization();
@@ -74,6 +75,7 @@ class DtoToEntityMapperTest {
     assertThat(entity.getOrganization()).isEqualTo(org);
     assertThat(entity.getIssuer()).isEqualTo("https://federation.example.com");
     assertThat(entity.getSubject()).isEqualTo("https://federation.example.com");
+    assertThat(entity.getName()).isEqualTo("Federation");
     assertThat(entity.getCrit()).containsExactly("crit1");
     assertThat(entity.getAuthorityhints()).containsExactly("https://ta.example.com");
   }
@@ -321,8 +323,10 @@ class DtoToEntityMapperTest {
   void updateEntity_federationEntityDto() {
     final FederationEntity entity = new FederationEntity();
     entity.setIssuer("old-issuer");
+    entity.setName("Old name");
     final FederationEntityDto dto = new FederationEntityDto();
     dto.setEntityIdentifier("https://new.example.com");
+    dto.setName("New name");
     dto.setCrit(List.of("new-crit"));
     dto.setAuthorityhints(List.of("https://new-ta.example.com"));
 
@@ -330,8 +334,21 @@ class DtoToEntityMapperTest {
 
     assertThat(entity.getIssuer()).isEqualTo("https://new.example.com");
     assertThat(entity.getSubject()).isEqualTo("https://new.example.com");
+    assertThat(entity.getName()).isEqualTo("New name");
     assertThat(entity.getCrit()).containsExactly("new-crit");
     assertThat(entity.getAuthorityhints()).containsExactly("https://new-ta.example.com");
+  }
+
+  @Test
+  void updateEntity_federationEntityDto_clearsNameWhenAbsent() {
+    final FederationEntity entity = new FederationEntity();
+    entity.setName("Old name");
+    final FederationEntityDto dto = new FederationEntityDto();
+    dto.setEntityIdentifier("https://new.example.com");
+
+    DtoToEntityMapper.updateEntity(entity, dto);
+
+    assertThat(entity.getName()).isNull();
   }
 
   // -------------------------------------------------------------------------

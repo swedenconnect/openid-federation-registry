@@ -60,7 +60,7 @@ public class EntityConfigController {
    *
    * @param tenant the tenant identifier
    * @param orgNumber the organization number
-   * @param type optional entity type filter (federation, hosted, subordinate)
+   * @param type optional entity type filter (federation, hosted)
    * @param includeModules whether to include modules (trustanchor, intermediate, resolver, trustmarkissuer)
    * @param organizationRecord the organization record
    * @return list of entities with optional modules
@@ -298,18 +298,24 @@ public class EntityConfigController {
    * @param tenant the tenant identifier
    * @param orgNumber the organization number
    * @param id the hosted entity ID
+   * @param deleteTrustmarkSubjects also remove the entity as subject of the trust marks pointed out by its trust mark
+   *     sources, as far as those trust marks belong to the organization
    * @param organizationRecord the organization record
    * @return empty response
    */
   @DeleteMapping("/hosted/{entityId}")
   @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
-  @Operation(summary = "Delete hosted entity")
+  @Operation(summary = "Delete hosted entity",
+      description = "Deletes a hosted entity. With deleteTrustmarkSubjects=true the entity is also removed as subject "
+          + "of the trust marks pointed out by its trust mark sources, but only for trust marks that belong to the "
+          + "organization.")
   public ResponseEntity<Void> deleteHostedEntity(
       @PathVariable("tenant") @P("tenant") final String tenant,
       @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("entityId") final UUID id,
+      @RequestParam(name = "deleteTrustmarkSubjects", defaultValue = "false") final boolean deleteTrustmarkSubjects,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    this.entityConfigService.deleteHostedEntity(organizationRecord, id);
+    this.entityConfigService.deleteHostedEntity(organizationRecord, id, deleteTrustmarkSubjects);
     return ResponseEntity.noContent().build();
   }
 

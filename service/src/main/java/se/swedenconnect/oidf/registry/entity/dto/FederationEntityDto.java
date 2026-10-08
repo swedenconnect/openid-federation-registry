@@ -39,6 +39,10 @@ public class FederationEntityDto {
   @Schema(description = "EntityIdentifier", example = "https://ta.example.se/ta")
   private String entityIdentifier;
 
+  @Schema(description = "Optional display name. The entityIdentifier is shown when no name is set.",
+      example = "Sweden Connect Trust Anchor")
+  private String name;
+
   @Schema(description = "crit ", example = "The crit (critical) Claim indicates that extensions to the set of "
       + "Claims specified for use in this type of JWT")
   private List<String> crit;

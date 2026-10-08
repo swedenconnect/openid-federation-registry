@@ -32,8 +32,10 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.api.EntitiesApi;
+import se.swedenconnect.oidf.registry.api.model.EntityWithModules;
 import se.swedenconnect.oidf.registry.api.model.FederationEntity;
 import se.swedenconnect.oidf.registry.api.model.FederationEntityWithModules;
+import se.swedenconnect.oidf.registry.api.model.HostedEntity;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
 import se.swedenconnect.oidf.registry.guioperations.JwksKeysCacheService;
 import se.swedenconnect.oidf.registry.guioperations.dto.JwksPayloadDto;
@@ -128,6 +130,63 @@ class EntityCRUDIT {
     assertThat(created).isNotNull();
     assertThat(created.getEntityId()).isNotNull();
     assertThat(created.getEntityIdentifier()).isEqualTo(input.getEntityIdentifier());
+  }
+
+  @Test
+  @DisplayName("Federation entity name is persisted on create and returned on get")
+  void testCreateFederationEntityWithName() {
+    final UUID entityId = UUID.randomUUID();
+
+    this.entitiesApi.createFederationEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId,
+        createFederationEntity().name("My trust anchor"));
+
+    final FederationEntityWithModules retrieved =
+        this.entitiesApi.getFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, false);
+    assertThat(retrieved.getName()).isEqualTo("My trust anchor");
+  }
+
+  @Test
+  @DisplayName("Federation entity name can be changed and cleared")
+  void testUpdateAndClearFederationEntityName() {
+    final UUID entityId = UUID.randomUUID();
+    this.entitiesApi.createFederationEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId,
+        createFederationEntity().name("Old name"));
+
+    final FederationEntity renamed = this.entitiesApi.updateFederationEntity(TENANT,
+        JwtTestUtils.OrganisationType.PM.orgId, entityId, createFederationEntity().name("New name"));
+    assertThat(renamed.getName()).isEqualTo("New name");
+
+    final FederationEntity cleared = this.entitiesApi.updateFederationEntity(TENANT,
+        JwtTestUtils.OrganisationType.PM.orgId, entityId, createFederationEntity());
+    assertThat(cleared.getName()).isNull();
+  }
+
+  @Test
+  @DisplayName("Listing entities can be filtered on the documented type values federation and hosted")
+  void testListEntitiesFilteredOnType() {
+    this.entitiesApi.createFederationEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, createFederationEntity());
+    this.entitiesApi.createHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        new HostedEntity()
+            .entityIdentifier("https://www.pm.se/oidf/" + UUID.randomUUID())
+            .metadata(Map.of("hosted_entity", Map.of("name", "Hosted Entity"))));
+
+    final EntityWithModules federation =
+        this.entitiesApi.listEntities(TENANT, JwtTestUtils.OrganisationType.PM.orgId, "federation", true);
+    assertThat(federation.getFederationEntity()).isNotEmpty();
+    assertThat(federation.getHostedEntity()).isEmpty();
+
+    final EntityWithModules hosted =
+        this.entitiesApi.listEntities(TENANT, JwtTestUtils.OrganisationType.PM.orgId, "hosted", false);
+    assertThat(hosted.getHostedEntity()).isNotEmpty();
+    assertThat(hosted.getFederationEntity()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("Listing entities with an unknown type is rejected")
+  void testListEntitiesWithInvalidTypeFails() {
+    assertThatThrownBy(() ->
+        this.entitiesApi.listEntities(TENANT, JwtTestUtils.OrganisationType.PM.orgId, "subordinate", false))
+        .hasMessageContaining("Invalid entity type");
   }
 
   @Test

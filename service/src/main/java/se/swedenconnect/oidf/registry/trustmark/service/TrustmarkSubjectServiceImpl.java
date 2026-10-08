@@ -26,6 +26,7 @@ import se.swedenconnect.oidf.registry.infrastructure.persistence.InsertOnly;
 import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
+import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSourceDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
 import se.swedenconnect.oidf.registry.trustmark.mapper.DtoToTrustmarkMapper;
 import se.swedenconnect.oidf.registry.trustmark.mapper.TrustmarkToDtoMapper;
@@ -34,6 +35,7 @@ import se.swedenconnect.oidf.registry.trustmark.model.TrustMarkSubject;
 import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
 import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkSubjectRepository;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -180,5 +182,51 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
         entity.getTrustMark().getTrustmarkIssuer().getEntity().getOrganization().getInstance().getInstanceId(),
         trustmarkId,
         entity.getTrustMark().getTrustmarkIssuer().getEntity().getOrganization().getOrganizationId(), dto);
+  }
+
+  /**
+   * Deletes the entries where the subject is the subject of the trust marks pointed out by the trust mark sources.
+   *
+   * @param organizationRecord the organization record
+   * @param subject the subject entity identifier
+   * @param sources the trust mark sources
+   * @return the number of deleted subject entries
+   */
+  @Override
+  @Transactional
+  public int deleteSubjectsForTrustmarkSources(final OrganizationRecord organizationRecord, final String subject,
+      final List<TrustmarkSourceDto> sources) {
+    if (subject == null || sources == null || sources.isEmpty()) {
+      return 0;
+    }
+    final UUID organizationId = this.organizationService.find(organizationRecord)
+        .map(Organization::getOrganizationId)
+        .orElse(null);
+    if (organizationId == null) {
+      return 0;
+    }
+
+    int deleted = 0;
+    for (final TrustmarkSourceDto source : sources.stream().distinct().toList()) {
+      if (isBlank(source.getTrustMarkIssuer()) || isBlank(source.getTrustmarkId())) {
+        continue;
+      }
+      for (final TrustMarkSubject entry : this.trustMarkSubjectRepository
+          .findByOrganizationIdAndSubjectAndIssuerAndType(organizationId, subject, source.getTrustMarkIssuer(),
+              source.getTrustmarkId())) {
+        final TrustmarkSubjectDto dto = TrustmarkToDtoMapper.toDto(entry);
+        final Organization owner = entry.getTrustMark().getTrustmarkIssuer().getEntity().getOrganization();
+        this.trustMarkSubjectRepository.delete(entry);
+        this.auditService.trustmarkSubjectDeleted(entry.getTrustmarksubjectId(),
+            owner.getInstance().getInstanceId(), entry.getTrustMark().getTrustmarkId(),
+            owner.getOrganizationId(), dto);
+        deleted++;
+      }
+    }
+    return deleted;
+  }
+
+  private static boolean isBlank(final String value) {
+    return value == null || value.isBlank();
   }
 }

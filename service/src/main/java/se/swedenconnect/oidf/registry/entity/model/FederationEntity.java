@@ -72,6 +72,9 @@ public class FederationEntity extends BaseEntity implements Persistable<UUID> {
   @Convert(converter = StringListConverter.class)
   private List<String> signingKeyIds;
 
+  @Column(name = "name")
+  private String name;
+
   @Column(name = "issuer", columnDefinition = "TEXT")
   private String issuer;
 
