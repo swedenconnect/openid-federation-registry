@@ -16,6 +16,8 @@
 
 import {createRouter, createWebHistory} from 'vue-router';
 import HomeView from '../views/HomeView.vue';
+import FederationEntitiesView from '../views/FederationEntitiesView.vue';
+import HostedEntitiesView from '../views/HostedEntitiesView.vue';
 import LoginView from '../views/LoginView.vue';
 import HostedEntityFormView from '../views/HostedEntityFormView.vue';
 import FederationEntityNewView from '../views/FederationEntityNewView.vue';
@@ -66,6 +68,18 @@ const router = createRouter({
             name: 'home',
             component: HomeView,
             meta: {title: 'Entities'},
+        },
+        {
+            path: '/federation',
+            name: 'federation-entities',
+            component: FederationEntitiesView,
+            meta: {operatorOnly: true, title: 'Federation'},
+        },
+        {
+            path: '/hosted',
+            name: 'hosted-entities',
+            component: HostedEntitiesView,
+            meta: {title: 'Hosted Entities'},
         },
         {
             path: '/entities/federation/new',

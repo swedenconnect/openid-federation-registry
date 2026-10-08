@@ -47,7 +47,30 @@
                 hint="Subject entity identifier (required, URL)"
                 persistent-hint
                 class="flex-grow-1"
-            ></v-text-field>
+            >
+              <template v-if="!isEdit && ecCheck !== 'idle'" #append-inner>
+                <v-progress-circular
+                    v-if="ecCheck === 'checking'"
+                    id="ec-check-checking"
+                    indeterminate
+                    size="20"
+                    width="2"
+                    aria-label="Checking entity configuration"
+                ></v-progress-circular>
+                <v-tooltip v-else-if="ecCheck === 'ok'" text="Entity configuration could be loaded" location="top">
+                  <template #activator="{ props }">
+                    <v-icon id="ec-check-ok" v-bind="props" color="success" tabindex="0"
+                            aria-label="Entity configuration could be loaded">mdi-check-circle</v-icon>
+                  </template>
+                </v-tooltip>
+                <v-tooltip v-else text="Entity configuration could not be loaded" location="top">
+                  <template #activator="{ props }">
+                    <v-icon id="ec-check-failed" v-bind="props" color="error" tabindex="0"
+                            aria-label="Entity configuration could not be loaded">mdi-close-circle</v-icon>
+                  </template>
+                </v-tooltip>
+              </template>
+            </v-text-field>
             <EntityConfigurationViewer
                 v-if="isEdit && entityIdentifier"
                 :entity-id="entityIdentifier"
@@ -205,6 +228,16 @@
           ></v-text-field>
 
           <v-card-actions>
+            <v-btn
+                v-if="isEdit"
+                id="btn-delete-subordinate"
+                color="error"
+                variant="text"
+                :disabled="saving"
+                @click="deleteDialog = true"
+            >
+              Delete Subordinate
+            </v-btn>
             <v-spacer></v-spacer>
             <v-btn
                 id="btn-cancel"
@@ -228,6 +261,37 @@
         </v-form>
       </v-card-text>
     </v-card>
+
+    <!-- Delete Confirmation Dialog -->
+    <v-dialog v-model="deleteDialog" max-width="500" aria-labelledby="delete-subordinate-dialog-title">
+      <v-card>
+        <v-card-title id="delete-subordinate-dialog-title" class="text-h5">Confirm Delete</v-card-title>
+        <v-card-text>
+          Are you sure you want to delete subordinate "{{ entityIdentifier || 'N/A' }}"? This action cannot be undone.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+              id="btn-delete-subordinate-cancel"
+              color="grey"
+              variant="text"
+              @click="deleteDialog = false"
+              :disabled="deleting"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+              id="btn-delete-subordinate-confirm"
+              color="error"
+              @click="deleteSubordinate"
+              :loading="deleting"
+              :disabled="deleting"
+          >
+            Yes, Delete
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <v-dialog v-model="jwksPickerDialog" max-width="640" scrollable aria-labelledby="jwks-picker-title">
       <v-card>
@@ -256,25 +320,27 @@
 </template>
 
 <script setup>
-import {computed, onMounted, ref} from 'vue';
+import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useLoadJwks} from '@/api/composables/jwks';
-import {subordinatePath, subordinatesPath} from '@/config/path';
+import {entityConfigurationViewPath, subordinatePath, subordinatesPath} from '@/config/path';
 import {useUserStore} from '@/stores/userStore';
 import EntityConfigurationViewer from '@/components/EntityConfigurationViewer.vue';
 import ListField from '@/components/ListField.vue';
 
 const route = useRoute();
 const router = useRouter();
-const {requestGet, requestPost, requestPut, loading, ok} = useRequest();
+const {requestGet, requestPost, requestPut, requestDelete, loading, ok} = useRequest();
 const errorStore = useErrorStore();
 const userStore = useUserStore();
 const {loadJwks: loadJwksFromApi, loading: loadingJwks} = useLoadJwks();
 
 const form = ref(null);
 const saving = ref(false);
+const deleteDialog = ref(false);
+const deleting = ref(false);
 
 const subordinateId = ref(null);
 const taImIdValue = ref(null);
@@ -299,6 +365,13 @@ const ecLocation = ref('');
 const ecLocationAutomaticResolve = ref(false);
 const effectiveEcLocation = ref('');
 const jwksLoadedFrom = ref('');
+// Result of the automatic check that the entered entity's entity configuration can be loaded (create only):
+// idle (nothing entered yet), checking, ok or failed.
+const ecCheck = ref('idle');
+const EC_CHECK_DELAY_MS = 600;
+let ecCheckTimer = null;
+let ecCheckSeq = 0;
+
 const jwksPickerDialog = ref(false);
 const jwksPickerItems = ref([]);
 
@@ -334,6 +407,42 @@ function applyJwksResult(item) {
   jwksLoadedFrom.value = item.ecLocation || '';
   jwksPickerDialog.value = false;
 }
+
+async function checkEntityConfiguration(entityId, seq) {
+  let result = 'failed';
+  try {
+    const response = await fetch(entityConfigurationViewPath(userStore.selectedTenant, userStore.orgNumber), {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type': 'text/plain'},
+      body: entityId,
+    });
+    if (response.ok) {
+      result = 'ok';
+    }
+  } catch (e) {
+    // Network failure, the entity cannot be verified.
+  }
+  // A newer input has started another check, its result is the one that counts.
+  if (seq === ecCheckSeq) {
+    ecCheck.value = result;
+  }
+}
+
+watch(entityIdentifier, (value) => {
+  if (isEdit.value) return;
+  clearTimeout(ecCheckTimer);
+  const entityId = (value || '').trim();
+  const seq = ++ecCheckSeq;
+  if (!/^https?:\/\/\S+$/i.test(entityId)) {
+    ecCheck.value = 'idle';
+    return;
+  }
+  ecCheck.value = 'checking';
+  ecCheckTimer = setTimeout(() => checkEntityConfiguration(entityId, seq), EC_CHECK_DELAY_MS);
+});
+
+onBeforeUnmount(() => clearTimeout(ecCheckTimer));
 
 async function loadJwks() {
   const result = await loadJwksFromApi(entityIdentifier.value);
@@ -441,6 +550,22 @@ async function submitForm() {
     console.error('Error saving subordinate:', error);
   } finally {
     saving.value = false;
+  }
+}
+
+async function deleteSubordinate() {
+  deleting.value = true;
+  errorStore.clearError();
+  try {
+    await requestDelete(subordinatePath(userStore.selectedTenant, userStore.orgNumber, subordinateId.value));
+    if (ok.value) {
+      deleteDialog.value = false;
+      navigateBack();
+    }
+  } catch (error) {
+    console.error('Error deleting subordinate:', error);
+  } finally {
+    deleting.value = false;
   }
 }
 

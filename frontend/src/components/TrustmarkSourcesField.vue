@@ -29,16 +29,27 @@
         class="mb-3 pa-3"
     >
       <div class="d-flex align-center mb-2">
-        <v-text-field
+        <v-combobox
             :model-value="group.issuer"
             @update:model-value="(val) => updateIssuer(gi, val)"
+            :items="issuerItems"
+            item-title="value"
+            item-value="value"
+            :return-object="false"
+            :hide-no-data="true"
             label="TrustMark Issuer"
-            hint="Entity identifier URL of the issuer"
+            :hint="suggest
+                ? 'Entity identifier URL of the issuer. Trustmark issuers in this organization are suggested.'
+                : 'Entity identifier URL of the issuer'"
             persistent-hint
             density="compact"
             :disabled="disabled"
             class="flex-grow-1 mr-2"
-        ></v-text-field>
+        >
+          <template #item="{ props: itemProps, item }">
+            <v-list-item v-bind="itemProps" subtitle="Trustmark issuer in this organization"></v-list-item>
+          </template>
+        </v-combobox>
         <v-btn
             icon
             size="small"
@@ -59,16 +70,32 @@
             :key="ti"
             class="d-flex align-center mb-1"
         >
-          <v-text-field
+          <v-combobox
               :model-value="tm"
               @update:model-value="(val) => updateTrustmark(gi, ti, val)"
+              :items="trustmarkItems(group.issuer)"
+              :return-object="false"
+              :hide-no-data="true"
               hint="Trustmark identifier URL"
               density="compact"
               variant="outlined"
               hide-details="auto"
               :disabled="disabled"
               class="flex-grow-1 mr-2"
-          ></v-text-field>
+          >
+            <template v-if="status(group.issuer, tm)" #append-inner>
+              <v-tooltip :text="status(group.issuer, tm).text" location="top">
+                <template #activator="{ props: tipProps }">
+                  <v-icon
+                      v-bind="tipProps"
+                      :color="status(group.issuer, tm).ok ? 'success' : 'error'"
+                      tabindex="0"
+                      :aria-label="status(group.issuer, tm).text"
+                  >{{ status(group.issuer, tm).ok ? 'mdi-check-circle' : 'mdi-close-circle' }}</v-icon>
+                </template>
+              </v-tooltip>
+            </template>
+          </v-combobox>
           <v-btn
               icon
               size="x-small"
@@ -113,7 +140,9 @@
 </template>
 
 <script setup>
-import {ref, watch} from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
+import {useUserStore} from '@/stores/userStore';
+import {adminPath, trustmarksListingPath, trustmarksPath} from '@/config/path';
 
 const props = defineProps({
   modelValue: {
@@ -123,6 +152,16 @@ const props = defineProps({
   disabled: {
     type: Boolean,
     default: false,
+  },
+  // Suggest the organization's own trustmark issuers and their trustmarks, and mark whether a trustmark has been
+  // assigned to `subject` (the entity identifier of the entity the sources belong to).
+  suggest: {
+    type: Boolean,
+    default: false,
+  },
+  subject: {
+    type: String,
+    default: '',
   },
 });
 
@@ -212,4 +251,111 @@ watch(
     },
     {deep: true}
 );
+
+
+// --- Suggestions and assignment status (only when `suggest` is set) ---------------------------------------------
+
+const userStore = useUserStore();
+
+// Entity identifier of a trustmark issuer in this organization -> its id.
+const issuers = ref(new Map());
+// Issuer entity identifier -> [{trustmarkId, trustmarkType}]
+const trustmarksByIssuer = ref(new Map());
+// trustmarkId -> subjects of that trustmark
+const subjectsByTrustmark = ref(new Map());
+const requested = new Set();
+
+const issuerItems = computed(() => props.suggest
+    ? [...issuers.value.keys()].sort((a, b) => a.localeCompare(b)).map((value) => ({value}))
+    : []);
+
+function trustmarkItems(issuer) {
+  return (trustmarksByIssuer.value.get(issuer) || []).map((t) => t.trustmarkType).sort((a, b) => a.localeCompare(b));
+}
+
+// Silent on purpose: a failed lookup only means that no suggestion or status is shown.
+async function getJson(path) {
+  try {
+    const response = await fetch(path, {credentials: 'include'});
+    return response.ok ? await response.json() : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function loadIssuers() {
+  const response = await getJson(adminPath(userStore.selectedTenant, userStore.orgNumber)
+      + '?type=federation&includemodules=true');
+  const found = new Map();
+  for (const entity of response?.federationEntity || []) {
+    const id = entity.trustmarkIssuer?.trustmarkIssuerId || entity.trustmarkIssuer?.id;
+    if (id && entity.entityIdentifier) found.set(entity.entityIdentifier, id);
+  }
+  issuers.value = found;
+}
+
+async function ensureTrustmarks(issuer) {
+  const issuerId = issuers.value.get(issuer);
+  const key = 'tm:' + issuer;
+  if (!issuerId || requested.has(key)) return;
+  requested.add(key);
+  const response = await getJson(trustmarksListingPath(userStore.selectedTenant, userStore.orgNumber, issuerId));
+  trustmarksByIssuer.value = new Map(trustmarksByIssuer.value)
+      .set(issuer, Array.isArray(response) ? response : []);
+}
+
+async function ensureSubjects(trustmarkId) {
+  const key = 'sub:' + trustmarkId;
+  if (requested.has(key)) return;
+  requested.add(key);
+  const response = await getJson(`${trustmarksPath(userStore.selectedTenant, userStore.orgNumber)}/${trustmarkId}/subjects`);
+  subjectsByTrustmark.value = new Map(subjectsByTrustmark.value)
+      .set(trustmarkId, Array.isArray(response) ? response : []);
+}
+
+function findTrustmark(issuer, type) {
+  return (trustmarksByIssuer.value.get(issuer) || []).find((t) => t.trustmarkType === type);
+}
+
+function isValidSubject(entry, now) {
+  if (entry.revoked) return false;
+  if (entry.granted && new Date(entry.granted) > now) return false;
+  return !(entry.expires && new Date(entry.expires) <= now);
+}
+
+// null: nothing to say (not suggesting, an issuer outside this organization, or nothing entered yet / still loading).
+function status(issuer, type) {
+  if (!props.suggest || !props.subject || !type || !issuers.value.has(issuer)) return null;
+  const trustmarks = trustmarksByIssuer.value.get(issuer);
+  if (!trustmarks) return null;
+  const trustmark = findTrustmark(issuer, type);
+  if (!trustmark) return {ok: false, text: 'This issuer has no trustmark with this identifier'};
+  const subjects = subjectsByTrustmark.value.get(trustmark.trustmarkId);
+  if (!subjects) return null;
+  const entries = subjects.filter((entry) => entry.subject === props.subject);
+  if (entries.length === 0) return {ok: false, text: 'The trustmark is not assigned to this entity'};
+  if (entries.some((entry) => isValidSubject(entry, new Date()))) {
+    return {ok: true, text: 'The trustmark is assigned to this entity'};
+  }
+  return {ok: false, text: 'The trustmark is assigned to this entity but is revoked, expired or not yet granted'};
+}
+
+// Load what the entered values need: the trustmarks of a chosen issuer (also the suggestions for its trustmark
+// fields) and the subjects of each trustmark that is entered.
+watch([groups, issuers, trustmarksByIssuer], () => {
+  if (!props.suggest) return;
+  for (const group of groups.value) {
+    if (!issuers.value.has(group.issuer)) continue;
+    ensureTrustmarks(group.issuer).then(() => {
+      for (const type of group.trustmarks) {
+        const trustmark = findTrustmark(group.issuer, type);
+        if (trustmark) ensureSubjects(trustmark.trustmarkId);
+      }
+    });
+  }
+}, {deep: true});
+
+onMounted(() => {
+  if (props.suggest) loadIssuers();
+});
 </script>

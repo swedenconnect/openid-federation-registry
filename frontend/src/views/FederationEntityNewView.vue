@@ -34,6 +34,18 @@
               class="mb-4"
           ></v-text-field>
 
+          <v-text-field
+              id="entity-name"
+              v-model="name"
+              label="Name"
+              :rules="[rules.maxName]"
+              :disabled="saving"
+              hint="Optional name shown in the federation list. The entity identifier is shown when no name is set."
+              persistent-hint
+              counter="255"
+              class="mb-4"
+          ></v-text-field>
+
           <v-select
               v-model="signingKeyId"
               :items="signingKeys"
@@ -99,11 +111,13 @@ const {signingKeys, fetchSigningKeys} = useSigningKeys();
 const form = ref(null);
 const saving = ref(false);
 const entityIdentifier = ref('');
+const name = ref('');
 const crit = ref([]);
 const signingKeyId = ref(null);
 
 const rules = {
   required: (value) => !!value || 'This field is required.',
+  maxName: (value) => !value || value.length <= 255 || 'The name can be at most 255 characters.',
 };
 
 async function saveEntity() {
@@ -116,6 +130,7 @@ async function saveEntity() {
   try {
     const entityData = {
       entityIdentifier: entityIdentifier.value,
+      name: name.value?.trim() || null,
       crit: crit.value.filter(c => c && c.trim() !== ''),
       signingKeyId: signingKeyId.value ? [signingKeyId.value] : [],
     };
@@ -134,7 +149,7 @@ async function saveEntity() {
 }
 
 function cancel() {
-  router.push('/');
+  router.push({name: 'federation-entities'});
 }
 
 onMounted(async () => {
