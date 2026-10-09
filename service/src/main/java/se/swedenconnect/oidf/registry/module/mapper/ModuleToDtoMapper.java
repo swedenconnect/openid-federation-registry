@@ -19,6 +19,8 @@ package se.swedenconnect.oidf.registry.module.mapper;
 import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustAnchorExternalTrustMarkDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustAnchorIssuerDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.module.model.ModuleType;
 import se.swedenconnect.oidf.registry.module.model.Resolver;
@@ -27,6 +29,8 @@ import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateMapper;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -52,7 +56,26 @@ public final class ModuleToDtoMapper {
     dto.setTrustAnchorId(moduleEntity.getTaImId());
     dto.setEntityId(moduleEntity.getEntity().getEntityId());
     dto.setActive(moduleEntity.getActive());
-    dto.setTrustMarkIssuers(moduleEntity.getTrustMarkIssuers());
+    dto.setTrustMarkIssuers(moduleEntity.getTrustMarkIssuers().stream()
+        .map(entry -> {
+          final TrustAnchorIssuerDto issuer = new TrustAnchorIssuerDto();
+          issuer.setIssuer(entry.issuer());
+          issuer.setAuto(entry.auto());
+          issuer.setTrustMarkTypes(new ArrayList<>(entry.trustMarkTypes()));
+          return issuer;
+        })
+        .sorted(Comparator.comparing(TrustAnchorIssuerDto::getIssuer))
+        .toList());
+    dto.setExternalTrustMarks(moduleEntity.getExternalTrustMarks().stream()
+        .map(trustMark -> {
+          final TrustAnchorExternalTrustMarkDto external = new TrustAnchorExternalTrustMarkDto();
+          external.setTrustMarkType(trustMark.trustMarkType());
+          external.setAllowAll(trustMark.allowAll());
+          external.setIssuers(new ArrayList<>(trustMark.issuers()));
+          return external;
+        })
+        .sorted(Comparator.comparing(TrustAnchorExternalTrustMarkDto::getTrustMarkType))
+        .toList());
 
     // Add subordinates
     if (moduleEntity.getSubordinates() != null) {

@@ -40,25 +40,37 @@ import se.swedenconnect.oidf.registry.federationservice.model.TrustMarkPropertie
 import se.swedenconnect.oidf.registry.federationservice.model.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.registry.federationservice.serde.JsonRegistryLoader;
 import se.swedenconnect.oidf.registry.module.model.Resolver;
+import se.swedenconnect.oidf.registry.module.model.ExternalTrustMark;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
+import se.swedenconnect.oidf.registry.module.model.TrustAnchorIssuer;
 import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
 import se.swedenconnect.oidf.registry.organization.model.Instance;
+import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
 import se.swedenconnect.oidf.registry.subordinate.dto.ConstraintsDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateMapper;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
+import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Service to collect data to federation services
@@ -209,18 +221,100 @@ public class OidfApiService {
 
   }
 
-  private TrustAnchorProperties toTaIm(final TrustAnchorIntermediateModule taImModuleEntity) {
+  TrustAnchorProperties toTaIm(final TrustAnchorIntermediateModule taImModuleEntity) {
     return TrustAnchorProperties.builder()
         .entityIdentifier(new EntityID(taImModuleEntity.getEntity().getIssuer()))
         //.trustMarkOwners()
-        // TODO: Add trustMarkIssuers
-        //.trustMarkIssuers(taImModuleEntity.getTrustMarkIssuers())
+        .trustMarkIssuers(this.toTrustMarkIssuers(taImModuleEntity))
         .subordinates(taImModuleEntity.getSubordinates()
             .stream()
             .map(this::toSubordinates)
             .filter(Objects::nonNull)
             .toList())
         .build();
+  }
+
+  /**
+   * Builds the trust_mark_issuers claim: for each trust mark type, the issuers that are trusted to issue it.
+   * <p>
+   * The trust mark issuers of the organization give their trust mark types in one of two ways. An entry with auto set
+   * takes the trust mark types from the trust marks the issuer has now, so the claim follows the issuer. The issuer has
+   * to be an active trust mark issuer of the same organization as the trust anchor. If it is not, for example if it
+   * has been removed or deactivated since, the entry is left out with a warning. The other entries list their trust
+   * mark types. The external trust marks give a trust mark type and the issuers outside the organization that are
+   * trusted to issue it. A trust mark type that anyone may issue is exported with an empty list of issuers, which the
+   * specification defines as that anyone may issue it (OpenID Federation 1.0, section 3.1.2). That wins over issuers
+   * that are listed for the same type some other way, since the type is then not limited to them.
+   *
+   * @param taImModuleEntity the trust anchor module
+   * @return trust mark type to issuers, or {@code null} if there is nothing to export
+   */
+  private Map<EntityID, List<EntityID>> toTrustMarkIssuers(final TrustAnchorIntermediateModule taImModuleEntity) {
+    final Map<String, List<String>> issuersByType = new TreeMap<>();
+    final Set<String> allowAll = new HashSet<>();
+
+    for (final TrustAnchorIssuer entry : taImModuleEntity.getTrustMarkIssuers().stream()
+        .sorted(Comparator.comparing(TrustAnchorIssuer::issuer)).toList()) {
+      final List<String> trustMarkTypes = entry.auto()
+          ? this.trustMarkTypesOf(taImModuleEntity, entry.issuer())
+          : entry.trustMarkTypes();
+      if (trustMarkTypes.isEmpty()) {
+        log.warn("Trust mark issuer {} of trust anchor {} gives no trust mark types and is left out of "
+                + "trust_mark_issuers. {}", entry.issuer(), taImModuleEntity.getEntity().getIssuer(),
+            entry.auto()
+                ? "It is not an active trust mark issuer with trust marks of the same organization."
+                : "No trust mark types are listed.");
+        continue;
+      }
+      trustMarkTypes.forEach(type -> addIssuer(issuersByType, type, entry.issuer()));
+    }
+
+    for (final ExternalTrustMark external : taImModuleEntity.getExternalTrustMarks()) {
+      if (external.allowAll()) {
+        allowAll.add(external.trustMarkType());
+        continue;
+      }
+      external.issuers().forEach(issuer -> addIssuer(issuersByType, external.trustMarkType(), issuer));
+    }
+
+    if (issuersByType.isEmpty() && allowAll.isEmpty()) {
+      return null;
+    }
+    final Map<EntityID, List<EntityID>> trustMarkIssuers = new LinkedHashMap<>();
+    final Set<String> types = new TreeSet<>(issuersByType.keySet());
+    types.addAll(allowAll);
+    for (final String type : types) {
+      trustMarkIssuers.put(new EntityID(type), allowAll.contains(type)
+          ? new ArrayList<>()
+          : issuersByType.get(type).stream().map(EntityID::new).collect(Collectors.toCollection(ArrayList::new)));
+    }
+    return trustMarkIssuers;
+  }
+
+  private static void addIssuer(final Map<String, List<String>> issuersByType, final String type,
+      final String issuer) {
+    final List<String> issuers = issuersByType.computeIfAbsent(type, key -> new ArrayList<>());
+    if (!issuers.contains(issuer)) {
+      issuers.add(issuer);
+    }
+  }
+
+  private List<String> trustMarkTypesOf(final TrustAnchorIntermediateModule taImModuleEntity, final String issuer) {
+    final Organization organization = taImModuleEntity.getOrganization();
+    if (organization == null) {
+      return List.of();
+    }
+    return this.entityRepository
+        .findByOrganizationIdAndEntityKeyTypeAndIssuer(organization.getOrganizationId(),
+            EntityType.FEDERATION_ENTITY, issuer)
+        .map(FederationEntity::getTrustmarkIssuer)
+        .filter(tmi -> Boolean.TRUE.equals(tmi.getActive()))
+        .map(tmi -> tmi.getTrustmarks().stream()
+            .map(TrustMark::getTrustmarkType)
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList())
+        .orElse(List.of());
   }
 
   protected TrustAnchorProperties.SubordinateListingProperty toSubordinates(final Subordinate subordinateEntity) {
