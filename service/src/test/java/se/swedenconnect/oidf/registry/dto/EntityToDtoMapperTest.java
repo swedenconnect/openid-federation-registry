@@ -26,9 +26,11 @@ import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
 import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustAnchorExternalTrustMarkDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorIssuerDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.module.mapper.ModuleToDtoMapper;
+import se.swedenconnect.oidf.registry.module.model.ExternalTrustMark;
 import se.swedenconnect.oidf.registry.module.model.ModuleType;
 import se.swedenconnect.oidf.registry.module.model.Resolver;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
@@ -212,6 +214,25 @@ class EntityToDtoMapperTest {
   // -------------------------------------------------------------------------
   // toDto(TaImEntity) — TrustAnchor
   // -------------------------------------------------------------------------
+
+  @Test
+  void toDto_trustAnchor_externalTrustMarks() {
+    final FederationEntity entity = createFederationEntity();
+    final TrustAnchorIntermediateModule module = createTaImEntity(entity, ModuleType.TRUSTANCHOR);
+    module.setExternalTrustMarks(List.of(
+        new ExternalTrustMark("https://ta.example.com/tm/b", true, List.of()),
+        new ExternalTrustMark("https://ta.example.com/tm/a", false, List.of("https://x.example.org"))));
+
+    final TrustAnchorDto dto = ModuleToDtoMapper.toDto(module);
+
+    // Sorted on the trust mark type
+    assertThat(dto.getExternalTrustMarks()).extracting(TrustAnchorExternalTrustMarkDto::getTrustMarkType)
+        .containsExactly("https://ta.example.com/tm/a", "https://ta.example.com/tm/b");
+    assertThat(dto.getExternalTrustMarks().get(0).isAllowAll()).isFalse();
+    assertThat(dto.getExternalTrustMarks().get(0).getIssuers()).containsExactly("https://x.example.org");
+    assertThat(dto.getExternalTrustMarks().get(1).isAllowAll()).isTrue();
+    assertThat(dto.getExternalTrustMarks().get(1).getIssuers()).isEmpty();
+  }
 
   @Test
   void toDto_trustAnchor() {

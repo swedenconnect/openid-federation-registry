@@ -26,9 +26,11 @@ import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
 import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustAnchorExternalTrustMarkDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorIssuerDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.module.mapper.DtoToModuleMapper;
+import se.swedenconnect.oidf.registry.module.model.ExternalTrustMark;
 import se.swedenconnect.oidf.registry.module.model.ModuleType;
 import se.swedenconnect.oidf.registry.module.model.Resolver;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
@@ -442,6 +444,36 @@ class DtoToEntityMapperTest {
     second.setTrustMarkIssuers(null);
     DtoToModuleMapper.updateIntermediate(module, second);
     assertThat(module.getTrustMarkIssuers()).isEmpty();
+  }
+
+  @Test
+  void updateIntermediate_trustAnchorDto_mapsExternalTrustMarks() {
+    final TrustAnchorIntermediateModule module = new TrustAnchorIntermediateModule();
+    final TrustAnchorDto dto = new TrustAnchorDto();
+    dto.setActive(true);
+    dto.setExternalTrustMarks(List.of(
+        externalDto("https://ta.example.com/tm/a", false, "https://x.example.org", "https://x.example.org"),
+        externalDto("https://ta.example.com/tm/b", true, "https://ignored.example.org")));
+
+    DtoToModuleMapper.updateIntermediate(module, dto);
+
+    // Repeated issuers are removed, and the issuers are not kept when anyone may issue the type
+    assertThat(module.getExternalTrustMarks()).containsExactly(
+        new ExternalTrustMark("https://ta.example.com/tm/a", false, List.of("https://x.example.org")),
+        new ExternalTrustMark("https://ta.example.com/tm/b", true, List.of()));
+
+    dto.setExternalTrustMarks(null);
+    DtoToModuleMapper.updateIntermediate(module, dto);
+    assertThat(module.getExternalTrustMarks()).isEmpty();
+  }
+
+  private static TrustAnchorExternalTrustMarkDto externalDto(final String type, final boolean allowAll,
+      final String... issuers) {
+    final TrustAnchorExternalTrustMarkDto dto = new TrustAnchorExternalTrustMarkDto();
+    dto.setTrustMarkType(type);
+    dto.setAllowAll(allowAll);
+    dto.setIssuers(new java.util.ArrayList<>(List.of(issuers)));
+    return dto;
   }
 
   // -------------------------------------------------------------------------

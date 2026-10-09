@@ -15,12 +15,15 @@
  */
 
 -- The trust mark issuers of a trust anchor change from a list of entity identifiers to a list of objects
--- {issuer, auto, trustMarkTypes}, stored as JSON in the same column. With auto set, all trust marks of the issuer
+-- {issuer, auto, trustMarkTypes}, stored as JSON in the same column. Trust mark types with issuers outside the
+-- organization, or that anyone may issue, are a list of {trustMarkType, allowAll, issuers} in a new column. With auto set, all trust marks of the issuer
 -- (a trust mark issuer of the same organization) are included as they are when the configuration is fetched, and
 -- without auto the trust mark types are listed. A list of objects does not fit in 255 characters.
 ALTER TABLE `trustanchor_intermediate`
     MODIFY COLUMN `trust_mark_issuers` TEXT DEFAULT NULL
-        COMMENT 'Trust mark issuers of a TrustAnchor, a JSON list of {issuer, auto, trustMarkTypes}';
+        COMMENT 'Trust mark issuers of the organization for a TrustAnchor, a JSON list of {issuer, auto, trustMarkTypes}',
+    ADD COLUMN `external_trust_marks` TEXT DEFAULT NULL
+        COMMENT 'Trust mark types of a TrustAnchor with issuers outside the organization, a JSON list of {trustMarkType, allowAll, issuers}';
 
 -- Only a trust anchor has trust mark issuers, and a value that is not JSON cannot be read.
 UPDATE `trustanchor_intermediate`

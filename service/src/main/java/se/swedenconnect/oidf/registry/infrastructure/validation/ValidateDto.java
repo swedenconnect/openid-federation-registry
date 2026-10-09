@@ -22,6 +22,7 @@ import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRec
 import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustAnchorExternalTrustMarkDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorIssuerDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.organization.dto.CreateOrganizationDto;
@@ -325,6 +326,7 @@ public class ValidateDto {
         .ifFailThrow("active", dto.getActive());
 
     this.validateTrustMarkIssuers(dto.getTrustMarkIssuers());
+    this.validateExternalTrustMarks(dto);
   }
 
   /**
@@ -369,6 +371,76 @@ public class ValidateDto {
           .url()
           .build()
           .ifFailThrow(key + ".trustMarkTypes", types);
+    }
+  }
+
+  /**
+   * Validates the trust mark types of a trust anchor that have issuers outside the organization. A trust mark type is
+   * listed once and is a URL. With allowAll no issuers are given, because anyone may issue the type. Without allowAll
+   * at least one issuer is required, and the issuers are entity identifiers listed once. A trust mark type that anyone
+   * may issue can not also be listed with the trust mark types of an issuer of the organization, since that would
+   * limit who may issue it.
+   */
+  private void validateExternalTrustMarks(final TrustAnchorDto dto) {
+    final List<TrustAnchorExternalTrustMarkDto> trustMarks = dto.getExternalTrustMarks();
+    if (trustMarks == null || trustMarks.isEmpty()) {
+      return;
+    }
+    final Set<String> seen = new HashSet<>();
+    final Set<String> allowAllTypes = new HashSet<>();
+    for (int i = 0; i < trustMarks.size(); i++) {
+      final TrustAnchorExternalTrustMarkDto trustMark = trustMarks.get(i);
+      final String key = "externalTrustMarks[" + i + "]";
+      if (trustMark == null) {
+        throw new PropertyValidationFailException(key, "A trust mark type is required");
+      }
+
+      this.v.required()
+          .url()
+          .build()
+          .ifFailThrow(key + ".trustMarkType", trustMark.getTrustMarkType());
+      final String type = trustMark.getTrustMarkType().trim();
+      if (!seen.add(type)) {
+        throw new PropertyValidationFailException(key + ".trustMarkType", type,
+            "The trust mark type is listed more than once");
+      }
+
+      final List<String> issuers = trustMark.getIssuers() == null ? List.of() : trustMark.getIssuers();
+      if (trustMark.isAllowAll()) {
+        if (!issuers.isEmpty()) {
+          throw new PropertyValidationFailException(key + ".issuers", issuers.toString(),
+              "No issuers are given when allowAll is set, anyone may issue the trust mark type");
+        }
+        allowAllTypes.add(type);
+        continue;
+      }
+      if (issuers.isEmpty()) {
+        throw new PropertyValidationFailException(key + ".issuers",
+            "At least one issuer is required unless allowAll is set");
+      }
+      this.v.required()
+          .entityid()
+          .build()
+          .ifFailThrow(key + ".issuers", issuers);
+      if (issuers.stream().map(String::trim).distinct().count() != issuers.size()) {
+        throw new PropertyValidationFailException(key + ".issuers", issuers.toString(),
+            "An issuer is listed more than once");
+      }
+    }
+
+    if (!allowAllTypes.isEmpty() && dto.getTrustMarkIssuers() != null) {
+      for (final TrustAnchorIssuerDto issuer : dto.getTrustMarkIssuers()) {
+        if (issuer == null || issuer.isAuto() || issuer.getTrustMarkTypes() == null) {
+          continue;
+        }
+        for (final String type : issuer.getTrustMarkTypes()) {
+          if (allowAllTypes.contains(type.trim())) {
+            throw new PropertyValidationFailException("externalTrustMarks", type,
+                "The trust mark type is allowed for all issuers and can not also be listed for the issuer "
+                    + issuer.getIssuer());
+          }
+        }
+      }
     }
   }
 

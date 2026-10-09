@@ -20,8 +20,10 @@ import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustAnchorExternalTrustMarkDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorIssuerDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
+import se.swedenconnect.oidf.registry.module.model.ExternalTrustMark;
 import se.swedenconnect.oidf.registry.module.model.ModuleType;
 import se.swedenconnect.oidf.registry.module.model.Resolver;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
@@ -63,6 +65,7 @@ public final class DtoToModuleMapper {
     module.setOrganization(organization);
     module.setActive(dto.getActive());
     setTrustMarkIssuers(module, dto.getTrustMarkIssuers());
+    setExternalTrustMarks(module, dto.getExternalTrustMarks());
 
     return module;
   }
@@ -121,6 +124,7 @@ public final class DtoToModuleMapper {
   public static void updateIntermediate(final TrustAnchorIntermediateModule module, final TrustAnchorDto dto) {
     module.setActive(dto.getActive());
     setTrustMarkIssuers(module, dto.getTrustMarkIssuers());
+    setExternalTrustMarks(module, dto.getExternalTrustMarks());
   }
 
   /**
@@ -199,6 +203,27 @@ public final class DtoToModuleMapper {
                 issuer.isAuto() || issuer.getTrustMarkTypes() == null
                     ? List.of()
                     : issuer.getTrustMarkTypes().stream().map(String::trim).distinct().toList()))
+            .collect(Collectors.toCollection(ArrayList::new)));
+  }
+
+  /**
+   * Sets the external trust marks of a trust anchor module. With allowAll set no issuers are kept, and duplicate
+   * issuers are removed.
+   *
+   * @param module the trust anchor module
+   * @param trustMarks the external trust marks, {@code null} or empty for none
+   */
+  private static void setExternalTrustMarks(final TrustAnchorIntermediateModule module,
+      final List<TrustAnchorExternalTrustMarkDto> trustMarks) {
+    module.setExternalTrustMarks(trustMarks == null
+        ? new ArrayList<>()
+        : trustMarks.stream()
+            .map(trustMark -> new ExternalTrustMark(
+                trustMark.getTrustMarkType().trim(),
+                trustMark.isAllowAll(),
+                trustMark.isAllowAll() || trustMark.getIssuers() == null
+                    ? List.of()
+                    : trustMark.getIssuers().stream().map(String::trim).distinct().toList()))
             .collect(Collectors.toCollection(ArrayList::new)));
   }
 }

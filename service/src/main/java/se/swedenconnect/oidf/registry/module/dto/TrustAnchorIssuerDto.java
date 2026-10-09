@@ -29,13 +29,13 @@ import java.util.List;
  */
 @Data
 @Schema(name = "TrustAnchorIssuer",
-    description = "A trust mark issuer of a trust anchor. With auto set, all trust marks of the issuer are included "
-        + "as they are when the configuration is fetched, and the issuer has to be a trust mark issuer of the same "
-        + "organization. Otherwise the trust mark types are listed in trustMarkTypes, and the issuer can be any "
-        + "entity.")
+    description = "A trust mark issuer of the organization that the trust anchor trusts. With auto set, all trust "
+        + "marks of the issuer are included as they are when the configuration is fetched. Otherwise the trust mark "
+        + "types are listed in trustMarkTypes. The issuer has to be a trust mark issuer of the same organization.")
 public class TrustAnchorIssuerDto {
 
-  @Schema(description = "Entity identifier of the trust mark issuer", example = "https://tmi.example.se")
+  @Schema(description = "Entity identifier of a trust mark issuer of the same organization",
+      example = "https://tmi.example.se")
   private String issuer;
 
   @Schema(description = "Include every trust mark of the issuer automatically, trustMarkTypes has to be empty.",

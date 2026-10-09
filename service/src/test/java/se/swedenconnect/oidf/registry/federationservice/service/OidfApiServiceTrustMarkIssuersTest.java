@@ -29,6 +29,7 @@ import se.swedenconnect.oidf.registry.federationservice.model.ModuleRecord;
 import se.swedenconnect.oidf.registry.federationservice.model.TrustAnchorProperties;
 import se.swedenconnect.oidf.registry.federationservice.serde.JsonRegistryLoader;
 import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
+import se.swedenconnect.oidf.registry.module.model.ExternalTrustMark;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIssuer;
 import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
@@ -116,6 +117,20 @@ class OidfApiServiceTrustMarkIssuersTest {
     return module;
   }
 
+  private static ExternalTrustMark external(final String type, final String... issuers) {
+    return new ExternalTrustMark(type, false, List.of(issuers));
+  }
+
+  private static ExternalTrustMark anyone(final String type) {
+    return new ExternalTrustMark(type, true, List.of());
+  }
+
+  private static TrustAnchorIntermediateModule withExternal(final TrustAnchorIntermediateModule module,
+      final ExternalTrustMark... trustMarks) {
+    module.setExternalTrustMarks(new ArrayList<>(List.of(trustMarks)));
+    return module;
+  }
+
   private static Map<String, List<String>> asStrings(final Map<EntityID, List<EntityID>> trustMarkIssuers) {
     final Map<String, List<String>> result = new LinkedHashMap<>();
     trustMarkIssuers.forEach((type, issuers) ->
@@ -147,29 +162,50 @@ class OidfApiServiceTrustMarkIssuersTest {
   }
 
   @Test
-  @DisplayName("Explicit entries are exported as they are, and the issuer can be an entity outside the registry")
-  void explicitEntriesAreExportedAsListed() {
-    final TrustAnchorProperties result = this.service.toTaIm(
-        trustAnchor(entry(EXTERNAL, false, CERTIFIED_OP, CERTIFIED_RP)));
+  @DisplayName("External trust marks give the issuers outside the organization for each trust mark type")
+  void externalTrustMarksAreExportedAsListed() {
+    final TrustAnchorProperties result = this.service.toTaIm(withExternal(trustAnchor(),
+        external(CERTIFIED_OP, EXTERNAL, "https://other.example.org"), external(CERTIFIED_RP, EXTERNAL)));
 
-    assertThat(asStrings(result.getTrustMarkIssuers()))
-        .containsOnly(Map.entry(CERTIFIED_OP, List.of(EXTERNAL)), Map.entry(CERTIFIED_RP, List.of(EXTERNAL)));
+    assertThat(asStrings(result.getTrustMarkIssuers())).containsOnly(
+        Map.entry(CERTIFIED_OP, List.of(EXTERNAL, "https://other.example.org")),
+        Map.entry(CERTIFIED_RP, List.of(EXTERNAL)));
   }
 
   @Test
-  @DisplayName("Auto and explicit entries are merged per trust mark type")
-  void autoAndExplicitEntriesAreMerged() {
+  @DisplayName("A trust mark type that anyone may issue is exported with an empty list of issuers")
+  void allowAllIsExportedAsAnEmptyList() {
+    final TrustAnchorProperties result = this.service.toTaIm(withExternal(trustAnchor(), anyone(CERTIFIED_OP)));
+
+    assertThat(asStrings(result.getTrustMarkIssuers())).containsOnly(Map.entry(CERTIFIED_OP, List.of()));
+  }
+
+  @Test
+  @DisplayName("Allow all wins over issuers that are listed for the same trust mark type")
+  void allowAllWinsOverListedIssuers() {
     trustMarkIssuerInOrganization(TMI1, true, CERTIFIED_OP, CERTIFIED_RP);
 
     final TrustAnchorProperties result = this.service.toTaIm(
-        trustAnchor(entry(TMI1, true), entry(EXTERNAL, false, CERTIFIED_OP)));
+        withExternal(trustAnchor(entry(TMI1, true)), anyone(CERTIFIED_OP), external(CERTIFIED_RP, EXTERNAL)));
 
-    assertThat(asStrings(result.getTrustMarkIssuers()))
-        .containsOnly(Map.entry(CERTIFIED_OP, List.of(EXTERNAL, TMI1)), Map.entry(CERTIFIED_RP, List.of(TMI1)));
+    assertThat(asStrings(result.getTrustMarkIssuers())).containsOnly(
+        Map.entry(CERTIFIED_OP, List.of()), Map.entry(CERTIFIED_RP, List.of(TMI1, EXTERNAL)));
   }
 
   @Test
-  @DisplayName("An explicit entry may list only some of the trust marks of a trust mark issuer of the organization")
+  @DisplayName("Auto entries, listed entries and external trust marks are merged per trust mark type")
+  void entriesAreMergedPerTrustMarkType() {
+    trustMarkIssuerInOrganization(TMI1, true, CERTIFIED_OP, CERTIFIED_RP);
+
+    final TrustAnchorProperties result = this.service.toTaIm(
+        withExternal(trustAnchor(entry(TMI1, true), entry(TMI2, false, CERTIFIED_OP)), external(CERTIFIED_OP, EXTERNAL)));
+
+    assertThat(asStrings(result.getTrustMarkIssuers()))
+        .containsOnly(Map.entry(CERTIFIED_OP, List.of(TMI1, TMI2, EXTERNAL)), Map.entry(CERTIFIED_RP, List.of(TMI1)));
+  }
+
+  @Test
+  @DisplayName("A listed entry may name only some of the trust marks of a trust mark issuer of the organization")
   void explicitEntryForOwnIssuerIsNotExpanded() {
     final TrustAnchorProperties result = this.service.toTaIm(trustAnchor(entry(TMI1, false, CERTIFIED_RP)));
 
@@ -206,10 +242,11 @@ class OidfApiServiceTrustMarkIssuersTest {
   void noDuplicates() {
     trustMarkIssuerInOrganization(TMI1, true, CERTIFIED_OP, CERTIFIED_OP);
 
-    final TrustAnchorProperties result = this.service.toTaIm(
-        trustAnchor(entry(TMI1, true), entry(TMI1, false, CERTIFIED_OP)));
+    final TrustAnchorProperties result = this.service.toTaIm(withExternal(
+        trustAnchor(entry(TMI1, true), entry(TMI1, false, CERTIFIED_OP)), external(CERTIFIED_OP, EXTERNAL, EXTERNAL)));
 
-    assertThat(asStrings(result.getTrustMarkIssuers())).containsOnly(Map.entry(CERTIFIED_OP, List.of(TMI1)));
+    assertThat(asStrings(result.getTrustMarkIssuers()))
+        .containsOnly(Map.entry(CERTIFIED_OP, List.of(TMI1, EXTERNAL)));
   }
 
   @Test
@@ -217,16 +254,18 @@ class OidfApiServiceTrustMarkIssuersTest {
   void serializesAsTypeToIssuers() {
     trustMarkIssuerInOrganization(TMI1, true, CERTIFIED_OP);
     final ModuleRecord record = new ModuleRecord();
-    record.setTrustAnchors(List.of(this.service.toTaIm(trustAnchor(entry(TMI1, true)))));
+    record.setTrustAnchors(List.of(this.service.toTaIm(withExternal(trustAnchor(entry(TMI1, true)), anyone(CERTIFIED_RP)))));
 
     final String json = new JsonRegistryLoader().toJson(record);
 
-    assertThat(json).contains("\"trust-mark-issuers\":{\"" + CERTIFIED_OP + "\":[\"" + TMI1 + "\"]}");
+    assertThat(json).contains("\"trust-mark-issuers\":{\"" + CERTIFIED_OP + "\":[\"" + TMI1 + "\"],\""
+        + CERTIFIED_RP + "\":[]}");
   }
 
   @Test
-  @DisplayName("No trust mark issuers on the module gives no claim")
+  @DisplayName("Nothing on the module gives no claim")
   void noIssuersGivesNoClaim() {
     assertThat(this.service.toTaIm(trustAnchor()).getTrustMarkIssuers()).isNull();
+    assertThat(this.service.toTaIm(withExternal(trustAnchor())).getTrustMarkIssuers()).isNull();
   }
 }

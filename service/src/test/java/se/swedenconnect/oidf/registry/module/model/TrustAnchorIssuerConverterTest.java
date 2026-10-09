@@ -75,4 +75,24 @@ class TrustAnchorIssuerConverterTest {
     module.setTrustMarkIssuers(null);
     assertThat(module.getTrustMarkIssuers()).isEmpty();
   }
+
+  @Test
+  @DisplayName("External trust marks are stored as a JSON list of objects and read back unchanged")
+  void externalTrustMarksRoundTrip() {
+    final TrustAnchorIntermediateModule.ExternalTrustMarkConverter external =
+        new TrustAnchorIntermediateModule.ExternalTrustMarkConverter(JsonMapper.builder().build());
+    final List<ExternalTrustMark> trustMarks = List.of(
+        new ExternalTrustMark("https://ta.example.com/tm/a", false, List.of("https://x.example.org")),
+        new ExternalTrustMark("https://ta.example.com/tm/b", true, List.of()));
+
+    final String json = external.convertToDatabaseColumn(trustMarks);
+
+    assertThat(json).contains("\"trustMarkType\"", "\"allowAll\"", "\"issuers\"");
+    assertThat(external.convertToEntityAttribute(json)).isEqualTo(trustMarks);
+    assertThat(external.convertToEntityAttribute(null)).isNull();
+
+    final TrustAnchorIntermediateModule module = new TrustAnchorIntermediateModule();
+    module.setExternalTrustMarks(null);
+    assertThat(module.getExternalTrustMarks()).isEmpty();
+  }
 }

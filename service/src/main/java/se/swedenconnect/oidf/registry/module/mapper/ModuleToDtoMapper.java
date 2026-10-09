@@ -19,6 +19,7 @@ package se.swedenconnect.oidf.registry.module.mapper;
 import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustAnchorExternalTrustMarkDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorIssuerDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.module.model.ModuleType;
@@ -64,6 +65,16 @@ public final class ModuleToDtoMapper {
           return issuer;
         })
         .sorted(Comparator.comparing(TrustAnchorIssuerDto::getIssuer))
+        .toList());
+    dto.setExternalTrustMarks(moduleEntity.getExternalTrustMarks().stream()
+        .map(trustMark -> {
+          final TrustAnchorExternalTrustMarkDto external = new TrustAnchorExternalTrustMarkDto();
+          external.setTrustMarkType(trustMark.trustMarkType());
+          external.setAllowAll(trustMark.allowAll());
+          external.setIssuers(new ArrayList<>(trustMark.issuers()));
+          return external;
+        })
+        .sorted(Comparator.comparing(TrustAnchorExternalTrustMarkDto::getTrustMarkType))
         .toList());
 
     // Add subordinates

@@ -44,8 +44,13 @@ public class TrustAnchorDto {
   @Schema(description = "If this trust anchor is active")
   private Boolean active;
 
-  @Schema(description = "The trust mark issuers of the trust anchor, exported as trust_mark_issuers")
+  @Schema(description = "The trust mark issuers of the organization that the trust anchor trusts, exported as "
+      + "trust_mark_issuers. An issuer has to be a trust mark issuer of the same organization.")
   private List<TrustAnchorIssuerDto> trustMarkIssuers = new ArrayList<>();
+
+  @Schema(description = "Trust mark types with issuers outside the organization, or that anyone may issue, exported as "
+      + "trust_mark_issuers together with trustMarkIssuers")
+  private List<TrustAnchorExternalTrustMarkDto> externalTrustMarks = new ArrayList<>();
 
   @Schema(description = "List of subordinates for this trust anchor")
   private List<SubordinateDto> subordinates;

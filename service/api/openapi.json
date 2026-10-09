@@ -5193,9 +5193,16 @@
           },
           "trustMarkIssuers": {
             "type": "array",
-            "description": "The trust mark issuers of the trust anchor, exported as trust_mark_issuers",
+            "description": "The trust mark issuers of the organization that the trust anchor trusts, exported as trust_mark_issuers. An issuer has to be a trust mark issuer of the same organization.",
             "items": {
               "$ref": "#/components/schemas/TrustAnchorIssuer"
+            }
+          },
+          "externalTrustMarks": {
+            "type": "array",
+            "description": "Trust mark types with issuers outside the organization, or that anyone may issue, exported as trust_mark_issuers together with trustMarkIssuers",
+            "items": {
+              "$ref": "#/components/schemas/TrustAnchorExternalTrustMark"
             }
           },
           "subordinates": {
@@ -5207,9 +5214,35 @@
           }
         }
       },
+      "TrustAnchorExternalTrustMark": {
+        "type": "object",
+        "description": "A trust mark type with the issuers outside the organization that are trusted to issue it. With allowAll set anyone may issue trust marks of the type, and it is exported with an empty list of issuers.",
+        "properties": {
+          "trustMarkType": {
+            "type": "string",
+            "description": "The trust mark type identifier",
+            "example": "https://ta.example.se/trustmarks/certified-op"
+          },
+          "allowAll": {
+            "type": "boolean",
+            "default": false,
+            "description": "Anyone may issue trust marks of the type. issuers has to be empty."
+          },
+          "issuers": {
+            "type": "array",
+            "description": "Entity identifiers of the issuers that are trusted to issue the type. Required, and at least one, unless allowAll is set.",
+            "example": [
+              "https://tmi.example.org"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "TrustAnchorIssuer": {
         "type": "object",
-        "description": "A trust mark issuer of a trust anchor. With auto set, all trust marks of the issuer are included as they are when the configuration is fetched, and the issuer has to be a trust mark issuer of the same organization. Otherwise the trust mark types are listed in trustMarkTypes, and the issuer can be any entity.",
+        "description": "A trust mark issuer of the organization that the trust anchor trusts. With auto set, all trust marks of the issuer are included as they are when the configuration is fetched. Otherwise the trust mark types are listed in trustMarkTypes. The issuer has to be a trust mark issuer of the same organization.",
         "properties": {
           "issuer": {
             "type": "string",
