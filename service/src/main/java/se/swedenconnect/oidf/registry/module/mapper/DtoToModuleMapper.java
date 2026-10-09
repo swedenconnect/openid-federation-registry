@@ -20,14 +20,19 @@ import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustAnchorIssuerDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.module.model.ModuleType;
 import se.swedenconnect.oidf.registry.module.model.Resolver;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
+import se.swedenconnect.oidf.registry.module.model.TrustAnchorIssuer;
 import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Utility class for converting DTO objects to Module objects.
@@ -57,7 +62,7 @@ public final class DtoToModuleMapper {
     module.setEntity(federationEntity);
     module.setOrganization(organization);
     module.setActive(dto.getActive());
-    module.setTrustMarkIssuers(dto.getTrustMarkIssuers());
+    setTrustMarkIssuers(module, dto.getTrustMarkIssuers());
 
     return module;
   }
@@ -115,7 +120,7 @@ public final class DtoToModuleMapper {
    */
   public static void updateIntermediate(final TrustAnchorIntermediateModule module, final TrustAnchorDto dto) {
     module.setActive(dto.getActive());
-    module.setTrustMarkIssuers(dto.getTrustMarkIssuers());
+    setTrustMarkIssuers(module, dto.getTrustMarkIssuers());
   }
 
   /**
@@ -174,5 +179,26 @@ public final class DtoToModuleMapper {
 
   private static String blankToNull(final String value) {
     return value == null || value.isBlank() ? null : value;
+  }
+
+  /**
+   * Sets the trust mark issuers of a trust anchor module. With auto set no trust mark types are kept, and duplicate
+   * trust mark types are removed.
+   *
+   * @param module the trust anchor module
+   * @param issuers the trust mark issuers, {@code null} or empty for none
+   */
+  private static void setTrustMarkIssuers(final TrustAnchorIntermediateModule module,
+      final List<TrustAnchorIssuerDto> issuers) {
+    module.setTrustMarkIssuers(issuers == null
+        ? new ArrayList<>()
+        : issuers.stream()
+            .map(issuer -> new TrustAnchorIssuer(
+                issuer.getIssuer().trim(),
+                issuer.isAuto(),
+                issuer.isAuto() || issuer.getTrustMarkTypes() == null
+                    ? List.of()
+                    : issuer.getTrustMarkTypes().stream().map(String::trim).distinct().toList()))
+            .collect(Collectors.toCollection(ArrayList::new)));
   }
 }

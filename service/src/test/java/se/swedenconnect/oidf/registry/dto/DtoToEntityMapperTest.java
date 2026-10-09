@@ -26,11 +26,13 @@ import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
 import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustAnchorIssuerDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.module.mapper.DtoToModuleMapper;
 import se.swedenconnect.oidf.registry.module.model.ModuleType;
 import se.swedenconnect.oidf.registry.module.model.Resolver;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
+import se.swedenconnect.oidf.registry.module.model.TrustAnchorIssuer;
 import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
@@ -128,7 +130,7 @@ class DtoToEntityMapperTest {
   void toEntity_trustAnchorDto() {
     final TrustAnchorDto dto = new TrustAnchorDto();
     dto.setActive(true);
-    dto.setTrustMarkIssuers(List.of("issuer1"));
+    dto.setTrustMarkIssuers(List.of(issuerDto("https://tmi1.example.com", true)));
     final FederationEntity entityEntity = createEntityEntity();
     final Organization org = createOrganization();
 
@@ -139,7 +141,16 @@ class DtoToEntityMapperTest {
     assertThat(module.getEntity()).isEqualTo(entityEntity);
     assertThat(module.getOrganization()).isEqualTo(org);
     assertThat(module.getActive()).isTrue();
-    assertThat(module.getTrustMarkIssuers()).containsExactly("issuer1");
+    assertThat(module.getTrustMarkIssuers())
+        .containsExactly(new TrustAnchorIssuer("https://tmi1.example.com", true, List.of()));
+  }
+
+  private static TrustAnchorIssuerDto issuerDto(final String issuer, final boolean auto, final String... types) {
+    final TrustAnchorIssuerDto dto = new TrustAnchorIssuerDto();
+    dto.setIssuer(issuer);
+    dto.setAuto(auto);
+    dto.setTrustMarkTypes(new java.util.ArrayList<>(List.of(types)));
+    return dto;
   }
 
   // -------------------------------------------------------------------------
@@ -398,12 +409,39 @@ class DtoToEntityMapperTest {
     module.setActive(false);
     final TrustAnchorDto dto = new TrustAnchorDto();
     dto.setActive(true);
-    dto.setTrustMarkIssuers(List.of("issuer1", "issuer2"));
+    dto.setTrustMarkIssuers(List.of(
+        issuerDto("https://tmi1.example.com", false, "https://ta.example.com/tm/a", "https://ta.example.com/tm/a"),
+        issuerDto("https://tmi2.example.com", true, "https://ta.example.com/tm/ignored")));
 
     DtoToModuleMapper.updateIntermediate(module, dto);
 
     assertThat(module.getActive()).isTrue();
-    assertThat(module.getTrustMarkIssuers()).containsExactly("issuer1", "issuer2");
+    // Duplicate types are removed, and the types are not kept for an auto entry
+    assertThat(module.getTrustMarkIssuers()).containsExactly(
+        new TrustAnchorIssuer("https://tmi1.example.com", false, List.of("https://ta.example.com/tm/a")),
+        new TrustAnchorIssuer("https://tmi2.example.com", true, List.of()));
+  }
+
+  @Test
+  void updateIntermediate_trustAnchorDto_replacesTheIssuersAsAWhole() {
+    final TrustAnchorIntermediateModule module = new TrustAnchorIntermediateModule();
+    final TrustAnchorDto first = new TrustAnchorDto();
+    first.setActive(true);
+    first.setTrustMarkIssuers(List.of(issuerDto("https://tmi1.example.com", true),
+        issuerDto("https://tmi2.example.com", false, "https://ta.example.com/tm/a")));
+    DtoToModuleMapper.updateIntermediate(module, first);
+    assertThat(module.getTrustMarkIssuers()).hasSize(2);
+
+    final TrustAnchorDto second = new TrustAnchorDto();
+    second.setActive(true);
+    second.setTrustMarkIssuers(List.of(issuerDto("https://tmi1.example.com", false, "https://ta.example.com/tm/b")));
+    DtoToModuleMapper.updateIntermediate(module, second);
+    assertThat(module.getTrustMarkIssuers()).containsExactly(
+        new TrustAnchorIssuer("https://tmi1.example.com", false, List.of("https://ta.example.com/tm/b")));
+
+    second.setTrustMarkIssuers(null);
+    DtoToModuleMapper.updateIntermediate(module, second);
+    assertThat(module.getTrustMarkIssuers()).isEmpty();
   }
 
   // -------------------------------------------------------------------------

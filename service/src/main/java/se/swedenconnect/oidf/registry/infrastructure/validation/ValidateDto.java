@@ -22,6 +22,7 @@ import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRec
 import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustAnchorIssuerDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.organization.dto.CreateOrganizationDto;
 import se.swedenconnect.oidf.registry.organization.dto.DomainRequestDto;
@@ -323,9 +324,52 @@ public class ValidateDto {
         .build()
         .ifFailThrow("active", dto.getActive());
 
-    this.v.entityid()
-        .build()
-        .ifFailThrow("trustMarkIssuers", dto.getTrustMarkIssuers());
+    this.validateTrustMarkIssuers(dto.getTrustMarkIssuers());
+  }
+
+  /**
+   * Validates the trust mark issuers of a trust anchor. An issuer is an entity identifier and is listed once. With
+   * auto set the trust marks of the issuer are included automatically and no trust mark types are given. Without
+   * auto at least one trust mark type is required.
+   */
+  private void validateTrustMarkIssuers(final List<TrustAnchorIssuerDto> issuers) {
+    if (issuers == null || issuers.isEmpty()) {
+      return;
+    }
+    final Set<String> seen = new HashSet<>();
+    for (int i = 0; i < issuers.size(); i++) {
+      final TrustAnchorIssuerDto issuer = issuers.get(i);
+      final String key = "trustMarkIssuers[" + i + "]";
+      if (issuer == null) {
+        throw new PropertyValidationFailException(key, "An issuer is required");
+      }
+
+      this.v.required()
+          .entityid()
+          .build()
+          .ifFailThrow(key + ".issuer", issuer.getIssuer());
+      if (!seen.add(issuer.getIssuer().trim())) {
+        throw new PropertyValidationFailException(key + ".issuer", issuer.getIssuer(),
+            "The issuer is listed more than once");
+      }
+
+      final List<String> types = issuer.getTrustMarkTypes() == null ? List.of() : issuer.getTrustMarkTypes();
+      if (issuer.isAuto()) {
+        if (!types.isEmpty()) {
+          throw new PropertyValidationFailException(key + ".trustMarkTypes", types.toString(),
+              "No trust mark types are given when auto is set, every trust mark of the issuer is included");
+        }
+        continue;
+      }
+      if (types.isEmpty()) {
+        throw new PropertyValidationFailException(key + ".trustMarkTypes",
+            "At least one trust mark type is required unless auto is set");
+      }
+      this.v.required()
+          .url()
+          .build()
+          .ifFailThrow(key + ".trustMarkTypes", types);
+    }
   }
 
   /**

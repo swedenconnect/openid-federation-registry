@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.registry.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
@@ -35,6 +36,7 @@ import se.swedenconnect.oidf.registry.api.TrustmarksApi;
 import se.swedenconnect.oidf.registry.api.model.FederationEntity;
 import se.swedenconnect.oidf.registry.api.model.Resolver;
 import se.swedenconnect.oidf.registry.api.model.TrustAnchor;
+import se.swedenconnect.oidf.registry.api.model.TrustAnchorIssuer;
 import se.swedenconnect.oidf.registry.api.model.Trustmark;
 import se.swedenconnect.oidf.registry.api.model.TrustmarkIssuer;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
@@ -221,7 +223,11 @@ class ModuleCRUDIT {
     final TrustAnchor input = new TrustAnchor()
         .entityId(entityId)
         .active(true)
-        .trustMarkIssuers(List.of("https://www.pm.se/oidf/tmi1", "https://www.pm.se/oidf/tmi2"));
+        .trustMarkIssuers(List.of(
+            new TrustAnchorIssuer().issuer("https://www.pm.se/oidf/tmi1")
+                .trustMarkTypes(List.of("https://www.pm.se/oidf/loa3")),
+            new TrustAnchorIssuer().issuer("https://www.pm.se/oidf/tmi2")
+                .trustMarkTypes(List.of("https://www.pm.se/oidf/loa3", "https://www.pm.se/oidf/loa4"))));
 
     // Act
     final TrustAnchor created = this.modulesApi.createTrustAnchor(TENANT, JwtTestUtils.OrganisationType.PM.orgId, input);
@@ -231,7 +237,90 @@ class ModuleCRUDIT {
     assertThat(created.getTrustAnchorId()).isNotNull();
     assertThat(created.getEntityId()).isEqualTo(entityId);
     assertThat(created.getActive()).isTrue();
-    assertThat(created.getTrustMarkIssuers()).contains("https://www.pm.se/oidf/tmi1", "https://www.pm.se/oidf/tmi2");
+    assertThat(created.getTrustMarkIssuers()).extracting(TrustAnchorIssuer::getIssuer)
+        .containsExactly("https://www.pm.se/oidf/tmi1", "https://www.pm.se/oidf/tmi2");
+    assertThat(created.getTrustMarkIssuers().get(1).getTrustMarkTypes())
+        .containsExactly("https://www.pm.se/oidf/loa3", "https://www.pm.se/oidf/loa4");
+    assertThat(created.getTrustMarkIssuers()).allSatisfy(issuer -> assertThat(issuer.getAuto()).isFalse());
+  }
+
+  @Test
+  @DisplayName("A trust anchor can list a trust mark issuer of the same organization with auto set")
+  void testCreateTrustAnchorWithAutoIssuer() {
+    final String tmiIdentifier = "https://www.pm.se/oidf/auto-tmi/" + UUID.randomUUID();
+    this.setupTrustmarkTestData(tmiIdentifier, tmiIdentifier);
+    final UUID entityId = this.createFederationEntity("https://www.pm.se/oidf/auto-ta", "https://www.pm.se/oidf/auto-ta/" + UUID.randomUUID());
+
+    final TrustAnchor created = this.modulesApi.createTrustAnchor(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        new TrustAnchor().entityId(entityId).active(true)
+            .trustMarkIssuers(List.of(new TrustAnchorIssuer().issuer(tmiIdentifier).auto(true))));
+
+    assertThat(created.getTrustMarkIssuers()).hasSize(1);
+    assertThat(created.getTrustMarkIssuers().getFirst().getIssuer()).isEqualTo(tmiIdentifier);
+    assertThat(created.getTrustMarkIssuers().getFirst().getAuto()).isTrue();
+    assertThat(created.getTrustMarkIssuers().getFirst().getTrustMarkTypes()).isEmpty();
+
+    final TrustAnchor retrieved = this.modulesApi.getTrustAnchor(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        created.getTrustAnchorId());
+    assertThat(retrieved.getTrustMarkIssuers().getFirst().getAuto()).isTrue();
+  }
+
+  @Test
+  @DisplayName("Auto is rejected for an issuer that is not a trust mark issuer of the same organization")
+  void testCreateTrustAnchorWithAutoIssuerThatIsNotATrustmarkIssuerFails() {
+    final UUID entityId = this.createFederationEntity("https://www.pm.se/oidf/auto-ta2", "https://www.pm.se/oidf/auto-ta2/" + UUID.randomUUID());
+
+    assertThatThrownBy(() -> this.modulesApi.createTrustAnchor(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        new TrustAnchor().entityId(entityId).active(true)
+            .trustMarkIssuers(List.of(new TrustAnchorIssuer().issuer("https://www.pm.se/oidf/not-a-tmi").auto(true)))))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(e -> assertThat(((RestClientResponseException) e).getStatusCode().value()).isEqualTo(400));
+  }
+
+  @Test
+  @DisplayName("Trust mark issuer entries are validated: types are required unless auto, and not allowed with auto")
+  void testCreateTrustAnchorWithInvalidIssuerEntriesFails() {
+    final UUID entityId = this.createFederationEntity("https://www.pm.se/oidf/auto-ta3", "https://www.pm.se/oidf/auto-ta3/" + UUID.randomUUID());
+
+    for (final TrustAnchorIssuer invalid : List.of(
+        new TrustAnchorIssuer().issuer("https://www.pm.se/oidf/tmi1"),
+        new TrustAnchorIssuer().issuer("https://www.pm.se/oidf/tmi1").auto(true)
+            .trustMarkTypes(List.of("https://www.pm.se/oidf/loa3")),
+        new TrustAnchorIssuer().issuer("not an entity id").trustMarkTypes(List.of("https://www.pm.se/oidf/loa3")),
+        new TrustAnchorIssuer().issuer("https://www.pm.se/oidf/tmi1").trustMarkTypes(List.of("not a url")))) {
+      assertThatThrownBy(() -> this.modulesApi.createTrustAnchor(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+          new TrustAnchor().entityId(entityId).active(true).trustMarkIssuers(List.of(invalid))))
+          .isInstanceOf(RestClientResponseException.class)
+          .satisfies(e -> assertThat(((RestClientResponseException) e).getStatusCode().value()).isEqualTo(400));
+    }
+  }
+
+  @Test
+  @DisplayName("Updating the trust mark issuers changes entries in place and removes the ones that are gone")
+  void testUpdateTrustAnchorIssuerEntries() {
+    final String tmiIdentifier = "https://www.pm.se/oidf/auto-tmi/" + UUID.randomUUID();
+    this.setupTrustmarkTestData(tmiIdentifier, tmiIdentifier);
+    final UUID entityId = this.createFederationEntity("https://www.pm.se/oidf/upd-ta", "https://www.pm.se/oidf/upd-ta/" + UUID.randomUUID());
+    final UUID moduleId = UUID.randomUUID();
+    this.modulesApi.createTrustAnchorWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, moduleId,
+        new TrustAnchor().entityId(entityId).active(true).trustMarkIssuers(List.of(
+            new TrustAnchorIssuer().issuer(tmiIdentifier).auto(true),
+            new TrustAnchorIssuer().issuer("https://www.pm.se/oidf/external")
+                .trustMarkTypes(List.of("https://www.pm.se/oidf/loa3")))));
+
+    // The same issuer goes from auto to explicit types, and the other issuer is dropped.
+    final TrustAnchor updated = this.modulesApi.updateTrustAnchor(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        moduleId, new TrustAnchor().entityId(entityId).active(true).trustMarkIssuers(List.of(
+            new TrustAnchorIssuer().issuer(tmiIdentifier).auto(false)
+                .trustMarkTypes(List.of("https://www.pm.se/oidf/loa4")))));
+
+    assertThat(updated.getTrustMarkIssuers()).hasSize(1);
+    assertThat(updated.getTrustMarkIssuers().getFirst().getAuto()).isFalse();
+    assertThat(updated.getTrustMarkIssuers().getFirst().getTrustMarkTypes()).containsExactly("https://www.pm.se/oidf/loa4");
+
+    final TrustAnchor cleared = this.modulesApi.updateTrustAnchor(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        moduleId, new TrustAnchor().entityId(entityId).active(true));
+    assertThat(cleared.getTrustMarkIssuers()).isEmpty();
   }
 
   @Test
@@ -293,7 +382,8 @@ class ModuleCRUDIT {
     final TrustAnchor updateInput = new TrustAnchor()
         .entityId(entityId)
         .active(false)
-        .trustMarkIssuers(List.of("https://www.pm.se/oidf/tmi-updated"));
+        .trustMarkIssuers(List.of(new TrustAnchorIssuer().issuer("https://www.pm.se/oidf/tmi-updated")
+            .trustMarkTypes(List.of("https://www.pm.se/oidf/loa3"))));
 
     // Act
     final TrustAnchor updated = this.modulesApi.updateTrustAnchor(TENANT, JwtTestUtils.OrganisationType.PM.orgId, moduleId, updateInput);
@@ -301,7 +391,8 @@ class ModuleCRUDIT {
     // Assert
     assertThat(updated).isNotNull();
     assertThat(updated.getActive()).isFalse();
-    assertThat(updated.getTrustMarkIssuers()).contains("https://www.pm.se/oidf/tmi-updated");
+    assertThat(updated.getTrustMarkIssuers()).extracting(TrustAnchorIssuer::getIssuer)
+        .containsExactly("https://www.pm.se/oidf/tmi-updated");
   }
 
   @Test
@@ -494,7 +585,8 @@ class ModuleCRUDIT {
     final TrustAnchor taInput = new TrustAnchor()
         .entityId(entityId)
         .active(true)
-        .trustMarkIssuers(List.of("https://www.pm.se/oidf/tmi1"));
+        .trustMarkIssuers(List.of(new TrustAnchorIssuer().issuer("https://www.pm.se/oidf/tmi1")
+            .trustMarkTypes(List.of("https://www.pm.se/oidf/loa3"))));
     this.modulesApi.createTrustAnchorWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, trustAnchorId, taInput);
 
     // Verify both exist

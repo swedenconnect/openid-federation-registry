@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,8 +44,8 @@ public class TrustAnchorDto {
   @Schema(description = "If this trust anchor is active")
   private Boolean active;
 
-  @Schema(description = "Entity identifiers for trust mark issuers")
-  private List<String> trustMarkIssuers;
+  @Schema(description = "The trust mark issuers of the trust anchor, exported as trust_mark_issuers")
+  private List<TrustAnchorIssuerDto> trustMarkIssuers = new ArrayList<>();
 
   @Schema(description = "List of subordinates for this trust anchor")
   private List<SubordinateDto> subordinates;

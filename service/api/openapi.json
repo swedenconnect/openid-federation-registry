@@ -5193,9 +5193,9 @@
           },
           "trustMarkIssuers": {
             "type": "array",
-            "description": "Entity identifiers for trust mark issuers",
+            "description": "The trust mark issuers of the trust anchor, exported as trust_mark_issuers",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/TrustAnchorIssuer"
             }
           },
           "subordinates": {
@@ -5203,6 +5203,32 @@
             "description": "List of subordinates for this trust anchor",
             "items": {
               "$ref": "#/components/schemas/Subordinate"
+            }
+          }
+        }
+      },
+      "TrustAnchorIssuer": {
+        "type": "object",
+        "description": "A trust mark issuer of a trust anchor. With auto set, all trust marks of the issuer are included as they are when the configuration is fetched, and the issuer has to be a trust mark issuer of the same organization. Otherwise the trust mark types are listed in trustMarkTypes, and the issuer can be any entity.",
+        "properties": {
+          "issuer": {
+            "type": "string",
+            "description": "Entity identifier of the trust mark issuer",
+            "example": "https://tmi.example.se"
+          },
+          "auto": {
+            "type": "boolean",
+            "default": false,
+            "description": "Include every trust mark of the issuer automatically. trustMarkTypes has to be empty."
+          },
+          "trustMarkTypes": {
+            "type": "array",
+            "description": "The trust mark types that the issuer is trusted to issue. Required, and at least one, unless auto is set.",
+            "example": [
+              "https://ta.example.se/trustmarks/certified-op"
+            ],
+            "items": {
+              "type": "string"
             }
           }
         }

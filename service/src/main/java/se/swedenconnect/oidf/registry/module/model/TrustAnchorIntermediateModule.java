@@ -24,9 +24,12 @@ import org.hibernate.type.SqlTypes;
 import org.springframework.data.domain.Persistable;
 import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
-import se.swedenconnect.oidf.registry.infrastructure.persistence.StringListConverter;
+import se.swedenconnect.oidf.registry.infrastructure.persistence.JsonConverter;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
+
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,9 +83,35 @@ public class TrustAnchorIntermediateModule extends BaseEntity implements Persist
   @Column(name = "active")
   private Boolean active;
 
-  @Column(name = "trust_mark_issuers")
-  @Convert(converter = StringListConverter.class)
-  private List<String> trustMarkIssuers;
+  /**
+   * The trust mark issuers of a trust anchor, stored as a JSON list. Not used by an intermediate.
+   */
+  @Column(name = "trust_mark_issuers", columnDefinition = "TEXT")
+  @Convert(converter = TrustAnchorIssuerConverter.class)
+  private List<TrustAnchorIssuer> trustMarkIssuers = new ArrayList<>();
+
+  /**
+   * Gets the trust mark issuers of the module.
+   *
+   * @return the trust mark issuers, an empty list if there are none
+   */
+  public List<TrustAnchorIssuer> getTrustMarkIssuers() {
+    return this.trustMarkIssuers == null ? List.of() : this.trustMarkIssuers;
+  }
+
+  /** JPA converter for the trust mark issuer list. */
+  @Converter
+  public static class TrustAnchorIssuerConverter extends JsonConverter<List<TrustAnchorIssuer>> {
+
+    /**
+     * Constructor.
+     *
+     * @param mapper the JSON mapper
+     */
+    public TrustAnchorIssuerConverter(final JsonMapper mapper) {
+      super(mapper, new TypeReference<List<TrustAnchorIssuer>>() {});
+    }
+  }
 
   /**
    * Determines whether the module is of the specified types. Compares the module's type against the provided

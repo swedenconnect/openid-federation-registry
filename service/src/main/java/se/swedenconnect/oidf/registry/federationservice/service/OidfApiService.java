@@ -41,8 +41,10 @@ import se.swedenconnect.oidf.registry.federationservice.model.TrustMarkSubjectPr
 import se.swedenconnect.oidf.registry.federationservice.serde.JsonRegistryLoader;
 import se.swedenconnect.oidf.registry.module.model.Resolver;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
+import se.swedenconnect.oidf.registry.module.model.TrustAnchorIssuer;
 import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
 import se.swedenconnect.oidf.registry.organization.model.Instance;
+import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
 import se.swedenconnect.oidf.registry.subordinate.dto.ConstraintsDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
@@ -55,6 +57,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -228,41 +231,61 @@ public class OidfApiService {
   /**
    * Builds the trust_mark_issuers claim: for each trust mark type, the issuers that are trusted to issue it.
    * <p>
-   * The module only lists the entity identifiers of the issuers. The trust mark types are taken from the trust marks
-   * of the issuer, which therefore has to be an active trust mark issuer in this registry. An issuer that is not, for
-   * example an external one, cannot be mapped to any trust mark type and is left out with a warning.
+   * An entry with auto set takes the trust mark types from the trust marks the issuer has now, so the claim follows
+   * the issuer. The issuer has to be an active trust mark issuer of the same organization as the trust anchor. If it
+   * is not, for example if it has been removed or deactivated since, the entry is left out with a warning. The other
+   * entries list their trust mark types and the issuer can be any entity.
    *
    * @param taImModuleEntity the trust anchor module
    * @return trust mark type to issuers, or {@code null} if there is nothing to export
    */
   private Map<EntityID, List<EntityID>> toTrustMarkIssuers(final TrustAnchorIntermediateModule taImModuleEntity) {
-    final List<String> issuers = taImModuleEntity.getTrustMarkIssuers();
-    if (issuers == null || issuers.isEmpty()) {
+    final List<TrustAnchorIssuer> entries = taImModuleEntity.getTrustMarkIssuers();
+    if (entries == null || entries.isEmpty()) {
       return null;
     }
 
     final Map<EntityID, List<EntityID>> trustMarkIssuers = new LinkedHashMap<>();
-    for (final String issuer : issuers.stream().filter(Objects::nonNull).distinct().toList()) {
-      final List<String> trustMarkTypes = this.entityRepository
-          .findByEntityTypeAndOptionalIssuer(EntityType.FEDERATION_ENTITY, issuer)
-          .stream()
-          .map(FederationEntity::getTrustmarkIssuer)
-          .filter(Objects::nonNull)
-          .filter(tmi -> Boolean.TRUE.equals(tmi.getActive()))
-          .flatMap(tmi -> tmi.getTrustmarks().stream())
-          .map(TrustMark::getTrustmarkType)
-          .filter(Objects::nonNull)
-          .distinct()
-          .toList();
+    for (final TrustAnchorIssuer entry : entries.stream()
+        .sorted(Comparator.comparing(TrustAnchorIssuer::issuer)).toList()) {
+      final List<String> trustMarkTypes = entry.auto()
+          ? this.trustMarkTypesOf(taImModuleEntity, entry.issuer())
+          : entry.trustMarkTypes();
       if (trustMarkTypes.isEmpty()) {
-        log.warn("Trust mark issuer {} of trust anchor {} is not an active trust mark issuer with trust marks in "
-            + "this registry, it is left out of trust_mark_issuers", issuer, taImModuleEntity.getEntity().getIssuer());
+        log.warn("Trust mark issuer {} of trust anchor {} gives no trust mark types and is left out of "
+                + "trust_mark_issuers. {}", entry.issuer(), taImModuleEntity.getEntity().getIssuer(),
+            entry.auto()
+                ? "It is not an active trust mark issuer with trust marks of the same organization."
+                : "No trust mark types are listed.");
         continue;
       }
-      trustMarkTypes.forEach(type ->
-          trustMarkIssuers.computeIfAbsent(new EntityID(type), key -> new ArrayList<>()).add(new EntityID(issuer)));
+      trustMarkTypes.stream().distinct().sorted().forEach(type -> {
+        final List<EntityID> issuers = trustMarkIssuers.computeIfAbsent(new EntityID(type), key -> new ArrayList<>());
+        final EntityID issuer = new EntityID(entry.issuer());
+        if (!issuers.contains(issuer)) {
+          issuers.add(issuer);
+        }
+      });
     }
     return trustMarkIssuers.isEmpty() ? null : trustMarkIssuers;
+  }
+
+  private List<String> trustMarkTypesOf(final TrustAnchorIntermediateModule taImModuleEntity, final String issuer) {
+    final Organization organization = taImModuleEntity.getOrganization();
+    if (organization == null) {
+      return List.of();
+    }
+    return this.entityRepository
+        .findByOrganizationIdAndEntityKeyTypeAndIssuer(organization.getOrganizationId(),
+            EntityType.FEDERATION_ENTITY, issuer)
+        .map(FederationEntity::getTrustmarkIssuer)
+        .filter(tmi -> Boolean.TRUE.equals(tmi.getActive()))
+        .map(tmi -> tmi.getTrustmarks().stream()
+            .map(TrustMark::getTrustmarkType)
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList())
+        .orElse(List.of());
   }
 
   protected TrustAnchorProperties.SubordinateListingProperty toSubordinates(final Subordinate subordinateEntity) {

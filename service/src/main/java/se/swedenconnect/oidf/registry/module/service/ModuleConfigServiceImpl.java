@@ -32,6 +32,7 @@ import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ModuleDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustAnchorIssuerDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.module.mapper.DtoToModuleMapper;
 import se.swedenconnect.oidf.registry.module.mapper.ModuleToDtoMapper;
@@ -119,6 +120,31 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
         .orElseThrow(() -> notFound);
   }
 
+  /**
+   * An issuer with auto set has its trust marks included as they are when the configuration is fetched, which only
+   * works for a trust mark issuer of the same organization.
+   */
+  private void requireOwnTrustmarkIssuers(final UUID organizationId, final TrustAnchorDto input) {
+    if (input.getTrustMarkIssuers() == null) {
+      return;
+    }
+    for (final TrustAnchorIssuerDto issuer : input.getTrustMarkIssuers()) {
+      if (!issuer.isAuto()) {
+        continue;
+      }
+      final boolean isOwnTrustmarkIssuer = this.entityRepository
+          .findByOrganizationIdAndEntityKeyTypeAndIssuer(organizationId, EntityType.FEDERATION_ENTITY,
+              issuer.getIssuer().trim())
+          .map(FederationEntity::getTrustmarkIssuer)
+          .isPresent();
+      if (!isOwnTrustmarkIssuer) {
+        throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
+            "Auto can only be set for a trust mark issuer of the same organization, but %s is not one"
+                .formatted(issuer.getIssuer()));
+      }
+    }
+  }
+
   private TrustAnchorIntermediateModule findModuleOrThrow(final OrganizationRecord organizationRecord,
       final UUID id, final ModuleType type) {
     final RegistryServerException notFound = new RegistryServerException(
@@ -146,6 +172,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     final UUID entityId = input.getEntityId();
     final FederationEntity entityEntity = this.findFederationEntityOrThrow(organizationRecord, entityId);
     final Organization org = this.resolveOrganization(organizationRecord);
+    this.requireOwnTrustmarkIssuers(org.getOrganizationId(), input);
 
     if (entityEntity.getTrustanchorIntermediate() != null) {
       throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
@@ -175,6 +202,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     ValidateDto.init(organizationRecord).validate(input);
 
     final TrustAnchorIntermediateModule module = this.findModuleOrThrow(organizationRecord, id, ModuleType.TRUSTANCHOR);
+    this.requireOwnTrustmarkIssuers(module.getOrganization().getOrganizationId(), input);
     final TrustAnchorDto oldDto = ModuleToDtoMapper.toDto(module);
 
     DtoToModuleMapper.updateIntermediate(module, input);

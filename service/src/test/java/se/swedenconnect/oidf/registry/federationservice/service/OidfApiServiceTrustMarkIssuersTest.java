@@ -25,17 +25,25 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import se.swedenconnect.oidf.registry.entity.model.EntityType;
 import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.entity.repository.EntityRepository;
+import se.swedenconnect.oidf.registry.federationservice.model.ModuleRecord;
 import se.swedenconnect.oidf.registry.federationservice.model.TrustAnchorProperties;
+import se.swedenconnect.oidf.registry.federationservice.serde.JsonRegistryLoader;
 import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
+import se.swedenconnect.oidf.registry.module.model.TrustAnchorIssuer;
 import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
+import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
 import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -49,8 +57,11 @@ class OidfApiServiceTrustMarkIssuersTest {
   private static final String TA = "https://ta.example.com";
   private static final String TMI1 = "https://tmi1.example.com";
   private static final String TMI2 = "https://tmi2.example.com";
+  private static final String EXTERNAL = "https://external.example.org";
   private static final String CERTIFIED_OP = "https://ta.example.com/trustmarks/certified-op";
   private static final String CERTIFIED_RP = "https://ta.example.com/trustmarks/certified-rp";
+
+  private static final UUID ORGANIZATION_ID = UUID.randomUUID();
 
   @Mock
   private EntityRepository entityRepository;
@@ -69,7 +80,8 @@ class OidfApiServiceTrustMarkIssuersTest {
         this.entityRepository, "https://issuer.example.com", this.instanceRepository, Duration.ofHours(1));
   }
 
-  private static FederationEntity trustMarkIssuerEntity(final String entityIdentifier, final boolean active,
+  /** A trust mark issuer entity with the given trust marks, that the repository finds for the organization. */
+  private void trustMarkIssuerInOrganization(final String entityIdentifier, final boolean active,
       final String... trustMarkTypes) {
     final FederationEntity entity = new FederationEntity();
     entity.setEntityType(EntityType.FEDERATION_ENTITY);
@@ -78,78 +90,124 @@ class OidfApiServiceTrustMarkIssuersTest {
     final TrustMarkIssuer tmi = new TrustMarkIssuer();
     tmi.setActive(active);
     tmi.setEntity(entity);
-    tmi.setTrustmarks(java.util.Arrays.stream(trustMarkTypes).map(type -> {
+    tmi.setTrustmarks(Arrays.stream(trustMarkTypes).map(type -> {
       final TrustMark trustMark = new TrustMark();
       trustMark.setTrustmarkType(type);
       return trustMark;
     }).toList());
     entity.setTrustmarkIssuer(tmi);
-    return entity;
+    when(this.entityRepository.findByOrganizationIdAndEntityKeyTypeAndIssuer(
+        ORGANIZATION_ID, EntityType.FEDERATION_ENTITY, entityIdentifier)).thenReturn(java.util.Optional.of(entity));
   }
 
-  private static TrustAnchorIntermediateModule trustAnchor(final List<String> trustMarkIssuers) {
+  private static TrustAnchorIssuer entry(final String issuer, final boolean auto, final String... types) {
+    return new TrustAnchorIssuer(issuer, auto, List.of(types));
+  }
+
+  private static TrustAnchorIntermediateModule trustAnchor(final TrustAnchorIssuer... entries) {
     final FederationEntity entity = new FederationEntity();
     entity.setIssuer(TA);
+    final Organization organization = new Organization();
+    organization.setOrganizationId(ORGANIZATION_ID);
     final TrustAnchorIntermediateModule module = new TrustAnchorIntermediateModule();
     module.setEntity(entity);
-    module.setTrustMarkIssuers(trustMarkIssuers);
+    module.setOrganization(organization);
+    module.setTrustMarkIssuers(new ArrayList<>(List.of(entries)));
     return module;
   }
 
   private static Map<String, List<String>> asStrings(final Map<EntityID, List<EntityID>> trustMarkIssuers) {
-    final Map<String, List<String>> result = new java.util.LinkedHashMap<>();
+    final Map<String, List<String>> result = new LinkedHashMap<>();
     trustMarkIssuers.forEach((type, issuers) ->
         result.put(type.getValue(), issuers.stream().map(EntityID::getValue).toList()));
     return result;
   }
 
   @Test
-  @DisplayName("Each trust mark type maps to the issuers that have a trust mark of that type")
-  void mapsTrustMarkTypesToIssuers() {
-    when(this.entityRepository.findByEntityTypeAndOptionalIssuer(EntityType.FEDERATION_ENTITY, TMI1))
-        .thenReturn(List.of(trustMarkIssuerEntity(TMI1, true, CERTIFIED_OP, CERTIFIED_RP)));
-    when(this.entityRepository.findByEntityTypeAndOptionalIssuer(EntityType.FEDERATION_ENTITY, TMI2))
-        .thenReturn(List.of(trustMarkIssuerEntity(TMI2, true, CERTIFIED_OP)));
+  @DisplayName("Auto includes every trust mark that the issuer has")
+  void autoIncludesAllTrustMarksOfTheIssuer() {
+    trustMarkIssuerInOrganization(TMI1, true, CERTIFIED_OP, CERTIFIED_RP);
 
-    final TrustAnchorProperties result = this.service.toTaIm(trustAnchor(List.of(TMI1, TMI2)));
+    final TrustAnchorProperties result = this.service.toTaIm(trustAnchor(entry(TMI1, true)));
 
     assertThat(asStrings(result.getTrustMarkIssuers()))
-        .containsEntry(CERTIFIED_OP, List.of(TMI1, TMI2))
-        .containsEntry(CERTIFIED_RP, List.of(TMI1))
-        .hasSize(2);
+        .containsOnly(Map.entry(CERTIFIED_OP, List.of(TMI1)), Map.entry(CERTIFIED_RP, List.of(TMI1)));
   }
 
   @Test
-  @DisplayName("An issuer that is not a trust mark issuer in this registry is left out")
-  void externalIssuerIsLeftOut() {
-    when(this.entityRepository.findByEntityTypeAndOptionalIssuer(EntityType.FEDERATION_ENTITY, TMI1))
-        .thenReturn(List.of(trustMarkIssuerEntity(TMI1, true, CERTIFIED_OP)));
-    when(this.entityRepository.findByEntityTypeAndOptionalIssuer(EntityType.FEDERATION_ENTITY, TMI2))
-        .thenReturn(List.of());
+  @DisplayName("Auto follows the issuer: a trust mark added later is part of the next export")
+  void autoFollowsTheCurrentTrustMarks() {
+    final TrustAnchorIntermediateModule module = trustAnchor(entry(TMI1, true));
+    trustMarkIssuerInOrganization(TMI1, true, CERTIFIED_OP);
+    assertThat(asStrings(this.service.toTaIm(module).getTrustMarkIssuers())).containsOnlyKeys(CERTIFIED_OP);
 
-    final TrustAnchorProperties result = this.service.toTaIm(trustAnchor(List.of(TMI1, TMI2)));
-
-    assertThat(asStrings(result.getTrustMarkIssuers())).containsOnly(Map.entry(CERTIFIED_OP, List.of(TMI1)));
+    trustMarkIssuerInOrganization(TMI1, true, CERTIFIED_OP, CERTIFIED_RP);
+    assertThat(asStrings(this.service.toTaIm(module).getTrustMarkIssuers()))
+        .containsOnlyKeys(CERTIFIED_OP, CERTIFIED_RP);
   }
 
   @Test
-  @DisplayName("An inactive trust mark issuer is left out")
-  void inactiveIssuerIsLeftOut() {
-    when(this.entityRepository.findByEntityTypeAndOptionalIssuer(EntityType.FEDERATION_ENTITY, TMI1))
-        .thenReturn(List.of(trustMarkIssuerEntity(TMI1, false, CERTIFIED_OP)));
+  @DisplayName("Explicit entries are exported as they are, and the issuer can be an entity outside the registry")
+  void explicitEntriesAreExportedAsListed() {
+    final TrustAnchorProperties result = this.service.toTaIm(
+        trustAnchor(entry(EXTERNAL, false, CERTIFIED_OP, CERTIFIED_RP)));
 
-    final TrustAnchorProperties result = this.service.toTaIm(trustAnchor(List.of(TMI1)));
+    assertThat(asStrings(result.getTrustMarkIssuers()))
+        .containsOnly(Map.entry(CERTIFIED_OP, List.of(EXTERNAL)), Map.entry(CERTIFIED_RP, List.of(EXTERNAL)));
+  }
+
+  @Test
+  @DisplayName("Auto and explicit entries are merged per trust mark type")
+  void autoAndExplicitEntriesAreMerged() {
+    trustMarkIssuerInOrganization(TMI1, true, CERTIFIED_OP, CERTIFIED_RP);
+
+    final TrustAnchorProperties result = this.service.toTaIm(
+        trustAnchor(entry(TMI1, true), entry(EXTERNAL, false, CERTIFIED_OP)));
+
+    assertThat(asStrings(result.getTrustMarkIssuers()))
+        .containsOnly(Map.entry(CERTIFIED_OP, List.of(EXTERNAL, TMI1)), Map.entry(CERTIFIED_RP, List.of(TMI1)));
+  }
+
+  @Test
+  @DisplayName("An explicit entry may list only some of the trust marks of a trust mark issuer of the organization")
+  void explicitEntryForOwnIssuerIsNotExpanded() {
+    final TrustAnchorProperties result = this.service.toTaIm(trustAnchor(entry(TMI1, false, CERTIFIED_RP)));
+
+    assertThat(asStrings(result.getTrustMarkIssuers())).containsOnly(Map.entry(CERTIFIED_RP, List.of(TMI1)));
+  }
+
+  @Test
+  @DisplayName("An auto entry is left out when the issuer is gone, inactive, or has no trust marks")
+  void autoEntryIsLeftOutWhenTheIssuerCannotBeUsed() {
+    // TMI1 is not found at all
+    when(this.entityRepository.findByOrganizationIdAndEntityKeyTypeAndIssuer(
+        ORGANIZATION_ID, EntityType.FEDERATION_ENTITY, TMI1)).thenReturn(java.util.Optional.empty());
+    trustMarkIssuerInOrganization(TMI2, false, CERTIFIED_OP);
+    trustMarkIssuerInOrganization("https://empty.example.com", true);
+
+    final TrustAnchorProperties result = this.service.toTaIm(trustAnchor(
+        entry(TMI1, true), entry(TMI2, true), entry("https://empty.example.com", true)));
 
     assertThat(result.getTrustMarkIssuers()).isNull();
   }
 
   @Test
-  @DisplayName("A repeated issuer and a repeated trust mark type give no duplicates")
-  void noDuplicates() {
-    when(this.entityRepository.findByEntityTypeAndOptionalIssuer(EntityType.FEDERATION_ENTITY, TMI1))
-        .thenReturn(List.of(trustMarkIssuerEntity(TMI1, true, CERTIFIED_OP, CERTIFIED_OP)));
+  @DisplayName("A trust mark issuer of another organization is not found, so auto leaves it out")
+  void autoIsLimitedToTheSameOrganization() {
+    // Nothing is stubbed for ORGANIZATION_ID, the repository does not find the issuer there.
+    when(this.entityRepository.findByOrganizationIdAndEntityKeyTypeAndIssuer(
+        ORGANIZATION_ID, EntityType.FEDERATION_ENTITY, TMI1)).thenReturn(java.util.Optional.empty());
 
-    final TrustAnchorProperties result = this.service.toTaIm(trustAnchor(List.of(TMI1, TMI1)));
+    assertThat(this.service.toTaIm(trustAnchor(entry(TMI1, true))).getTrustMarkIssuers()).isNull();
+  }
+
+  @Test
+  @DisplayName("No duplicate issuers or trust mark types in the claim")
+  void noDuplicates() {
+    trustMarkIssuerInOrganization(TMI1, true, CERTIFIED_OP, CERTIFIED_OP);
+
+    final TrustAnchorProperties result = this.service.toTaIm(
+        trustAnchor(entry(TMI1, true), entry(TMI1, false, CERTIFIED_OP)));
 
     assertThat(asStrings(result.getTrustMarkIssuers())).containsOnly(Map.entry(CERTIFIED_OP, List.of(TMI1)));
   }
@@ -157,14 +215,11 @@ class OidfApiServiceTrustMarkIssuersTest {
   @Test
   @DisplayName("The claim is serialized as trust-mark-issuers with the trust mark type as key")
   void serializesAsTypeToIssuers() {
-    when(this.entityRepository.findByEntityTypeAndOptionalIssuer(EntityType.FEDERATION_ENTITY, TMI1))
-        .thenReturn(List.of(trustMarkIssuerEntity(TMI1, true, CERTIFIED_OP)));
-    final se.swedenconnect.oidf.registry.federationservice.model.ModuleRecord record =
-        new se.swedenconnect.oidf.registry.federationservice.model.ModuleRecord();
-    record.setTrustAnchors(List.of(this.service.toTaIm(trustAnchor(List.of(TMI1)))));
+    trustMarkIssuerInOrganization(TMI1, true, CERTIFIED_OP);
+    final ModuleRecord record = new ModuleRecord();
+    record.setTrustAnchors(List.of(this.service.toTaIm(trustAnchor(entry(TMI1, true)))));
 
-    final String json = new se.swedenconnect.oidf.registry.federationservice.serde.JsonRegistryLoader()
-        .toJson(record);
+    final String json = new JsonRegistryLoader().toJson(record);
 
     assertThat(json).contains("\"trust-mark-issuers\":{\"" + CERTIFIED_OP + "\":[\"" + TMI1 + "\"]}");
   }
@@ -172,7 +227,6 @@ class OidfApiServiceTrustMarkIssuersTest {
   @Test
   @DisplayName("No trust mark issuers on the module gives no claim")
   void noIssuersGivesNoClaim() {
-    assertThat(this.service.toTaIm(trustAnchor(null)).getTrustMarkIssuers()).isNull();
-    assertThat(this.service.toTaIm(trustAnchor(List.of())).getTrustMarkIssuers()).isNull();
+    assertThat(this.service.toTaIm(trustAnchor()).getTrustMarkIssuers()).isNull();
   }
 }
