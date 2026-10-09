@@ -172,17 +172,115 @@
                     :disabled="savingModule"
                     class="mb-4"
                 ></v-switch>
-                <v-combobox
-                    v-model="modules.trustanchor.trustMarkIssuers"
-                    label="Trust Mark Issuers"
-                    multiple
-                    chips
-                    closable-chips
-                    :disabled="savingModule"
-                    hint="Entity identifiers of trust mark issuers in this registry. The trust anchor trusts every trust mark type of each issuer. Issuers outside the registry are not exported."
-                    persistent-hint
+                <div class="text-subtitle-2 mb-1">Trust Mark Issuers</div>
+                <div class="text-caption text-medium-emphasis mb-3">
+                  The trust mark issuers that this trust anchor trusts, exported as trust_mark_issuers. Include every
+                  trust mark of a trust mark issuer of this organization with auto, and the issuer is read when the
+                  configuration is fetched. Otherwise list the trust mark types, for any issuer.
+                </div>
+
+                <div v-if="modules.trustanchor.trustMarkIssuers.length === 0" class="text-caption mb-3">
+                  No trust mark issuers added.
+                </div>
+
+                <v-card
+                    v-for="(entry, index) in modules.trustanchor.trustMarkIssuers"
+                    :key="index"
+                    variant="outlined"
+                    class="mb-3 pa-3"
+                >
+                  <div class="d-flex align-start">
+                    <v-combobox
+                        :id="'trustanchor-issuer-' + index"
+                        v-model="entry.issuer"
+                        :items="trustmarkIssuerOverview.ownIssuers.value"
+                        label="Issuer"
+                        hint="Entity identifier of the trust mark issuer"
+                        persistent-hint
+                        density="compact"
+                        :hide-no-data="true"
+                        :disabled="savingModule"
+                        class="flex-grow-1 mr-2"
+                    ></v-combobox>
+                    <v-btn
+                        :id="'trustanchor-issuer-remove-' + index"
+                        icon="mdi-delete"
+                        variant="text"
+                        size="small"
+                        color="error"
+                        :aria-label="`Remove trust mark issuer ${index + 1}`"
+                        :disabled="savingModule"
+                        @click="removeTrustMarkIssuer(index)"
+                    ></v-btn>
+                  </div>
+
+                  <v-checkbox
+                      :id="'trustanchor-issuer-auto-' + index"
+                      v-model="entry.auto"
+                      label="Include all trust marks of the issuer automatically"
+                      density="compact"
+                      hide-details
+                      :disabled="savingModule"
+                      @update:model-value="(auto) => { if (auto) entry.trustMarkTypes = []; }"
+                  ></v-checkbox>
+
+                  <v-combobox
+                      v-if="!entry.auto"
+                      :id="'trustanchor-issuer-types-' + index"
+                      v-model="entry.trustMarkTypes"
+                      :items="trustmarkIssuerOverview.typesOf(entry.issuer)"
+                      label="Trust mark types"
+                      hint="Trust mark types that the issuer is trusted to issue, press Enter after each"
+                      persistent-hint
+                      multiple
+                      chips
+                      closable-chips
+                      density="compact"
+                      :hide-no-data="true"
+                      :disabled="savingModule"
+                      class="mt-2"
+                  ></v-combobox>
+
+                  <v-alert
+                      v-if="issuerStatus(entry)"
+                      :id="'trustanchor-issuer-status-' + index"
+                      :type="issuerStatus(entry).level === 'ok' ? 'success'
+                          : (issuerStatus(entry).level === 'error' ? 'error' : 'warning')"
+                      variant="tonal"
+                      density="compact"
+                      class="mt-2"
+                  >
+                    {{ issuerStatus(entry).text }}
+                  </v-alert>
+                </v-card>
+
+                <v-btn
+                    id="btn-add-trustanchor-issuer"
+                    color="primary"
+                    variant="outlined"
+                    size="small"
                     class="mb-4"
-                ></v-combobox>
+                    :disabled="savingModule"
+                    @click="addTrustMarkIssuer"
+                >
+                  <v-icon start>mdi-plus</v-icon>
+                  Add Trust Mark Issuer
+                </v-btn>
+
+                <div class="mb-4">
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    Trust mark types that this trust anchor trusts (trust_mark_issuers)
+                  </div>
+                  <div v-if="trustedTypes.length === 0" class="text-caption">
+                    None.
+                  </div>
+                  <ul v-else id="trustanchor-trusted-types" class="text-body-2 pl-4">
+                    <li v-for="[type, typeIssuers] in trustedTypes" :key="type">
+                      {{ type }}
+                      <span class="text-medium-emphasis">({{ typeIssuers.join(', ') }})</span>
+                    </li>
+                  </ul>
+                </div>
                 <v-card-actions class="px-0">
                   <v-spacer></v-spacer>
                   <v-btn
@@ -607,6 +705,7 @@ import {useSigningKeys} from '@/api/composables/signingKeys';
 import ListField from '@/components/ListField.vue';
 import EntityConfigurationViewer from '@/components/EntityConfigurationViewer.vue';
 import {useUserStore} from '@/stores/userStore';
+import {useTrustmarkIssuerOverview} from '@/api/composables/trustmarkIssuerOverview';
 import {
   federationEntityPath,
   intermediateFlowAssignmentsPath,
@@ -624,6 +723,7 @@ const router = useRouter();
 const {requestGet, requestPut, requestPost, requestDelete, loading, ok} = useRequest();
 const errorStore = useErrorStore();
 const userStore = useUserStore();
+const trustmarkIssuerOverview = useTrustmarkIssuerOverview();
 const {loadJwks: loadJwksFromApi, loading: loadingResolverJwks} = useLoadJwks();
 const {signingKeys, fetchSigningKeys} = useSigningKeys();
 
@@ -742,7 +842,11 @@ async function loadEntity() {
       modules.value.trustanchor = {
         id: response.trustAnchor.trustAnchorId || response.trustAnchor.id,
         active: response.trustAnchor.active !== false,
-        trustMarkIssuers: response.trustAnchor.trustMarkIssuers || [],
+        trustMarkIssuers: (response.trustAnchor.trustMarkIssuers || []).map((issuer) => ({
+          issuer: issuer.issuer || '',
+          auto: issuer.auto === true,
+          trustMarkTypes: issuer.trustMarkTypes || [],
+        })),
       };
     }
 
@@ -882,7 +986,15 @@ async function saveModule(moduleType) {
         moduleData = {
           entityId: entityId.value,
           active: module.active,
-          trustMarkIssuers: module.trustMarkIssuers.filter(s => s && s.trim() !== ''),
+          trustMarkIssuers: module.trustMarkIssuers
+              .filter(entry => entry.issuer && entry.issuer.trim() !== '')
+              .map(entry => ({
+                issuer: entry.issuer.trim(),
+                auto: entry.auto === true,
+                trustMarkTypes: entry.auto === true
+                    ? []
+                    : (entry.trustMarkTypes || []).map(type => type.trim()).filter(type => type !== ''),
+              })),
         };
         if (module.id) {
           endpoint = trustAnchorModulePath(userStore.selectedTenant, userStore.orgNumber, module.id);
@@ -1067,8 +1179,23 @@ function cancel() {
   router.push({name: 'federation-entities'});
 }
 
+function issuerStatus(entry) {
+  return trustmarkIssuerOverview.statusOf(entry);
+}
+
+function addTrustMarkIssuer() {
+  modules.value.trustanchor.trustMarkIssuers.push({issuer: '', auto: true, trustMarkTypes: []});
+}
+
+function removeTrustMarkIssuer(index) {
+  modules.value.trustanchor.trustMarkIssuers.splice(index, 1);
+}
+
+const trustedTypes = computed(() =>
+    trustmarkIssuerOverview.trustedTypes(modules.value.trustanchor.trustMarkIssuers));
+
 onMounted(async () => {
-  await Promise.all([loadEntity(), fetchSigningKeys('FEDERATION_ENTITY')]);
+  await Promise.all([loadEntity(), fetchSigningKeys('FEDERATION_ENTITY'), trustmarkIssuerOverview.load()]);
 });
 </script>
 

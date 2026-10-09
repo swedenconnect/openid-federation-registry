@@ -34,13 +34,15 @@
   page.
 - A superuser in a tenant without registered organizations now sees an explanatory message, and the selected tenant is
   kept across page loads.
-- The trust mark issuers of a trust anchor are now exported to oidf-service as `trust_mark_issuers`. The module still
-  lists the entity identifiers of the issuers, and the trust mark types are taken from the trust marks of each issuer,
-  which has to be an active trust mark issuer in the registry. An issuer outside the registry is left out with a
-  warning in the log.
-- The frontend is now built by the frontend-maven-plugin as part of the Maven build and copied into the static resources
-  of the service. The built frontend files are no longer checked into git, and the GitHub Actions workflows no longer
-  build the frontend by hand. Use `-Dfrontend.skip=true` to leave the frontend out of a build.
+- The trust mark issuers of a trust anchor are now exported to oidf-service as `trust_mark_issuers`. **Breaking change in
+  the API:** `trustMarkIssuers` of a trust anchor is a list of entries `{issuer, auto, trustMarkTypes}` instead of a list
+  of entity identifiers. With `auto` set, every trust mark of the issuer is included and the trust mark types are read
+  from the issuer when oidf-service fetches its configuration, so new and removed trust marks are followed without
+  changing the trust anchor. The issuer has to be a trust mark issuer of the same organization, otherwise the request
+  is rejected with 400, and an issuer that has been removed or deactivated since is left out with a warning in the log.
+  Without `auto`, `trustMarkTypes` lists the trust mark types and the issuer can be any entity. Database migration V32
+  moves the issuers that are stored today to entries with `auto` set. The trust anchor panel in the GUI has a row per
+  issuer with the auto option, suggestions, a status for each row and the list of trust mark types that are trusted.
 
 ---
 
