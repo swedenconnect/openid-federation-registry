@@ -82,10 +82,7 @@ public class SecurityConfig {
           login
               .loginPage("/")
               .defaultSuccessUrl("/", true)
-              .failureHandler((request, response, exception) -> {
-                log.error("Authentication failed", exception);
-                response.sendRedirect("/login?errorcode=backend.login.failed");
-              })
+              .failureHandler(new LoginFailureHandler())
               .userInfoEndpoint(userInfo -> userInfo
                   .oidcUserService(orgRightsOidcUserService)
               );

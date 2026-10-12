@@ -28,6 +28,9 @@
 - Exporting of metrics and traces is now off by default: `management.prometheus.metrics.export.enabled`,
   `management.otlp.metrics.export.enabled` and `management.tracing.export.enabled` are `false` in `application.yml`.
   Set them to `true` to turn the export on.
+- A failed login, for example when the tokens can not be exchanged, now sends the user to the login page with a message.
+  The error code from Spring Security or the identity provider, such as `invalid_token_response`, is shown as the reason. A login that is denied or cancelled has a message of its own. The redirect keeps the context path, so it also works
+  when the registry is not served from the root.
 
 ---
 
