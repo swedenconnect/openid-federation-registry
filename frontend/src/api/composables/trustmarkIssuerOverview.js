@@ -126,10 +126,30 @@ export function useTrustmarkIssuerOverview() {
         return {level: 'ok', text: `Trusted for the ${types.length} listed trust mark type${types.length === 1 ? '' : 's'}.`};
     }
 
+    function isBlankType(external) {
+        return !external?.trustMarkType || !external.trustMarkType.trim();
+    }
+
     /**
-     * The trust_mark_issuers that the entries give: trust mark type -> issuers.
+     * Explains what happens to an external trust mark: {level, text} like statusOf. Null when there is nothing to say.
      */
-    function trustedTypes(entries) {
+    function externalStatusOf(external) {
+        if (isBlankType(external)) return null;
+        if (external.allowAll) {
+            return {level: 'ok', text: 'Anyone may issue the trust mark type. It is exported with an empty list of issuers.'};
+        }
+        const count = (external.issuers || []).filter((issuer) => issuer && issuer.trim()).length;
+        if (count === 0) {
+            return {level: 'error', text: 'Add at least one issuer, or allow all issuers.'};
+        }
+        return {level: 'ok', text: `Trusted for ${count} issuer${count === 1 ? '' : 's'} outside the organization.`};
+    }
+
+    /**
+     * The trust_mark_issuers that the entries and the external trust marks give: trust mark type -> issuers, where an
+     * empty list means that anyone may issue the type. Like the registry, allow all wins over listed issuers.
+     */
+    function trustedTypes(entries, externals = []) {
         const byType = new Map();
         for (const entry of entries || []) {
             for (const type of typesOfEntry(entry)) {
@@ -138,8 +158,19 @@ export function useTrustmarkIssuerOverview() {
                 if (!current.includes(issuer)) byType.set(type, [...current, issuer]);
             }
         }
+        for (const external of externals || []) {
+            if (isBlankType(external)) continue;
+            const type = external.trustMarkType.trim();
+            if (external.allowAll) {
+                byType.set(type, []);
+                continue;
+            }
+            const current = byType.get(type) || [];
+            const added = (external.issuers || []).map((issuer) => issuer.trim()).filter(Boolean);
+            byType.set(type, [...new Set([...current, ...added])]);
+        }
         return [...byType.entries()].sort(([a], [b]) => a.localeCompare(b));
     }
 
-    return {issuers, loaded, load, ownIssuers, isOwn, typesOf, statusOf, trustedTypes};
+    return {issuers, loaded, load, ownIssuers, isOwn, typesOf, statusOf, externalStatusOf, trustedTypes};
 }

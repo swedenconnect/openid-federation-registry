@@ -43,6 +43,9 @@
   Without `auto`, `trustMarkTypes` lists the trust mark types and the issuer can be any entity. Database migration V32
   moves the issuers that are stored today to entries with `auto` set. The trust anchor panel in the GUI has a row per
   issuer with the auto option, suggestions, a status for each row and the list of trust mark types that are trusted.
+- A trust anchor can also export trust mark types with issuers outside the organization, in `externalTrustMarks`
+  `{trustMarkType, allowAll, issuers}`. With `allowAll` anyone may issue the trust mark type, and it is exported with an
+  empty list of issuers. The trust anchor panel in the GUI has a section for them.
 
 ---
 

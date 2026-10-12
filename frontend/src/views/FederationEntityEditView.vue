@@ -267,6 +267,96 @@
                   Add Trust Mark Issuer
                 </v-btn>
 
+                <div class="text-subtitle-2 mb-1">External Trust Marks</div>
+                <div class="text-caption text-medium-emphasis mb-3">
+                  Trust mark types with issuers outside this organization, or that anyone may issue. They are exported
+                  as trust_mark_issuers together with the trust mark issuers above.
+                </div>
+
+                <div v-if="modules.trustanchor.externalTrustMarks.length === 0" class="text-caption mb-3">
+                  No external trust marks added.
+                </div>
+
+                <v-card
+                    v-for="(external, index) in modules.trustanchor.externalTrustMarks"
+                    :key="'external-' + index"
+                    variant="outlined"
+                    class="mb-3 pa-3"
+                >
+                  <div class="d-flex align-start">
+                    <v-text-field
+                        :id="'trustanchor-external-type-' + index"
+                        v-model="external.trustMarkType"
+                        label="Trust mark type"
+                        hint="Trust mark type identifier, a URL"
+                        persistent-hint
+                        density="compact"
+                        :disabled="savingModule"
+                        class="flex-grow-1 mr-2"
+                    ></v-text-field>
+                    <v-btn
+                        :id="'trustanchor-external-remove-' + index"
+                        icon="mdi-delete"
+                        variant="text"
+                        size="small"
+                        color="error"
+                        :aria-label="`Remove external trust mark ${index + 1}`"
+                        :disabled="savingModule"
+                        @click="removeExternalTrustMark(index)"
+                    ></v-btn>
+                  </div>
+
+                  <v-checkbox
+                      :id="'trustanchor-external-allow-all-' + index"
+                      v-model="external.allowAll"
+                      label="Anyone may issue this trust mark type"
+                      density="compact"
+                      hide-details
+                      :disabled="savingModule"
+                      @update:model-value="(allowAll) => { if (allowAll) external.issuers = []; }"
+                  ></v-checkbox>
+
+                  <v-combobox
+                      v-if="!external.allowAll"
+                      :id="'trustanchor-external-issuers-' + index"
+                      v-model="external.issuers"
+                      label="Issuers"
+                      hint="Entity identifiers of the issuers that are trusted to issue the type, press Enter after each"
+                      persistent-hint
+                      multiple
+                      chips
+                      closable-chips
+                      density="compact"
+                      :hide-no-data="true"
+                      :disabled="savingModule"
+                      class="mt-2"
+                  ></v-combobox>
+
+                  <v-alert
+                      v-if="externalStatus(external)"
+                      :id="'trustanchor-external-status-' + index"
+                      :type="externalStatus(external).level === 'ok' ? 'success' : 'error'"
+                      variant="tonal"
+                      density="compact"
+                      class="mt-2"
+                  >
+                    {{ externalStatus(external).text }}
+                  </v-alert>
+                </v-card>
+
+                <v-btn
+                    id="btn-add-trustanchor-external"
+                    color="primary"
+                    variant="outlined"
+                    size="small"
+                    class="mb-4"
+                    :disabled="savingModule"
+                    @click="addExternalTrustMark"
+                >
+                  <v-icon start>mdi-plus</v-icon>
+                  Add External Trust Mark
+                </v-btn>
+
                 <div class="mb-4">
                   <div class="text-caption text-medium-emphasis mb-1">
                     Trust mark types that this trust anchor trusts (trust_mark_issuers)
@@ -277,7 +367,9 @@
                   <ul v-else id="trustanchor-trusted-types" class="text-body-2 pl-4">
                     <li v-for="[type, typeIssuers] in trustedTypes" :key="type">
                       {{ type }}
-                      <span class="text-medium-emphasis">({{ typeIssuers.join(', ') }})</span>
+                      <span class="text-medium-emphasis">
+                        ({{ typeIssuers.length === 0 ? 'anyone may issue' : typeIssuers.join(', ') }})
+                      </span>
                     </li>
                   </ul>
                 </div>
@@ -782,6 +874,7 @@ const modules = ref({
     id: null,
     active: true,
     trustMarkIssuers: [],
+    externalTrustMarks: [],
   },
   intermediate: {
     id: null,
@@ -846,6 +939,11 @@ async function loadEntity() {
           issuer: issuer.issuer || '',
           auto: issuer.auto === true,
           trustMarkTypes: issuer.trustMarkTypes || [],
+        })),
+        externalTrustMarks: (response.trustAnchor.externalTrustMarks || []).map((external) => ({
+          trustMarkType: external.trustMarkType || '',
+          allowAll: external.allowAll === true,
+          issuers: external.issuers || [],
         })),
       };
     }
@@ -995,6 +1093,15 @@ async function saveModule(moduleType) {
                     ? []
                     : (entry.trustMarkTypes || []).map(type => type.trim()).filter(type => type !== ''),
               })),
+          externalTrustMarks: module.externalTrustMarks
+              .filter(external => external.trustMarkType && external.trustMarkType.trim() !== '')
+              .map(external => ({
+                trustMarkType: external.trustMarkType.trim(),
+                allowAll: external.allowAll === true,
+                issuers: external.allowAll === true
+                    ? []
+                    : (external.issuers || []).map(issuer => issuer.trim()).filter(issuer => issuer !== ''),
+              })),
         };
         if (module.id) {
           endpoint = trustAnchorModulePath(userStore.selectedTenant, userStore.orgNumber, module.id);
@@ -1124,7 +1231,7 @@ async function confirmDeleteModule() {
       // Reset module data
       switch (moduleType) {
         case 'trustanchor':
-          modules.value.trustanchor = {id: null, active: true, trustMarkIssuers: []};
+          modules.value.trustanchor = {id: null, active: true, trustMarkIssuers: [], externalTrustMarks: []};
           break;
         case 'intermediate':
           modules.value.intermediate = {id: null, active: true};
@@ -1191,8 +1298,21 @@ function removeTrustMarkIssuer(index) {
   modules.value.trustanchor.trustMarkIssuers.splice(index, 1);
 }
 
+function externalStatus(external) {
+  return trustmarkIssuerOverview.externalStatusOf(external);
+}
+
+function addExternalTrustMark() {
+  modules.value.trustanchor.externalTrustMarks.push({trustMarkType: '', allowAll: false, issuers: []});
+}
+
+function removeExternalTrustMark(index) {
+  modules.value.trustanchor.externalTrustMarks.splice(index, 1);
+}
+
 const trustedTypes = computed(() =>
-    trustmarkIssuerOverview.trustedTypes(modules.value.trustanchor.trustMarkIssuers));
+    trustmarkIssuerOverview.trustedTypes(modules.value.trustanchor.trustMarkIssuers,
+        modules.value.trustanchor.externalTrustMarks));
 
 onMounted(async () => {
   await Promise.all([loadEntity(), fetchSigningKeys('FEDERATION_ENTITY'), trustmarkIssuerOverview.load()]);
