@@ -10,17 +10,16 @@
   },
   "dependencies": {
     "@formkit/vue": "^1.6.9",
+    "@mdi/font": "^7.4.47",
     "pinia": "^3.0.4",
-    "vue": "^3.5.13",
+    "vue": "^3.5.43",
     "vue-router": "^4.5.0",
-    "vuetify": "^3.7.1",
-    "@mdi/font": "^7.4.47"
+    "vuetify": "^3.13.6"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.1",
-    "autoprefixer": "^10.4.20",
-    "postcss": "^8.5.28",
-    "vite": "^6.4.3"
+    "autoprefixer": "^10.6.1",
+    "postcss": "^8.5.29",
+    "vite": "^6.4.4"
   }
 }
-

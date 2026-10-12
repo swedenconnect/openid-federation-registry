@@ -74,7 +74,7 @@ public class ScopeRightsFactory {
 
     final List<OrgRightsClaim.OrgEntry> entries = byOrg.entrySet().stream()
         .map(entry -> new OrgRightsClaim.OrgEntry(
-            OrganizationID.of(entry.getKey()), new LocalizedString(), null, List.copyOf(entry.getValue())))
+            OrganizationID.of(entry.getKey()), null, new LocalizedString(), null, List.copyOf(entry.getValue())))
         .toList();
 
     return new OrgRightsClaim(false, entries);

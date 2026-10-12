@@ -88,7 +88,7 @@ class TenantServiceTest {
   }
 
   private RegistryProperties registryPropertiesWith(final RegistryProperties.InstanceProperties... instances) {
-    return new RegistryProperties(null, List.of(instances), null, null);
+    return new RegistryProperties(null, List.of(instances), null, null, null);
   }
 
   // Superuser-leg fixtures: these organization numbers are persisted DB data (Organization.orgNumber), never
@@ -136,7 +136,7 @@ class TenantServiceTest {
     final LocalizedString name = new LocalizedString();
     name.add("sv", nameSv);
     name.add("en", nameEn);
-    return new OrgRightsClaim.OrgEntry(OrganizationID.of(orgNumber), name, null, List.of(functions));
+    return new OrgRightsClaim.OrgEntry(OrganizationID.of(orgNumber), null, name, null, List.of(functions));
   }
 
   private static OrgRightsClaim.FunctionEntry functionRight(final String function, final String right) {
