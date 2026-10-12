@@ -226,7 +226,7 @@
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
                 <includes>
-                    <include>application.yaml</include>
+                    <include>application.yml</include>
                     <include>banner.txt</include>
                 </includes>
             </resource>
@@ -234,7 +234,7 @@
                 <directory>src/main/resources</directory>
                 <filtering>false</filtering>
                 <excludes>
-                    <exclude>application.yaml</exclude>
+                    <exclude>application.yml</exclude>
                     <exclude>banner.txt</exclude>
                 </excludes>
             </resource>
