@@ -21,6 +21,9 @@
 - A trust anchor can also export trust mark types with issuers outside the organization, in `externalTrustMarks`
   `{trustMarkType, allowAll, issuers}`. With `allowAll` anyone may issue the trust mark type, and it is exported with an
   empty list of issuers. The trust anchor panel in the GUI has a section for them.
+- Exporting of metrics and traces is now off by default: `management.prometheus.metrics.export.enabled`,
+  `management.otlp.metrics.export.enabled` and `management.tracing.export.enabled` are `false` in `application.yml`.
+  Set them to `true` to turn the export on.
 
 ---
 
