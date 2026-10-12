@@ -109,7 +109,9 @@ automatically generated names differ between environments.
 | `management.server.port`                                | `8081`                            | Port for the management/actuator endpoints (separate from the main server port).               |
 | `management.metrics.tags.application_name`              | `oidf-registry`                   | Tag added to all metrics for filtering by application name.                                    |
 | `management.metrics.tags.application_version`           | `1.0.0`                           | Tag added to all metrics for filtering by application version.                                 |
-| `management.prometheus.metrics.export.enabled`          | `true`                            | Enables Prometheus metrics export.                                                             |
+| `management.prometheus.metrics.export.enabled`          | `false`                           | Enables Prometheus metrics export. Off unless explicitly turned on.                            |
+| `management.otlp.metrics.export.enabled`                | `false`                           | Enables OTLP metrics export. Off unless explicitly turned on.                                  |
+| `management.tracing.export.enabled`                     | `false`                           | Enables export of traces to the OTLP endpoint. Off unless explicitly turned on.                |
 | `management.tracing.sampling.probability`               | `1.0`                             | Fraction of requests to sample for distributed tracing. `1.0` = 100 %.                         |
 | `management.opentelemetry.tracing.export.otlp.endpoint` | `http://localhost:4318/v1/traces` | OTLP endpoint for exporting traces. Can also be set via `OTEL_EXPORTER_OTLP_ENDPOINT` env var. |
 | `management.endpoints.web.exposure.include`             | `*`                               | Controls which actuator endpoints are exposed over HTTP.                                       |

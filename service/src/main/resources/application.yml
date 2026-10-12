@@ -5,11 +5,19 @@ management:
     tags:
       application_version: ${spring.application.version}
       application_name: ${spring.application.name}
+  # Nothing is exported by default. Turn on explicitly, for example with the environment variables
+  # MANAGEMENT_PROMETHEUS_METRICS_EXPORT_ENABLED=true and MANAGEMENT_TRACING_EXPORT_ENABLED=true
   prometheus:
     metrics:
       export:
-        enabled: true
+        enabled: false
+  otlp:
+    metrics:
+      export:
+        enabled: false
   tracing:
+    export:
+      enabled: false
     sampling:
       probability: 1.0
   endpoints:
