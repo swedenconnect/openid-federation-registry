@@ -31,22 +31,17 @@
 - A failed login, for example when the tokens can not be exchanged, now sends the user to the login page with a message.
   The error code from Spring Security or the identity provider, such as `invalid_token_response`, is shown as the reason. A login that is denied or cancelled has a message of its own. The redirect keeps the context path, so it also works
   when the registry is not served from the root.
-- Registrations are reviewed per entity: the domain, then the trust marks it asked for, then the steps of its own
-  registration, in one session that any operator of the tenant can continue. Decisions can be deferred. The order is
-  enforced by the server.
-- Registration review is a tenant-operator duty (`operator_organizations`), no longer limited to the organization
-  that owns the intermediate.
-- Every step that pauses for review stores a preview of what it is about to do, shown to the operator.
-- New step **Metadata Review** shows the operator the entity's metadata (logo, names, links, changes to a hosted
-  entity) and always waits for approval.
-- **Metadata Policy Creation** is configurable and selectable: a template of rules per entity type builds the
-  Subordinate Statement's `metadata` and `metadata_policy` and checks the entity's metadata. The default template
-  follows the Sweden Connect requirements. The subordinate's `metadata` is now published.
-- Fixed: a registration approved after a pause lost the keys and metadata policy loaded before the pause.
-- Fixed: approving and rejecting registrations now records the reviewer, with audit events
-  `REGISTRATION_STEP_APPROVED` and `REGISTRATION_REJECTED`.
-- Fixed: a registration whose flow failed after an approval stayed pending with nothing to approve; it now returns to
-  `STARTED`.
+- New entity review API under `/registration-admin/v1/{tenant}/{orgNumber}/entity-reviews`: list, get, `start` and
+  `decisions`. Open to tenant operators (`operator_organizations`).
+- Removed `GET /registration-admin/v1/{tenant}/{orgNumber}/count`.
+- `Registration` has new fields `createdDate`, `reviewedBy` and `reviewedAt`. `StepExecutionRecord` has new fields
+  `preview`, `reviewedBy` and `reviewedAt`.
+- New audit events `REGISTRATION_STEP_APPROVED` and `REGISTRATION_REJECTED`.
+- GUI: registrations are reviewed per entity in a shared session, with a preview of each paused step.
+- New step **Metadata Review**.
+- **Metadata Policy Creation** uses a configurable template per entity type. Subordinate statements publish `metadata`.
+- Fixed: approving a paused registration lost its keys and metadata policy.
+- Fixed: a flow that failed after an approval stayed pending; it now returns to `STARTED`.
 
 ---
 
