@@ -26,6 +26,7 @@ import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springdoc.core.customizers.OpenApiCustomizer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -43,17 +44,18 @@ public class OpenApiConfig {
   /**
    * Configures the OpenAPI documentation for the Entity Registry API.
    *
+   * @param version the version of the application, the project version set by the build
    * @return configured OpenAPI instance
    */
   @Bean
-  public OpenAPI openAPI() {
+  public OpenAPI openAPI(@Value("${spring.application.version:unknown}") final String version) {
     return new OpenAPI()
         .info(new Info()
             .title("OpenID Federation Registry API")
             .description("REST API for managing OpenID Federation entities, policies, modules, and trust marks. "
                 + "This API provides endpoints for creating, reading, updating, and deleting federation entities, "
                 + "policies, trust anchors, resolvers, trust marks, and trust mark subjects.")
-            .version("0.5.10-SNAPSHOT")
+            .version(version)
             .contact(new Contact()
                 .name("Sweden Connect")
                 .url("https://www.swedenconnect.se")
