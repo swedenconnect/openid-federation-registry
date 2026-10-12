@@ -6,8 +6,27 @@
 
 ---
 
+### Version 0.9.9 Unreleased
+**Date:** <ToBeSet>
 
-=======
+- The trust mark issuers of a trust anchor are now exported to oidf-service as `trust_mark_issuers`. **Breaking change in
+  the API:** `trustMarkIssuers` of a trust anchor is a list of entries `{issuer, auto, trustMarkTypes}` instead of a list
+  of entity identifiers. With `auto` set, every trust mark of the issuer is included and the trust mark types are read
+  from the issuer when oidf-service fetches its configuration, so new and removed trust marks are followed without
+  changing the trust anchor. The issuer has to be a trust mark issuer of the same organization, otherwise the request
+  is rejected with 400, and an issuer that has been removed or deactivated since is left out with a warning in the log.
+  Without `auto`, `trustMarkTypes` lists the trust mark types and the issuer can be any entity. Database migration V32
+  moves the issuers that are stored today to entries with `auto` set. The trust anchor panel in the GUI has a row per
+  issuer with the auto option, suggestions, a status for each row and the list of trust mark types that are trusted.
+- A trust anchor can also export trust mark types with issuers outside the organization, in `externalTrustMarks`
+  `{trustMarkType, allowAll, issuers}`. With `allowAll` anyone may issue the trust mark type, and it is exported with an
+  empty list of issuers. The trust anchor panel in the GUI has a section for them.
+- Exporting of metrics and traces is now off by default: `management.prometheus.metrics.export.enabled`,
+  `management.otlp.metrics.export.enabled` and `management.tracing.export.enabled` are `false` in `application.yml`.
+  Set them to `true` to turn the export on.
+
+---
+
 ### Version 0.9.8
 **Date:** 2026-10-09
 

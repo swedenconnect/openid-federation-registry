@@ -26,11 +26,15 @@ import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
 import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustAnchorExternalTrustMarkDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustAnchorIssuerDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.module.mapper.ModuleToDtoMapper;
+import se.swedenconnect.oidf.registry.module.model.ExternalTrustMark;
 import se.swedenconnect.oidf.registry.module.model.ModuleType;
 import se.swedenconnect.oidf.registry.module.model.Resolver;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
+import se.swedenconnect.oidf.registry.module.model.TrustAnchorIssuer;
 import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateMapper;
@@ -212,17 +216,44 @@ class EntityToDtoMapperTest {
   // -------------------------------------------------------------------------
 
   @Test
+  void toDto_trustAnchor_externalTrustMarks() {
+    final FederationEntity entity = createFederationEntity();
+    final TrustAnchorIntermediateModule module = createTaImEntity(entity, ModuleType.TRUSTANCHOR);
+    module.setExternalTrustMarks(List.of(
+        new ExternalTrustMark("https://ta.example.com/tm/b", true, List.of()),
+        new ExternalTrustMark("https://ta.example.com/tm/a", false, List.of("https://x.example.org"))));
+
+    final TrustAnchorDto dto = ModuleToDtoMapper.toDto(module);
+
+    // Sorted on the trust mark type
+    assertThat(dto.getExternalTrustMarks()).extracting(TrustAnchorExternalTrustMarkDto::getTrustMarkType)
+        .containsExactly("https://ta.example.com/tm/a", "https://ta.example.com/tm/b");
+    assertThat(dto.getExternalTrustMarks().get(0).isAllowAll()).isFalse();
+    assertThat(dto.getExternalTrustMarks().get(0).getIssuers()).containsExactly("https://x.example.org");
+    assertThat(dto.getExternalTrustMarks().get(1).isAllowAll()).isTrue();
+    assertThat(dto.getExternalTrustMarks().get(1).getIssuers()).isEmpty();
+  }
+
+  @Test
   void toDto_trustAnchor() {
     final FederationEntity entity = createFederationEntity();
     final TrustAnchorIntermediateModule module = createTaImEntity(entity, ModuleType.TRUSTANCHOR);
-    module.setTrustMarkIssuers(List.of("issuer1", "issuer2"));
+    module.setTrustMarkIssuers(List.of(
+        new TrustAnchorIssuer("https://tmi2.example.com", false, List.of("https://ta.example.com/tm/b")),
+        new TrustAnchorIssuer("https://tmi1.example.com", true, List.of())));
 
     final TrustAnchorDto dto = ModuleToDtoMapper.toDto(module);
 
     assertThat(dto.getTrustAnchorId()).isEqualTo(module.getTaImId());
     assertThat(dto.getEntityId()).isEqualTo(entity.getEntityId());
     assertThat(dto.getActive()).isTrue();
-    assertThat(dto.getTrustMarkIssuers()).containsExactly("issuer1", "issuer2");
+    // Sorted on the issuer
+    assertThat(dto.getTrustMarkIssuers()).extracting(TrustAnchorIssuerDto::getIssuer)
+        .containsExactly("https://tmi1.example.com", "https://tmi2.example.com");
+    assertThat(dto.getTrustMarkIssuers().get(0).isAuto()).isTrue();
+    assertThat(dto.getTrustMarkIssuers().get(0).getTrustMarkTypes()).isEmpty();
+    assertThat(dto.getTrustMarkIssuers().get(1).isAuto()).isFalse();
+    assertThat(dto.getTrustMarkIssuers().get(1).getTrustMarkTypes()).containsExactly("https://ta.example.com/tm/b");
   }
 
   @Test

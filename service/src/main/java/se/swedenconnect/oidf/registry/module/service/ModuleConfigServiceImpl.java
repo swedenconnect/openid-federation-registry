@@ -32,6 +32,8 @@ import se.swedenconnect.oidf.registry.module.dto.IntermediateDto;
 import se.swedenconnect.oidf.registry.module.dto.ModuleDto;
 import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustAnchorExternalTrustMarkDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustAnchorIssuerDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.module.mapper.DtoToModuleMapper;
 import se.swedenconnect.oidf.registry.module.mapper.ModuleToDtoMapper;
@@ -53,7 +55,9 @@ import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Default implementation of {@link ModuleConfigService} for TrustAnchor, Resolver and Trustmark modules.
@@ -119,6 +123,45 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
         .orElseThrow(() -> notFound);
   }
 
+  /**
+   * The trust mark issuers of a trust anchor are trust mark issuers of the same organization, since their trust marks
+   * are read from the registry. Issuers outside the organization are given as external trust marks. A trust mark type
+   * that anyone may issue can not also be among the trust marks that an issuer of the organization has now, because
+   * that would limit who may issue it.
+   */
+  private void requireOwnTrustmarkIssuers(final UUID organizationId, final TrustAnchorDto input) {
+    if (input.getTrustMarkIssuers() == null) {
+      return;
+    }
+    final Set<String> allowAllTypes = input.getExternalTrustMarks() == null
+        ? Set.of()
+        : input.getExternalTrustMarks().stream()
+            .filter(TrustAnchorExternalTrustMarkDto::isAllowAll)
+            .map(trustMark -> trustMark.getTrustMarkType().trim())
+            .collect(Collectors.toSet());
+    for (final TrustAnchorIssuerDto issuer : input.getTrustMarkIssuers()) {
+      final TrustMarkIssuer trustmarkIssuer = this.entityRepository
+          .findByOrganizationIdAndEntityKeyTypeAndIssuer(organizationId, EntityType.FEDERATION_ENTITY,
+              issuer.getIssuer().trim())
+          .map(FederationEntity::getTrustmarkIssuer)
+          .orElseThrow(() -> new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
+              ("%s is not a trust mark issuer of the same organization. Issuers outside the organization are given "
+                  + "as external trust marks").formatted(issuer.getIssuer())));
+      if (!issuer.isAuto() || allowAllTypes.isEmpty() || trustmarkIssuer.getTrustmarks() == null) {
+        continue;
+      }
+      trustmarkIssuer.getTrustmarks().stream()
+          .map(TrustMark::getTrustmarkType)
+          .filter(allowAllTypes::contains)
+          .findFirst()
+          .ifPresent(type -> {
+            throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
+                ("The trust mark type %s is allowed for all issuers and is also a trust mark of %s, which is "
+                    + "included automatically").formatted(type, issuer.getIssuer()));
+          });
+    }
+  }
+
   private TrustAnchorIntermediateModule findModuleOrThrow(final OrganizationRecord organizationRecord,
       final UUID id, final ModuleType type) {
     final RegistryServerException notFound = new RegistryServerException(
@@ -146,6 +189,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     final UUID entityId = input.getEntityId();
     final FederationEntity entityEntity = this.findFederationEntityOrThrow(organizationRecord, entityId);
     final Organization org = this.resolveOrganization(organizationRecord);
+    this.requireOwnTrustmarkIssuers(org.getOrganizationId(), input);
 
     if (entityEntity.getTrustanchorIntermediate() != null) {
       throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
@@ -175,6 +219,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     ValidateDto.init(organizationRecord).validate(input);
 
     final TrustAnchorIntermediateModule module = this.findModuleOrThrow(organizationRecord, id, ModuleType.TRUSTANCHOR);
+    this.requireOwnTrustmarkIssuers(module.getOrganization().getOrganizationId(), input);
     final TrustAnchorDto oldDto = ModuleToDtoMapper.toDto(module);
 
     DtoToModuleMapper.updateIntermediate(module, input);

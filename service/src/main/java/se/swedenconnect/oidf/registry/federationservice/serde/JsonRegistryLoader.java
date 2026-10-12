@@ -43,6 +43,8 @@ import java.util.Map;
  * @author Felix Hellman
  */
 public class JsonRegistryLoader {
+  private static final String TRUST_MARK_ISSUERS = "trust-mark-issuers";
+
   private final Gson GSON;
 
   /**
@@ -105,7 +107,8 @@ public class JsonRegistryLoader {
 
   /**
    * Serializes the module record. Values without content (null, empty objects and empty arrays) are left out
-   * everywhere below the three top level lists, which are always present.
+   * everywhere below the three top level lists, which are always present. The empty lists of issuers inside a
+   * trust-mark-issuers object are kept, since they have a meaning.
    *
    * @param moduleRecord
    * @return json string
@@ -132,7 +135,10 @@ public class JsonRegistryLoader {
     if (element.isJsonObject()) {
       final JsonObject object = element.getAsJsonObject();
       for (final String name : new ArrayList<>(object.keySet())) {
-        final JsonElement pruned = prune(object.get(name));
+        // An empty list of issuers means that anyone may issue the trust mark type, so it has to be kept.
+        final JsonElement pruned = TRUST_MARK_ISSUERS.equals(name) && object.get(name).isJsonObject()
+            ? object.get(name)
+            : prune(object.get(name));
         if (isEmpty(pruned)) {
           object.remove(name);
         }
