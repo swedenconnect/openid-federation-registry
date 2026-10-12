@@ -30,9 +30,6 @@ public enum RegistrationStatus {
   /** Awaiting review by an operator. */
   PENDING_APPROVAL,
 
-  /** REgistration has failed
-   FAILED,
-
   /** Approved — subordinate statement has been created. */
   APPROVED,
 

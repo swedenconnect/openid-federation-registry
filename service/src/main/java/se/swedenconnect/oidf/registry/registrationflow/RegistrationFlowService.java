@@ -49,6 +49,8 @@ import se.swedenconnect.oidf.registry.registrationflow.model.StepModel;
 import se.swedenconnect.oidf.registry.registrationflow.model.TrustMarkFlowAssignment;
 import se.swedenconnect.oidf.registry.registrationflow.model.TrustMarkIssuerFlowAssignment;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
+import se.swedenconnect.oidf.registry.infrastructure.persistence.Timestamps;
+import se.swedenconnect.oidf.registry.registrationflow.process.PersistedContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessEngine;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessFlow;
@@ -73,6 +75,7 @@ import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepos
 import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
 import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -340,14 +343,7 @@ public class RegistrationFlowService {
       processContext.<UUID>get(ContextKey.REGISTRATION_ID).flatMap(this.registrationRepository::findById)
           .ifPresent(reg -> {
             reg.setStepResults(RegistrationMapper.toStepExecutionRecordDtos(report));
-            if (report.isPendingApproval()) {
-              reg.setPendingStepIndex(report.steps().size() - 1);
-              reg.setStatus(RegistrationStatus.PENDING_APPROVAL);
-              processContext.<net.minidev.json.JSONObject>get(ContextKey.REQUEST_METADATA)
-                  .ifPresent(m -> reg.setRequestMetadata(new java.util.HashMap<>(m)));
-            } else {
-              reg.setPendingStepIndex(null);
-            }
+            markPause(reg, report, 0, processContext);
             this.registrationRepository.save(reg);
           });
       return report;
@@ -363,13 +359,14 @@ public class RegistrationFlowService {
    * Approves a specific pending step, reconstructs the pipeline context from stored registration
    * data, and resumes execution from that step onwards.
    *
-   * @param reg the registration to resume — the caller is responsible for verifying that this
-   *     registration belongs to an intermediate owned by the calling organization before invoking this
+   * @param reg the registration to resume — the caller is responsible for verifying that the calling
+   *     organization may review it before invoking this
    * @param stepIndex the index of the pending step within the full step list
+   * @param reviewer who approved the step, recorded on the step and the registration
    * @return updated process report from the resumed run
    */
   @Transactional
-  public ProcessReport approveStep(final Registration reg, final int stepIndex) {
+  public ProcessReport approveStep(final Registration reg, final int stepIndex, final String reviewer) {
     final UUID registrationId = reg.getRegistrationId();
 
     if (reg.getStatus() != RegistrationStatus.PENDING_APPROVAL) {
@@ -382,7 +379,7 @@ public class RegistrationFlowService {
     }
 
     if (reg.getRegistrationType() == RegistrationType.TRUST_MARK_SUBORDINATE) {
-      return this.approveTrustMarkSubordinateStep(reg, stepIndex);
+      return this.approveTrustMarkSubordinateStep(reg, stepIndex, reviewer);
     }
 
     final RegistrationFlow flow = reg.getFlowAssignment().getRegistrationFlow();
@@ -399,7 +396,9 @@ public class RegistrationFlowService {
     if (reg.getTrustmarksRequested() != null) {
       ctx.put(ContextKey.TRUSTMARKS_REQUESTED, new SerializableList<>(reg.getTrustmarksRequested()));
     }
-    if (reg.getJwks() != null && !reg.getJwks().isEmpty()) {
+    PersistedContext.restore(reg.getProcessContext(), ctx);
+    // A registration paused before the context was saved only has these columns to resume from
+    if (ctx.get(ContextKey.ENTITY_CONFIGURATION_JWKS).isEmpty() && reg.getJwks() != null && !reg.getJwks().isEmpty()) {
       try {
         ctx.put(ContextKey.ENTITY_CONFIGURATION_JWKS,
             JWKSet.parse(new net.minidev.json.JSONObject(reg.getJwks()).toJSONString()));
@@ -407,33 +406,72 @@ public class RegistrationFlowService {
         throw new RegistryServerException(ErrorTypes.BLANK, "Failed to parse stored JWKS", e);
       }
     }
-    if (reg.getMetadataPolicy() != null) {
+    if (ctx.get(ContextKey.METADATA_POLICY).isEmpty() && reg.getMetadataPolicy() != null) {
       ctx.put(ContextKey.METADATA_POLICY, new net.minidev.json.JSONObject(reg.getMetadataPolicy()));
     }
-    if (reg.getRequestMetadata() != null && !reg.getRequestMetadata().isEmpty()) {
+    if (ctx.get(ContextKey.REQUEST_METADATA).isEmpty()
+        && reg.getRequestMetadata() != null && !reg.getRequestMetadata().isEmpty()) {
       ctx.put(ContextKey.REQUEST_METADATA, new net.minidev.json.JSONObject(reg.getRequestMetadata()));
     }
     ctx.put(ContextKey.STEP_APPROVED, Boolean.TRUE);
 
     final List<StepDefinition> remaining = allSteps.subList(stepIndex, allSteps.size());
     final ProcessReport resumeReport = this.processEngine.run(remaining, ctx);
-
-    final List<StepExecutionRecordDto> merged = new java.util.ArrayList<>(
-        Optional.ofNullable(reg.getStepResults()).orElse(List.of()).subList(0, stepIndex));
-    merged.addAll(RegistrationMapper.toStepExecutionRecordDtos(resumeReport));
-
-    reg.setStepResults(merged);
-    if (resumeReport.isPendingApproval()) {
-      reg.setPendingStepIndex(stepIndex + resumeReport.steps().size() - 1);
-      reg.setStatus(RegistrationStatus.PENDING_APPROVAL);
-    } else {
-      reg.setPendingStepIndex(null);
-    }
-    this.registrationRepository.save(reg);
+    this.recordResume(reg, stepIndex, resumeReport, ctx, reviewer);
     return resumeReport;
   }
 
-  private ProcessReport approveTrustMarkSubordinateStep(final Registration reg, final int stepIndex) {
+  /**
+   * Stores the outcome of a run resumed after an approval: keeps the step results before the approved step, appends
+   * the resumed ones with the approved step marked as reviewed, and records where the flow paused next, if it did.
+   */
+  private void recordResume(final Registration reg, final int stepIndex, final ProcessReport resumeReport,
+      final ProcessContext ctx, final String reviewer) {
+    final LocalDateTime reviewedAt = LocalDateTime.now();
+    final List<StepExecutionRecordDto> merged = new java.util.ArrayList<>(
+        Optional.ofNullable(reg.getStepResults()).orElse(List.of()).subList(0, stepIndex));
+    final List<StepExecutionRecordDto> resumed = RegistrationMapper.toStepExecutionRecordDtos(resumeReport);
+    for (int i = 0; i < resumed.size(); i++) {
+      merged.add(i == 0 ? resumed.get(i).approvedBy(reviewer, Timestamps.toOffsetDateTime(reviewedAt))
+          : resumed.get(i));
+    }
+    reg.setStepResults(merged);
+    reg.setReviewedAt(reviewedAt);
+    reg.setReviewedBy(reviewer);
+    markPause(reg, resumeReport, stepIndex, ctx);
+    this.registrationRepository.save(reg);
+  }
+
+  /**
+   * Records whether a run paused for manual review. A paused registration keeps the index of the paused step and the
+   * context the steps before it produced, so that approving the step can resume where the run stopped. A resumed run
+   * that fails puts the registration back to {@code STARTED}, as a failed first run leaves it.
+   *
+   * @param reg the registration the run belongs to
+   * @param report the run's report
+   * @param stepOffset index in the full step list of the run's first step
+   * @param ctx the run's context
+   */
+  private static void markPause(final Registration reg, final ProcessReport report, final int stepOffset,
+      final ProcessContext ctx) {
+    if (report.isPendingApproval()) {
+      reg.setPendingStepIndex(stepOffset + report.steps().size() - 1);
+      reg.setStatus(RegistrationStatus.PENDING_APPROVAL);
+      reg.setProcessContext(PersistedContext.capture(ctx));
+    }
+    else {
+      reg.setPendingStepIndex(null);
+      reg.setProcessContext(null);
+      if (!report.isSuccessful() && reg.getStatus() == RegistrationStatus.PENDING_APPROVAL) {
+        // A step after the approved one failed: the registration is no longer waiting for anyone, so it goes back
+        // to where a failed first run leaves it. The failed step and its issues are in the step results.
+        reg.setStatus(RegistrationStatus.STARTED);
+      }
+    }
+  }
+
+  private ProcessReport approveTrustMarkSubordinateStep(final Registration reg, final int stepIndex,
+      final String reviewer) {
     final String trustmarkType = reg.getEntityId();
     final TrustMark trustMark = this.trustMarkRepository.findAllByTrustmarkType(trustmarkType)
         .stream().findFirst()
@@ -471,6 +509,7 @@ public class RegistrationFlowService {
     ctx.put(ContextKey.ORG, new OrganizationRecord(org.getOrgNumber(), org.getOrgName(), null,
         this.resolveTenantOrThrow(org)));
     ctx.put(ContextKey.TRUSTMARKS_REQUESTED, new SerializableList<>(List.of(tmSource)));
+    PersistedContext.restore(reg.getProcessContext(), ctx);
     ctx.put(ContextKey.STEP_APPROVED, Boolean.TRUE);
     // STEP_APPROVED only lets the step being resumed past the gate. Re-apply the pre-validation flag so a later
     // gated step in the same sub-flow is auto-approved too, exactly as it would have been on the first run.
@@ -481,19 +520,7 @@ public class RegistrationFlowService {
 
     final List<StepDefinition> remaining = allSubSteps.subList(stepIndex, allSubSteps.size());
     final ProcessReport resumeReport = this.processEngine.run(remaining, ctx);
-
-    final List<StepExecutionRecordDto> merged = new java.util.ArrayList<>(
-        Optional.ofNullable(reg.getStepResults()).orElse(List.of()).subList(0, stepIndex));
-    merged.addAll(RegistrationMapper.toStepExecutionRecordDtos(resumeReport));
-    reg.setStepResults(merged);
-
-    if (resumeReport.isPendingApproval()) {
-      reg.setPendingStepIndex(stepIndex + resumeReport.steps().size() - 1);
-      reg.setStatus(RegistrationStatus.PENDING_APPROVAL);
-    } else {
-      reg.setPendingStepIndex(null);
-    }
-    this.registrationRepository.save(reg);
+    this.recordResume(reg, stepIndex, resumeReport, ctx, reviewer);
     return resumeReport;
   }
 

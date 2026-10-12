@@ -61,29 +61,9 @@ public class RegistrationAdminController {
 
   private final RegistrationAdminService registrationAdminService;
 
-  /**
-   * Counts unhandled PENDING registrations for an intermediate.
-   *
-   * @param tenant the tenant identifier
-   * @param orgNumber the organization number
-   * @param organizationRecord the calling organization
-   * @param taimId the intermediate ID
-   * @return map containing the count
-   */
-  @GetMapping("/count")
-  @PreAuthorize("@orgRightsService.canReadAsOperator(authentication, #orgNumber, #tenant)")
-  @Operation(summary = "Count unhandled PENDING registrations for an intermediate")
-  public ResponseEntity<Map<String, Long>> countPending(
-      @PathVariable("tenant") @P("tenant") final String tenant,
-      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
-      @Parameter(hidden = true) final OrganizationRecord organizationRecord,
-      @Parameter(description = "Intermediate ID") @RequestParam("taimId") final UUID taimId) {
-    return ResponseEntity.ok(
-        Map.of("count", this.registrationAdminService.countPending(organizationRecord, taimId)));
-  }
 
   /**
-   * List all registration records for this organizations intermidiates
+   * List all registration records on the tenant, for its operator to review
    *
    * @param tenant the tenant identifier
    * @param orgNumber the organization number
@@ -92,12 +72,12 @@ public class RegistrationAdminController {
    */
   @GetMapping
   @PreAuthorize("@orgRightsService.canReadAsOperator(authentication, #orgNumber, #tenant)")
-  @Operation(summary = "List all registration records for current organization")
+  @Operation(summary = "List all registration records on the tenant")
   public ResponseEntity<List<RegistrationDto>> listRegistrations(
       @PathVariable("tenant") @P("tenant") final String tenant,
       @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    return ResponseEntity.ok(this.registrationAdminService.listRegistrationsConnectedToThisOrgIM(organizationRecord));
+    return ResponseEntity.ok(this.registrationAdminService.listRegistrationsForReview(organizationRecord));
   }
 
   /**

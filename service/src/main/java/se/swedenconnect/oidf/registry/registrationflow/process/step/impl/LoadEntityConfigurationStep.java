@@ -15,28 +15,36 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow.process.step.impl;
 
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
+import net.minidev.json.JSONObject;
 import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.registry.guioperations.OidfService;
 import se.swedenconnect.oidf.registry.infrastructure.validation.CleanInput;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
+import se.swedenconnect.oidf.registry.registrationflow.process.review.PreviewSection;
+import se.swedenconnect.oidf.registry.registrationflow.process.review.ReviewableStep;
+import se.swedenconnect.oidf.registry.registrationflow.process.review.StepPreview;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Loading entityconfiguration and jwks
+ * Loading entityconfiguration and jwks. The entity configuration is loaded in {@code buildContext}, so that an
+ * operator reviewing this step sees what was loaded before anything downstream uses it.
  *
  * @author Per Fredrik Plars
  */
 @Component
-public class LoadEntityConfigurationStep extends NoConfigStepAdapter {
+public class LoadEntityConfigurationStep extends NoConfigStepAdapter implements ReviewableStep {
 
   final OidfService oidfService;
 
@@ -65,7 +73,21 @@ public class LoadEntityConfigurationStep extends NoConfigStepAdapter {
   }
 
   @Override
+  public StepResult buildContext(final ProcessContext ctx, final StepConfig config) {
+    this.loadEntityConfiguration(ctx);
+    return StepResult.success("EntityConfiguration loaded successfully");
+  }
+
+  @Override
   public StepResult execute(final ProcessContext ctx, final StepConfig config) {
+    if (ctx.get(ContextKey.ENTITY_CONFIGURATION_METADATA).isEmpty()
+        || ctx.get(ContextKey.ENTITY_CONFIGURATION_JWKS).isEmpty()) {
+      this.loadEntityConfiguration(ctx);
+    }
+    return StepResult.success("EntityConfiguration loaded successfully");
+  }
+
+  private void loadEntityConfiguration(final ProcessContext ctx) {
     final String entityId = ctx.getRequired(ContextKey.ENTITY_ID);
     final EntityStatement entityStatement = this.oidfService.loadEntityStatement(new EntityID(entityId));
 
@@ -73,8 +95,24 @@ public class LoadEntityConfigurationStep extends NoConfigStepAdapter {
     ctx.put(ContextKey.ENTITY_CONFIGURATION_METADATA, esClaimsSet.getJSONObjectClaim("metadata"));
 
     ctx.put(ContextKey.ENTITY_CONFIGURATION_JWKS, CleanInput.removeExpIatNbfFromJwks(esClaimsSet.getJWKSet()));
+  }
 
-    return StepResult.success("EntityConfiguration loaded successfully");
+  @Override
+  public StepPreview preview(final ProcessContext ctx, final StepConfig config) {
+    final String entityId = ctx.getRequired(ContextKey.ENTITY_ID);
+    final JSONObject metadata = ctx.<JSONObject>get(ContextKey.ENTITY_CONFIGURATION_METADATA).orElse(null);
+    final List<String> keyIds = ctx.<JWKSet>get(ContextKey.ENTITY_CONFIGURATION_JWKS)
+        .map(jwks -> jwks.getKeys().stream().map(JWK::getKeyID).filter(Objects::nonNull).toList())
+        .orElse(List.of());
+    return StepPreview.builder()
+        .add(PreviewSection.checks("Checks", List.of(
+            new PreviewSection.Check(PreviewSection.CheckStatus.OK,
+                "Entity Configuration fetched and its signature verified"))))
+        .add(PreviewSection.fields("Entity Configuration", List.of(
+            new PreviewSection.Field("Entity identifier", entityId),
+            new PreviewSection.Field("Entity types", metadata == null ? "" : String.join(", ", metadata.keySet())),
+            new PreviewSection.Field("Federation key ids", String.join(", ", keyIds)))))
+        .build();
   }
 
   @Override
@@ -84,7 +122,7 @@ public class LoadEntityConfigurationStep extends NoConfigStepAdapter {
 
   @Override
   public List<StepConfigurationValue> getStepConfigurationValues() {
-    return List.of(new StepConfigurationValue("manualreview",
+    return List.of(new StepConfigurationValue(MANUAL_REVIEW,
         StepConfigurationValue.DATA_TYPE.BOOLEAN,
         "If true, registration requires manual approval before proceeding", "false"));
   }

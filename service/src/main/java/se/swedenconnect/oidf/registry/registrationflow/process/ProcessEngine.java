@@ -16,6 +16,8 @@ package se.swedenconnect.oidf.registry.registrationflow.process;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import se.swedenconnect.oidf.registry.registrationflow.process.review.ReviewableStep;
+import se.swedenconnect.oidf.registry.registrationflow.process.review.StepPreview;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepStatus;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
@@ -46,7 +48,8 @@ public class ProcessEngine {
    * <ol>
    *   <li>{@code canApply} — skip the step if not applicable</li>
    *   <li>{@code buildContext} — read-only data loading; skipped when resuming after approval</li>
-   *   <li>approval gate — halts the pipeline when {@code manualreview=true} and not yet approved</li>
+   *   <li>approval gate — halts a {@link ReviewableStep} that requires manual review and is not yet approved,
+   *   storing its preview</li>
    *   <li>{@code execute} — write-side action</li>
    * </ol>
    * The {@code STEP_APPROVED} context flag is consumed per step so that only the first
@@ -92,12 +95,12 @@ public class ProcessEngine {
 
         // Phase 3: approval gate. A trust mark the organization is already pre-validated for needs no second
         // look: the sub-flow runs in full, the gated step just does not stop at the gate.
-        if (def.config().getBoolean("manualreview")) {
+        if (def.step() instanceof final ReviewableStep reviewable && reviewable.requiresManualReview(def.config())) {
           if (!ctx.<Boolean>get(ContextKey.TRUST_MARK_PRE_VALIDATED).orElse(false)) {
             log.info("Step {} requires manual approval — pausing pipeline", def.name());
             final List<ContextDiffEntry> diff = computeDiff(before, ctx.snapshot());
             records.add(new StepExecutionRecord(def.name(),
-                StepResult.pendingApproval("Step requires manual approval"), diff));
+                StepResult.pendingApproval("Step requires manual approval"), diff, previewOf(def, ctx)));
             return ProcessReport.pendingApproval(records);
           }
           log.info("Step {} requires manual approval, but the organization holds a pre-validated trust mark "
@@ -112,7 +115,8 @@ public class ProcessEngine {
       // Consume flag after execute so sub-pipelines inside execute can propagate it
       ctx.remove(ContextKey.STEP_APPROVED);
       final List<ContextDiffEntry> diff = computeDiff(before, ctx.snapshot());
-      records.add(new StepExecutionRecord(def.name(), result, diff));
+      final StepPreview preview = result.status() == StepStatus.PENDING_APPROVAL ? previewOf(def, ctx) : null;
+      records.add(new StepExecutionRecord(def.name(), result, diff, preview));
 
       if (result.status() == StepStatus.FAILURE) {
         log.error("Step {} failed — aborting pipeline", def.name());
@@ -145,6 +149,27 @@ public class ProcessEngine {
         ? autoApprovalMessage
         : autoApprovalMessage + " — " + result.message();
     return new StepResult(StepStatus.WARNING, message, result.issues());
+  }
+
+  /**
+   * Asks a paused step for its preview. A step that cannot describe itself still pauses: the operator is told the
+   * preview is missing rather than the registration failing.
+   *
+   * @param def the paused step
+   * @param ctx the context at the pause
+   * @return the preview, or {@code null} if the step is not reviewable
+   */
+  private static StepPreview previewOf(final StepDefinition def, final ProcessContext ctx) {
+    if (!(def.step() instanceof final ReviewableStep reviewable)) {
+      return null;
+    }
+    try {
+      return reviewable.preview(ctx, def.config());
+    }
+    catch (final RuntimeException e) {
+      log.warn("Step {} could not build its review preview", def.name(), e);
+      return StepPreview.unavailable("The step could not describe what it is about to do: " + e.getMessage());
+    }
   }
 
   private static List<ContextDiffEntry> computeDiff(

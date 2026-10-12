@@ -242,7 +242,8 @@
     </v-card>
 
     <!-- Step settings dialog -->
-    <v-dialog v-model="configDialog.open" max-width="560" scrollable aria-labelledby="step-settings-dialog-title">
+    <v-dialog v-model="configDialog.open" :max-width="configDialogHasJson ? 1100 : 560" scrollable
+              aria-labelledby="step-settings-dialog-title">
       <v-card v-if="configDialogStep">
         <v-card-title id="step-settings-dialog-title">{{ configDialogStep.name }} Settings</v-card-title>
         <v-card-text>
@@ -251,8 +252,19 @@
               :key="cfg.key"
               class="mb-4"
           >
+            <template v-if="cfg.type === 'JSON'">
+              <div class="text-body-2 font-weight-medium">{{ cfg.key }}</div>
+              <div class="text-caption text-grey mb-2">{{ cfg.description }}</div>
+              <MetadataPolicyTemplateEditor
+                  v-if="cfg.key === 'template'"
+                  v-model="cfg.value"
+                  :preset="String(cfg.defaultValue ?? '')"
+              ></MetadataPolicyTemplateEditor>
+              <v-textarea v-else v-model="cfg.value" rows="10"></v-textarea>
+            </template>
+
             <v-checkbox
-                v-if="cfg.type === 'BOOLEAN'"
+                v-else-if="cfg.type === 'BOOLEAN'"
                 v-model="cfg.value"
                 :label="cfg.key"
                 :hint="cfg.description"
@@ -287,6 +299,7 @@ import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
 import {registrationFlowCreatePath, registrationFlowPath, registrationFlowStepsPath} from '@/config/path';
+import MetadataPolicyTemplateEditor from '@/components/MetadataPolicyTemplateEditor.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -361,6 +374,8 @@ watch(flowType, (val) => {
 const configDialogStep = computed(() =>
     configDialog.value.stepIndex !== null ? selectedSteps.value[configDialog.value.stepIndex] : null
 );
+
+const configDialogHasJson = computed(() => (configDialogStep.value?.config ?? []).some(c => c.type === 'JSON'));
 
 function openStepConfig(index) {
   configDialog.value = {open: true, stepIndex: index};

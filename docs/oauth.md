@@ -118,7 +118,10 @@ path organization is a configured operator. A superuser passes. They guard:
 - creating, updating and deleting **federation entities** (`/registry/v1/{tenant}/{orgNumber}/entities/federation/**`).
   Reading them, and all hosted entity operations, use `canRead`/`canWrite`.
 - **registration flows** (`/registration-flow/v1/**`), including flow assignment to intermediates and trust marks
-- **registration management** (`/registration-admin/v1/**`): the review queue, approve and reject
+- **registration management** (`/registration-admin/v1/**`): the review queue, approve and reject. Review is a
+  tenant-wide duty: an operator sees and decides every registration submitted on the tenant, whichever organization
+  owns the intermediate the flow is assigned to. A registration on another tenant answers `404`, as if it did not
+  exist.
 
 A caller that fails one of these checks gets `403`. The domain review and organization endpoints under
 `/registration-admin/v1` use a service-level check and return `404`

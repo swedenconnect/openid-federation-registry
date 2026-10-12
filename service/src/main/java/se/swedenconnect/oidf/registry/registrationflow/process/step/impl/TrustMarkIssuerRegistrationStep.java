@@ -26,6 +26,7 @@ import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 import se.swedenconnect.oidf.registry.registrationflow.RegistrationStepRepository;
 import se.swedenconnect.oidf.registry.registrationflow.dto.Mapper;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
+import se.swedenconnect.oidf.registry.registrationflow.process.PersistedContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessEngine;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessFlow;
@@ -239,8 +240,10 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
           if (report.isPendingApproval()) {
             tmReg.setStatus(RegistrationStatus.PENDING_APPROVAL);
             tmReg.setPendingStepIndex(stepOffset + report.steps().size() - 1);
+            tmReg.setProcessContext(PersistedContext.capture(subCtx));
           } else {
             tmReg.setPendingStepIndex(null);
+            tmReg.setProcessContext(null);
           }
           this.registrationRepository.save(tmReg);
         });

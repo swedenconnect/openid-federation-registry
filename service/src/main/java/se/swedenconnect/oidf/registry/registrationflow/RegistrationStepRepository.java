@@ -17,6 +17,7 @@ package se.swedenconnect.oidf.registry.registrationflow;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.Assert;
+import se.swedenconnect.oidf.registry.registrationflow.process.review.ReviewableStep;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 
 import java.util.Collections;
@@ -53,6 +54,15 @@ public class RegistrationStepRepository {
         .map(Step::getStepId)
         .collect(Collectors.toSet())
         .size() == this.definedSteps.size(), "StepId has to be unique for all steps");
+    this.definedSteps.stream()
+        .filter(step -> !(step instanceof ReviewableStep))
+        .filter(step -> step.getStepConfigurationValues().stream()
+            .anyMatch(value -> ReviewableStep.MANUAL_REVIEW.equals(value.name())))
+        .findFirst()
+        .ifPresent(step -> {
+          throw new IllegalStateException("Step %s offers manual review but does not implement ReviewableStep, so it "
+              .formatted(step.getName()) + "cannot show the operator a preview");
+        });
 
   }
 

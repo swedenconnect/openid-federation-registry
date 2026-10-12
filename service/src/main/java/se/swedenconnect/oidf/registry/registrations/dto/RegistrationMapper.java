@@ -15,6 +15,7 @@
  */
 package se.swedenconnect.oidf.registry.registrations.dto;
 
+import se.swedenconnect.oidf.registry.infrastructure.persistence.Timestamps;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.registrationflow.dto.Technology;
 import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
@@ -97,6 +98,9 @@ public final class RegistrationMapper {
     dto.setRegistrationType(model.getRegistrationType());
     dto.setStatusFedreg(FedRegStatus.valueOf(model.getStatus().toString()));
     dto.setRejectionReason(model.getRejectionReason());
+    dto.setCreatedDate(Timestamps.toOffsetDateTime(model.getCreatedDate()));
+    dto.setReviewedAt(Timestamps.toOffsetDateTime(model.getReviewedAt()));
+    dto.setReviewedBy(model.getReviewedBy());
     dto.setStatusTrustmarks(toTrustmarkDtoList(model.getTrustmarksRequested(), tmStatusByType));
     dto.setOrganizationName(
         Optional.ofNullable(model.getOrganization()).map(Organization::getOrgName).orElse(null));
@@ -245,7 +249,10 @@ public final class RegistrationMapper {
         record.result().issues().stream()
             .map(RegistrationMapper::toStepIssueDto)
             .toList(),
-        diff
+        diff,
+        record.preview(),
+        null,
+        null
     );
   }
 

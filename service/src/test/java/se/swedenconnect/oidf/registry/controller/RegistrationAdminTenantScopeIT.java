@@ -52,41 +52,34 @@ import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
 
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Reproduces the cross-organization registration-admin IDOR from the external vulnerability report: an organization
- * with legitimate READ/WRITE rights on its own organization number ("Charlie") can substitute another organization's
- * ("Alice's") registration UUID in the path and act on it anyway.
- * <p>
- * {@code RegistrationAdminController.getById/reject/approveStep} resolve an {@code OrganizationRecord} for the caller
- * but never pass it to the service layer, so the lookup underneath is a plain, unscoped {@code findById} with no
- * ownership check.
- * <p>
- * Each test here asserts the SECURE behavior (a foreign-org registration must 404) and therefore currently FAILS — that
- * failure documents the vulnerability. Once the lookups are scoped to the caller's own organization, these tests should
- * pass unmodified.
- * <p>
- * Alice's pending registrations are inserted directly via {@link RegistrationRepository} rather than driven through the
- * real registration pipeline (which would need WireMock-stubbed entity statements, as in
- * {@code RegistrationFlowEndToEndIT}) — the pipeline itself isn't what's under test here, only the admin endpoints'
- * missing ownership check. Charlie needs no setup at all beyond a valid token for his own organization.
+ * Registration review is a tenant-wide operator duty. Any organization listed in the tenant's
+ * {@code operator_organizations} reviews every registration submitted on that tenant, whichever organization owns the
+ * intermediate. An operator acting on another tenant, and an organization that operates no tenant, must not reach the
+ * registration at all: a foreign registration ID answers 404 (or 403 for a non-operator), exactly as a nonexistent
+ * one, so registration IDs cannot be probed.
  *
- * @author Per Fredrik Plars
+ * @author Felix Hellman
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
 @AutoConfigureRestTestClient
-class RegistrationAdminCrossOrganizationIT {
+class RegistrationAdminTenantScopeIT {
 
   private static final String TENANT = "Swedenconnect";
+  /** Operates ENA as well as Swedenconnect (operator_organizations in application.yml). */
+  private static final String OTHER_TENANT = "ENA";
   private static final JwtTestUtils.OrganisationType ALICE = JwtTestUtils.OrganisationType.PM;
-  // Both are operators of the tenant (operator_organizations in application.yml): the operator-only endpoints must
-  // still keep one operator organization out of another's data.
+  /** Operates Swedenconnect but owns no intermediate. */
   private static final JwtTestUtils.OrganisationType CHARLIE = JwtTestUtils.OrganisationType.SKATT;
+  /** Operates no tenant. */
+  private static final JwtTestUtils.OrganisationType MEMBER = JwtTestUtils.OrganisationType.TESTORG1;
   private static final UUID PREDEFINED_DIRECT_REGISTER_FLOW_STEP_ID =
       UUID.fromString("AE67B1D8-2DCF-4A8C-9E6B-FC972CC65DEA");
 
@@ -110,6 +103,8 @@ class RegistrationAdminCrossOrganizationIT {
 
   private RegistrationAdminApi aliceAdminApi;
   private RegistrationAdminApi charlieAdminApi;
+  private RegistrationAdminApi otherTenantAdminApi;
+  private RegistrationAdminApi memberAdminApi;
   private FlowAssignment aliceFlowAssignment;
   private Organization aliceOrganization;
 
@@ -118,9 +113,11 @@ class RegistrationAdminCrossOrganizationIT {
     final ApiClient aliceClient = buildApiClient(ALICE);
     this.aliceAdminApi = new RegistrationAdminApi(aliceClient);
     this.charlieAdminApi = new RegistrationAdminApi(buildApiClient(CHARLIE));
+    this.otherTenantAdminApi = new RegistrationAdminApi(aliceClient);
+    this.memberAdminApi = new RegistrationAdminApi(buildApiClient(MEMBER));
 
-    // Alice provisions her own intermediate and flow. Charlie needs none of this — only a valid
-    // token carrying rights on his own organization number.
+    // Alice provisions the intermediate and flow. Charlie owns no intermediate: as a tenant operator he reviews
+    // registrations on every intermediate of the tenant.
     final EntitiesApi entitiesApi = new EntitiesApi(aliceClient);
     final ModulesApi modulesApi = new ModulesApi(aliceClient);
     final RegistrationFlowApi flowApi = new RegistrationFlowApi(aliceClient);
@@ -131,8 +128,8 @@ class RegistrationAdminCrossOrganizationIT {
     final TrustAnchor trustAnchor = modulesApi.createTrustAnchor(TENANT, ALICE.orgId,
         TrustAnchor.builder().entityId(taEntity.getEntityId()).active(true).build());
     final RegistrationFlowDto flow = flowApi.createFlow(TENANT, ALICE.orgId, new RegistrationFlowDto()
-        .name("Cross-org IDOR fixture flow")
-        .description("Fixture flow for RegistrationAdminCrossOrganizationIT")
+        .name("Tenant scope fixture flow")
+        .description("Fixture flow for RegistrationAdminTenantScopeIT")
         .technology(RegistrationFlowDto.TechnologyEnum.OIDC)
         .steps(List.of(new StepDto()
             .stepId(PREDEFINED_DIRECT_REGISTER_FLOW_STEP_ID)
@@ -180,53 +177,90 @@ class RegistrationAdminCrossOrganizationIT {
     return this.registrationRepository.save(registration);
   }
 
-  @Test
-  @DisplayName("getById must not leak another organization's registration — currently FAILS: Charlie's "
-      + "own valid org path plus Alice's registration UUID returns 200 with her data")
-  void getByIdMustNotLeakAnotherOrganizationsRegistration() {
-    final UUID aliceRegistrationId =
-        this.pendingAliceRegistration("https://alice.example/sp/get", 0).getRegistrationId();
-
-    assertThatThrownBy(() -> this.charlieAdminApi.getById1(TENANT, CHARLIE.orgId, aliceRegistrationId))
-        .isInstanceOf(RestClientResponseException.class)
-        .satisfies(ex -> assertThat(((RestClientResponseException) ex).getStatusCode().value()).isEqualTo(404));
-  }
-
-  @Test
-  @DisplayName("reject must not mutate another organization's registration — currently FAILS: Charlie can "
-      + "reject Alice's pending registration through his own valid org path")
-  void rejectMustNotMutateAnotherOrganizationsRegistration() {
-    final UUID aliceRegistrationId =
-        this.pendingAliceRegistration("https://alice.example/sp/reject", 0).getRegistrationId();
-
-    assertThatThrownBy(() -> this.charlieAdminApi.reject(TENANT, CHARLIE.orgId, aliceRegistrationId,
-        new RejectRegistrationRequest().rejectionReason("Cross-org exploit")))
-        .isInstanceOf(RestClientResponseException.class)
-        .satisfies(ex -> assertThat(((RestClientResponseException) ex).getStatusCode().value()).isEqualTo(404));
-
-    final Registration stillOwnedByAlice = this.aliceAdminApi.getById1(TENANT, ALICE.orgId, aliceRegistrationId);
-    assertThat(stillOwnedByAlice.getStatusFedreg()).isEqualTo(Registration.StatusFedregEnum.PENDING_APPROVAL);
-  }
-
-  @Test
-  @DisplayName("approveStep must not mutate another organization's registration — currently FAILS: "
-      + "Charlie can approve Alice's pending step through his own valid org path")
-  void approveStepMustNotMutateAnotherOrganizationsRegistration() {
-    // One past the end of the real assembled step list, so *if* the ownership check is bypassed,
-    // the pipeline has nothing left to run and simply completes — this isolates the assertion to
-    // the ownership gap rather than to any particular step's behavior.
-    final int pastTheEndOfTheFlow = this.registrationStepRepository.preDefaultSteps().size()
+  private int pastTheEndOfTheFlow() {
+    // One past the end of the assembled step list: approving it resumes with nothing left to run, which isolates
+    // the assertion to who may approve rather than to any particular step's behavior.
+    return this.registrationStepRepository.preDefaultSteps().size()
         + 1 // the one PredefinedDirectRegisterFlow MID step configured on Alice's flow
         + this.registrationStepRepository.postDefaultSteps().size();
-    final UUID aliceRegistrationId = this.pendingAliceRegistration(
-        "https://alice.example/sp/approve", pastTheEndOfTheFlow).getRegistrationId();
+  }
 
-    assertThatThrownBy(() -> this.charlieAdminApi.approveStep(
-        TENANT, CHARLIE.orgId, aliceRegistrationId, pastTheEndOfTheFlow))
-        .isInstanceOf(RestClientResponseException.class)
-        .satisfies(ex -> assertThat(((RestClientResponseException) ex).getStatusCode().value()).isEqualTo(404));
+  private static Consumer<Throwable> status(final int expected) {
+    return ex -> assertThat(((RestClientResponseException) ex).getStatusCode().value()).isEqualTo(expected);
+  }
 
-    final Registration stillOwnedByAlice = this.aliceAdminApi.getById1(TENANT, ALICE.orgId, aliceRegistrationId);
-    assertThat(stillOwnedByAlice.getStatusFedreg()).isEqualTo(Registration.StatusFedregEnum.PENDING_APPROVAL);
+  @Test
+  @DisplayName("An operator of the tenant sees a registration on an intermediate it does not own")
+  void operatorOfTheTenantSeesEveryRegistration() {
+    final UUID registrationId = this.pendingAliceRegistration("https://alice.example/sp/get", 0).getRegistrationId();
+
+    assertThat(this.charlieAdminApi.getById1(TENANT, CHARLIE.orgId, registrationId).getRegistrationId())
+        .isEqualTo(registrationId);
+    assertThat(this.charlieAdminApi.listRegistrations1(TENANT, CHARLIE.orgId))
+        .extracting(Registration::getRegistrationId)
+        .contains(registrationId);
+  }
+
+  @Test
+  @DisplayName("An operator of the tenant can reject a registration on an intermediate it does not own")
+  void operatorOfTheTenantCanReject() {
+    final UUID registrationId =
+        this.pendingAliceRegistration("https://alice.example/sp/reject", 0).getRegistrationId();
+
+    final Registration rejected = this.charlieAdminApi.reject(TENANT, CHARLIE.orgId, registrationId,
+        new RejectRegistrationRequest().rejectionReason("Not part of the federation"));
+
+    assertThat(rejected.getStatusFedreg()).isEqualTo(Registration.StatusFedregEnum.REJECTED);
+    assertThat(this.registrationRepository.findById(registrationId).orElseThrow().getReviewedBy()).isNotBlank();
+  }
+
+  @Test
+  @DisplayName("An operator of the tenant can approve a step of a registration on an intermediate it does not own")
+  void operatorOfTheTenantCanApprove() {
+    final int step = this.pastTheEndOfTheFlow();
+    final UUID registrationId =
+        this.pendingAliceRegistration("https://alice.example/sp/approve", step).getRegistrationId();
+
+    this.charlieAdminApi.approveStep(TENANT, CHARLIE.orgId, registrationId, step);
+
+    assertThat(this.registrationRepository.findById(registrationId).orElseThrow().getReviewedBy()).isNotBlank();
+  }
+
+  @Test
+  @DisplayName("An operator acting on another tenant cannot see, reject or approve the registration")
+  void operatorOfAnotherTenantIsKeptOut() {
+    final int step = this.pastTheEndOfTheFlow();
+    final UUID registrationId =
+        this.pendingAliceRegistration("https://alice.example/sp/other-tenant", step).getRegistrationId();
+
+    assertThatThrownBy(() -> this.otherTenantAdminApi.getById1(OTHER_TENANT, ALICE.orgId, registrationId))
+        .isInstanceOf(RestClientResponseException.class).satisfies(status(404));
+    assertThatThrownBy(() -> this.otherTenantAdminApi.reject(OTHER_TENANT, ALICE.orgId, registrationId,
+        new RejectRegistrationRequest().rejectionReason("Wrong tenant")))
+        .isInstanceOf(RestClientResponseException.class).satisfies(status(404));
+    assertThatThrownBy(() -> this.otherTenantAdminApi.approveStep(OTHER_TENANT, ALICE.orgId, registrationId, step))
+        .isInstanceOf(RestClientResponseException.class).satisfies(status(404));
+    assertThat(this.otherTenantAdminApi.listRegistrations1(OTHER_TENANT, ALICE.orgId))
+        .extracting(Registration::getRegistrationId)
+        .doesNotContain(registrationId);
+
+    assertThat(this.registrationRepository.findById(registrationId).orElseThrow().getStatus())
+        .isEqualTo(RegistrationStatus.PENDING_APPROVAL);
+  }
+
+  @Test
+  @DisplayName("An organization that operates no tenant cannot reach the registration")
+  void nonOperatorIsKeptOut() {
+    final UUID registrationId =
+        this.pendingAliceRegistration("https://alice.example/sp/member", 0).getRegistrationId();
+
+    assertThatThrownBy(() -> this.memberAdminApi.getById1(TENANT, MEMBER.orgId, registrationId))
+        .isInstanceOf(RestClientResponseException.class).satisfies(status(403));
+    assertThatThrownBy(() -> this.memberAdminApi.reject(TENANT, MEMBER.orgId, registrationId,
+        new RejectRegistrationRequest().rejectionReason("Not an operator")))
+        .isInstanceOf(RestClientResponseException.class).satisfies(status(403));
+
+    assertThat(this.registrationRepository.findById(registrationId).orElseThrow().getStatus())
+        .isEqualTo(RegistrationStatus.PENDING_APPROVAL);
   }
 }

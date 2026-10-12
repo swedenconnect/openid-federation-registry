@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -78,6 +79,20 @@ public class RegistrationDto {
       accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private String rejectionReason;
+
+  @Schema(description = "When the registration was submitted", accessMode = Schema.AccessMode.READ_ONLY)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  private OffsetDateTime createdDate;
+
+  @Schema(description = "When an operator last approved a step of, or rejected, this registration",
+      accessMode = Schema.AccessMode.READ_ONLY)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  private OffsetDateTime reviewedAt;
+
+  @Schema(description = "Who last approved a step of, or rejected, this registration",
+      accessMode = Schema.AccessMode.READ_ONLY)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  private String reviewedBy;
 
   @Schema(description = "Trustmark status per requested trustmark",
       accessMode = Schema.AccessMode.READ_ONLY)

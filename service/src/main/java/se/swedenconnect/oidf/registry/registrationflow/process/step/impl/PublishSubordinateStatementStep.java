@@ -89,6 +89,7 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
     final String entityId = ctx.getRequired(ContextKey.ENTITY_ID);
     final UUID registrationId = ctx.getRequired(ContextKey.REGISTRATION_ID);
     final Optional<JSONObject> metadataPolicy = ctx.get(ContextKey.METADATA_POLICY);
+    final Optional<JSONObject> subordinateMetadata = ctx.get(ContextKey.SUBORDINATE_METADATA);
     final JWKSet ecJwks = ctx.getRequired(ContextKey.ENTITY_CONFIGURATION_JWKS, JWKSet.class);
 
     final Registration registration = this.registrationRepository.findById(registrationId)
@@ -108,6 +109,7 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
         registration.getFlowAssignment().getTaIm().getTaImId())
         .ifPresentOrElse(subordinateDto -> {//Update
           metadataPolicy.ifPresent(subordinateDto::setMetadataPolicy);
+          subordinateMetadata.ifPresent(subordinateDto::setMetadata);
           subordinateDto.setJwks(ecJwks.toJSONObject());
           subordinateDto.setEcLocationAutomaticResolve(isHosted);
           this.subordinateService.updateSubordinate(org,subordinateDto.getSubordinateId(),subordinateDto);
@@ -118,6 +120,7 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
             newSubordinate.setTaImId(registration.getFlowAssignment().getTaIm().getTaImId());
             newSubordinate.setEntityIdentifier(entityId);
             metadataPolicy.ifPresent(newSubordinate::setMetadataPolicy);
+            subordinateMetadata.ifPresent(newSubordinate::setMetadata);
             newSubordinate.setJwks(ecJwks.toJSONObject());
             newSubordinate.setEcLocationAutomaticResolve(isHosted);
             this.subordinateService.createSubordinate(org, newSubordinate);
@@ -172,8 +175,6 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
 
   @Override
   public List<StepConfigurationValue> getStepConfigurationValues() {
-    return List.of(new StepConfigurationValue("manualreview",
-        StepConfigurationValue.DATA_TYPE.BOOLEAN,
-        "If true this request is redirected to a manual approval flow","false"));
+    return List.of();
   }
 }

@@ -17,6 +17,9 @@ package se.swedenconnect.oidf.registry.registrationflow.process;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import se.swedenconnect.oidf.registry.registrationflow.process.review.PreviewSection;
+import se.swedenconnect.oidf.registry.registrationflow.process.review.ReviewableStep;
+import se.swedenconnect.oidf.registry.registrationflow.process.review.StepPreview;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
@@ -40,9 +43,14 @@ class ProcessEngineApprovalGateTest {
   private final ProcessEngine engine = new ProcessEngine();
 
   /** Records whether {@code execute} was reached, which is the whole question the gate decides. */
-  private static final class RecordingStep implements Step {
+  private static class RecordingStep implements ReviewableStep {
 
     private final AtomicBoolean executed = new AtomicBoolean(false);
+
+    @Override
+    public StepPreview preview(final ProcessContext ctx, final StepConfig config) {
+      return StepPreview.of(PreviewSection.text("What happens", "The step records that it ran"));
+    }
 
     @Override
     public StepResult execute(final ProcessContext ctx, final StepConfig config) {
@@ -130,5 +138,73 @@ class ProcessEngineApprovalGateTest {
     assertThat(step.executed).isTrue();
     assertThat(report.steps()).singleElement()
         .satisfies(record -> assertThat(record.result().status()).isEqualTo(StepStatus.SUCCESS));
+  }
+
+  @Test
+  @DisplayName("A paused step stores its preview with the pending result")
+  void pausedStepStoresItsPreview() {
+    final ProcessReport report = this.engine.run(gatedPipeline(new RecordingStep()), new ProcessContext());
+
+    assertThat(report.steps()).singleElement().satisfies(record -> {
+      assertThat(record.preview()).isNotNull();
+      assertThat(record.preview().sections()).singleElement()
+          .satisfies(section -> assertThat(section.text()).isEqualTo("The step records that it ran"));
+    });
+  }
+
+  @Test
+  @DisplayName("A step that ran without pausing has no preview")
+  void stepThatRanHasNoPreview() {
+    final ProcessReport report = this.engine.run(
+        List.of(new StepDefinition(new RecordingStep(), new DefaultConfig(Map.of()))), new ProcessContext());
+
+    assertThat(report.steps()).singleElement().satisfies(record -> assertThat(record.preview()).isNull());
+  }
+
+  @Test
+  @DisplayName("A step that cannot build its preview still pauses, with a preview saying so")
+  void brokenPreviewStillPauses() {
+    final RecordingStep step = new RecordingStep() {
+      @Override
+      public StepPreview preview(final ProcessContext ctx, final StepConfig config) {
+        throw new IllegalStateException("metadata missing");
+      }
+    };
+
+    final ProcessReport report = this.engine.run(gatedPipeline(step), new ProcessContext());
+
+    assertThat(report.isPendingApproval()).isTrue();
+    assertThat(report.steps()).singleElement().satisfies(record ->
+        assertThat(record.preview().sections()).singleElement()
+            .satisfies(section -> assertThat(section.text()).contains("metadata missing")));
+  }
+
+  @Test
+  @DisplayName("A step that is not reviewable never pauses, whatever its configuration says")
+  void nonReviewableStepDoesNotPause() {
+    final AtomicBoolean executed = new AtomicBoolean(false);
+    final Step plain = new Step() {
+      @Override
+      public StepResult execute(final ProcessContext ctx, final StepConfig config) {
+        executed.set(true);
+        return StepResult.success();
+      }
+
+      @Override
+      public UUID getStepId() {
+        return UUID.fromString("22222222-2222-3333-4444-555555555555");
+      }
+
+      @Override
+      public List<StepConfigurationValue> getStepConfigurationValues() {
+        return List.of();
+      }
+    };
+
+    final ProcessReport report = this.engine.run(
+        List.of(new StepDefinition(plain, new DefaultConfig(Map.of("manualreview", "true")))), new ProcessContext());
+
+    assertThat(report.isPendingApproval()).isFalse();
+    assertThat(executed).isTrue();
   }
 }

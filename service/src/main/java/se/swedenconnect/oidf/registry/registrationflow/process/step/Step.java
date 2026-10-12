@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.registry.registrationflow.process.step;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -134,4 +135,15 @@ public interface Step {
    * @return list of configuration value descriptors
    */
   List<StepConfigurationValue> getStepConfigurationValues();
+
+  /**
+   * Checks the configuration a flow gives this step, when the flow is saved. A step whose configuration values can be
+   * wrong in ways the data type does not catch (such as a JSON document) overrides this.
+   *
+   * @param values the configuration values, keyed by name; a value not given is absent
+   * @return what is wrong, one message each; empty if the configuration can be used
+   */
+  default List<String> validateConfiguration(final Map<String, String> values) {
+    return List.of();
+  }
 }

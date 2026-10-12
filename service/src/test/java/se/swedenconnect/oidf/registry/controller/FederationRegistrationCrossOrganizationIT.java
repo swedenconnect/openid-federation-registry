@@ -69,10 +69,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * broader organizationId-scoping change (commit 7b01505) before this report was filed. These tests assert the SECURE
  * behavior and are expected to pass; they exist to give this specific report's PoC (GET and DELETE on the applicant
  * {@code /registration/v1} controller, as opposed to the operator-facing {@code /registration-admin/v1} controller
- * covered by {@link RegistrationAdminCrossOrganizationIT}) permanent regression coverage.
+ * covered by {@link RegistrationAdminTenantScopeIT}) permanent regression coverage.
  * <p>
  * Alice's registration is inserted directly via {@link RegistrationRepository}, matching
- * {@code RegistrationAdminCrossOrganizationIT}'s approach — the registration pipeline itself isn't under test here,
+ * {@code RegistrationAdminTenantScopeIT}'s approach — the registration pipeline itself isn't under test here,
  * only the ownership check on lookup.
  *
  * @author Per Fredrik Plars
