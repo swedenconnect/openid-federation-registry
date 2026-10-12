@@ -6,8 +6,16 @@
 
 ---
 
+### Version 0.9.9 Unreleased
+**Date:** <ToBeSet>
 
-=======
+- The `ec_location` that is calculated for a hosted entity now has a `hosted` path segment, for example `https://registry.example.se/oidf/hosted/www_example_org`
+  instead of `https://registry.example.se/oidf/www_example_org`. **The location changes for existing hosted entities**
+  and for subordinates that resolve it automatically. The segment is set with
+  `openid.federation.registry.hosted-path-segment`, and an empty value leaves it out.
+
+---
+
 ### Version 0.9.8
 **Date:** 2026-10-09
 

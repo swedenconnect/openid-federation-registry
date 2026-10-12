@@ -161,6 +161,12 @@ automatically generated names differ between environments.
 | `openid.federation.registry.federation_service_api.notifications[0].endpoint`    | `https://example.com/notify`            | The URI of the notification endpoint.                                                      |
 | `openid.federation.registry.federation_service_api.notifications[0].instance_id` | `UUID`                                  | The unique identifier for the instance sending notifications.                              |
 
+### Hosted Entities
+
+| Setting                                          | Required | Example Value | Description |
+|--------------------------------------------------|----------|---------------|-------------|
+| `openid.federation.registry.hosted-path-segment` | No       | `hosted`      | Path segment between the entity prefix and the entity in the `ec_location` that is calculated for a hosted entity whose entity identifier lies outside the entity prefix, for example `https://registry.swedenconnect.se/oidf/hosted/www_example_org`. Defaults to `hosted`. An empty value leaves the segment out, which gives `https://registry.swedenconnect.se/oidf/www_example_org`. Must be a single path segment of letters, digits, `.`, `_`, `~` or `-`. |
+
 ### Federation Instances
 
 Each entry in `openid.federation.registry.instances` represents one federation instance managed by

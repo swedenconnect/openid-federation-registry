@@ -96,7 +96,9 @@ public class OidfService {
    * The ec_location of a hosted entity is the base location. The entitystatement is served below it.
    */
   private static URI entityStatementUri(final String ecLocation) {
-    return UriComponentsBuilder.fromUriString(ecLocation).path("/.well-known/openid-federation").build().toUri();
+    // Plain concatenation, since building the URI from components would encode the '%' of an already encoded
+    // ec_location a second time.
+    return URI.create(ecLocation.replaceAll("/+$", "") + "/.well-known/openid-federation");
   }
 
   private List<JwksLoadedDto> loadJwksFromHostedEntity(final EntityID entityID) {

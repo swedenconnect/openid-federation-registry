@@ -76,6 +76,7 @@ public class OidfApiService {
   private final Duration jwkExpiryDuration;
   private final JWTSupport jwtSupport;
   private final FederationMetadataCreator entityResponseFormatter;
+  private final String hostedPathSegment;
   private final JsonRegistryLoader serdeLoader = new JsonRegistryLoader();
 
   /**
@@ -87,6 +88,7 @@ public class OidfApiService {
    * @param entityRepository the repository for managing entity
    * @param jwkIssuer the issuer associated with the JSON Web Key (JWK)
    * @param jwkExpiryDuration jwkExpiryDuration
+   * @param hostedPathSegment path segment of a calculated ec_location of a hosted entity, empty for none
    */
   public OidfApiService(
       final JWK signKey,
@@ -94,13 +96,15 @@ public class OidfApiService {
       final EntityRepository entityRepository,
       final String jwkIssuer,
       final InstanceRepository instanceRepository,
-      final Duration jwkExpiryDuration) {
+      final Duration jwkExpiryDuration,
+      final String hostedPathSegment) {
+    this.hostedPathSegment = hostedPathSegment;
     this.entityRepository = entityRepository;
     this.jwkIssuer = jwkIssuer;
     this.instanceRepository = instanceRepository;
     this.jwkExpiryDuration = jwkExpiryDuration;
     this.jwtSupport = new JWTSupport(signKey);
-    this.entityResponseFormatter = new FederationMetadataCreator(subordinateRepository);
+    this.entityResponseFormatter = new FederationMetadataCreator(subordinateRepository, hostedPathSegment);
   }
 
   /**
@@ -245,7 +249,7 @@ public class OidfApiService {
               EntityType.HOSTED_ENTITY,
               subordinateEntity.getEntityidentifier())
           .stream().findFirst()
-          .map(EntityToDtoMapper::toDtoHosted)
+          .map(entity -> EntityToDtoMapper.toDtoHosted(entity, this.hostedPathSegment))
           .map(dto -> {
             sub.setCrit(EmptyToNull.list(dto.getCrit()));
             final String ecLocation = dto.getEffectiveEcLocation();

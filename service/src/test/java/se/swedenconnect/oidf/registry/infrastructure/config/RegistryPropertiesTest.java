@@ -23,7 +23,9 @@ import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 class RegistryPropertiesTest {
@@ -42,6 +44,33 @@ class RegistryPropertiesTest {
 
   private RegistryProperties propertiesWith(final RegistryProperties.InstanceProperties... instances) {
     return new RegistryProperties(this.federationApiProperties(), List.of(instances), null, null);
+  }
+
+  private RegistryProperties propertiesWithSegment(final String segment) {
+    return new RegistryProperties(this.federationApiProperties(),
+        List.of(this.instance("Swedenconnect", "swedenconnect")), null, null, segment);
+  }
+
+  @Test
+  @DisplayName("The hosted path segment is hosted when not configured, and can be changed or left out")
+  void hostedPathSegment() {
+    assertThat(this.propertiesWithSegment(null).effectiveHostedPathSegment()).isEqualTo("hosted");
+    assertThat(this.propertiesWithSegment("ec").effectiveHostedPathSegment()).isEqualTo("ec");
+    assertThat(this.propertiesWithSegment("").effectiveHostedPathSegment()).isEmpty();
+    assertThat(this.propertiesWithSegment("  ").effectiveHostedPathSegment()).isEmpty();
+    assertThatCode(this.propertiesWithSegment("ec-1.x")::validate).doesNotThrowAnyException();
+    assertThatCode(this.propertiesWithSegment("")::validate).doesNotThrowAnyException();
+  }
+
+  @Test
+  @DisplayName("A hosted path segment with a slash or other unsafe characters fails validation")
+  void invalidHostedPathSegmentFailsValidation() {
+    for (final String segment : List.of("a/b", "/hosted", "hosted/", "a b", "..%2f", "..", ".", "å")) {
+      assertThatThrownBy(this.propertiesWithSegment(segment)::validate)
+          .as(segment)
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("hosted-path-segment");
+    }
   }
 
   @Test

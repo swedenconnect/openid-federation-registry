@@ -44,14 +44,18 @@ import java.util.Optional;
 public class FederationMetadataCreator {
 
   final SubordinateRepository subordinateRepository;
+  private final String hostedPathSegment;
 
   /**
    * Create federation metadata
    *
    * @param subordinateRepository subordinateRepository
+   * @param hostedPathSegment path segment of a calculated ec_location of a hosted entity, empty for none
    */
-  public FederationMetadataCreator(final SubordinateRepository subordinateRepository) {
+  public FederationMetadataCreator(final SubordinateRepository subordinateRepository,
+      final String hostedPathSegment) {
     this.subordinateRepository = subordinateRepository;
+    this.hostedPathSegment = hostedPathSegment;
   }
 
   /**
@@ -75,7 +79,7 @@ public class FederationMetadataCreator {
 
     if (entityType == EntityType.HOSTED_ENTITY) {
 
-      final HostedEntityDto dto = EntityToDtoMapper.toDtoHosted(entityEntity);
+      final HostedEntityDto dto = EntityToDtoMapper.toDtoHosted(entityEntity, this.hostedPathSegment);
         entityData.setEntityIdentifier(new EntityID(dto.getEntityIdentifier()));
         entityData.setMetadata(dto.getMetadata());
         entityData.setEcLocation(Optional.ofNullable(dto.getEffectiveEcLocation()).orElse(dto.getEntityIdentifier()));
