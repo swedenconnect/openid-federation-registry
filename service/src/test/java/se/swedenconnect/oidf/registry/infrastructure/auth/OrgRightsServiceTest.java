@@ -59,7 +59,7 @@ class OrgRightsServiceTest {
   }
 
   private RegistryProperties registryPropertiesWith(final RegistryProperties.InstanceProperties... instances) {
-    return new RegistryProperties(null, List.of(instances), null, null);
+    return new RegistryProperties(null, List.of(instances), null, null, null);
   }
 
   private OrgRightsService serviceWith(final RegistryProperties registryProperties) {
@@ -82,7 +82,7 @@ class OrgRightsServiceTest {
     final LocalizedString name = new LocalizedString();
     name.add("sv", "Org " + orgNumber);
     name.add("en", "Org " + orgNumber);
-    return new OrgRightsClaim.OrgEntry(OrganizationID.of(orgNumber), name, null, List.of(functions));
+    return new OrgRightsClaim.OrgEntry(OrganizationID.of(orgNumber), null, name, null, List.of(functions));
   }
 
   private static OrgRightsClaim.FunctionEntry functionRight(final String function, final String right) {

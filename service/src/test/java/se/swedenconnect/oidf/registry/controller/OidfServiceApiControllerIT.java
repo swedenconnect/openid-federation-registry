@@ -116,7 +116,7 @@ class OidfServiceApiControllerIT {
     assertTrue(polisen.getCrit() == null || polisen.getCrit().isEmpty(),
         "ec_location must not be added to crit, was " + polisen.getCrit());
     assertNull(polisen.getJwks());
-    assertEquals("https://www.pm.se/oidf/www_polisen_se_op_sverigeid",
+    assertEquals("https://www.pm.se/oidf/hosted/www_polisen_se_op_sverigeid",
         polisen.getEcLocation());
     assertEquals(this.taEntityId, polisen.getAuthorityHints().getFirst());
 
@@ -157,7 +157,7 @@ class OidfServiceApiControllerIT {
             subordinateListingProperty.getEntityIdentifier().toString().equals("https://www.polisen.se/op/sverigeid"))
         .findFirst()
         .orElseThrow();
-    assertEquals("https://www.pm.se/oidf/www_polisen_se_op_sverigeid/.well-known/openid-federation",
+    assertEquals("https://www.pm.se/oidf/hosted/www_polisen_se_op_sverigeid/.well-known/openid-federation",
         sub.getOverrideConfigurationLocation());
     assertTrue(sub.getCrit() == null || sub.getCrit().isEmpty(),
         "ec_location must not be added to crit, was " + sub.getCrit());

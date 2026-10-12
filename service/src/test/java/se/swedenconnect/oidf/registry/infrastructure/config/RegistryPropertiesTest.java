@@ -43,7 +43,7 @@ class RegistryPropertiesTest {
   }
 
   private RegistryProperties propertiesWith(final RegistryProperties.InstanceProperties... instances) {
-    return new RegistryProperties(this.federationApiProperties(), List.of(instances), null, null);
+    return new RegistryProperties(this.federationApiProperties(), List.of(instances), null, null, null);
   }
 
   private RegistryProperties propertiesWithSegment(final String segment) {

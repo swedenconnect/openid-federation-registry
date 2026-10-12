@@ -62,21 +62,6 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
   private static final Pattern PATH_SEGMENT = Pattern.compile("[A-Za-z0-9._~-]+");
 
   /**
-   * Constructor without a hosted path segment, which gives the default.
-   *
-   * @param federationServiceApi federation API settings
-   * @param instances the instances managed by this registry
-   * @param entityConfigurationLoader EntityConfigurationLoader configuration
-   * @param registration registration request settings
-   */
-  public RegistryProperties(final FederationAPIProperties federationServiceApi,
-      final List<InstanceProperties> instances,
-      final EntityConfigurationLoaderProperties entityConfigurationLoader,
-      final RegistrationProperties registration) {
-    this(federationServiceApi, instances, entityConfigurationLoader, registration, null);
-  }
-
-  /**
    * The path segment to put in the generated ec_location of a hosted entity.
    *
    * @return the configured segment, the default if it is not configured, or an empty string if it is turned off
@@ -161,7 +146,8 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
     Assert.isTrue(segment.isEmpty()
             || (PATH_SEGMENT.matcher(segment).matches() && !segment.equals(".") && !segment.equals("..")),
         "openid.federation.registry.hosted-path-segment must be a single path segment of letters, digits, "
-            + "'.', '_', '~' or '-', not '.' or '..', without slashes, or empty to leave it out, was: " + this.hostedPathSegment);
+            + "'.', '_', '~' or '-', not '.' or '..', without slashes, or empty to leave it out, was: "
+            + this.hostedPathSegment);
 
     Optional.ofNullable(this.entityConfigurationLoader).ifPresent(EntityConfigurationLoaderProperties::validate);
   }

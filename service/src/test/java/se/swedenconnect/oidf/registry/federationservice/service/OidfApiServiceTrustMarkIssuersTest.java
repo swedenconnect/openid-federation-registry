@@ -78,7 +78,7 @@ class OidfApiServiceTrustMarkIssuersTest {
   @BeforeEach
   void setUp() throws Exception {
     this.service = new OidfApiService(TestDataOperations.genKey(), this.subordinateRepository,
-        this.entityRepository, "https://issuer.example.com", this.instanceRepository, Duration.ofHours(1));
+        this.entityRepository, "https://issuer.example.com", this.instanceRepository, Duration.ofHours(1), "");
   }
 
   /** A trust mark issuer entity with the given trust marks, that the repository finds for the organization. */
