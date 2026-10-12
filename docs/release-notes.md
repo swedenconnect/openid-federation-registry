@@ -9,6 +9,10 @@
 ### Version 0.9.9 Unreleased
 **Date:** <ToBeSet>
 
+- The `ec_location` that is calculated for a hosted entity now has a `hosted` path segment, for example `https://registry.example.se/oidf/hosted/www_example_org`
+  instead of `https://registry.example.se/oidf/www_example_org`. **The location changes for existing hosted entities**
+  and for subordinates that resolve it automatically. The segment is set with
+  `openid.federation.registry.hosted-path-segment`, and an empty value leaves it out.
 - The trust mark issuers of a trust anchor are now exported to oidf-service as `trust_mark_issuers`. **Breaking change in
   the API:** `trustMarkIssuers` of a trust anchor is a list of entries `{issuer, auto, trustMarkTypes}` instead of a list
   of entity identifiers. With `auto` set, every trust mark of the issuer is included and the trust mark types are read

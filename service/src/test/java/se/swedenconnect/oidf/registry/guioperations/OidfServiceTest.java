@@ -39,7 +39,8 @@ import java.util.List;
 class OidfServiceTest {
 
   private static final String ENTITY_ID = "https://www.polisen.se/op/sverigeid";
-  private static final String EC_LOCATION = "https://www.pm.se/oidf/www_polisen_se_op_sverigeid";
+  private static final String EC_LOCATION =
+      "https://www.pm.se/oidf/hosted/www_polisen_se_op_sverigeid%3A8443";
   private static final URI HOSTED_URI =
       URI.create(EC_LOCATION + "/.well-known/openid-federation");
 

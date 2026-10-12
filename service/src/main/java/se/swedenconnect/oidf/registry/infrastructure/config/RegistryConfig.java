@@ -121,7 +121,8 @@ public class RegistryConfig {
         this.entityRepository,
         federationAPIProperties.issuer(),
         this.instanceRepository,
-        tokenExpiryDuration
+        tokenExpiryDuration,
+        this.registryProperties.effectiveHostedPathSegment()
     );
   }
 

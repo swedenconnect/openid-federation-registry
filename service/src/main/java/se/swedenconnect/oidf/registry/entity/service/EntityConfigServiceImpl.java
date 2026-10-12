@@ -24,6 +24,7 @@ import se.swedenconnect.oidf.registry.entity.dto.FederationEntityWithModulesDto;
 import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.entity.mapper.DtoToEntityMapper;
 import se.swedenconnect.oidf.registry.entity.mapper.EntityToDtoMapper;
+import se.swedenconnect.oidf.registry.infrastructure.config.RegistryProperties;
 import se.swedenconnect.oidf.registry.entity.model.EntityType;
 import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.entity.repository.EntityRepository;
@@ -58,6 +59,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   private final SubordinateService subordinateService;
   private final JwksKeysCacheService jwksKeysCacheService;
   private final TrustmarkSubjectService trustmarkSubjectService;
+  private final String hostedPathSegment;
 
   /**
    * Constructor.
@@ -68,19 +70,26 @@ public class EntityConfigServiceImpl implements EntityConfigService {
    * @param auditService the audit service
    * @param jwksKeysCacheService the JWKS key cache service for signing key validation
    * @param trustmarkSubjectService the trust mark subject service
+   * @param registryProperties the registry properties, for the hosted path segment of a calculated ec_location
    */
   public EntityConfigServiceImpl(final EntityRepository entityRepository,
       final OrganizationService organizationService,
       final RegistryAuditService auditService,
       final SubordinateService subordinateService,
       final JwksKeysCacheService jwksKeysCacheService,
-      final TrustmarkSubjectService trustmarkSubjectService) {
+      final TrustmarkSubjectService trustmarkSubjectService,
+      final RegistryProperties registryProperties) {
     this.entityRepository = entityRepository;
     this.organizationService = organizationService;
     this.auditService = auditService;
     this.subordinateService = subordinateService;
     this.jwksKeysCacheService = jwksKeysCacheService;
     this.trustmarkSubjectService = trustmarkSubjectService;
+    this.hostedPathSegment = registryProperties.effectiveHostedPathSegment();
+  }
+
+  private HostedEntityDto toDtoHosted(final FederationEntity entity) {
+    return EntityToDtoMapper.toDtoHosted(entity, this.hostedPathSegment);
   }
 
   private Organization resolveOrganization(final OrganizationRecord organizationRecord) {
@@ -215,7 +224,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
         id, input, EntityType.HOSTED_ENTITY, org);
     entity.setSubject(organizationRecord.entityPrefix());
     InsertOnly.save(this.entityRepository, entity, "A hosted entity with this ID already exists: " + id);
-    final HostedEntityDto dto = EntityToDtoMapper.toDtoHosted(entity);
+    final HostedEntityDto dto = this.toDtoHosted(entity);
     this.auditService.hostedEntityCreated(id, org.getInstance().getInstanceId(), org.getOrganizationId(), null, dto);
     return dto;
   }
@@ -237,11 +246,11 @@ public class EntityConfigServiceImpl implements EntityConfigService {
 
     final FederationEntity existing = this.findEntityOrThrow(
         organizationRecord, id, EntityType.HOSTED_ENTITY);
-    final HostedEntityDto oldDto = EntityToDtoMapper.toDtoHosted(existing);
+    final HostedEntityDto oldDto = this.toDtoHosted(existing);
     DtoToEntityMapper.updateEntity(existing, input);
     existing.setSubject(organizationRecord.entityPrefix());
     this.entityRepository.save(existing);
-    final HostedEntityDto newDto = EntityToDtoMapper.toDtoHosted(existing);
+    final HostedEntityDto newDto = this.toDtoHosted(existing);
     this.auditService.hostedEntityUpdated(id, existing.getOrganization().getInstance().getInstanceId(),
         existing.getOrganization().getOrganizationId(), oldDto, newDto);
     return newDto;
@@ -260,7 +269,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
       final UUID id) {
     final FederationEntity entity = this.findEntityOrThrow(
         organizationRecord, id, EntityType.HOSTED_ENTITY);
-    return EntityToDtoMapper.toDtoHosted(entity);
+    return this.toDtoHosted(entity);
   }
 
   /**
@@ -283,14 +292,14 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     final UUID organizationId = organization.get().getOrganizationId();
     if (entityIdentifier != null && !entityIdentifier.isEmpty()) {
       this.entityRepository.findByOrganizationIdAndEntityKeyTypeAndIssuer(organizationId,
-              EntityType.HOSTED_ENTITY, entityIdentifier).map(EntityToDtoMapper::toDtoHosted)
+              EntityType.HOSTED_ENTITY, entityIdentifier).map(this::toDtoHosted)
           .ifPresent(results::add);
     }
     else {
       this.entityRepository.findByOrganizationIdAndOptionalEntityKeyType(organizationId,
               EntityType.HOSTED_ENTITY)
           .stream()
-          .map(EntityToDtoMapper::toDtoHosted)
+          .map(this::toDtoHosted)
           .forEach(results::add);
     }
 
@@ -305,7 +314,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     return this.entityRepository
         .findByEntityTypeAndOptionalIssuer(EntityType.HOSTED_ENTITY, issuerFilter)
         .stream()
-        .map(EntityToDtoMapper::toDtoHosted)
+        .map(this::toDtoHosted)
         .toList();
   }
 
@@ -321,7 +330,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
       final boolean deleteTrustmarkSubjects) {
     final FederationEntity entity = this.findEntityOrThrow(
         organizationRecord, id, EntityType.HOSTED_ENTITY);
-    final HostedEntityDto dto = EntityToDtoMapper.toDtoHosted(entity);
+    final HostedEntityDto dto = this.toDtoHosted(entity);
     if (deleteTrustmarkSubjects) {
       this.trustmarkSubjectService.deleteSubjectsForTrustmarkSources(organizationRecord, dto.getEntityIdentifier(),
           dto.getTrustMarkSources());
@@ -375,7 +384,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
 
     dto.setHostedEntity(entities.stream()
         .filter(entity -> entity.getEntityType().equals(EntityType.HOSTED_ENTITY))
-        .map(EntityToDtoMapper::toDtoHosted)
+        .map(this::toDtoHosted)
         .toList());
 
     return dto;

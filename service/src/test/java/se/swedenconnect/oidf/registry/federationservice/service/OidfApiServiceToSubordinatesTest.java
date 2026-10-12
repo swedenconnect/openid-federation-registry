@@ -76,7 +76,8 @@ class OidfApiServiceToSubordinatesTest {
         this.entityRepository,
         "https://issuer.example.com",
         this.instanceRepository,
-        Duration.ofHours(1)
+        Duration.ofHours(1),
+        ""
     );
 
     this.organization = new Organization();

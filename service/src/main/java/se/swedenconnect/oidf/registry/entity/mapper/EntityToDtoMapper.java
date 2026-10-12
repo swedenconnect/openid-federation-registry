@@ -86,12 +86,24 @@ public final class EntityToDtoMapper {
   }
 
   /**
-   * Converts FederationEntity to HostedEntityDto.
+   * Converts FederationEntity to HostedEntityDto, with a calculated ec_location without a hosted path segment.
    *
    * @param entity the federation entity
    * @return the hosted entity DTO
    */
   public static HostedEntityDto toDtoHosted(final FederationEntity entity) {
+    return toDtoHosted(entity, "");
+  }
+
+  /**
+   * Converts FederationEntity to HostedEntityDto.
+   *
+   * @param entity the federation entity
+   * @param hostedPathSegment path segment put between the entity prefix and the entity in a calculated ec_location,
+   *     empty or {@code null} for none
+   * @return the hosted entity DTO
+   */
+  public static HostedEntityDto toDtoHosted(final FederationEntity entity, final String hostedPathSegment) {
     if (entity.getEntityType() != EntityType.HOSTED_ENTITY) {
       throw new IllegalArgumentException("Entity is not a HostedEntity");
     }
@@ -122,7 +134,7 @@ public final class EntityToDtoMapper {
       final boolean isUnderRegistryPrefix = entity.getIssuer().equals(entity.getSubject())
           || entity.getIssuer().startsWith(subjectPathPrefix);
       if (!isUnderRegistryPrefix) {
-        dto.setEffectiveEcLocation(calculatedEcLocation(entity.getSubject(), entity.getIssuer()));
+        dto.setEffectiveEcLocation(calculatedEcLocation(entity.getSubject(), entity.getIssuer(), hostedPathSegment));
       }
     }
     dto.setMetadata(entity.getMetadata());
@@ -133,7 +145,9 @@ public final class EntityToDtoMapper {
   // Private helper methods
   // -------------------------------------------------------------------------
 
-  private static String calculatedEcLocation(final String baseUrl, final String subject) {
+  private static String calculatedEcLocation(final String baseUrl, final String subject,
+      final String hostedPathSegment) {
+    // The scheme is left out, and '.' and '/' are replaced by '_', before the rest is URL encoded.
     final String id = subject
         .replace("https://", "")
         .replace("http://", "")
@@ -141,7 +155,10 @@ public final class EntityToDtoMapper {
         .replace("/", "_");
     final String encodedId = URLEncoder.encode(id, StandardCharsets.UTF_8);
     final String calculatedEcLocation = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
-    return calculatedEcLocation + encodedId;
+    final String segment = hostedPathSegment == null || hostedPathSegment.isBlank()
+        ? ""
+        : hostedPathSegment.trim() + "/";
+    return calculatedEcLocation + segment + encodedId;
   }
 
   /**

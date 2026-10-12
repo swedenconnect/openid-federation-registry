@@ -68,6 +68,8 @@ server:
 openid:
   federation:
     registry:
+      # Path segment in the ec_location of hosted entities. Empty leaves it out.
+      hosted-path-segment: hosted
       federation_service_api:
         issuer: "https://oidf-registry.swedenconnect.se"
         token-expiry-duration: PT168H

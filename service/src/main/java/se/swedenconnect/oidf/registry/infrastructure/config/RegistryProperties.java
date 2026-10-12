@@ -42,13 +42,48 @@ import java.util.stream.Collectors;
  * @param instances InstanceProperties that is managed by this registry
  * @param entityConfigurationLoader EntityConfigurationLoader configuration
  * @param registration registration request settings
+ * @param hostedPathSegment path segment between the entity prefix and the entity in the generated ec_location of
+ *     hosted entities, for example {@code hosted} gives {@code https://example.se/oidf/hosted/www_example_org}. Unset
+ *     gives {@value #DEFAULT_HOSTED_PATH_SEGMENT}, and an empty value leaves the segment out
  * @author Per Fredrik Plars
  */
 @ConfigurationProperties("openid.federation.registry")
 public record RegistryProperties(FederationAPIProperties federationServiceApi,
     List<InstanceProperties> instances,
     EntityConfigurationLoaderProperties entityConfigurationLoader,
-    RegistrationProperties registration) {
+    RegistrationProperties registration,
+    String hostedPathSegment) {
+
+  /**
+   * The path segment of a generated ec_location when {@code hosted-path-segment} is not configured.
+   */
+  public static final String DEFAULT_HOSTED_PATH_SEGMENT = "hosted";
+
+  private static final Pattern PATH_SEGMENT = Pattern.compile("[A-Za-z0-9._~-]+");
+
+  /**
+   * Constructor without a hosted path segment, which gives the default.
+   *
+   * @param federationServiceApi federation API settings
+   * @param instances the instances managed by this registry
+   * @param entityConfigurationLoader EntityConfigurationLoader configuration
+   * @param registration registration request settings
+   */
+  public RegistryProperties(final FederationAPIProperties federationServiceApi,
+      final List<InstanceProperties> instances,
+      final EntityConfigurationLoaderProperties entityConfigurationLoader,
+      final RegistrationProperties registration) {
+    this(federationServiceApi, instances, entityConfigurationLoader, registration, null);
+  }
+
+  /**
+   * The path segment to put in the generated ec_location of a hosted entity.
+   *
+   * @return the configured segment, the default if it is not configured, or an empty string if it is turned off
+   */
+  public String effectiveHostedPathSegment() {
+    return this.hostedPathSegment == null ? DEFAULT_HOSTED_PATH_SEGMENT : this.hostedPathSegment.trim();
+  }
 
   /**
    * Whether a registration request's entity identifier must resolve to a host covered by one of the registering
@@ -121,6 +156,12 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
     Assert.isTrue(duplicatedSlugs.isEmpty(),
         "openid.federation.registry.instances[].name must resolve to a unique tenant slug, since the slug "
             + "identifies the tenant in request paths, duplicate slug(s) found: " + duplicatedSlugs);
+
+    final String segment = this.effectiveHostedPathSegment();
+    Assert.isTrue(segment.isEmpty()
+            || (PATH_SEGMENT.matcher(segment).matches() && !segment.equals(".") && !segment.equals("..")),
+        "openid.federation.registry.hosted-path-segment must be a single path segment of letters, digits, "
+            + "'.', '_', '~' or '-', not '.' or '..', without slashes, or empty to leave it out, was: " + this.hostedPathSegment);
 
     Optional.ofNullable(this.entityConfigurationLoader).ifPresent(EntityConfigurationLoaderProperties::validate);
   }

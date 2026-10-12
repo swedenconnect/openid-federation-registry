@@ -170,6 +170,26 @@ class EntityToDtoMapperTest {
   }
 
   @Test
+  void toDtoHosted_putsTheHostedPathSegmentInTheCalculatedEcLocation() {
+    final FederationEntity entity = createHostedEntity("https://telia.com/oidf", "https://sc.se/oidf");
+
+    assertThat(EntityToDtoMapper.toDtoHosted(entity, "hosted").getEffectiveEcLocation())
+        .isEqualTo("https://sc.se/oidf/hosted/telia_com_oidf");
+    assertThat(EntityToDtoMapper.toDtoHosted(entity, "").getEffectiveEcLocation())
+        .isEqualTo("https://sc.se/oidf/telia_com_oidf");
+    assertThat(EntityToDtoMapper.toDtoHosted(entity, null).getEffectiveEcLocation())
+        .isEqualTo("https://sc.se/oidf/telia_com_oidf");
+  }
+
+  @Test
+  void toDtoHosted_urlEncodesTheEntityPartOfTheCalculatedEcLocation() {
+    final FederationEntity entity = createHostedEntity("https://telia.com:8443/oidf/a b?x=1", "https://sc.se/oidf");
+
+    assertThat(EntityToDtoMapper.toDtoHosted(entity, "hosted").getEffectiveEcLocation())
+        .isEqualTo("https://sc.se/oidf/hosted/telia_com%3A8443_oidf_a+b%3Fx%3D1");
+  }
+
+  @Test
   void toDtoHosted_throwsForNonHostedEntity() {
     final FederationEntity entity = createFederationEntity();
 
