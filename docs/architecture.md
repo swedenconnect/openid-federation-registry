@@ -73,8 +73,8 @@ within each domain package you'll typically find the same shape: `controller`, `
 | `organization`      | Organizations, instances (tenants) and instance-placement logic — see below.                                                                                                         |
 | `subordinate`       | Subordinate entities published under an intermediate.                                                                                                                                |
 | `trustmark`         | Trustmark issuers and trustmark subjects.                                                                                                                                            |
-| `registrationflow`  | The step-by-step flow for onboarding a new entity to the federation (state machine under `process`).                                                                                 |
-| `registrations`     | Registration requests/applications and their admin review, including scheduled cleanup (`scheduler`).                                                                                |
+| `registrationflow`  | The step-by-step flow for onboarding a new entity to the federation (state machine under `process`). `process.review` holds the manual-review contract (`ReviewableStep`) and the typed step previews; `metadata` builds the Subordinate Statement's `metadata`/`metadata_policy` from a template, see [Metadata Review and Metadata Policy](metadata_policy.md). |
+| `registrations`     | Registration requests/applications and their admin review, including scheduled cleanup (`scheduler`). `review` holds the per-entity review sessions (domain → trust marks → entity), see UC-2b in [Registration Flow](use_case_registration_flow.md). |
 | `federationservice` | The public API the external oidf-service node reads from (`entity_record`, `submodules`).                                                                                            |
 | `guioperations`     | Endpoints that exist to serve the SPA directly (e.g. `/tenants`, `/userinfo`), not general REST resources.                                                                           |
 | `infrastructure`    | Cross-cutting concerns: `config` (Spring `@ConfigurationProperties`, security config), `auth` (JWT/OIDC, `org_rights`, rights model), `audit`, `persistence`, `error`, `validation`. |
@@ -120,7 +120,10 @@ tenant concept and its auto-configured resource-server converter only understand
 Persistence is JPA/Hibernate over MariaDB, schema evolution managed by Flyway migrations under
 `service/src/main/resources/db/migration`. Core tables mirror the package map above: `instance`, `organization`,
 `entities` (federation/hosted), module tables per module type, `subordinate`, `trustmark_issuer`,
-`trustmark_subject`, plus tables backing `registrationflow`/`registrations`. Function groups are **not** persisted
+`trustmark_subject`, plus tables backing `registrationflow`/`registrations`: `registrations` keeps each step's result
+and preview (`step_results`) and, while paused for review, the context the earlier steps produced
+(`process_context`); `entity_review` and `entity_review_decision` record review sessions and the decisions taken in
+them. Function groups are **not** persisted
 — they exist only in application configuration and are used purely for request-time routing and authorization.
 
 ## Build, Test and Deployment

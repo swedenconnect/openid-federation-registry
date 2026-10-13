@@ -31,11 +31,15 @@ import se.swedenconnect.oidf.registry.organization.service.InstancePlacementServ
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.SerializableList;
+import se.swedenconnect.oidf.registry.registrationflow.process.review.PreviewSection;
+import se.swedenconnect.oidf.registry.registrationflow.process.review.ReviewableStep;
+import se.swedenconnect.oidf.registry.registrationflow.process.review.StepPreview;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Severity;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepIssue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.StepStatus;
 import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSourceDto;
 import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
@@ -58,6 +62,8 @@ import java.util.UUID;
  *       {@link ContextKey#ENTITY_CONFIGURATION_JWKS} for downstream steps.</li>
  *   <li>Places the metadata body in {@link ContextKey#ENTITY_CONFIGURATION_METADATA}.</li>
  * </ol>
+ * The metadata and keys are loaded in {@code buildContext}; only {@code execute} writes the hosted entity, so an
+ * operator reviewing this step sees what will be hosted before anything is stored.
  * When {@link ContextKey#REQUEST_METADATA} is absent the step is a no-op, allowing
  * the same flow to handle both hosted and non-hosted joins.
  * <p>
@@ -71,7 +77,7 @@ import java.util.UUID;
 @Slf4j
 @SuppressWarnings("unchecked")
 @Component
-public class HostedEntityRegistrationStep extends NoConfigStepAdapter {
+public class HostedEntityRegistrationStep extends NoConfigStepAdapter implements ReviewableStep {
 
   private final EntityConfigService entityConfigService;
   private final TaImRepository taImRepository;
@@ -122,6 +128,18 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter {
   }
 
   @Override
+  public StepResult buildContext(final ProcessContext ctx, final StepConfig config) {
+    ctx.put(ContextKey.ENTITY_CONFIGURATION_METADATA, ctx.<JSONObject>getRequired(ContextKey.REQUEST_METADATA));
+    final OrganizationRecord org = ctx.getRequired(ContextKey.ORG);
+    final String entityId = ctx.getRequired(ContextKey.ENTITY_ID);
+    // What is hosted now, before this registration replaces it: the Metadata Review step shows the reviewer the diff
+    this.entityConfigService.listHostedEntity(org, entityId).stream().findFirst()
+        .map(HostedEntityDto::getMetadata)
+        .ifPresent(previous -> ctx.put(ContextKey.HOSTED_PREVIOUS_METADATA, new JSONObject(previous)));
+    return this.loadServiceNodeJwks(ctx);
+  }
+
+  @Override
   @Transactional
   public StepResult execute(final ProcessContext ctx, final StepConfig config) {
     final JSONObject metadata = ctx.<JSONObject>getRequired(ContextKey.REQUEST_METADATA);
@@ -131,9 +149,7 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter {
     // Derive registry entity-prefix from the TaIm's org so that the hosted-entity
     // subject points to the registry host URL, not to the joining entity's own domain.
     // Entity ownership remains with the calling org (orgNumber from auth token).
-    final UUID taImId = ctx.getRequired(ContextKey.TAIM_ID);
-    final TrustAnchorIntermediateModule taIm = this.taImRepository.findById(taImId)
-        .orElseThrow(() -> new IllegalStateException("TaIm not found: " + taImId));
+    final TrustAnchorIntermediateModule taIm = this.findTaIm(ctx);
     final String registryEntityPrefix = this.instancePlacementService
         .resolveEntityPrefixForPlacedOrg(taIm.getOrganization())
         .orElse(org.entityPrefix());
@@ -160,8 +176,57 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter {
 
     ctx.put(ContextKey.ENTITY_CONFIGURATION_METADATA, metadata);
 
-    // Federation JWKS must come from the service node — metadata JWKS is entity-type specific (e.g. SAML)
-    // and must never be used as the subordinate statement JWKS.
+    if (ctx.get(ContextKey.ENTITY_CONFIGURATION_JWKS).isEmpty()) {
+      final StepResult jwksResult = this.loadServiceNodeJwks(ctx);
+      if (jwksResult.status() == StepStatus.FAILURE) {
+        return jwksResult;
+      }
+    }
+
+    return StepResult.success("Hosted entity stored and JWKS loaded for: " + entityId);
+  }
+
+  @Override
+  public StepPreview preview(final ProcessContext ctx, final StepConfig config) {
+    final String entityId = ctx.getRequired(ContextKey.ENTITY_ID);
+    final OrganizationRecord org = ctx.getRequired(ContextKey.ORG);
+    final Optional<HostedEntityDto> existing = this.entityConfigService.listHostedEntity(org, entityId).stream()
+        .findFirst();
+    final int keyCount = ctx.<JWKSet>get(ContextKey.ENTITY_CONFIGURATION_JWKS)
+        .map(jwks -> jwks.getKeys().size())
+        .orElse(0);
+
+    final List<PreviewSection.Field> trustMarkSources = this.buildTrustMarkSources(ctx).stream()
+        .map(source -> new PreviewSection.Field(source.getTrustmarkId(), "issuer " + source.getTrustMarkIssuer()))
+        .toList();
+
+    return StepPreview.builder()
+        .add(PreviewSection.fields("Hosted entity", List.of(
+            new PreviewSection.Field("Action",
+                existing.isPresent() ? "Update existing hosted entity" : "Create new hosted entity"),
+            new PreviewSection.Field("Entity identifier", entityId),
+            new PreviewSection.Field("Owner", "%s (%s)".formatted(org.orgName(), org.orgNumber())))))
+        .add(PreviewSection.checks("Checks", List.of(
+            new PreviewSection.Check(PreviewSection.CheckStatus.OK, "Join request contains metadata"),
+            new PreviewSection.Check(PreviewSection.CheckStatus.INFO,
+                "Federation keys fetched from the service node: %d".formatted(keyCount)))))
+        .add(trustMarkSources.isEmpty() ? null : PreviewSection.fields("Trust mark sources", trustMarkSources))
+        .build();
+  }
+
+  private TrustAnchorIntermediateModule findTaIm(final ProcessContext ctx) {
+    final UUID taImId = ctx.getRequired(ContextKey.TAIM_ID);
+    return this.taImRepository.findById(taImId)
+        .orElseThrow(() -> new IllegalStateException("TaIm not found: " + taImId));
+  }
+
+  /**
+   * Fetches the federation JWKS from the service node. Federation JWKS must come from the service node — metadata
+   * JWKS is entity-type specific (e.g. SAML) and must never be used as the subordinate statement JWKS.
+   */
+  private StepResult loadServiceNodeJwks(final ProcessContext ctx) {
+    final String entityId = ctx.getRequired(ContextKey.ENTITY_ID);
+    final TrustAnchorIntermediateModule taIm = this.findTaIm(ctx);
     final Optional<URI> serviceNodeBaseUrl = this.instancePlacementService
         .resolveBaseUrl(taIm.getOrganization().getInstance().getInstanceId());
 
@@ -182,8 +247,7 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter {
           List.of(new StepIssue("HostedEntityRegistrationStep.jwks",
               "Could not fetch JWKS from service node: " + e.getMessage(), Severity.ERROR)));
     }
-
-    return StepResult.success("Hosted entity stored and JWKS loaded for: " + entityId);
+    return StepResult.success("Federation JWKS loaded for: " + entityId);
   }
 
   private List<TrustmarkSourceDto> buildTrustMarkSources(final ProcessContext ctx) {
@@ -223,7 +287,7 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter {
 
   @Override
   public List<StepConfigurationValue> getStepConfigurationValues() {
-    return List.of(new StepConfigurationValue("manualreview",
+    return List.of(new StepConfigurationValue(MANUAL_REVIEW,
         StepConfigurationValue.DATA_TYPE.BOOLEAN,
         "If true, registration requires manual approval before proceeding", "false"));
   }

@@ -18,6 +18,9 @@ subordinate entity statements by the underlying federation service.
   organisation's entity joins the federation via an Intermediate: from entity configuration
   loading through validation to subordinate statement publication.
 
+- [Metadata Review and Metadata Policy](metadata_policy.md) — The steps that show an operator an entity's
+  metadata and build the Subordinate Statement's `metadata` and `metadata_policy` claims from a template.
+
 - [Organizations and Domains](organization.md): Organization bootstrap, the domain claim
   lifecycle, the domain check on registration requests, and how a domain rejection affects
   registrations.

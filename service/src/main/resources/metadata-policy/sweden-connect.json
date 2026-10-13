@@ -1,0 +1,105 @@
+{
+  "default_language": "sv",
+  "languages": ["sv", "en"],
+  "on_failure": "fail",
+  "entity_types": {
+    "openid_relying_party": [
+      {
+        "parameter": "organization_name",
+        "claim": "metadata",
+        "source": "entity",
+        "required": true,
+        "multilingual": true,
+        "untagged": "organization",
+        "untagged_organization_field": "legal_name",
+        "checks": [{ "type": "non_empty" }]
+      },
+      {
+        "parameter": "organization_identifier",
+        "claim": "metadata",
+        "source": "entity",
+        "required": true,
+        "checks": [{ "type": "matches_organization", "organization_field": "organization_identifier", "icd": "0007" }]
+      },
+      {
+        "parameter": "client_name",
+        "claim": "metadata_policy",
+        "operator": "value",
+        "source": "entity",
+        "required": true,
+        "multilingual": true,
+        "untagged": "entity_or_default",
+        "checks": [{ "type": "non_empty" }]
+      },
+      {
+        "parameter": "display_name",
+        "claim": "metadata_policy",
+        "operator": "value",
+        "source": "entity",
+        "fallback": "client_name",
+        "required": true,
+        "multilingual": true,
+        "untagged": "entity_or_default",
+        "checks": [{ "type": "non_empty" }]
+      },
+      {
+        "parameter": "logo_uri",
+        "claim": "metadata_policy",
+        "operator": "value",
+        "source": "entity",
+        "checks": [{ "type": "https_url" }, { "type": "image" }]
+      }
+    ],
+    "openid_provider": [
+      {
+        "parameter": "organization_name",
+        "claim": "metadata",
+        "source": "entity",
+        "required": true,
+        "multilingual": true,
+        "untagged": "organization",
+        "untagged_organization_field": "legal_name",
+        "checks": [{ "type": "non_empty" }]
+      },
+      {
+        "parameter": "organization_identifier",
+        "claim": "metadata",
+        "source": "entity",
+        "required": true,
+        "checks": [{ "type": "matches_organization", "organization_field": "organization_identifier", "icd": "0007" }]
+      },
+      {
+        "parameter": "display_name",
+        "claim": "metadata_policy",
+        "operator": "value",
+        "source": "entity",
+        "required": true,
+        "multilingual": true,
+        "untagged": "entity_or_default",
+        "checks": [{ "type": "non_empty" }]
+      },
+      {
+        "parameter": "logo_uri",
+        "claim": "metadata_policy",
+        "operator": "value",
+        "source": "entity",
+        "checks": [{ "type": "https_url" }, { "type": "image" }]
+      },
+      {
+        "parameter": "acr_values_supported",
+        "claim": "metadata_policy",
+        "operator": "value",
+        "source": "entity",
+        "required": true,
+        "checks": [{
+          "type": "allowed_values",
+          "values": [
+            "http://id.elegnamnden.se/loa/1.0/loa2",
+            "http://id.elegnamnden.se/loa/1.0/loa3",
+            "http://id.elegnamnden.se/loa/1.0/loa4"
+          ]
+        }]
+      }
+    ]
+  }
+}

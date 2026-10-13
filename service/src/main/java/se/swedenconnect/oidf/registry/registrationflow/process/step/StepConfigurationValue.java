@@ -33,5 +33,5 @@ public record StepConfigurationValue(String name,
   /**
    * Supported data types for step configuration values.
    */
-  public enum DATA_TYPE {STRING, INT, BOOLEAN, NUMERIC, LIST}
+  public enum DATA_TYPE {STRING, INT, BOOLEAN, NUMERIC, LIST, JSON}
 }

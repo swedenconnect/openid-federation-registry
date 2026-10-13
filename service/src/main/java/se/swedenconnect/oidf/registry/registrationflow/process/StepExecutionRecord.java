@@ -15,6 +15,7 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow.process;
 
+import se.swedenconnect.oidf.registry.registrationflow.process.review.StepPreview;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 
 import java.util.List;
@@ -25,7 +26,21 @@ import java.util.List;
  * @param stepName display name of the step
  * @param result the step's execution result
  * @param contextDiff changes made to the pipeline context by this step
+ * @param preview what the step showed the operator when it paused for manual review, otherwise {@code null}
  * @author Per Fredrik Plars
  */
-public record StepExecutionRecord(String stepName, StepResult result, List<ContextDiffEntry> contextDiff) {
+public record StepExecutionRecord(String stepName, StepResult result, List<ContextDiffEntry> contextDiff,
+    StepPreview preview) {
+
+  /**
+   * Creates a record for a step that did not pause for review.
+   *
+   * @param stepName display name of the step
+   * @param result the step's execution result
+   * @param contextDiff changes made to the pipeline context by this step
+   */
+  public StepExecutionRecord(final String stepName, final StepResult result,
+      final List<ContextDiffEntry> contextDiff) {
+    this(stepName, result, contextDiff, null);
+  }
 }

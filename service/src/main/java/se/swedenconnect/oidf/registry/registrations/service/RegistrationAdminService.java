@@ -35,18 +35,7 @@ import java.util.UUID;
 public interface RegistrationAdminService {
 
   /**
-   * Counts registrations with PENDING_APPROVAL status for a given intermediate. Scoped to
-   * intermediates owned by the calling organization.
-   *
-   * @param organizationRecord the calling organization
-   * @param taimId the intermediate ID
-   * @return count of pending registrations
-   */
-  long countPending(OrganizationRecord organizationRecord, UUID taimId);
-
-  /**
-   * Rejects a pending registration. The registration must be connected to an intermediate owned
-   * by the calling organization.
+   * Rejects a pending registration. The registration must have been submitted on the tenant the caller operates.
    *
    * @param organizationRecord the calling organization
    * @param id the registration ID
@@ -56,16 +45,16 @@ public interface RegistrationAdminService {
   RegistrationDto reject(OrganizationRecord organizationRecord, UUID id, String rejectionReason);
 
   /**
-   * Return all registrations that is done towards this organization intermidiate:s
+   * Returns every registration submitted on the tenant the caller operates. Only a tenant operator (a superuser, or
+   * an organization listed in the tenant's {@code operator_organizations}) may review registrations.
    *
    * @param organizationRecord the calling organization
    * @return list of registration records
    */
-  List<RegistrationDto> listRegistrationsConnectedToThisOrgIM(OrganizationRecord organizationRecord);
+  List<RegistrationDto> listRegistrationsForReview(OrganizationRecord organizationRecord);
 
   /**
-   * Getting a registration by ID. The registration must be connected to an intermediate owned by
-   * the calling organization.
+   * Getting a registration by ID. The registration must have been submitted on the tenant the caller operates.
    *
    * @param organizationRecord the calling organization
    * @param registrationId the registration ID
@@ -75,7 +64,7 @@ public interface RegistrationAdminService {
 
   /**
    * Approves a specific pending step, resumes pipeline execution from that step. The registration
-   * must be connected to an intermediate owned by the calling organization.
+   * must have been submitted on the tenant the caller operates.
    *
    * @param organizationRecord the calling organization
    * @param registrationId the registration ID
@@ -160,4 +149,23 @@ public interface RegistrationAdminService {
    * @return the distinct trust mark types on the operator's instance, sorted
    */
   List<String> listTrustMarkTypes(OrganizationRecord organizationRecord);
+
+  /**
+   * Resolves the instance the caller reviews, having established that the caller is a tenant operator: a superuser,
+   * or an organization listed in the tenant's {@code operator_organizations}.
+   *
+   * @param organizationRecord the calling organization
+   * @return the instance the review is scoped to
+   * @throws se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException not found, if the caller is
+   *     not an operator of the tenant
+   */
+  UUID requireReviewerInstance(OrganizationRecord organizationRecord);
+
+  /**
+   * Returns who is reviewing, as recorded on decisions.
+   *
+   * @param organizationRecord the calling organization
+   * @return the reviewer
+   */
+  String currentReviewer(OrganizationRecord organizationRecord);
 }

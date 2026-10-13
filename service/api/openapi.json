@@ -39,6 +39,10 @@
       "description": "CRUD for federation modules"
     },
     {
+      "name": "EntityReview",
+      "description": "Operator review of everything an entity waits for"
+    },
+    {
       "name": "Subordinates",
       "description": "CRUD for subordinates"
     },
@@ -3404,6 +3408,112 @@
         }
       }
     },
+    "/registration-admin/v1/{tenant}/{orgNumber}/entity-reviews/{registrationId}/start": {
+      "post": {
+        "tags": [
+          "EntityReview"
+        ],
+        "summary": "Start or continue the review of an entity",
+        "operationId": "start",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "registrationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityReview"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-admin/v1/{tenant}/{orgNumber}/entity-reviews/{registrationId}/decisions": {
+      "post": {
+        "tags": [
+          "EntityReview"
+        ],
+        "summary": "Approve, reject or defer one review item",
+        "operationId": "decide",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "registrationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityReview"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/registration-admin/v1/{tenant}/{orgNumber}/domains/{domainId}/reject": {
       "post": {
         "tags": [
@@ -4285,7 +4395,7 @@
         "tags": [
           "RegistrationAdmin"
         ],
-        "summary": "List all registration records for current organization",
+        "summary": "List all registration records on the tenant",
         "operationId": "listRegistrations_1",
         "parameters": [
           {
@@ -4503,6 +4613,106 @@
         }
       }
     },
+    "/registration-admin/v1/{tenant}/{orgNumber}/entity-reviews": {
+      "get": {
+        "tags": [
+          "EntityReview"
+        ],
+        "summary": "List entities with what each waits for",
+        "operationId": "list",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "all",
+            "in": "query",
+            "description": "Include entities with nothing left to review",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntityReviewSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/registration-admin/v1/{tenant}/{orgNumber}/entity-reviews/{registrationId}": {
+      "get": {
+        "tags": [
+          "EntityReview"
+        ],
+        "summary": "Get an entity's review items",
+        "operationId": "get",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "registrationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityReview"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/registration-admin/v1/{tenant}/{orgNumber}/domains": {
       "get": {
         "tags": [
@@ -4581,59 +4791,6 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "integer",
-                    "format": "int64"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/registration-admin/v1/{tenant}/{orgNumber}/count": {
-      "get": {
-        "tags": [
-          "RegistrationAdmin"
-        ],
-        "summary": "Count unhandled PENDING registrations for an intermediate",
-        "operationId": "countPending",
-        "parameters": [
-          {
-            "name": "tenant",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "orgNumber",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "taimId",
-            "in": "query",
-            "description": "Intermediate ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
             }
           }
         ],
@@ -5005,9 +5162,9 @@
           "max_path_length": {
             "type": "integer",
             "format": "int32",
-            "minimum": 0,
             "description": "Maximum number of intermediate entities between the subordinate and a leaf. A non-negative integer.",
-            "example": 2
+            "example": 2,
+            "minimum": 0
           },
           "naming_constraints": {
             "$ref": "#/components/schemas/NamingConstraints",
@@ -5164,13 +5321,12 @@
           },
           "trustMarkTokenValidityDuration": {
             "type": "string",
-            "description": "Trust mark token validity duration (ISO-8601 duration, e.g. PT1H)"
+            "description": "Trust mark token validity duration (ISO-8601 duration, e.g. PT1H). If left empty the issued trust marks never expire."
           }
         },
         "required": [
           "active",
-          "entityId",
-          "trustMarkTokenValidityDuration"
+          "entityId"
         ]
       },
       "TrustAnchor": {
@@ -5509,6 +5665,134 @@
           }
         }
       },
+      "PreviewCheck": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "FAIL",
+              "INFO"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "PreviewDiffEntry": {
+        "type": "object",
+        "properties": {
+          "changeType": {
+            "type": "string",
+            "enum": [
+              "ADDED",
+              "CHANGED",
+              "REMOVED"
+            ]
+          },
+          "key": {
+            "type": "string"
+          },
+          "before": {
+            "type": "string"
+          },
+          "after": {
+            "type": "string"
+          }
+        }
+      },
+      "PreviewField": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "PreviewImage": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "dataUri": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      },
+      "PreviewSection": {
+        "type": "object",
+        "description": "One typed section of a step preview",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "How the section is rendered",
+            "enum": [
+              "FIELDS",
+              "CHECKS",
+              "JSON",
+              "LIST",
+              "TEXT",
+              "IMAGE",
+              "DIFF"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "description": "Heading shown above the section"
+          },
+          "fields": {
+            "type": "array",
+            "description": "Name and value pairs, for FIELDS",
+            "items": {
+              "$ref": "#/components/schemas/PreviewField"
+            }
+          },
+          "checks": {
+            "type": "array",
+            "description": "Check outcomes, for CHECKS",
+            "items": {
+              "$ref": "#/components/schemas/PreviewCheck"
+            }
+          },
+          "json": {
+            "description": "JSON object or array shown as code, for JSON"
+          },
+          "items": {
+            "type": "array",
+            "description": "Plain list entries, for LIST",
+            "items": {
+              "type": "string"
+            }
+          },
+          "text": {
+            "type": "string",
+            "description": "Free text, for TEXT"
+          },
+          "image": {
+            "$ref": "#/components/schemas/PreviewImage",
+            "description": "Image reference, for IMAGE"
+          },
+          "diff": {
+            "type": "array",
+            "description": "Changes between two versions, for DIFF",
+            "items": {
+              "$ref": "#/components/schemas/PreviewDiffEntry"
+            }
+          }
+        }
+      },
       "Registration": {
         "type": "object",
         "properties": {
@@ -5570,6 +5854,23 @@
           "rejectionReason": {
             "type": "string",
             "description": "Reason for rejection, present when status_fedreg is DENY",
+            "readOnly": true
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the registration was submitted",
+            "readOnly": true
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When an operator last approved a step of, or rejected, this registration",
+            "readOnly": true
+          },
+          "reviewedBy": {
+            "type": "string",
+            "description": "Who last approved a step of, or rejected, this registration",
             "readOnly": true
           },
           "statusTrustmarks": {
@@ -5659,6 +5960,19 @@
             "items": {
               "$ref": "#/components/schemas/ContextDiffEntry"
             }
+          },
+          "preview": {
+            "$ref": "#/components/schemas/StepPreview",
+            "description": "What the step showed the operator when it paused for manual review"
+          },
+          "reviewedBy": {
+            "type": "string",
+            "description": "Who approved this step, set when the step ran after manual review"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this step was approved, set when the step ran after manual review"
           }
         }
       },
@@ -5678,6 +5992,19 @@
             "type": "string",
             "description": "Severity of the issue",
             "example": "ERROR"
+          }
+        }
+      },
+      "StepPreview": {
+        "type": "object",
+        "description": "What a step paused for manual review shows the operator",
+        "properties": {
+          "sections": {
+            "type": "array",
+            "description": "Sections in display order",
+            "items": {
+              "$ref": "#/components/schemas/PreviewSection"
+            }
           }
         }
       },
@@ -5973,6 +6300,169 @@
             "type": "string",
             "description": "Human-readable explanation shown to the applicant",
             "example": "Entity configuration could not be fetched from the provided entity ID."
+          }
+        }
+      },
+      "EntityReview": {
+        "type": "object",
+        "properties": {
+          "registrationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entityId": {
+            "type": "string"
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "organizationNumber": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "registrationStatus": {
+            "type": "string"
+          },
+          "hosted": {
+            "type": "boolean"
+          },
+          "reviewState": {
+            "type": "string",
+            "enum": [
+              "NOT_STARTED",
+              "IN_REVIEW",
+              "COMPLETED"
+            ]
+          },
+          "review": {
+            "$ref": "#/components/schemas/ReviewSession"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReviewItem"
+            }
+          }
+        }
+      },
+      "ReviewItem": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "DOMAIN",
+              "TRUST_MARK",
+              "ENTITY"
+            ]
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "stepIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          },
+          "subtitle": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "WAITING",
+              "UPCOMING",
+              "APPROVED",
+              "REJECTED"
+            ]
+          },
+          "waitingFor": {
+            "type": "string"
+          },
+          "decidedBy": {
+            "type": "string"
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rejectionReason": {
+            "type": "string"
+          },
+          "decidedInReviewOf": {
+            "type": "string"
+          },
+          "deferred": {
+            "type": "boolean"
+          },
+          "preview": {
+            "$ref": "#/components/schemas/StepPreview"
+          }
+        }
+      },
+      "ReviewSession": {
+        "type": "object",
+        "properties": {
+          "reviewId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "IN_PROGRESS",
+              "COMPLETED"
+            ]
+          },
+          "startedBy": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ReviewDecisionRequest": {
+        "type": "object",
+        "properties": {
+          "itemType": {
+            "type": "string",
+            "enum": [
+              "DOMAIN",
+              "TRUST_MARK",
+              "ENTITY"
+            ]
+          },
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "stepIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "REJECTED",
+              "DEFERRED"
+            ]
+          },
+          "reason": {
+            "type": "string"
           }
         }
       },
@@ -6477,6 +6967,65 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "EntityReviewSummary": {
+        "type": "object",
+        "properties": {
+          "registrationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "entityId": {
+            "type": "string"
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "organizationNumber": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "registrationStatus": {
+            "type": "string"
+          },
+          "hosted": {
+            "type": "boolean"
+          },
+          "pendingDomains": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pendingTrustMarks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pendingEntitySteps": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reviewState": {
+            "type": "string",
+            "enum": [
+              "NOT_STARTED",
+              "IN_REVIEW",
+              "COMPLETED"
+            ]
+          },
+          "startedBy": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decidedItems": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       }

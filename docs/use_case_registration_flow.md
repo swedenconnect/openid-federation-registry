@@ -22,7 +22,7 @@ There are two flow types (`Step.FlowType`):
 | Actor                          | Description                                                                                                                                                          |
 |--------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Federation Member**          | An organization, scoped to a tenant, that wants to connect an entity to the federation (`entityIdentifier` + `orgNumber` + `tenant`)                                 |
-| **Intermediate Administrator** | Operator with write rights on the Intermediate's owning organization who reviews, approves per step, or rejects registrations (`@orgRightsService.canRead/canWrite`) |
+| **Tenant Operator**            | An organization listed in the tenant's `operator_organizations` (or a superuser). Reviews, approves per step, or rejects every registration on the tenant, whichever organization owns the Intermediate (`@orgRightsService.canReadAsOperator/canWriteAsOperator`) |
 | **Federation Operator**        | Creates and assigns registration flows — to Intermediates, trust mark issuers, or individual trust marks                                                             |
 | **System**                     | The registry service; runs the pipeline steps, creates subordinate statements and trust mark subjects                                                                |
 
@@ -107,7 +107,7 @@ trust marks are reflected in `statusTrustmarks`.
 
 ## UC-2: Submit registration request (manual review at any step)
 
-**Actor:** Federation Member, Intermediate Administrator
+**Actor:** Federation Member, Tenant Operator
 
 **Goal:** The pipeline pauses at a configured checkpoint and waits for an operator to approve that specific step before
 continuing.
@@ -117,40 +117,113 @@ continuing.
 1. Same as UC-1, steps 1–2.
 2. The pipeline runs step by step. When it reaches a `MID` step configured with `manualreview=true` (any public `MID`
    step in the flow definition — not necessarily the last one), the engine:
-    - still runs that step's `buildContext` (read-only validation),
-    - then halts **before** `execute`, recording a `PENDING_APPROVAL` result for that step.
+    - still runs that step's `buildContext`, which loads everything the step needs without writing anything,
+    - then halts **before** `execute`, recording a `PENDING_APPROVAL` result for that step together with the step's
+      **preview**: typed sections (`FIELDS`, `CHECKS`, `JSON`, `LIST`, `TEXT`, `IMAGE`, `DIFF`) describing what the
+      step is about to do. Only steps implementing `ReviewableStep` can pause, and every step that offers
+      `manualreview` must implement it — the application refuses to start otherwise.
 3. The system sets `Registration.status = PENDING_APPROVAL`,
-   `Registration.pendingStepIndex = <index of the paused step>`, and persists the step results so far.
+   `Registration.pendingStepIndex = <index of the paused step>`, persists the step results so far, and saves the
+   context the steps before the pause produced (entity metadata, federation keys, metadata policy, request metadata)
+   in `Registration.processContext`.
 4. The system returns a `RegistrationDto` with `successful = false` and `statusFedreg = PENDING_APPROVAL`.
-5. The Intermediate administrator sees the pending registration: `GET /registration-admin/v1/{tenant}/{orgNumber}` or
+5. The tenant operator sees the pending registration: `GET /registration-admin/v1/{tenant}/{orgNumber}` or
    `GET /registration-admin/v1/{tenant}/{orgNumber}/{registrationId}`.
-6. The administrator reviews the step results and context diff, then approves the pending step:
+6. The operator reviews the step's preview and the step results, then approves the pending step:
    `POST /registration-admin/v1/{tenant}/{orgNumber}/{registrationId}/steps/{stepIndex}/approve`. `stepIndex` must match
    `pendingStepIndex` exactly, or the call fails with `409 Conflict`.
-7. On approval, the system reconstructs the pipeline context from the stored registration data (entity ID, JWKS,
-   metadata policy, requested trust marks, request metadata) and resumes execution from `stepIndex` onward. The approved
+7. On approval, the system rebuilds the pipeline context from the registration (entity ID, organization, flow,
+   requested trust marks) and the saved `processContext`, and resumes execution from `stepIndex` onward. The approved
    step's `buildContext`/approval gate is bypassed for this one step only (`STEP_APPROVED` context flag, consumed after
-   `execute`).
+   `execute`), so the step runs on exactly the data the operator reviewed. The approved step's result records
+   `reviewedBy` and `reviewedAt`, the registration's `reviewedBy`/`reviewedAt` are updated, and a
+   `REGISTRATION_STEP_APPROVED` audit event is emitted.
 8. If a later step in the same run also requires manual review, the pipeline pauses again with a new
    `pendingStepIndex` — steps 5–7 repeat.
 9. Once all remaining steps complete, `PublishSubordinateStatementStep` runs and sets `Registration.status = APPROVED`.
+10. If a step after the approved one fails, the registration goes back to `STARTED` with no pending step, as a failed
+    first run leaves it; the failed step and its issues are in the step results.
 
 **Result:** The entity becomes a subordinate once every gated step has been individually approved.
 
 ---
 
+## UC-2b: Review an entity
+
+**Actor:** Tenant Operator
+
+**Goal:** Decide everything one entity waits for in one session, in a fixed order: the **domain** it is registered
+under, then the **trust marks** it asked for, then the steps of its own **registration** that need review.
+
+An entity is identified by its own registration (`registrationId` of the `SUBORDINATE` registration). The items are
+not stored; they are read from the domains and registrations each time:
+
+| Item         | What it is                                                                                    |
+|--------------|-----------------------------------------------------------------------------------------------|
+| `DOMAIN`     | Each domain of the entity's organization that covers the entity's host.                       |
+| `TRUST_MARK` | Each trust mark registration under the entity's registration that is paused or decided.      |
+| `ENTITY`     | The steps of the entity's registration approved so far, the paused step, and the later steps that will pause too (`UPCOMING`). |
+
+In the admin UI this is **Registrations → Entities**: the entity list, an entity page listing its items in order,
+and a review view with the item's preview and **Reject… / Defer decision / Approve and continue**. **Registrations →
+Domain claims** still lists every domain claim, including those no entity is registered under yet.
+
+### Main flow
+
+1. The operator lists the entities: `GET /registration-admin/v1/{tenant}/{orgNumber}/entity-reviews` (`?all=true`
+   includes entities with nothing left to review). Each row counts the pending domains, trust marks and entity steps
+   and says whether a review is `NOT_STARTED`, `IN_REVIEW` or `COMPLETED`.
+2. The operator opens an entity: `GET .../entity-reviews/{registrationId}` returns the items in review order, each with
+   its state (`PENDING`, `WAITING`, `UPCOMING`, `APPROVED`, `REJECTED`) and the preview the operator reviews.
+3. The operator starts the review: `POST .../entity-reviews/{registrationId}/start`. If a review is already open it is
+   returned instead, so any operator of the tenant can continue a review another started.
+4. For each item the operator posts a decision, `POST .../entity-reviews/{registrationId}/decisions` with
+   `itemType`, `itemId`, `stepIndex` (for a registration, as listed) and `decision`:
+    - `APPROVED` and `REJECTED` (with `reason`) go through the same service as the single-item endpoints, with the same
+      checks, cascades and audit events. Approving an entity step resumes the flow, which may pause at the next
+      review step; that step then appears as the next item.
+    - `DEFERRED` records the deferral and changes nothing else. The review stays open and the entity is listed as
+      `IN_REVIEW` ("Continue review").
+5. When nothing is left to decide, the review is `COMPLETED`.
+
+### Order
+
+An item is `WAITING`, and cannot be approved, until the items before it are decided:
+
+- a trust mark or entity step waits while a domain covering the entity is `PENDING` and none is `VALIDATED`;
+- an entity step also waits while a trust mark it asked for is pending.
+
+The rule is enforced by the server, also on `.../{registrationId}/steps/{stepIndex}/approve`, which answers `409`
+with the reason.
+
+### Shared domains
+
+A domain covers every entity of the organization under it, so it shows in each of their reviews. It is decided once:
+the other reviews show it as decided, with `decidedInReviewOf` naming the entity in whose review it was decided.
+Deciding a domain does not start a review of the other entities.
+
+### Rejections
+
+- Rejecting the domain rejects the entities under it that no other domain of the organization covers, with reason
+  "Not Accepted Domain" (see UC-3), and their reviews end.
+- Rejecting a trust mark rejects only that trust mark; the review continues.
+- Rejecting an entity step rejects the registration and ends the review.
+
+---
+
 ## UC-3: Reject a registration request
 
-**Actor:** Intermediate Administrator
+**Actor:** Tenant Operator
 
 **Goal:** A registration currently paused for review is rejected with a stated reason.
 
 ### Main flow
 
-1. The administrator opens a registration with `statusFedreg = PENDING_APPROVAL`.
-2. The administrator rejects it: `POST /registration-admin/v1/{tenant}/{orgNumber}/{registrationId}/reject` with
+1. The operator opens a registration with `statusFedreg = PENDING_APPROVAL`.
+2. The operator rejects it: `POST /registration-admin/v1/{tenant}/{orgNumber}/{registrationId}/reject` with
    `rejectionReason`.
-3. The system sets `Registration.status = REJECTED`, stores `rejectionReason` and `reviewedAt`.
+3. The system sets `Registration.status = REJECTED`, stores `rejectionReason`, `reviewedAt` and `reviewedBy`, drops the
+   saved `processContext`, and emits a `REGISTRATION_REJECTED` audit event.
 4. The system returns the updated `RegistrationDto`.
 5. The registration record is deleted automatically 30 days later by `RegistrationCleanupJob` (nightly at 02:00,
    `deleteByStatusAndCreatedDateBefore(REJECTED, now-30d)`).
@@ -363,8 +436,10 @@ pipeline), `PENDING_APPROVAL`.
 | `LoadEntityConfigurationStep`                                                     | MID          | Yes (default)         | Runs only when `metadata` is absent. Fetches and signature-validates the entity statement at `entityId`. Supports `manualreview`.                                      |
 | `TrustMarkIssuerRegistrationStep`                                                 | MID          | Yes                   | Dispatches a `TRUST_MARK_ISSUER` sub-pipeline for each requested trust mark (see UC-6).                                                                                |
 | `PredefinedDirectRegisterFlow`                                                    | MID          | Yes (legacy)          | Combines `LoadEntityConfigurationStep` + `PublishSubordinateStatementStep` into a single selectable step.                                                              |
-| `PublishSubordinateStatementStep`                                                 | POST (fixed) | —                     | Creates or updates the subordinate statement from the loaded JWKS/metadata policy and sets status `APPROVED`.                                                          |
-| `MetadataPolicyCreationStep`, `RpMetadataValidationStep`, `TrustMarkApprovalStep` | MID          | No (`isPublic=false`) | Defined but not currently selectable via the flow-builder UI/API, and not part of the default flow.                                                                    |
+| `PublishSubordinateStatementStep`                                                 | POST (fixed) | —                     | Creates or updates the subordinate statement from the loaded JWKS, metadata and metadata policy and sets status `APPROVED`. Never pauses for review.                   |
+| `MetadataReviewStep`                                                              | MID          | Yes                   | Shows the operator the entity's metadata (logo, names, links, changes) and always waits for approval. See [Metadata Review and Metadata Policy](metadata_policy.md). |
+| `MetadataPolicyCreationStep`                                                      | MID          | Yes                   | Builds the `metadata` and `metadata_policy` claims from a template and checks the metadata against it. Supports `manualreview`. See [Metadata Review and Metadata Policy](metadata_policy.md). |
+| `RpMetadataValidationStep`, `TrustMarkApprovalStep`                               | MID          | No (`isPublic=false`) | Defined but not currently selectable via the flow-builder UI/API, and not part of the default flow.                                                                    |
 
 ### TRUST_MARK_ISSUER flow steps
 
@@ -374,7 +449,8 @@ pipeline), `PENDING_APPROVAL`.
 | `AddTrustMarkSubjectStep`              | MID          | Yes                 | Validates the requested trust mark type exists; supports `manualreview` to gate subject creation.                        |
 | `CreateTrustMarkSubjectStep`           | POST (fixed) | —                   | Creates the `TrustMarkSubject` and marks the child registration `APPROVED`. Runs only if the MID step signalled proceed. |
 
-Every `MID` step declares its own `manualreview` (boolean, default `false`) config value; `PRE`/`POST` steps always run
+Every `MID` step that can pause declares its own `manualreview` (boolean, default `false`) config value and implements
+`ReviewableStep`, which supplies the preview shown to the reviewer; `PRE`/`POST` steps always run
 with their default config and are not individually configurable in the flow definition. The pipeline aborts at the first
 `FAILURE`; a step can also return `WARNING` (pipeline continues) or be `SKIPPED` when its `canApply` check is false.
 
@@ -393,9 +469,12 @@ All endpoints are scoped under `/{tenant}/{orgNumber}` except where noted, and g
 | `POST`   | `/registration/v1/{tenant}/{orgNumber}/{joinId}`                                                 | Submit a registration (join) request                                      |
 | `PUT`    | `/registration/v1/{tenant}/{orgNumber}/{registrationId}`                                         | Re-run the flow for an existing entity                                    |
 | `DELETE` | `/registration/v1/{tenant}/{orgNumber}/{registrationId}`                                         | Remove a registration (cascades to subordinate/hosted entity if approved) |
-| `GET`    | `/registration-admin/v1/{tenant}/{orgNumber}`                                                    | List registrations connected to this org's Intermediates                  |
+| `GET`    | `/registration-admin/v1/{tenant}/{orgNumber}`                                                    | List registrations on the tenant (operator)                               |
+| `GET`    | `/registration-admin/v1/{tenant}/{orgNumber}/entity-reviews`                                     | List entities with what each waits for (UC-2b)                            |
+| `GET`    | `/registration-admin/v1/{tenant}/{orgNumber}/entity-reviews/{registrationId}`                    | Get an entity's review items in order (UC-2b)                             |
+| `POST`   | `/registration-admin/v1/{tenant}/{orgNumber}/entity-reviews/{registrationId}/start`              | Start or continue the review of an entity (UC-2b)                         |
+| `POST`   | `/registration-admin/v1/{tenant}/{orgNumber}/entity-reviews/{registrationId}/decisions`          | Approve, reject or defer one review item (UC-2b)                          |
 | `GET`    | `/registration-admin/v1/{tenant}/{orgNumber}/{registrationId}`                                   | Get a specific registration (admin)                                       |
-| `GET`    | `/registration-admin/v1/{tenant}/{orgNumber}/count?taimId=`                                      | Count unhandled `PENDING_APPROVAL` registrations for an Intermediate      |
 | `POST`   | `/registration-admin/v1/{tenant}/{orgNumber}/{registrationId}/reject`                            | Reject a pending registration                                             |
 | `POST`   | `/registration-admin/v1/{tenant}/{orgNumber}/{registrationId}/steps/{stepIndex}/approve`         | Approve the pending step and resume the pipeline                          |
 | `POST`   | `/organization/v1/{tenant}/{orgNumber}`                                                          | Bootstrap the organization's registry record (UC-0)                       |

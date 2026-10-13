@@ -47,12 +47,14 @@ import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 import se.swedenconnect.oidf.registry.registrationflow.RegistrationFlowService;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationMapper;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationReviewDto;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationRejectionReasons;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
 import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
+import se.swedenconnect.oidf.registry.registrations.review.service.ReviewOrder;
 import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
 
 import java.time.LocalDateTime;
@@ -93,6 +95,7 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
   private final OrgRightsService orgRightsService;
   private final AuditorAware<String> auditorAware;
   private final RegistryAuditService auditService;
+  private final ReviewOrder reviewOrder;
 
   /**
    * Constructor.
@@ -109,6 +112,7 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
    * @param orgRightsService service used to recognise a superuser caller
    * @param auditorAware supplies the principal recorded as the reviewer
    * @param auditService the audit service domain review events are emitted through
+   * @param reviewOrder the order an entity's items are reviewed in
    */
   public RegistrationAdminServiceImpl(final RegistrationRepository registrationRepository,
       final EntityConfigService entityConfigService,
@@ -121,7 +125,8 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
       final InstancePlacementService instancePlacementService,
       final OrgRightsService orgRightsService,
       final AuditorAware<String> auditorAware,
-      final RegistryAuditService auditService) {
+      final RegistryAuditService auditService,
+      final ReviewOrder reviewOrder) {
     this.registrationRepository = registrationRepository;
     this.entityConfigService = entityConfigService;
     this.registrationFlowService = registrationFlowService;
@@ -134,51 +139,47 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
     this.orgRightsService = orgRightsService;
     this.auditorAware = auditorAware;
     this.auditService = auditService;
+    this.reviewOrder = reviewOrder;
   }
 
   /**
-   * Finds a registration by ID, verifying it is connected to an intermediate owned by the calling organization. Both
-   * "no such registration" and "registration belongs to another organization" collapse to the same not-found error, so
-   * a foreign registration ID is indistinguishable from a nonexistent one.
+   * Finds a registration the caller may review: one submitted on the tenant the caller operates. Both "no such
+   * registration" and "registration on another tenant" collapse to the same not-found error, so a foreign
+   * registration ID is indistinguishable from a nonexistent one.
    *
-   * @param organizationRecord the calling organization
+   * @param organizationRecord the calling organization, a tenant operator
    * @param registrationId the registration ID
-   * @return the owned registration
+   * @return the registration
    */
-  private Registration findOwnedRegistrationOrThrow(final OrganizationRecord organizationRecord,
+  private Registration findReviewableRegistrationOrThrow(final OrganizationRecord organizationRecord,
       final UUID registrationId) {
-    final UUID organizationId = this.organizationService.find(organizationRecord)
-        .map(Organization::getOrganizationId)
-        .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
-            "Registration not found: %s".formatted(registrationId)));
+    final UUID instanceId = this.requireReviewerInstance(organizationRecord);
     return this.registrationRepository
-        .findByRegistrationIdAndFlowAssignment_TaIm_Organization_OrganizationId(registrationId, organizationId)
+        .findByRegistrationIdAndOrganization_Instance_InstanceId(registrationId, instanceId)
         .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
             "Registration not found: %s".formatted(registrationId)));
-  }
-
-  @Override
-  public long countPending(final OrganizationRecord organizationRecord, final UUID taimId) {
-    return this.organizationService.find(organizationRecord)
-        .map(org -> this.registrationRepository
-            .countByFlowAssignment_TaIm_TaImIdAndFlowAssignment_TaIm_Organization_OrganizationIdAndStatus(
-                taimId, org.getOrganizationId(), RegistrationStatus.PENDING_APPROVAL))
-        .orElse(0L);
   }
 
   @Override
   @Transactional
   public RegistrationDto reject(final OrganizationRecord organizationRecord, final UUID registrationId,
       final String rejectionReason) {
-    final Registration reg = this.findOwnedRegistrationOrThrow(organizationRecord, registrationId);
+    final Registration reg = this.findReviewableRegistrationOrThrow(organizationRecord, registrationId);
     if (reg.getStatus() != RegistrationStatus.PENDING_APPROVAL) {
       throw new RegistryServerException(ErrorTypes.CONFLICT,
           "Registration %s is not pending approval".formatted(registrationId));
     }
+    final String reviewer = this.currentReviewer(organizationRecord);
     reg.setStatus(RegistrationStatus.REJECTED);
     reg.setRejectionReason(rejectionReason);
     reg.setReviewedAt(LocalDateTime.now());
+    reg.setReviewedBy(reviewer);
+    reg.setProcessContext(null);
     this.registrationRepository.save(reg);
+    this.auditService.registrationRejected(reg.getRegistrationId(), instanceIdOf(reg),
+        reg.getOrganization().getOrganizationId(), new RegistrationReviewDto(reg.getRegistrationId(),
+            reg.getEntityId(), reg.getRegistrationType(), null, null, reviewer, reg.getReviewedAt(),
+            rejectionReason));
     final List<HostedEntityDto> hostedEntities = this.entityConfigService.listHostedEntity(reg.getEntityId());
     final boolean isHosted = !hostedEntities.isEmpty();
     final Map<String, Object> hostedMetadata = isHosted ? hostedEntities.getFirst().getMetadata() : null;
@@ -187,14 +188,12 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
 
   @Override
   @Transactional(readOnly = true)
-  public List<RegistrationDto> listRegistrationsConnectedToThisOrgIM(final OrganizationRecord organizationRecord) {
+  public List<RegistrationDto> listRegistrationsForReview(final OrganizationRecord organizationRecord) {
+    final UUID instanceId = this.requireReviewerInstance(organizationRecord);
     final Map<String, Map<String, Object>> hostedMetadataByEntityId = new HashMap<>();
     this.entityConfigService.listHostedEntity((String) null)
         .forEach(h -> hostedMetadataByEntityId.put(h.getEntityIdentifier(), h.getMetadata()));
-    final List<Registration> allRegs = this.organizationService.find(organizationRecord)
-        .map(org -> this.registrationRepository.findByFlowAssignment_TaIm_Organization_OrganizationId(
-            org.getOrganizationId()))
-        .orElse(List.of());
+    final List<Registration> allRegs = this.registrationRepository.findByOrganization_Instance_InstanceId(instanceId);
     final Map<UUID, Map<String, RegistrationStatus>> tmStatusByParent = allRegs.stream()
         .filter(r -> r.getRegistrationType() == RegistrationType.TRUST_MARK_SUBORDINATE)
         .filter(r -> r.getParentRegistration() != null)
@@ -212,7 +211,7 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
   @Override
   @Transactional(readOnly = true)
   public RegistrationDto getRegistrationById(final OrganizationRecord organizationRecord, final UUID registrationId) {
-    final Registration reg = this.findOwnedRegistrationOrThrow(organizationRecord, registrationId);
+    final Registration reg = this.findReviewableRegistrationOrThrow(organizationRecord, registrationId);
     final List<HostedEntityDto> hostedEntities = this.entityConfigService.listHostedEntity(reg.getEntityId());
     final boolean isHosted = !hostedEntities.isEmpty();
     final Map<String, Object> hostedMetadata = isHosted ? hostedEntities.getFirst().getMetadata() : null;
@@ -227,8 +226,19 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
   @Transactional
   public RegistrationDto approveStep(final OrganizationRecord organizationRecord, final UUID registrationId,
       final int stepIndex) {
-    final Registration reg = this.findOwnedRegistrationOrThrow(organizationRecord, registrationId);
-    this.registrationFlowService.approveStep(reg, stepIndex);
+    final Registration reg = this.findReviewableRegistrationOrThrow(organizationRecord, registrationId);
+    this.reviewOrder.waitingFor(reg).ifPresent(reason -> {
+      throw new RegistryServerException(ErrorTypes.CONFLICT, reason);
+    });
+    final String reviewer = this.currentReviewer(organizationRecord);
+    final String stepName = Optional.ofNullable(reg.getStepResults())
+        .filter(results -> stepIndex >= 0 && stepIndex < results.size())
+        .map(results -> results.get(stepIndex).stepName())
+        .orElse(null);
+    this.registrationFlowService.approveStep(reg, stepIndex, reviewer);
+    this.auditService.registrationStepApproved(reg.getRegistrationId(), instanceIdOf(reg),
+        reg.getOrganization().getOrganizationId(), new RegistrationReviewDto(reg.getRegistrationId(),
+            reg.getEntityId(), reg.getRegistrationType(), stepIndex, stepName, reviewer, reg.getReviewedAt(), null));
     return this.getRegistrationById(organizationRecord, registrationId);
   }
 
@@ -516,19 +526,22 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
     registration.setRejectionReason(RegistrationRejectionReasons.NOT_ACCEPTED_DOMAIN);
     registration.setReviewedAt(reviewedAt);
     registration.setReviewedBy(reviewer);
+    registration.setProcessContext(null);
     this.registrationRepository.save(registration);
     return registration.getRegistrationId();
   }
 
   /**
-   * Resolves the instance whose domains the caller may review, having established that the caller is a tenant
-   * operator: a superuser, or an organization listed in the tenant's configured {@code operator_organizations}. A
-   * caller that is neither is told the resource does not exist, the same convention foreign registrations follow.
+   * Resolves the instance whose registrations and domains the caller may review, having established that the caller
+   * is a tenant operator: a superuser, or an organization listed in the tenant's configured
+   * {@code operator_organizations}. A caller that is neither is told the resource does not exist, the same convention
+   * foreign registrations follow.
    *
    * @param organizationRecord the calling organization
    * @return the instance the review is scoped to
    */
-  private UUID requireReviewerInstance(final OrganizationRecord organizationRecord) {
+  @Override
+  public UUID requireReviewerInstance(final OrganizationRecord organizationRecord) {
     final UUID instanceId = this.instancePlacementService.resolveInstance(organizationRecord)
         .map(Instance::getInstanceId)
         .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
@@ -540,7 +553,7 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
 
     if (!this.instancePlacementService.isOperator(organizationRecord.orgNumber(), organizationRecord.tenant())) {
       throw new RegistryServerException(ErrorTypes.NOT_FOUND,
-          "No domain review available for organization %s on tenant %s"
+          "No review available for organization %s on tenant %s"
               .formatted(organizationRecord.orgNumber(), organizationRecord.tenant()));
     }
     return instanceId;
@@ -553,7 +566,14 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
             "Domain not found: %s".formatted(domainId)));
   }
 
-  private String currentReviewer(final OrganizationRecord organizationRecord) {
+  private static UUID instanceIdOf(final Registration registration) {
+    return Optional.ofNullable(registration.getOrganization().getInstance())
+        .map(Instance::getInstanceId)
+        .orElse(null);
+  }
+
+  @Override
+  public String currentReviewer(final OrganizationRecord organizationRecord) {
     return this.auditorAware.getCurrentAuditor().orElse(organizationRecord.orgNumber());
   }
 

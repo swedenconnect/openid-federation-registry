@@ -23,9 +23,10 @@ import se.swedenconnect.oidf.registry.organization.dto.OrganizationDto;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.model.OrganizationDomain;
 
+import se.swedenconnect.oidf.registry.infrastructure.persistence.Timestamps;
+
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
@@ -139,14 +140,7 @@ public final class OrganizationMapper {
         cascadedRegistrationIds);
   }
 
-  /**
-   * Resolves a stored, zone-less timestamp against the running service's own zone, so the API emits an absolute
-   * instant rather than a wall-clock reading a consumer would have to guess the zone for.
-   *
-   * @param timestamp the stored timestamp, may be {@code null}
-   * @return the same point in time with an offset, or {@code null}
-   */
   private static OffsetDateTime toOffsetDateTime(final LocalDateTime timestamp) {
-    return timestamp == null ? null : timestamp.atZone(ZoneId.systemDefault()).toOffsetDateTime();
+    return Timestamps.toOffsetDateTime(timestamp);
   }
 }

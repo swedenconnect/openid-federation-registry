@@ -36,6 +36,8 @@ import DomainRequestDetailView from '../views/DomainRequestDetailView.vue';
 import OrganizationsListView from '../views/OrganizationsListView.vue';
 import TriggerRegistrationView from '../views/TriggerRegistrationView.vue';
 import NoAccessView from '../views/NoAccessView.vue';
+import EntityReviewDetailView from '../views/EntityReviewDetailView.vue';
+import EntityReviewSessionView from '../views/EntityReviewSessionView.vue';
 import {useAuthorizationStatusStore} from '@/authorization/stores/authorizationStatusStore';
 import {useUserStore} from '@/stores/userStore';
 
@@ -188,6 +190,18 @@ const router = createRouter({
             name: 'registration-trigger',
             component: TriggerRegistrationView,
             meta: {operatorOnly: true, title: 'Trigger Registration'},
+        },
+        {
+            path: '/registrations/entity/:registrationId',
+            name: 'entity-review-detail',
+            component: EntityReviewDetailView,
+            meta: {operatorOnly: true, title: 'Entity'},
+        },
+        {
+            path: '/registrations/entity/:registrationId/review',
+            name: 'entity-review-session',
+            component: EntityReviewSessionView,
+            meta: {operatorOnly: true, title: 'Review'},
         },
         {
             path: '/registrations/domain/:domainId',

@@ -16,6 +16,8 @@
 
 package se.swedenconnect.oidf.registry.registrationflow.dto;
 
+import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
+import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.registrationflow.RegistrationStepRepository;
 import se.swedenconnect.oidf.registry.registrationflow.model.ConfigValueModel;
@@ -28,7 +30,9 @@ import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigur
 import se.swedenconnect.oidf.registry.registrationflow.process.step.impl.DefaultConfig;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -174,6 +178,8 @@ public class Mapper {
                 .toList()))
         .toList();
 
+    validateStepConfigurations(stepModels, registrationStepRepository);
+
     final RegistrationFlow registrationFlow = new RegistrationFlow();
     registrationFlow.setFlowId(flowId);
     registrationFlow.setOrganization(organization);
@@ -209,6 +215,8 @@ public class Mapper {
                 .toList()))
         .toList();
 
+    validateStepConfigurations(stepModels, registrationStepRepository);
+
     existing.setName(dto.name());
     existing.setDescription(dto.description());
     existing.setDescriptionSv(dto.descriptionSv());
@@ -220,6 +228,28 @@ public class Mapper {
     existing.setEnabled(isEnabled(dto));
     existing.setFlowDefinition(stepModels);
     return existing;
+  }
+
+  /**
+   * Lets every step check the configuration the flow gives it.
+   *
+   * @param stepModels the flow's steps
+   * @param registrationStepRepository the defined steps
+   * @throws RegistryServerException if a step's configuration cannot be used
+   */
+  private static void validateStepConfigurations(final List<StepModel> stepModels,
+      final RegistrationStepRepository registrationStepRepository) {
+    final List<String> problems = new ArrayList<>();
+    for (final StepModel stepModel : stepModels) {
+      registrationStepRepository.findStepById(stepModel.stepId()).ifPresent(step -> {
+        final Map<String, String> values = new HashMap<>();
+        stepModel.config().forEach(value -> values.put(value.key(), value.value()));
+        step.validateConfiguration(values).forEach(problem -> problems.add(step.getName() + ": " + problem));
+      });
+    }
+    if (!problems.isEmpty()) {
+      throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER, String.join("; ", problems));
+    }
   }
 
   /**

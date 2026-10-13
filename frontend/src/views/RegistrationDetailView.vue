@@ -171,7 +171,22 @@
                         variant="tonal"
                         @click="openStepInfo(step)"
                     >Diff</v-btn>
+                    <v-btn
+                        v-if="step.preview"
+                        :id="`btn-preview-step-${i}`"
+                        size="x-small"
+                        variant="tonal"
+                        @click="toggleStepPreview(i)"
+                    >{{ openPreviews.has(i) ? 'Hide preview' : 'Preview' }}</v-btn>
                   </div>
+                  <div v-if="step.reviewedBy" class="text-caption text-grey mb-1">
+                    Approved by {{ step.reviewedBy }}
+                  </div>
+                  <StepPreview
+                      v-if="step.preview && openPreviews.has(i)"
+                      :preview="step.preview"
+                      class="step-preview-box mb-2"
+                  ></StepPreview>
                   <div v-if="step.message" class="text-body-2 text-medium-emphasis mb-1">
                     {{ step.message }}
                   </div>
@@ -405,6 +420,7 @@
 
 <script setup>
 import {computed, onMounted, ref, watch} from 'vue';
+import StepPreview from '@/components/StepPreview.vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
@@ -449,6 +465,16 @@ const allTrustmarks = ref([]);
 const trustmarkIssuersMap = ref({});
 const trustmarksTabLoading = ref(false);
 const trustmarksLoaded = ref(false);
+
+// Steps whose stored review preview is expanded; a paused step's preview opens by default.
+const openPreviews = ref(new Set());
+
+function toggleStepPreview(index) {
+  const next = new Set(openPreviews.value);
+  if (next.has(index)) next.delete(index);
+  else next.add(index);
+  openPreviews.value = next;
+}
 
 function statusColor(status) {
   const colors = {PENDING_APPROVAL: 'warning', APPROVED: 'success', REJECTED: 'error', STARTED: 'info'};
@@ -638,6 +664,8 @@ async function loadRegistration() {
       registrationAdminItemPath(userStore.selectedTenant, userStore.orgNumber, route.params.id));
   if (registration.value) {
     loadEntityStatement();
+    const paused = (registration.value.steps ?? []).findIndex(step => step.status === 'PENDING_APPROVAL');
+    openPreviews.value = paused >= 0 ? new Set([paused]) : new Set();
   }
 }
 
@@ -729,5 +757,9 @@ onMounted(() => {
 
 .diff-after {
   border-left: 3px solid #66bb6a;
+}
+.step-preview-box {
+  border-left: 3px solid rgba(0, 0, 0, 0.12);
+  padding-left: 12px;
 }
 </style>

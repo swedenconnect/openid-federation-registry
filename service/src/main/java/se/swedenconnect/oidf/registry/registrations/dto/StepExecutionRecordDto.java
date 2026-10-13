@@ -16,7 +16,9 @@
 package se.swedenconnect.oidf.registry.registrations.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import se.swedenconnect.oidf.registry.registrationflow.process.review.StepPreview;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 /**
@@ -27,6 +29,9 @@ import java.util.List;
  * @param message optional human-readable summary
  * @param issues validation issues found during this step
  * @param contextDiff changes made to the pipeline context by this step
+ * @param preview what the step showed the operator when it paused for manual review, otherwise {@code null}
+ * @param reviewedBy who approved the step, {@code null} unless it ran after manual review
+ * @param reviewedAt when the step was approved, {@code null} unless it ran after manual review
  * @author Per Fredrik Plars
  */
 @Schema(name = "StepExecutionRecord")
@@ -45,6 +50,38 @@ public record StepExecutionRecordDto(
     List<StepIssueDto> issues,
 
     @Schema(description = "Changes made to the pipeline context by this step")
-    List<ContextDiffEntryDto> contextDiff
+    List<ContextDiffEntryDto> contextDiff,
+    @Schema(description = "What the step showed the operator when it paused for manual review")
+    StepPreview preview,
+    @Schema(description = "Who approved this step, set when the step ran after manual review")
+    String reviewedBy,
+    @Schema(description = "When this step was approved, set when the step ran after manual review")
+    OffsetDateTime reviewedAt
 ) {
+
+  /**
+   * Creates a record for a step that was not paused for review.
+   *
+   * @param stepName display name of the step
+   * @param status step outcome
+   * @param message optional human-readable summary
+   * @param issues validation issues found during this step
+   * @param contextDiff changes made to the pipeline context by this step
+   */
+  public StepExecutionRecordDto(final String stepName, final String status, final String message,
+      final List<StepIssueDto> issues, final List<ContextDiffEntryDto> contextDiff) {
+    this(stepName, status, message, issues, contextDiff, null, null, null);
+  }
+
+  /**
+   * Returns a copy of this record marked as approved by an operator.
+   *
+   * @param reviewer who approved the step
+   * @param at when the step was approved
+   * @return the marked copy
+   */
+  public StepExecutionRecordDto approvedBy(final String reviewer, final OffsetDateTime at) {
+    return new StepExecutionRecordDto(this.stepName, this.status, this.message, this.issues, this.contextDiff,
+        this.preview, reviewer, at);
+  }
 }

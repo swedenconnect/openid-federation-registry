@@ -23,6 +23,7 @@ import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.organization.dto.DomainDto;
 import se.swedenconnect.oidf.registry.organization.dto.OrganizationDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationReviewDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
@@ -428,6 +429,27 @@ public interface RegistryAuditService {
    */
   void organizationDomainRejected(UUID id, UUID instanceId, UUID organizationId, DomainDto oldData,
       DomainDto newData);
+
+  /**
+   * Audits a tenant operator approving a step of a registration paused for manual review.
+   *
+   * @param id the unique identifier of the registration.
+   * @param instanceId the unique identifier of the instance the registration belongs to, may be {@code null}.
+   * @param organizationId the unique identifier of the organization that submitted the registration.
+   * @param review the approval.
+   */
+  void registrationStepApproved(UUID id, UUID instanceId, UUID organizationId, RegistrationReviewDto review);
+
+  /**
+   * Audits a tenant operator rejecting a registration. Registrations rejected because their domain was rejected are
+   * audited through the domain event instead.
+   *
+   * @param id the unique identifier of the registration.
+   * @param instanceId the unique identifier of the instance the registration belongs to, may be {@code null}.
+   * @param organizationId the unique identifier of the organization that submitted the registration.
+   * @param review the rejection.
+   */
+  void registrationRejected(UUID id, UUID instanceId, UUID organizationId, RegistrationReviewDto review);
 
   /**
    * Trigger when a entity configuration resolve is made

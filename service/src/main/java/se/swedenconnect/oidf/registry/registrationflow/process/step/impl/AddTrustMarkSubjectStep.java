@@ -20,6 +20,9 @@ import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.SerializableList;
+import se.swedenconnect.oidf.registry.registrationflow.process.review.PreviewSection;
+import se.swedenconnect.oidf.registry.registrationflow.process.review.ReviewableStep;
+import se.swedenconnect.oidf.registry.registrationflow.process.review.StepPreview;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Severity;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
@@ -49,7 +52,7 @@ import java.util.UUID;
  */
 @Component
 @Slf4j
-public class AddTrustMarkSubjectStep extends NoConfigStepAdapter {
+public class AddTrustMarkSubjectStep extends NoConfigStepAdapter implements ReviewableStep {
 
   private final TrustMarkRepository trustMarkRepository;
 
@@ -109,6 +112,25 @@ public class AddTrustMarkSubjectStep extends NoConfigStepAdapter {
    * Only reached when the approval gate has been passed (or skipped).
    */
   @Override
+  public StepPreview preview(final ProcessContext ctx, final StepConfig config) {
+    final List<PreviewSection.Field> requested = ctx.<SerializableList<TrustmarkSource>>get(
+            ContextKey.TRUSTMARKS_REQUESTED)
+        .map(sources -> sources.stream()
+            .flatMap(source -> source.trustmarks().stream()
+                .map(status -> new PreviewSection.Field(status.trustmarkType(),
+                    "issuer " + source.trustMarkIssuer())))
+            .toList())
+        .orElse(List.of());
+    return StepPreview.builder()
+        .add(PreviewSection.fields("Subject", List.of(
+            new PreviewSection.Field("Entity identifier", ctx.<String>get(ContextKey.ENTITY_ID).orElse("")))))
+        .add(PreviewSection.fields("Requested trust marks", requested))
+        .add(PreviewSection.checks("Checks", List.of(new PreviewSection.Check(PreviewSection.CheckStatus.OK,
+            "Every requested trust mark type is offered by an issuer in the registry"))))
+        .build();
+  }
+
+  @Override
   public StepResult execute(final ProcessContext ctx, final StepConfig config) {
     ctx.put(ContextKey.TRUSTMARK_SUBJECT_PROCEED, Boolean.TRUE);
     return StepResult.success("Enrollment approved — subject creation signalled");
@@ -128,7 +150,7 @@ public class AddTrustMarkSubjectStep extends NoConfigStepAdapter {
 
   @Override
   public List<StepConfigurationValue> getStepConfigurationValues() {
-    return List.of(new StepConfigurationValue("manualreview",
+    return List.of(new StepConfigurationValue(MANUAL_REVIEW,
         StepConfigurationValue.DATA_TYPE.BOOLEAN,
         "If true, enrollment requires manual approval before the subject is created", "false"));
   }

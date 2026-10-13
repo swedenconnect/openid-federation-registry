@@ -114,6 +114,15 @@ public class Registration extends BaseEntity {
   @Convert(converter = MapConverter.class)
   private Map<String, Object> requestMetadata;
 
+  /**
+   * Context values saved when the flow paused for manual review, restored when it resumes. See
+   * {@link se.swedenconnect.oidf.registry.registrationflow.process.PersistedContext}. {@code null} when the
+   * registration is not paused.
+   */
+  @Column(name = "process_context", columnDefinition = "TEXT")
+  @Convert(converter = MapConverter.class)
+  private Map<String, Object> processContext;
+
   /** JPA converter for the trustmark source list. */
   @Converter
   public static class TrustmarkSourceConverter extends JsonConverter<List<TrustmarkSource>> {

@@ -31,6 +31,17 @@
 - A failed login, for example when the tokens can not be exchanged, now sends the user to the login page with a message.
   The error code from Spring Security or the identity provider, such as `invalid_token_response`, is shown as the reason. A login that is denied or cancelled has a message of its own. The redirect keeps the context path, so it also works
   when the registry is not served from the root.
+- New entity review API under `/registration-admin/v1/{tenant}/{orgNumber}/entity-reviews`: list, get, `start` and
+  `decisions`. Open to tenant operators (`operator_organizations`).
+- Removed `GET /registration-admin/v1/{tenant}/{orgNumber}/count`.
+- `Registration` has new fields `createdDate`, `reviewedBy` and `reviewedAt`. `StepExecutionRecord` has new fields
+  `preview`, `reviewedBy` and `reviewedAt`.
+- New audit events `REGISTRATION_STEP_APPROVED` and `REGISTRATION_REJECTED`.
+- GUI: registrations are reviewed per entity in a shared session, with a preview of each paused step.
+- New step **Metadata Review**.
+- **Metadata Policy Creation** uses a configurable template per entity type. Subordinate statements publish `metadata`.
+- Fixed: approving a paused registration lost its keys and metadata policy.
+- Fixed: a flow that failed after an approval stayed pending; it now returns to `STARTED`.
 
 ---
 
@@ -73,7 +84,6 @@
 **Date:** 2026-10-07
 
 - The `/submodules` response no longer contains null values or empty objects and arrays.
-
 
 ---
 

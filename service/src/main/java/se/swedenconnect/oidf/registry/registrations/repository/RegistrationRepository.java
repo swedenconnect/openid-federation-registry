@@ -60,43 +60,22 @@ public interface RegistrationRepository extends JpaRepository<Registration, UUID
   List<Registration> findByFlowAssignment_TaIm_TaImIdAndStatus(UUID taimId, RegistrationStatus status);
 
   /**
-   * Counts registrations for an intermediate with the given status.
-   *
-   * @param taimId the intermediate ID
-   * @param status the registration status
-   * @return count of matching registrations
-   */
-  long countByFlowAssignment_TaIm_TaImIdAndStatus(UUID taimId, RegistrationStatus status);
-
-  /**
-   * Counts registrations for an intermediate with the given status, scoped to the organization that owns the
-   * intermediate.
-   *
-   * @param taimId the intermediate ID
-   * @param organizationId the ID of the organization that owns the intermediate
-   * @param status the registration status
-   * @return count of matching registrations
-   */
-  long countByFlowAssignment_TaIm_TaImIdAndFlowAssignment_TaIm_Organization_OrganizationIdAndStatus(
-      UUID taimId, UUID organizationId, RegistrationStatus status);
-
-  /**
-   * Finds a registration by ID, scoped to the organization that owns the intermediate its flow is assigned to.
+   * Finds a registration by ID, scoped to the instance (tenant) the registering organization belongs to.
    *
    * @param registrationId the registration ID
-   * @param organizationId the ID of the organization that owns the intermediate
+   * @param instanceId the instance ID
    * @return optional registration
    */
-  Optional<Registration> findByRegistrationIdAndFlowAssignment_TaIm_Organization_OrganizationId(
-      UUID registrationId, UUID organizationId);
+  Optional<Registration> findByRegistrationIdAndOrganization_Instance_InstanceId(UUID registrationId,
+      UUID instanceId);
 
   /**
-   * Finds all registrations connected to intermediates owned by the given organization.
+   * Finds all registrations submitted on an instance (tenant).
    *
-   * @param organizationId the ID of the organization that owns the intermediates
+   * @param instanceId the instance ID
    * @return list of matching registrations
    */
-  List<Registration> findByFlowAssignment_TaIm_Organization_OrganizationId(UUID organizationId);
+  List<Registration> findByOrganization_Instance_InstanceId(UUID instanceId);
 
   /**
    * Finds all registrations for which the given organization is the registrant.

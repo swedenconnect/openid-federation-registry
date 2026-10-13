@@ -24,6 +24,7 @@ import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.organization.dto.DomainDto;
 import se.swedenconnect.oidf.registry.organization.dto.OrganizationDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationReviewDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSubjectDto;
@@ -516,6 +517,32 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
             .extId(id.toString())
             .oldData(this.toJson(oldData))
             .newData(this.toJson(newData))
+            .build());
+  }
+
+  @Override
+  public void registrationStepApproved(final UUID id, final UUID instanceId, final UUID organizationId,
+      final RegistrationReviewDto review) {
+    this.emitRegistrationReview(RegistryAuditEventType.REGISTRATION_STEP_APPROVED, id, instanceId, organizationId,
+        review);
+  }
+
+  @Override
+  public void registrationRejected(final UUID id, final UUID instanceId, final UUID organizationId,
+      final RegistrationReviewDto review) {
+    this.emitRegistrationReview(RegistryAuditEventType.REGISTRATION_REJECTED, id, instanceId, organizationId,
+        review);
+  }
+
+  private void emitRegistrationReview(final RegistryAuditEventType type, final UUID id, final UUID instanceId,
+      final UUID organizationId, final RegistrationReviewDto review) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(type)
+            .instanceId(instanceId == null ? null : instanceId.toString())
+            .organizationId(organizationId.toString())
+            .extId(id.toString())
+            .newData(this.toJson(review))
             .build());
   }
 
