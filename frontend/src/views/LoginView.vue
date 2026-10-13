@@ -28,6 +28,7 @@
             class="mb-4 text-left"
         >
           {{ errorMessage }}
+          <div v-if="errorReason" class="text-body-small mt-1">Reason: {{ errorReason }}</div>
         </v-alert>
         <p>Please log in to continue.</p>
       </v-card-text>
@@ -53,6 +54,7 @@ import {adminAuthenticatePath} from '@/config/path';
 
 const ERROR_MESSAGES = {
   'backend.login.failed': 'Login failed. Please try again or contact support if the problem persists.',
+  'backend.login.denied': 'The login was denied or cancelled. Please try again.',
 };
 
 const route = useRoute();
@@ -60,6 +62,12 @@ const errorMessage = computed(() => {
   const code = route.query.errorcode;
   if (!code) return null;
   return ERROR_MESSAGES[code] ?? `Login error: ${code}`;
+});
+
+// The OAuth2 error code from Spring Security or the identity provider, for example invalid_token_response.
+const errorReason = computed(() => {
+  const reason = route.query.reason;
+  return typeof reason === 'string' && /^[a-z][a-z0-9_]{0,63}$/.test(reason) ? reason : null;
 });
 
 function login() {
