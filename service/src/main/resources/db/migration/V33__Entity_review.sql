@@ -43,7 +43,7 @@ CREATE TABLE `entity_review_decision` (
   `decision` varchar(20) NOT NULL,
   `reason` text DEFAULT NULL,
   `decided_by` varchar(255) NOT NULL,
-  `decided_at` datetime NOT NULL,
+  `decided_at` datetime(6) NOT NULL,
   `created_date` datetime NOT NULL,
   `last_modified_date` datetime NOT NULL,
   `created_by` varchar(255) DEFAULT NULL,
