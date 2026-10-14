@@ -63,6 +63,12 @@
   failing.
 - API: only a hosted entity's identifier has to be on a registered domain of the organization; a self-managed entity
   needs no domain claim.
+- API: a trust mark in `statusTrustmarks` has `steps`, its own step results; also in the response to a registration
+  request.
+- API: `PUT /registry/v1/{tenant}/{orgNumber}/subordinates/metadata-policy` sets a policy on all subordinates of a
+  Trust Anchor or Intermediate. GUI: after loading a template on a Trust Anchor or Intermediate, an offer to apply it
+  to all its subordinates.
+- GUI: **Load template** on a subordinate's metadata policy.
 
 ---
 

@@ -21,10 +21,8 @@
 -->
 <template>
   <div>
-    <div class="text-subtitle-2 mb-1">Metadata policy for subordinates</div>
-    <div class="text-caption text-medium-emphasis mb-2">
-      Combined with each subordinate's own policy in every subordinate statement. Leave empty for none.
-    </div>
+    <div class="text-subtitle-2 mb-1">{{ title }}</div>
+    <div class="text-caption text-medium-emphasis mb-2">{{ hint }}</div>
     <div v-if="templates.length > 0" class="d-flex align-center ga-2 mb-2">
       <v-select
           :id="`${idPrefix}-policy-template`"
@@ -85,8 +83,14 @@ const props = defineProps({
   modelValue: {type: String, default: ''},
   disabled: {type: Boolean, default: false},
   idPrefix: {type: String, required: true},
+  title: {type: String, default: 'Metadata policy for subordinates'},
+  hint: {
+    type: String,
+    default: "Combined with each subordinate's own policy in every subordinate statement. Leave empty for none.",
+  },
 });
-const emit = defineEmits(['update:modelValue']);
+// template-loaded: the name of the template just loaded, so the page can offer to apply it further.
+const emit = defineEmits(['update:modelValue', 'template-loaded']);
 
 const {requestGet} = useRequest();
 const userStore = useUserStore();
@@ -118,6 +122,7 @@ function loadTemplate() {
   leftOut.value = selected.value.omitted ?? [];
   leftOutFrom.value = selected.value.name;
   emit('update:modelValue', selected.value.content);
+  emit('template-loaded', selected.value.name);
 }
 
 onMounted(async () => {

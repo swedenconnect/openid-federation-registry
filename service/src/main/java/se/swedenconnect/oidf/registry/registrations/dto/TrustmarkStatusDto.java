@@ -18,6 +18,8 @@ package se.swedenconnect.oidf.registry.registrations.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * Status for a single trustmark on a registered entity.
  *
@@ -43,6 +45,10 @@ public class TrustmarkStatusDto {
 
   @Schema(description = "Why the trust mark request was rejected, set when the status is REJECTED")
   private String rejectionReason;
+
+  @Schema(description = "The steps of the trust mark request's own flow, as for the entity's steps; empty until its "
+      + "flow has run")
+  private List<StepExecutionRecordDto> steps;
 
 
 }
