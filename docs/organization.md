@@ -133,8 +133,9 @@ domain.
 
 ## Domain enforcement on registration requests
 
-`RegistrationServiceImpl.createRegistrationRequest` and `updateRegistrationRequest` check each request before the
-flow engine runs:
+`RegistrationServiceImpl.createRegistrationRequest` and `updateRegistrationRequest` check each request for a hosted
+entity (one whose `metadata` is in the request) before the flow engine runs. A self-managed entity, which serves its
+own entity configuration, is not checked:
 
 > The host of `entityIdentifier` must **equal**, or be a **subdomain of**, one of the calling organization's
 > domains in status `PENDING` or `VALIDATED`.

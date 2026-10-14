@@ -33,7 +33,8 @@ There are two flow types (`Step.FlowType`):
 - **UC-0: the member has bootstrapped its organization and claimed the entity's domain** (see
   [Organizations and Domains](organization.md)). The member calls `POST /organization/v1/{tenant}/{orgNumber}`
   with a `legalName`, then `POST /organization/v1/{tenant}/{orgNumber}/domains` with the hostname of the entity
-  identifiers. A `PENDING` claim is enough. Without a claim, every registration request below returns `400` (see
+  identifiers. A `PENDING` claim is enough. Without a claim, every registration request for a hosted entity below
+  returns `400`; a self-managed entity needs no claim (see
   [domain enforcement](organization.md#domain-enforcement-on-registration-requests)). To disable the check, set
   `openid.federation.registry.registration.require-registered-domain=false`.
 - The federation member is authenticated and authorized for the target `tenant`/`orgNumber` (
@@ -63,8 +64,9 @@ There are two flow types (`Step.FlowType`):
     - `entityIdentifier` — the entity's URL
     - `trustmarksRequested` — desired trust marks, grouped by issuer (optional)
     - `metadata` — federation metadata for a hosted entity (optional; presence selects the hosted path)
-3. **Before the pipeline runs:** the system checks that the host of `entityIdentifier` equals, or is a subdomain
-   of, one of the member's `PENDING`/`VALIDATED` domains. If not, it returns `400`.
+3. **Before the pipeline runs:** for a hosted entity (`metadata` in the request), the system checks that the host
+   of `entityIdentifier` equals, or is a subdomain of, one of the member's `PENDING`/`VALIDATED` domains. If not, it
+   returns `400`. A self-managed entity is not checked.
 4. **Before the pipeline runs:** the system checks that the flow behind `joinId` is enabled. If not, it returns
    `409 Conflict` (`Registration flow is disabled: <name>`) and creates no `Registration` row. The same check
    applies to the re-run path (`PUT /registration/v1/{tenant}/{orgNumber}/{registrationId}`), which runs the flow

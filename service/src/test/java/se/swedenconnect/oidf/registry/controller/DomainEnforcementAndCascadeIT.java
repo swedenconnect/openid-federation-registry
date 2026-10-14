@@ -87,6 +87,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.ok;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
@@ -167,7 +168,7 @@ class DomainEnforcementAndCascadeIT {
   }
 
   @Test
-  @DisplayName("A registration for a host the organization has not claimed is refused")
+  @DisplayName("A hosted registration for a host the organization has not claimed is refused, a self-managed one is not")
   void registrationForAnUnclaimedHostIsRefused() {
     final JwtTestUtils.OrganisationType applicant = JwtTestUtils.OrganisationType.TESTORG1;
     final ApiClient applicantClient = this.apiClient(applicant);
@@ -178,8 +179,9 @@ class DomainEnforcementAndCascadeIT {
     final FederationRegistrationApi registrationApi = new FederationRegistrationApi(applicantClient);
     final String entityId = this.stubbedEntityId("unclaimed");
 
+    // A hosted entity, whose metadata is in the request, has to stand on a domain the organization has claimed.
     assertThatThrownBy(() -> registrationApi.createJoinWithId(TENANT, applicant.orgId, this.assignId,
-        new RegistrationJoinRequest().entityIdentifier(entityId)))
+        new RegistrationJoinRequest().entityIdentifier(entityId).metadata(hostedMetadata(entityId))))
         .isInstanceOf(RestClientResponseException.class)
         .satisfies(ex -> {
           final RestClientResponseException response = (RestClientResponseException) ex;
@@ -189,15 +191,21 @@ class DomainEnforcementAndCascadeIT {
                   + applicant.orgId);
         });
 
+    // A self-managed entity serves its own entity configuration and needs no claim.
+    final Registration selfManaged = registrationApi.createJoinWithId(TENANT, applicant.orgId, this.assignId,
+        new RegistrationJoinRequest().entityIdentifier(entityId));
+    assertThat(selfManaged.getStatusFedreg()).isEqualTo(Registration.StatusFedregEnum.APPROVED);
+
     final Domain claimed = organizationApi.requestDomain(TENANT, applicant.orgId,
         new DomainRequest().domain("localhost"));
     assertThat(claimed.getStatus())
         .as("A claim awaiting review is already enough to register under")
         .isEqualTo(Domain.StatusEnum.PENDING);
 
-    final Registration registration = registrationApi.createJoinWithId(TENANT, applicant.orgId, this.assignId,
-        new RegistrationJoinRequest().entityIdentifier(entityId));
-    assertThat(registration.getStatusFedreg()).isEqualTo(Registration.StatusFedregEnum.APPROVED);
+    assertThatCode(() -> registrationApi.createJoinWithId(TENANT, applicant.orgId, this.assignId,
+        new RegistrationJoinRequest().entityIdentifier(entityId).metadata(hostedMetadata(entityId))))
+        .as("Once the host is claimed, a hosted registration passes the domain check")
+        .doesNotThrowAnyException();
 
     // Only one organization on the tenant holds a domain at a time, and WireMock can serve no host but
     // 'localhost'. Withdrawing the claim hands the host back, so the other localhost case in this class is
@@ -357,6 +365,18 @@ class DomainEnforcementAndCascadeIT {
     client.setBasePath("http://localhost:" + this.port);
     client.setBearerToken(this.jwtTestUtils.createJwt(org));
     return client;
+  }
+
+  /** Metadata of a hosted relying party, which makes a registration request one for a hosted entity. */
+  private static Map<String, Object> hostedMetadata(final String entityId) {
+    return Map.of(
+        "federation_entity", Map.of("organization_name", "TestOrg1 AB"),
+        "openid_relying_party", Map.of(
+            "client_name", "Test service",
+            "redirect_uris", List.of(entityId + "/callback"),
+            "response_types", List.of("code"),
+            "grant_types", List.of("authorization_code"),
+            "token_endpoint_auth_method", "private_key_jwt"));
   }
 
   private String stubbedEntityId(final String path) {
