@@ -33,6 +33,7 @@ import se.swedenconnect.oidf.registry.organization.model.Organization;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -66,6 +67,7 @@ public final class DtoToModuleMapper {
     module.setActive(dto.getActive());
     setTrustMarkIssuers(module, dto.getTrustMarkIssuers());
     setExternalTrustMarks(module, dto.getExternalTrustMarks());
+    module.setMetadataPolicy(policyOrNull(dto.getMetadataPolicy()));
 
     return module;
   }
@@ -89,6 +91,7 @@ public final class DtoToModuleMapper {
     module.setEntity(federationEntity);
     module.setOrganization(organization);
     module.setActive(dto.getActive());
+    module.setMetadataPolicy(policyOrNull(dto.getMetadataPolicy()));
 
     return module;
   }
@@ -125,6 +128,7 @@ public final class DtoToModuleMapper {
     module.setActive(dto.getActive());
     setTrustMarkIssuers(module, dto.getTrustMarkIssuers());
     setExternalTrustMarks(module, dto.getExternalTrustMarks());
+    module.setMetadataPolicy(policyOrNull(dto.getMetadataPolicy()));
   }
 
   /**
@@ -135,6 +139,12 @@ public final class DtoToModuleMapper {
    */
   public static void updateIntermediate(final TrustAnchorIntermediateModule module, final IntermediateDto dto) {
     module.setActive(dto.getActive());
+    module.setMetadataPolicy(policyOrNull(dto.getMetadataPolicy()));
+  }
+
+  /** An empty policy is no policy. */
+  private static Map<String, Object> policyOrNull(final Map<String, Object> policy) {
+    return policy == null || policy.isEmpty() ? null : policy;
   }
 
   /**

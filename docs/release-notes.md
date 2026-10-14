@@ -48,6 +48,11 @@
 - GUI and API: a flow step can be shown for the user (`showforuser`), with a display name and description in Swedish
   and English that are then required. The step results of a registration carry them as `displayName`,
   `displayNameSv`, `displayDescription` and `displayDescriptionSv`.
+- Templates can be configured under `openid.federation.registry.templates` (`step` or `policy`) and are listed by
+  `GET /registry/v1/{tenant}/{orgNumber}/templates`. GUI: **Load template** in the Metadata Policy Creation step.
+- API: Trust Anchors and Intermediates have `metadataPolicy`, combined with each subordinate's own policy in every
+  subordinate statement. A policy that cannot be combined is refused with `400`. GUI: **Metadata policy for
+  subordinates** with **Load template**.
 
 ---
 

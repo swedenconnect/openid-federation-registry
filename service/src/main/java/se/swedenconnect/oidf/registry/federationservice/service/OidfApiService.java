@@ -54,6 +54,7 @@ import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
 import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
 
+import se.swedenconnect.oidf.registry.policy.MetadataPolicies;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -321,11 +322,30 @@ public class OidfApiService {
         .orElse(List.of());
   }
 
+  /**
+   * The policy of a subordinate statement: the Trust Anchor's or Intermediate's policy combined with the subordinate's
+   * own. Saving either refuses policies that cannot be combined; one saved before that check that still conflicts is
+   * published with the subordinate's own policy, and logged.
+   */
+  private Map<String, Object> combinedPolicy(final Subordinate subordinate, final Map<String, Object> own) {
+    final Map<String, Object> superior = Optional.ofNullable(subordinate.getTaIm())
+        .map(TrustAnchorIntermediateModule::getMetadataPolicy)
+        .orElse(null);
+    try {
+      return MetadataPolicies.combine(superior, own);
+    }
+    catch (final IllegalArgumentException e) {
+      log.error("The metadata policy of {} cannot be combined with its superior's, publishing its own policy: {}",
+          subordinate.getEntityidentifier(), e.getMessage());
+      return own;
+    }
+  }
+
   protected TrustAnchorProperties.SubordinateListingProperty toSubordinates(final Subordinate subordinateEntity) {
     final TrustAnchorProperties.SubordinateListingProperty sub = new TrustAnchorProperties.SubordinateListingProperty();
     final SubordinateDto subDto = SubordinateMapper.toDto(subordinateEntity);
 
-    Map<String, Object> metadataPolicy = subDto.getMetadataPolicy();
+    Map<String, Object> metadataPolicy = this.combinedPolicy(subordinateEntity, subDto.getMetadataPolicy());
     if (metadataPolicy != null && metadataPolicy.containsKey("metadata_policy")) {
       metadataPolicy = (Map<String, Object>) metadataPolicy.get("metadata_policy");
     }

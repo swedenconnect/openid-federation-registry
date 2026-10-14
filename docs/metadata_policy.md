@@ -46,16 +46,18 @@ fetched, and the reason is shown instead.
 
 ## Metadata Policy Creation
 
-The step's `template` setting holds the rules as JSON. When it is not set, the step uses the Sweden Connect template
-(`service/src/main/resources/metadata-policy/sweden-connect.json`), which implements *Registration Intermediate
-Metadata Assignment* (OIDC metadata requirements, section 6.2). The template is checked when the flow is saved; a
+The step's `template` setting holds the rules as JSON. When it is not set, the step uses the default template
+(`service/src/main/resources/metadata-policy/default.json`). For a Sweden Connect Intermediate, see the
+[Sweden Connect Profile](sweden_connect_profile.md). The template is checked when the flow is saved; a
 template that cannot be used is refused with `400` and a list of the problems.
 
 With `manualreview` set, the step pauses after building the claims, and the reviewer sees every check, the values
 pinned with the `value` operator, and the claims exactly as they will be published.
 
 In the flow builder, the step's settings open a rules editor: general settings, a tab per entity type, a table of
-rules and an editor for the selected rule, with **Load Sweden Connect preset** and **Edit as JSON**.
+rules and an editor for the selected rule, with **Load default template**, **Load template** (the `step` templates
+configured under `openid.federation.registry.templates`, see [Templates](configuration.md#templates)) and
+**Edit as JSON**. A loaded template is copied into the step; a later change to the configured file does not change it.
 
 ### Template
 
@@ -110,3 +112,20 @@ rules and an editor for the selected rule, with **Load Sweden Connect preset** a
 The `metadata` claim is stored on the subordinate as `{ "<entity type>": { ... } }`, and the `metadata_policy` claim as
 `{ "metadata_policy": { "<entity type>": { ... } } }`, the form the subordinate API expects. Every generated policy is
 parsed with the OpenID Federation policy language before it is accepted.
+
+## Trust Anchor and Intermediate policy
+
+A Trust Anchor or Intermediate can have a metadata policy of its own (`metadataPolicy` on the module, the same
+`{ "metadata_policy": { ... } }` form). Every subordinate statement it issues carries that policy combined with the
+subordinate's own, operator by operator as OpenID Federation combines a superior's policy with a subordinate's.
+
+- Saving the module is refused with `400` when its policy is not valid or cannot be combined with the policy of one of
+  its subordinates; the message names the subordinate.
+- Saving a subordinate, by hand or through the Publish step of a registration flow, is refused (the registration is
+  declined) when its policy cannot be combined with the module's.
+- A parameter with `"value": null` (remove the parameter) is kept as it is, and combining it with any other operator
+  for the same parameter is a conflict.
+
+In the GUI, the module's settings have a **Metadata policy for subordinates** field, with **Load template** for the
+`policy` templates configured under `openid.federation.registry.templates`. A loaded template is copied into the
+module.

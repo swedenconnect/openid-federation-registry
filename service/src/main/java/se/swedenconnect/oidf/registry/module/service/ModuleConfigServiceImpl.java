@@ -53,7 +53,12 @@ import se.swedenconnect.oidf.registry.trustmark.mapper.TrustmarkToDtoMapper;
 import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
 import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
 
+import se.swedenconnect.oidf.registry.policy.MetadataPolicies;
+import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -129,6 +134,31 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
    * that anyone may issue can not also be among the trust marks that an issuer of the organization has now, because
    * that would limit who may issue it.
    */
+  /**
+   * Refuses a module policy that is not valid, or that cannot be combined with the policy of one of the module's
+   * subordinates: every subordinate statement the module issues carries the two combined.
+   */
+  private static void requireUsablePolicy(final Map<String, Object> policy, final List<Subordinate> subordinates) {
+    if (policy == null || policy.isEmpty()) {
+      return;
+    }
+    final List<String> problems = new ArrayList<>(MetadataPolicies.problems(policy));
+    if (problems.isEmpty()) {
+      for (final Subordinate subordinate : Optional.ofNullable(subordinates).orElse(List.of())) {
+        try {
+          MetadataPolicies.combine(policy, subordinate.getMetadataPolicy());
+        }
+        catch (final IllegalArgumentException e) {
+          problems.add("Subordinate %s: %s".formatted(subordinate.getEntityidentifier(), e.getMessage()));
+        }
+      }
+    }
+    if (!problems.isEmpty()) {
+      throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
+          "metadataPolicy cannot be used: " + String.join("; ", problems));
+    }
+  }
+
   private void requireOwnTrustmarkIssuers(final UUID organizationId, final TrustAnchorDto input) {
     if (input.getTrustMarkIssuers() == null) {
       return;
@@ -190,6 +220,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     final FederationEntity entityEntity = this.findFederationEntityOrThrow(organizationRecord, entityId);
     final Organization org = this.resolveOrganization(organizationRecord);
     this.requireOwnTrustmarkIssuers(org.getOrganizationId(), input);
+    requireUsablePolicy(input.getMetadataPolicy(), List.of());
 
     if (entityEntity.getTrustanchorIntermediate() != null) {
       throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
@@ -220,6 +251,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
 
     final TrustAnchorIntermediateModule module = this.findModuleOrThrow(organizationRecord, id, ModuleType.TRUSTANCHOR);
     this.requireOwnTrustmarkIssuers(module.getOrganization().getOrganizationId(), input);
+    requireUsablePolicy(input.getMetadataPolicy(), module.getSubordinates());
     final TrustAnchorDto oldDto = ModuleToDtoMapper.toDto(module);
 
     DtoToModuleMapper.updateIntermediate(module, input);
@@ -283,6 +315,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     final UUID entityId = input.getEntityId();
     final FederationEntity entityEntity = this.findFederationEntityOrThrow(organizationRecord, entityId);
     final Organization org = this.resolveOrganization(organizationRecord);
+    requireUsablePolicy(input.getMetadataPolicy(), List.of());
 
     if (entityEntity.getTrustanchorIntermediate() != null) {
       throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
@@ -313,6 +346,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
 
     final TrustAnchorIntermediateModule module =
         this.findModuleOrThrow(organizationRecord, id, ModuleType.INTERMEDIATE);
+    requireUsablePolicy(input.getMetadataPolicy(), module.getSubordinates());
     final IntermediateDto oldDto = ModuleToDtoMapper.toDtoIntermediate(module);
 
     DtoToModuleMapper.updateIntermediate(module, input);

@@ -60,6 +60,7 @@ export const trustAnchorModulePath = (tenant, orgNumber, id) => getAbsolutePath(
 export const intermediateModulePath = (tenant, orgNumber, id) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/modules/intermediate/${id}`);
 export const resolverModulePath = (tenant, orgNumber, id) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/modules/resolver/${id}`);
 export const trustmarkIssuerModulePath = (tenant, orgNumber, id) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/modules/trustmark-issuer/${id}`);
+export const templatesPath = (tenant, orgNumber, type) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/templates${type ? `?type=${type}` : ''}`);
 
 export const subordinatesPath = (tenant, orgNumber) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/subordinates/`);
 export const subordinatePath = (tenant, orgNumber, id) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/subordinates/${id}`);

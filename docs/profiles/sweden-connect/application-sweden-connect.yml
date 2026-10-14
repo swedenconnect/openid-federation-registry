@@ -1,0 +1,22 @@
+# Sweden Connect profile: templates for a Sweden Connect Trust Anchor and Registration Intermediate.
+#
+# Import it next to the registry's own configuration:
+#   --spring.config.import=file:docs/profiles/sweden-connect/application-sweden-connect.yml
+#
+# The template files are read from sweden-connect.profile-directory. The default is this folder, relative to the
+# directory the registry is started from; set it when the files are somewhere else.
+sweden-connect:
+  profile-directory: docs/profiles/sweden-connect
+
+openid:
+  federation:
+    registry:
+      templates:
+        - name: sweden-connect-registration
+          description: Registration Intermediate Metadata Assignment (OIDC metadata requirements, section 6.2)
+          type: step
+          location: file:${sweden-connect.profile-directory}/registration-template.json
+        - name: sweden-connect-trust-anchor
+          description: Trust Anchor metadata policy for relying parties and OpenID Providers
+          type: policy
+          location: file:${sweden-connect.profile-directory}/trust-anchor-policy.json

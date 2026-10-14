@@ -36,6 +36,8 @@ import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateMapper;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
 
+import se.swedenconnect.oidf.registry.policy.MetadataPolicies;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -79,6 +81,21 @@ public class SubordinateServiceImpl implements SubordinateService {
     return this.organizationService.find(organizationRecord)
         .map(Organization::getOrganizationId)
         .orElseThrow(() -> notFound);
+  }
+
+  /**
+   * Refuses a subordinate policy that cannot be combined with the policy of its Trust Anchor or Intermediate: the
+   * subordinate statement carries the two combined.
+   */
+  private static void requireCombinable(final TrustAnchorIntermediateModule taIm,
+      final Map<String, Object> metadataPolicy) {
+    try {
+      MetadataPolicies.combine(taIm.getMetadataPolicy(), metadataPolicy);
+    }
+    catch (final IllegalArgumentException e) {
+      throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
+          "metadataPolicy cannot be combined with the policy of the Trust Anchor or Intermediate: " + e.getMessage());
+    }
   }
 
   private TrustAnchorIntermediateModule findTaImOrThrow(final OrganizationRecord organizationRecord,
@@ -126,6 +143,7 @@ public class SubordinateServiceImpl implements SubordinateService {
     ValidateDto.init(organizationRecord).validate(input);
 
     final TrustAnchorIntermediateModule taIm = this.findTaImOrThrow(organizationRecord, input.getTaImId());
+    requireCombinable(taIm, input.getMetadataPolicy());
 
     final Subordinate subordinateEntity = SubordinateMapper.toEntity(id, input, taIm);
 
@@ -161,6 +179,7 @@ public class SubordinateServiceImpl implements SubordinateService {
     ValidateDto.init(organizationRecord).validate(input);
 
     final Subordinate existing = this.findSubordinateOrThrow(organizationRecord, id);
+    requireCombinable(existing.getTaIm(), input.getMetadataPolicy());
     final SubordinateDto oldDto = SubordinateMapper.toDto(existing);
 
     SubordinateMapper.updateEntity(existing, input);

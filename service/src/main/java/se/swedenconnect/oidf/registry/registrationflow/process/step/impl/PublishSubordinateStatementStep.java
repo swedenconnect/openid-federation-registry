@@ -34,7 +34,11 @@ import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepos
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.subordinate.service.SubordinateService;
 
+import se.swedenconnect.oidf.registry.policy.MetadataPolicies;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.StepIssue;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.Severity;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -96,6 +100,17 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
         .orElseThrow();
 
     final boolean isHosted = ctx.get(ContextKey.REQUEST_METADATA).isPresent();
+
+    // The subordinate statement carries the Trust Anchor's or Intermediate's policy combined with this one.
+    try {
+      MetadataPolicies.combine(registration.getFlowAssignment().getTaIm().getMetadataPolicy(),
+          metadataPolicy.<Map<String, Object>>map(policy -> policy).orElse(null));
+    }
+    catch (final IllegalArgumentException e) {
+      return StepResult.failure("The metadata policy cannot be combined with the policy of the Trust Anchor or "
+          + "Intermediate", List.of(new StepIssue("PublishSubordinateStatementStep.metadataPolicy", e.getMessage(),
+          Severity.ERROR)));
+    }
 
     final Organization imOrganization = registration.getFlowAssignment().getTaIm().getOrganization();
     final String tenant = this.instancePlacementService.resolveTenantForPlacedOrg(imOrganization)

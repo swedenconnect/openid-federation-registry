@@ -76,6 +76,7 @@ public final class ModuleToDtoMapper {
         })
         .sorted(Comparator.comparing(TrustAnchorExternalTrustMarkDto::getTrustMarkType))
         .toList());
+    dto.setMetadataPolicy(moduleEntity.getMetadataPolicy());
 
     // Add subordinates
     if (moduleEntity.getSubordinates() != null) {
@@ -103,6 +104,7 @@ public final class ModuleToDtoMapper {
     dto.setIntermediateId(moduleEntity.getTaImId());
     dto.setEntityId(moduleEntity.getEntity().getEntityId());
     dto.setActive(moduleEntity.getActive());
+    dto.setMetadataPolicy(moduleEntity.getMetadataPolicy());
 
     // Add subordinates
     if (moduleEntity.getSubordinates() != null) {

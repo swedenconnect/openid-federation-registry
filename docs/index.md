@@ -21,6 +21,9 @@ subordinate entity statements by the underlying federation service.
 - [Metadata Review and Metadata Policy](metadata_policy.md) — The steps that show an operator an entity's
   metadata and build the Subordinate Statement's `metadata` and `metadata_policy` claims from a template.
 
+- [Sweden Connect Profile](sweden_connect_profile.md) — Loadable templates for a Sweden Connect Trust Anchor and
+  Registration Intermediate, and how to configure them.
+
 - [Organizations and Domains](organization.md): Organization bootstrap, the domain claim
   lifecycle, the domain check on registration requests, and how a domain rejection affects
   registrations.
