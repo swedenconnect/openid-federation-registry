@@ -16,6 +16,7 @@
 
 package se.swedenconnect.oidf.registry.guioperations;
 
+import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import org.springframework.stereotype.Service;
@@ -82,6 +83,17 @@ public class OidfService {
     return this.hostedEntityStatementUri(entityID)
         .map(this.oidfServiceIntegration::callEntityStatementAndVerifyJwks)
         .orElseGet(() -> this.oidfServiceIntegration.entityConfigurationOnStandardLocation(entityID));
+  }
+
+  /**
+   * Loads the subordinate statement that an issuer has published about a subject.
+   *
+   * @param issuer the Trust Anchor or Intermediate that issued the statement
+   * @param subject the entity the statement is about
+   * @return the signed subordinate statement
+   */
+  public SignedJWT loadSubordinateStatement(final EntityID issuer, final EntityID subject) {
+    return this.oidfServiceIntegration.fetchSubordinateStatement(this.loadEntityStatement(issuer), subject);
   }
 
   private Optional<URI> hostedEntityStatementUri(final EntityID entityID) {

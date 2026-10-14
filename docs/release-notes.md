@@ -63,6 +63,11 @@
   failing.
 - API: only a hosted entity's identifier has to be on a registered domain of the organization; a self-managed entity
   needs no domain claim.
+- GUI: list views have previous/next pagination, and subordinates can be searched, sorted and paged (#310).
+- GUI: federation entities show icons for their active modules and no Resolver button (#310).
+- GUI: the edit page of a subordinate has a button that fetches and shows its subordinate statement, and the entity
+  configuration check and button are also on the create page.
+- GUI: a trustmark subject is opened by clicking its row, and is deleted from its edit view (#310).
 
 ---
 

@@ -163,6 +163,69 @@ public class OidfServiceIntegration {
   }
 
   /**
+   * Fetches the subordinate statement an issuer has published about a subject, from the
+   * {@code federation_fetch_endpoint} in the issuer's entity configuration. The signature is verified with the keys of
+   * the issuer's entity configuration.
+   *
+   * @param issuerConfiguration the verified entity configuration of the issuer
+   * @param subject the entity the statement is about
+   * @return the signed subordinate statement
+   * @throws IllegalArgumentException if the issuer has no fetch endpoint or the statement is invalid
+   */
+  public SignedJWT fetchSubordinateStatement(final EntityStatement issuerConfiguration, final EntityID subject) {
+    final Map<String, Object> issuerPayload = issuerConfiguration.getSignedStatement().getPayload().toJSONObject();
+    final URI fetchEndpoint = this.federationFetchEndpoint(issuerPayload);
+    final URI uri = UriComponentsBuilder.fromUri(fetchEndpoint).queryParam("sub", subject.getValue()).build().toUri();
+    this.auditLogger.resolveJwks(uri);
+    log.debug("Fetching subordinate statement from: {}", uri);
+    try {
+      final String body = this.restClient.get().uri(uri).retrieve().body(String.class);
+      if (body == null) {
+        throw new IllegalArgumentException("There is no body in response when fetching subordinate statement from: " + uri);
+      }
+      final SignedJWT signedJWT = SignedJWT.parse(body.trim());
+      final JWSHeader header = signedJWT.getHeader();
+      if (header.getType() == null || !ENTITY_STATEMENT_JWT.equals(header.getType().getType())) {
+        throw new IllegalStateException("Unsupported entity statement type: " + header.getType());
+      }
+      @SuppressWarnings("unchecked")
+      final Map<String, Object> jwksMap = (Map<String, Object>) issuerPayload.get("jwks");
+      if (jwksMap == null) {
+        throw new IllegalArgumentException("JWKS is missing in the entity configuration of the issuer");
+      }
+      final Optional<JWK> jwk = new JWKSelector(new JWKMatcher.Builder().keyID(header.getKeyID()).build())
+          .select(JWKSet.parse(jwksMap)).stream().findFirst();
+      if (jwk.isEmpty()) {
+        throw new IllegalArgumentException("Unable to find key for kid: " + header.getKeyID() + " in JWKSet");
+      }
+      final JWSVerifier verifier = switch (jwk.get().getKeyType().getValue()) {
+        case "EC" -> new ECDSAVerifier(jwk.get().toECKey());
+        case "RSA" -> new RSASSAVerifier(jwk.get().toRSAKey());
+        case null, default -> null;
+      };
+      if (verifier == null || !signedJWT.verify(verifier)) {
+        throw new IllegalStateException("Signature verification failed");
+      }
+      return signedJWT;
+    }
+    catch (final JOSEException | ParseException e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private URI federationFetchEndpoint(final Map<String, Object> issuerPayload) {
+    final Map<String, Object> metadata = (Map<String, Object>) issuerPayload.get("metadata");
+    final Map<String, Object> federationEntity =
+        metadata == null ? null : (Map<String, Object>) metadata.get("federation_entity");
+    final Object endpoint = federationEntity == null ? null : federationEntity.get("federation_fetch_endpoint");
+    if (endpoint == null) {
+      throw new IllegalArgumentException("The issuer has no federation_fetch_endpoint");
+    }
+    return URI.create(endpoint.toString());
+  }
+
+  /**
    * Configures and retrieves an entity statement for the provided EntityID.
    * Validate that JWKS exists and then check that the signature matches with the included keys.
    * if not a IllegalArgumentException is thrown.

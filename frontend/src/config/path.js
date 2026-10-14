@@ -67,6 +67,7 @@ export const subordinatePath = (tenant, orgNumber, id) => getAbsolutePath(`regis
 
 export const jwksSupportPath = (tenant, orgNumber) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/entityconfiguration/jwks`);
 export const entityConfigurationViewPath = (tenant, orgNumber) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/entityconfiguration/view`);
+export const subordinateStatementViewPath = (tenant, orgNumber) => getAbsolutePath(`registry/v1/${tenant}/${orgNumber}/entityconfiguration/subordinate-statement/view`);
 
 export const registrationFlowsPath = (tenant, orgNumber) => getAbsolutePath(`registration-flow/v1/${tenant}/${orgNumber}/flows`);
 export const registrationFlowPath = (tenant, orgNumber, id) => getAbsolutePath(`registration-flow/v1/${tenant}/${orgNumber}/flow/${id}`);

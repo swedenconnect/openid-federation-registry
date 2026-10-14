@@ -64,14 +64,17 @@
             :items="entities"
             :search="search"
             :filter-keys="['entityIdentifier']"
-            :items-per-page="50"
-            :items-per-page-options="[50, 100]"
+            v-model:page="page"
+            v-model:items-per-page="itemsPerPage"
             item-value="entityId"
             hover
             @click:row="openEntity"
         >
           <template #no-data>
             <p class="text-grey py-8">No hosted entities found.</p>
+          </template>
+          <template #bottom>
+            <TablePager v-model:page="page" v-model:items-per-page="itemsPerPage" :total="filteredCount"/>
           </template>
         </v-data-table>
       </v-card-text>
@@ -80,8 +83,9 @@
 </template>
 
 <script setup>
-import {onMounted, ref} from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import {useRouter} from 'vue-router';
+import TablePager from '@/components/TablePager.vue';
 import {useRequest} from '@/api/composables/request';
 import {useUserStore} from '@/stores/userStore';
 import {hostedEntitiesPath} from '@/config/path';
@@ -92,6 +96,18 @@ const userStore = useUserStore();
 
 const entities = ref([]);
 const search = ref('');
+const page = ref(1);
+const itemsPerPage = ref(50);
+
+const filteredCount = computed(() => {
+  const term = (search.value || '').toLowerCase();
+  if (!term) return entities.value.length;
+  return entities.value.filter((entity) => (entity.entityIdentifier || '').toLowerCase().includes(term)).length;
+});
+
+watch(search, () => {
+  page.value = 1;
+});
 
 const headers = [
   {title: 'Entity Identifier', key: 'entityIdentifier', sortable: true},

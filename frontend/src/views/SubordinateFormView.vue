@@ -48,7 +48,7 @@
                 persistent-hint
                 class="flex-grow-1"
             >
-              <template v-if="!isEdit && ecCheck !== 'idle'" #append-inner>
+              <template v-if="ecCheck !== 'idle'" #append-inner>
                 <v-progress-circular
                     v-if="ecCheck === 'checking'"
                     id="ec-check-checking"
@@ -72,8 +72,14 @@
               </template>
             </v-text-field>
             <EntityConfigurationViewer
-                v-if="isEdit && entityIdentifier"
+                v-if="entityIdentifier"
                 :entity-id="entityIdentifier"
+                class="mt-1"
+            />
+            <EntityConfigurationViewer
+                v-if="isEdit && entityIdentifier && issuerEntityIdentifier"
+                :entity-id="entityIdentifier"
+                :issuer="issuerEntityIdentifier"
                 class="mt-1"
             />
           </div>
@@ -325,7 +331,7 @@ import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useLoadJwks} from '@/api/composables/jwks';
-import {entityConfigurationViewPath, subordinatePath, subordinatesPath} from '@/config/path';
+import {entityConfigurationViewPath, federationEntityPath, subordinatePath, subordinatesPath} from '@/config/path';
 import {useUserStore} from '@/stores/userStore';
 import EntityConfigurationViewer from '@/components/EntityConfigurationViewer.vue';
 import ListField from '@/components/ListField.vue';
@@ -361,6 +367,8 @@ const entityTypeSuggestions = [
   'oauth_client',
   'oauth_resource',
 ];
+// Entity identifier of the Trust Anchor or Intermediate that issues the subordinate statement.
+const issuerEntityIdentifier = ref('');
 const ecLocation = ref('');
 const ecLocationAutomaticResolve = ref(false);
 const effectiveEcLocation = ref('');
@@ -430,7 +438,6 @@ async function checkEntityConfiguration(entityId, seq) {
 }
 
 watch(entityIdentifier, (value) => {
-  if (isEdit.value) return;
   clearTimeout(ecCheckTimer);
   const entityId = (value || '').trim();
   const seq = ++ecCheckSeq;
@@ -579,9 +586,17 @@ function cancel() {
   navigateBack();
 }
 
+async function loadIssuerEntityIdentifier() {
+  const response = await requestGet(federationEntityPath(userStore.selectedTenant, userStore.orgNumber, entityId.value));
+  if (response) {
+    issuerEntityIdentifier.value = response.entityIdentifier || response.federationEntity?.entityIdentifier || '';
+  }
+}
+
 onMounted(() => {
   errorStore.clearError();
   if (isEdit.value) {
+    loadIssuerEntityIdentifier();
     loadSubordinate();
   }
 });
