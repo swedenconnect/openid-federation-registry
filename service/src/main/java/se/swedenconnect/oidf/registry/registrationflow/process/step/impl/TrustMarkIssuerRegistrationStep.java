@@ -65,6 +65,12 @@ import java.util.UUID;
 @Slf4j
 public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
 
+  /**
+   * The reason a member sees for a trust mark request no flow can handle. Why it cannot be handled (no flow, a
+   * disabled flow, an unknown trust mark) is logged, not shown.
+   */
+  static final String NOT_REQUESTABLE = "Automatically declined: the trust mark cannot be requested.";
+
   private final TrustMarkRepository trustMarkRepository;
   private final TrustMarkFlowAssignmentRepository tmFlowAssignmentRepository;
   private final RegistrationStepRepository registrationStepRepository;
@@ -254,6 +260,7 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
 
           // The reason of an earlier decline does not apply to the run that replaces it.
           tmReg.setRejectionReason(null);
+          tmReg.setTechnicalReason(null);
           if (report.isPendingApproval()) {
             tmReg.setStatus(RegistrationStatus.PENDING_APPROVAL);
             tmReg.setPendingStepIndex(stepOffset + report.steps().size() - 1);
@@ -263,7 +270,7 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
             tmReg.setProcessContext(null);
             if (!report.isSuccessful()) {
               // A failed sub-flow declines the trust mark, so it does not wait for a review that never comes.
-              this.automaticDecline.decline(tmReg, report.failureReason());
+              this.automaticDecline.decline(tmReg, report.failureReason(), report.technicalReason());
             }
           }
           this.registrationRepository.save(tmReg);
@@ -300,7 +307,8 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
    * @param trustmarkType the requested trust mark type
    * @param trustMark the trust mark, if it exists
    * @param entityId the entity requesting the trust mark
-   * @param reason why no flow can handle the request
+   * @param reason why no flow can handle the request, for the log; the member is told only that the trust mark
+   *     cannot be requested, see {@link #NOT_REQUESTABLE}
    * @return {@code true} if the entity already holds the trust mark
    */
   private boolean settleWithoutFlow(final Optional<UUID> parentRegId, final String trustmarkType,
@@ -323,6 +331,7 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
           newReg.setRegistrationId(UUID.randomUUID());
           newReg.setEntityId(trustmarkType);
           newReg.setRegistrationType(RegistrationType.TRUST_MARK_SUBORDINATE);
+          newReg.setStatus(RegistrationStatus.STARTED);
           newReg.setFlowAssignment(parent.get().getFlowAssignment());
           newReg.setOrganization(parent.get().getOrganization());
           newReg.setParentRegistration(parent.get());
@@ -333,13 +342,14 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
     if (held) {
       tmReg.setStatus(RegistrationStatus.APPROVED);
       tmReg.setRejectionReason(null);
+      tmReg.setTechnicalReason(null);
     }
     else {
       log.info("TrustMarkIssuerRegistrationStep: declining trust mark '{}' for '{}': {}", trustmarkType, entityId,
           reason);
       // A new registration is saved first, so the audited decline names a registration that exists.
       this.registrationRepository.save(tmReg);
-      this.automaticDecline.decline(tmReg, reason);
+      this.automaticDecline.decline(tmReg, NOT_REQUESTABLE, reason);
     }
     this.registrationRepository.save(tmReg);
     return held;

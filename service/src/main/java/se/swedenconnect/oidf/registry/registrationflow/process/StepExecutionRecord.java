@@ -29,10 +29,11 @@ import java.util.List;
  * @param contextDiff changes made to the pipeline context by this step
  * @param preview what the step showed the operator when it paused for manual review, otherwise {@code null}
  * @param userStep how the step is shown to the user, {@code null} if it is not shown for the user
+ * @param declineReason the reason the user sees if the step fails, {@code null} if the flow gives none
  * @author Per Fredrik Plars
  */
 public record StepExecutionRecord(String stepName, StepResult result, List<ContextDiffEntry> contextDiff,
-    StepPreview preview, UserPresentation.UserStep userStep) {
+    StepPreview preview, UserPresentation.UserStep userStep, String declineReason) {
 
   /**
    * Creates a record for a step that is not shown for the user.
@@ -44,7 +45,7 @@ public record StepExecutionRecord(String stepName, StepResult result, List<Conte
    */
   public StepExecutionRecord(final String stepName, final StepResult result,
       final List<ContextDiffEntry> contextDiff, final StepPreview preview) {
-    this(stepName, result, contextDiff, preview, null);
+    this(stepName, result, contextDiff, preview, null, null);
   }
 
   /**
@@ -60,13 +61,15 @@ public record StepExecutionRecord(String stepName, StepResult result, List<Conte
   }
 
   /**
-   * Returns a copy of this record shown to the user as the flow configures the step.
+   * Returns a copy of this record shown to the user as the flow configures the step, with the reason the user sees if
+   * it fails.
    *
    * @param definition the step as configured in the flow
    * @return the copy
    */
   public StepExecutionRecord shownAs(final StepDefinition definition) {
     return new StepExecutionRecord(this.stepName, this.result, this.contextDiff, this.preview,
-        UserPresentation.of(definition.config()).orElse(null));
+        UserPresentation.of(definition.config()).orElse(null),
+        UserPresentation.declineReason(definition.config()).orElse(null));
   }
 }

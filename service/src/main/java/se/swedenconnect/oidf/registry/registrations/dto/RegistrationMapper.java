@@ -85,11 +85,12 @@ public final class RegistrationMapper {
    * @param model registration entity
    * @param isHosted whether the entity is hosted
    * @param hostedMetadata metadata for hosted entity, or null if not hosted
-   * @param tmStatusByType map from trust mark type to actual registration status, overrides stored value
+   * @param tmStatusByType map from trust mark type to its trust mark registration, whose status overrides the stored
+   *     value
    * @return mapped DTO
    */
   public static RegistrationDto toRegistrationDto(final Registration model, final boolean isHosted,
-      final Map<String, Object> hostedMetadata, final Map<String, RegistrationStatus> tmStatusByType) {
+      final Map<String, Object> hostedMetadata, final Map<String, Registration> tmStatusByType) {
     final RegistrationDto dto = new RegistrationDto();
     dto.setRegistrationId(model.getRegistrationId());
     dto.setJoinId(model.getFlowAssignment().getAssignId());
@@ -167,7 +168,7 @@ public final class RegistrationMapper {
     };
   }
   private static List<TrustmarkRegistrationDto> toTrustmarkDtoList(final List<TrustmarkSource> tmSource,
-      final Map<String, RegistrationStatus> tmStatusByType) {
+      final Map<String, Registration> tmStatusByType) {
     if (tmSource == null) {
       return null;
     }
@@ -178,10 +179,16 @@ public final class RegistrationMapper {
           .orElse(Collections.emptyList())
           .stream()
           .map(trustMarkStatus -> {
-            final RegistrationStatus resolved = tmStatusByType.getOrDefault(
-                trustMarkStatus.trustmarkType(), trustMarkStatus.trustmarkStatus());
-            return new TrustmarkStatusDto(trustMarkStatus.trustmarkType(),
+            final Registration trustMarkRegistration = tmStatusByType.get(trustMarkStatus.trustmarkType());
+            final RegistrationStatus resolved = trustMarkRegistration != null
+                ? trustMarkRegistration.getStatus()
+                : trustMarkStatus.trustmarkStatus();
+            final TrustmarkStatusDto status = new TrustmarkStatusDto(trustMarkStatus.trustmarkType(),
                 FedRegStatus.valueOf(resolved.toString()));
+            if (resolved == RegistrationStatus.REJECTED && trustMarkRegistration != null) {
+              status.setRejectionReason(trustMarkRegistration.getRejectionReason());
+            }
+            return status;
           })
           .toList());
       return dto;
@@ -261,6 +268,7 @@ public final class RegistrationMapper {
   }
 
   private static StepIssueDto toStepIssueDto(final StepIssue issue) {
-    return new StepIssueDto(issue.field(), issue.message(), issue.severity().toString());
+    return new StepIssueDto(issue.field(), issue.message(), issue.severity().toString(),
+        issue.type() == null ? StepIssue.Type.VALIDATION.name() : issue.type().name());
   }
 }

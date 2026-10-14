@@ -85,7 +85,7 @@ public class MetadataReviewStep extends NoConfigStepAdapter implements Reviewabl
   public StepResult buildContext(final ProcessContext ctx, final StepConfig config) {
     final JSONObject metadata = ctx.<JSONObject>get(ContextKey.ENTITY_CONFIGURATION_METADATA).orElse(null);
     if (metadata == null) {
-      return StepResult.failure("No metadata to review", List.of(new StepIssue("MetadataReviewStep",
+      return StepResult.failure("No metadata to review", List.of(StepIssue.technical("MetadataReviewStep",
           "Metadata Review must come after the step that loads the entity's metadata", Severity.ERROR)));
     }
     final OrganizationRecord organization = ctx.getRequired(ContextKey.ORG);

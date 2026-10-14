@@ -232,7 +232,7 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter implements
 
     if (serviceNodeBaseUrl.isEmpty()) {
       return StepResult.failure("No service node configured — cannot derive federation JWKS for hosted entity",
-          List.of(new StepIssue("HostedEntityRegistrationStep.jwks",
+          List.of(StepIssue.technical("HostedEntityRegistrationStep.jwks",
               "A service node must be configured to provide the federation JWKS", Severity.ERROR)));
     }
 
@@ -244,7 +244,7 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter implements
     }
     catch (final Exception e) {
       return StepResult.failure("Failed to fetch federation JWKS from service node",
-          List.of(new StepIssue("HostedEntityRegistrationStep.jwks",
+          List.of(StepIssue.technical("HostedEntityRegistrationStep.jwks",
               "Could not fetch JWKS from service node: " + e.getMessage(), Severity.ERROR)));
     }
     return StepResult.success("Federation JWKS loaded for: " + entityId);

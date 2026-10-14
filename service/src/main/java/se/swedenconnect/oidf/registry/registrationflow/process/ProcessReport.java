@@ -16,6 +16,7 @@
 package se.swedenconnect.oidf.registry.registrationflow.process;
 
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepStatus;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.UserPresentation;
 
 import java.util.List;
 import java.util.Optional;
@@ -79,21 +80,41 @@ public record ProcessReport(ProcessStatus status, List<StepExecutionRecord> step
   }
 
   /**
-   * Says why the run failed, for the registration it declines: the failed step, its message and its issues.
+   * Says why the run failed, for the member whose registration it declines: the reason the flow gives for the failed
+   * step, or else which step failed, by the name the flow shows the user. Without technical details, see
+   * {@link #technicalReason()}.
    *
    * @return the reason; {@code null} if no step failed
    */
   public String failureReason() {
-    return this.steps.stream()
-        .filter(r -> r.result().status() == StepStatus.FAILURE)
-        .findFirst()
+    return this.failed()
+        .map(r -> Optional.ofNullable(r.declineReason()).filter(reason -> !reason.isBlank())
+            .orElseGet(() -> "Automatically declined: %s failed.".formatted(
+                Optional.ofNullable(r.userStep())
+                    .map(UserPresentation.UserStep::name)
+                    .filter(name -> !name.isBlank())
+                    .map("'%s'"::formatted)
+                    .orElse("an automated check"))))
+        .orElse(null);
+  }
+
+  /**
+   * Says why the run failed, for an operator troubleshooting it: the failed step, its message and its issues.
+   *
+   * @return the technical reason; {@code null} if no step failed
+   */
+  public String technicalReason() {
+    return this.failed()
         .map(r -> {
-          final StringBuilder reason = new StringBuilder("Automatically declined: step %s failed: %s"
-              .formatted(r.stepName(), r.result().message()));
+          final StringBuilder reason = new StringBuilder("%s: %s".formatted(r.stepName(), r.result().message()));
           Optional.ofNullable(r.result().issues()).orElse(List.of())
-              .forEach(issue -> reason.append("; ").append(issue.message()));
+              .forEach(issue -> reason.append("; ").append(issue.field()).append(": ").append(issue.message()));
           return reason.toString();
         })
         .orElse(null);
+  }
+
+  private Optional<StepExecutionRecord> failed() {
+    return this.steps.stream().filter(r -> r.result().status() == StepStatus.FAILURE).findFirst();
   }
 }

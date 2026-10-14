@@ -94,9 +94,19 @@ trust marks are reflected in `statusTrustmarks`.
 
 - If a `PRE`/`MID`/`POST` step's `buildContext` or `execute` returns `FAILURE`, the pipeline aborts immediately (
   `ProcessReport.status = SKIPPED`).
-- The registration is declined automatically: `Registration.status = REJECTED`, with `rejectionReason`
-  `Automatically declined: step <step> failed: <message>`, followed by the step's issues. It does not wait for a review
-  that never comes.
+- The registration is declined automatically: `Registration.status = REJECTED`. It does not wait for a review that
+  never comes.
+  - `rejectionReason`, shown to the member: the failed step's `userdeclinereason`, or when the flow gives none
+    `Automatically declined: '<name>' failed.`, where `<name>` is the step's `userdisplayname_en`, or
+    `an automated check` for a step not shown for the user. No technical details.
+  - `technicalReason`, for operators: the failed step, its message and its issues. Only in the registration admin API
+    and the registry GUI, never in the member API.
+- Each issue has a `type`: `VALIDATION`, something the entity registers that is not accepted, which the member is shown
+  and can fix; or `TECHNICAL`, something the member cannot fix from the registration, such as an entity configuration
+  or key set that could not be fetched, resolved with an operator. The portal shows validation messages, and for a
+  technical issue only that support has to be contacted.
+- `LoadEntityConfigurationStep` fails the step, rather than the request, when the entity configuration cannot be
+  fetched (`TECHNICAL`) or is not valid (`VALIDATION`).
 - Exception: a request for an entity whose registration is `PENDING_APPROVAL` is refused by the `PRE` step and leaves
   that registration as it is, with its paused step and saved context.
 - The response has `successful = false`; `steps` lists which step failed and why (`StepIssue` entries with `Severity`).
@@ -302,6 +312,8 @@ children get the same. The response lists all of them in `cascadedRegistrationId
       `RegistrationDto`) carry the texts as `displayName`, `displayNameSv`, `displayDescription` and
       `displayDescriptionSv` for the steps shown for the user, so the member's view can name the steps in plain
       language.
+    - Every selectable step also has `userdeclinereason`: the reason the member sees when the step fails and the
+      registration is declined. Empty gives a generic reason, see Alternative flow A.
 3. The system saves the flow and returns the flow DTO (with `flowId`).
 4. The operator assigns the flow:
     - to an Intermediate: `POST /registration-flow/v1/{tenant}/{orgNumber}/intermediate/{taImId}/assign`
@@ -365,9 +377,10 @@ and, once approved, create a `TrustMarkSubject`.
 5. Each trust mark's outcome (`pending`, `failed`, `declined`, `already held`) is aggregated into the parent step's
    result message; a failure, pending or declined trust mark does **not** fail the parent `SUBORDINATE` registration.
    A trust mark that has no usable flow gets a `TRUST_MARK_SUBORDINATE` registration without running a sub-flow:
-   `APPROVED` if the entity already holds the trust mark, otherwise `REJECTED` with the reason (`No registration flow
-   assigned to the trust mark`, `The registration flow of the trust mark is disabled` or `Trust mark not found`).
-   A trust mark whose sub-flow fails is declined automatically the same way, with the failed step as the reason.
+   `APPROVED` if the entity already holds the trust mark, otherwise `REJECTED` with the reason
+   `Automatically declined: the trust mark cannot be requested.` Why (no flow assigned, a disabled flow, or an unknown
+   trust mark) is in `technicalReason` and the log, not shown to the member. A trust mark whose sub-flow fails is declined automatically the same way, with the
+   reason naming the failed step as in Alternative flow A.
 6. A domain rejection also ends a paused trust mark sub-flow. When a domain rejection rejects the parent
    `SUBORDINATE` registration, its unsettled `TRUST_MARK_SUBORDINATE` children are rejected with reason
    `Not Accepted Domain`. See
@@ -379,8 +392,8 @@ and, once approved, create a `TrustMarkSubject`.
    context is rebuilt, so a later gated step in the same sub-flow also passes.
 
 **Result:** Each requested trust mark ends up as its own `TRUST_MARK_SUBORDINATE` registration with an independent
-status, surfaced on the parent registration's `statusTrustmarks` (member view) or listed as its own row (admin view,
-which does not filter out trust mark sub-registrations).
+status, surfaced on the parent registration's `statusTrustmarks` (member view, with `rejectionReason` for a rejected
+trust mark) or listed as its own row (admin view, which does not filter out trust mark sub-registrations).
 
 ---
 
