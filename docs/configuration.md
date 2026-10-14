@@ -339,7 +339,7 @@ Controls the checks on registration requests before the flow engine runs.
 
 | Setting                                                             | Required | Default | Description                                                                                                                                                                                             |
 |---------------------------------------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `openid.federation.registry.registration.require-registered-domain` | No       | `true`  | Requires the host of a registration request's `entityIdentifier` to equal, or be a subdomain of, one of the registering organization's `PENDING`/`VALIDATED` domains. Applies to superusers too. See [Organizations and Domains](organization.md). |
+| `openid.federation.registry.registration.require-registered-domain` | No       | `true`  | Requires the host of a registration request's `entityIdentifier` to equal, or be a subdomain of, one of the registering organization's `PENDING`/`VALIDATED` domains, for a hosted entity (`metadata` in the request). A self-managed entity is not checked. Applies to superusers too. See [Organizations and Domains](organization.md). |
 
 When `false`, any organization can register any entity identifier it can prove control of. Set it to `false` only
 where entity ownership is established outside the registry.

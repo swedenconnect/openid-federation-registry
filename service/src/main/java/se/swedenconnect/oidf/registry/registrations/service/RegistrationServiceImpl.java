@@ -135,7 +135,9 @@ public class RegistrationServiceImpl implements RegistrationService {
 
     request.setJoinId(joinId);
     ValidateDto.init(organizationRecord).validate(request);
-    this.organizationService.requireRegisteredDomain(organizationRecord, request.getEntityIdentifier());
+    if (isHosted(request)) {
+      this.organizationService.requireRegisteredDomain(organizationRecord, request.getEntityIdentifier());
+    }
     final ProcessReport report = this.registrationFlowService.executeRegistrationFlow(organizationRecord, request);
     final Registration registration = this.registrationRepository.findByEntityId(request.getEntityIdentifier())
         .orElseThrow(() -> new IllegalArgumentException("No registration found for this registrationid"));
@@ -184,6 +186,15 @@ public class RegistrationServiceImpl implements RegistrationService {
         .toList();
   }
 
+  /**
+   * Whether the request registers a hosted entity: one whose metadata is in the request, and that the registry
+   * publishes under the entity identifier. Only a hosted entity's identifier must be on a domain the organization has
+   * registered; a self-managed entity serves its own entity configuration.
+   */
+  private static boolean isHosted(final RegistrationJoinRequestDto request) {
+    return request.getMetadata() != null && !request.getMetadata().isEmpty();
+  }
+
   @Override
   @Transactional
   public RegistrationDto updateRegistrationRequest(final OrganizationRecord organizationRecord,
@@ -191,7 +202,9 @@ public class RegistrationServiceImpl implements RegistrationService {
     final Registration existing = this.findOwnedRegistrationOrThrow(organizationRecord, registrationId);
     request.setJoinId(existing.getFlowAssignment().getAssignId());
     ValidateDto.init(organizationRecord).validate(request);
-    this.organizationService.requireRegisteredDomain(organizationRecord, request.getEntityIdentifier());
+    if (isHosted(request)) {
+      this.organizationService.requireRegisteredDomain(organizationRecord, request.getEntityIdentifier());
+    }
     final ProcessReport report = this.registrationFlowService.executeRegistrationFlow(organizationRecord, request);
     final Registration registration = this.registrationRepository.findByEntityId(request.getEntityIdentifier())
         .orElseThrow(() -> new IllegalArgumentException("No registration found for this entity id"));
