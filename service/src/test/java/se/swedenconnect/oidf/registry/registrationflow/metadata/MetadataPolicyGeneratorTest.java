@@ -42,7 +42,7 @@ class MetadataPolicyGeneratorTest {
   @BeforeAll
   static void loadPreset() throws Exception {
     try (InputStream preset = MetadataPolicyGeneratorTest.class.getResourceAsStream(
-        "/metadata-policy/sweden-connect.json")) {
+        "/metadata-policy/default.json")) {
       swedenConnect = JsonMapper.builder().build().readValue(preset, MetadataPolicyTemplate.class);
     }
   }

@@ -373,6 +373,12 @@
                     </li>
                   </ul>
                 </div>
+                <ModulePolicyEditor
+                    v-model="modules.trustanchor.metadataPolicyText"
+                    id-prefix="trustanchor"
+                    :disabled="savingModule"
+                    class="mb-2"
+                ></ModulePolicyEditor>
                 <v-card-actions class="px-0">
                   <v-spacer></v-spacer>
                   <v-btn
@@ -432,6 +438,13 @@
                     :disabled="savingModule"
                     class="mb-4"
                 ></v-switch>
+
+                <ModulePolicyEditor
+                    v-model="modules.intermediate.metadataPolicyText"
+                    id-prefix="intermediate"
+                    :disabled="savingModule"
+                    class="mb-2"
+                ></ModulePolicyEditor>
 
                 <template v-if="modules.intermediate.id && modules.intermediate.active">
                   <v-divider class="mb-4"></v-divider>
@@ -796,6 +809,7 @@ import {useLoadJwks} from '@/api/composables/jwks';
 import {useSigningKeys} from '@/api/composables/signingKeys';
 import ListField from '@/components/ListField.vue';
 import EntityConfigurationViewer from '@/components/EntityConfigurationViewer.vue';
+import ModulePolicyEditor from '@/components/ModulePolicyEditor.vue';
 import {useUserStore} from '@/stores/userStore';
 import {useTrustmarkIssuerOverview} from '@/api/composables/trustmarkIssuerOverview';
 import {
@@ -875,10 +889,12 @@ const modules = ref({
     active: true,
     trustMarkIssuers: [],
     externalTrustMarks: [],
+    metadataPolicyText: '',
   },
   intermediate: {
     id: null,
     active: true,
+    metadataPolicyText: '',
   },
   resolver: {
     id: null,
@@ -899,6 +915,22 @@ const rules = {
   required: (value) => !!value || 'This field is required.',
   maxName: (value) => !value || value.length <= 255 || 'The name can be at most 255 characters.',
 };
+
+// A module's metadata policy is edited as JSON text; empty text is no policy.
+function policyText(policy) {
+  return policy && Object.keys(policy).length > 0 ? JSON.stringify(policy, null, 2) : '';
+}
+
+// Returns the policy to send, null for none, or undefined (after showing why) when the text is not valid JSON.
+function policyFromText(text) {
+  if (!text || !text.trim()) return null;
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    errorStore.setError('The metadata policy is not valid JSON: ' + e.message);
+    return undefined;
+  }
+}
 
 function applyResolverJwks(item) {
   modules.value.resolver.trustedKeys = item.jwks ? JSON.stringify(item.jwks, null, 2) : '';
@@ -945,6 +977,7 @@ async function loadEntity() {
           allowAll: external.allowAll === true,
           issuers: external.issuers || [],
         })),
+        metadataPolicyText: policyText(response.trustAnchor.metadataPolicy),
       };
     }
 
@@ -953,6 +986,7 @@ async function loadEntity() {
       modules.value.intermediate = {
         id: taImId,
         active: response.intermediate.active !== false,
+        metadataPolicyText: policyText(response.intermediate.metadataPolicy),
       };
       if (modules.value.intermediate.active) {
         await loadFlowData(taImId);
@@ -1102,7 +1136,9 @@ async function saveModule(moduleType) {
                     ? []
                     : (external.issuers || []).map(issuer => issuer.trim()).filter(issuer => issuer !== ''),
               })),
+          metadataPolicy: policyFromText(module.metadataPolicyText),
         };
+        if (moduleData.metadataPolicy === undefined) return;
         if (module.id) {
           endpoint = trustAnchorModulePath(userStore.selectedTenant, userStore.orgNumber, module.id);
           await requestPut(endpoint, moduleData);
@@ -1120,7 +1156,9 @@ async function saveModule(moduleType) {
         moduleData = {
           entityId: entityId.value,
           active: module.active,
+          metadataPolicy: policyFromText(module.metadataPolicyText),
         };
+        if (moduleData.metadataPolicy === undefined) return;
         if (module.id) {
           endpoint = intermediateModulePath(userStore.selectedTenant, userStore.orgNumber, module.id);
           await requestPut(endpoint, moduleData);
@@ -1231,10 +1269,12 @@ async function confirmDeleteModule() {
       // Reset module data
       switch (moduleType) {
         case 'trustanchor':
-          modules.value.trustanchor = {id: null, active: true, trustMarkIssuers: [], externalTrustMarks: []};
+          modules.value.trustanchor = {
+            id: null, active: true, trustMarkIssuers: [], externalTrustMarks: [], metadataPolicyText: '',
+          };
           break;
         case 'intermediate':
-          modules.value.intermediate = {id: null, active: true};
+          modules.value.intermediate = {id: null, active: true, metadataPolicyText: ''};
           break;
         case 'resolver':
           modules.value.resolver = {

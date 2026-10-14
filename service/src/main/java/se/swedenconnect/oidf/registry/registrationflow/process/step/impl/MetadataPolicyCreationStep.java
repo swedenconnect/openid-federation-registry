@@ -55,8 +55,7 @@ import java.util.UUID;
 
 /**
  * Builds the {@code metadata} and {@code metadata_policy} claims of the Subordinate Statement from a configurable
- * template, see {@link MetadataPolicyTemplate}. The default template implements the Sweden Connect Registration
- * Intermediate Metadata Assignment (OIDC metadata requirements, section 6.2).
+ * template, see {@link MetadataPolicyTemplate}. A step with no template uses the default template.
  *
  * <p>The claims are built and checked in {@code buildContext}, so an operator reviewing this step sees exactly what
  * will be published and which checks passed. A failed check either fails the step or, with
@@ -70,7 +69,7 @@ public class MetadataPolicyCreationStep extends NoConfigStepAdapter implements R
   /** Name of the configuration value holding the template, as JSON. */
   public static final String TEMPLATE = "template";
 
-  private static final String PRESET_RESOURCE = "/metadata-policy/sweden-connect.json";
+  private static final String PRESET_RESOURCE = "/metadata-policy/default.json";
 
   private final JsonMapper jsonMapper;
   private final OrganizationService organizationService;
@@ -106,7 +105,7 @@ public class MetadataPolicyCreationStep extends NoConfigStepAdapter implements R
   @Override
   public String getDescription() {
     return "Builds the metadata and metadata_policy claims of the subordinate statement from a template, and checks "
-        + "the entity's metadata against it. The default template follows the Sweden Connect requirements.";
+        + "the entity's metadata against it.";
   }
 
   @Override
@@ -234,8 +233,8 @@ public class MetadataPolicyCreationStep extends NoConfigStepAdapter implements R
         new StepConfigurationValue(MANUAL_REVIEW, StepConfigurationValue.DATA_TYPE.BOOLEAN,
             "If true, registration requires manual approval before proceeding", "false"),
         new StepConfigurationValue(TEMPLATE, StepConfigurationValue.DATA_TYPE.JSON,
-            "Rules per entity type for the metadata and metadata_policy claims; defaults to the Sweden Connect "
-                + "requirements", this.presetTemplate));
+            "Rules per entity type for the metadata and metadata_policy claims; the default template when not set",
+            this.presetTemplate));
   }
 
   /**

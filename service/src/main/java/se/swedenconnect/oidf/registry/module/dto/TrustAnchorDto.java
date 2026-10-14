@@ -22,6 +22,7 @@ import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -51,6 +52,10 @@ public class TrustAnchorDto {
   @Schema(description = "Trust mark types with issuers outside the organization, or that anyone may issue, exported as "
       + "trust_mark_issuers together with trustMarkIssuers")
   private List<TrustAnchorExternalTrustMarkDto> externalTrustMarks = new ArrayList<>();
+
+  @Schema(description = "Metadata policy applied to every subordinate statement it issues, combined with the "
+      + "subordinate's own policy. JSON object with the root key metadata_policy.")
+  private Map<String, Object> metadataPolicy;
 
   @Schema(description = "List of subordinates for this trust anchor")
   private List<SubordinateDto> subordinates;

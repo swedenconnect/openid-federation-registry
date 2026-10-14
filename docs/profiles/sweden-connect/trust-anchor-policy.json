@@ -1,0 +1,115 @@
+{
+  "metadata_policy": {
+    "openid_relying_party": {
+      "redirect_uris": { "essential": true },
+      "response_types": { "essential": true, "superset_of": ["code"] },
+      "grant_types": { "essential": true, "superset_of": ["authorization_code"] },
+      "token_endpoint_auth_method": { "essential": true, "one_of": ["private_key_jwt"] },
+      "client_uri": { "essential": true },
+      "contacts": { "essential": true },
+      "logo_uri": { "essential": true },
+      "subject_type": { "default": "public", "one_of": ["public", "pairwise"] },
+      "require_auth_time": { "one_of": [true] },
+
+      "id_token_signed_response_alg": { "value": null },
+      "userinfo_signed_response_alg": { "value": null },
+
+      "id_token_signing_alg_values_supported": {
+        "add": ["RS256", "RS384", "RS512", "ES256", "ES384", "ES512"]
+      },
+      "userinfo_signing_alg_values_supported": {
+        "add": ["RS256", "RS384", "RS512", "ES256", "ES384", "ES512"]
+      },
+
+      "id_token_encrypted_response_alg": {
+        "one_of": ["RSA-OAEP", "RSA-OAEP-256", "ECDH-ES"]
+      },
+      "id_token_encrypted_response_enc": {
+        "one_of": ["A128CBC-HS256", "A256CBC-HS512", "A128GCM", "A256GCM"]
+      },
+      "userinfo_encrypted_response_alg": {
+        "one_of": ["RSA-OAEP", "RSA-OAEP-256", "ECDH-ES"]
+      },
+      "userinfo_encrypted_response_enc": {
+        "one_of": ["A128CBC-HS256", "A256CBC-HS512", "A128GCM", "A256GCM"]
+      },
+      "request_object_signing_alg": {
+        "one_of": ["RS256", "RS384", "RS512", "ES256", "ES384", "ES512"]
+      },
+      "request_object_encryption_alg": {
+        "one_of": ["RSA-OAEP", "RSA-OAEP-256", "ECDH-ES"]
+      },
+      "request_object_encryption_enc": {
+        "one_of": ["A128CBC-HS256", "A256CBC-HS512", "A128GCM", "A256GCM"]
+      },
+      "token_endpoint_auth_signing_alg": {
+        "one_of": ["RS256", "RS384", "RS512", "ES256", "ES384", "ES512"]
+      }
+    },
+
+    "openid_provider": {
+      "issuer": { "essential": true },
+      "authorization_endpoint": { "essential": true },
+      "token_endpoint": { "essential": true },
+      "userinfo_endpoint": { "essential": true },
+      "jwks_uri": { "essential": true },
+      "contacts": { "essential": true },
+      "logo_uri": { "essential": true },
+
+      "scopes_supported": { "essential": true, "superset_of": ["openid"] },
+      "response_types_supported": { "essential": true, "superset_of": ["code"] },
+      "subject_types_supported": { "essential": true, "superset_of": ["public"] },
+      "ui_locales_supported": { "essential": true, "superset_of": ["en", "sv"] },
+      "acr_values_supported": { "essential": true },
+      "claims_supported": { "essential": true },
+
+      "token_endpoint_auth_methods_supported": {
+        "essential": true,
+        "superset_of": ["private_key_jwt"]
+      },
+      "code_challenge_methods_supported": {
+        "essential": true,
+        "subset_of": ["S256"],
+        "superset_of": ["S256"]
+      },
+      "claims_parameter_supported": { "value": true },
+      "request_parameter_supported": { "value": true },
+      "request_uri_parameter_supported": { "essential": true },
+
+      "client_registration_types_supported": { "default": ["automatic"] },
+
+      "id_token_signing_alg_values_supported": {
+        "essential": true,
+        "add": ["RS256", "RS384", "RS512", "ES256", "ES384", "ES512"]
+      },
+      "userinfo_signing_alg_values_supported": {
+        "add": ["RS256", "RS384", "RS512", "ES256", "ES384", "ES512"]
+      },
+      "request_object_signing_alg_values_supported": {
+        "add": ["RS256", "RS384", "RS512", "ES256", "ES384", "ES512"]
+      },
+      "token_endpoint_auth_signing_alg_values_supported": {
+        "essential": true,
+        "add": ["RS256", "RS384", "RS512", "ES256", "ES384", "ES512"]
+      },
+      "id_token_encryption_alg_values_supported": {
+        "add": ["RSA-OAEP", "RSA-OAEP-256", "ECDH-ES"]
+      },
+      "id_token_encryption_enc_values_supported": {
+        "add": ["A128CBC-HS256", "A256CBC-HS512", "A128GCM", "A256GCM"]
+      },
+      "userinfo_encryption_alg_values_supported": {
+        "add": ["RSA-OAEP", "RSA-OAEP-256", "ECDH-ES"]
+      },
+      "userinfo_encryption_enc_values_supported": {
+        "add": ["A128CBC-HS256", "A256CBC-HS512", "A128GCM", "A256GCM"]
+      },
+      "request_object_encryption_alg_values_supported": {
+        "add": ["RSA-OAEP", "RSA-OAEP-256", "ECDH-ES"]
+      },
+      "request_object_encryption_enc_values_supported": {
+        "add": ["A128CBC-HS256", "A256CBC-HS512", "A128GCM", "A256GCM"]
+      }
+    }
+  }
+}

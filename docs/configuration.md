@@ -21,6 +21,7 @@ This document describes the configuration settings available for the OpenID Fede
     - [OIDF Service API Validation Key](#oidf-service-api-validation-key)
   - [Entity Configuration Loader](#entity-configuration-loader)
   - [Registration](#registration)
+  - [Templates](#templates)
 
 ---
 
@@ -352,6 +353,41 @@ openid:
       registration:
         require-registered-domain: true
 ```
+
+### Templates
+
+Templates the registry loads at start, offered in the GUI when choosing a starting point. The code names none; a
+deployment configures its own. A template that cannot be read or used stops the start, with a message naming it.
+
+| Setting                                                       | Required | Description                                                                                                                                       |
+|---------------------------------------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------|
+| `openid.federation.registry.templates[].name`                 | Yes      | Unique name, shown when choosing a template.                                                                                                      |
+| `openid.federation.registry.templates[].description`          | No       | What the template is for, shown when choosing a template.                                                                                         |
+| `openid.federation.registry.templates[].type`                 | Yes      | `step`: rules for the Metadata Policy Creation step. `policy`: a metadata policy for a Trust Anchor or Intermediate. See [Metadata Review and Metadata Policy](metadata_policy.md). |
+| `openid.federation.registry.templates[].location`             | Yes      | Where the template is read from, as a Spring resource location: `file:/etc/registry/policy.json` or `classpath:templates/policy.json`.          |
+
+The list is one setting: a configuration file that sets `templates` replaces the list of an earlier one.
+
+Templates are assumed to follow OpenID Federation. Entries the registry cannot handle yet are left out when a template
+is loaded, with a warning naming each: in a `policy` template `"value": null` and `one_of` with values that are not
+strings, in a `step` template a rule with `"static_value": null`. The template list (`omitted`) and the GUI, when the
+template is loaded, show what was left out.
+
+#### Example
+
+```yaml
+openid:
+  federation:
+    registry:
+      templates:
+        - name: federation-policy
+          description: Metadata policy for relying parties and OpenID Providers
+          type: policy
+          location: file:/etc/registry/templates/federation-policy.json
+```
+
+A ready-made set for Sweden Connect is in [`profiles/sweden-connect`](profiles/sweden-connect), see
+[Sweden Connect Profile](sweden_connect_profile.md).
 
 ---
 

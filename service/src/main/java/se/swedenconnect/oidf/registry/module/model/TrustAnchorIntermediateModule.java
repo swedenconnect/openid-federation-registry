@@ -25,6 +25,7 @@ import org.springframework.data.domain.Persistable;
 import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.BaseEntity;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.JsonConverter;
+import se.swedenconnect.oidf.registry.infrastructure.persistence.MapConverter;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 
@@ -33,6 +34,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -115,6 +117,14 @@ public class TrustAnchorIntermediateModule extends BaseEntity implements Persist
   public List<ExternalTrustMark> getExternalTrustMarks() {
     return this.externalTrustMarks == null ? List.of() : this.externalTrustMarks;
   }
+
+  /**
+   * The metadata policy applied to every subordinate statement the module issues, combined with the subordinate's
+   * own policy. Stored as {@code {"metadata_policy": {...}}}; {@code null} for none.
+   */
+  @Column(name = "metadata_policy", columnDefinition = "TEXT")
+  @Convert(converter = MapConverter.class)
+  private Map<String, Object> metadataPolicy;
 
   /** JPA converter for the external trust mark list. */
   @Converter

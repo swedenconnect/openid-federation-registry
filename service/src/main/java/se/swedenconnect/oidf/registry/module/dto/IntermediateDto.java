@@ -21,6 +21,7 @@ import lombok.Data;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -42,6 +43,10 @@ public class IntermediateDto {
 
   @Schema(description = "If this intermediate is active")
   private Boolean active;
+
+  @Schema(description = "Metadata policy applied to every subordinate statement it issues, combined with the "
+      + "subordinate's own policy. JSON object with the root key metadata_policy.")
+  private Map<String, Object> metadataPolicy;
 
   @Schema(description = "List of subordinates for this intermediate")
   private List<SubordinateDto> subordinates;

@@ -23,12 +23,44 @@
   <div class="template-editor">
     <div class="d-flex justify-end ga-2 mb-2">
       <v-btn v-if="preset" id="btn-template-preset" size="small" variant="text" @click="loadPreset">
-        Load Sweden Connect preset
+        Load default template
       </v-btn>
+      <v-menu v-if="configuredTemplates.length > 0">
+        <template #activator="{ props: menuProps }">
+          <v-btn id="btn-template-configured" size="small" variant="text" v-bind="menuProps">
+            Load template
+            <v-icon end>mdi-menu-down</v-icon>
+          </v-btn>
+        </template>
+        <v-list density="compact">
+          <v-list-item
+              v-for="configured in configuredTemplates"
+              :key="configured.name"
+              :title="configured.name"
+              :subtitle="[configured.description, configured.omitted?.length
+                ? `${configured.omitted.length} left out, not supported yet` : null].filter(Boolean).join(' · ')"
+              @click="loadConfigured(configured)"
+          ></v-list-item>
+        </v-list>
+      </v-menu>
       <v-btn id="btn-template-json" size="small" variant="text" @click="toggleRaw">
         {{ raw ? 'Edit as rules' : 'Edit as JSON' }}
       </v-btn>
     </div>
+
+    <v-alert
+        v-if="leftOut.length > 0"
+        id="template-left-out"
+        type="warning"
+        variant="tonal"
+        density="compact"
+        class="mb-2"
+    >
+      Left out of {{ leftOutFrom }}, not supported by the registry yet:
+      <ul class="pl-4">
+        <li v-for="entry in leftOut" :key="entry" class="mono">{{ entry }}</li>
+      </ul>
+    </v-alert>
 
     <template v-if="raw || !template">
       <v-textarea
@@ -213,11 +245,14 @@
 </template>
 
 <script setup>
-import {computed, ref, watch} from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
+import {useRequest} from '@/api/composables/request';
+import {useUserStore} from '@/stores/userStore';
+import {templatesPath} from '@/config/path';
 
 const props = defineProps({
   modelValue: {type: String, default: ''},
-  // The step's default template, offered as "Load Sweden Connect preset".
+  // The step's default template, offered as "Load default template".
   preset: {type: String, default: ''},
 });
 const emit = defineEmits(['update:modelValue']);
@@ -300,7 +335,29 @@ function toggleRaw() {
   }
 }
 
+// Step templates configured in the registry, offered under "Load template".
+const configuredTemplates = ref([]);
+// What the registry left out of the configured template loaded last.
+const leftOut = ref([]);
+const leftOutFrom = ref('');
+const {requestGet} = useRequest();
+const userStore = useUserStore();
+
+onMounted(async () => {
+  const response = await requestGet(templatesPath(userStore.selectedTenant, userStore.orgNumber, 'STEP'));
+  configuredTemplates.value = Array.isArray(response) ? response : [];
+});
+
+function loadConfigured(configured) {
+  leftOut.value = configured.omitted ?? [];
+  leftOutFrom.value = configured.name;
+  raw.value = false;
+  load(configured.content);
+  emit('update:modelValue', configured.content);
+}
+
 function loadPreset() {
+  leftOut.value = [];
   raw.value = false;
   load(props.preset);
   emit('update:modelValue', props.preset);
