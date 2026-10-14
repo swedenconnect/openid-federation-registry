@@ -15,6 +15,7 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow.process;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.organization.model.Instance;
@@ -34,6 +35,7 @@ import java.util.Optional;
  *
  * @author Felix Hellman
  */
+@Slf4j
 @Component
 public class AutomaticDecline {
 
@@ -53,11 +55,15 @@ public class AutomaticDecline {
    *
    * @param registration the registration to decline
    * @param reason why it is declined, shown to the member
+   * @param technicalReason the technical cause, for operators
    */
-  public void decline(final Registration registration, final String reason) {
+  public void decline(final Registration registration, final String reason, final String technicalReason) {
     final LocalDateTime decidedAt = LocalDateTime.now();
     registration.setStatus(RegistrationStatus.REJECTED);
     registration.setRejectionReason(reason);
+    registration.setTechnicalReason(technicalReason);
+    log.info("Declining registration {} ({}) automatically: {}", registration.getRegistrationId(),
+        registration.getEntityId(), technicalReason);
     registration.setReviewedAt(decidedAt);
     registration.setReviewedBy(null);
     registration.setPendingStepIndex(null);

@@ -103,6 +103,10 @@ public class Registration extends BaseEntity {
   @Column(name = "rejection_reason", columnDefinition = "TEXT")
   private String rejectionReason;
 
+  /** Technical cause of an automatic decline, for operators; never shown to the member. */
+  @Column(name = "technical_reason", columnDefinition = "TEXT")
+  private String technicalReason;
+
   @Column(name = "step_results", columnDefinition = "TEXT")
   @Convert(converter = Registration.StepResultsConverter.class)
   private List<StepExecutionRecordDto> stepResults;

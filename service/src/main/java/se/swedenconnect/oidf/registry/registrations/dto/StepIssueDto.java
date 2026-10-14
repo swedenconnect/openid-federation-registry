@@ -23,6 +23,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param field the field that caused the issue
  * @param message human-readable description
  * @param severity issue severity (INFO, WARNING, ERROR)
+ * @param type VALIDATION, something the member can fix, or TECHNICAL, something resolved with an operator
  * @author Per Fredrik Plars
  */
 @Schema(name = "StepIssue")
@@ -35,6 +36,10 @@ public record StepIssueDto(
     String message,
 
     @Schema(description = "Severity of the issue", example = "ERROR")
-    String severity
+    String severity,
+    @Schema(description = "VALIDATION: something the member can fix, shown to the member. TECHNICAL: something "
+        + "resolved with an operator, such as a fetch that failed; the message is for operators",
+        example = "VALIDATION")
+    String type
 ) {
 }

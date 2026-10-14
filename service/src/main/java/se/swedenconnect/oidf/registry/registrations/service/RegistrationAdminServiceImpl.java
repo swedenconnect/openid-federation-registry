@@ -183,7 +183,7 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
     final List<HostedEntityDto> hostedEntities = this.entityConfigService.listHostedEntity(reg.getEntityId());
     final boolean isHosted = !hostedEntities.isEmpty();
     final Map<String, Object> hostedMetadata = isHosted ? hostedEntities.getFirst().getMetadata() : null;
-    return RegistrationMapper.toRegistrationDto(reg, isHosted, hostedMetadata);
+    return withTechnicalReason(RegistrationMapper.toRegistrationDto(reg, isHosted, hostedMetadata), reg);
   }
 
   @Override
@@ -194,17 +194,17 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
     this.entityConfigService.listHostedEntity((String) null)
         .forEach(h -> hostedMetadataByEntityId.put(h.getEntityIdentifier(), h.getMetadata()));
     final List<Registration> allRegs = this.registrationRepository.findByOrganization_Instance_InstanceId(instanceId);
-    final Map<UUID, Map<String, RegistrationStatus>> tmStatusByParent = allRegs.stream()
+    final Map<UUID, Map<String, Registration>> tmStatusByParent = allRegs.stream()
         .filter(r -> r.getRegistrationType() == RegistrationType.TRUST_MARK_SUBORDINATE)
         .filter(r -> r.getParentRegistration() != null)
         .collect(Collectors.groupingBy(
             r -> r.getParentRegistration().getRegistrationId(),
-            Collectors.toMap(Registration::getEntityId, Registration::getStatus)));
+            Collectors.toMap(Registration::getEntityId, Function.identity())));
     return allRegs.stream()
-        .map(r -> RegistrationMapper.toRegistrationDto(r,
+        .map(r -> withTechnicalReason(RegistrationMapper.toRegistrationDto(r,
             hostedMetadataByEntityId.containsKey(r.getEntityId()),
             hostedMetadataByEntityId.get(r.getEntityId()),
-            tmStatusByParent.getOrDefault(r.getRegistrationId(), Map.of())))
+            tmStatusByParent.getOrDefault(r.getRegistrationId(), Map.of())), r))
         .toList();
   }
 
@@ -215,11 +215,12 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
     final List<HostedEntityDto> hostedEntities = this.entityConfigService.listHostedEntity(reg.getEntityId());
     final boolean isHosted = !hostedEntities.isEmpty();
     final Map<String, Object> hostedMetadata = isHosted ? hostedEntities.getFirst().getMetadata() : null;
-    final Map<String, RegistrationStatus> tmStatusByType =
+    final Map<String, Registration> tmStatusByType =
         this.registrationRepository.findByParentRegistration_RegistrationId(registrationId)
             .stream()
-            .collect(Collectors.toMap(Registration::getEntityId, Registration::getStatus));
-    return RegistrationMapper.toRegistrationDto(reg, isHosted, hostedMetadata, tmStatusByType);
+            .collect(Collectors.toMap(Registration::getEntityId, Function.identity()));
+    return withTechnicalReason(RegistrationMapper.toRegistrationDto(reg, isHosted, hostedMetadata, tmStatusByType),
+        reg);
   }
 
   @Override
@@ -564,6 +565,12 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
         .findByDomainIdAndOrganization_Instance_InstanceId(domainId, instanceId)
         .orElseThrow(() -> new RegistryServerException(ErrorTypes.NOT_FOUND,
             "Domain not found: %s".formatted(domainId)));
+  }
+
+  /** The admin API shows operators the technical cause of an automatic decline; the member API does not. */
+  private static RegistrationDto withTechnicalReason(final RegistrationDto dto, final Registration registration) {
+    dto.setTechnicalReason(registration.getTechnicalReason());
+    return dto;
   }
 
   private static UUID instanceIdOf(final Registration registration) {

@@ -22,6 +22,7 @@ import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityStatementClaimsSet;
 import net.minidev.json.JSONObject;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
 import se.swedenconnect.oidf.registry.guioperations.OidfService;
 import se.swedenconnect.oidf.registry.infrastructure.validation.CleanInput;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
@@ -29,12 +30,15 @@ import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.review.PreviewSection;
 import se.swedenconnect.oidf.registry.registrationflow.process.review.ReviewableStep;
 import se.swedenconnect.oidf.registry.registrationflow.process.review.StepPreview;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.Severity;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.StepIssue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -74,27 +78,48 @@ public class LoadEntityConfigurationStep extends NoConfigStepAdapter implements 
 
   @Override
   public StepResult buildContext(final ProcessContext ctx, final StepConfig config) {
-    this.loadEntityConfiguration(ctx);
-    return StepResult.success("EntityConfiguration loaded successfully");
+    return this.loadEntityConfiguration(ctx);
   }
 
   @Override
   public StepResult execute(final ProcessContext ctx, final StepConfig config) {
     if (ctx.get(ContextKey.ENTITY_CONFIGURATION_METADATA).isEmpty()
         || ctx.get(ContextKey.ENTITY_CONFIGURATION_JWKS).isEmpty()) {
-      this.loadEntityConfiguration(ctx);
+      return this.loadEntityConfiguration(ctx);
     }
     return StepResult.success("EntityConfiguration loaded successfully");
   }
 
-  private void loadEntityConfiguration(final ProcessContext ctx) {
+  /**
+   * Loads the entity configuration. A fetch that fails (the entity cannot be reached, or answers with an error) is a
+   * technical issue; a configuration that is fetched but not valid is a validation issue the entity can fix.
+   */
+  private StepResult loadEntityConfiguration(final ProcessContext ctx) {
     final String entityId = ctx.getRequired(ContextKey.ENTITY_ID);
-    final EntityStatement entityStatement = this.oidfService.loadEntityStatement(new EntityID(entityId));
+    final EntityStatement entityStatement;
+    try {
+      entityStatement = this.oidfService.loadEntityStatement(new EntityID(entityId));
+    }
+    catch (final RestClientException | SecurityException e) {
+      // SecurityException: the outgoing request was refused before it was sent (unknown host, blocked address).
+      return StepResult.failure("The entity configuration could not be fetched", List.of(StepIssue.technical(
+          "LoadEntityConfigurationStep.fetch", "Could not fetch the entity configuration of %s: %s%s"
+              .formatted(entityId, e.getMessage(),
+                  Optional.ofNullable(e.getCause()).map(cause -> " (" + cause.getMessage() + ")").orElse("")),
+          Severity.ERROR)));
+    }
+    catch (final IllegalArgumentException | IllegalStateException e) {
+      return StepResult.failure("The entity configuration is not valid", List.of(new StepIssue(
+          "LoadEntityConfigurationStep.entityConfiguration", "The entity configuration is not valid: "
+              + Optional.ofNullable(e.getCause()).map(Throwable::getMessage).orElse(e.getMessage()),
+          Severity.ERROR)));
+    }
 
     final EntityStatementClaimsSet esClaimsSet = entityStatement.getClaimsSet();
     ctx.put(ContextKey.ENTITY_CONFIGURATION_METADATA, esClaimsSet.getJSONObjectClaim("metadata"));
 
     ctx.put(ContextKey.ENTITY_CONFIGURATION_JWKS, CleanInput.removeExpIatNbfFromJwks(esClaimsSet.getJWKSet()));
+    return StepResult.success("EntityConfiguration loaded successfully");
   }
 
   @Override

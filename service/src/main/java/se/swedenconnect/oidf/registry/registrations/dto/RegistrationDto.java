@@ -80,6 +80,11 @@ public class RegistrationDto {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private String rejectionReason;
 
+  @Schema(description = "Technical cause of an automatic decline, for operators troubleshooting it. Only in the "
+      + "registration admin API, never shown to the member.", accessMode = Schema.AccessMode.READ_ONLY)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  private String technicalReason;
+
   @Schema(description = "When the registration was submitted", accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private OffsetDateTime createdDate;

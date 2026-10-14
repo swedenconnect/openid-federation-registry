@@ -87,6 +87,12 @@
                 <td class="font-weight-bold field-label">Rejection Reason</td>
                 <td>{{ registration.rejectionReason }}</td>
               </tr>
+              <tr v-if="registration.technicalReason">
+                <td class="font-weight-bold field-label">Technical Reason</td>
+                <td id="registration-technical-reason" class="text-medium-emphasis technical-reason">
+                  {{ registration.technicalReason }}
+                </td>
+              </tr>
               <tr v-if="registration.subordinateEntityId">
                 <td class="font-weight-bold field-label">Subordinate Entity ID</td>
                 <td class="text-mono">{{ registration.subordinateEntityId }}</td>
@@ -200,6 +206,13 @@
                         {{ issueIcon(issue.severity) }}
                       </v-icon>
                       <span class="text-caption">
+                        <v-chip
+                            v-if="issue.type"
+                            size="x-small"
+                            variant="tonal"
+                            :color="issue.type === 'TECHNICAL' ? 'error' : 'warning'"
+                            class="mr-1"
+                        >{{ issue.type === 'TECHNICAL' ? 'Technical' : 'Validation' }}</v-chip>
                         <strong v-if="issue.field">{{ issue.field }}:</strong>
                         {{ issue.message }}
                       </span>
@@ -761,5 +774,11 @@ onMounted(() => {
 .step-preview-box {
   border-left: 3px solid rgba(0, 0, 0, 0.12);
   padding-left: 12px;
+}
+
+.technical-reason {
+  font-family: monospace;
+  font-size: 0.85rem;
+  word-break: break-word;
 }
 </style>

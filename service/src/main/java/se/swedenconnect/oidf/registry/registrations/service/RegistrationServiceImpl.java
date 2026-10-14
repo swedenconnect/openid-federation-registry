@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -119,10 +120,10 @@ public class RegistrationServiceImpl implements RegistrationService {
         this.entityConfigService.listHostedEntity(organizationRecord, reg.getEntityId());
     final boolean isHosted = !hostedEntities.isEmpty();
     final Map<String, Object> hostedMetadata = isHosted ? hostedEntities.getFirst().getMetadata() : null;
-    final Map<String, RegistrationStatus> tmStatusByType =
+    final Map<String, Registration> tmStatusByType =
         this.registrationRepository.findByParentRegistration_RegistrationId(registrationId)
             .stream()
-            .collect(Collectors.toMap(Registration::getEntityId, Registration::getStatus));
+            .collect(Collectors.toMap(Registration::getEntityId, Function.identity()));
     return RegistrationMapper.toRegistrationDto(reg, isHosted, hostedMetadata, tmStatusByType);
   }
 
@@ -168,12 +169,12 @@ public class RegistrationServiceImpl implements RegistrationService {
     final List<Registration> allRegs = this.organizationService.find(organizationRecord)
         .map(org -> this.registrationRepository.findByOrganization_OrganizationId(org.getOrganizationId()))
         .orElse(List.of());
-    final Map<UUID, Map<String, RegistrationStatus>> tmStatusByParent = allRegs.stream()
+    final Map<UUID, Map<String, Registration>> tmStatusByParent = allRegs.stream()
         .filter(r -> r.getRegistrationType() == RegistrationType.TRUST_MARK_SUBORDINATE)
         .filter(r -> r.getParentRegistration() != null)
         .collect(Collectors.groupingBy(
             r -> r.getParentRegistration().getRegistrationId(),
-            Collectors.toMap(Registration::getEntityId, Registration::getStatus)));
+            Collectors.toMap(Registration::getEntityId, Function.identity())));
     return allRegs.stream()
         .filter(r -> r.getRegistrationType() != RegistrationType.TRUST_MARK_SUBORDINATE)
         .map(r -> RegistrationMapper.toRegistrationDto(r,

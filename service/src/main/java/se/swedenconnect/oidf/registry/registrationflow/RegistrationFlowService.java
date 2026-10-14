@@ -476,6 +476,7 @@ public class RegistrationFlowService {
       final ProcessContext ctx) {
     // The reason of an earlier decline does not apply to the run that replaces it.
     reg.setRejectionReason(null);
+    reg.setTechnicalReason(null);
     if (report.isPendingApproval()) {
       reg.setPendingStepIndex(stepOffset + report.steps().size() - 1);
       reg.setStatus(RegistrationStatus.PENDING_APPROVAL);
@@ -485,7 +486,7 @@ public class RegistrationFlowService {
       reg.setPendingStepIndex(null);
       reg.setProcessContext(null);
       if (!report.isSuccessful()) {
-        this.automaticDecline.decline(reg, report.failureReason());
+        this.automaticDecline.decline(reg, report.failureReason(), report.technicalReason());
       }
     }
   }

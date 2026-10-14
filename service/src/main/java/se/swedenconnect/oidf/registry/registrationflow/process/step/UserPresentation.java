@@ -43,6 +43,9 @@ public final class UserPresentation {
   /** The description the user sees for the step, in English. */
   public static final String DESCRIPTION_EN = "userdescription_en";
 
+  /** The reason the user sees when the step fails and the registration is declined. */
+  public static final String DECLINE_REASON = "userdeclinereason";
+
   /** The texts a step shown for the user must have. */
   public static final List<String> TEXTS = List.of(DISPLAY_NAME_SV, DISPLAY_NAME_EN, DESCRIPTION_SV, DESCRIPTION_EN);
 
@@ -57,7 +60,10 @@ public final class UserPresentation {
       new StepConfigurationValue(DESCRIPTION_SV, StepConfigurationValue.DATA_TYPE.STRING,
           "Description the user sees for this step, in Swedish; required when shown for user", null),
       new StepConfigurationValue(DESCRIPTION_EN, StepConfigurationValue.DATA_TYPE.STRING,
-          "Description the user sees for this step, in English; required when shown for user", null));
+          "Description the user sees for this step, in English; required when shown for user", null),
+      new StepConfigurationValue(DECLINE_REASON, StepConfigurationValue.DATA_TYPE.STRING,
+          "Reason the user sees when this step fails and the registration is declined; a generic reason when empty",
+          null));
 
   private UserPresentation() {
   }
@@ -85,6 +91,19 @@ public final class UserPresentation {
     }
     return Optional.of(new UserStep(config.getString(DISPLAY_NAME_EN), config.getString(DISPLAY_NAME_SV),
         config.getString(DESCRIPTION_EN), config.getString(DESCRIPTION_SV)));
+  }
+
+  /**
+   * Returns the reason the user sees when a configured step fails.
+   *
+   * @param config the step's configuration in the flow
+   * @return the reason; empty if the flow gives none
+   */
+  public static Optional<String> declineReason(final StepConfig config) {
+    return Optional.ofNullable(config)
+        .map(c -> c.getValue(DECLINE_REASON))
+        .map(Object::toString)
+        .filter(reason -> !reason.isBlank());
   }
 
   /**

@@ -53,6 +53,14 @@
 - API: Trust Anchors and Intermediates have `metadataPolicy`, combined with each subordinate's own policy in every
   subordinate statement. A policy that cannot be combined is refused with `400`. GUI: **Metadata policy for
   subordinates** with **Load template**.
+- API: a trust mark in `statusTrustmarks` has `rejectionReason` when it is `REJECTED`.
+- A flow step can set `userdeclinereason`, the reason the member sees when the step fails. Automatic decline reasons
+  have no technical details.
+- API: the registration admin API has `technicalReason` for an automatic decline. GUI: **Technical Reason** on the
+  registration.
+- API: step issues have `type`, `VALIDATION` or `TECHNICAL`. GUI: the issue type on the registration.
+- A registration whose entity configuration cannot be fetched or is not valid is declined, instead of the request
+  failing.
 
 ---
 

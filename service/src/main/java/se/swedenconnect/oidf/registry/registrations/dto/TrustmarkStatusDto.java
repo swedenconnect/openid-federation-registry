@@ -41,5 +41,8 @@ public class TrustmarkStatusDto {
   @Schema(description = "Current status of this trustmark")
   private FedRegStatus status;
 
+  @Schema(description = "Why the trust mark request was rejected, set when the status is REJECTED")
+  private String rejectionReason;
+
 
 }
