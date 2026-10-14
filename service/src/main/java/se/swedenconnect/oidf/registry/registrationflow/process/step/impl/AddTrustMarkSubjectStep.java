@@ -113,20 +113,25 @@ public class AddTrustMarkSubjectStep extends NoConfigStepAdapter implements Revi
    */
   @Override
   public StepPreview preview(final ProcessContext ctx, final StepConfig config) {
-    final List<PreviewSection.Field> requested = ctx.<SerializableList<TrustmarkSource>>get(
+    final List<TrustmarkSource> sources = ctx.<SerializableList<TrustmarkSource>>get(
             ContextKey.TRUSTMARKS_REQUESTED)
-        .map(sources -> sources.stream()
-            .flatMap(source -> source.trustmarks().stream()
-                .map(status -> new PreviewSection.Field(status.trustmarkType(),
-                    "issuer " + source.trustMarkIssuer())))
-            .toList())
+        .map(List::copyOf)
         .orElse(List.of());
+    final List<PreviewSection.Field> requested = sources.stream()
+        .flatMap(source -> source.trustmarks().stream()
+            .map(status -> new PreviewSection.Field(status.trustmarkType(), "issuer " + source.trustMarkIssuer())))
+        .toList();
+    // buildContext has failed the step for a trust mark the issuer does not have, so each one listed here exists.
+    final List<PreviewSection.Check> checks = sources.stream()
+        .flatMap(source -> source.trustmarks().stream()
+            .map(status -> new PreviewSection.Check(PreviewSection.CheckStatus.OK,
+                "%s is issued by %s".formatted(status.trustmarkType(), source.trustMarkIssuer()))))
+        .toList();
     return StepPreview.builder()
         .add(PreviewSection.fields("Subject", List.of(
             new PreviewSection.Field("Entity identifier", ctx.<String>get(ContextKey.ENTITY_ID).orElse("")))))
         .add(PreviewSection.fields("Requested trust marks", requested))
-        .add(PreviewSection.checks("Checks", List.of(new PreviewSection.Check(PreviewSection.CheckStatus.OK,
-            "Every requested trust mark type is offered by an issuer in the registry"))))
+        .add(PreviewSection.checks("Checks", checks))
         .build();
   }
 

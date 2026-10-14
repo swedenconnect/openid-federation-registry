@@ -97,6 +97,17 @@ public record StepPreview(
     }
 
     /**
+     * Adds sections in order.
+     *
+     * @param sections the sections; {@code null} entries are ignored
+     * @return this builder
+     */
+    public Builder addAll(final List<PreviewSection> sections) {
+      sections.forEach(this::add);
+      return this;
+    }
+
+    /**
      * Builds the preview.
      *
      * @return the preview

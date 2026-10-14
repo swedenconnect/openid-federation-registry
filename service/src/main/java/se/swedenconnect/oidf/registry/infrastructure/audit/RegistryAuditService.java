@@ -452,6 +452,17 @@ public interface RegistryAuditService {
   void registrationRejected(UUID id, UUID instanceId, UUID organizationId, RegistrationReviewDto review);
 
   /**
+   * Audits the registry declining a registration on its own, such as one whose automated step failed. Audited as a
+   * rejection, with the registry as the principal: no user made the decision, whoever's request ran the flow.
+   *
+   * @param id the unique identifier of the registration.
+   * @param instanceId the unique identifier of the instance the registration belongs to, may be {@code null}.
+   * @param organizationId the unique identifier of the organization that submitted the registration.
+   * @param review the decline, with no reviewer.
+   */
+  void registrationDeclinedAutomatically(UUID id, UUID instanceId, UUID organizationId, RegistrationReviewDto review);
+
+  /**
    * Trigger when a entity configuration resolve is made
    *
    * @param entityConfigurationLocation URL for this entityconfiguration

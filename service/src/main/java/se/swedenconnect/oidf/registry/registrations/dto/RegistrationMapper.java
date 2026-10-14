@@ -252,7 +252,11 @@ public final class RegistrationMapper {
         diff,
         record.preview(),
         null,
-        null
+        null,
+        record.userStep() == null ? null : record.userStep().name(),
+        record.userStep() == null ? null : record.userStep().nameSv(),
+        record.userStep() == null ? null : record.userStep().description(),
+        record.userStep() == null ? null : record.userStep().descriptionSv()
     );
   }
 

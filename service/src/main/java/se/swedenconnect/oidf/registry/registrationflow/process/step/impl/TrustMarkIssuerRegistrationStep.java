@@ -25,6 +25,7 @@ import se.swedenconnect.oidf.registry.organization.repository.OrganizationTrustM
 import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 import se.swedenconnect.oidf.registry.registrationflow.RegistrationStepRepository;
 import se.swedenconnect.oidf.registry.registrationflow.dto.Mapper;
+import se.swedenconnect.oidf.registry.registrationflow.process.AutomaticDecline;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.PersistedContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
@@ -37,10 +38,12 @@ import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 import se.swedenconnect.oidf.registry.registrationflow.repository.TrustMarkFlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationMapper;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
+import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
 import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
 import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
 import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
+import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkSubjectRepository;
 
 import se.swedenconnect.oidf.registry.registrations.dto.StepExecutionRecordDto;
 import se.swedenconnect.oidf.registry.registrationflow.process.StepDefinition;
@@ -71,6 +74,8 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
   private final CreateTrustMarkSubjectStep postTmStep;
   private final OrganizationService organizationService;
   private final OrganizationTrustMarkRepository organizationTrustMarkRepository;
+  private final TrustMarkSubjectRepository trustMarkSubjectRepository;
+  private final AutomaticDecline automaticDecline;
 
   /**
    * Constructor.
@@ -84,6 +89,8 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
    * @param postTmStep auto-injected POST step that creates the TrustMarkSubject
    * @param organizationService service resolving the applicant organization from the context
    * @param organizationTrustMarkRepository repository of the trust mark types pre-approved per organization
+   * @param trustMarkSubjectRepository repository of the subjects that hold a trust mark
+   * @param automaticDecline declines a trust mark request that cannot be settled
    */
   public TrustMarkIssuerRegistrationStep(final TrustMarkRepository trustMarkRepository,
       final TrustMarkFlowAssignmentRepository tmFlowAssignmentRepository,
@@ -93,7 +100,9 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
       final InternalPreTrustMarkRegistrationStep preTmStep,
       final CreateTrustMarkSubjectStep postTmStep,
       final OrganizationService organizationService,
-      final OrganizationTrustMarkRepository organizationTrustMarkRepository) {
+      final OrganizationTrustMarkRepository organizationTrustMarkRepository,
+      final TrustMarkSubjectRepository trustMarkSubjectRepository,
+      final AutomaticDecline automaticDecline) {
     this.trustMarkRepository = trustMarkRepository;
     this.tmFlowAssignmentRepository = tmFlowAssignmentRepository;
     this.registrationStepRepository = registrationStepRepository;
@@ -103,6 +112,8 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
     this.postTmStep = postTmStep;
     this.organizationService = organizationService;
     this.organizationTrustMarkRepository = organizationTrustMarkRepository;
+    this.trustMarkSubjectRepository = trustMarkSubjectRepository;
+    this.automaticDecline = automaticDecline;
   }
 
   @Override
@@ -128,8 +139,8 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
     // This tells us we are resuming an earlier approval.
     final boolean isResume = ctx.<Boolean>get(ContextKey.STEP_APPROVED).orElse(false);
 
-    final List<String> skippedNotFound = new ArrayList<>();
-    final List<String> skippedNoFlow = new ArrayList<>();
+    final List<String> declined = new ArrayList<>();
+    final List<String> alreadyHeld = new ArrayList<>();
     final List<String> failed = new ArrayList<>();
     final List<String> pendingApproval = new ArrayList<>();
     final List<String> preValidated = new ArrayList<>();
@@ -140,6 +151,7 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
         .map(Organization::getOrganizationId);
 
     final Optional<UUID> parentRegId = ctx.get(ContextKey.REGISTRATION_ID);
+    final String entityId = ctx.getRequired(ContextKey.ENTITY_ID);
 
     for (final TrustmarkSource source : requested.get()) {
       for (final TrustmarkSource.TrustMarkStatus tmStatus : source.trustmarks()) {
@@ -151,7 +163,8 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
 
         if (trustMark.isEmpty()) {
           log.warn("TrustMarkIssuerRegistrationStep: trust mark not found for type='{}'", trustmarkType);
-          skippedNotFound.add(trustmarkType);
+          (this.settleWithoutFlow(parentRegId, trustmarkType, trustMark, entityId, "Trust mark not found")
+              ? alreadyHeld : declined).add(trustmarkType);
           continue;
         }
 
@@ -160,16 +173,18 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
 
         if (assignment.isEmpty()) {
           log.warn("TrustMarkIssuerRegistrationStep: no flow assigned to trust mark type='{}'", trustmarkType);
-          skippedNoFlow.add(trustmarkType);
+          (this.settleWithoutFlow(parentRegId, trustmarkType, trustMark, entityId,
+              "No registration flow assigned to the trust mark") ? alreadyHeld : declined).add(trustmarkType);
           continue;
         }
 
-        // A disabled flow is no more usable than an unassigned one: skip the type rather than failing the
+        // A disabled flow is no more usable than an unassigned one: settle the type rather than failing the
         // registration, so the entity still joins the federation with whatever trust marks remain available.
         if (!assignment.get().getRegistrationFlow().isEnabled()) {
           log.warn("TrustMarkIssuerRegistrationStep: flow assigned to trust mark type='{}' is disabled",
               trustmarkType);
-          skippedNoFlow.add(trustmarkType);
+          (this.settleWithoutFlow(parentRegId, trustmarkType, trustMark, entityId,
+              "The registration flow of the trust mark is disabled") ? alreadyHeld : declined).add(trustmarkType);
           continue;
         }
 
@@ -237,6 +252,8 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
           merged.addAll(RegistrationMapper.toStepExecutionRecordDtos(report));
           tmReg.setStepResults(merged);
 
+          // The reason of an earlier decline does not apply to the run that replaces it.
+          tmReg.setRejectionReason(null);
           if (report.isPendingApproval()) {
             tmReg.setStatus(RegistrationStatus.PENDING_APPROVAL);
             tmReg.setPendingStepIndex(stepOffset + report.steps().size() - 1);
@@ -244,6 +261,10 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
           } else {
             tmReg.setPendingStepIndex(null);
             tmReg.setProcessContext(null);
+            if (!report.isSuccessful()) {
+              // A failed sub-flow declines the trust mark, so it does not wait for a review that never comes.
+              this.automaticDecline.decline(tmReg, report.failureReason());
+            }
           }
           this.registrationRepository.save(tmReg);
         });
@@ -261,13 +282,67 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
     if (!failed.isEmpty()) {
       return StepResult.success(
           ("Trust mark flows completed with failures for: %s. Pending: %s. Auto-approved (pre-validated): %s. "
-              + "Not found: %s. No flow assigned: %s")
-              .formatted(failed, pendingApproval, preValidated, skippedNotFound, skippedNoFlow));
+              + "Declined (no usable flow): %s. Already held: %s")
+              .formatted(failed, pendingApproval, preValidated, declined, alreadyHeld));
     }
     return StepResult.success(
         ("Trust mark flows dispatched. Pending approval: %s. Auto-approved (pre-validated): %s. "
-            + "Not found: %s. No flow assigned: %s")
-            .formatted(pendingApproval, preValidated, skippedNotFound, skippedNoFlow));
+            + "Declined (no usable flow): %s. Already held: %s")
+            .formatted(pendingApproval, preValidated, declined, alreadyHeld));
+  }
+
+  /**
+   * Settles a requested trust mark that no registration flow can handle, so the request does not wait for a review
+   * that never comes. The trust mark registration is approved if the entity already holds the trust mark, and
+   * declined with the reason otherwise.
+   *
+   * @param parentRegId the entity's registration
+   * @param trustmarkType the requested trust mark type
+   * @param trustMark the trust mark, if it exists
+   * @param entityId the entity requesting the trust mark
+   * @param reason why no flow can handle the request
+   * @return {@code true} if the entity already holds the trust mark
+   */
+  private boolean settleWithoutFlow(final Optional<UUID> parentRegId, final String trustmarkType,
+      final Optional<TrustMark> trustMark, final String entityId, final String reason) {
+    final boolean held = trustMark
+        .flatMap(tm -> this.trustMarkSubjectRepository.findByTrustMarkTrustmarkIdAndSubject(tm.getTrustmarkId(),
+            entityId))
+        .filter(subject -> !Boolean.TRUE.equals(subject.getRevoked()))
+        .isPresent();
+    final Optional<se.swedenconnect.oidf.registry.registrations.model.Registration> parent =
+        parentRegId.flatMap(this.registrationRepository::findById);
+    if (parent.isEmpty()) {
+      return held;
+    }
+    final se.swedenconnect.oidf.registry.registrations.model.Registration tmReg = this.registrationRepository
+        .findByEntityIdAndParentRegistration_RegistrationId(trustmarkType, parent.get().getRegistrationId())
+        .orElseGet(() -> {
+          final se.swedenconnect.oidf.registry.registrations.model.Registration newReg =
+              new se.swedenconnect.oidf.registry.registrations.model.Registration();
+          newReg.setRegistrationId(UUID.randomUUID());
+          newReg.setEntityId(trustmarkType);
+          newReg.setRegistrationType(RegistrationType.TRUST_MARK_SUBORDINATE);
+          newReg.setFlowAssignment(parent.get().getFlowAssignment());
+          newReg.setOrganization(parent.get().getOrganization());
+          newReg.setParentRegistration(parent.get());
+          return newReg;
+        });
+    tmReg.setPendingStepIndex(null);
+    tmReg.setProcessContext(null);
+    if (held) {
+      tmReg.setStatus(RegistrationStatus.APPROVED);
+      tmReg.setRejectionReason(null);
+    }
+    else {
+      log.info("TrustMarkIssuerRegistrationStep: declining trust mark '{}' for '{}': {}", trustmarkType, entityId,
+          reason);
+      // A new registration is saved first, so the audited decline names a registration that exists.
+      this.registrationRepository.save(tmReg);
+      this.automaticDecline.decline(tmReg, reason);
+    }
+    this.registrationRepository.save(tmReg);
+    return held;
   }
 
   @Override

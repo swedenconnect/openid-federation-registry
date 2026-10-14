@@ -74,7 +74,7 @@ public class ProcessEngine {
       if (!def.step().canApply(ctx, def.config())) {
         log.info("Step {} not applicable — skipping", def.name());
         records.add(new StepExecutionRecord(def.name(),
-            StepResult.skipped("Step not applicable"), List.of()));
+            StepResult.skipped("Step not applicable"), List.of()).shownAs(def));
         continue;
       }
 
@@ -89,7 +89,7 @@ public class ProcessEngine {
         if (buildResult.status() == StepStatus.FAILURE) {
           log.error("Step {} buildContext failed — aborting pipeline", def.name());
           final List<ContextDiffEntry> diff = computeDiff(before, ctx.snapshot());
-          records.add(new StepExecutionRecord(def.name(), buildResult, diff));
+          records.add(new StepExecutionRecord(def.name(), buildResult, diff).shownAs(def));
           return ProcessReport.skipped(records);
         }
 
@@ -100,7 +100,7 @@ public class ProcessEngine {
             log.info("Step {} requires manual approval — pausing pipeline", def.name());
             final List<ContextDiffEntry> diff = computeDiff(before, ctx.snapshot());
             records.add(new StepExecutionRecord(def.name(),
-                StepResult.pendingApproval("Step requires manual approval"), diff, previewOf(def, ctx)));
+                StepResult.pendingApproval("Step requires manual approval"), diff, previewOf(def, ctx)).shownAs(def));
             return ProcessReport.pendingApproval(records);
           }
           log.info("Step {} requires manual approval, but the organization holds a pre-validated trust mark "
@@ -116,7 +116,7 @@ public class ProcessEngine {
       ctx.remove(ContextKey.STEP_APPROVED);
       final List<ContextDiffEntry> diff = computeDiff(before, ctx.snapshot());
       final StepPreview preview = result.status() == StepStatus.PENDING_APPROVAL ? previewOf(def, ctx) : null;
-      records.add(new StepExecutionRecord(def.name(), result, diff, preview));
+      records.add(new StepExecutionRecord(def.name(), result, diff, preview).shownAs(def));
 
       if (result.status() == StepStatus.FAILURE) {
         log.error("Step {} failed — aborting pipeline", def.name());

@@ -41,7 +41,13 @@
 - New step **Metadata Review**.
 - **Metadata Policy Creation** uses a configurable template per entity type. Subordinate statements publish `metadata`.
 - Fixed: approving a paused registration lost its keys and metadata policy.
-- Fixed: a flow that failed after an approval stayed pending; it now returns to `STARTED`.
+- A registration or trust mark request whose automated step fails is now declined automatically (`REJECTED`, with the
+  failed step as `rejectionReason`) instead of staying pending.
+- A requested trust mark with no usable registration flow is no longer skipped and left pending. It is `APPROVED` if
+  the entity already holds the trust mark, otherwise `REJECTED` with the reason.
+- GUI and API: a flow step can be shown for the user (`showforuser`), with a display name and description in Swedish
+  and English that are then required. The step results of a registration carry them as `displayName`,
+  `displayNameSv`, `displayDescription` and `displayDescriptionSv`.
 
 ---
 

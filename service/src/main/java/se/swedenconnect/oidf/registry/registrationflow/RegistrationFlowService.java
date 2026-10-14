@@ -48,6 +48,7 @@ import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
 import se.swedenconnect.oidf.registry.registrationflow.model.StepModel;
 import se.swedenconnect.oidf.registry.registrationflow.model.TrustMarkFlowAssignment;
 import se.swedenconnect.oidf.registry.registrationflow.model.TrustMarkIssuerFlowAssignment;
+import se.swedenconnect.oidf.registry.registrationflow.process.AutomaticDecline;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.Timestamps;
 import se.swedenconnect.oidf.registry.registrationflow.process.PersistedContext;
@@ -59,6 +60,7 @@ import se.swedenconnect.oidf.registry.registrationflow.process.SerializableList;
 import se.swedenconnect.oidf.registry.registrationflow.process.StepDefinition;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.MissingContextValueException;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.UserPresentation;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.impl.DefaultConfig;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowRepository;
@@ -81,6 +83,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Operations for registration flows.
@@ -103,6 +106,7 @@ public class RegistrationFlowService {
   private final ProcessEngine processEngine;
   private final RegistrationRepository registrationRepository;
   private final OrganizationTrustMarkRepository organizationTrustMarkRepository;
+  private final AutomaticDecline automaticDecline;
 
   /**
    * Constructs a new RegistrationFlowService.
@@ -120,6 +124,7 @@ public class RegistrationFlowService {
    * @param processEngine engine that handle the processing of a flow
    * @param registrationRepository repository for persisting step results
    * @param organizationTrustMarkRepository repository of the trust mark types pre-approved per organization
+   * @param automaticDecline declines a registration whose run failed
    */
   public RegistrationFlowService(final RegistrationStepRepository registrationStepRepository,
       final TaImRepository taImRepository, final FlowRepository flowRepository,
@@ -131,7 +136,8 @@ public class RegistrationFlowService {
       final OrganizationService organizationService,
       final InstancePlacementService instancePlacementService, final ProcessEngine processEngine,
       final RegistrationRepository registrationRepository,
-      final OrganizationTrustMarkRepository organizationTrustMarkRepository) {
+      final OrganizationTrustMarkRepository organizationTrustMarkRepository,
+      final AutomaticDecline automaticDecline) {
     this.registrationStepRepository = registrationStepRepository;
     this.taImRepository = taImRepository;
     this.flowRepository = flowRepository;
@@ -145,6 +151,7 @@ public class RegistrationFlowService {
     this.processEngine = processEngine;
     this.registrationRepository = registrationRepository;
     this.organizationTrustMarkRepository = organizationTrustMarkRepository;
+    this.automaticDecline = automaticDecline;
   }
 
   private String resolveTenantOrThrow(final Organization organization) {
@@ -249,7 +256,8 @@ public class RegistrationFlowService {
     final Map<String, String> storedValues = storedStep.config().stream()
         .collect(Collectors.toMap(ConfigValueModel::key, ConfigValueModel::value));
 
-    final List<ConfigValueDto> configs = defined.getStepConfigurationValues().stream()
+    final List<ConfigValueDto> configs = Stream.concat(defined.getStepConfigurationValues().stream(),
+            UserPresentation.CONFIGURATION_VALUES.stream())
         .map(scv -> new ConfigValueDto(
             scv.name(),
             scv.description(),
@@ -290,8 +298,8 @@ public class RegistrationFlowService {
         .map(step -> new StepDto(step.getStepId(),
             step.getName(),
             step.getDescription(),
-            step.getStepConfigurationValues()
-                .stream()
+            Stream.concat(step.getStepConfigurationValues().stream(),
+                    UserPresentation.CONFIGURATION_VALUES.stream())
                 .map(ConfigValueDto::create)
                 .toList(),
             step.flowType()))
@@ -341,9 +349,10 @@ public class RegistrationFlowService {
       final List<StepDefinition> allSteps = processFlow.getProcessFlow();
       final ProcessReport report = this.processEngine.run(allSteps, processContext);
       processContext.<UUID>get(ContextKey.REGISTRATION_ID).flatMap(this.registrationRepository::findById)
+          .filter(reg -> !isRefusedWhilePending(reg, report))
           .ifPresent(reg -> {
             reg.setStepResults(RegistrationMapper.toStepExecutionRecordDtos(report));
-            markPause(reg, report, 0, processContext);
+            this.markPause(reg, report, 0, processContext);
             this.registrationRepository.save(reg);
           });
       return report;
@@ -438,22 +447,35 @@ public class RegistrationFlowService {
     reg.setStepResults(merged);
     reg.setReviewedAt(reviewedAt);
     reg.setReviewedBy(reviewer);
-    markPause(reg, resumeReport, stepIndex, ctx);
+    this.markPause(reg, resumeReport, stepIndex, ctx);
     this.registrationRepository.save(reg);
   }
 
   /**
+   * Whether a request was refused because the entity's registration is waiting for review. The first step refuses it
+   * before anything else runs; the waiting registration is left as it is, with its paused step and saved context.
+   */
+  private static boolean isRefusedWhilePending(final Registration reg, final ProcessReport report) {
+    return reg.getStatus() == RegistrationStatus.PENDING_APPROVAL
+        && report.steps().size() == 1
+        && !report.isSuccessful();
+  }
+
+  /**
    * Records whether a run paused for manual review. A paused registration keeps the index of the paused step and the
-   * context the steps before it produced, so that approving the step can resume where the run stopped. A resumed run
-   * that fails puts the registration back to {@code STARTED}, as a failed first run leaves it.
+   * context the steps before it produced, so that approving the step can resume where the run stopped. A run in which
+   * a step fails, first or resumed, declines the registration with the failure as the reason, so it does not wait for
+   * a review that never comes.
    *
    * @param reg the registration the run belongs to
    * @param report the run's report
    * @param stepOffset index in the full step list of the run's first step
    * @param ctx the run's context
    */
-  private static void markPause(final Registration reg, final ProcessReport report, final int stepOffset,
+  private void markPause(final Registration reg, final ProcessReport report, final int stepOffset,
       final ProcessContext ctx) {
+    // The reason of an earlier decline does not apply to the run that replaces it.
+    reg.setRejectionReason(null);
     if (report.isPendingApproval()) {
       reg.setPendingStepIndex(stepOffset + report.steps().size() - 1);
       reg.setStatus(RegistrationStatus.PENDING_APPROVAL);
@@ -462,10 +484,8 @@ public class RegistrationFlowService {
     else {
       reg.setPendingStepIndex(null);
       reg.setProcessContext(null);
-      if (!report.isSuccessful() && reg.getStatus() == RegistrationStatus.PENDING_APPROVAL) {
-        // A step after the approved one failed: the registration is no longer waiting for anyone, so it goes back
-        // to where a failed first run leaves it. The failed step and its issues are in the step results.
-        reg.setStatus(RegistrationStatus.STARTED);
+      if (!report.isSuccessful()) {
+        this.automaticDecline.decline(reg, report.failureReason());
       }
     }
   }

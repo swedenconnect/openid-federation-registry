@@ -17,6 +17,7 @@ package se.swedenconnect.oidf.registry.registrationflow.process;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import net.minidev.json.JSONObject;
+import se.swedenconnect.oidf.registry.registrationflow.metadata.FetchedResource;
 
 import java.text.ParseException;
 import java.util.LinkedHashMap;
@@ -81,6 +82,15 @@ public final class PersistedContext {
         ctx.put(key, new JSONObject((Map<String, Object>) value));
       }
     }
+    // A resource that was not fetched before the pause, such as a logo on a domain that was validated during the
+    // review, is fetched again rather than kept as failed.
+    ctx.<JSONObject>get(ContextKey.FETCHED_RESOURCES).ifPresent(fetched -> {
+      fetched.values().removeIf(resource -> resource instanceof final Map<?, ?> map
+          && FetchedResource.fromMap(map).size() == null);
+      if (fetched.isEmpty()) {
+        ctx.remove(ContextKey.FETCHED_RESOURCES);
+      }
+    });
     if (saved.get(ContextKey.ENTITY_CONFIGURATION_JWKS) instanceof final Map<?, ?> jwks) {
       try {
         ctx.put(ContextKey.ENTITY_CONFIGURATION_JWKS, JWKSet.parse((Map<String, Object>) jwks));

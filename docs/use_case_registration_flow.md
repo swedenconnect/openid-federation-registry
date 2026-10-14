@@ -77,8 +77,10 @@ There are two flow types (`Step.FlowType`):
     - `LoadEntityConfigurationStep` runs otherwise: fetches and signature-validates the entity statement at `entityId`,
       extracting `metadata` and JWKS.
 7. **MID — `TrustMarkIssuerRegistrationStep`** (only if trust marks were requested): for each requested trust mark type,
-   resolves the assigned `TRUST_MARK_ISSUER` flow and dispatches a sub-pipeline (see UC-6). Trust marks with no assigned
-   flow, with a disabled flow, or that don't exist, are skipped with a warning. The parent registration continues.
+   resolves the assigned `TRUST_MARK_ISSUER` flow and dispatches a sub-pipeline (see UC-6). A trust mark with no
+   assigned flow, with a disabled flow, or that doesn't exist is settled at once: approved if the entity already holds
+   it (a trust mark subject that is not revoked), otherwise declined with the reason. The parent registration
+   continues.
 8. **POST — `PublishSubordinateStatementStep`:** creates (or updates, if one already exists for this entity +
    Intermediate) a subordinate statement with the loaded JWKS and metadata policy, and sets
    `Registration.status = APPROVED`.
@@ -92,7 +94,11 @@ trust marks are reflected in `statusTrustmarks`.
 
 - If a `PRE`/`MID`/`POST` step's `buildContext` or `execute` returns `FAILURE`, the pipeline aborts immediately (
   `ProcessReport.status = SKIPPED`).
-- `Registration.status` is left as it was before the failing step (typically `STARTED`).
+- The registration is declined automatically: `Registration.status = REJECTED`, with `rejectionReason`
+  `Automatically declined: step <step> failed: <message>`, followed by the step's issues. It does not wait for a review
+  that never comes.
+- Exception: a request for an entity whose registration is `PENDING_APPROVAL` is refused by the `PRE` step and leaves
+  that registration as it is, with its paused step and saved context.
 - The response has `successful = false`; `steps` lists which step failed and why (`StepIssue` entries with `Severity`).
 - The member can fix the problem and resubmit — `POST` on the same `entityIdentifier` reuses the existing `Registration`
   row.
@@ -141,8 +147,8 @@ continuing.
 8. If a later step in the same run also requires manual review, the pipeline pauses again with a new
    `pendingStepIndex` — steps 5–7 repeat.
 9. Once all remaining steps complete, `PublishSubordinateStatementStep` runs and sets `Registration.status = APPROVED`.
-10. If a step after the approved one fails, the registration goes back to `STARTED` with no pending step, as a failed
-    first run leaves it; the failed step and its issues are in the step results.
+10. If a step after the approved one fails, the registration is declined automatically, as a failed first run is
+    (Alternative flow A); the failed step and its issues are in the step results.
 
 **Result:** The entity becomes a subordinate once every gated step has been individually approved.
 
@@ -289,6 +295,13 @@ children get the same. The response lists all of them in `cascadedRegistrationId
     - `steps` — an ordered list of selected `MID` steps, each with `config` key/value pairs (e.g.
       `manualreview: "true"`). If omitted for an `INTERMEDIATE` flow, the system defaults to
       `HostedEntityRegistrationStep` + `LoadEntityConfigurationStep`.
+    - Every selectable step also has `showforuser` (boolean, default `false`), `userdisplayname_sv`,
+      `userdisplayname_en`, `userdescription_sv` and `userdescription_en`: whether the step is shown to the user who
+      registers, and the name and description the user sees, in Swedish and English. With `showforuser` set, all four
+      texts are required, or the flow is refused with `400`. The step results of a registration (`steps` in
+      `RegistrationDto`) carry the texts as `displayName`, `displayNameSv`, `displayDescription` and
+      `displayDescriptionSv` for the steps shown for the user, so the member's view can name the steps in plain
+      language.
 3. The system saves the flow and returns the flow DTO (with `flowId`).
 4. The operator assigns the flow:
     - to an Intermediate: `POST /registration-flow/v1/{tenant}/{orgNumber}/intermediate/{taImId}/assign`
@@ -310,8 +323,8 @@ replace a flow. A disabled flow has these effects:
 - `GET /registration/v1/flows` no longer lists the flow's assignments.
 - `POST /registration/v1/{tenant}/{orgNumber}/{joinId}` and the `PUT` re-run path return `409 Conflict`
   (`Registration flow is disabled: <name>`) and create nothing (UC-1).
-- A disabled `TRUST_MARK_ISSUER` flow counts as unassigned. The trust mark type is skipped with a warning and the
-  parent registration completes (UC-6).
+- A disabled `TRUST_MARK_ISSUER` flow counts as unassigned. The trust mark request is declined, unless the entity
+  already holds the trust mark, and the parent registration completes (UC-1, UC-6).
 - **Registrations already submitted are unaffected.** They can still be approved step by step (UC-2) or rejected
   (UC-3).
 - `GET /registration-flow/v1/{tenant}/{orgNumber}/flows` still lists the flow with `enabled = false`, so the
@@ -349,8 +362,12 @@ and, once approved, create a `TrustMarkSubject`.
 4. **POST — `CreateTrustMarkSubjectStep`:** runs only when the proceed signal is set. Creates a `TrustMarkSubject` (
    idempotent — a no-op if one already exists for this trust mark + subject), fires an audit event, and sets the child
    registration's status to `APPROVED`.
-5. Each trust mark's outcome (`pending`, `failed`, `not found`, `no flow assigned`) is aggregated into the parent step's
-   result message; a failure or pending trust mark does **not** fail the parent `SUBORDINATE` registration.
+5. Each trust mark's outcome (`pending`, `failed`, `declined`, `already held`) is aggregated into the parent step's
+   result message; a failure, pending or declined trust mark does **not** fail the parent `SUBORDINATE` registration.
+   A trust mark that has no usable flow gets a `TRUST_MARK_SUBORDINATE` registration without running a sub-flow:
+   `APPROVED` if the entity already holds the trust mark, otherwise `REJECTED` with the reason (`No registration flow
+   assigned to the trust mark`, `The registration flow of the trust mark is disabled` or `Trust mark not found`).
+   A trust mark whose sub-flow fails is declined automatically the same way, with the failed step as the reason.
 6. A domain rejection also ends a paused trust mark sub-flow. When a domain rejection rejects the parent
    `SUBORDINATE` registration, its unsettled `TRUST_MARK_SUBORDINATE` children are rejected with reason
    `Not Accepted Domain`. See
@@ -376,7 +393,7 @@ which does not filter out trust mark sub-registrations).
 | `STARTED`          | Registration created; pipeline has not yet completed         |
 | `PENDING_APPROVAL` | Paused at a `manualreview=true` step; see `pendingStepIndex` |
 | `APPROVED`         | Subordinate statement (or trust mark subject) created        |
-| `REJECTED`         | Rejected by an operator; auto-deleted after 30 days          |
+| `REJECTED`         | Rejected by an operator, or declined automatically when a step failed; auto-deleted after 30 days |
 
 `ProcessStatus` (pipeline run outcome, not persisted on `Registration` directly):
 
@@ -420,7 +437,7 @@ pipeline), `PENDING_APPROVAL`.
                                                                      │
                                                         [Deleted after 30 days]
 
-  A step FAILURE at any point aborts the run; status stays STARTED (or unchanged).
+  A step FAILURE at any point aborts the run and declines the registration (REJECTED).
 ```
 
 ---

@@ -248,7 +248,7 @@
         <v-card-title id="step-settings-dialog-title">{{ configDialogStep.name }} Settings</v-card-title>
         <v-card-text>
           <div
-              v-for="cfg in configDialogStep.config"
+              v-for="cfg in configDialogStep.config.filter(c => isConfigShown(configDialogStep, c))"
               :key="cfg.key"
               class="mb-4"
           >
@@ -280,6 +280,7 @@
                 :hint="cfg.description"
                 persistent-hint
                 :placeholder="String(cfg.defaultValue ?? '')"
+                :rules="USER_PRESENTATION_TEXT.includes(cfg.key) ? [rules.required] : []"
             ></v-text-field>
           </div>
         </v-card-text>
@@ -376,6 +377,16 @@ const configDialogStep = computed(() =>
 );
 
 const configDialogHasJson = computed(() => (configDialogStep.value?.config ?? []).some(c => c.type === 'JSON'));
+
+// A step shown for the user needs a name and a description the user sees, in Swedish and English; the registry refuses
+// the flow without them.
+const SHOW_FOR_USER = 'showforuser';
+const USER_PRESENTATION_TEXT = ['userdisplayname_sv', 'userdisplayname_en', 'userdescription_sv', 'userdescription_en'];
+
+function isConfigShown(step, cfg) {
+  if (!USER_PRESENTATION_TEXT.includes(cfg.key)) return true;
+  return (step.config || []).some(c => c.key === SHOW_FOR_USER && String(c.value) === 'true');
+}
 
 function openStepConfig(index) {
   configDialog.value = {open: true, stepIndex: index};

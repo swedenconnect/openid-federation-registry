@@ -17,6 +17,7 @@ package se.swedenconnect.oidf.registry.registrationflow.process;
 
 import se.swedenconnect.oidf.registry.registrationflow.process.review.StepPreview;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.UserPresentation;
 
 import java.util.List;
 
@@ -27,10 +28,24 @@ import java.util.List;
  * @param result the step's execution result
  * @param contextDiff changes made to the pipeline context by this step
  * @param preview what the step showed the operator when it paused for manual review, otherwise {@code null}
+ * @param userStep how the step is shown to the user, {@code null} if it is not shown for the user
  * @author Per Fredrik Plars
  */
 public record StepExecutionRecord(String stepName, StepResult result, List<ContextDiffEntry> contextDiff,
-    StepPreview preview) {
+    StepPreview preview, UserPresentation.UserStep userStep) {
+
+  /**
+   * Creates a record for a step that is not shown for the user.
+   *
+   * @param stepName display name of the step
+   * @param result the step's execution result
+   * @param contextDiff changes made to the pipeline context by this step
+   * @param preview what the step showed the operator when it paused for manual review, otherwise {@code null}
+   */
+  public StepExecutionRecord(final String stepName, final StepResult result,
+      final List<ContextDiffEntry> contextDiff, final StepPreview preview) {
+    this(stepName, result, contextDiff, preview, null);
+  }
 
   /**
    * Creates a record for a step that did not pause for review.
@@ -42,5 +57,16 @@ public record StepExecutionRecord(String stepName, StepResult result, List<Conte
   public StepExecutionRecord(final String stepName, final StepResult result,
       final List<ContextDiffEntry> contextDiff) {
     this(stepName, result, contextDiff, null);
+  }
+
+  /**
+   * Returns a copy of this record shown to the user as the flow configures the step.
+   *
+   * @param definition the step as configured in the flow
+   * @return the copy
+   */
+  public StepExecutionRecord shownAs(final StepDefinition definition) {
+    return new StepExecutionRecord(this.stepName, this.result, this.contextDiff, this.preview,
+        UserPresentation.of(definition.config()).orElse(null));
   }
 }

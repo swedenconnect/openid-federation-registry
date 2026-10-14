@@ -32,6 +32,12 @@ import java.util.List;
  * @param preview what the step showed the operator when it paused for manual review, otherwise {@code null}
  * @param reviewedBy who approved the step, {@code null} unless it ran after manual review
  * @param reviewedAt when the step was approved, {@code null} unless it ran after manual review
+ * @param displayName name shown to the user in English, {@code null} unless the flow shows the step for the user
+ * @param displayNameSv name shown to the user in Swedish, {@code null} unless the flow shows the step for the user
+ * @param displayDescription description shown to the user in English, {@code null} unless the flow shows the step
+ *     for the user
+ * @param displayDescriptionSv description shown to the user in Swedish, {@code null} unless the flow shows the step
+ *     for the user
  * @author Per Fredrik Plars
  */
 @Schema(name = "StepExecutionRecord")
@@ -56,7 +62,19 @@ public record StepExecutionRecordDto(
     @Schema(description = "Who approved this step, set when the step ran after manual review")
     String reviewedBy,
     @Schema(description = "When this step was approved, set when the step ran after manual review")
-    OffsetDateTime reviewedAt
+    OffsetDateTime reviewedAt,
+    @Schema(description = "Name shown to the user in English, set when the flow shows the step for the user",
+        example = "Metadata review")
+    String displayName,
+    @Schema(description = "Name shown to the user in Swedish, set when the flow shows the step for the user",
+        example = "Granskning av metadata")
+    String displayNameSv,
+    @Schema(description = "Description shown to the user in English, set when the flow shows the step for the user",
+        example = "An operator checks the metadata of the service")
+    String displayDescription,
+    @Schema(description = "Description shown to the user in Swedish, set when the flow shows the step for the user",
+        example = "En operatör granskar tjänstens metadata")
+    String displayDescriptionSv
 ) {
 
   /**
@@ -70,7 +88,7 @@ public record StepExecutionRecordDto(
    */
   public StepExecutionRecordDto(final String stepName, final String status, final String message,
       final List<StepIssueDto> issues, final List<ContextDiffEntryDto> contextDiff) {
-    this(stepName, status, message, issues, contextDiff, null, null, null);
+    this(stepName, status, message, issues, contextDiff, null, null, null, null, null, null, null);
   }
 
   /**
@@ -82,6 +100,7 @@ public record StepExecutionRecordDto(
    */
   public StepExecutionRecordDto approvedBy(final String reviewer, final OffsetDateTime at) {
     return new StepExecutionRecordDto(this.stepName, this.status, this.message, this.issues, this.contextDiff,
-        this.preview, reviewer, at);
+        this.preview, reviewer, at, this.displayName, this.displayNameSv, this.displayDescription,
+        this.displayDescriptionSv);
   }
 }
