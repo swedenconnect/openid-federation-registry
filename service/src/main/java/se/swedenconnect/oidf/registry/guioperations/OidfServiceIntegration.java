@@ -181,7 +181,8 @@ public class OidfServiceIntegration {
     try {
       final String body = this.restClient.get().uri(uri).retrieve().body(String.class);
       if (body == null) {
-        throw new IllegalArgumentException("There is no body in response when fetching subordinate statement from: " + uri);
+        throw new IllegalArgumentException(
+            "There is no body in response when fetching subordinate statement from: " + uri);
       }
       final SignedJWT signedJWT = SignedJWT.parse(body.trim());
       final JWSHeader header = signedJWT.getHeader();
