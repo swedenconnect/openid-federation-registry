@@ -37,8 +37,9 @@ public record StepIssueDto(
 
     @Schema(description = "Severity of the issue", example = "ERROR")
     String severity,
-    @Schema(description = "VALIDATION: something the member can fix, shown to the member. TECHNICAL: something resolved "
-        + "with an operator, such as a fetch that failed; the message is for operators", example = "VALIDATION")
+    @Schema(description = "VALIDATION: something the member can fix, shown to the member. TECHNICAL: something "
+        + "resolved with an operator, such as a fetch that failed; the message is for operators",
+        example = "VALIDATION")
     String type
 ) {
 }
