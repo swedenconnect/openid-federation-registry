@@ -395,7 +395,8 @@ and, once approved, create a `TrustMarkSubject`.
 
 **Result:** Each requested trust mark ends up as its own `TRUST_MARK_SUBORDINATE` registration with an independent
 status, surfaced on the parent registration's `statusTrustmarks` (member view, with `rejectionReason` for a rejected
-trust mark) or listed as its own row (admin view, which does not filter out trust mark sub-registrations).
+trust mark and `steps`, the trust mark's own step results, so the member can follow the request) or listed as its own
+row (admin view, which does not filter out trust mark sub-registrations).
 
 ---
 

@@ -128,4 +128,9 @@ subordinate's own, operator by operator as OpenID Federation combines a superior
 
 In the GUI, the module's settings have a **Metadata policy for subordinates** field, with **Load template** for the
 `policy` templates configured under `openid.federation.registry.templates`. A loaded template is copied into the
-module.
+module. After a template is loaded and the module saved, the GUI offers to apply it to all the module's
+subordinates as well, which replaces their own policies
+(`PUT /registry/v1/{tenant}/{orgNumber}/subordinates/metadata-policy` with `taImId` and `metadataPolicy`; refused with
+`400` if the policy is not valid or cannot be combined with the module's).
+
+A subordinate's own **Metadata Policy** has **Load template** for the same templates.

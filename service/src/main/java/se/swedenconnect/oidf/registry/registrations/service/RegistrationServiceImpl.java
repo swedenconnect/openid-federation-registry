@@ -145,7 +145,12 @@ public class RegistrationServiceImpl implements RegistrationService {
         this.entityConfigService.listHostedEntity(organizationRecord, request.getEntityIdentifier());
     final boolean isHosted = !hostedEntities.isEmpty();
     final Map<String, Object> hostedMetadata = isHosted ? hostedEntities.getFirst().getMetadata() : null;
-    return RegistrationMapper.toRegistrationRequestStatusDto(registration, report, isHosted, hostedMetadata);
+    final Map<String, Registration> tmStatusByType =
+        this.registrationRepository.findByParentRegistration_RegistrationId(registration.getRegistrationId())
+            .stream()
+            .collect(Collectors.toMap(Registration::getEntityId, Function.identity()));
+    return RegistrationMapper.toRegistrationRequestStatusDto(registration, report, isHosted, hostedMetadata,
+        tmStatusByType);
   }
 
   @Override
@@ -212,7 +217,12 @@ public class RegistrationServiceImpl implements RegistrationService {
         this.entityConfigService.listHostedEntity(organizationRecord, request.getEntityIdentifier());
     final boolean isHosted = !hostedEntities.isEmpty();
     final Map<String, Object> hostedMetadata = isHosted ? hostedEntities.getFirst().getMetadata() : null;
-    return RegistrationMapper.toRegistrationRequestStatusDto(registration, report, isHosted, hostedMetadata);
+    final Map<String, Registration> tmStatusByType =
+        this.registrationRepository.findByParentRegistration_RegistrationId(registration.getRegistrationId())
+            .stream()
+            .collect(Collectors.toMap(Registration::getEntityId, Function.identity()));
+    return RegistrationMapper.toRegistrationRequestStatusDto(registration, report, isHosted, hostedMetadata,
+        tmStatusByType);
   }
 
   @Override
