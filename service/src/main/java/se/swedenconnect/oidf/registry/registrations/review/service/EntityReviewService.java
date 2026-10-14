@@ -349,7 +349,7 @@ public class EntityReviewService {
     for (final Registration trustMark : this.registrationRepository
         .findByParentRegistration_RegistrationId(entity.getRegistrationId())) {
       final ReviewItemDto item = this.registrationItem(ReviewItemType.TRUST_MARK, trustMark, trustMark.getEntityId(),
-          "Trust mark request", deferred, withPreviews);
+          "Trust mark request", deferred, withPreviews, withPreviews ? this.requesterSection(entity) : null);
       if (item != null) {
         items.add(item);
       }
@@ -365,7 +365,7 @@ public class EntityReviewService {
       }
     }
     final ReviewItemDto current = this.registrationItem(ReviewItemType.ENTITY, entity, null, "Entity registration",
-        deferred, withPreviews);
+        deferred, withPreviews, null);
     if (current != null && current.state() != ReviewItemState.APPROVED) {
       items.add(current);
     }
@@ -377,14 +377,20 @@ public class EntityReviewService {
 
   /**
    * Builds the item for a registration paused for review or decided; {@code null} for one still running or failed.
+   * A {@code lead} section, if given, is shown before the paused step's preview.
    */
   private ReviewItemDto registrationItem(final ReviewItemType type, final Registration registration,
-      final String title, final String subtitle, final Set<String> deferred, final boolean withPreviews) {
+      final String title, final String subtitle, final Set<String> deferred, final boolean withPreviews,
+      final PreviewSection lead) {
     final List<StepExecutionRecordDto> steps = Optional.ofNullable(registration.getStepResults()).orElse(List.of());
     final Integer index = registration.getPendingStepIndex();
     final StepExecutionRecordDto step = index != null && index >= 0 && index < steps.size() ? steps.get(index) : null;
     final String name = title != null ? title : step != null ? step.stepName() : "Registration";
-    final StepPreview preview = withPreviews && step != null ? step.preview() : null;
+    final StepPreview stepPreview = withPreviews && step != null ? step.preview() : null;
+    final StepPreview preview = lead == null ? stepPreview : StepPreview.builder()
+        .add(lead)
+        .addAll(stepPreview == null ? List.of() : stepPreview.sections())
+        .build();
     return switch (registration.getStatus()) {
       case PENDING_APPROVAL -> {
         final Optional<String> waitingFor = this.reviewOrder.waitingFor(registration);
@@ -451,6 +457,22 @@ public class EntityReviewService {
     catch (final RuntimeException e) {
       return true;
     }
+  }
+
+  /**
+   * Describes who requests a trust mark, as the domain item does: the organization, the entity and the domains the
+   * entity is registered under.
+   */
+  private PreviewSection requesterSection(final Registration entity) {
+    final Organization organization = entity.getOrganization();
+    final String domains = this.reviewOrder.domainsOf(entity).stream()
+        .map(domain -> "%s (%s)".formatted(domain.getDomain(), domain.getStatus().name()))
+        .collect(Collectors.joining(", "));
+    return PreviewSection.fields("Requester", List.of(
+        new PreviewSection.Field("Organization", organization == null ? "?"
+            : "%s (%s)".formatted(organizationName(organization), organization.getOrgNumber())),
+        new PreviewSection.Field("Entity", entity.getEntityId()),
+        new PreviewSection.Field("Domain", domains.isEmpty() ? "None" : domains)));
   }
 
   private StepPreview domainPreview(final OrganizationDomain domain, final Registration entity) {

@@ -17,6 +17,8 @@ package se.swedenconnect.oidf.registry.infrastructure.audit;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Optional;
+
 /**
  * The RegistryAuditServiceLog class is an extension of RegistryAuditServiceAdapter that is responsible for emitting
  * audit events by logging them using the SLF4J logger. This implementation ensures that audit events are captured in a
@@ -33,6 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 public class RegistryAuditLogger extends RegistryAuditServiceAdapter {
   @Override
   protected void emitEvent(final FederationAuditEvent event) {
-    log.info(event.toAuditEvent("<NoPrincipal>").toString());
+    log.info(event.toAuditEvent(Optional.ofNullable(event.getPrincipal()).orElse("<NoPrincipal>")).toString());
   }
 }

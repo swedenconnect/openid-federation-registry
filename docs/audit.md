@@ -50,7 +50,7 @@ resource kind) plus two system-level events.
 | Subordinate         | `SUBORDINATE_CREATED`, `SUBORDINATE_UPDATED`, `SUBORDINATE_DELETED`                                                                                                                                                                               |
 | Organization        | `ORGANIZATION_CREATED`, `ORGANIZATION_UPDATED`. `ORGANIZATION_UPDATED` also covers a new list of pre-validated trust mark types.                                                                                                                  |
 | Organization domain | `ORGANIZATION_DOMAIN_REQUESTED`, `ORGANIZATION_DOMAIN_DELETED`, `ORGANIZATION_DOMAIN_APPROVED`, `ORGANIZATION_DOMAIN_REJECTED`. See [Organizations and Domains](organization.md#audit-events).                                                   |
-| Registration review | `REGISTRATION_STEP_APPROVED`, `REGISTRATION_REJECTED`. `extId` is the registration id; `newData` holds the entity, the step (for an approval), the reviewer, the time and the rejection reason. Rejections caused by a domain rejection are audited through `ORGANIZATION_DOMAIN_REJECTED` instead. |
+| Registration review | `REGISTRATION_STEP_APPROVED`, `REGISTRATION_REJECTED`. `extId` is the registration id; `newData` holds the entity, the step (for an approval), the reviewer, the time and the rejection reason. Rejections caused by a domain rejection are audited through `ORGANIZATION_DOMAIN_REJECTED` instead. A registration or trust mark request the registry declines on its own, because an automated step failed or no flow can handle it, is audited as `REGISTRATION_REJECTED` with `principal` `<Registry>` and no reviewer. |
 
 System-level (no organization/instance scope):
 

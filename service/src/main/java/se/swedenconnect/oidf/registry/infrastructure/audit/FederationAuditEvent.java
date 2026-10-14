@@ -41,6 +41,8 @@ public class FederationAuditEvent implements Serializable {
   final String extId;
   final String oldData;
   final String newData;
+  /** Who acted, when it was not the signed-in user, such as the registry itself; {@code null} for the signed-in user. */
+  final String principal;
 
   /**
    * Converts the current instance of {@code FederationAuditEvent} into an {@code AuditEvent}. This method structures

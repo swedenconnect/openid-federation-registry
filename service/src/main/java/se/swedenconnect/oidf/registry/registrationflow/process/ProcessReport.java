@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.registry.registrationflow.process;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepStatus;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Aggregated report for a complete pipeline run.
@@ -75,5 +76,24 @@ public record ProcessReport(ProcessStatus status, List<StepExecutionRecord> step
    */
   public boolean isPendingApproval() {
     return this.status == ProcessStatus.PENDING_APPROVAL;
+  }
+
+  /**
+   * Says why the run failed, for the registration it declines: the failed step, its message and its issues.
+   *
+   * @return the reason; {@code null} if no step failed
+   */
+  public String failureReason() {
+    return this.steps.stream()
+        .filter(r -> r.result().status() == StepStatus.FAILURE)
+        .findFirst()
+        .map(r -> {
+          final StringBuilder reason = new StringBuilder("Automatically declined: step %s failed: %s"
+              .formatted(r.stepName(), r.result().message()));
+          Optional.ofNullable(r.result().issues()).orElse(List.of())
+              .forEach(issue -> reason.append("; ").append(issue.message()));
+          return reason.toString();
+        })
+        .orElse(null);
   }
 }

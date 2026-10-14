@@ -44,6 +44,9 @@ import java.util.UUID;
 @Slf4j
 public abstract class RegistryAuditServiceAdapter implements RegistryAuditService {
 
+  /** The principal of what the registry does on its own, with no user deciding. */
+  public static final String REGISTRY_PRINCIPAL = "<Registry>";
+
   private final JsonMapper mapper;
 
   /**
@@ -532,6 +535,20 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
       final RegistrationReviewDto review) {
     this.emitRegistrationReview(RegistryAuditEventType.REGISTRATION_REJECTED, id, instanceId, organizationId,
         review);
+  }
+
+  @Override
+  public void registrationDeclinedAutomatically(final UUID id, final UUID instanceId, final UUID organizationId,
+      final RegistrationReviewDto review) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(RegistryAuditEventType.REGISTRATION_REJECTED)
+            .instanceId(instanceId == null ? null : instanceId.toString())
+            .organizationId(organizationId.toString())
+            .extId(id.toString())
+            .newData(this.toJson(review))
+            .principal(REGISTRY_PRINCIPAL)
+            .build());
   }
 
   private void emitRegistrationReview(final RegistryAuditEventType type, final UUID id, final UUID instanceId,

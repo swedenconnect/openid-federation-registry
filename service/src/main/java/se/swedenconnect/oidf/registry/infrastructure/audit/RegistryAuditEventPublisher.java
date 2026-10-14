@@ -21,6 +21,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.AuditorAware;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.util.Optional;
+
 /**
  * The RegistryAuditServiceAuditEvent class implements the RegistryAuditService interface to provide audit event logging
  * functionality for the Federation API. This service utilizes an ApplicationEventPublisher to publish audit events and
@@ -59,7 +61,9 @@ public class RegistryAuditEventPublisher extends RegistryAuditServiceAdapter {
   protected void emitEvent(final FederationAuditEvent event) {
     this.publisher.publishEvent(event);
     this.publisher.publishEvent(new AuditApplicationEvent(
-        event.toAuditEvent(this.currentUser.getCurrentAuditor().orElse("<NoActiveUserSet>"))));
+        event.toAuditEvent(Optional.ofNullable(event.getPrincipal())
+            .or(this.currentUser::getCurrentAuditor)
+            .orElse("<NoActiveUserSet>"))));
   }
 
 }

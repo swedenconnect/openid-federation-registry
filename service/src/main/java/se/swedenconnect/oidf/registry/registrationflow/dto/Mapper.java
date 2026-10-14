@@ -27,6 +27,7 @@ import se.swedenconnect.oidf.registry.registrationflow.process.ProcessFlow;
 import se.swedenconnect.oidf.registry.registrationflow.process.StepDefinition;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.UserPresentation;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.impl.DefaultConfig;
 
 import java.util.ArrayList;
@@ -245,6 +246,7 @@ public class Mapper {
         final Map<String, String> values = new HashMap<>();
         stepModel.config().forEach(value -> values.put(value.key(), value.value()));
         step.validateConfiguration(values).forEach(problem -> problems.add(step.getName() + ": " + problem));
+        UserPresentation.validate(values).forEach(problem -> problems.add(step.getName() + ": " + problem));
       });
     }
     if (!problems.isEmpty()) {
