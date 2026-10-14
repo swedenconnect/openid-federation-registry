@@ -193,7 +193,7 @@ class MetadataPolicyFlowIT {
   }
 
   @Test
-  @DisplayName("A failed check after the review fails the registration and says why")
+  @DisplayName("A failed check after the review declines the registration and says why")
   void failedCheckFailsTheRegistration() {
     final Registration submitted = new FederationRegistrationApi(this.apiClient(APPLICANT)).createJoinWithId(
         TENANT, APPLICANT.orgId, this.assignId, new RegistrationJoinRequest().entityIdentifier(this.entityId("wrongid")));
@@ -203,7 +203,8 @@ class MetadataPolicyFlowIT {
         .approveStep(TENANT, OPERATOR.orgId, submitted.getRegistrationId(), paused.getPendingStepIndex());
 
     final var failed = this.registrationRepository.findById(submitted.getRegistrationId()).orElseThrow();
-    assertThat(failed.getStatus()).isEqualTo(RegistrationStatus.STARTED);
+    assertThat(failed.getStatus()).isEqualTo(RegistrationStatus.REJECTED);
+    assertThat(failed.getRejectionReason()).startsWith("Automatically declined");
     assertThat(failed.getPendingStepIndex()).isNull();
     assertThat(failed.getStepResults().getLast()).satisfies(step -> {
       assertThat(step.stepName()).isEqualTo("MetadataPolicyCreationStep");
