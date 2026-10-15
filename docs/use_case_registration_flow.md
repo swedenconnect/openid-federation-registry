@@ -121,6 +121,30 @@ trust marks are reflected in `statusTrustmarks`.
   skipped (`SKIPPED` step result) — federation JWKS always comes from the service node, never from entity metadata.
 - If `metadata` is absent, only `LoadEntityConfigurationStep` runs.
 
+### Alternative flow C — A self-managed entity publishes again
+
+A self-managed entity serves its own entity configuration, but its subordinate statement pins some of it:
+
+- the parameters set by the `metadata` claim,
+- the parameters fixed with the `value` operator of the `metadata_policy` claim,
+- the federation keys, in the `jwks` claim.
+
+`RegistrationDto.pinnedMetadata` lists them, for a self-managed entity whose subordinate statement is published:
+`parameters` (`entityType`, `parameter`, `value`, `claim`: `metadata` or `metadata_policy`) and `jwks`. A change to
+anything else in the entity configuration needs no new subordinate statement.
+
+To publish a change to a pinned value or key, the member runs the registration again (`PUT` re-run path). When the
+registration is `APPROVED`, before the pipeline runs the system loads the entity configuration and builds the claims
+(the flow's `LoadEntityConfigurationStep` and `MetadataPolicyCreationStep`, up to their review gates), and compares
+them with the published subordinate statement:
+
+- **A pinned value or key changes:** the run pauses at its review steps as in UC-2.
+- **Nothing pinned changes:** the run passes its review steps. Each gated step records a `WARNING` result:
+  *"Auto-approved: no value or key pinned by the subordinate statement changes"*. Trust mark sub-flows are still
+  reviewed.
+
+The run uses the entity configuration loaded for the comparison, so the one compared is the one published.
+
 ---
 
 ## UC-2: Submit registration request (manual review at any step)

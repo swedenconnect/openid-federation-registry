@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.registry.registrations.dto;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.Timestamps;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.registrationflow.dto.Technology;
+import se.swedenconnect.oidf.registry.registrationflow.metadata.PinnedValues;
 import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextDiffEntry;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
@@ -27,6 +28,7 @@ import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
 import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
+import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -213,6 +215,20 @@ public final class RegistrationMapper {
                     new TrustmarkSource.TrustMarkStatus(tmType, RegistrationStatus.STARTED))
                 .toList()))
         .toList();
+  }
+
+  /**
+   * Maps what a published subordinate statement pins to a {@link PinnedMetadataDto}.
+   *
+   * @param subordinate the published subordinate statement
+   * @return mapped DTO
+   */
+  public static PinnedMetadataDto toPinnedMetadataDto(final SubordinateDto subordinate) {
+    return new PinnedMetadataDto(
+        PinnedValues.parameters(subordinate.getMetadataPolicy(), subordinate.getMetadata()).stream()
+            .map(p -> new PinnedParameterDto(p.entityType(), p.parameter(), p.value(), p.claim()))
+            .toList(),
+        subordinate.getJwks());
   }
 
   /**
