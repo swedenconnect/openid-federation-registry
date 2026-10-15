@@ -32,7 +32,7 @@ public final class ContextKey {
   public static final String METADATA_POLICY = "metadata_policy";
   /** The Subordinate Statement's {@code metadata} claim, keyed by entity type. */
   public static final String SUBORDINATE_METADATA = "subordinate_metadata";
-  /** Images fetched for review, keyed by URL; values are {@code FetchedResource} maps. */
+  /** Images and JSON documents fetched for review, keyed by URL; values are {@code FetchedResource} maps. */
   public static final String FETCHED_RESOURCES = "fetched_resources";
   /** A hosted entity's metadata before this registration replaced it, for the reviewer's diff. */
   public static final String HOSTED_PREVIOUS_METADATA = "hosted_previous_metadata";

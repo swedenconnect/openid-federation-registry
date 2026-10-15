@@ -20,7 +20,9 @@ import se.swedenconnect.oidf.registry.registrationflow.metadata.MetadataPolicyTe
 import se.swedenconnect.oidf.registry.registrationflow.metadata.MetadataPolicyTemplate.Rule;
 import se.swedenconnect.oidf.registry.registrationflow.process.review.PreviewSection;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,7 +33,7 @@ import java.util.stream.Stream;
 /**
  * Applies a {@link MetadataPolicyTemplate} to an entity's metadata: works out the values of the Subordinate
  * Statement's {@code metadata} and {@code metadata_policy} claims and runs the template's checks. Has no side effects;
- * images are looked up through the function it is given.
+ * images and JSON documents are looked up through the functions it is given.
  *
  * @author Felix Hellman
  */
@@ -69,7 +71,7 @@ public final class MetadataPolicyGenerator {
   }
 
   /**
-   * Applies a template. Only the entity types the entity declares are considered.
+   * Applies a template, with no JSON documents to look up. Only the entity types the entity declares are considered.
    *
    * @param template the template
    * @param entityMetadata the entity's metadata, keyed by entity type
@@ -79,6 +81,23 @@ public final class MetadataPolicyGenerator {
    */
   public static Result generate(final MetadataPolicyTemplate template, final Map<String, Object> entityMetadata,
       final OrganizationData organization, final Function<String, FetchedResource> images) {
+    return generate(template, entityMetadata, organization, images,
+        url -> FetchedResource.notFetched(url, "Not fetched"));
+  }
+
+  /**
+   * Applies a template. Only the entity types the entity declares are considered.
+   *
+   * @param template the template
+   * @param entityMetadata the entity's metadata, keyed by entity type
+   * @param organization the registry's data about the organization behind the entity
+   * @param images looks up an image URL; used by the {@code image} check
+   * @param documents looks up a JSON document URL; used by the {@code lists_redirect_uris} check
+   * @return the claims and the check outcomes
+   */
+  public static Result generate(final MetadataPolicyTemplate template, final Map<String, Object> entityMetadata,
+      final OrganizationData organization, final Function<String, FetchedResource> images,
+      final Function<String, FetchedResource> documents) {
     final Map<String, Object> metadata = new LinkedHashMap<>();
     final Map<String, Object> metadataPolicy = new LinkedHashMap<>();
     final List<PreviewSection.Check> checks = new ArrayList<>();
@@ -91,7 +110,7 @@ public final class MetadataPolicyGenerator {
       final Map<String, Object> typeMetadata = new LinkedHashMap<>();
       final Map<String, Object> typePolicy = new LinkedHashMap<>();
       for (final Rule rule : rules) {
-        final Context context = new Context(template, declared, organization, images, checks);
+        final Context context = new Context(template, declared, organization, images, documents, checks);
         final Map<String, Object> values = context.values(rule);
         if (values.isEmpty()) {
           continue;
@@ -131,10 +150,12 @@ public final class MetadataPolicyGenerator {
    * @param declared the entity's metadata for the rule's entity type
    * @param organization the registry's data about the organization
    * @param images looks up an image URL
+   * @param documents looks up a JSON document URL
    * @param checks where check outcomes are collected
    */
   private record Context(MetadataPolicyTemplate template, Map<?, ?> declared, OrganizationData organization,
-      Function<String, FetchedResource> images, List<PreviewSection.Check> checks) {
+      Function<String, FetchedResource> images, Function<String, FetchedResource> documents,
+      List<PreviewSection.Check> checks) {
 
     private void ok(final String message) {
       this.checks.add(new PreviewSection.Check(PreviewSection.CheckStatus.OK, message));
@@ -251,6 +272,7 @@ public final class MetadataPolicyGenerator {
             this.fail("%s does not resolve to an image: %s".formatted(parameter, image.error()));
           }
         });
+        case LISTS_REDIRECT_URIS -> texts.forEach(text -> this.listsRedirectUris(parameter, text));
         case MATCHES_ORGANIZATION -> {
           final String expected = this.organization.value(check.organizationField(), check.icd());
           if (expected != null && texts.stream().allMatch(expected::equals)) {
@@ -272,6 +294,39 @@ public final class MetadataPolicyGenerator {
           }
         }
         }
+      }
+    }
+
+    /**
+     * Checks that a URL resolves to a JSON array that lists every value of the entity's {@code redirect_uris}.
+     */
+    private void listsRedirectUris(final String parameter, final String url) {
+      final FetchedResource document = this.documents.apply(url);
+      if (document.error() != null || document.dataUri() == null) {
+        this.fail("%s does not resolve to a JSON document: %s".formatted(parameter,
+            document.error() == null ? "Not fetched" : document.error()));
+        return;
+      }
+      final String json = new String(Base64.getDecoder().decode(
+          document.dataUri().substring(document.dataUri().indexOf(',') + 1)), StandardCharsets.UTF_8);
+      if (!(JSONValue.parse(json) instanceof final List<?> listed)) {
+        this.fail("%s does not resolve to a JSON array".formatted(parameter));
+        return;
+      }
+      if (!(this.declared.get("redirect_uris") instanceof final Collection<?> redirectUris)
+          || redirectUris.isEmpty()) {
+        this.fail("%s cannot be checked: the entity declares no redirect_uris".formatted(parameter));
+        return;
+      }
+      final List<String> missing = redirectUris.stream()
+          .filter(redirectUri -> !listed.contains(redirectUri))
+          .map(String::valueOf)
+          .toList();
+      if (missing.isEmpty()) {
+        this.ok("%s lists all redirect_uris".formatted(parameter));
+      }
+      else {
+        this.fail("%s does not list these redirect_uris: %s".formatted(parameter, String.join(", ", missing)));
       }
     }
 

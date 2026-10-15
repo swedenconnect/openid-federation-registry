@@ -54,7 +54,7 @@
         "claim": "metadata_policy",
         "operator": "value",
         "source": "entity",
-        "checks": [{ "type": "https_url" }]
+        "checks": [{ "type": "https_url" }, { "type": "lists_redirect_uris" }]
       },
       {
         "parameter": "signed_jwks_uri",

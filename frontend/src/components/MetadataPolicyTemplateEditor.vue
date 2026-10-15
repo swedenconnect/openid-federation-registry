@@ -273,7 +273,9 @@ const UNTAGGED = [{title: 'No untagged value', value: 'none'},
   {title: 'Organization data (registry)', value: 'organization'}];
 const ON_FAILURE = [{title: 'Fail registration', value: 'fail'}, {title: 'Show reviewer as a warning', value: 'review'}];
 const CHECKS = [{title: 'Not empty', value: 'non_empty'}, {title: 'HTTPS URL', value: 'https_url'},
-  {title: 'Resolves to an image', value: 'image'}, {title: 'Matches organization data', value: 'matches_organization'},
+  {title: 'Resolves to an image', value: 'image'},
+  {title: 'Lists all redirect URIs', value: 'lists_redirect_uris'},
+  {title: 'Matches organization data', value: 'matches_organization'},
   {title: 'Within allowed values', value: 'allowed_values'}];
 
 const template = ref(null);
