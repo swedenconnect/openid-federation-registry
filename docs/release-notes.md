@@ -74,6 +74,8 @@
   failing.
 - API: only a hosted entity's identifier has to be on a registered domain of the organization; a self-managed entity
   needs no domain claim.
+- API: `POST /registration/v1/{tenant}/{orgNumber}/{joinId}/dry-run` runs a flow's metadata steps without storing
+  anything, and returns the pinned values, the overridden values and the errors.
 
 ---
 

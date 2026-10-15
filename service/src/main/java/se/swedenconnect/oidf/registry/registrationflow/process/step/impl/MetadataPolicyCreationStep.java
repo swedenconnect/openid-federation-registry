@@ -144,6 +144,17 @@ public class MetadataPolicyCreationStep extends NoConfigStepAdapter implements R
   }
 
   /**
+   * Builds the claims and runs the checks as {@code buildContext} does, without failing: for a dry run of the step.
+   *
+   * @param ctx the context, which must hold the entity's metadata; the claims are put in it
+   * @param config the step's configuration
+   * @return the claims, the check outcomes and every problem
+   */
+  public Evaluation dryRun(final ProcessContext ctx, final StepConfig config) {
+    return this.evaluate(ctx, config);
+  }
+
+  /**
    * Applies the configured template to the entity's metadata and puts the claims in the context. Images are fetched
    * once per run and kept in the context, so evaluating again gives the same outcome.
    */
@@ -245,7 +256,7 @@ public class MetadataPolicyCreationStep extends NoConfigStepAdapter implements R
    * @param problems every failed check and policy error, as messages
    * @param failed whether the step must fail
    */
-  private record Evaluation(MetadataPolicyGenerator.Result result, List<String> problems, boolean failed) {
+  public record Evaluation(MetadataPolicyGenerator.Result result, List<String> problems, boolean failed) {
 
     private List<StepIssue> issues(final Severity severity) {
       return this.problems.stream()
