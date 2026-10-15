@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.registry.registrationflow.process.review;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
 
 /**
  * A step that can pause the pipeline for manual review. Only a reviewable step pauses: the engine asks
@@ -39,6 +40,13 @@ public interface ReviewableStep extends Step {
   String MANUAL_REVIEW = "manualreview";
 
   /**
+   * Name of the boolean configuration value that makes a step pause also when a self-managed entity in the federation
+   * is resubmitted without a change to what its Subordinate Statement pins. Such a resubmission otherwise passes every
+   * review gate.
+   */
+  String MANUAL_REVIEW_FOR_UPDATE = "manualreviewforupdate";
+
+  /**
    * Tells whether the pipeline pauses at this step for an operator decision. Defaults to the
    * {@link #MANUAL_REVIEW} configuration value; a step that always needs a decision overrides this.
    *
@@ -57,4 +65,27 @@ public interface ReviewableStep extends Step {
    * @return the preview shown to the operator
    */
   StepPreview preview(ProcessContext ctx, StepConfig config);
+
+  /**
+   * Tells whether the pipeline pauses at this step when a self-managed entity in the federation is resubmitted
+   * without a change to a pinned value or key. Read from the {@link #MANUAL_REVIEW_FOR_UPDATE} configuration value;
+   * {@code false} when it is not set.
+   *
+   * @param config the step configuration
+   * @return {@code true} if such a resubmission pauses before {@code execute}
+   */
+  default boolean requiresManualReviewForUpdate(final StepConfig config) {
+    return config.getBoolean(MANUAL_REVIEW_FOR_UPDATE);
+  }
+
+  /**
+   * The {@link #MANUAL_REVIEW_FOR_UPDATE} configuration value, for a step to declare.
+   *
+   * @return the configuration value, default {@code false}
+   */
+  static StepConfigurationValue manualReviewForUpdateValue() {
+    return new StepConfigurationValue(MANUAL_REVIEW_FOR_UPDATE, StepConfigurationValue.DATA_TYPE.BOOLEAN,
+        "If true, a resubmission of an entity in the federation that changes no pinned value or key also requires "
+            + "manual approval", "false");
+  }
 }

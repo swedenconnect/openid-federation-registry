@@ -30,6 +30,8 @@ import java.util.UUID;
  * @param submittedAt when the registration was submitted
  * @param registrationStatus the entity registration's status
  * @param hosted whether the registry hosts the entity
+ * @param update whether the entity is already in the federation: the registration updates its subordinate statement,
+ *     and the federation keeps the published one until the update is approved
  * @param pendingDomains domains waiting for a decision
  * @param pendingTrustMarks trust mark requests waiting for a decision
  * @param pendingEntitySteps steps of the entity's registration waiting for a decision
@@ -48,6 +50,7 @@ public record EntityReviewSummaryDto(
     OffsetDateTime submittedAt,
     String registrationStatus,
     boolean hosted,
+    boolean update,
     int pendingDomains,
     int pendingTrustMarks,
     int pendingEntitySteps,

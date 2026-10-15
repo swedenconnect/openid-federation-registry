@@ -17,7 +17,8 @@ Load Entity Configuration or Hosted Entity Registration → Metadata Review → 
 ## Metadata Review
 
 The step always pauses for review; it has no `manualreview` setting. A flow that should not have its metadata checked
-leaves the step out.
+leaves the step out. A resubmission that changes no [pinned value](#pinned-values) passes it, unless
+`manualreviewforupdate` is set.
 
 The reviewer sees:
 
@@ -28,9 +29,11 @@ The reviewer sees:
 | Names                           | Every `*_name` parameter, per language tag.                                                   |
 | Links                           | Every other `*_uri` parameter.                                                                |
 | Changes to the hosted metadata  | Hosted entities only: what this registration changes compared to what is hosted now.          |
+| Changes to the values published in the federation | Fetched entities with a published subordinate statement only: each [pinned value](#pinned-values) and the key ids, published against the entity configuration. |
 | Full metadata                   | The metadata as JSON.                                                                         |
 
-Fetched entities have no stored earlier copy of their metadata, so they get no diff.
+Fetched entities have no stored earlier copy of their metadata; an entity already in the federation is compared with
+the values its subordinate statement pins instead.
 
 ### Fetching images
 
@@ -118,7 +121,7 @@ parsed with the OpenID Federation policy language before it is accepted.
 A parameter set by the `metadata` claim or fixed with the `value` operator is pinned: the federation resolves the
 subordinate statement's value, whatever the entity publishes. For a self-managed entity the registration API lists
 them, with the pinned keys, in `pinnedMetadata`. Running the registration again with a change to a pinned value or key
-pauses for review; without one, the review steps are passed. See
+pauses for review; without one, the review steps are passed, except those with `manualreviewforupdate` set. See
 [Registration Flow, Alternative flow C](use_case_registration_flow.md#alternative-flow-c--a-self-managed-entity-publishes-again).
 
 ## Trust Anchor and Intermediate policy

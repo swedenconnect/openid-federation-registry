@@ -57,7 +57,8 @@ public class RegistrationStepRepository {
     this.definedSteps.stream()
         .filter(step -> !(step instanceof ReviewableStep))
         .filter(step -> step.getStepConfigurationValues().stream()
-            .anyMatch(value -> ReviewableStep.MANUAL_REVIEW.equals(value.name())))
+            .anyMatch(value -> ReviewableStep.MANUAL_REVIEW.equals(value.name())
+                || ReviewableStep.MANUAL_REVIEW_FOR_UPDATE.equals(value.name())))
         .findFirst()
         .ifPresent(step -> {
           throw new IllegalStateException("Step %s offers manual review but does not implement ReviewableStep, so it "

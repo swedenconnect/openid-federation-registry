@@ -133,17 +133,31 @@ A self-managed entity serves its own entity configuration, but its subordinate s
 `parameters` (`entityType`, `parameter`, `value`, `claim`: `metadata` or `metadata_policy`) and `jwks`. A change to
 anything else in the entity configuration needs no new subordinate statement.
 
-To publish a change to a pinned value or key, the member runs the registration again (`PUT` re-run path). When the
+To publish a change to a pinned value or key, the member resubmits the entity: the registration runs again (`PUT`
+re-run path). When the
 registration is `APPROVED`, before the pipeline runs the system loads the entity configuration and builds the claims
 (the flow's `LoadEntityConfigurationStep` and `MetadataPolicyCreationStep`, up to their review gates), and compares
 them with the published subordinate statement:
 
 - **A pinned value or key changes:** the run pauses at its review steps as in UC-2.
-- **Nothing pinned changes:** the run passes its review steps. Each gated step records a `WARNING` result:
-  *"Auto-approved: no value or key pinned by the subordinate statement changes"*. Trust mark sub-flows are still
-  reviewed.
+- **Nothing pinned changes:** the run passes its review steps, except a step with `manualreviewforupdate` set, which
+  pauses. Each passed step records a `WARNING` result: *"Auto-approved: no value or key pinned by the subordinate
+  statement changes"*. Trust mark sub-flows are still reviewed. `pinnedMetadata.reviewOnUpdate` tells whether a step
+  of the flow sets `manualreviewforupdate`.
 
-The run uses the entity configuration loaded for the comparison, so the one compared is the one published.
+A resubmission that both adds and removes keys (by `kid`; a key without `kid` by its JWK thumbprint) is refused
+with `400`, before the pipeline runs and without changing the registration: *"Key rollover: add the new key first and
+remove the old key in a later resubmission (added: …, removed: …)"*. As
+[key rollover](https://docs.swedenconnect.se/federation/security-requirements.html#name-key-rollover) requires, the new
+key is published in one resubmission and the old one removed in a later one.
+
+The run uses the entity configuration loaded for the comparison, so the one compared is the one published. The
+subordinate statement is only written by `PublishSubordinateStatementStep`, after the review steps: until the operator
+approves, the federation keeps the published values. While the update waits, the registration is `PENDING_APPROVAL`.
+
+The operator sees the update in the entity review (UC-2b): `update = true` on the entity (an **Update** chip in the
+list, a line on the entity page), and in the Metadata Review preview a diff *"Changes to the values published in the
+federation"*: each pinned value and the key ids, published against the entity configuration.
 
 ---
 
@@ -509,6 +523,10 @@ Every `MID` step that can pause declares its own `manualreview` (boolean, defaul
 `ReviewableStep`, which supplies the preview shown to the reviewer; `PRE`/`POST` steps always run
 with their default config and are not individually configurable in the flow definition. The pipeline aborts at the first
 `FAILURE`; a step can also return `WARNING` (pipeline continues) or be `SKIPPED` when its `canApply` check is false.
+
+`LoadEntityConfigurationStep`, `MetadataReviewStep`, `MetadataPolicyCreationStep` and `RpMetadataValidationStep` also
+declare `manualreviewforupdate` (boolean, default `false`): the step pauses also for a resubmission that changes no
+pinned value or key (Alternative flow C). It has no effect on other runs.
 
 ---
 

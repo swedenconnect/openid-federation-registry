@@ -61,6 +61,9 @@ public final class PersistedContext {
     }
     ctx.<JWKSet>get(ContextKey.ENTITY_CONFIGURATION_JWKS)
         .ifPresent(jwks -> saved.put(ContextKey.ENTITY_CONFIGURATION_JWKS, jwks.toJSONObject(false)));
+    // A resubmission without a pinned change keeps passing the later gates that do not review such an update
+    ctx.<Boolean>get(ContextKey.PINNED_UNCHANGED)
+        .ifPresent(unchanged -> saved.put(ContextKey.PINNED_UNCHANGED, unchanged));
     return saved;
   }
 
@@ -91,6 +94,9 @@ public final class PersistedContext {
         ctx.remove(ContextKey.FETCHED_RESOURCES);
       }
     });
+    if (Boolean.TRUE.equals(saved.get(ContextKey.PINNED_UNCHANGED))) {
+      ctx.put(ContextKey.PINNED_UNCHANGED, Boolean.TRUE);
+    }
     if (saved.get(ContextKey.ENTITY_CONFIGURATION_JWKS) instanceof final Map<?, ?> jwks) {
       try {
         ctx.put(ContextKey.ENTITY_CONFIGURATION_JWKS, JWKSet.parse((Map<String, Object>) jwks));

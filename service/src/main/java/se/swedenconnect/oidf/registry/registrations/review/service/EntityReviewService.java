@@ -57,6 +57,7 @@ import se.swedenconnect.oidf.registry.registrations.review.model.ReviewItemType;
 import se.swedenconnect.oidf.registry.registrations.review.repository.EntityReviewDecisionRepository;
 import se.swedenconnect.oidf.registry.registrations.review.repository.EntityReviewRepository;
 import se.swedenconnect.oidf.registry.registrations.service.RegistrationAdminService;
+import se.swedenconnect.oidf.registry.subordinate.service.SubordinateService;
 
 import java.time.LocalDateTime;
 
@@ -97,6 +98,7 @@ public class EntityReviewService {
   private final ReviewOrder reviewOrder;
   private final RegistrationStepRepository registrationStepRepository;
   private final EntityConfigService entityConfigService;
+  private final SubordinateService subordinateService;
 
   /**
    * Constructor.
@@ -108,6 +110,7 @@ public class EntityReviewService {
    * @param reviewOrder the order items are reviewed in
    * @param registrationStepRepository the defined steps, to show the review steps still to come
    * @param entityConfigService service telling hosted entities apart
+   * @param subordinateService service telling entities already in the federation apart
    */
   public EntityReviewService(final RegistrationRepository registrationRepository,
       final EntityReviewRepository reviewRepository,
@@ -115,7 +118,8 @@ public class EntityReviewService {
       final RegistrationAdminService registrationAdminService,
       final ReviewOrder reviewOrder,
       final RegistrationStepRepository registrationStepRepository,
-      final EntityConfigService entityConfigService) {
+      final EntityConfigService entityConfigService,
+      final SubordinateService subordinateService) {
     this.registrationRepository = registrationRepository;
     this.reviewRepository = reviewRepository;
     this.decisionRepository = decisionRepository;
@@ -123,6 +127,7 @@ public class EntityReviewService {
     this.reviewOrder = reviewOrder;
     this.registrationStepRepository = registrationStepRepository;
     this.entityConfigService = entityConfigService;
+    this.subordinateService = subordinateService;
   }
 
   /**
@@ -157,7 +162,7 @@ public class EntityReviewService {
       summaries.add(new EntityReviewSummaryDto(entity.getRegistrationId(), entity.getEntityId(),
           organizationName(entity.getOrganization()), entity.getOrganization().getOrgNumber(),
           toOffsetDateTime(entity.getCreatedDate()), entity.getStatus().name(), hosted.contains(entity.getEntityId()),
-          count(items, ReviewItemType.DOMAIN), count(items, ReviewItemType.TRUST_MARK),
+          this.isUpdate(entity), count(items, ReviewItemType.DOMAIN), count(items, ReviewItemType.TRUST_MARK),
           count(items, ReviewItemType.ENTITY), state,
           open == null ? null : open.getStartedBy(), open == null ? null : toOffsetDateTime(open.getStartedAt()),
           open == null ? 0 : this.decidedIn(open)));
@@ -297,6 +302,15 @@ public class EntityReviewService {
             "Entity registration not found: %s".formatted(registrationId)));
   }
 
+  /**
+   * Whether the entity already has a subordinate statement under the registration's Intermediate, so that the
+   * registration updates it.
+   */
+  private boolean isUpdate(final Registration entity) {
+    return this.subordinateService.getByEntityidentifierAndTaIm(entity.getEntityId(),
+        entity.getFlowAssignment().getTaIm().getTaImId()).isPresent();
+  }
+
   private Optional<EntityReview> openReview(final Registration entity) {
     return this.reviewRepository.findFirstByRegistration_RegistrationIdAndStatus(entity.getRegistrationId(),
         EntityReviewStatus.IN_PROGRESS);
@@ -310,7 +324,7 @@ public class EntityReviewService {
     return new EntityReviewDto(entity.getRegistrationId(), entity.getEntityId(),
         organizationName(entity.getOrganization()), entity.getOrganization().getOrgNumber(),
         toOffsetDateTime(entity.getCreatedDate()), entity.getStatus().name(),
-        !this.entityConfigService.listHostedEntity(entity.getEntityId()).isEmpty(),
+        !this.entityConfigService.listHostedEntity(entity.getEntityId()).isEmpty(), this.isUpdate(entity),
         state(open.orElse(null), items), shown == null ? null : ReviewSessionDto.of(shown), items);
   }
 

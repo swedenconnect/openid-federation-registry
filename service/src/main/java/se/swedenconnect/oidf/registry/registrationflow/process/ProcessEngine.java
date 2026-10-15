@@ -102,9 +102,13 @@ public class ProcessEngine {
 
         // Phase 3: approval gate. A trust mark the organization is already pre-validated for needs no second
         // look: the sub-flow runs in full, the gated step just does not stop at the gate. The same holds for a
-        // self-managed entity that publishes again without changing what its Subordinate Statement pins.
-        if (def.step() instanceof final ReviewableStep reviewable && reviewable.requiresManualReview(def.config())) {
-          if (ctx.<Boolean>get(ContextKey.PINNED_UNCHANGED).orElse(false)) {
+        // self-managed entity that publishes again without changing what its Subordinate Statement pins, unless the
+        // step asks for review of such an update too.
+        final boolean pinnedUnchanged = ctx.<Boolean>get(ContextKey.PINNED_UNCHANGED).orElse(false);
+        if (def.step() instanceof final ReviewableStep reviewable
+            && (reviewable.requiresManualReview(def.config())
+            || (pinnedUnchanged && reviewable.requiresManualReviewForUpdate(def.config())))) {
+          if (pinnedUnchanged && !reviewable.requiresManualReviewForUpdate(def.config())) {
             log.info("Step {} requires manual approval, but no pinned value changes — auto-approving", def.name());
             autoApprovalMessage = PINNED_UNCHANGED_MESSAGE;
           }

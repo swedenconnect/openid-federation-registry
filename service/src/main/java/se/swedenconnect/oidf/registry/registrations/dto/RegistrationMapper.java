@@ -221,14 +221,17 @@ public final class RegistrationMapper {
    * Maps what a published subordinate statement pins to a {@link PinnedMetadataDto}.
    *
    * @param subordinate the published subordinate statement
+   * @param reviewOnUpdate whether a resubmission without a pinned change is also reviewed
    * @return mapped DTO
    */
-  public static PinnedMetadataDto toPinnedMetadataDto(final SubordinateDto subordinate) {
+  public static PinnedMetadataDto toPinnedMetadataDto(final SubordinateDto subordinate,
+      final boolean reviewOnUpdate) {
     return new PinnedMetadataDto(
         PinnedValues.parameters(subordinate.getMetadataPolicy(), subordinate.getMetadata()).stream()
             .map(p -> new PinnedParameterDto(p.entityType(), p.parameter(), p.value(), p.claim()))
             .toList(),
-        subordinate.getJwks());
+        subordinate.getJwks(),
+        reviewOnUpdate);
   }
 
   /**

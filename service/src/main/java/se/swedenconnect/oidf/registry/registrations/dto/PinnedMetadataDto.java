@@ -27,6 +27,8 @@ import java.util.Map;
  *
  * @param parameters the pinned metadata parameters
  * @param jwks the entity's federation keys, as pinned by the subordinate statement's {@code jwks} claim
+ * @param reviewOnUpdate whether a resubmission that changes no pinned value or key is also reviewed, because a step of
+ *     the registration flow sets {@code manualreviewforupdate}
  * @author Felix Hellman
  */
 @Schema(name = "PinnedMetadata")
@@ -37,6 +39,10 @@ public record PinnedMetadataDto(
     List<PinnedParameterDto> parameters,
 
     @Schema(description = "The entity's federation keys (JWK set) pinned by the subordinate statement's jwks claim")
-    Map<String, Object> jwks
+    Map<String, Object> jwks,
+
+    @Schema(description = "True if a resubmission that changes no pinned value or key is also reviewed by an operator; "
+        + "otherwise it is published directly")
+    boolean reviewOnUpdate
 ) {
 }
