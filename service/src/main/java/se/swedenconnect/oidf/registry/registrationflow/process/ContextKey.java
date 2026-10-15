@@ -55,6 +55,13 @@ public final class ContextKey {
    */
   public static final String TRUST_MARK_PRE_VALIDATED = "trustMarkPreValidated";
 
+  /**
+   * Set when a self-managed entity whose registration is approved runs it again, and the Subordinate Statement the run
+   * builds pins the same values and keys as the published one. A gated step is then auto-approved instead of pausing
+   * for manual review. Never set on a trust mark sub-flow context.
+   */
+  public static final String PINNED_UNCHANGED = "pinnedUnchanged";
+
   private ContextKey() {
   }
 }

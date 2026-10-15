@@ -124,7 +124,26 @@ public class RegistrationServiceImpl implements RegistrationService {
         this.registrationRepository.findByParentRegistration_RegistrationId(registrationId)
             .stream()
             .collect(Collectors.toMap(Registration::getEntityId, Function.identity()));
-    return RegistrationMapper.toRegistrationDto(reg, isHosted, hostedMetadata, tmStatusByType);
+    return this.withPinnedMetadata(
+        RegistrationMapper.toRegistrationDto(reg, isHosted, hostedMetadata, tmStatusByType), reg);
+  }
+
+  /**
+   * Adds what the published subordinate statement pins, for a self-managed entity that has one.
+   *
+   * @param dto the mapped registration
+   * @param reg the registration
+   * @return the same DTO
+   */
+  private RegistrationDto withPinnedMetadata(final RegistrationDto dto, final Registration reg) {
+    if (Boolean.TRUE.equals(dto.getIsHosted()) || reg.getRegistrationType() != RegistrationType.SUBORDINATE) {
+      return dto;
+    }
+    this.subordinateService
+        .getByEntityidentifierAndTaIm(reg.getEntityId(), reg.getFlowAssignment().getTaIm().getTaImId())
+        .map(RegistrationMapper::toPinnedMetadataDto)
+        .ifPresent(dto::setPinnedMetadata);
+    return dto;
   }
 
 
@@ -149,8 +168,10 @@ public class RegistrationServiceImpl implements RegistrationService {
         this.registrationRepository.findByParentRegistration_RegistrationId(registration.getRegistrationId())
             .stream()
             .collect(Collectors.toMap(Registration::getEntityId, Function.identity()));
-    return RegistrationMapper.toRegistrationRequestStatusDto(registration, report, isHosted, hostedMetadata,
-        tmStatusByType);
+    return this.withPinnedMetadata(
+        RegistrationMapper.toRegistrationRequestStatusDto(registration, report, isHosted, hostedMetadata,
+            tmStatusByType),
+        registration);
   }
 
   @Override
@@ -184,10 +205,10 @@ public class RegistrationServiceImpl implements RegistrationService {
             Collectors.toMap(Registration::getEntityId, Function.identity())));
     return allRegs.stream()
         .filter(r -> r.getRegistrationType() != RegistrationType.TRUST_MARK_SUBORDINATE)
-        .map(r -> RegistrationMapper.toRegistrationDto(r,
+        .map(r -> this.withPinnedMetadata(RegistrationMapper.toRegistrationDto(r,
             hostedMetadataByEntityId.containsKey(r.getEntityId()),
             hostedMetadataByEntityId.get(r.getEntityId()),
-            tmStatusByParent.getOrDefault(r.getRegistrationId(), Map.of())))
+            tmStatusByParent.getOrDefault(r.getRegistrationId(), Map.of())), r))
         .toList();
   }
 
@@ -221,8 +242,10 @@ public class RegistrationServiceImpl implements RegistrationService {
         this.registrationRepository.findByParentRegistration_RegistrationId(registration.getRegistrationId())
             .stream()
             .collect(Collectors.toMap(Registration::getEntityId, Function.identity()));
-    return RegistrationMapper.toRegistrationRequestStatusDto(registration, report, isHosted, hostedMetadata,
-        tmStatusByType);
+    return this.withPinnedMetadata(
+        RegistrationMapper.toRegistrationRequestStatusDto(registration, report, isHosted, hostedMetadata,
+            tmStatusByType),
+        registration);
   }
 
   @Override

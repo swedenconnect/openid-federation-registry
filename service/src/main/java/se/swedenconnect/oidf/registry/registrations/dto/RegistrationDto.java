@@ -66,6 +66,12 @@ public class RegistrationDto {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private Map<String, Object> metadata;
 
+  @Schema(description = "What the published subordinate statement pins, present for a self-managed entity that has "
+      + "one. Running the registration again with a change to a pinned value pauses it for review.",
+      accessMode = Schema.AccessMode.READ_ONLY)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  private PinnedMetadataDto pinnedMetadata;
+
   @Schema(description = "Registration type: SUBORDINATE or TRUST_MARK_SUBORDINATE",
       accessMode = Schema.AccessMode.READ_ONLY)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)

@@ -113,6 +113,14 @@ The `metadata` claim is stored on the subordinate as `{ "<entity type>": { ... }
 `{ "metadata_policy": { "<entity type>": { ... } } }`, the form the subordinate API expects. Every generated policy is
 parsed with the OpenID Federation policy language before it is accepted.
 
+### Pinned values
+
+A parameter set by the `metadata` claim or fixed with the `value` operator is pinned: the federation resolves the
+subordinate statement's value, whatever the entity publishes. For a self-managed entity the registration API lists
+them, with the pinned keys, in `pinnedMetadata`. Running the registration again with a change to a pinned value or key
+pauses for review; without one, the review steps are passed. See
+[Registration Flow, Alternative flow C](use_case_registration_flow.md#alternative-flow-c--a-self-managed-entity-publishes-again).
+
 ## Trust Anchor and Intermediate policy
 
 A Trust Anchor or Intermediate can have a metadata policy of its own (`metadataPolicy` on the module, the same

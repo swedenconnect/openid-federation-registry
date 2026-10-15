@@ -78,6 +78,12 @@ public class LoadEntityConfigurationStep extends NoConfigStepAdapter implements 
 
   @Override
   public StepResult buildContext(final ProcessContext ctx, final StepConfig config) {
+    // Already loaded when the registry compared it with the published Subordinate Statement before the run; loading
+    // it again could give a configuration other than the one compared.
+    if (ctx.get(ContextKey.ENTITY_CONFIGURATION_METADATA).isPresent()
+        && ctx.get(ContextKey.ENTITY_CONFIGURATION_JWKS).isPresent()) {
+      return StepResult.success("EntityConfiguration loaded successfully");
+    }
     return this.loadEntityConfiguration(ctx);
   }
 

@@ -68,6 +68,10 @@
   have no technical details.
 - API: the registration admin API has `technicalReason` for an automatic decline. GUI: **Technical Reason** on the
   registration.
+- API: `Registration` has `pinnedMetadata` for a self-managed entity: the parameters and keys its subordinate statement
+  pins.
+- Running the registration of an approved self-managed entity again passes its review steps when no pinned value or
+  key changes.
 - API: step issues have `type`, `VALIDATION` or `TECHNICAL`. GUI: the issue type on the registration.
 - A registration whose entity configuration cannot be fetched or is not valid is declined, instead of the request
   failing.
