@@ -26,6 +26,7 @@ import se.swedenconnect.oidf.registry.registrationflow.process.review.MetadataDi
 import se.swedenconnect.oidf.registry.registrationflow.process.review.PreviewSection;
 import se.swedenconnect.oidf.registry.registrationflow.process.review.ReviewableStep;
 import se.swedenconnect.oidf.registry.registrationflow.process.review.StepPreview;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepIssue;
@@ -89,10 +90,11 @@ public class MetadataReviewStep extends NoConfigStepAdapter implements Reviewabl
           "Metadata Review must come after the step that loads the entity's metadata", Severity.ERROR)));
     }
     final OrganizationRecord organization = ctx.getRequired(ContextKey.ORG);
+    final boolean hosted = Step.isHosted(ctx);
     final JSONObject fetched = ctx.<JSONObject>get(ContextKey.FETCHED_RESOURCES).orElseGet(JSONObject::new);
     for (final String url : imageUrls(metadata)) {
       if (!fetched.containsKey(url)) {
-        fetched.put(url, this.resourceFetcher.fetchImage(url, organization).toMap());
+        fetched.put(url, this.resourceFetcher.fetchImage(url, organization, hosted).toMap());
       }
     }
     if (!fetched.isEmpty()) {
@@ -109,7 +111,7 @@ public class MetadataReviewStep extends NoConfigStepAdapter implements Reviewabl
   @Override
   public StepPreview preview(final ProcessContext ctx, final StepConfig config) {
     final JSONObject metadata = ctx.getRequired(ContextKey.ENTITY_CONFIGURATION_METADATA, JSONObject.class);
-    final boolean hosted = ctx.get(ContextKey.REQUEST_METADATA).isPresent();
+    final boolean hosted = Step.isHosted(ctx);
     final JSONObject fetched = ctx.<JSONObject>get(ContextKey.FETCHED_RESOURCES).orElseGet(JSONObject::new);
     final String entityId = ctx.getRequired(ContextKey.ENTITY_ID);
 

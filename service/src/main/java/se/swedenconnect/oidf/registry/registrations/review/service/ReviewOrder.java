@@ -15,11 +15,19 @@
  */
 package se.swedenconnect.oidf.registry.registrations.review.service;
 
+import net.minidev.json.JSONObject;
 import org.springframework.stereotype.Component;
+import se.swedenconnect.oidf.registry.entity.service.EntityConfigService;
+import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.organization.model.DomainStatus;
 import se.swedenconnect.oidf.registry.organization.model.OrganizationDomain;
 import se.swedenconnect.oidf.registry.organization.repository.OrganizationDomainRepository;
 import se.swedenconnect.oidf.registry.organization.service.DomainMatcher;
+import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
+import se.swedenconnect.oidf.registry.registrationflow.process.PersistedContext;
+import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
+import se.swedenconnect.oidf.registry.registrationflow.process.SerializableList;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
@@ -31,7 +39,8 @@ import java.util.Optional;
 /**
  * The order an entity is reviewed in: its domain first, then the trust marks it asked for, then its own registration.
  * Both the entity review and the single-step approval endpoint ask this before approving, so the order holds
- * whichever way an operator decides.
+ * whichever way an operator decides. Only an entity the registry hosts has a domain to review; a self-managed entity
+ * starts with its trust marks.
  *
  * @author Felix Hellman
  */
@@ -40,17 +49,20 @@ public class ReviewOrder {
 
   private final OrganizationDomainRepository organizationDomainRepository;
   private final RegistrationRepository registrationRepository;
+  private final EntityConfigService entityConfigService;
 
   /**
    * Constructor.
    *
    * @param organizationDomainRepository repository of the domains organizations have claimed
    * @param registrationRepository repository of registrations
+   * @param entityConfigService service telling hosted entities apart
    */
   public ReviewOrder(final OrganizationDomainRepository organizationDomainRepository,
-      final RegistrationRepository registrationRepository) {
+      final RegistrationRepository registrationRepository, final EntityConfigService entityConfigService) {
     this.organizationDomainRepository = organizationDomainRepository;
     this.registrationRepository = registrationRepository;
+    this.entityConfigService = entityConfigService;
   }
 
   /**
@@ -73,6 +85,54 @@ public class ReviewOrder {
   }
 
   /**
+   * Lists the domains the operator reviews for the entity: those {@link #domainsOf(Registration)} lists for an entity
+   * the registry hosts, none for a self-managed entity.
+   *
+   * @param entity the entity's own registration
+   * @return the domains to review
+   */
+  public List<OrganizationDomain> reviewedDomainsOf(final Registration entity) {
+    return this.isHosted(entity) ? this.domainsOf(entity) : List.of();
+  }
+
+  /**
+   * Tells whether the registry hosts the entity. A registration still in flight tells by the context it saved, as
+   * {@link Step#isHosted(ProcessContext)} does; a decided one no longer has that context, but its hosted entity exists.
+   *
+   * @param entity the entity's own registration
+   * @return {@code true} if the entity is hosted
+   */
+  public boolean isHosted(final Registration entity) {
+    return Step.isHosted(savedContext(entity))
+        || !this.entityConfigService.listHostedEntity(entity.getEntityId()).isEmpty();
+  }
+
+  /**
+   * Rebuilds what the engine's context holds for a paused registration, enough for steps to tell if they apply.
+   *
+   * @param entity the entity's own registration
+   * @return the context
+   */
+  public static ProcessContext savedContext(final Registration entity) {
+    final ProcessContext context = new ProcessContext();
+    context.put(ContextKey.ENTITY_ID, entity.getEntityId());
+    context.put(ContextKey.REGISTRATION_ID, entity.getRegistrationId());
+    if (entity.getOrganization() != null) {
+      context.put(ContextKey.ORG, new OrganizationRecord(entity.getOrganization().getOrgNumber(),
+          entity.getOrganization().getOrgName(), null, null));
+    }
+    if (entity.getTrustmarksRequested() != null) {
+      context.put(ContextKey.TRUSTMARKS_REQUESTED, new SerializableList<>(entity.getTrustmarksRequested()));
+    }
+    PersistedContext.restore(entity.getProcessContext(), context);
+    if (context.get(ContextKey.REQUEST_METADATA).isEmpty()
+        && entity.getRequestMetadata() != null && !entity.getRequestMetadata().isEmpty()) {
+      context.put(ContextKey.REQUEST_METADATA, new JSONObject(entity.getRequestMetadata()));
+    }
+    return context;
+  }
+
+  /**
    * Returns the entity a registration belongs to: itself, or the parent of a trust mark registration.
    *
    * @param registration the registration
@@ -89,7 +149,8 @@ public class ReviewOrder {
    * Tells why a registration may not be approved yet, if it may not.
    *
    * <ul>
-   *   <li>A trust mark or entity step waits while a domain covering the entity is pending and none is validated.</li>
+   *   <li>A trust mark or entity step of a hosted entity waits while a domain covering the entity is pending and none
+   *   is validated.</li>
    *   <li>An entity step also waits while a trust mark it asked for is pending.</li>
    * </ul>
    *
@@ -98,7 +159,7 @@ public class ReviewOrder {
    */
   public Optional<String> waitingFor(final Registration registration) {
     final Registration entity = entityOf(registration);
-    final List<OrganizationDomain> domains = this.domainsOf(entity);
+    final List<OrganizationDomain> domains = this.reviewedDomainsOf(entity);
     final boolean validated = domains.stream().anyMatch(domain -> domain.getStatus() == DomainStatus.VALIDATED);
     final Optional<OrganizationDomain> pending = domains.stream()
         .filter(domain -> domain.getStatus() == DomainStatus.PENDING)

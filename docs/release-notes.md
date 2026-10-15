@@ -62,7 +62,8 @@
 - A registration whose entity configuration cannot be fetched or is not valid is declined, instead of the request
   failing.
 - API: only a hosted entity's identifier has to be on a registered domain of the organization; a self-managed entity
-  needs no domain claim.
+  needs no domain claim. The entity review shows no domain item for a self-managed entity, a domain rejection does not
+  reject its registration, and its logo is fetched without a validated domain.
 
 ---
 

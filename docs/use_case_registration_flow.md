@@ -178,7 +178,7 @@ not stored; they are read from the domains and registrations each time:
 
 | Item         | What it is                                                                                    |
 |--------------|-----------------------------------------------------------------------------------------------|
-| `DOMAIN`     | Each domain of the entity's organization that covers the entity's host.                       |
+| `DOMAIN`     | Each domain of the entity's organization that covers the entity's host. Hosted entities only. |
 | `TRUST_MARK` | Each trust mark registration under the entity's registration that is paused or decided.      |
 | `ENTITY`     | The steps of the entity's registration approved so far, the paused step, and the later steps that will pause too (`UPCOMING`). |
 
@@ -208,7 +208,8 @@ Domain claims** still lists every domain claim, including those no entity is reg
 
 An item is `WAITING`, and cannot be approved, until the items before it are decided:
 
-- a trust mark or entity step waits while a domain covering the entity is `PENDING` and none is `VALIDATED`;
+- for a hosted entity, a trust mark or entity step waits while a domain covering the entity is `PENDING` and none
+  is `VALIDATED`;
 - an entity step also waits while a trust mark it asked for is pending.
 
 The rule is enforced by the server, also on `.../{registrationId}/steps/{stepIndex}/approve`, which answers `409`

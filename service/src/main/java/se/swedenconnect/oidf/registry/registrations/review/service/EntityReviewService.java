@@ -15,7 +15,6 @@
  */
 package se.swedenconnect.oidf.registry.registrations.review.service;
 
-import net.minidev.json.JSONObject;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
@@ -29,10 +28,7 @@ import se.swedenconnect.oidf.registry.organization.model.OrganizationDomain;
 import se.swedenconnect.oidf.registry.organization.service.DomainMatcher;
 import se.swedenconnect.oidf.registry.registrationflow.RegistrationStepRepository;
 import se.swedenconnect.oidf.registry.registrationflow.dto.Mapper;
-import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
-import se.swedenconnect.oidf.registry.registrationflow.process.PersistedContext;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
-import se.swedenconnect.oidf.registry.registrationflow.process.SerializableList;
 import se.swedenconnect.oidf.registry.registrationflow.process.StepDefinition;
 import se.swedenconnect.oidf.registry.registrationflow.process.review.PreviewSection;
 import se.swedenconnect.oidf.registry.registrationflow.process.review.ReviewableStep;
@@ -326,7 +322,7 @@ public class EntityReviewService {
     final Set<String> deferred = open == null ? Set.of() : this.deferredIn(open);
     final List<ReviewItemDto> items = new ArrayList<>();
 
-    for (final OrganizationDomain domain : this.reviewOrder.domainsOf(entity)) {
+    for (final OrganizationDomain domain : this.reviewOrder.reviewedDomainsOf(entity)) {
       final ReviewItemState state = switch (domain.getStatus()) {
         case PENDING -> ReviewItemState.PENDING;
         case VALIDATED -> ReviewItemState.APPROVED;
@@ -418,7 +414,7 @@ public class EntityReviewService {
   private List<ReviewItemDto> upcomingSteps(final Registration entity) {
     final List<StepDefinition> steps = Mapper.toProcessFlow(entity.getFlowAssignment().getRegistrationFlow(),
         this.registrationStepRepository).getProcessFlow();
-    final ProcessContext context = savedContext(entity);
+    final ProcessContext context = ReviewOrder.savedContext(entity);
     final List<ReviewItemDto> upcoming = new ArrayList<>();
     for (int index = entity.getPendingStepIndex() + 1; index < steps.size(); index++) {
       final StepDefinition step = steps.get(index);
@@ -429,24 +425,6 @@ public class EntityReviewService {
       }
     }
     return upcoming;
-  }
-
-  /** Rebuilds what the engine's context holds for a paused registration, enough for steps to tell if they apply. */
-  private static ProcessContext savedContext(final Registration entity) {
-    final ProcessContext context = new ProcessContext();
-    context.put(ContextKey.ENTITY_ID, entity.getEntityId());
-    context.put(ContextKey.REGISTRATION_ID, entity.getRegistrationId());
-    context.put(ContextKey.ORG, new OrganizationRecord(entity.getOrganization().getOrgNumber(),
-        entity.getOrganization().getOrgName(), null, null));
-    if (entity.getTrustmarksRequested() != null) {
-      context.put(ContextKey.TRUSTMARKS_REQUESTED, new SerializableList<>(entity.getTrustmarksRequested()));
-    }
-    PersistedContext.restore(entity.getProcessContext(), context);
-    if (context.get(ContextKey.REQUEST_METADATA).isEmpty()
-        && entity.getRequestMetadata() != null && !entity.getRequestMetadata().isEmpty()) {
-      context.put(ContextKey.REQUEST_METADATA, new JSONObject(entity.getRequestMetadata()));
-    }
-    return context;
   }
 
   /** Asks a step whether it applies; a step that cannot tell from the saved context is shown. */

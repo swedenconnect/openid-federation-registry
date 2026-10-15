@@ -135,7 +135,7 @@ domain.
 
 `RegistrationServiceImpl.createRegistrationRequest` and `updateRegistrationRequest` check each request for a hosted
 entity (one whose `metadata` is in the request) before the flow engine runs. A self-managed entity, which serves its
-own entity configuration, is not checked:
+own entity configuration, is not checked, and has no domain to review in its entity review:
 
 > The host of `entityIdentifier` must **equal**, or be a **subdomain of**, one of the calling organization's
 > domains in status `PENDING` or `VALIDATED`.
@@ -160,6 +160,7 @@ A domain rejection also rejects the registrations accepted under that domain, in
 - belongs to the domain's organization
 - is `STARTED` or `PENDING_APPROVAL`
 - is not a `TRUST_MARK_SUBORDINATE` (these follow their parent)
+- is for a hosted entity
 - has an `entityId` host that matches the rejected domain **and no other `PENDING`/`VALIDATED` domain of the same
   organization**
 

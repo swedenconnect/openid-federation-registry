@@ -41,9 +41,10 @@ import java.util.Optional;
  * Fetches images an entity's metadata points to, such as its logo, so the reviewer sees them and checks can tell an
  * image from anything else.
  *
- * <p>The registry only fetches from hosts it has reason to trust: an HTTPS URL whose host is under a domain the
- * tenant operator has validated for the entity's organization. Redirects are not followed, so a validated host cannot
- * point the registry elsewhere. Anything else is reported as not fetched, with the reason.</p>
+ * <p>The registry only fetches HTTPS URLs. For an entity the registry hosts, the host must also be under a domain the
+ * tenant operator has validated for the entity's organization; a self-managed entity has no domain requirement.
+ * Redirects are not followed, so a host cannot point the registry elsewhere. Anything else is reported as not fetched,
+ * with the reason.</p>
  *
  * @author Felix Hellman
  */
@@ -87,9 +88,10 @@ public class ResourceFetcher {
    *
    * @param url the image URL
    * @param organization the organization behind the entity
+   * @param hosted whether the registry hosts the entity; only then must the host be under a validated domain
    * @return the outcome; never throws
    */
-  public FetchedResource fetchImage(final String url, final OrganizationRecord organization) {
+  public FetchedResource fetchImage(final String url, final OrganizationRecord organization, final boolean hosted) {
     final URI uri;
     try {
       uri = URI.create(url.trim());
@@ -101,7 +103,10 @@ public class ResourceFetcher {
       return FetchedResource.notFetched(url, "Not fetched: only HTTPS URLs are fetched");
     }
     final Optional<String> host = DomainMatcher.hostOf(url);
-    if (host.isEmpty() || !DomainMatcher.matchesAny(host.get(), this.validatedDomains(organization))) {
+    if (host.isEmpty()) {
+      return FetchedResource.notFetched(url, "Not a valid URL");
+    }
+    if (hosted && !DomainMatcher.matchesAny(host.get(), this.validatedDomains(organization))) {
       return FetchedResource.notFetched(url,
           "Not fetched: the host is not under a validated domain of the organization");
     }

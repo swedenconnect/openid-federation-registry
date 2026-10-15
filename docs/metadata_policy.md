@@ -37,7 +37,8 @@ Fetched entities have no stored earlier copy of their metadata, so they get no d
 The registry fetches an image only if all of these hold:
 
 - the URL uses HTTPS,
-- its host is a domain, or under a domain, that the tenant operator has **validated** for the entity's organization,
+- for a hosted entity, its host is a domain, or under a domain, that the tenant operator has **validated** for the
+  entity's organization (a self-managed entity has no domain requirement),
 - the server answers `200` with an `image/*` content type, within 10 seconds and 512 KB.
 
 Redirects are not followed. The fetched copy is stored with the review, as a `data:` URI, so the reviewer sees what

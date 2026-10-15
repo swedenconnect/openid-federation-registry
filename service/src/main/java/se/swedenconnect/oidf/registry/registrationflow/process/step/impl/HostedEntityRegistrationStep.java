@@ -35,6 +35,7 @@ import se.swedenconnect.oidf.registry.registrationflow.process.review.PreviewSec
 import se.swedenconnect.oidf.registry.registrationflow.process.review.ReviewableStep;
 import se.swedenconnect.oidf.registry.registrationflow.process.review.StepPreview;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Severity;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepIssue;
@@ -124,7 +125,7 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter implements
 
   @Override
   public boolean canApply(final ProcessContext ctx, final StepConfig config) {
-    return ctx.get(ContextKey.REQUEST_METADATA).isPresent();
+    return Step.isHosted(ctx);
   }
 
   @Override

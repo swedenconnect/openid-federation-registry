@@ -453,6 +453,7 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
     this.registrationRepository.findByOrganization_OrganizationIdAndStatusIn(organizationId, IN_FLIGHT_STATUSES)
         .stream()
         .filter(registration -> isCascadeTarget(registration, rejected.getDomain(), remainingDomains))
+        .filter(this.reviewOrder::isHosted)
         .forEach(registration -> {
           cascaded.add(this.rejectAsNotAcceptedDomain(registration, reviewer, reviewedAt));
           this.registrationRepository.findByParentRegistration_RegistrationId(registration.getRegistrationId())

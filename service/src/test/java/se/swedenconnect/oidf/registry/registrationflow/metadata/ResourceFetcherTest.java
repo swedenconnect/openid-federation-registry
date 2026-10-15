@@ -82,7 +82,7 @@ class ResourceFetcherTest {
   void fetchesImageOnValidatedDomain() throws Exception {
     this.serve(200, "image/svg+xml; charset=utf-8", "<svg/>".getBytes());
 
-    final FetchedResource image = this.fetcher.fetchImage("https://www.example.se/logo.svg", ORG);
+    final FetchedResource image = this.fetcher.fetchImage("https://www.example.se/logo.svg", ORG, true);
 
     assertThat(image.isImage()).isTrue();
     assertThat(image.contentType()).isEqualTo("image/svg+xml");
@@ -94,11 +94,11 @@ class ResourceFetcherTest {
   @SuppressWarnings("unchecked")
   @DisplayName("Plain HTTP and hosts outside the validated domains are not fetched at all")
   void refusesUntrustedUrls() throws Exception {
-    assertThat(this.fetcher.fetchImage("http://www.example.se/logo.svg", ORG).error())
+    assertThat(this.fetcher.fetchImage("http://www.example.se/logo.svg", ORG, true).error())
         .contains("only HTTPS");
-    assertThat(this.fetcher.fetchImage("https://cdn.elsewhere.com/logo.svg", ORG).error())
+    assertThat(this.fetcher.fetchImage("https://cdn.elsewhere.com/logo.svg", ORG, true).error())
         .contains("not under a validated domain");
-    assertThat(this.fetcher.fetchImage("https://example.se.evil.com/logo.svg", ORG).error())
+    assertThat(this.fetcher.fetchImage("https://example.se.evil.com/logo.svg", ORG, true).error())
         .contains("not under a validated domain");
     verify(this.httpClient, never()).send(any(), any(HttpResponse.BodyHandler.class));
   }
@@ -107,15 +107,15 @@ class ResourceFetcherTest {
   @DisplayName("Something that is not an image, too large, or an error answer is reported, not kept")
   void reportsUnusableResponses() throws Exception {
     this.serve(200, "text/html", "<html/>".getBytes());
-    assertThat(this.fetcher.fetchImage("https://example.se/logo", ORG))
+    assertThat(this.fetcher.fetchImage("https://example.se/logo", ORG, true))
         .satisfies(r -> assertThat(r.isImage()).isFalse())
         .satisfies(r -> assertThat(r.error()).contains("text/html"))
         .satisfies(r -> assertThat(r.dataUri()).isNull());
 
     this.serve(200, "image/png", new byte[ResourceFetcher.MAX_BYTES + 1]);
-    assertThat(this.fetcher.fetchImage("https://example.se/big.png", ORG).error()).contains("Larger than");
+    assertThat(this.fetcher.fetchImage("https://example.se/big.png", ORG, true).error()).contains("Larger than");
 
     this.serve(404, "text/plain", new byte[0]);
-    assertThat(this.fetcher.fetchImage("https://example.se/gone.png", ORG).error()).contains("HTTP 404");
+    assertThat(this.fetcher.fetchImage("https://example.se/gone.png", ORG, true).error()).contains("HTTP 404");
   }
 }

@@ -25,6 +25,7 @@ import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.service.InstancePlacementService;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
@@ -99,7 +100,7 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
     final Registration registration = this.registrationRepository.findById(registrationId)
         .orElseThrow();
 
-    final boolean isHosted = ctx.get(ContextKey.REQUEST_METADATA).isPresent();
+    final boolean isHosted = Step.isHosted(ctx);
 
     // The subordinate statement carries the Trust Anchor's or Intermediate's policy combined with this one.
     try {

@@ -15,6 +15,7 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow.process.step;
 
+import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
 
 import java.util.List;
@@ -127,6 +128,18 @@ public interface Step {
    */
   default boolean canApply(ProcessContext ctx, StepConfig config) {
     return true;
+  }
+
+  /**
+   * Whether the registration is for an entity the registry hosts: one whose metadata is in the request. A
+   * self-managed entity serves its own entity configuration. Only a hosted entity's identifier has to be on a domain
+   * validated for the organization.
+   *
+   * @param ctx shared pipeline context
+   * @return {@code true} if the entity is hosted
+   */
+  static boolean isHosted(final ProcessContext ctx) {
+    return ctx.get(ContextKey.REQUEST_METADATA).isPresent();
   }
 
   /**

@@ -34,6 +34,7 @@ import se.swedenconnect.oidf.registry.registrationflow.process.review.PreviewSec
 import se.swedenconnect.oidf.registry.registrationflow.process.review.ReviewableStep;
 import se.swedenconnect.oidf.registry.registrationflow.process.review.StepPreview;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Severity;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfig;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigurationValue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepIssue;
@@ -162,7 +163,7 @@ public class MetadataPolicyCreationStep extends NoConfigStepAdapter implements R
           if (fetched.get(url) instanceof final Map<?, ?> known) {
             return FetchedResource.fromMap(known);
           }
-          final FetchedResource resource = this.resourceFetcher.fetchImage(url, organization);
+          final FetchedResource resource = this.resourceFetcher.fetchImage(url, organization, Step.isHosted(ctx));
           fetched.put(url, resource.toMap());
           return resource;
         });
