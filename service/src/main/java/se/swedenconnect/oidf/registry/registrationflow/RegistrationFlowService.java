@@ -382,11 +382,13 @@ public class RegistrationFlowService {
    * published Subordinate Statement pins: its {@code metadata} and {@code metadata_policy} claims and its keys. The
    * flow's steps that load the entity configuration and build the claims are run up to their review gates, and the
    * result compared with what is published. If nothing changes, {@link ContextKey#PINNED_UNCHANGED} lets the run pass
-   * its review gates. If the check cannot be made, the run is reviewed as usual and reports any failure itself.
+   * its review gates. If the check cannot be made, the run is reviewed as usual and reports any failure itself. A
+   * resubmission that both adds and removes keys is refused.
    *
    * @param ctx the context of the run, which keeps what the steps loaded
    * @param steps the flow's steps
    * @param flowAssignment the flow assignment the run is made under
+   * @throws RegistryServerException if the resubmission both adds and removes keys
    */
   private void checkPinnedValues(final ProcessContext ctx, final List<StepDefinition> steps,
       final FlowAssignment flowAssignment) {
@@ -416,6 +418,15 @@ public class RegistrationFlowService {
     final Optional<JWKSet> jwks = ctx.get(ContextKey.ENTITY_CONFIGURATION_JWKS);
     if (jwks.isEmpty()) {
       return;
+    }
+    // A key rollover must not disrupt other parties: the new key is published before it is used, and the old one
+    // removed only after that, so one resubmission either adds or removes keys, never both.
+    final PinnedValues.KeyChange keyChange = PinnedValues.keyChange(published.get().getJwks(),
+        jwks.get().toJSONObject());
+    if (keyChange.addsAndRemoves()) {
+      throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER, ("Key rollover: add the new key first and "
+          + "remove the old key in a later resubmission (added: %s, removed: %s)").formatted(
+          String.join(", ", keyChange.added()), String.join(", ", keyChange.removed())));
     }
     final PinnedValues.Published claims = new PinnedValues.Published(published.get().getMetadataPolicy(),
         published.get().getMetadata(), published.get().getJwks());

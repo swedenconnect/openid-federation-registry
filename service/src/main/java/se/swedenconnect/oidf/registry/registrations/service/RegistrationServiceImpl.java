@@ -27,6 +27,7 @@ import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 import se.swedenconnect.oidf.registry.registrationflow.RegistrationFlowService;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
+import se.swedenconnect.oidf.registry.registrationflow.process.review.ReviewableStep;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationFlowInformationDto;
@@ -42,6 +43,7 @@ import se.swedenconnect.oidf.registry.subordinate.service.SubordinateService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -141,9 +143,21 @@ public class RegistrationServiceImpl implements RegistrationService {
     }
     this.subordinateService
         .getByEntityidentifierAndTaIm(reg.getEntityId(), reg.getFlowAssignment().getTaIm().getTaImId())
-        .map(RegistrationMapper::toPinnedMetadataDto)
+        .map(subordinate -> RegistrationMapper.toPinnedMetadataDto(subordinate, reviewsUpdates(reg)))
         .ifPresent(dto::setPinnedMetadata);
     return dto;
+  }
+
+  /**
+   * Whether a step of the registration's flow sets {@code manualreviewforupdate}, so that a resubmission without a
+   * change to a pinned value or key is reviewed too.
+   */
+  private static boolean reviewsUpdates(final Registration reg) {
+    return Optional.ofNullable(reg.getFlowAssignment().getRegistrationFlow().getFlowDefinition()).orElse(List.of())
+        .stream()
+        .flatMap(step -> Optional.ofNullable(step.config()).orElse(List.of()).stream())
+        .anyMatch(value -> ReviewableStep.MANUAL_REVIEW_FOR_UPDATE.equals(value.key())
+            && Boolean.parseBoolean(value.value()));
   }
 
 

@@ -36,6 +36,10 @@
             {{ review.organizationName }} · {{ review.organizationNumber }} · submitted {{ formatDate(review.submittedAt) }}
             · {{ review.hosted ? 'hosted by the registry' : 'self-hosted Entity Configuration' }}
           </div>
+          <div v-if="review.update" class="text-caption">
+            Update of an entity in the federation: the published subordinate statement is kept until this registration
+            is approved.
+          </div>
           <div v-if="review.review && review.reviewState === 'IN_REVIEW'" class="text-caption text-grey">
             Review started {{ formatDate(review.review.startedAt) }} by {{ review.review.startedBy }}
           </div>

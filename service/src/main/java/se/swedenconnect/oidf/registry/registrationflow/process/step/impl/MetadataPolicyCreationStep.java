@@ -232,6 +232,7 @@ public class MetadataPolicyCreationStep extends NoConfigStepAdapter implements R
     return List.of(
         new StepConfigurationValue(MANUAL_REVIEW, StepConfigurationValue.DATA_TYPE.BOOLEAN,
             "If true, registration requires manual approval before proceeding", "false"),
+        ReviewableStep.manualReviewForUpdateValue(),
         new StepConfigurationValue(TEMPLATE, StepConfigurationValue.DATA_TYPE.JSON,
             "Rules per entity type for the metadata and metadata_policy claims; the default template when not set",
             this.presetTemplate));

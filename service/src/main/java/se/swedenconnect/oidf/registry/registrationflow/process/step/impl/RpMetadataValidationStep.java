@@ -57,6 +57,7 @@ public class RpMetadataValidationStep extends NoConfigStepAdapter implements Rev
   public List<StepConfigurationValue> getStepConfigurationValues() {
     return List.of(new StepConfigurationValue(MANUAL_REVIEW,
         StepConfigurationValue.DATA_TYPE.BOOLEAN,
-        "If true, registration requires manual approval before proceeding", "false"));
+        "If true, registration requires manual approval before proceeding", "false"),
+        ReviewableStep.manualReviewForUpdateValue());
   }
 }

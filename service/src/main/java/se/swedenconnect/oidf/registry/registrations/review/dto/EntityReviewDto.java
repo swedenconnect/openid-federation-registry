@@ -32,6 +32,8 @@ import java.util.UUID;
  * @param submittedAt when the registration was submitted
  * @param registrationStatus the entity registration's status
  * @param hosted whether the registry hosts the entity
+ * @param update whether the entity is already in the federation: the registration updates its subordinate statement,
+ *     and the federation keeps the published one until the update is approved
  * @param reviewState where the review stands
  * @param review the open review session, or the latest one; {@code null} if none was started
  * @param items the items in review order
@@ -47,6 +49,7 @@ public record EntityReviewDto(
     OffsetDateTime submittedAt,
     String registrationStatus,
     boolean hosted,
+    boolean update,
     EntityReviewState reviewState,
     ReviewSessionDto review,
     List<ReviewItemDto> items) {

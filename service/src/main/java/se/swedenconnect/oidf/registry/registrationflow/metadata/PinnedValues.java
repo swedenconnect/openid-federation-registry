@@ -15,13 +15,17 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow.metadata;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.jwk.JWK;
 import net.minidev.json.JSONValue;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * The values a published Subordinate Statement pins for a self-managed entity: parameters set by the {@code metadata}
@@ -103,6 +107,62 @@ public final class PinnedValues {
    */
   public record Published(Map<String, Object> metadataPolicy, Map<String, Object> metadata,
       Map<String, Object> jwks) {
+  }
+
+  /**
+   * How the entity's keys change compared with the published ones, by key id. A key without {@code kid} is identified
+   * by its JWK thumbprint.
+   *
+   * @param added ids of keys the entity publishes that the Subordinate Statement does not
+   * @param removed ids of published keys the entity no longer publishes
+   */
+  public record KeyChange(List<String> added, List<String> removed) {
+
+    /**
+     * Tells whether the change both adds and removes a key. A key rollover must not do that in one step: the new key
+     * is published first, and the old one removed only after the new one is in use.
+     *
+     * @return {@code true} if keys are both added and removed
+     */
+    public boolean addsAndRemoves() {
+      return !this.added.isEmpty() && !this.removed.isEmpty();
+    }
+  }
+
+  /**
+   * Compares the published keys with the entity's keys.
+   *
+   * @param published the {@code jwks} claim of the published Subordinate Statement, may be {@code null}
+   * @param built the entity's keys, as a JWK set, may be {@code null}
+   * @return the added and removed key ids
+   */
+  public static KeyChange keyChange(final Map<String, Object> published, final Map<String, Object> built) {
+    final Set<String> before = keyIds(published);
+    final Set<String> after = keyIds(built);
+    return new KeyChange(after.stream().filter(id -> !before.contains(id)).toList(),
+        before.stream().filter(id -> !after.contains(id)).toList());
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Set<String> keyIds(final Map<String, Object> jwks) {
+    final Set<String> ids = new LinkedHashSet<>();
+    if (jwks != null && jwks.get("keys") instanceof final List<?> keys) {
+      for (final Object key : keys) {
+        if (key instanceof final Map<?, ?> map) {
+          ids.add(map.get("kid") instanceof final String kid ? kid : thumbprint((Map<String, Object>) map));
+        }
+      }
+    }
+    return ids;
+  }
+
+  private static String thumbprint(final Map<String, Object> key) {
+    try {
+      return "thumbprint " + JWK.parse(key).computeThumbprint();
+    }
+    catch (final java.text.ParseException | JOSEException e) {
+      return "unreadable key " + JSONValue.toJSONString(key);
+    }
   }
 
   private static boolean same(final Object published, final Object built) {

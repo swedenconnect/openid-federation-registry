@@ -15,10 +15,13 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow.process.step.impl;
 
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jose.jwk.JWKSet;
 import net.minidev.json.JSONObject;
 import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.registrationflow.metadata.FetchedResource;
+import se.swedenconnect.oidf.registry.registrationflow.metadata.PinnedValues;
 import se.swedenconnect.oidf.registry.registrationflow.metadata.ResourceFetcher;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessContext;
@@ -31,16 +34,22 @@ import se.swedenconnect.oidf.registry.registrationflow.process.step.StepConfigur
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepIssue;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.StepResult;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Severity;
+import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
+import se.swedenconnect.oidf.registry.subordinate.service.SubordinateService;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
  * Shows an operator the metadata an entity registers with, whatever step loaded it: the logo as an image, the names per
- * language, the links, what changed since the hosted entity was last updated, and the full metadata. Always pauses for
- * review; a flow that should not check metadata leaves the step out.
+ * language, the links, what changed since the hosted entity was last updated, for an entity already in the federation
+ * how the values its Subordinate Statement pins differ from the Entity Configuration, and the full metadata. Always
+ * pauses for review; a flow that should not check metadata leaves the step out.
  *
  * <p>Must come after the step that loads the metadata ({@code LoadEntityConfigurationStep} or
  * {@code HostedEntityRegistrationStep}). Logos are fetched in {@code buildContext} under the rules of
@@ -55,14 +64,17 @@ public class MetadataReviewStep extends NoConfigStepAdapter implements Reviewabl
   static final List<String> IMAGE_PARAMETERS = List.of("logo_uri");
 
   private final ResourceFetcher resourceFetcher;
+  private final SubordinateService subordinateService;
 
   /**
    * Constructor.
    *
    * @param resourceFetcher fetcher for images the metadata points to
+   * @param subordinateService service reading the Subordinate Statement already published for the entity
    */
-  public MetadataReviewStep(final ResourceFetcher resourceFetcher) {
+  public MetadataReviewStep(final ResourceFetcher resourceFetcher, final SubordinateService subordinateService) {
     this.resourceFetcher = resourceFetcher;
+    this.subordinateService = subordinateService;
   }
 
   @Override
@@ -152,7 +164,57 @@ public class MetadataReviewStep extends NoConfigStepAdapter implements Reviewabl
     ctx.<JSONObject>get(ContextKey.HOSTED_PREVIOUS_METADATA).ifPresent(previous -> preview.add(
         PreviewSection.diff("Changes to the hosted metadata", MetadataDiff.compare(previous, metadata))));
 
+    if (!hosted) {
+      this.published(ctx).ifPresent(published -> preview.add(PreviewSection.diff(
+          "Changes to the values published in the federation", pinnedChanges(published, metadata, ctx))));
+    }
+
     return preview.add(PreviewSection.json("Full metadata", metadata)).build();
+  }
+
+  /** The Subordinate Statement already published for the entity under this Intermediate, if any. */
+  private Optional<SubordinateDto> published(final ProcessContext ctx) {
+    final Optional<UUID> taImId = ctx.get(ContextKey.TAIM_ID);
+    return taImId.flatMap(id -> this.subordinateService.getByEntityidentifierAndTaIm(
+        ctx.getRequired(ContextKey.ENTITY_ID), id));
+  }
+
+  /**
+   * Compares the values and keys the published Subordinate Statement pins with the same parameters and keys in the
+   * entity's Entity Configuration. The federation keeps the published values until the registration is approved.
+   */
+  @SuppressWarnings("unchecked")
+  private static List<PreviewSection.DiffEntry> pinnedChanges(final SubordinateDto published,
+      final JSONObject metadata, final ProcessContext ctx) {
+    final Map<String, Object> before = new LinkedHashMap<>();
+    final Map<String, Object> after = new LinkedHashMap<>();
+    for (final PinnedValues.Parameter parameter : PinnedValues.parameters(published.getMetadataPolicy(),
+        published.getMetadata())) {
+      ((Map<String, Object>) before.computeIfAbsent(parameter.entityType(), type -> new LinkedHashMap<>()))
+          .put(parameter.parameter(), parameter.value());
+      final Object current = metadata.get(parameter.entityType()) instanceof final Map<?, ?> declared
+          ? declared.get(parameter.parameter())
+          : null;
+      ((Map<String, Object>) after.computeIfAbsent(parameter.entityType(), type -> new LinkedHashMap<>()))
+          .put(parameter.parameter(), current);
+    }
+    before.put("jwks", keyIds(published.getJwks()));
+    after.put("jwks", ctx.<JWKSet>get(ContextKey.ENTITY_CONFIGURATION_JWKS)
+        .map(jwks -> jwks.getKeys().stream().map(JWK::getKeyID).filter(Objects::nonNull).sorted().toList())
+        .orElse(List.of()));
+    return MetadataDiff.compare(before, after);
+  }
+
+  private static List<String> keyIds(final Map<String, Object> jwks) {
+    if (jwks == null || !(jwks.get("keys") instanceof final List<?> keys)) {
+      return List.of();
+    }
+    return keys.stream()
+        .map(key -> key instanceof final Map<?, ?> map ? map.get("kid") : null)
+        .filter(Objects::nonNull)
+        .map(String::valueOf)
+        .sorted()
+        .toList();
   }
 
   private static List<String> imageUrls(final JSONObject metadata) {
@@ -176,6 +238,6 @@ public class MetadataReviewStep extends NoConfigStepAdapter implements Reviewabl
 
   @Override
   public List<StepConfigurationValue> getStepConfigurationValues() {
-    return List.of();
+    return List.of(ReviewableStep.manualReviewForUpdateValue());
   }
 }
