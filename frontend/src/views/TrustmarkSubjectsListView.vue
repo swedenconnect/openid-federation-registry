@@ -72,33 +72,19 @@
         <thead>
         <tr>
           <th class="text-left">Subject</th>
-          <th class="text-right">Actions</th>
         </tr>
         </thead>
         <tbody>
-        <tr v-for="subject in subjects" :key="subject.trustmarksubjectId">
+        <tr
+            v-for="subject in subjects"
+            :key="subject.trustmarksubjectId"
+            :id="'row-subject-' + subject.trustmarksubjectId"
+            class="clickable-row"
+            tabindex="0"
+            @click="editSubject(subject.trustmarksubjectId)"
+            @keydown.enter="editSubject(subject.trustmarksubjectId)"
+        >
           <td>{{ subject.subject || 'N/A' }}</td>
-          <td class="text-right">
-            <v-btn
-                :id="'btn-edit-subject-' + subject.trustmarksubjectId"
-                color="primary"
-                variant="text"
-                size="small"
-                @click="editSubject(subject.trustmarksubjectId)"
-                class="mr-2"
-            >
-              Edit
-            </v-btn>
-            <v-btn
-                :id="'btn-delete-subject-' + subject.trustmarksubjectId"
-                color="error"
-                variant="text"
-                size="small"
-                @click="confirmDelete(subject)"
-            >
-              Delete
-            </v-btn>
-          </td>
         </tr>
         </tbody>
       </v-table>
@@ -112,36 +98,6 @@
       </v-card-text>
     </v-card>
 
-    <!-- Delete Confirmation Dialog -->
-    <v-dialog v-model="deleteDialog" max-width="500" aria-labelledby="delete-subject-dialog-title">
-      <v-card>
-        <v-card-title id="delete-subject-dialog-title" class="text-h5">Confirm Delete</v-card-title>
-        <v-card-text>
-          Are you sure you want to delete subject "{{ deleteSubjectLabel }}"? This action cannot be undone.
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn
-              id="btn-delete-subject-cancel"
-              color="grey"
-              variant="text"
-              @click="deleteDialog = false"
-              :disabled="deleting"
-          >
-            Cancel
-          </v-btn>
-          <v-btn
-              id="btn-delete-subject-confirm"
-              color="error"
-              @click="deleteSubject"
-              :loading="deleting"
-              :disabled="deleting"
-          >
-            Yes, Delete
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 
@@ -151,29 +107,21 @@ import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
-import {federationEntityPath, trustmarksPath, trustmarkSubjectsPath} from '@/config/path';
+import {federationEntityPath, trustmarksPath} from '@/config/path';
 
 const route = useRoute();
 const router = useRouter();
-const {requestGet, requestDelete, loading, ok} = useRequest();
+const {requestGet, loading} = useRequest();
 const errorStore = useErrorStore();
 const userStore = useUserStore();
 
 const subjects = ref([]);
 const entityIdentifier = ref(null);
 const trustmarkType = ref(null);
-const deleteDialog = ref(false);
-const deleting = ref(false);
-const subjectToDelete = ref(null);
 
 const entityId = computed(() => route.params.entityId);
 const trustmarkId = computed(() => route.params.trustmarkId);
 const trustmarkIssuerId = computed(() => route.query.trustmarkIssuerId || null);
-
-const deleteSubjectLabel = computed(() => {
-  if (!subjectToDelete.value) return '';
-  return subjectToDelete.value.subject || 'N/A';
-});
 
 function listBasePath() {
   return `/entities/${entityId.value}/modules/trustmarkissuer/trustmarks/${trustmarkId.value}/subjects`;
@@ -213,40 +161,6 @@ function editSubject(subjectId) {
   router.push(`${listBasePath()}/${subjectId}/edit?${queryParams()}`);
 }
 
-function confirmDelete(subject) {
-  subjectToDelete.value = subject;
-  deleteDialog.value = true;
-}
-
-async function deleteSubject() {
-  if (!subjectToDelete.value) return;
-
-  deleting.value = true;
-  errorStore.clearError();
-
-  try {
-    const subjectId = subjectToDelete.value.trustmarksubjectId;
-
-    if (!subjectId) {
-      errorStore.setError('Subject ID not found');
-      deleting.value = false;
-      return;
-    }
-
-    await requestDelete(`${trustmarkSubjectsPath(userStore.selectedTenant, userStore.orgNumber)}/${subjectId}`);
-
-    if (ok.value) {
-      deleteDialog.value = false;
-      subjectToDelete.value = null;
-      await loadSubjects();
-    }
-  } catch (error) {
-    console.error('Error deleting trustmark subject:', error);
-  } finally {
-    deleting.value = false;
-  }
-}
-
 function goBack() {
   const params = new URLSearchParams();
   if (trustmarkIssuerId.value) params.set('trustmarkIssuerId', trustmarkIssuerId.value);
@@ -266,3 +180,9 @@ onMounted(() => {
   loadSubjects();
 });
 </script>
+
+<style scoped>
+.clickable-row {
+  cursor: pointer;
+}
+</style>

@@ -46,9 +46,19 @@
       <v-col v-for="(entity, index) in entities" :key="entity.entityId" cols="12" sm="6" lg="4">
         <v-card :id="'entity-card-' + index" class="entity-card h-100" variant="outlined">
           <div class="d-flex align-center pa-2 pb-0">
-            <div class="entity-name text-subtitle-1 font-weight-bold text-truncate flex-grow-1 ml-2 mr-2"
+            <div class="entity-name text-subtitle-1 font-weight-bold text-truncate ml-2 mr-2"
                  :title="entity.entityIdentifier">
               {{ displayName(entity) }}
+            </div>
+            <div class="d-flex align-center flex-grow-1">
+              <v-tooltip v-for="module in activeModules(entity)" :key="module.type" :text="module.title" location="top">
+                <template v-slot:activator="{ props }">
+                  <span v-bind="props" :id="'icon-module-' + module.type + '-' + index" tabindex="0" role="img"
+                        :aria-label="module.title">
+                    <v-icon aria-hidden="true" size="small" class="mr-1">{{ module.icon }}</v-icon>
+                  </span>
+                </template>
+              </v-tooltip>
             </div>
             <EntityConfigurationViewer
                 :entity-id="entity.entityIdentifier"
@@ -73,7 +83,6 @@
                   color="secondary"
                   variant="outlined"
                   block
-                  :prepend-icon="role.icon"
                   @click="openRole(entity, role.type)"
               >
                 {{ role.label }}
@@ -114,17 +123,25 @@ function displayName(entity) {
   return entity.name || entity.entityIdentifier || 'N/A';
 }
 
+// The buttons open the list view of a role. The resolver has no list view and therefore no button.
 function roles(entity) {
   return [
-    entity.resolver && {type: 'resolver', label: 'Resolver', icon: 'mdi-magnify-scan'},
-    entity.trustAnchor && {type: 'trustanchor', label: 'Subordinates', icon: 'mdi-shield-check'},
-    entity.intermediate && {type: 'intermediate', label: 'Subordinates', icon: 'mdi-transit-connection-variant'},
-    entity.trustmarkIssuer && {type: 'trustmarkissuer', label: 'Trustmarks', icon: 'mdi-certificate-outline'},
+    entity.trustAnchor && {type: 'trustanchor', label: 'Subordinates'},
+    entity.intermediate && {type: 'intermediate', label: 'Subordinates'},
+    entity.trustmarkIssuer && {type: 'trustmarkissuer', label: 'Trustmarks'},
   ].filter(Boolean);
 }
 
-// Each role button opens the existing view of that role. The resolver has no list view of its own and is
-// configured on the entity's edit page.
+// Icons after the name show which modules are active.
+function activeModules(entity) {
+  return [
+    entity.resolver?.active && {type: 'resolver', title: 'Resolver', icon: 'mdi-magnify-scan'},
+    entity.trustAnchor?.active && {type: 'trustanchor', title: 'Trust Anchor', icon: 'mdi-shield-check'},
+    entity.intermediate?.active && {type: 'intermediate', title: 'Intermediate', icon: 'mdi-transit-connection-variant'},
+    entity.trustmarkIssuer?.active && {type: 'trustmarkissuer', title: 'Trustmark Issuer', icon: 'mdi-certificate-outline'},
+  ].filter(Boolean);
+}
+
 function openRole(entity, type) {
   const base = `/entities/${entity.entityId}`;
   const queryParams = new URLSearchParams();
@@ -137,8 +154,6 @@ function openRole(entity, type) {
     const id = type === 'trustanchor' ? module.trustAnchorId || module.id : module.intermediateId || module.id;
     if (id) queryParams.set('taImId', id);
     router.push(`${base}/modules/${type}/subordinates?${queryParams.toString()}`);
-  } else {
-    router.push(`/entities/federation/${entity.entityId}/edit`);
   }
 }
 

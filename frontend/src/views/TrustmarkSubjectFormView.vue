@@ -86,13 +86,23 @@
           ></DateTimeField>
 
           <v-card-actions>
+            <v-btn
+                v-if="isEdit"
+                id="btn-delete-subject"
+                color="error"
+                variant="text"
+                @click="deleteDialog = true"
+                :disabled="saving || deleting"
+            >
+              Delete
+            </v-btn>
             <v-spacer></v-spacer>
             <v-btn
                 id="btn-cancel"
                 color="grey"
                 variant="text"
                 @click="cancel"
-                :disabled="saving"
+                :disabled="saving || deleting"
             >
               Cancel
             </v-btn>
@@ -109,6 +119,37 @@
         </v-form>
       </v-card-text>
     </v-card>
+
+    <!-- Delete Confirmation Dialog -->
+    <v-dialog v-model="deleteDialog" max-width="500" aria-labelledby="delete-subject-dialog-title">
+      <v-card>
+        <v-card-title id="delete-subject-dialog-title" class="text-h5">Confirm Delete</v-card-title>
+        <v-card-text>
+          Are you sure you want to delete subject "{{ subject || 'N/A' }}"? This action cannot be undone.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+              id="btn-delete-subject-cancel"
+              color="grey"
+              variant="text"
+              @click="deleteDialog = false"
+              :disabled="deleting"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+              id="btn-delete-subject-confirm"
+              color="error"
+              @click="deleteSubject"
+              :loading="deleting"
+              :disabled="deleting"
+          >
+            Yes, Delete
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -123,12 +164,14 @@ import {hostedEntitiesPath, trustmarkSubjectsPath} from '@/config/path';
 
 const route = useRoute();
 const router = useRouter();
-const {requestGet, requestPost, requestPut, loading, ok} = useRequest();
+const {requestGet, requestPost, requestPut, requestDelete, loading, ok} = useRequest();
 const errorStore = useErrorStore();
 const userStore = useUserStore();
 
 const form = ref(null);
 const saving = ref(false);
+const deleting = ref(false);
+const deleteDialog = ref(false);
 
 const subjectId = ref(null);
 const trustmarkIdValue = ref(null);
@@ -222,6 +265,24 @@ async function submitForm() {
     console.error('Error saving trustmark subject:', error);
   } finally {
     saving.value = false;
+  }
+}
+
+async function deleteSubject() {
+  deleting.value = true;
+  errorStore.clearError();
+
+  try {
+    await requestDelete(`${trustmarkSubjectsPath(userStore.selectedTenant, userStore.orgNumber)}/${subjectId.value}`);
+
+    if (ok.value) {
+      deleteDialog.value = false;
+      navigateBack();
+    }
+  } catch (error) {
+    console.error('Error deleting trustmark subject:', error);
+  } finally {
+    deleting.value = false;
   }
 }
 

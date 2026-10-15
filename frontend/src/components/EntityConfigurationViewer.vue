@@ -18,31 +18,31 @@
   <div>
     <v-btn
         v-if="iconOnly"
-        id="btn-view-ec"
-        icon="mdi-file-document-outline"
+        :id="issuer ? 'btn-view-ss' : 'btn-view-ec'"
+        :icon="issuer ? 'mdi-file-certificate-outline' : 'mdi-file-document-outline'"
         variant="text"
         size="small"
         :loading="loading"
-        aria-label="View entity configuration"
-        title="View entity configuration"
+        :aria-label="'View ' + label.toLowerCase()"
+        :title="'View ' + label.toLowerCase()"
         @click="open"
     ></v-btn>
     <v-btn
         v-else
-        id="btn-view-ec"
+        :id="issuer ? 'btn-view-ss' : 'btn-view-ec'"
         color="secondary"
         variant="outlined"
         size="small"
         :loading="loading"
         @click="open"
     >
-      View EC
+      {{ issuer ? 'View SS' : 'View EC' }}
     </v-btn>
 
     <v-dialog v-model="dialog" max-width="860" scrollable aria-labelledby="ec-dialog-title">
       <v-card>
         <v-card-title id="ec-dialog-title" class="d-flex align-center">
-          <span>Entity Configuration</span>
+          <span>{{ label }}</span>
           <v-spacer></v-spacer>
           <span class="text-body-2 text-grey text-truncate" style="max-width: 420px;">
             {{ entityId }}
@@ -54,7 +54,7 @@
         <v-card-text style="max-height: 72vh; overflow-y: auto;">
           <div v-if="loading" role="status" aria-live="polite" class="text-center py-12">
             <v-progress-circular indeterminate color="primary" size="48" aria-hidden="true"></v-progress-circular>
-            <p class="mt-4 text-grey">Fetching entity configuration…</p>
+            <p class="mt-4 text-grey">Fetching {{ label.toLowerCase() }}…</p>
           </div>
 
           <v-alert
@@ -88,15 +88,21 @@
 </template>
 
 <script setup>
-import {ref} from 'vue';
+import {computed, ref} from 'vue';
 import {useErrorStore} from '@/stores/errorStore';
-import {entityConfigurationViewPath} from '@/config/path';
+import {entityConfigurationViewPath, subordinateStatementViewPath} from '@/config/path';
 import {useUserStore} from '@/stores/userStore';
 
 const props = defineProps({
   entityId: {
     type: String,
     required: true,
+  },
+  // Entity identifier of the issuer. When set, the subordinate statement the issuer has published about entityId is
+  // shown instead of the entity configuration of entityId.
+  issuer: {
+    type: String,
+    default: null,
   },
   // Compact icon button, for use in a card header.
   iconOnly: {
@@ -107,6 +113,8 @@ const props = defineProps({
 
 const errorStore = useErrorStore();
 const userStore = useUserStore();
+
+const label = computed(() => (props.issuer ? 'Subordinate Statement' : 'Entity Configuration'));
 
 const dialog = ref(false);
 const loading = ref(false);
@@ -120,20 +128,25 @@ async function open() {
   loading.value = true;
 
   try {
-    const response = await fetch(entityConfigurationViewPath(userStore.selectedTenant, userStore.orgNumber), {
-      method: 'POST',
-      credentials: 'include',
-      headers: {'Content-Type': 'text/plain'},
-      body: props.entityId,
-    });
+    const response = props.issuer
+        ? await fetch(`${subordinateStatementViewPath(userStore.selectedTenant, userStore.orgNumber)}?${new URLSearchParams({
+          issuer: props.issuer,
+          sub: props.entityId,
+        })}`, {credentials: 'include'})
+        : await fetch(entityConfigurationViewPath(userStore.selectedTenant, userStore.orgNumber), {
+          method: 'POST',
+          credentials: 'include',
+          headers: {'Content-Type': 'text/plain'},
+          body: props.entityId,
+        });
 
     if (response.ok) {
       ecData.value = await response.json();
     } else {
-      errorMessage.value = 'Could not fetch entity configuration. The entity may be unreachable or the response is invalid.';
+      errorMessage.value = `Could not fetch ${label.value.toLowerCase()}. The entity may be unreachable or the response is invalid.`;
     }
   } catch (e) {
-    errorMessage.value = 'Could not fetch entity configuration. The entity may be unreachable or the response is invalid.';
+    errorMessage.value = `Could not fetch ${label.value.toLowerCase()}. The entity may be unreachable or the response is invalid.`;
     errorStore.setError(e.message);
   } finally {
     loading.value = false;

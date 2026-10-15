@@ -185,4 +185,45 @@ public class EntityConfigurationController {
     }
   }
 
+  /**
+   * Fetches the subordinate statement an issuer has published about a subject and returns its decoded header and
+   * payload as JSON. The statement is fetched from the issuer's {@code federation_fetch_endpoint}.
+   *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param issuer EntityId of the Trust Anchor or Intermediate that issued the statement
+   * @param subject EntityId of the subordinate
+   * @return decoded header and payload, or 400 on error
+   */
+  @GetMapping(path = "/subordinate-statement/view")
+  @PreAuthorize("@orgRightsService.canRead(authentication, #orgNumber, #tenant)")
+  public ResponseEntity<EntityConfigurationViewDto> viewSubordinateStatement(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
+      @RequestParam("issuer") final String issuer,
+      @RequestParam("sub") final String subject) {
+    log.debug("Fetching subordinate statement for view, issuer {} subject {}", issuer, subject);
+    try {
+      final com.nimbusds.jwt.SignedJWT signedJWT =
+          this.oidfService.loadSubordinateStatement(EntityID.parse(issuer), EntityID.parse(subject));
+
+      final EntityConfigurationViewDto dto = new EntityConfigurationViewDto();
+      dto.setHeader(signedJWT.getHeader().toJSONObject());
+      dto.setPayload(signedJWT.getPayload().toJSONObject());
+      return ResponseEntity.ok(dto);
+    }
+    catch (final ParseException e) {
+      log.info("Invalid entity ID for subordinate statement view: {} / {}", issuer, subject);
+      return ResponseEntity.badRequest().build();
+    }
+    catch (final HttpClientErrorException | HttpServerErrorException e) {
+      log.info("HTTP error fetching subordinate statement {} / {}: {}", issuer, subject, e.getStatusCode());
+      return ResponseEntity.badRequest().build();
+    }
+    catch (final SecurityException | ResourceAccessException | IllegalArgumentException | IllegalStateException e) {
+      log.info("Error fetching subordinate statement {} / {}", issuer, subject, e);
+      return ResponseEntity.badRequest().build();
+    }
+  }
+
 }
