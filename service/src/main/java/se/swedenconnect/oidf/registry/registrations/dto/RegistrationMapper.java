@@ -53,12 +53,13 @@ public final class RegistrationMapper {
    * @param report process report from the pipeline run
    * @param isHosted whether the entity is hosted
    * @param hostedMetadata metadata for hosted entity, or null if not hosted
+   * @param tmStatusByType map from trust mark type to its trust mark registration
    * @return mapped DTO
    */
   public static RegistrationDto toRegistrationRequestStatusDto(
       final Registration registration, final ProcessReport report, final boolean isHosted,
-      final Map<String, Object> hostedMetadata) {
-    final RegistrationDto dto = toRegistrationDto(registration, isHosted, hostedMetadata);
+      final Map<String, Object> hostedMetadata, final Map<String, Registration> tmStatusByType) {
+    final RegistrationDto dto = toRegistrationDto(registration, isHosted, hostedMetadata, tmStatusByType);
     dto.setSuccessful(report.isSuccessful());
     dto.setSteps(report.steps().stream()
         .map(RegistrationMapper::toStepExecutionRecordDto)
@@ -187,6 +188,9 @@ public final class RegistrationMapper {
                 FedRegStatus.valueOf(resolved.toString()));
             if (resolved == RegistrationStatus.REJECTED && trustMarkRegistration != null) {
               status.setRejectionReason(trustMarkRegistration.getRejectionReason());
+            }
+            if (trustMarkRegistration != null && trustMarkRegistration.getStepResults() != null) {
+              status.setSteps(trustMarkRegistration.getStepResults());
             }
             return status;
           })

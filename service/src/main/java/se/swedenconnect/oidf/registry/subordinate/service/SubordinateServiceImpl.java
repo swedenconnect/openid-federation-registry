@@ -32,11 +32,14 @@ import se.swedenconnect.oidf.registry.module.repository.TaImRepository;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
+import se.swedenconnect.oidf.registry.subordinate.dto.SubordinatePolicyRequest;
+import se.swedenconnect.oidf.registry.subordinate.dto.SubordinatePolicyResult;
 import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateMapper;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
 
 import se.swedenconnect.oidf.registry.policy.MetadataPolicies;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -81,6 +84,37 @@ public class SubordinateServiceImpl implements SubordinateService {
     return this.organizationService.find(organizationRecord)
         .map(Organization::getOrganizationId)
         .orElseThrow(() -> notFound);
+  }
+
+  @Override
+  @Transactional
+  public SubordinatePolicyResult replaceMetadataPolicy(final OrganizationRecord organizationRecord,
+      final SubordinatePolicyRequest input) {
+    if (input == null || input.taImId() == null) {
+      throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER, "taImId must be given");
+    }
+    final TrustAnchorIntermediateModule taIm = this.findTaImOrThrow(organizationRecord, input.taImId());
+    final Map<String, Object> policy = input.metadataPolicy() == null || input.metadataPolicy().isEmpty()
+        ? null
+        : input.metadataPolicy();
+    final List<String> problems = MetadataPolicies.problems(policy);
+    if (!problems.isEmpty()) {
+      throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER,
+          "metadataPolicy cannot be used: " + String.join("; ", problems));
+    }
+    requireCombinable(taIm, policy);
+
+    int updated = 0;
+    for (final Subordinate subordinate : taIm.getSubordinates()) {
+      final SubordinateDto oldDto = SubordinateMapper.toDto(subordinate);
+      subordinate.setMetadataPolicy(policy);
+      this.subordinateRepository.save(subordinate);
+      this.auditService.subordinateUpdated(subordinate.getSubordinateId(),
+          taIm.getOrganization().getInstance().getInstanceId(), taIm.getOrganization().getOrganizationId(), oldDto,
+          SubordinateMapper.toDto(subordinate));
+      updated++;
+    }
+    return new SubordinatePolicyResult(updated);
   }
 
   /**

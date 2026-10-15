@@ -121,18 +121,14 @@
               :disabled="saving"
           />
 
-          <v-textarea
+          <ModulePolicyEditor
               v-model="metadataPolicy"
-              label="Metadata Policy"
-              :rules="[rules.json]"
+              id-prefix="subordinate"
+              title="Metadata Policy"
+              hint="Metadata policy for this subordinate statement (optional), combined with the policy of its Trust Anchor or Intermediate."
               :disabled="saving"
-              :rows="5"
-              auto-grow
-              hint="Metadata policy for this subordinate statement (optional, JSON)"
-              persistent-hint
               class="mb-4"
-              style="font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;"
-          ></v-textarea>
+          ></ModulePolicyEditor>
 
           <v-textarea
               v-model="metadata"
@@ -327,6 +323,7 @@
 
 <script setup>
 import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue';
+import ModulePolicyEditor from '@/components/ModulePolicyEditor.vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
@@ -518,6 +515,10 @@ function buildConstraints() {
 async function submitForm() {
   const {valid} = await form.value.validate();
   if (!valid) return;
+  if (rules.json(metadataPolicy.value) !== true) {
+    errorStore.setError('The metadata policy is not valid JSON.');
+    return;
+  }
 
   saving.value = true;
   errorStore.clearError();

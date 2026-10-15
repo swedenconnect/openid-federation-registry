@@ -18,6 +18,8 @@ package se.swedenconnect.oidf.registry.subordinate.service;
 
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
+import se.swedenconnect.oidf.registry.subordinate.dto.SubordinatePolicyRequest;
+import se.swedenconnect.oidf.registry.subordinate.dto.SubordinatePolicyResult;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -67,6 +69,16 @@ public interface SubordinateService {
    * @return the updated subordinate
    */
   SubordinateDto updateSubordinate(OrganizationRecord organizationRecord, UUID id, SubordinateDto input);
+
+  /**
+   * Sets a metadata policy on every subordinate of a Trust Anchor or Intermediate, replacing their own. Each update is
+   * audited as an update of that subordinate.
+   *
+   * @param organizationRecord the organization record
+   * @param input the Trust Anchor or Intermediate and the policy
+   * @return how many subordinates got the policy
+   */
+  SubordinatePolicyResult replaceMetadataPolicy(OrganizationRecord organizationRecord, SubordinatePolicyRequest input);
 
   /**
    * Deletes a subordinate.

@@ -33,6 +33,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
+import se.swedenconnect.oidf.registry.subordinate.dto.SubordinatePolicyRequest;
+import se.swedenconnect.oidf.registry.subordinate.dto.SubordinatePolicyResult;
 import se.swedenconnect.oidf.registry.subordinate.service.SubordinateService;
 
 import java.util.UUID;
@@ -132,6 +134,28 @@ public class SubordinateController {
       @RequestBody final SubordinateDto body,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
     return ResponseEntity.ok(this.subordinateService.updateSubordinate(organizationRecord, id, body));
+  }
+
+  /**
+   * Sets a metadata policy on every subordinate of a Trust Anchor or Intermediate, replacing their own.
+   *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param body the Trust Anchor or Intermediate and the policy
+   * @param organizationRecord the organization record
+   * @return how many subordinates got the policy
+   */
+  @PutMapping("/metadata-policy")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
+  @Operation(summary = "Set a metadata policy on all subordinates of a Trust Anchor or Intermediate",
+      description = "Replaces each subordinate's own metadata policy. Refused with 400 if the policy is not valid or "
+          + "cannot be combined with the Trust Anchor's or Intermediate's own policy.")
+  public ResponseEntity<SubordinatePolicyResult> replaceMetadataPolicy(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
+      @RequestBody final SubordinatePolicyRequest body,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(this.subordinateService.replaceMetadataPolicy(organizationRecord, body));
   }
 
   /**

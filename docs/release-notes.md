@@ -68,6 +68,13 @@
 - GUI: the edit page of a subordinate has a button that fetches and shows its subordinate statement, and the entity
   configuration check and button are also on the create page.
 - GUI: a trustmark subject is opened by clicking its row, and is deleted from its edit view (#310).
+- API: a trust mark in `statusTrustmarks` has `steps`, its own step results; also in the response to a registration
+  request.
+- API: `PUT /registry/v1/{tenant}/{orgNumber}/subordinates/metadata-policy` sets a policy on all subordinates of a
+  Trust Anchor or Intermediate. GUI: after loading a template on a Trust Anchor or Intermediate, an offer to apply it
+  to all its subordinates.
+- GUI: **Load template** on a subordinate's metadata policy.
+
 
 ---
 

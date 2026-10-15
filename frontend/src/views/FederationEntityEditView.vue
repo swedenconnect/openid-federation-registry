@@ -375,6 +375,7 @@
                 </div>
                 <ModulePolicyEditor
                     v-model="modules.trustanchor.metadataPolicyText"
+                    @template-loaded="name => modules.trustanchor.loadedTemplate = name"
                     id-prefix="trustanchor"
                     :disabled="savingModule"
                     class="mb-2"
@@ -441,6 +442,7 @@
 
                 <ModulePolicyEditor
                     v-model="modules.intermediate.metadataPolicyText"
+                    @template-loaded="name => modules.intermediate.loadedTemplate = name"
                     id-prefix="intermediate"
                     :disabled="savingModule"
                     class="mb-2"
@@ -737,6 +739,40 @@
     </v-dialog>
 
     <!-- Delete Confirmation Dialog -->
+    <v-dialog v-model="applyToSubordinates.open" max-width="560" aria-labelledby="apply-subordinates-dialog-title">
+      <v-card>
+        <v-card-title id="apply-subordinates-dialog-title" class="text-h5">Apply to all subordinates?</v-card-title>
+        <v-card-text>
+          Also apply the template <strong>{{ applyToSubordinates.template }}</strong> to
+          {{ applyToSubordinates.count === 1 ? 'the subordinate' : `all ${applyToSubordinates.count} subordinates` }}
+          of this {{ applyToSubordinates.moduleLabel }}?
+          {{ applyToSubordinates.count === 1 ? 'Its own metadata policy is' : 'Their own metadata policies are' }}
+          replaced.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+              id="btn-apply-subordinates-cancel"
+              color="grey"
+              variant="text"
+              @click="applyToSubordinates.open = false"
+              :disabled="applyToSubordinates.applying"
+          >
+            Not now
+          </v-btn>
+          <v-btn
+              id="btn-apply-subordinates-confirm"
+              color="primary"
+              @click="confirmApplyToSubordinates"
+              :loading="applyToSubordinates.applying"
+              :disabled="applyToSubordinates.applying"
+          >
+            Apply to all subordinates
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-dialog v-model="deleteDialog" max-width="500" aria-labelledby="delete-module-dialog-title">
       <v-card>
         <v-card-title id="delete-module-dialog-title" class="text-h5">Confirm Delete</v-card-title>
@@ -821,6 +857,7 @@ import {
   registrationFlowsPath,
   resolverModulePath,
   trustAnchorModulePath,
+  subordinatesMetadataPolicyPath,
   trustmarkIssuerModulePath,
 } from '@/config/path';
 
@@ -916,6 +953,28 @@ const rules = {
   maxName: (value) => !value || value.length <= 255 || 'The name can be at most 255 characters.',
 };
 
+// Offered after a template was loaded on a Trust Anchor or Intermediate and saved.
+const applyToSubordinates = ref({
+  open: false, applying: false, template: '', count: 0, moduleLabel: '', taImId: null, metadataPolicy: null,
+});
+
+async function confirmApplyToSubordinates() {
+  applyToSubordinates.value.applying = true;
+  errorStore.clearError();
+  try {
+    await requestPut(subordinatesMetadataPolicyPath(userStore.selectedTenant, userStore.orgNumber), {
+      taImId: applyToSubordinates.value.taImId,
+      metadataPolicy: applyToSubordinates.value.metadataPolicy,
+    });
+    if (ok.value) {
+      applyToSubordinates.value.open = false;
+      await loadEntity();
+    }
+  } finally {
+    applyToSubordinates.value.applying = false;
+  }
+}
+
 // A module's metadata policy is edited as JSON text; empty text is no policy.
 function policyText(policy) {
   return policy && Object.keys(policy).length > 0 ? JSON.stringify(policy, null, 2) : '';
@@ -978,6 +1037,8 @@ async function loadEntity() {
           issuers: external.issuers || [],
         })),
         metadataPolicyText: policyText(response.trustAnchor.metadataPolicy),
+        loadedTemplate: null,
+        subordinateCount: (response.trustAnchor.subordinates || []).length,
       };
     }
 
@@ -987,6 +1048,8 @@ async function loadEntity() {
         id: taImId,
         active: response.intermediate.active !== false,
         metadataPolicyText: policyText(response.intermediate.metadataPolicy),
+        loadedTemplate: null,
+        subordinateCount: (response.intermediate.subordinates || []).length,
       };
       if (modules.value.intermediate.active) {
         await loadFlowData(taImId);
@@ -1216,8 +1279,22 @@ async function saveModule(moduleType) {
     }
 
     if (ok.value) {
+      // A template loaded on a Trust Anchor or Intermediate can also be applied to all its subordinates.
+      const offer = (moduleType === 'trustanchor' || moduleType === 'intermediate') && module.loadedTemplate
+          && module.subordinateCount > 0 && moduleData.metadataPolicy
+          ? {
+            template: module.loadedTemplate,
+            count: module.subordinateCount,
+            moduleLabel: moduleType === 'trustanchor' ? 'Trust Anchor' : 'Intermediate',
+            taImId: module.id,
+            metadataPolicy: moduleData.metadataPolicy,
+          }
+          : null;
       // Reload to get updated data
       await loadEntity();
+      if (offer) {
+        applyToSubordinates.value = {...applyToSubordinates.value, ...offer, open: true};
+      }
     }
   } catch (error) {
     console.error(`Error saving ${moduleType} module:`, error);
