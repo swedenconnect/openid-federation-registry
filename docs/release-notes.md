@@ -95,7 +95,8 @@
   Trust Anchor or Intermediate. GUI: after loading a template on a Trust Anchor or Intermediate, an offer to apply it
   to all its subordinates.
 - GUI: **Load template** on a subordinate's metadata policy.
-
+- API: `POST /registration/v1/{tenant}/{orgNumber}/{joinId}/dry-run` runs a flow's metadata steps without storing
+  anything, and returns the pinned values, the overridden values and the errors.
 
 ---
 
