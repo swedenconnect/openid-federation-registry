@@ -31,6 +31,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
+import se.swedenconnect.oidf.registry.registrationflow.MetadataDryRunService;
+import se.swedenconnect.oidf.registry.registrations.dto.MetadataDryRunDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationFlowInformationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationJoinRequestDto;
@@ -52,6 +54,7 @@ import java.util.UUID;
 public class FederationRegistrationController {
 
   private final RegistrationService registrationService;
+  private final MetadataDryRunService metadataDryRunService;
 
   /**
    * Lists all registration records.
@@ -112,6 +115,31 @@ public class FederationRegistrationController {
       @RequestBody final RegistrationJoinRequestDto body) {
     return ResponseEntity.status(201)
         .body(this.registrationService.createRegistrationRequest(organizationRecord, joinId, body));
+  }
+
+  /**
+   * Dry run of the metadata steps of a join flow. Nothing is stored.
+   *
+   * @param tenant the tenant slug
+   * @param orgNumber the calling organization's number
+   * @param joinId the join ID of the flow
+   * @param organizationRecord the calling organization
+   * @param body the join request: the entity identifier and, for a hosted entity, its metadata
+   * @return what the subordinate statement would pin and override, and what is in error
+   */
+  @PostMapping("/{tenant}/{orgNumber}/{joinId}/dry-run")
+  @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
+  @Operation(summary = "Dry run of the metadata steps of a join flow",
+      description = "Builds the subordinate statement's metadata and metadata_policy claims as the flow would, from "
+          + "the metadata in the request (hosted entity) or the fetched entity configuration (self-managed entity), "
+          + "and lists the pinned and overridden values and the errors. Nothing is stored.")
+  public ResponseEntity<MetadataDryRunDto> dryRunMetadata(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
+      @PathVariable("joinId") final UUID joinId,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord,
+      @RequestBody final RegistrationJoinRequestDto body) {
+    return ResponseEntity.ok(this.metadataDryRunService.dryRun(organizationRecord, joinId, body));
   }
 
   /**

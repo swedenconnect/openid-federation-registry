@@ -110,6 +110,13 @@ configured under `openid.federation.registry.templates`, see [Templates](configu
 | `matches_organization` | `organization_field`, `icd`           | Every value equals that field of the registry's organization data.          |
 | `allowed_values`       | `values`                              | Every value, or every element of a list, is one of `values`.                |
 
+### Dry run
+
+The registration API tests a template on an entity without registering it: the pinned values, the overridden values
+(the entity's value differs from the one the federation resolves once the `metadata` and `metadata_policy` claims are
+applied) and the errors. Only the subordinate statement's own claims are applied, not the policies of the superiors.
+See [Registration Flow, UC-7](use_case_registration_flow.md#uc-7-dry-run-of-the-metadata-steps).
+
 ### Output
 
 The `metadata` claim is stored on the subordinate as `{ "<entity type>": { ... } }`, and the `metadata_policy` claim as

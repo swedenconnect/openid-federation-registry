@@ -437,6 +437,38 @@ trust mark) or listed as its own row (admin view, which does not filter out trus
 
 ---
 
+## UC-7: Dry run of the metadata steps
+
+**Actor:** Member
+
+Before submitting a registration, the member can test its metadata with
+`POST /registration/v1/{tenant}/{orgNumber}/{joinId}/dry-run`. The body is the join request: `entityIdentifier` and,
+for a hosted entity, `metadata`.
+
+### Main flow
+
+1. The request is checked as a join is: an unknown `joinId` (404), a disabled flow (409), a hosted entity off the
+   organization's registered domains.
+2. The entity's metadata is the one in the request (hosted). Without `metadata`, the entity configuration is fetched as
+   `LoadEntityConfigurationStep` does (self-managed).
+3. The flow's `MetadataPolicyCreationStep` builds the claims and runs its checks.
+4. Nothing is stored and no review is started.
+
+The response (`MetadataDryRun`):
+
+- `pinned`: the parameters the subordinate statement would pin (`entityType`, `parameter`, `value`, `claim`): set by
+  the `metadata` claim or fixed with the `value` operator.
+- `overridden`: the parameters whose resolved value is not the one the entity declares (`entityType`, `parameter`,
+  `entityValue`, `value`, `claim`, `operators`): set by the `metadata` claim, or changed, added or removed by the
+  `metadata_policy` claim.
+- `errors`: the failed checks, metadata policy errors, and why the entity configuration could not be fetched.
+- `failed`: whether the errors would decline the registration, rather than be shown to a reviewer
+  (`on_failure: review`).
+- `checks`: every check made (`status`: `OK`, `FAIL` or `INFO`; `message`).
+- `metadata`, `metadataPolicy`: the claims that would be published.
+
+---
+
 ## Status reference
 
 `RegistrationStatus` / `FedRegStatus` (identical value sets — the latter is the API-facing DTO enum):
@@ -541,6 +573,7 @@ All endpoints are scoped under `/{tenant}/{orgNumber}` except where noted, and g
 | `GET`    | `/registration/v1/{tenant}/{orgNumber}`                                                          | List own registrations                                                    |
 | `GET`    | `/registration/v1/{tenant}/{orgNumber}/{registrationId}`                                         | Get a specific registration                                               |
 | `POST`   | `/registration/v1/{tenant}/{orgNumber}/{joinId}`                                                 | Submit a registration (join) request                                      |
+| `POST`   | `/registration/v1/{tenant}/{orgNumber}/{joinId}/dry-run`                                         | Dry run of the flow's metadata steps; nothing is stored                   |
 | `PUT`    | `/registration/v1/{tenant}/{orgNumber}/{registrationId}`                                         | Re-run the flow for an existing entity                                    |
 | `DELETE` | `/registration/v1/{tenant}/{orgNumber}/{registrationId}`                                         | Remove a registration (cascades to subordinate/hosted entity if approved) |
 | `GET`    | `/registration-admin/v1/{tenant}/{orgNumber}`                                                    | List registrations on the tenant (operator)                               |
