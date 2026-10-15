@@ -63,6 +63,8 @@
   failing.
 - API: only a hosted entity's identifier has to be on a registered domain of the organization; a self-managed entity
   needs no domain claim.
+- New Metadata Policy Creation check `lists_redirect_uris`: the URL resolves to a JSON array listing all the entity's
+  `redirect_uris`. The Sweden Connect registration template checks `sector_identifier_uri` with it.
 
 ---
 

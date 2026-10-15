@@ -104,6 +104,7 @@ configured under `openid.federation.registry.templates`, see [Templates](configu
 | `non_empty`            |                                       | No value is blank.                                                          |
 | `https_url`            |                                       | Every value is an HTTPS URL.                                                |
 | `image`                |                                       | Every value resolves to an image, under the image fetching rules above.     |
+| `lists_redirect_uris`  |                                       | Every value resolves to a JSON array listing all the entity's `redirect_uris`, under the image fetching rules above, but any content type, up to 64 KB. |
 | `matches_organization` | `organization_field`, `icd`           | Every value equals that field of the registry's organization data.          |
 | `allowed_values`       | `values`                              | Every value, or every element of a list, is one of `values`.                |
 
