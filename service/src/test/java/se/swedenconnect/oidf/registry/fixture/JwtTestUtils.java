@@ -46,6 +46,9 @@ import java.util.Map;
 @Component
 public class JwtTestUtils {
 
+  /** The {@code iss} of the generated tokens. */
+  public static final String ISSUER = "http://swedenconnect.se/op";
+
   /**
    * If a token is needed for external testing
    *
@@ -118,13 +121,28 @@ public class JwtTestUtils {
    * @return a serialized, signed JWT
    */
   public String createJwt(OrganisationType orgType, String audience, List<Map<String, String>> functions) {
+    return this.createJwt(orgType, audience, ISSUER, functions);
+  }
+
+  /**
+   * Generates a token whose {@code org_rights} claim holds the given function rights for the organisation, with
+   * settable {@code aud} and {@code iss} claims — useful for exercising issuer rejection.
+   *
+   * @param orgType the organisation the token grants rights for
+   * @param audience the {@code aud} claim value
+   * @param issuer the {@code iss} claim value
+   * @param functions the {@code functions} list entries, each a {@code {"function": ..., "right": ...}} map
+   * @return a serialized, signed JWT
+   */
+  public String createJwt(OrganisationType orgType, String audience, String issuer,
+      List<Map<String, String>> functions) {
     final JWTClaimsSet claims = new com.nimbusds.jwt.JWTClaimsSet.Builder()
         .subject("test-user-subject")
         .audience(audience)
         .claim("preferred_username", "test-user")
         .issueTime(new java.util.Date())
         .expirationTime(Date.from(Instant.now().plus(30, ChronoUnit.DAYS)))
-        .issuer("http://swedenconnect.se/op")
+        .issuer(issuer)
         .claim("scope", "read write")
         .claim("org_rights", List.of(Map.of(
             "organization_identifier", orgType.orgId,
@@ -152,7 +170,7 @@ public class JwtTestUtils {
         .claim("preferred_username", "test-user")
         .issueTime(new java.util.Date())
         .expirationTime(Date.from(Instant.now().plus(30, ChronoUnit.DAYS)))
-        .issuer("http://swedenconnect.se/op")
+        .issuer(ISSUER)
         .claim("scope", orgType.orgId + ":" + function + ":" + right)
         .claim("organization_identifier", orgType.orgId)
         .build();
