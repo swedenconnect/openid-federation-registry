@@ -20,10 +20,11 @@ management:
       enabled: false
     sampling:
       probability: 1.0
+  # Only what monitoring needs. Other endpoints, such as heapdump, env and configprops, leak secrets.
   endpoints:
     web:
       exposure:
-        include: "*"
+        include: health,info,prometheus
   opentelemetry:
     tracing:
       export:

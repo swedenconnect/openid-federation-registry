@@ -27,11 +27,11 @@ This document describes the configuration settings available for the OpenID Fede
 
 ## Server Configuration
 
-| Setting                                     | Example Value | Description                                               |
-|---------------------------------------------|---------------|-----------------------------------------------------------|
-| `server.port`                               | 8010          | Port the server will run on.                              |
-| `server.compression.enabled`                | true          | Enables response compression for the server. Recommended. |
-| `management.endpoints.web.exposure.include` | `*`           | Configures the exposure of all management endpoints.      |
+| Setting                                     | Example Value            | Description                                               |
+|---------------------------------------------|--------------------------|-----------------------------------------------------------|
+| `server.port`                               | 8010                     | Port the server will run on.                              |
+| `server.compression.enabled`                | true                     | Enables response compression for the server. Recommended. |
+| `management.endpoints.web.exposure.include` | `health,info,prometheus` | Configures which management endpoints are exposed.        |
 
 ## Spring Application Configuration
 
@@ -115,7 +115,7 @@ automatically generated names differ between environments.
 | `management.tracing.export.enabled`                     | `false`                           | Enables export of traces to the OTLP endpoint. Off unless explicitly turned on.                |
 | `management.tracing.sampling.probability`               | `1.0`                             | Fraction of requests to sample for distributed tracing. `1.0` = 100 %.                         |
 | `management.opentelemetry.tracing.export.otlp.endpoint` | `http://localhost:4318/v1/traces` | OTLP endpoint for exporting traces. Can also be set via `OTEL_EXPORTER_OTLP_ENDPOINT` env var. |
-| `management.endpoints.web.exposure.include`             | `*`                               | Controls which actuator endpoints are exposed over HTTP.                                       |
+| `management.endpoints.web.exposure.include`             | `health,info,prometheus`          | Controls which actuator endpoints are exposed over HTTP.                                       |
 
 ## API Documentation (SpringDoc)
 

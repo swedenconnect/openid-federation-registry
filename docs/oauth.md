@@ -145,13 +145,13 @@ portal calls it with the member's own token to register the member's entities.
 
 ### Public endpoints (no authentication required)
 
-| Path pattern                                                      | Notes                                                           |
-|-------------------------------------------------------------------|-----------------------------------------------------------------|
-| `GET /api/v1/federationservice/**`                                | Public API the external oidf-service federation node reads from |
-| `GET /actuator/**`                                                | Health / metrics endpoints                                      |
-| `GET /assets/**`                                                  | Static frontend assets                                          |
-| `GET /*`                                                          | Top-level SPA entry points (`/`, `/login`, ...)                 |
-| `GET /logout/frontchannel`                                        | OIDC front-channel logout                                       |
+| Path pattern                                                        | Notes                                                           |
+|---------------------------------------------------------------------|-----------------------------------------------------------------|
+| `GET /api/v1/federationservice/**`                                  | Public API the external oidf-service federation node reads from |
+| `GET /actuator/health/**`, `/actuator/info`, `/actuator/prometheus` | Health / metrics endpoints                                      |
+| `GET /assets/**`                                                    | Static frontend assets                                          |
+| `GET /*`                                                            | Top-level SPA entry points (`/`, `/login`, ...)                 |
+| `GET /logout/frontchannel`                                          | OIDC front-channel logout                                       |
 
 See [Architecture Overview](architecture.md#multi-tenancy-and-authorization-model) for how this fits into the
 rest of the system, and `infrastructure.config.SecurityConfig` for the authoritative, up-to-date rule set.
