@@ -57,7 +57,8 @@ class ActuatorSecurityIT {
 
   @DisplayName("Sensitive actuator endpoints are not available without authentication")
   @ParameterizedTest
-  @ValueSource(strings = { "heapdump", "env", "configprops", "beans", "mappings", "loggers", "threaddump" })
+  @ValueSource(strings = { "heapdump", "env", "configprops", "beans", "mappings", "loggers", "threaddump",
+      "prometheus" })
   void sensitiveEndpointsRequireAuthentication(final String endpoint) throws Exception {
     assertThat(this.get("/actuator/" + endpoint).statusCode()).isNotEqualTo(200);
   }
