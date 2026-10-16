@@ -18,8 +18,25 @@ import {useAuthorizationStatusStore} from "@/authorization/stores/authorizationS
 import router from "@/router";
 import {ref} from "vue";
 
+/**
+ * The CSRF token the backend sets in the XSRF-TOKEN cookie, or null when there is no cookie.
+ */
+export function csrfToken() {
+    const cookie = document.cookie.split('; ').find(c => c.startsWith('XSRF-TOKEN='));
+    return cookie ? decodeURIComponent(cookie.substring('XSRF-TOKEN='.length)) : null;
+}
+
+/**
+ * The CSRF header for a state-changing request: the token from the XSRF-TOKEN cookie, sent back in the X-XSRF-TOKEN
+ * header. Empty when there is no cookie.
+ */
+export function csrfHeaders() {
+    const token = csrfToken();
+    return token ? {'X-XSRF-TOKEN': token} : {};
+}
+
 function _getRequestOptions(payload, method) {
-    const headers = {};
+    const headers = {...csrfHeaders()};
     headers['Content-Type'] = 'application/json';
     return {
         method,

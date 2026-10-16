@@ -6,6 +6,11 @@
 
 ---
 
+### Version 0.9.10 Unreleased
+**Date:** <ToBeSet>
+
+- CSRF protection for requests from the GUI. Logout is a `POST`, and the session cookie is sent with `SameSite=Lax`.
+
 ### Version 0.9.9 Unreleased
 **Date:** <ToBeSet>
 

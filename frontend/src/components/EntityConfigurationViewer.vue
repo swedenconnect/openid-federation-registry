@@ -92,6 +92,7 @@ import {computed, ref} from 'vue';
 import {useErrorStore} from '@/stores/errorStore';
 import {entityConfigurationViewPath, subordinateStatementViewPath} from '@/config/path';
 import {useUserStore} from '@/stores/userStore';
+import {csrfHeaders} from '@/api/composables/fetch';
 
 const props = defineProps({
   entityId: {
@@ -136,7 +137,7 @@ async function open() {
         : await fetch(entityConfigurationViewPath(userStore.selectedTenant, userStore.orgNumber), {
           method: 'POST',
           credentials: 'include',
-          headers: {'Content-Type': 'text/plain'},
+          headers: {'Content-Type': 'text/plain', ...csrfHeaders()},
           body: props.entityId,
         });
 

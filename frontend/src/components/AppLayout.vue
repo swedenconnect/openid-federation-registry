@@ -175,9 +175,9 @@ import {RouterLink, RouterView, useRoute, useRouter} from 'vue-router';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
 import {useRequest} from '@/api/composables/request';
+import {logout} from '@/authorization/logout';
 import {
   adminAuthenticatePath,
-  logoutPath,
   registrationAdminDomainsCountPath,
   registrationAdminPath,
   swaggerUiPath,
@@ -217,10 +217,6 @@ async function handleTenantChange(tenantName) {
 
 function login() {
   globalThis.location.href = adminAuthenticatePath;
-}
-
-function logout() {
-  globalThis.location.href = logoutPath;
 }
 
 function reload() {

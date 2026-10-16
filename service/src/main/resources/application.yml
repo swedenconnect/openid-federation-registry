@@ -61,6 +61,10 @@ logging:
 
 server:
   port: 8010
+  servlet:
+    session:
+      cookie:
+        same-site: lax
   compression:
     enabled: true
   forward-headers-strategy: framework

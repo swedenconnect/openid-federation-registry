@@ -326,6 +326,7 @@ import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue';
 import ModulePolicyEditor from '@/components/ModulePolicyEditor.vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
+import {csrfHeaders} from '@/api/composables/fetch';
 import {useErrorStore} from '@/stores/errorStore';
 import {useLoadJwks} from '@/api/composables/jwks';
 import {entityConfigurationViewPath, federationEntityPath, subordinatePath, subordinatesPath} from '@/config/path';
@@ -419,7 +420,7 @@ async function checkEntityConfiguration(entityId, seq) {
     const response = await fetch(entityConfigurationViewPath(userStore.selectedTenant, userStore.orgNumber), {
       method: 'POST',
       credentials: 'include',
-      headers: {'Content-Type': 'text/plain'},
+      headers: {'Content-Type': 'text/plain', ...csrfHeaders()},
       body: entityId,
     });
     if (response.ok) {

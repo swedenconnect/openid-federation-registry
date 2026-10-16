@@ -27,7 +27,6 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.oauth2.client.endpoint.NimbusJwtClientAuthenticationParametersConverter;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
 import org.springframework.security.oauth2.client.endpoint.RestClientAuthorizationCodeTokenResponseClient;
@@ -39,6 +38,8 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import se.swedenconnect.iam.security.client.ResourceParameterConverter;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryJwtConverter;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauthclient.RegistryOidcUser;
@@ -72,12 +73,22 @@ public class SecurityConfig {
         new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
     logoutSuccessHandler.setPostLogoutRedirectUri("{baseUrl}/");
 
+    // The token is read from the XSRF-TOKEN cookie and sent back as is, in the X-XSRF-TOKEN header from fetch or the
+    // _csrf parameter of the logout form. A null attribute name loads the token on every request, so the cookie is
+    // always set for the SPA.
+    final CsrfTokenRequestAttributeHandler csrfRequestHandler = new CsrfTokenRequestAttributeHandler();
+    csrfRequestHandler.setCsrfRequestAttributeName(null);
+
     http
         .oauth2ResourceServer(oauth2 -> oauth2
             .jwt(jwtConfigurer ->
                 jwtConfigurer.jwtAuthenticationConverter(this.customJwtAuthenticationConverter()))
         )
-        .csrf(AbstractHttpConfigurer::disable)
+        // The SPA is authorized by the session cookie, so state-changing requests must carry the CSRF token.
+        // Requests with a bearer token are exempt.
+        .csrf(csrf -> csrf
+            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+            .csrfTokenRequestHandler(csrfRequestHandler))
         .oauth2Login(login -> {
           login
               .loginPage("/")
@@ -93,6 +104,7 @@ public class SecurityConfig {
               .ifPresent(client -> login.tokenEndpoint(token -> token.accessTokenResponseClient(client)));
         })
         .logout(logout -> logout
+            // POST only, with the CSRF token
             .logoutUrl("/logout")
             .logoutSuccessHandler(logoutSuccessHandler)
             .clearAuthentication(true)

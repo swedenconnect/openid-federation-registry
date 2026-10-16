@@ -39,11 +39,7 @@
 
 <script setup>
 import {useUserStore} from '@/stores/userStore';
-import {logoutPath} from '@/config/path';
+import {logout} from '@/authorization/logout';
 
 const userStore = useUserStore();
-
-function logout() {
-  globalThis.location.href = logoutPath;
-}
 </script>
