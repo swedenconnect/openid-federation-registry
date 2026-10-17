@@ -26,8 +26,8 @@ import org.springframework.core.env.Environment;
  * The issuer check itself is performed by Spring Boot, which adds a {@code JwtIssuerValidator} to the
  * {@code JwtDecoder} when {@code spring.security.oauth2.resourceserver.jwt.issuer-uri} is set. With only
  * {@code jwk-set-uri} the {@code iss} claim is not checked at all, so any token signed by a key in that JWK set is
- * accepted, whatever issuer it claims. That failure mode is invisible at runtime, so it is turned into a startup failure
- * here instead.
+ * accepted, whatever issuer it claims. That failure mode is invisible at runtime, so it is turned into a startup
+ * failure here instead.
  * <p>
  * {@code issuer-uri} can not be combined with {@code public-key-location} without {@code jwk-set-uri}: Spring Boot then
  * ignores the public key and fetches the keys through OpenID Connect discovery at the issuer instead, which also fails
