@@ -153,6 +153,13 @@ portal calls it with the member's own token to register the member's entities.
 | `GET /*`                                    | Top-level SPA entry points (`/`, `/login`, ...)                 |
 | `GET /logout/frontchannel`                  | OIDC front-channel logout                                       |
 
+### CSRF
+
+Requests from the GUI are authorized by the session cookie, so a state-changing request (`POST`, `PUT`, `DELETE`)
+must send the token from the `XSRF-TOKEN` cookie in the `X-XSRF-TOKEN` header, otherwise it is rejected with `403`.
+Logout is a `POST /logout` form with the token in the `_csrf` parameter. Requests with a bearer token do not need it.
+The session cookie is sent with `SameSite=Lax`.
+
 See [Architecture Overview](architecture.md#multi-tenancy-and-authorization-model) for how this fits into the
 rest of the system, and `infrastructure.config.SecurityConfig` for the authoritative, up-to-date rule set.
 

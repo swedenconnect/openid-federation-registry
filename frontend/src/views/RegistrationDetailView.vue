@@ -436,6 +436,7 @@ import {computed, onMounted, ref, watch} from 'vue';
 import StepPreview from '@/components/StepPreview.vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
+import {csrfHeaders} from '@/api/composables/fetch';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
 import {
@@ -600,7 +601,7 @@ async function loadEntityStatement() {
     const res = await fetch(entityConfigurationViewPath(userStore.selectedTenant, userStore.orgNumber), {
       method: 'POST',
       credentials: 'include',
-      headers: {'Content-Type': 'text/plain'},
+      headers: {'Content-Type': 'text/plain', ...csrfHeaders()},
       body: registration.value.entityIdentifier,
     });
     if (res.ok) {

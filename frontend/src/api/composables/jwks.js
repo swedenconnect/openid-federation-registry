@@ -20,6 +20,7 @@ import {useAuthorizationStatusStore} from "@/authorization/stores/authorizationS
 import router from "@/router";
 import {jwksSupportPath} from "@/config/path";
 import {useUserStore} from "@/stores/userStore";
+import {csrfHeaders} from "./fetch";
 
 export function useLoadJwks() {
     const errorStore = useErrorStore();
@@ -42,6 +43,7 @@ export function useLoadJwks() {
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'text/plain',
+                    ...csrfHeaders(),
                 },
                 body: entityIdentifier.trim(),
             });

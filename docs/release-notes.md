@@ -9,6 +9,7 @@
 ### Version 0.9.10 Unreleased
 **Date:** <ToBeSet>
 
+- CSRF protection for requests from the GUI. Logout is a `POST`, and the session cookie is sent with `SameSite=Lax`.
 - The registry does not start when `spring.security.oauth2.resourceserver.jwt.jwk-set-uri` is set without
   `spring.security.oauth2.resourceserver.jwt.issuer-uri`, since the `iss` claim of access tokens is then not checked.
 - Only the actuator endpoints `health` and `info` are exposed and open without authentication.
