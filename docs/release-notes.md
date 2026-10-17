@@ -6,6 +6,11 @@
 
 ---
 
+### Version 0.9.10 Unreleased
+**Date:** <ToBeSet>
+
+- Only the actuator endpoints `health` and `info` are exposed and open without authentication.
+
 ### Version 0.9.9 Unreleased
 **Date:** <ToBeSet>
 
