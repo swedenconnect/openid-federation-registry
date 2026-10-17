@@ -11,6 +11,7 @@
 
 - The registry does not start when `spring.security.oauth2.resourceserver.jwt.jwk-set-uri` is set without
   `spring.security.oauth2.resourceserver.jwt.issuer-uri`, since the `iss` claim of access tokens is then not checked.
+- Only the actuator endpoints `health` and `info` are exposed and open without authentication.
 
 ### Version 0.9.9 Unreleased
 **Date:** <ToBeSet>

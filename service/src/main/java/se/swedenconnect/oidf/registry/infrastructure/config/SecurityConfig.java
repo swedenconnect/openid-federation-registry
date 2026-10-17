@@ -115,7 +115,7 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.GET, "/jwks").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/v1/federationservice/**").permitAll()
             .requestMatchers(HttpMethod.OPTIONS).permitAll()
-            .requestMatchers(HttpMethod.GET, "/actuator/**").permitAll()
+            .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
             .requestMatchers(HttpMethod.GET, "/assets/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/entities/**", "/federation/**", "/hosted/**",
                 "/registration-flows/**", "/registrations/**", "/organizations/**").authenticated()
