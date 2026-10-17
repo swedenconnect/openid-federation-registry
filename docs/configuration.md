@@ -31,7 +31,7 @@ This document describes the configuration settings available for the OpenID Fede
 |---------------------------------------------|---------------|-----------------------------------------------------------|
 | `server.port`                               | 8010          | Port the server will run on.                              |
 | `server.compression.enabled`                | true          | Enables response compression for the server. Recommended. |
-| `management.endpoints.web.exposure.include` | `*`           | Configures the exposure of all management endpoints.      |
+| `management.endpoints.web.exposure.include` | `health,info` | Configures which management endpoints are exposed.        |
 
 ## Spring Application Configuration
 
@@ -93,6 +93,7 @@ automatically generated names differ between environments.
 |--------------------------------------------------------------------------------|---------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `spring.security.oauth2.resourceserver.jwt.public-key-location`                | classpath:my-key.pub      | Location of the public key for the JWT resource server.                                                                                                                                                                                                                                            |
 | `spring.security.oauth2.resourceserver.jwt.audiences`                          | oidf-entity-registry      | **Required.** Expected `aud` claim value(s) of incoming access tokens; several values may be given comma-separated, and a token matching any one of them is accepted. Startup fails if unset, since Spring Boot would then accept any token signed by the configured key, including tokens issued for another resource server. |
+| `spring.security.oauth2.resourceserver.jwt.issuer-uri`                         | https://idp.example.se    | **Required with `jwk-set-uri`.** Expected `iss` claim of incoming access tokens. Startup fails without it, since the `iss` claim is otherwise not checked. Can not be combined with `public-key-location` alone.                                                                                                               |
 | `spring.security.oauth2.client.registration.<id>.client-authentication-method` | private_key_jwt           | This registry authenticates to Keycloak's token endpoint with a signed JWT assertion instead of a client secret.                                                                                                                                                                                   |
 | `iam.security.client.credential.jks.store.location`                            | classpath:oidc-client.jks | Keystore holding this application's own OIDC client credential, used to sign `private_key_jwt` assertions and published (public part only) at `GET /jwks`. Also supports `pem`/`bundle` styles — see [`iam-security-spring-boot-starter`](https://github.com/swedenconnect/organizations-iam-app). |
 | `iam.security.function`                                                        | *(unset)*                 | Left unset — this registry runs in full/multi-function mode, since a tenant can be backed by several function groups.                                                                                                                                                                              |
@@ -115,7 +116,7 @@ automatically generated names differ between environments.
 | `management.tracing.export.enabled`                     | `false`                           | Enables export of traces to the OTLP endpoint. Off unless explicitly turned on.                |
 | `management.tracing.sampling.probability`               | `1.0`                             | Fraction of requests to sample for distributed tracing. `1.0` = 100 %.                         |
 | `management.opentelemetry.tracing.export.otlp.endpoint` | `http://localhost:4318/v1/traces` | OTLP endpoint for exporting traces. Can also be set via `OTEL_EXPORTER_OTLP_ENDPOINT` env var. |
-| `management.endpoints.web.exposure.include`             | `*`                               | Controls which actuator endpoints are exposed over HTTP.                                       |
+| `management.endpoints.web.exposure.include`             | `health,info`                     | Controls which actuator endpoints are exposed over HTTP.                                       |
 
 ## API Documentation (SpringDoc)
 
