@@ -66,6 +66,8 @@ server:
     session:
       cookie:
         same-site: lax
+        # TLS is terminated in the proxy, so Tomcat sees http and would leave Secure off
+        secure: true
   compression:
     enabled: true
   forward-headers-strategy: framework
