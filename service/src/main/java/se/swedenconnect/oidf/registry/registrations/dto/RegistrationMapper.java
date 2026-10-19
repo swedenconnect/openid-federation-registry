@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.registry.registrations.dto;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.Timestamps;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.registrationflow.dto.Technology;
+import se.swedenconnect.oidf.registry.registrationflow.metadata.MetadataPolicyTemplate;
 import se.swedenconnect.oidf.registry.registrationflow.metadata.PinnedValues;
 import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextDiffEntry;
@@ -226,13 +227,21 @@ public final class RegistrationMapper {
    *
    * @param subordinate the published subordinate statement
    * @param reviewOnUpdate whether a resubmission without a pinned change is also reviewed
+   * @param template the flow's metadata policy template, which tells where each value comes from; {@code null} if
+   *     unknown, in which case every value is taken to come from the entity configuration
    * @return mapped DTO
    */
   public static PinnedMetadataDto toPinnedMetadataDto(final SubordinateDto subordinate,
-      final boolean reviewOnUpdate) {
+      final boolean reviewOnUpdate, final MetadataPolicyTemplate template) {
     return new PinnedMetadataDto(
         PinnedValues.parameters(subordinate.getMetadataPolicy(), subordinate.getMetadata()).stream()
-            .map(p -> new PinnedParameterDto(p.entityType(), p.parameter(), p.value(), p.claim()))
+            .map(p -> {
+              final List<String> from = template == null
+                  ? List.of(p.parameter())
+                  : template.entityParameters(p.entityType(), p.parameter());
+              return new PinnedParameterDto(p.entityType(), p.parameter(), p.value(), p.claim(),
+                  from.isEmpty() ? PinnedParameterDto.REGISTRY : PinnedParameterDto.ENTITY_CONFIGURATION, from);
+            })
             .toList(),
         subordinate.getJwks(),
         reviewOnUpdate);

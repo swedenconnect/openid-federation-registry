@@ -26,8 +26,12 @@ import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 import se.swedenconnect.oidf.registry.registrationflow.RegistrationFlowService;
+import se.swedenconnect.oidf.registry.registrationflow.metadata.MetadataPolicyTemplate;
+import se.swedenconnect.oidf.registry.registrationflow.model.ConfigValueModel;
+import se.swedenconnect.oidf.registry.registrationflow.model.StepModel;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
 import se.swedenconnect.oidf.registry.registrationflow.process.review.ReviewableStep;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.impl.MetadataPolicyCreationStep;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationFlowInformationDto;
@@ -64,6 +68,7 @@ public class RegistrationServiceImpl implements RegistrationService {
   private final SubordinateService subordinateService;
   private final EntityConfigService entityConfigService;
   private final OrganizationService organizationService;
+  private final MetadataPolicyCreationStep metadataPolicyCreationStep;
 
 
   /**
@@ -76,6 +81,7 @@ public class RegistrationServiceImpl implements RegistrationService {
    * @param subordinateService service for deleting subordinate statements
    * @param entityConfigService service for deleting hosted entities
    * @param organizationService service for resolving the calling organization
+   * @param metadataPolicyCreationStep the step whose template tells where pinned values come from
    */
   public RegistrationServiceImpl(final FlowAssignmentRepository flowAssignmentRepository,
       final RegistrationRepository registrationRepository,
@@ -83,7 +89,8 @@ public class RegistrationServiceImpl implements RegistrationService {
       final SubordinateRepository subordinateRepository,
       final SubordinateService subordinateService,
       final EntityConfigService entityConfigService,
-      final OrganizationService organizationService) {
+      final OrganizationService organizationService,
+      final MetadataPolicyCreationStep metadataPolicyCreationStep) {
     this.flowAssignmentRepository = flowAssignmentRepository;
     this.registrationRepository = registrationRepository;
     this.registrationFlowService = registrationFlowService;
@@ -91,6 +98,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     this.subordinateService = subordinateService;
     this.entityConfigService = entityConfigService;
     this.organizationService = organizationService;
+    this.metadataPolicyCreationStep = metadataPolicyCreationStep;
   }
 
   /**
@@ -143,9 +151,37 @@ public class RegistrationServiceImpl implements RegistrationService {
     }
     this.subordinateService
         .getByEntityidentifierAndTaIm(reg.getEntityId(), reg.getFlowAssignment().getTaIm().getTaImId())
-        .map(subordinate -> RegistrationMapper.toPinnedMetadataDto(subordinate, reviewsUpdates(reg)))
+        .map(subordinate -> RegistrationMapper.toPinnedMetadataDto(subordinate, reviewsUpdates(reg),
+            this.metadataPolicyTemplate(reg)))
         .ifPresent(dto::setPinnedMetadata);
     return dto;
+  }
+
+  /**
+   * The metadata policy template of the registration's flow, which tells where each pinned value comes from.
+   * {@code null} if the flow has no Metadata Policy Creation step or its template cannot be read.
+   */
+  private MetadataPolicyTemplate metadataPolicyTemplate(final Registration reg) {
+    final UUID stepId = this.metadataPolicyCreationStep.getStepId();
+    final Optional<StepModel> step = Optional.ofNullable(reg.getFlowAssignment().getRegistrationFlow()
+            .getFlowDefinition()).orElse(List.of())
+        .stream()
+        .filter(s -> stepId.equals(s.stepId()))
+        .findFirst();
+    if (step.isEmpty()) {
+      return null;
+    }
+    final String configured = Optional.ofNullable(step.get().config()).orElse(List.of()).stream()
+        .filter(value -> MetadataPolicyCreationStep.TEMPLATE.equals(value.key()))
+        .map(ConfigValueModel::value)
+        .findFirst()
+        .orElse(null);
+    try {
+      return this.metadataPolicyCreationStep.template(configured);
+    }
+    catch (final IllegalStateException e) {
+      return null;
+    }
   }
 
   /**

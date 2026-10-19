@@ -55,4 +55,36 @@ class MetadataPolicyTemplateTest {
         "openid_relying_party[2]: only values from the entity's metadata can be multilingual",
         "openid_relying_party[3]: static_value must be given for source static");
   }
+
+  @Test
+  @DisplayName("Tells which parameters of the entity configuration a pinned value comes from")
+  void entityParameters() {
+    final MetadataPolicyTemplate template = new MetadataPolicyTemplate("sv", null, null, Map.of(
+        "openid_relying_party", List.of(
+            new MetadataPolicyTemplate.Rule("organization_name", MetadataPolicyTemplate.Claim.METADATA, null,
+                MetadataPolicyTemplate.Source.ENTITY, null, null, null, null, null, true,
+                MetadataPolicyTemplate.Untagged.ORGANIZATION, MetadataPolicyTemplate.OrganizationField.LEGAL_NAME,
+                null),
+            new MetadataPolicyTemplate.Rule("display_name", MetadataPolicyTemplate.Claim.METADATA_POLICY, "value",
+                MetadataPolicyTemplate.Source.ENTITY, null, null, "client_name", null, null, true,
+                MetadataPolicyTemplate.Untagged.ENTITY_OR_DEFAULT, null, null),
+            new MetadataPolicyTemplate.Rule("logo_uri", MetadataPolicyTemplate.Claim.METADATA_POLICY, "value",
+                MetadataPolicyTemplate.Source.ENTITY, null, null, null, null, null, null, null, null, null),
+            new MetadataPolicyTemplate.Rule("organization_number", MetadataPolicyTemplate.Claim.METADATA, null,
+                MetadataPolicyTemplate.Source.ORGANIZATION,
+                MetadataPolicyTemplate.OrganizationField.ORGANIZATION_NUMBER,
+                null, null, null, null, null, null, null, null))));
+
+    assertThat(template.entityParameters("openid_relying_party", "organization_name")).isEmpty();
+    assertThat(template.entityParameters("openid_relying_party", "organization_name#en"))
+        .containsExactly("organization_name#en");
+    assertThat(template.entityParameters("openid_relying_party", "display_name"))
+        .containsExactly("display_name", "display_name#sv", "client_name", "client_name#sv");
+    assertThat(template.entityParameters("openid_relying_party", "display_name#sv"))
+        .containsExactly("display_name#sv", "client_name#sv");
+    assertThat(template.entityParameters("openid_relying_party", "logo_uri")).containsExactly("logo_uri");
+    assertThat(template.entityParameters("openid_relying_party", "organization_number")).isEmpty();
+    assertThat(template.entityParameters("openid_relying_party", "unknown")).isEmpty();
+    assertThat(template.entityParameters("openid_provider", "logo_uri")).isEmpty();
+  }
 }

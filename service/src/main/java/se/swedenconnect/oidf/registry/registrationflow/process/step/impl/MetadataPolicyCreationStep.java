@@ -192,6 +192,17 @@ public class MetadataPolicyCreationStep extends NoConfigStepAdapter implements R
             && template.onFailureOrFail() == MetadataPolicyTemplate.OnFailure.FAIL));
   }
 
+  /**
+   * Reads the template a flow configures for this step, the default template when none is set.
+   *
+   * @param configured the {@value #TEMPLATE} configuration value, may be {@code null}
+   * @return the template
+   * @throws IllegalStateException if the template cannot be read
+   */
+  public MetadataPolicyTemplate template(final String configured) {
+    return this.parse(configured == null || configured.isBlank() ? this.presetTemplate : configured);
+  }
+
   private String templateJson(final StepConfig config) {
     final Object configured = config.getValue(TEMPLATE);
     return configured == null || configured.toString().isBlank() ? this.presetTemplate : configured.toString();
