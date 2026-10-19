@@ -40,6 +40,13 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import se.swedenconnect.iam.security.client.ResourceParameterConverter;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauth.RegistryJwtConverter;
 import se.swedenconnect.oidf.registry.infrastructure.auth.oauthclient.RegistryOidcUser;
@@ -60,7 +67,9 @@ import java.util.Optional;
 @Slf4j
 public class SecurityConfig {
 
-
+  private static final String CONTENT_SECURITY_POLICY = "Content-Security-Policy";
+  private static final String PERMISSIONS_POLICY =
+      "camera=(), microphone=(), geolocation=(), payment=(), usb=()";
 
   @Bean
   @Order(1)
@@ -79,7 +88,23 @@ public class SecurityConfig {
     final CsrfTokenRequestAttributeHandler csrfRequestHandler = new CsrfTokenRequestAttributeHandler();
     csrfRequestHandler.setCsrfRequestAttributeName(null);
 
+    final RequestMatcher swagger = new OrRequestMatcher(
+        PathPatternRequestMatcher.withDefaults().matcher("/swagger-ui.html"),
+        PathPatternRequestMatcher.withDefaults().matcher("/swagger-ui/**"),
+        PathPatternRequestMatcher.withDefaults().matcher("/v3/api-docs/**"));
+    final String guiPolicy =
+        ContentSecurityPolicies.gui(ContentSecurityPolicies.endSessionOrigins(clientRegistrationRepository));
+    log.info("Content-Security-Policy: {}", guiPolicy);
+
     http
+        .headers(headers -> headers
+            .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(new NegatedRequestMatcher(swagger),
+                new StaticHeadersWriter(CONTENT_SECURITY_POLICY, guiPolicy)))
+            .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(swagger,
+                new StaticHeadersWriter(CONTENT_SECURITY_POLICY, ContentSecurityPolicies.SWAGGER)))
+            .referrerPolicy(referrer -> referrer.policy(ReferrerPolicy.SAME_ORIGIN))
+            .permissionsPolicyHeader(permissions -> permissions.policy(PERMISSIONS_POLICY))
+        )
         .oauth2ResourceServer(oauth2 -> oauth2
             .jwt(jwtConfigurer ->
                 jwtConfigurer.jwtAuthenticationConverter(this.customJwtAuthenticationConverter()))
