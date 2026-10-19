@@ -14,6 +14,7 @@
   `spring.security.oauth2.resourceserver.jwt.issuer-uri`, since the `iss` claim of access tokens is then not checked.
 - Only the actuator endpoints `health` and `info` are exposed and open without authentication.
 - The session cookie is marked `Secure` also behind the TLS proxy (#322).
+- Content-Security-Policy, Referrer-Policy and Permissions-Policy headers. The icon font is no longer loaded from a CDN (#324).
 
 ### Version 0.9.9 Unreleased
 **Date:** <ToBeSet>

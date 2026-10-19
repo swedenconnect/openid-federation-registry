@@ -160,6 +160,14 @@ must send the token from the `XSRF-TOKEN` cookie in the `X-XSRF-TOKEN` header, o
 Logout is a `POST /logout` form with the token in the `_csrf` parameter. Requests with a bearer token do not need it.
 The session cookie is sent with `SameSite=Lax` and `Secure`.
 
+### Security headers
+
+Every response has a `Content-Security-Policy` that only allows scripts, styles, fonts and requests from the registry
+itself. Inline styles are allowed, since Vuetify adds its theme as a `<style>` element. Forms may also be redirected to
+the origin of the OpenID provider's end session endpoint, which the logout goes to. Swagger UI (`/swagger-ui.html`,
+`/swagger-ui/**`, `/v3/api-docs/**`) gets a milder policy that allows inline scripts. `Referrer-Policy: same-origin`
+and a `Permissions-Policy` that turns off camera, microphone, geolocation, payment and USB are sent as well.
+
 See [Architecture Overview](architecture.md#multi-tenancy-and-authorization-model) for how this fits into the
 rest of the system, and `infrastructure.config.SecurityConfig` for the authoritative, up-to-date rule set.
 
