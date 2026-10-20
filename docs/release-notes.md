@@ -15,6 +15,17 @@
 - Only the actuator endpoints `health` and `info` are exposed and open without authentication.
 - The session cookie is marked `Secure` also behind the TLS proxy (#322).
 - Content-Security-Policy, Referrer-Policy and Permissions-Policy headers. The icon font is no longer loaded from a CDN (#324).
+- API: `Registration` has `pinnedMetadata` for a self-managed entity: the parameters and keys its subordinate statement
+  pins.
+- Resubmitting an approved self-managed entity passes its review steps when no pinned value or key changes. When one
+  changes, it waits for review and the federation keeps the published values until it is approved.
+- API: a resubmission of a self-managed entity that both adds and removes keys is refused with `400` (key rollover:
+  add the new key first, remove the old one in a later resubmission).
+- Flow steps that can pause for review have `manualreviewforupdate`: the step also reviews a resubmission that changes
+  no pinned value or key. API: `pinnedMetadata.reviewOnUpdate` is set when a step of the flow has it. GUI: a checkbox
+  in the flow builder.
+- API: an entity review has `update`, set when the entity is already in the federation. GUI: an **Update** chip on
+  the entity, and the Metadata Review step shows the changes to the values published in the federation.
 
 ### Version 0.9.9 Unreleased
 **Date:** <ToBeSet>
@@ -68,17 +79,6 @@
   have no technical details.
 - API: the registration admin API has `technicalReason` for an automatic decline. GUI: **Technical Reason** on the
   registration.
-- API: `Registration` has `pinnedMetadata` for a self-managed entity: the parameters and keys its subordinate statement
-  pins.
-- Resubmitting an approved self-managed entity passes its review steps when no pinned value or key changes. When one
-  changes, it waits for review and the federation keeps the published values until it is approved.
-- API: a resubmission of a self-managed entity that both adds and removes keys is refused with `400` (key rollover:
-  add the new key first, remove the old one in a later resubmission).
-- Flow steps that can pause for review have `manualreviewforupdate`: the step also reviews a resubmission that changes
-  no pinned value or key. API: `pinnedMetadata.reviewOnUpdate` is set when a step of the flow has it. GUI: a checkbox
-  in the flow builder.
-- API: an entity review has `update`, set when the entity is already in the federation. GUI: an **Update** chip on
-  the entity, and the Metadata Review step shows the changes to the values published in the federation.
 - API: step issues have `type`, `VALIDATION` or `TECHNICAL`. GUI: the issue type on the registration.
 - A registration whose entity configuration cannot be fetched or is not valid is declined, instead of the request
   failing.
