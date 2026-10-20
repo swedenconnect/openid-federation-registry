@@ -465,14 +465,18 @@ for a hosted entity, `metadata`.
 
 The response (`MetadataDryRun`):
 
-- `pinned`: the parameters the subordinate statement would pin (`entityType`, `parameter`, `value`, `claim`): set by
-  the `metadata` claim or fixed with the `value` operator.
+- `pinned`: the parameters the subordinate statement would pin (`entityType`, `parameter`, `value`, `claim`,
+  `source`, `entityParameters`, as in `RegistrationDto.pinnedMetadata`): set by the `metadata` claim or fixed with the
+  `value` operator.
 - `overridden`: the parameters whose resolved value is not the one the entity declares (`entityType`, `parameter`,
   `entityValue`, `value`, `claim`, `operators`): set by the `metadata` claim, or changed, added or removed by the
   `metadata_policy` claim.
 - `errors`: the failed checks, metadata policy errors, and why the entity configuration could not be fetched.
 - `failed`: whether the errors would decline the registration, rather than be shown to a reviewer
   (`on_failure: review`).
+- `willTriggerReview`: whether submitting would wait for an operator's approval. True when a step of the flow that
+  applies has `manualreview` set; for a self-managed entity whose `APPROVED` registration would publish no change to a
+  pinned value or key (UC-1, alternative flow C), only a step with `manualreviewforupdate` counts.
 - `checks`: every check made (`status`: `OK`, `FAIL` or `INFO`; `message`).
 - `metadata`, `metadataPolicy`: the claims that would be published.
 

@@ -28,6 +28,7 @@ import java.util.Map;
  * @param overridden the parameters whose resolved value is not the one the entity declares
  * @param errors the failed checks and policy errors
  * @param failed whether the errors would fail the registration, rather than be shown to a reviewer
+ * @param willTriggerReview whether submitting would wait for an operator's approval
  * @param checks every check made, passed or failed
  * @param metadata the {@code metadata} claim that would be published, keyed by entity type
  * @param metadataPolicy the {@code metadata_policy} claim that would be published, keyed by entity type
@@ -50,6 +51,10 @@ public record MetadataDryRunDto(
     @Schema(description = "True if the errors would decline the registration; false if there are none or a reviewer "
         + "is shown them")
     boolean failed,
+
+    @Schema(description = "True if submitting would wait for an operator's approval; false if it would be published "
+        + "directly")
+    boolean willTriggerReview,
 
     @Schema(description = "Every check made, passed or failed")
     List<Check> checks,

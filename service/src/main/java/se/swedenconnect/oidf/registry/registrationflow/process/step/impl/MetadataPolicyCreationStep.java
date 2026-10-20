@@ -200,7 +200,7 @@ public class MetadataPolicyCreationStep extends NoConfigStepAdapter implements R
     final boolean invalidPolicy = problems.size() > result.failures().size();
     return new Evaluation(result, problems,
         invalidPolicy || (!result.failures().isEmpty()
-            && template.onFailureOrFail() == MetadataPolicyTemplate.OnFailure.FAIL));
+            && template.onFailureOrFail() == MetadataPolicyTemplate.OnFailure.FAIL), template);
   }
 
   /**
@@ -266,8 +266,10 @@ public class MetadataPolicyCreationStep extends NoConfigStepAdapter implements R
    * @param result the claims and check outcomes
    * @param problems every failed check and policy error, as messages
    * @param failed whether the step must fail
+   * @param template the template applied
    */
-  public record Evaluation(MetadataPolicyGenerator.Result result, List<String> problems, boolean failed) {
+  public record Evaluation(MetadataPolicyGenerator.Result result, List<String> problems, boolean failed,
+      MetadataPolicyTemplate template) {
 
     private List<StepIssue> issues(final Severity severity) {
       return this.problems.stream()
