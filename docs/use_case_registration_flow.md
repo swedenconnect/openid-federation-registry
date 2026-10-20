@@ -130,8 +130,16 @@ A self-managed entity serves its own entity configuration, but its subordinate s
 - the federation keys, in the `jwks` claim.
 
 `RegistrationDto.pinnedMetadata` lists them, for a self-managed entity whose subordinate statement is published:
-`parameters` (`entityType`, `parameter`, `value`, `claim`: `metadata` or `metadata_policy`) and `jwks`. A change to
-anything else in the entity configuration needs no new subordinate statement.
+`parameters` (`entityType`, `parameter`, `value`, `claim`: `metadata` or `metadata_policy`, `source`,
+`entityParameters`) and `jwks`. A change to anything else in the entity configuration needs no new subordinate
+statement.
+
+`source` tells where a pinned value comes from, as the flow's metadata policy template says:
+`entity_configuration` (the entity's own metadata, so changing it there changes the pinned value) or `registry` (the
+registry's organization data or a fixed value, which the entity cannot change). `entityParameters` lists the entity
+configuration parameters the value is taken from, the first one the entity declares being used (a fallback parameter
+or a default language may follow the parameter itself); it is empty for `registry`. Without a readable template, every
+value is reported as `entity_configuration` from its own parameter.
 
 To publish a change to a pinned value or key, the member resubmits the entity: the registration runs again (`PUT`
 re-run path). When the
