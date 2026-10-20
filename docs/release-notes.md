@@ -26,6 +26,8 @@
   in the flow builder.
 - API: an entity review has `update`, set when the entity is already in the federation. GUI: an **Update** chip on
   the entity, and the Metadata Review step shows the changes to the values published in the federation.
+- API: `POST /registration/v1/{tenant}/{orgNumber}/{joinId}/dry-run` runs a flow's metadata steps without storing
+  anything, and returns the pinned values, the overridden values and the errors.
 
 ### Version 0.9.9 Unreleased
 **Date:** <ToBeSet>
@@ -95,8 +97,6 @@
   Trust Anchor or Intermediate. GUI: after loading a template on a Trust Anchor or Intermediate, an offer to apply it
   to all its subordinates.
 - GUI: **Load template** on a subordinate's metadata policy.
-- API: `POST /registration/v1/{tenant}/{orgNumber}/{joinId}/dry-run` runs a flow's metadata steps without storing
-  anything, and returns the pinned values, the overridden values and the errors.
 
 ---
 
