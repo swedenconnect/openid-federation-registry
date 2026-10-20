@@ -22,7 +22,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Configuration of the Metadata Policy Creation step: per entity type, the rules that decide what goes into the
@@ -255,6 +257,39 @@ public record MetadataPolicyTemplate(
    */
   public OnFailure onFailureOrFail() {
     return this.onFailure == null ? OnFailure.FAIL : this.onFailure;
+  }
+
+  /**
+   * Lists the parameters of the entity's own metadata that a parameter's value is taken from, the first one the
+   * entity declares being used. An empty list means the registry sets the value itself, from its organization data or
+   * a fixed value, or that no rule of this template writes the parameter.
+   *
+   * @param entityType the entity type, e.g. {@code openid_relying_party}
+   * @param parameter the parameter as written to the claim, with language tag if it has one
+   * @return the entity's parameters the value comes from, in the order they are tried
+   */
+  public List<String> entityParameters(final String entityType, final String parameter) {
+    final int hash = parameter.indexOf('#');
+    final String name = hash < 0 ? parameter : parameter.substring(0, hash);
+    final String tag = hash < 0 ? "" : parameter.substring(hash);
+    final Rule rule = Optional.ofNullable(this.entityTypes).map(types -> types.get(entityType)).orElse(List.of())
+        .stream()
+        .filter(r -> r != null && name.equals(r.parameter()))
+        .findFirst()
+        .orElse(null);
+    if (rule == null || rule.source() != Source.ENTITY) {
+      return List.of();
+    }
+    final List<String> from = rule.fallback() == null ? List.of(name) : List.of(name, rule.fallback());
+    if (!rule.isMultilingual() || !tag.isEmpty()) {
+      return from.stream().map(p -> p + tag).toList();
+    }
+    final String defaultTag = "#" + this.defaultLanguageOrSv();
+    return switch (rule.untaggedOrDefault()) {
+      case NONE, ORGANIZATION -> List.of();
+      case DEFAULT_LANGUAGE -> from.stream().map(p -> p + defaultTag).toList();
+      case ENTITY_OR_DEFAULT -> from.stream().flatMap(p -> Stream.of(p, p + defaultTag)).toList();
+    };
   }
 
   /**

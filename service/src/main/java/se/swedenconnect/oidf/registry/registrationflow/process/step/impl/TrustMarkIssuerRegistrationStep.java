@@ -213,6 +213,8 @@ public class TrustMarkIssuerRegistrationStep extends NoConfigStepAdapter {
                     trustmarkType, pid));
 
         final ProcessContext subCtx = ctx.copy();
+        // Unchanged pinned values skip the review of the entity's own steps, never of a trust mark.
+        subCtx.remove(ContextKey.PINNED_UNCHANGED);
         subCtx.put(ContextKey.TRUSTMARKS_REQUESTED, new SerializableList<>(List.of(
             new TrustmarkSource(resolvedIssuerId, List.of(tmStatus)))));
 

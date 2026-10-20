@@ -48,6 +48,7 @@ import se.swedenconnect.oidf.registry.registrationflow.model.RegistrationFlow;
 import se.swedenconnect.oidf.registry.registrationflow.model.StepModel;
 import se.swedenconnect.oidf.registry.registrationflow.model.TrustMarkFlowAssignment;
 import se.swedenconnect.oidf.registry.registrationflow.model.TrustMarkIssuerFlowAssignment;
+import se.swedenconnect.oidf.registry.registrationflow.metadata.PinnedValues;
 import se.swedenconnect.oidf.registry.registrationflow.process.AutomaticDecline;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.Timestamps;
@@ -60,8 +61,11 @@ import se.swedenconnect.oidf.registry.registrationflow.process.SerializableList;
 import se.swedenconnect.oidf.registry.registrationflow.process.StepDefinition;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.MissingContextValueException;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.Step;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.StepStatus;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.UserPresentation;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.impl.DefaultConfig;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.impl.LoadEntityConfigurationStep;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.impl.MetadataPolicyCreationStep;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowRepository;
 import se.swedenconnect.oidf.registry.registrationflow.repository.TrustMarkFlowAssignmentRepository;
@@ -74,6 +78,8 @@ import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
 import se.swedenconnect.oidf.registry.registrations.model.TrustmarkSource;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
+import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
+import se.swedenconnect.oidf.registry.subordinate.service.SubordinateService;
 import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
 import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
 
@@ -107,6 +113,7 @@ public class RegistrationFlowService {
   private final RegistrationRepository registrationRepository;
   private final OrganizationTrustMarkRepository organizationTrustMarkRepository;
   private final AutomaticDecline automaticDecline;
+  private final SubordinateService subordinateService;
 
   /**
    * Constructs a new RegistrationFlowService.
@@ -125,6 +132,7 @@ public class RegistrationFlowService {
    * @param registrationRepository repository for persisting step results
    * @param organizationTrustMarkRepository repository of the trust mark types pre-approved per organization
    * @param automaticDecline declines a registration whose run failed
+   * @param subordinateService service for reading the published subordinate statement of an entity
    */
   public RegistrationFlowService(final RegistrationStepRepository registrationStepRepository,
       final TaImRepository taImRepository, final FlowRepository flowRepository,
@@ -137,7 +145,8 @@ public class RegistrationFlowService {
       final InstancePlacementService instancePlacementService, final ProcessEngine processEngine,
       final RegistrationRepository registrationRepository,
       final OrganizationTrustMarkRepository organizationTrustMarkRepository,
-      final AutomaticDecline automaticDecline) {
+      final AutomaticDecline automaticDecline,
+      final SubordinateService subordinateService) {
     this.registrationStepRepository = registrationStepRepository;
     this.taImRepository = taImRepository;
     this.flowRepository = flowRepository;
@@ -152,6 +161,7 @@ public class RegistrationFlowService {
     this.registrationRepository = registrationRepository;
     this.organizationTrustMarkRepository = organizationTrustMarkRepository;
     this.automaticDecline = automaticDecline;
+    this.subordinateService = subordinateService;
   }
 
   private String resolveTenantOrThrow(final Organization organization) {
@@ -347,6 +357,9 @@ public class RegistrationFlowService {
 
     try {
       final List<StepDefinition> allSteps = processFlow.getProcessFlow();
+      if (bodyMetadata == null || bodyMetadata.isEmpty()) {
+        this.checkPinnedValues(processContext, allSteps, flowAssignment);
+      }
       final ProcessReport report = this.processEngine.run(allSteps, processContext);
       processContext.<UUID>get(ContextKey.REGISTRATION_ID).flatMap(this.registrationRepository::findById)
           .filter(reg -> !isRefusedWhilePending(reg, report))
@@ -363,6 +376,65 @@ public class RegistrationFlowService {
 
   }
 
+
+  /**
+   * Checks, before a self-managed entity runs its approved registration again, whether the run changes anything the
+   * published Subordinate Statement pins: its {@code metadata} and {@code metadata_policy} claims and its keys. The
+   * flow's steps that load the entity configuration and build the claims are run up to their review gates, and the
+   * result compared with what is published. If nothing changes, {@link ContextKey#PINNED_UNCHANGED} lets the run pass
+   * its review gates. If the check cannot be made, the run is reviewed as usual and reports any failure itself. A
+   * resubmission that both adds and removes keys is refused.
+   *
+   * @param ctx the context of the run, which keeps what the steps loaded
+   * @param steps the flow's steps
+   * @param flowAssignment the flow assignment the run is made under
+   * @throws RegistryServerException if the resubmission both adds and removes keys
+   */
+  private void checkPinnedValues(final ProcessContext ctx, final List<StepDefinition> steps,
+      final FlowAssignment flowAssignment) {
+    final String entityId = ctx.getRequired(ContextKey.ENTITY_ID);
+    final boolean approved = this.registrationRepository.findByEntityId(entityId)
+        .filter(reg -> reg.getRegistrationType() == RegistrationType.SUBORDINATE)
+        .filter(reg -> reg.getStatus() == RegistrationStatus.APPROVED)
+        .isPresent();
+    final Optional<SubordinateDto> published = approved
+        ? this.subordinateService.getByEntityidentifierAndTaIm(entityId, flowAssignment.getTaIm().getTaImId())
+        : Optional.empty();
+    if (published.isEmpty()) {
+      return;
+    }
+    try {
+      for (final StepDefinition def : steps) {
+        if ((def.step() instanceof LoadEntityConfigurationStep || def.step() instanceof MetadataPolicyCreationStep)
+            && def.step().canApply(ctx, def.config())
+            && def.step().buildContext(ctx, def.config()).status() == StepStatus.FAILURE) {
+          return;
+        }
+      }
+    }
+    catch (final RuntimeException e) {
+      return;
+    }
+    final Optional<JWKSet> jwks = ctx.get(ContextKey.ENTITY_CONFIGURATION_JWKS);
+    if (jwks.isEmpty()) {
+      return;
+    }
+    // A key rollover must not disrupt other parties: the new key is published before it is used, and the old one
+    // removed only after that, so one resubmission either adds or removes keys, never both.
+    final PinnedValues.KeyChange keyChange = PinnedValues.keyChange(published.get().getJwks(),
+        jwks.get().toJSONObject());
+    if (keyChange.addsAndRemoves()) {
+      throw new RegistryServerException(ErrorTypes.INVALID_PARAMETER, ("Key rollover: add the new key first and "
+          + "remove the old key in a later resubmission (added: %s, removed: %s)").formatted(
+          String.join(", ", keyChange.added()), String.join(", ", keyChange.removed())));
+    }
+    final PinnedValues.Published claims = new PinnedValues.Published(published.get().getMetadataPolicy(),
+        published.get().getMetadata(), published.get().getJwks());
+    if (PinnedValues.unchanged(claims, ctx.<JSONObject>get(ContextKey.METADATA_POLICY).orElse(null),
+        ctx.<JSONObject>get(ContextKey.SUBORDINATE_METADATA).orElse(null), jwks.get().toJSONObject())) {
+      ctx.put(ContextKey.PINNED_UNCHANGED, Boolean.TRUE);
+    }
+  }
 
   /**
    * Approves a specific pending step, reconstructs the pipeline context from stored registration

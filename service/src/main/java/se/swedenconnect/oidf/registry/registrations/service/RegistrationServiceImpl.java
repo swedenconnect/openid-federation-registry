@@ -26,7 +26,12 @@ import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 import se.swedenconnect.oidf.registry.registrationflow.RegistrationFlowService;
+import se.swedenconnect.oidf.registry.registrationflow.metadata.MetadataPolicyTemplate;
+import se.swedenconnect.oidf.registry.registrationflow.model.ConfigValueModel;
+import se.swedenconnect.oidf.registry.registrationflow.model.StepModel;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
+import se.swedenconnect.oidf.registry.registrationflow.process.review.ReviewableStep;
+import se.swedenconnect.oidf.registry.registrationflow.process.step.impl.MetadataPolicyCreationStep;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationFlowInformationDto;
@@ -42,6 +47,7 @@ import se.swedenconnect.oidf.registry.subordinate.service.SubordinateService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -62,6 +68,7 @@ public class RegistrationServiceImpl implements RegistrationService {
   private final SubordinateService subordinateService;
   private final EntityConfigService entityConfigService;
   private final OrganizationService organizationService;
+  private final MetadataPolicyCreationStep metadataPolicyCreationStep;
 
 
   /**
@@ -74,6 +81,7 @@ public class RegistrationServiceImpl implements RegistrationService {
    * @param subordinateService service for deleting subordinate statements
    * @param entityConfigService service for deleting hosted entities
    * @param organizationService service for resolving the calling organization
+   * @param metadataPolicyCreationStep the step whose template tells where pinned values come from
    */
   public RegistrationServiceImpl(final FlowAssignmentRepository flowAssignmentRepository,
       final RegistrationRepository registrationRepository,
@@ -81,7 +89,8 @@ public class RegistrationServiceImpl implements RegistrationService {
       final SubordinateRepository subordinateRepository,
       final SubordinateService subordinateService,
       final EntityConfigService entityConfigService,
-      final OrganizationService organizationService) {
+      final OrganizationService organizationService,
+      final MetadataPolicyCreationStep metadataPolicyCreationStep) {
     this.flowAssignmentRepository = flowAssignmentRepository;
     this.registrationRepository = registrationRepository;
     this.registrationFlowService = registrationFlowService;
@@ -89,6 +98,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     this.subordinateService = subordinateService;
     this.entityConfigService = entityConfigService;
     this.organizationService = organizationService;
+    this.metadataPolicyCreationStep = metadataPolicyCreationStep;
   }
 
   /**
@@ -124,7 +134,66 @@ public class RegistrationServiceImpl implements RegistrationService {
         this.registrationRepository.findByParentRegistration_RegistrationId(registrationId)
             .stream()
             .collect(Collectors.toMap(Registration::getEntityId, Function.identity()));
-    return RegistrationMapper.toRegistrationDto(reg, isHosted, hostedMetadata, tmStatusByType);
+    return this.withPinnedMetadata(
+        RegistrationMapper.toRegistrationDto(reg, isHosted, hostedMetadata, tmStatusByType), reg);
+  }
+
+  /**
+   * Adds what the published subordinate statement pins, for a self-managed entity that has one.
+   *
+   * @param dto the mapped registration
+   * @param reg the registration
+   * @return the same DTO
+   */
+  private RegistrationDto withPinnedMetadata(final RegistrationDto dto, final Registration reg) {
+    if (Boolean.TRUE.equals(dto.getIsHosted()) || reg.getRegistrationType() != RegistrationType.SUBORDINATE) {
+      return dto;
+    }
+    this.subordinateService
+        .getByEntityidentifierAndTaIm(reg.getEntityId(), reg.getFlowAssignment().getTaIm().getTaImId())
+        .map(subordinate -> RegistrationMapper.toPinnedMetadataDto(subordinate, reviewsUpdates(reg),
+            this.metadataPolicyTemplate(reg)))
+        .ifPresent(dto::setPinnedMetadata);
+    return dto;
+  }
+
+  /**
+   * The metadata policy template of the registration's flow, which tells where each pinned value comes from.
+   * {@code null} if the flow has no Metadata Policy Creation step or its template cannot be read.
+   */
+  private MetadataPolicyTemplate metadataPolicyTemplate(final Registration reg) {
+    final UUID stepId = this.metadataPolicyCreationStep.getStepId();
+    final Optional<StepModel> step = Optional.ofNullable(reg.getFlowAssignment().getRegistrationFlow()
+            .getFlowDefinition()).orElse(List.of())
+        .stream()
+        .filter(s -> stepId.equals(s.stepId()))
+        .findFirst();
+    if (step.isEmpty()) {
+      return null;
+    }
+    final String configured = Optional.ofNullable(step.get().config()).orElse(List.of()).stream()
+        .filter(value -> MetadataPolicyCreationStep.TEMPLATE.equals(value.key()))
+        .map(ConfigValueModel::value)
+        .findFirst()
+        .orElse(null);
+    try {
+      return this.metadataPolicyCreationStep.template(configured);
+    }
+    catch (final IllegalStateException e) {
+      return null;
+    }
+  }
+
+  /**
+   * Whether a step of the registration's flow sets {@code manualreviewforupdate}, so that a resubmission without a
+   * change to a pinned value or key is reviewed too.
+   */
+  private static boolean reviewsUpdates(final Registration reg) {
+    return Optional.ofNullable(reg.getFlowAssignment().getRegistrationFlow().getFlowDefinition()).orElse(List.of())
+        .stream()
+        .flatMap(step -> Optional.ofNullable(step.config()).orElse(List.of()).stream())
+        .anyMatch(value -> ReviewableStep.MANUAL_REVIEW_FOR_UPDATE.equals(value.key())
+            && Boolean.parseBoolean(value.value()));
   }
 
 
@@ -149,8 +218,10 @@ public class RegistrationServiceImpl implements RegistrationService {
         this.registrationRepository.findByParentRegistration_RegistrationId(registration.getRegistrationId())
             .stream()
             .collect(Collectors.toMap(Registration::getEntityId, Function.identity()));
-    return RegistrationMapper.toRegistrationRequestStatusDto(registration, report, isHosted, hostedMetadata,
-        tmStatusByType);
+    return this.withPinnedMetadata(
+        RegistrationMapper.toRegistrationRequestStatusDto(registration, report, isHosted, hostedMetadata,
+            tmStatusByType),
+        registration);
   }
 
   @Override
@@ -184,10 +255,10 @@ public class RegistrationServiceImpl implements RegistrationService {
             Collectors.toMap(Registration::getEntityId, Function.identity())));
     return allRegs.stream()
         .filter(r -> r.getRegistrationType() != RegistrationType.TRUST_MARK_SUBORDINATE)
-        .map(r -> RegistrationMapper.toRegistrationDto(r,
+        .map(r -> this.withPinnedMetadata(RegistrationMapper.toRegistrationDto(r,
             hostedMetadataByEntityId.containsKey(r.getEntityId()),
             hostedMetadataByEntityId.get(r.getEntityId()),
-            tmStatusByParent.getOrDefault(r.getRegistrationId(), Map.of())))
+            tmStatusByParent.getOrDefault(r.getRegistrationId(), Map.of())), r))
         .toList();
   }
 
@@ -221,8 +292,10 @@ public class RegistrationServiceImpl implements RegistrationService {
         this.registrationRepository.findByParentRegistration_RegistrationId(registration.getRegistrationId())
             .stream()
             .collect(Collectors.toMap(Registration::getEntityId, Function.identity()));
-    return RegistrationMapper.toRegistrationRequestStatusDto(registration, report, isHosted, hostedMetadata,
-        tmStatusByType);
+    return this.withPinnedMetadata(
+        RegistrationMapper.toRegistrationRequestStatusDto(registration, report, isHosted, hostedMetadata,
+            tmStatusByType),
+        registration);
   }
 
   @Override

@@ -121,6 +121,52 @@ trust marks are reflected in `statusTrustmarks`.
   skipped (`SKIPPED` step result) — federation JWKS always comes from the service node, never from entity metadata.
 - If `metadata` is absent, only `LoadEntityConfigurationStep` runs.
 
+### Alternative flow C — A self-managed entity publishes again
+
+A self-managed entity serves its own entity configuration, but its subordinate statement pins some of it:
+
+- the parameters set by the `metadata` claim,
+- the parameters fixed with the `value` operator of the `metadata_policy` claim,
+- the federation keys, in the `jwks` claim.
+
+`RegistrationDto.pinnedMetadata` lists them, for a self-managed entity whose subordinate statement is published:
+`parameters` (`entityType`, `parameter`, `value`, `claim`: `metadata` or `metadata_policy`, `source`,
+`entityParameters`) and `jwks`. A change to anything else in the entity configuration needs no new subordinate
+statement.
+
+`source` tells where a pinned value comes from, as the flow's metadata policy template says:
+`entity_configuration` (the entity's own metadata, so changing it there changes the pinned value) or `registry` (the
+registry's organization data or a fixed value, which the entity cannot change). `entityParameters` lists the entity
+configuration parameters the value is taken from, the first one the entity declares being used (a fallback parameter
+or a default language may follow the parameter itself); it is empty for `registry`. Without a readable template, every
+value is reported as `entity_configuration` from its own parameter.
+
+To publish a change to a pinned value or key, the member resubmits the entity: the registration runs again (`PUT`
+re-run path). When the
+registration is `APPROVED`, before the pipeline runs the system loads the entity configuration and builds the claims
+(the flow's `LoadEntityConfigurationStep` and `MetadataPolicyCreationStep`, up to their review gates), and compares
+them with the published subordinate statement:
+
+- **A pinned value or key changes:** the run pauses at its review steps as in UC-2.
+- **Nothing pinned changes:** the run passes its review steps, except a step with `manualreviewforupdate` set, which
+  pauses. Each passed step records a `WARNING` result: *"Auto-approved: no value or key pinned by the subordinate
+  statement changes"*. Trust mark sub-flows are still reviewed. `pinnedMetadata.reviewOnUpdate` tells whether a step
+  of the flow sets `manualreviewforupdate`.
+
+A resubmission that both adds and removes keys (by `kid`; a key without `kid` by its JWK thumbprint) is refused
+with `400`, before the pipeline runs and without changing the registration: *"Key rollover: add the new key first and
+remove the old key in a later resubmission (added: …, removed: …)"*. As
+[key rollover](https://docs.swedenconnect.se/federation/security-requirements.html#name-key-rollover) requires, the new
+key is published in one resubmission and the old one removed in a later one.
+
+The run uses the entity configuration loaded for the comparison, so the one compared is the one published. The
+subordinate statement is only written by `PublishSubordinateStatementStep`, after the review steps: until the operator
+approves, the federation keeps the published values. While the update waits, the registration is `PENDING_APPROVAL`.
+
+The operator sees the update in the entity review (UC-2b): `update = true` on the entity (an **Update** chip in the
+list, a line on the entity page), and in the Metadata Review preview a diff *"Changes to the values published in the
+federation"*: each pinned value and the key ids, published against the entity configuration.
+
 ---
 
 ## UC-2: Submit registration request (manual review at any step)
@@ -400,6 +446,42 @@ row (admin view, which does not filter out trust mark sub-registrations).
 
 ---
 
+## UC-7: Dry run of the metadata steps
+
+**Actor:** Member
+
+Before submitting a registration, the member can test its metadata with
+`POST /registration/v1/{tenant}/{orgNumber}/{joinId}/dry-run`. The body is the join request: `entityIdentifier` and,
+for a hosted entity, `metadata`.
+
+### Main flow
+
+1. The request is checked as a join is: an unknown `joinId` (404), a disabled flow (409), a hosted entity off the
+   organization's registered domains.
+2. The entity's metadata is the one in the request (hosted). Without `metadata`, the entity configuration is fetched as
+   `LoadEntityConfigurationStep` does (self-managed).
+3. The flow's `MetadataPolicyCreationStep` builds the claims and runs its checks.
+4. Nothing is stored and no review is started.
+
+The response (`MetadataDryRun`):
+
+- `pinned`: the parameters the subordinate statement would pin (`entityType`, `parameter`, `value`, `claim`,
+  `source`, `entityParameters`, as in `RegistrationDto.pinnedMetadata`): set by the `metadata` claim or fixed with the
+  `value` operator.
+- `overridden`: the parameters whose resolved value is not the one the entity declares (`entityType`, `parameter`,
+  `entityValue`, `value`, `claim`, `operators`): set by the `metadata` claim, or changed, added or removed by the
+  `metadata_policy` claim.
+- `errors`: the failed checks, metadata policy errors, and why the entity configuration could not be fetched.
+- `failed`: whether the errors would decline the registration, rather than be shown to a reviewer
+  (`on_failure: review`).
+- `willTriggerReview`: whether submitting would wait for an operator's approval. True when a step of the flow that
+  applies has `manualreview` set; for a self-managed entity whose `APPROVED` registration would publish no change to a
+  pinned value or key (UC-1, alternative flow C), only a step with `manualreviewforupdate` counts.
+- `checks`: every check made (`status`: `OK`, `FAIL` or `INFO`; `message`).
+- `metadata`, `metadataPolicy`: the claims that would be published.
+
+---
+
 ## Status reference
 
 `RegistrationStatus` / `FedRegStatus` (identical value sets — the latter is the API-facing DTO enum):
@@ -487,6 +569,10 @@ Every `MID` step that can pause declares its own `manualreview` (boolean, defaul
 with their default config and are not individually configurable in the flow definition. The pipeline aborts at the first
 `FAILURE`; a step can also return `WARNING` (pipeline continues) or be `SKIPPED` when its `canApply` check is false.
 
+`LoadEntityConfigurationStep`, `MetadataReviewStep`, `MetadataPolicyCreationStep` and `RpMetadataValidationStep` also
+declare `manualreviewforupdate` (boolean, default `false`): the step pauses also for a resubmission that changes no
+pinned value or key (Alternative flow C). It has no effect on other runs.
+
 ---
 
 ## Related API endpoints
@@ -500,6 +586,7 @@ All endpoints are scoped under `/{tenant}/{orgNumber}` except where noted, and g
 | `GET`    | `/registration/v1/{tenant}/{orgNumber}`                                                          | List own registrations                                                    |
 | `GET`    | `/registration/v1/{tenant}/{orgNumber}/{registrationId}`                                         | Get a specific registration                                               |
 | `POST`   | `/registration/v1/{tenant}/{orgNumber}/{joinId}`                                                 | Submit a registration (join) request                                      |
+| `POST`   | `/registration/v1/{tenant}/{orgNumber}/{joinId}/dry-run`                                         | Dry run of the flow's metadata steps; nothing is stored                   |
 | `PUT`    | `/registration/v1/{tenant}/{orgNumber}/{registrationId}`                                         | Re-run the flow for an existing entity                                    |
 | `DELETE` | `/registration/v1/{tenant}/{orgNumber}/{registrationId}`                                         | Remove a registration (cascades to subordinate/hosted entity if approved) |
 | `GET`    | `/registration-admin/v1/{tenant}/{orgNumber}`                                                    | List registrations on the tenant (operator)                               |

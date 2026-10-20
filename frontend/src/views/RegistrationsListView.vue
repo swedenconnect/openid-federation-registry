@@ -100,6 +100,7 @@
               <td>
                 <span class="mono">{{ entity.entityId }}</span>
                 <v-chip v-if="entity.hosted" size="x-small" color="info" label class="ml-2">Hosted</v-chip>
+                <v-chip v-if="entity.update" size="x-small" color="warning" label class="ml-2">Update</v-chip>
               </td>
               <td>
                 <div>{{ entity.organizationName }}</div>
