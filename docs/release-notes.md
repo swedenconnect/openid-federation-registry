@@ -6,8 +6,8 @@
 
 ---
 
-### Version 0.9.10 Unreleased
-**Date:** <ToBeSet>
+### Version 0.9.10 
+**Date:** 26-10-20
 
 - CSRF protection for requests from the GUI. Logout is a `POST`, and the session cookie is sent with `SameSite=Lax`.
 - The registry does not start when `spring.security.oauth2.resourceserver.jwt.jwk-set-uri` is set without
@@ -29,8 +29,8 @@
 - API: `POST /registration/v1/{tenant}/{orgNumber}/{joinId}/dry-run` runs a flow's metadata steps without storing
   anything, and returns the pinned values, the overridden values and the errors.
 
-### Version 0.9.9 Unreleased
-**Date:** <ToBeSet>
+### Version 0.9.9 
+
 
 - The `ec_location` that is calculated for a hosted entity now has a `hosted` path segment, for example `https://registry.example.se/oidf/hosted/www_example_org`
   instead of `https://registry.example.se/oidf/www_example_org`. **The location changes for existing hosted entities**
