@@ -2,13 +2,14 @@ logging:
   level:
     se:
       swedenconnect:
-        oidf: debug
+        oidf: warn
     org:
       springframework:
-        web: DEBUG
-        https: DEBUG
-      hibernate.SQL: DEBUG
-      hibernate.orm.jdbc.bind: TRACE
+        web: warn
+        https: warn
+      hibernate.SQL: warn
+      hibernate.orm.jdbc.bind: warn
+    root: warn
 
 
 openid:
