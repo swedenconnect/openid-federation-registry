@@ -22,11 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Import;
 import org.springframework.web.client.RestClientResponseException;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.api.EntitiesApi;
 import se.swedenconnect.oidf.registry.api.OrganizationApi;
@@ -42,6 +39,7 @@ import se.swedenconnect.oidf.registry.api.model.Organization;
 import se.swedenconnect.oidf.registry.api.model.PreValidatedTrustMarksRequest;
 import se.swedenconnect.oidf.registry.api.model.RejectRegistrationRequest;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
+import se.swedenconnect.oidf.registry.fixture.TestContainersConfiguration;
 
 import java.util.List;
 import java.util.UUID;
@@ -57,17 +55,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Felix Hellman
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
+@Import(TestContainersConfiguration.class)
 @AutoConfigureRestTestClient
 class DomainRegistrationIT {
 
   private static final String TENANT = "Swedenconnect";
   private static final JwtTestUtils.OrganisationType OPERATOR = JwtTestUtils.OrganisationType.PM;
   private static final JwtTestUtils.OrganisationType NOT_AN_OPERATOR = JwtTestUtils.OrganisationType.AF;
-
-  @Container
-  @ServiceConnection
-  public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
 
   @LocalServerPort
   private int port;

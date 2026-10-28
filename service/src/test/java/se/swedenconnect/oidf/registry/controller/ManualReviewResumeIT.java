@@ -34,10 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.springframework.context.annotation.Import;
 import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.api.EntitiesApi;
 import se.swedenconnect.oidf.registry.api.FederationRegistrationApi;
@@ -57,6 +54,7 @@ import se.swedenconnect.oidf.registry.api.model.RegistrationJoinRequest;
 import se.swedenconnect.oidf.registry.api.model.StepDto;
 import se.swedenconnect.oidf.registry.api.model.TrustAnchor;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
+import se.swedenconnect.oidf.registry.fixture.TestContainersConfiguration;
 import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
 import se.swedenconnect.oidf.registry.registrationflow.process.ContextKey;
 import se.swedenconnect.oidf.registry.registrationflow.process.review.PreviewSection;
@@ -95,7 +93,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.ssl.bundle.jks.wiremock-trust.truststore.password=Test1234",
         "spring.ssl.bundle.jks.wiremock-trust.truststore.type=PKCS12"
     })
-@Testcontainers
+@Import(TestContainersConfiguration.class)
 @AutoConfigureRestTestClient
 class ManualReviewResumeIT {
 
@@ -106,10 +104,6 @@ class ManualReviewResumeIT {
   private static final JwtTestUtils.OrganisationType APPLICANT = JwtTestUtils.OrganisationType.TESTORG4;
   private static final int WIREMOCK_HTTPS_PORT = 6891;
   private static final int WIREMOCK_HTTP_PORT = 6790;
-
-  @Container
-  @ServiceConnection
-  public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
 
   @LocalServerPort
   private int port;
