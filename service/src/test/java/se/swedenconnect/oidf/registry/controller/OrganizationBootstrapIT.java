@@ -21,16 +21,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Import;
 import org.springframework.web.client.RestClientResponseException;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.api.OrganizationApi;
 import se.swedenconnect.oidf.registry.api.model.CreateOrganizationRequest;
 import se.swedenconnect.oidf.registry.api.model.Organization;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
+import se.swedenconnect.oidf.registry.fixture.TestContainersConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -42,17 +40,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Felix Hellman
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
+@Import(TestContainersConfiguration.class)
 @AutoConfigureRestTestClient
 class OrganizationBootstrapIT {
 
   private static final String TENANT = "Swedenconnect";
   private static final JwtTestUtils.OrganisationType APPLICANT = JwtTestUtils.OrganisationType.TESTORG1;
   private static final JwtTestUtils.OrganisationType OTHER = JwtTestUtils.OrganisationType.TESTORG2;
-
-  @Container
-  @ServiceConnection
-  public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
 
   @LocalServerPort
   private int port;

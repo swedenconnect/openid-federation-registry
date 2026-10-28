@@ -18,10 +18,12 @@ package se.swedenconnect.oidf.registry.infrastructure.config;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.flywaydb.core.Flyway;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.containers.MariaDBContainer;
+import se.swedenconnect.oidf.registry.fixture.TestContainersConfiguration;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -37,30 +39,35 @@ import java.util.List;
 @Testcontainers
 class FlywayMigrationPathsIT {
 
+  /** One server, one database per migration path. */
   @Container
-  static MariaDBContainer<?> baseline = new MariaDBContainer<>("mariadb:11.7");
+  static MariaDBContainer<?> server = new MariaDBContainer<>(TestContainersConfiguration.MARIADB_VERSION);
 
-  @Container
-  static MariaDBContainer<?> legacy = new MariaDBContainer<>("mariadb:11.7");
+  private static final String BASELINE_DB = "baseline";
+  private static final String LEGACY_DB = "legacy";
+  private static final String UPGRADED_DB = "upgraded";
+  private static final String RESTARTED_DB = "restarted";
+  private static final String LEGACY_RESTARTED_DB = "legacy_restarted";
 
-  @Container
-  static MariaDBContainer<?> upgraded = new MariaDBContainer<>("mariadb:11.7");
-
-  @Container
-  static MariaDBContainer<?> restarted = new MariaDBContainer<>("mariadb:11.7");
-
-  @Container
-  static MariaDBContainer<?> legacyRestarted = new MariaDBContainer<>("mariadb:11.7");
+  @BeforeAll
+  static void createDatabases() throws SQLException {
+    try (final Connection c = DriverManager.getConnection(server.getJdbcUrl(), "root", server.getPassword());
+        final var st = c.createStatement()) {
+      for (final String db : List.of(BASELINE_DB, LEGACY_DB, UPGRADED_DB, RESTARTED_DB, LEGACY_RESTARTED_DB)) {
+        st.execute("create database " + db);
+      }
+    }
+  }
 
   @Test
   void restartAfterBaselineInstallKeepsUsingBaseline() {
     final String table = "flyway_schema_history";
-    assertThat(FlywayLocationsConfiguration.isLegacyInstallation(dataSource(restarted), table)).isFalse();
-    flyway(restarted, null, FlywayLocationsConfiguration.BASELINE).migrate();
+    assertThat(FlywayLocationsConfiguration.isLegacyInstallation(dataSource(RESTARTED_DB), table)).isFalse();
+    flyway(RESTARTED_DB, null, FlywayLocationsConfiguration.BASELINE).migrate();
 
     // Second node / restart: the history table now exists but holds only the baseline.
-    assertThat(FlywayLocationsConfiguration.isLegacyInstallation(dataSource(restarted), table)).isFalse();
-    final Flyway second = flyway(restarted, null, FlywayLocationsConfiguration.BASELINE);
+    assertThat(FlywayLocationsConfiguration.isLegacyInstallation(dataSource(RESTARTED_DB), table)).isFalse();
+    final Flyway second = flyway(RESTARTED_DB, null, FlywayLocationsConfiguration.BASELINE);
     second.validate();
     assertThat(second.migrate().migrationsExecuted).isZero();
   }
@@ -68,52 +75,56 @@ class FlywayMigrationPathsIT {
   @Test
   void databaseWithPreBaselineHistoryIsLegacy() {
     final String table = "flyway_schema_history";
-    flyway(legacyRestarted, "20", FlywayLocationsConfiguration.LEGACY).migrate();
-    assertThat(FlywayLocationsConfiguration.isLegacyInstallation(dataSource(legacyRestarted), table)).isTrue();
+    flyway(LEGACY_RESTARTED_DB, "20", FlywayLocationsConfiguration.LEGACY).migrate();
+    assertThat(FlywayLocationsConfiguration.isLegacyInstallation(dataSource(LEGACY_RESTARTED_DB), table)).isTrue();
   }
 
   @Test
   void freshInstallAndLegacyPathProduceSameSchema() throws SQLException {
-    assertThat(FlywayLocationsConfiguration.hasHistoryTable(dataSource(baseline), "flyway_schema_history")).isFalse();
-    flyway(baseline, null, FlywayLocationsConfiguration.BASELINE).migrate();
-    assertThat(FlywayLocationsConfiguration.hasHistoryTable(dataSource(baseline), "flyway_schema_history")).isTrue();
+    final String table = "flyway_schema_history";
+    assertThat(FlywayLocationsConfiguration.hasHistoryTable(dataSource(BASELINE_DB), table)).isFalse();
+    flyway(BASELINE_DB, null, FlywayLocationsConfiguration.BASELINE).migrate();
+    assertThat(FlywayLocationsConfiguration.hasHistoryTable(dataSource(BASELINE_DB), table)).isTrue();
 
-    flyway(legacy, null, FlywayLocationsConfiguration.LEGACY).migrate();
+    flyway(LEGACY_DB, null, FlywayLocationsConfiguration.LEGACY).migrate();
 
-    assertThat(describeSchema(baseline)).isNotEmpty().isEqualTo(describeSchema(legacy));
+    assertThat(describeSchema(BASELINE_DB)).isNotEmpty().isEqualTo(describeSchema(LEGACY_DB));
   }
 
   @Test
   void databaseOnV20IsUpgradedThroughLegacyMigrations() throws SQLException {
-    flyway(upgraded, "20", FlywayLocationsConfiguration.LEGACY).migrate();
-    assertThat(currentVersion(upgraded)).isEqualTo("20");
+    flyway(UPGRADED_DB, "20", FlywayLocationsConfiguration.LEGACY).migrate();
+    assertThat(currentVersion(UPGRADED_DB)).isEqualTo("20");
 
-    flyway(upgraded, null, FlywayLocationsConfiguration.LEGACY).migrate();
+    flyway(UPGRADED_DB, null, FlywayLocationsConfiguration.LEGACY).migrate();
 
-    assertThat(currentVersion(upgraded)).isEqualTo(currentVersion(baseline));
+    assertThat(currentVersion(UPGRADED_DB)).isEqualTo(currentVersion(BASELINE_DB));
   }
 
-  private static String currentVersion(final MariaDBContainer<?> db) {
+  private static String currentVersion(final String db) {
     return flyway(db, null, FlywayLocationsConfiguration.LEGACY).info().current().getVersion().getVersion();
   }
 
-  private static Flyway flyway(final MariaDBContainer<?> db, final String target, final String location) {
+  private static Flyway flyway(final String db, final String target, final String location) {
     return Flyway.configure()
-        .dataSource(db.getJdbcUrl(), db.getUsername(), db.getPassword())
+        .dataSource(url(db), "root", server.getPassword())
         .locations(location, FlywayLocationsConfiguration.MIGRATION)
         .target(target == null ? "latest" : target)
         .load();
   }
 
-  private static DataSource dataSource(final MariaDBContainer<?> db) {
-    return new org.springframework.jdbc.datasource.DriverManagerDataSource(db.getJdbcUrl(), db.getUsername(),
-        db.getPassword());
+  private static String url(final String db) {
+    return "jdbc:mariadb://" + server.getHost() + ":" + server.getMappedPort(3306) + "/" + db;
+  }
+
+  private static DataSource dataSource(final String db) {
+    return new org.springframework.jdbc.datasource.DriverManagerDataSource(url(db), "root", server.getPassword());
   }
 
   /** Columns, indexes and constraints as seen by information_schema, one string per row. */
-  private static List<String> describeSchema(final MariaDBContainer<?> db) throws SQLException {
+  private static List<String> describeSchema(final String db) throws SQLException {
     final List<String> rows = new ArrayList<>();
-    try (final Connection c = DriverManager.getConnection(db.getJdbcUrl(), db.getUsername(), db.getPassword())) {
+    try (final Connection c = DriverManager.getConnection(url(db), "root", server.getPassword())) {
       query(c, """
           select concat_ws('|', 'col', table_name, column_name, column_type, is_nullable, column_default,
                  generation_expression, extra, column_comment)

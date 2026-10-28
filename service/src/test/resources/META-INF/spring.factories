@@ -1,0 +1,2 @@
+org.springframework.test.context.TestExecutionListener=\
+se.swedenconnect.oidf.registry.fixture.CleanDatabaseTestExecutionListener

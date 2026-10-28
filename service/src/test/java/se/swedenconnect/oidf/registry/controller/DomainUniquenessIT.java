@@ -22,11 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Import;
 import org.springframework.web.client.RestClientResponseException;
-import org.testcontainers.containers.MariaDBContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.api.OrganizationApi;
 import se.swedenconnect.oidf.registry.api.RegistrationAdminApi;
@@ -35,6 +32,7 @@ import se.swedenconnect.oidf.registry.api.model.Domain;
 import se.swedenconnect.oidf.registry.api.model.DomainRequest;
 import se.swedenconnect.oidf.registry.api.model.RejectRegistrationRequest;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
+import se.swedenconnect.oidf.registry.fixture.TestContainersConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -47,7 +45,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * @author Felix Hellman
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
+@Import(TestContainersConfiguration.class)
 @AutoConfigureRestTestClient
 class DomainUniquenessIT {
 
@@ -56,10 +54,6 @@ class DomainUniquenessIT {
   private static final String OTHER_TENANT_FUNCTION_GROUP = "ena";
   private static final JwtTestUtils.OrganisationType OPERATOR = JwtTestUtils.OrganisationType.PM;
   private static final String ALREADY_HELD = "is already held by another organization";
-
-  @Container
-  @ServiceConnection
-  public static MariaDBContainer<?> database = new MariaDBContainer<>("mariadb:11.2");
 
   @LocalServerPort
   private int port;
