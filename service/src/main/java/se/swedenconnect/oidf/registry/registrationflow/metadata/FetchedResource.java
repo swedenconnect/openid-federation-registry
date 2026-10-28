@@ -24,7 +24,7 @@ import java.util.Map;
 
 /**
  * The outcome of fetching a resource an entity's metadata points to, such as its logo. A fetched image or JSON document
- * is kept as a {@code data:} URI so that the reviewer sees the copy that was checked, not whatever the URL serves later.
+ * is kept as a {@code data:} URI so that the reviewer sees the copy that was checked, not what the URL serves later.
  *
  * @param url the URL that was fetched
  * @param contentType the media type the server gave, {@code null} if not fetched
