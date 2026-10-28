@@ -110,6 +110,19 @@ spring:
 
 
 management:
+  prometheus:
+    metrics:
+      export:
+        enabled: false
+  otlp:
+    metrics:
+      export:
+        enabled: false
+  tracing:
+    export:
+      enabled: false
+    sampling:
+      probability: 1.0
   endpoints:
     web:
       exposure:
