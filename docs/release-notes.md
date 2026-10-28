@@ -11,6 +11,8 @@
 
 - New Metadata Policy Creation check `lists_redirect_uris`: the URL resolves to a JSON array listing all the entity's
   `redirect_uris`. The Sweden Connect registration template checks `sector_identifier_uri` with it.
+- Images and JSON documents of a self-hosted entity are fetched from the host of its entity identifier, and hosts
+  under it, without a validated domain. Rejected fetches are logged with the reason.
 
 ---
 

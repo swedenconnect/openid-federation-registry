@@ -46,8 +46,9 @@ import java.util.Optional;
  * lists.
  *
  * <p>The registry only fetches from hosts it has reason to trust: an HTTPS URL whose host is under a domain the
- * tenant operator has validated for the entity's organization. Redirects are not followed, so a validated host cannot
- * point the registry elsewhere. Anything else is reported as not fetched, with the reason.</p>
+ * tenant operator has validated for the entity's organization, or, for a self-hosted entity, under the host of its
+ * entity identifier. Redirects are not followed, so a trusted host cannot point the registry elsewhere. Anything else
+ * is reported as not fetched, with the reason.</p>
  *
  * @author Felix Hellman
  */
@@ -94,9 +95,16 @@ public class ResourceFetcher {
    *
    * @param url the image URL
    * @param organization the organization behind the entity
+   * @param selfHostedEntityId the entity identifier of a self-hosted entity, or {@code null} for a hosted entity
    * @return the outcome; never throws
    */
-  public FetchedResource fetchImage(final String url, final OrganizationRecord organization) {
+  public FetchedResource fetchImage(final String url, final OrganizationRecord organization,
+      final String selfHostedEntityId) {
+    return logged(this.loadImage(url, organization, selfHostedEntityId), organization);
+  }
+
+  private FetchedResource loadImage(final String url, final OrganizationRecord organization,
+      final String selfHostedEntityId) {
     final URI uri;
     try {
       uri = URI.create(url.trim());
@@ -107,10 +115,8 @@ public class ResourceFetcher {
     if (!"https".equalsIgnoreCase(uri.getScheme())) {
       return FetchedResource.notFetched(url, "Not fetched: only HTTPS URLs are fetched");
     }
-    final Optional<String> host = DomainMatcher.hostOf(url);
-    if (host.isEmpty() || !DomainMatcher.matchesAny(host.get(), this.validatedDomains(organization))) {
-      return FetchedResource.notFetched(url,
-          "Not fetched: the host is not under a validated domain of the organization");
+    if (!this.isTrustedHost(url, organization, selfHostedEntityId)) {
+      return FetchedResource.notFetched(url, untrustedHostReason(selfHostedEntityId));
     }
     try {
       final HttpResponse<InputStream> response = this.httpClient.send(HttpRequest.newBuilder(uri)
@@ -139,7 +145,6 @@ public class ResourceFetcher {
       }
     }
     catch (final IOException e) {
-      log.info("Could not fetch {}: {}", url, e.getMessage());
       return FetchedResource.notFetched(url, "Could not fetch: " + e.getMessage());
     }
     catch (final InterruptedException e) {
@@ -154,9 +159,16 @@ public class ResourceFetcher {
    *
    * @param url the document URL
    * @param organization the organization behind the entity
+   * @param selfHostedEntityId the entity identifier of a self-hosted entity, or {@code null} for a hosted entity
    * @return the outcome; never throws
    */
-  public FetchedResource fetchJson(final String url, final OrganizationRecord organization) {
+  public FetchedResource fetchJson(final String url, final OrganizationRecord organization,
+      final String selfHostedEntityId) {
+    return logged(this.loadJson(url, organization, selfHostedEntityId), organization);
+  }
+
+  private FetchedResource loadJson(final String url, final OrganizationRecord organization,
+      final String selfHostedEntityId) {
     final URI uri;
     try {
       uri = URI.create(url.trim());
@@ -167,10 +179,8 @@ public class ResourceFetcher {
     if (!"https".equalsIgnoreCase(uri.getScheme())) {
       return FetchedResource.notFetched(url, "Not fetched: only HTTPS URLs are fetched");
     }
-    final Optional<String> host = DomainMatcher.hostOf(url);
-    if (host.isEmpty() || !DomainMatcher.matchesAny(host.get(), this.validatedDomains(organization))) {
-      return FetchedResource.notFetched(url,
-          "Not fetched: the host is not under a validated domain of the organization");
+    if (!this.isTrustedHost(url, organization, selfHostedEntityId)) {
+      return FetchedResource.notFetched(url, untrustedHostReason(selfHostedEntityId));
     }
     try {
       final HttpResponse<InputStream> response = this.httpClient.send(HttpRequest.newBuilder(uri)
@@ -201,13 +211,38 @@ public class ResourceFetcher {
       }
     }
     catch (final IOException e) {
-      log.info("Could not fetch {}: {}", url, e.getMessage());
       return FetchedResource.notFetched(url, "Could not fetch: " + e.getMessage());
     }
     catch (final InterruptedException e) {
       Thread.currentThread().interrupt();
       return FetchedResource.notFetched(url, "Fetching was interrupted");
     }
+  }
+
+  private static FetchedResource logged(final FetchedResource resource, final OrganizationRecord organization) {
+    if (resource.error() != null) {
+      log.info("Rejected {} for organization {}: {}", resource.url(), organization.orgNumber(), resource.error());
+    }
+    return resource;
+  }
+
+  private boolean isTrustedHost(final String url, final OrganizationRecord organization,
+      final String selfHostedEntityId) {
+    final Optional<String> host = DomainMatcher.hostOf(url);
+    if (host.isEmpty()) {
+      return false;
+    }
+    final boolean underEntityHost = selfHostedEntityId != null && DomainMatcher.hostOf(selfHostedEntityId)
+        .filter(entityHost -> DomainMatcher.matches(host.get(), entityHost))
+        .isPresent();
+    return underEntityHost || DomainMatcher.matchesAny(host.get(), this.validatedDomains(organization));
+  }
+
+  private static String untrustedHostReason(final String selfHostedEntityId) {
+    return selfHostedEntityId == null
+        ? "Not fetched: the host is not under a validated domain of the organization"
+        : "Not fetched: the host is neither under the entity's own host nor under a validated domain of the "
+            + "organization";
   }
 
   private List<String> validatedDomains(final OrganizationRecord organization) {
