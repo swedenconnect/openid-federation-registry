@@ -127,6 +127,8 @@ public record MetadataPolicyTemplate(
     @JsonProperty("https_url") HTTPS_URL,
     /** Every value is a URL that resolves to an image. */
     @JsonProperty("image") IMAGE,
+    /** Every value is a URL that resolves to a JSON array listing all the entity's {@code redirect_uris}. */
+    @JsonProperty("lists_redirect_uris") LISTS_REDIRECT_URIS,
     /** Every value equals a field of the registry's organization data. */
     @JsonProperty("matches_organization") MATCHES_ORGANIZATION,
     /** Every value is one of the allowed values. */

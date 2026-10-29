@@ -82,7 +82,7 @@ class ResourceFetcherTest {
   void fetchesImageOnValidatedDomain() throws Exception {
     this.serve(200, "image/svg+xml; charset=utf-8", "<svg/>".getBytes());
 
-    final FetchedResource image = this.fetcher.fetchImage("https://www.example.se/logo.svg", ORG);
+    final FetchedResource image = this.fetcher.fetchImage("https://www.example.se/logo.svg", ORG, null);
 
     assertThat(image.isImage()).isTrue();
     assertThat(image.contentType()).isEqualTo("image/svg+xml");
@@ -91,14 +91,37 @@ class ResourceFetcherTest {
   }
 
   @Test
+  @DisplayName("An image under a self-hosted entity's own host is fetched without a validated domain")
+  void fetchesImageUnderSelfHostedEntityHost() throws Exception {
+    this.serve(200, "image/png", new byte[] { 1, 2, 3 });
+
+    final FetchedResource image = this.fetcher.fetchImage("https://cdn.rp.other.se/logo.png", ORG,
+        "https://rp.other.se/oidc");
+
+    assertThat(image.isImage()).isTrue();
+    assertThat(image.error()).isNull();
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  @DisplayName("A self-hosted entity's host does not cover other hosts")
+  void refusesHostOutsideSelfHostedEntityHost() throws Exception {
+    assertThat(this.fetcher.fetchImage("https://other.se/logo.png", ORG, "https://rp.other.se").error())
+        .contains("neither under the entity's own host");
+    assertThat(this.fetcher.fetchImage("https://rp.other.se.evil.com/logo.png", ORG, "https://rp.other.se").error())
+        .contains("neither under the entity's own host");
+    verify(this.httpClient, never()).send(any(), any(HttpResponse.BodyHandler.class));
+  }
+
+  @Test
   @SuppressWarnings("unchecked")
   @DisplayName("Plain HTTP and hosts outside the validated domains are not fetched at all")
   void refusesUntrustedUrls() throws Exception {
-    assertThat(this.fetcher.fetchImage("http://www.example.se/logo.svg", ORG).error())
+    assertThat(this.fetcher.fetchImage("http://www.example.se/logo.svg", ORG, null).error())
         .contains("only HTTPS");
-    assertThat(this.fetcher.fetchImage("https://cdn.elsewhere.com/logo.svg", ORG).error())
+    assertThat(this.fetcher.fetchImage("https://cdn.elsewhere.com/logo.svg", ORG, null).error())
         .contains("not under a validated domain");
-    assertThat(this.fetcher.fetchImage("https://example.se.evil.com/logo.svg", ORG).error())
+    assertThat(this.fetcher.fetchImage("https://example.se.evil.com/logo.svg", ORG, null).error())
         .contains("not under a validated domain");
     verify(this.httpClient, never()).send(any(), any(HttpResponse.BodyHandler.class));
   }
@@ -107,15 +130,15 @@ class ResourceFetcherTest {
   @DisplayName("Something that is not an image, too large, or an error answer is reported, not kept")
   void reportsUnusableResponses() throws Exception {
     this.serve(200, "text/html", "<html/>".getBytes());
-    assertThat(this.fetcher.fetchImage("https://example.se/logo", ORG))
+    assertThat(this.fetcher.fetchImage("https://example.se/logo", ORG, null))
         .satisfies(r -> assertThat(r.isImage()).isFalse())
         .satisfies(r -> assertThat(r.error()).contains("text/html"))
         .satisfies(r -> assertThat(r.dataUri()).isNull());
 
     this.serve(200, "image/png", new byte[ResourceFetcher.MAX_BYTES + 1]);
-    assertThat(this.fetcher.fetchImage("https://example.se/big.png", ORG).error()).contains("Larger than");
+    assertThat(this.fetcher.fetchImage("https://example.se/big.png", ORG, null).error()).contains("Larger than");
 
     this.serve(404, "text/plain", new byte[0]);
-    assertThat(this.fetcher.fetchImage("https://example.se/gone.png", ORG).error()).contains("HTTP 404");
+    assertThat(this.fetcher.fetchImage("https://example.se/gone.png", ORG, null).error()).contains("HTTP 404");
   }
 }

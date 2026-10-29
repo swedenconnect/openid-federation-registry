@@ -41,6 +41,7 @@ The registry fetches an image only if all of these hold:
 
 - the URL uses HTTPS,
 - its host is a domain, or under a domain, that the tenant operator has **validated** for the entity's organization,
+  or, for a self-hosted entity, the host of its entity identifier or under it,
 - the server answers `200` with an `image/*` content type, within 10 seconds and 512 KB.
 
 Redirects are not followed. The fetched copy is stored with the review, as a `data:` URI, so the reviewer sees what
@@ -107,6 +108,7 @@ configured under `openid.federation.registry.templates`, see [Templates](configu
 | `non_empty`            |                                       | No value is blank.                                                          |
 | `https_url`            |                                       | Every value is an HTTPS URL.                                                |
 | `image`                |                                       | Every value resolves to an image, under the image fetching rules above.     |
+| `lists_redirect_uris`  |                                       | Every value resolves to a JSON array listing all the entity's `redirect_uris`, under the image fetching rules above, but any content type, up to 64 KB. |
 | `matches_organization` | `organization_field`, `icd`           | Every value equals that field of the registry's organization data.          |
 | `allowed_values`       | `values`                              | Every value, or every element of a list, is one of `values`.                |
 

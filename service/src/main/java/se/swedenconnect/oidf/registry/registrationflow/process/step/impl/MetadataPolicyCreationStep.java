@@ -81,7 +81,7 @@ public class MetadataPolicyCreationStep extends NoConfigStepAdapter implements R
    *
    * @param jsonMapper mapper used to read templates
    * @param organizationService service resolving the registry's data about the organization behind the entity
-   * @param resourceFetcher fetcher for images the metadata points to
+   * @param resourceFetcher fetcher for images and JSON documents the metadata points to
    */
   public MetadataPolicyCreationStep(final JsonMapper jsonMapper, final OrganizationService organizationService,
       final ResourceFetcher resourceFetcher) {
@@ -155,8 +155,8 @@ public class MetadataPolicyCreationStep extends NoConfigStepAdapter implements R
   }
 
   /**
-   * Applies the configured template to the entity's metadata and puts the claims in the context. Images are fetched
-   * once per run and kept in the context, so evaluating again gives the same outcome.
+   * Applies the configured template to the entity's metadata and puts the claims in the context. Images and JSON
+   * documents are fetched once per run and kept in the context, so evaluating again gives the same outcome.
    */
   @SuppressWarnings("unchecked")
   private Evaluation evaluate(final ProcessContext ctx, final StepConfig config) {
@@ -167,13 +167,23 @@ public class MetadataPolicyCreationStep extends NoConfigStepAdapter implements R
         this.organizationService.find(organization).map(Organization::getLegalName).orElse(null),
         organization.orgNumber());
 
+    final String selfHostedEntityId = ctx.get(ContextKey.REQUEST_METADATA).isPresent()
+        ? null
+        : ctx.<String>get(ContextKey.ENTITY_ID).orElse(null);
     final JSONObject fetched = ctx.<JSONObject>get(ContextKey.FETCHED_RESOURCES).orElseGet(JSONObject::new);
     final MetadataPolicyGenerator.Result result = MetadataPolicyGenerator.generate(template, entityMetadata,
         organizationData, url -> {
           if (fetched.get(url) instanceof final Map<?, ?> known) {
             return FetchedResource.fromMap(known);
           }
-          final FetchedResource resource = this.resourceFetcher.fetchImage(url, organization);
+          final FetchedResource resource = this.resourceFetcher.fetchImage(url, organization, selfHostedEntityId);
+          fetched.put(url, resource.toMap());
+          return resource;
+        }, url -> {
+          if (fetched.get(url) instanceof final Map<?, ?> known) {
+            return FetchedResource.fromMap(known);
+          }
+          final FetchedResource resource = this.resourceFetcher.fetchJson(url, organization, selfHostedEntityId);
           fetched.put(url, resource.toMap());
           return resource;
         });

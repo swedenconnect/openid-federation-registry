@@ -101,10 +101,13 @@ public class MetadataReviewStep extends NoConfigStepAdapter implements Reviewabl
           "Metadata Review must come after the step that loads the entity's metadata", Severity.ERROR)));
     }
     final OrganizationRecord organization = ctx.getRequired(ContextKey.ORG);
+    final String selfHostedEntityId = ctx.get(ContextKey.REQUEST_METADATA).isPresent()
+        ? null
+        : ctx.<String>get(ContextKey.ENTITY_ID).orElse(null);
     final JSONObject fetched = ctx.<JSONObject>get(ContextKey.FETCHED_RESOURCES).orElseGet(JSONObject::new);
     for (final String url : imageUrls(metadata)) {
       if (!fetched.containsKey(url)) {
-        fetched.put(url, this.resourceFetcher.fetchImage(url, organization).toMap());
+        fetched.put(url, this.resourceFetcher.fetchImage(url, organization, selfHostedEntityId).toMap());
       }
     }
     if (!fetched.isEmpty()) {

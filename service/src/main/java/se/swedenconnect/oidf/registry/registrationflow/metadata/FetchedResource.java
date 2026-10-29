@@ -23,13 +23,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * The outcome of fetching a resource an entity's metadata points to, such as its logo. A fetched image is kept as a
- * {@code data:} URI so that the reviewer sees the copy that was checked, not whatever the URL serves later.
+ * The outcome of fetching a resource an entity's metadata points to, such as its logo. A fetched image or JSON document
+ * is kept as a {@code data:} URI so that the reviewer sees the copy that was checked, not what the URL serves later.
  *
  * @param url the URL that was fetched
  * @param contentType the media type the server gave, {@code null} if not fetched
  * @param size the size in bytes, {@code null} if not fetched
- * @param dataUri the content as a {@code data:} URI, {@code null} if not fetched or not an image
+ * @param dataUri the content as a {@code data:} URI, {@code null} if not fetched or not an image or JSON document
  * @param error why the resource was not fetched or is not usable, {@code null} on success
  * @author Felix Hellman
  */
