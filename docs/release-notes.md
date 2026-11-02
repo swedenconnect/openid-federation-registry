@@ -6,8 +6,8 @@
 
 ---
 
-### Version 0.9.11 Unreleased
-**Date:** <ToBeSet>
+### Version 0.9.11
+**Date:** 26-11-02
 
 - New Metadata Policy Creation check `lists_redirect_uris`: the URL resolves to a JSON array listing all the entity's
   `redirect_uris`. The Sweden Connect registration template checks `sector_identifier_uri` with it.
