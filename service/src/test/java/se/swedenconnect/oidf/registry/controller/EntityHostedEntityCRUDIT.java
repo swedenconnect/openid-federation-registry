@@ -448,18 +448,22 @@ class EntityHostedEntityCRUDIT {
   }
 
   @Test
-  @DisplayName("deleteSubordinates also removes the subordinate under a Trust Anchor of another organization in the "
-      + "federation")
-  void testDeleteHostedEntityDeletesSubordinateOfOtherOrganization() {
+  @DisplayName("deleteSubordinates removes the subordinate of the own organization but leaves the one under a Trust "
+      + "Anchor of another organization")
+  void testDeleteHostedEntityLeavesSubordinateOfOtherOrganization() {
     final String hostedIdentifier = "https://www.pm.se/oidf/hosted/" + UUID.randomUUID();
-    final UUID trustAnchorId = this.createTrustAnchor(JwtTestUtils.OrganisationType.SKATT);
+    final UUID ownTrustAnchorId = this.createTrustAnchor(JwtTestUtils.OrganisationType.PM);
+    final UUID otherTrustAnchorId = this.createTrustAnchor(JwtTestUtils.OrganisationType.SKATT);
     final UUID hostedId = this.createHostedEntity(hostedIdentifier);
-    final UUID subordinateId =
-        this.createSubordinate(JwtTestUtils.OrganisationType.SKATT, trustAnchorId, hostedIdentifier, false);
+    final UUID ownSubordinateId =
+        this.createSubordinate(JwtTestUtils.OrganisationType.PM, ownTrustAnchorId, hostedIdentifier, false);
+    final UUID otherSubordinateId =
+        this.createSubordinate(JwtTestUtils.OrganisationType.SKATT, otherTrustAnchorId, hostedIdentifier, false);
 
     this.entitiesApi.deleteHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, hostedId, false, true);
 
-    assertThat(this.subordinateExists(JwtTestUtils.OrganisationType.SKATT, subordinateId)).isFalse();
+    assertThat(this.subordinateExists(JwtTestUtils.OrganisationType.PM, ownSubordinateId)).isFalse();
+    assertThat(this.subordinateExists(JwtTestUtils.OrganisationType.SKATT, otherSubordinateId)).isTrue();
   }
 
   @Test

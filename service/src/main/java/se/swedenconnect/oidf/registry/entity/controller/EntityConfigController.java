@@ -299,7 +299,7 @@ public class EntityConfigController {
    * @param orgNumber the organization number
    * @param id the hosted entity ID
    * @param deleteTrustmarkSubjects also remove the entity as subject of every trust mark in the federation
-   * @param deleteSubordinates also delete the subordinate statements of the entity in the federation
+   * @param deleteSubordinates also delete the subordinate statements of the entity in the organization
    * @param organizationRecord the organization record
    * @return empty response
    */
@@ -308,8 +308,8 @@ public class EntityConfigController {
   @Operation(summary = "Delete hosted entity",
       description = "Deletes a hosted entity. With deleteTrustmarkSubjects=true the entity is also removed as subject "
           + "of every trust mark in the federation, also of trust marks that belong to other organizations. With "
-          + "deleteSubordinates=true its subordinate statements under every Trust Anchor and Intermediate in the "
-          + "federation are also deleted, also under those that belong to other organizations.")
+          + "deleteSubordinates=true its subordinate statements under the Trust Anchors and Intermediates of the "
+          + "organization are also deleted. Subordinate statements of other organizations are left alone.")
   public ResponseEntity<Void> deleteHostedEntity(
       @PathVariable("tenant") @P("tenant") final String tenant,
       @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,

@@ -154,8 +154,8 @@
               label="Also remove the entity as subject of its trustmarks"
           ></v-checkbox>
           <div class="text-caption text-medium-emphasis ml-8">
-            The subordinate statements and trustmark subjects of the entity in this federation are removed, also
-            those that belong to other organizations.
+            Subordinate statements of this organization are removed. Trustmark subjects are removed in the whole
+            federation, also on trustmarks of other organizations.
           </div>
         </v-card-text>
         <v-card-actions>

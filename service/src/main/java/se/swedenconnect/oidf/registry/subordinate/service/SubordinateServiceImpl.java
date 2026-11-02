@@ -249,14 +249,14 @@ public class SubordinateServiceImpl implements SubordinateService {
 
   @Override
   @Transactional
-  public int deleteSubordinatesInFederation(final OrganizationRecord organizationRecord,
+  public int deleteSubordinatesInOrganization(final OrganizationRecord organizationRecord,
       final String entityIdentifier) {
     if (entityIdentifier == null) {
       return 0;
     }
     final List<Subordinate> subordinates = this.organizationService.find(organizationRecord)
-        .map(org -> this.subordinateRepository.findByInstanceIdAndEntityidentifier(
-            org.getInstance().getInstanceId(), entityIdentifier))
+        .map(org -> this.subordinateRepository.findByOrganizationIdAndEntityidentifier(
+            org.getOrganizationId(), entityIdentifier))
         .orElse(List.of());
     subordinates.forEach(this::delete);
     return subordinates.size();

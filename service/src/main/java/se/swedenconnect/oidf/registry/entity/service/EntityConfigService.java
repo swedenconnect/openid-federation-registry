@@ -140,20 +140,21 @@ public interface EntityConfigService {
    * @param id the entity ID
    * @param deleteTrustmarkSubjects if {@code true} the entity is also removed as subject of every trust mark in the
    *     federation, see {@link #deleteEntityReferences}
-   * @param deleteSubordinates if {@code true} the subordinates of the entity under every Trust Anchor and
-   *     Intermediate in the federation are also deleted, see {@link #deleteEntityReferences}
+   * @param deleteSubordinates if {@code true} the subordinates of the entity under the Trust Anchors and
+   *     Intermediates of the organization are also deleted, see {@link #deleteEntityReferences}
    */
   void deleteHostedEntity(OrganizationRecord organizationRecord, UUID id, boolean deleteTrustmarkSubjects,
       boolean deleteSubordinates);
 
   /**
-   * Deletes what points at an entity identifier in the federation of the calling organization, whichever organization
-   * owns it. Each deleted row is audited.
+   * Deletes what points at an entity identifier. Each deleted row is audited.
    *
-   * @param organizationRecord the calling organization, which decides the federation
+   * @param organizationRecord the calling organization
    * @param entityIdentifier the entity identifier
-   * @param deleteTrustmarkSubjects delete the trust mark subject entries with the entity as subject
-   * @param deleteSubordinates delete the subordinates with the entity as subordinate
+   * @param deleteTrustmarkSubjects delete the trust mark subject entries with the entity as subject in the federation
+   *     of the calling organization, whichever organization owns the trust mark
+   * @param deleteSubordinates delete the subordinates with the entity as subordinate under the Trust Anchors and
+   *     Intermediates of the calling organization
    */
   void deleteEntityReferences(OrganizationRecord organizationRecord, String entityIdentifier,
       boolean deleteTrustmarkSubjects, boolean deleteSubordinates);

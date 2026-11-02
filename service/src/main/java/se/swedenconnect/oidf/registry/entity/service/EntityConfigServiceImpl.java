@@ -324,7 +324,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
    * @param organizationRecord the organization record
    * @param id the entity ID
    * @param deleteTrustmarkSubjects also delete the trust mark subject entries of the entity in the federation
-   * @param deleteSubordinates also delete the subordinates of the entity in the federation
+   * @param deleteSubordinates also delete the subordinates of the entity in the organization
    */
   @Override
   @Transactional
@@ -341,7 +341,8 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   }
 
   /**
-   * Deletes the trust mark subject entries and subordinates of an entity identifier in the federation.
+   * Deletes the trust mark subject entries of an entity identifier in the federation and its subordinates in the
+   * organization.
    *
    * @param organizationRecord the calling organization
    * @param entityIdentifier the entity identifier
@@ -356,7 +357,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
       this.trustmarkSubjectService.deleteSubjectsInFederation(organizationRecord, entityIdentifier);
     }
     if (deleteSubordinates) {
-      this.subordinateService.deleteSubordinatesInFederation(organizationRecord, entityIdentifier);
+      this.subordinateService.deleteSubordinatesInOrganization(organizationRecord, entityIdentifier);
     }
   }
 
