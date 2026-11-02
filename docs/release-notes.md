@@ -6,6 +6,13 @@
 
 ---
 
+### Version 0.9.12 Unreleased
+**Date:** <ToBeSet>
+
+- MariaDB driver upgraded to 3.5.11, which no longer exposes the database password through connection metadata (#365).
+
+---
+
 ### Version 0.9.11
 **Date:** 26-11-02
 
