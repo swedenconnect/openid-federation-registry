@@ -244,10 +244,29 @@ public class SubordinateServiceImpl implements SubordinateService {
   @Override
   @Transactional
   public void deleteSubordinate(final OrganizationRecord organizationRecord, final UUID id) {
-    final Subordinate entity = this.findSubordinateOrThrow(organizationRecord, id);
+    this.delete(this.findSubordinateOrThrow(organizationRecord, id));
+  }
+
+  @Override
+  @Transactional
+  public int deleteSubordinatesInFederation(final OrganizationRecord organizationRecord,
+      final String entityIdentifier) {
+    if (entityIdentifier == null) {
+      return 0;
+    }
+    final List<Subordinate> subordinates = this.organizationService.find(organizationRecord)
+        .map(org -> this.subordinateRepository.findByInstanceIdAndEntityidentifier(
+            org.getInstance().getInstanceId(), entityIdentifier))
+        .orElse(List.of());
+    subordinates.forEach(this::delete);
+    return subordinates.size();
+  }
+
+  private void delete(final Subordinate entity) {
     final SubordinateDto dto = SubordinateMapper.toDto(entity);
     this.subordinateRepository.delete(entity);
-    this.auditService.subordinateDeleted(id, entity.getTaIm().getOrganization().getInstance().getInstanceId(),
+    this.auditService.subordinateDeleted(entity.getSubordinateId(),
+        entity.getTaIm().getOrganization().getInstance().getInstanceId(),
         entity.getTaIm().getOrganization().getOrganizationId(), dto);
   }
 

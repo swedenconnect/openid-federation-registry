@@ -41,7 +41,6 @@ import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
 import se.swedenconnect.oidf.registry.registrations.repository.RegistrationRepository;
-import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
 import se.swedenconnect.oidf.registry.subordinate.service.SubordinateService;
 
 import java.util.HashMap;
@@ -64,7 +63,6 @@ public class RegistrationServiceImpl implements RegistrationService {
   private final FlowAssignmentRepository flowAssignmentRepository;
   private final RegistrationRepository registrationRepository;
   private final RegistrationFlowService registrationFlowService;
-  private final SubordinateRepository subordinateRepository;
   private final SubordinateService subordinateService;
   private final EntityConfigService entityConfigService;
   private final OrganizationService organizationService;
@@ -77,16 +75,14 @@ public class RegistrationServiceImpl implements RegistrationService {
    * @param flowAssignmentRepository repository for flow assignments
    * @param registrationRepository repository for registration records
    * @param registrationFlowService service for managing registration flows
-   * @param subordinateRepository repository for subordinate statements
    * @param subordinateService service for deleting subordinate statements
-   * @param entityConfigService service for deleting hosted entities
+   * @param entityConfigService service for deleting hosted entities and what points at them
    * @param organizationService service for resolving the calling organization
    * @param metadataPolicyCreationStep the step whose template tells where pinned values come from
    */
   public RegistrationServiceImpl(final FlowAssignmentRepository flowAssignmentRepository,
       final RegistrationRepository registrationRepository,
       final RegistrationFlowService registrationFlowService,
-      final SubordinateRepository subordinateRepository,
       final SubordinateService subordinateService,
       final EntityConfigService entityConfigService,
       final OrganizationService organizationService,
@@ -94,7 +90,6 @@ public class RegistrationServiceImpl implements RegistrationService {
     this.flowAssignmentRepository = flowAssignmentRepository;
     this.registrationRepository = registrationRepository;
     this.registrationFlowService = registrationFlowService;
-    this.subordinateRepository = subordinateRepository;
     this.subordinateService = subordinateService;
     this.entityConfigService = entityConfigService;
     this.organizationService = organizationService;
@@ -228,13 +223,13 @@ public class RegistrationServiceImpl implements RegistrationService {
   @Transactional
   public void deleteRegistrationRequest(final OrganizationRecord organizationRecord, final UUID registrationId) {
     final Registration reg = this.findOwnedRegistrationOrThrow(organizationRecord, registrationId);
-    if (reg.getStatus() == RegistrationStatus.APPROVED) {
-      this.subordinateRepository
-          .findByOrganizationIdAndEntityidentifier(reg.getOrganization().getOrganizationId(), reg.getEntityId())
-          .forEach(sub -> this.subordinateService.deleteSubordinate(organizationRecord, sub.getSubordinateId()));
+    final List<HostedEntityDto> hostedEntities =
+        this.entityConfigService.listHostedEntity(organizationRecord, reg.getEntityId());
+    if (hostedEntities.isEmpty() && reg.getStatus() == RegistrationStatus.APPROVED) {
+      this.entityConfigService.deleteEntityReferences(organizationRecord, reg.getEntityId(), true, true);
     }
-    this.entityConfigService.listHostedEntity(organizationRecord, reg.getEntityId())
-        .forEach(hosted -> this.entityConfigService.deleteHostedEntity(organizationRecord, hosted.getEntityId()));
+    hostedEntities.forEach(hosted ->
+        this.entityConfigService.deleteHostedEntity(organizationRecord, hosted.getEntityId(), true, true));
     this.registrationRepository.delete(reg);
   }
 

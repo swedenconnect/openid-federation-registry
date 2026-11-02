@@ -6,6 +6,13 @@
 
 ---
 
+### Version 0.9.12
+
+- Deleting a hosted entity or a registration also removes its subordinate statements and trust mark subjects
+  ([#367](https://github.com/swedenconnect/openid-federation-registry/issues/367)).
+
+---
+
 ### Version 0.9.11
 **Date:** 26-11-02
 

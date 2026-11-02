@@ -174,14 +174,7 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
   @Override
   @Transactional
   public void deleteTrustmarkSubject(final OrganizationRecord organizationRecord, final UUID id) {
-    final TrustMarkSubject entity = this.findSubjectOrThrow(organizationRecord, id);
-    final TrustmarkSubjectDto dto = TrustmarkToDtoMapper.toDto(entity);
-    final UUID trustmarkId = entity.getTrustMark().getTrustmarkId();
-    this.trustMarkSubjectRepository.delete(entity);
-    this.auditService.trustmarkSubjectDeleted(id,
-        entity.getTrustMark().getTrustmarkIssuer().getEntity().getOrganization().getInstance().getInstanceId(),
-        trustmarkId,
-        entity.getTrustMark().getTrustmarkIssuer().getEntity().getOrganization().getOrganizationId(), dto);
+    this.delete(this.findSubjectOrThrow(organizationRecord, id));
   }
 
   /**
@@ -214,16 +207,41 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
       for (final TrustMarkSubject entry : this.trustMarkSubjectRepository
           .findByOrganizationIdAndSubjectAndIssuerAndType(organizationId, subject, source.getTrustMarkIssuer(),
               source.getTrustmarkId())) {
-        final TrustmarkSubjectDto dto = TrustmarkToDtoMapper.toDto(entry);
-        final Organization owner = entry.getTrustMark().getTrustmarkIssuer().getEntity().getOrganization();
-        this.trustMarkSubjectRepository.delete(entry);
-        this.auditService.trustmarkSubjectDeleted(entry.getTrustmarksubjectId(),
-            owner.getInstance().getInstanceId(), entry.getTrustMark().getTrustmarkId(),
-            owner.getOrganizationId(), dto);
+        this.delete(entry);
         deleted++;
       }
     }
     return deleted;
+  }
+
+  /**
+   * Deletes every entry where the subject is the subject of a trust mark in the federation of the calling
+   * organization.
+   *
+   * @param organizationRecord the calling organization, which decides the federation
+   * @param subject the subject entity identifier
+   * @return the number of deleted subject entries
+   */
+  @Override
+  @Transactional
+  public int deleteSubjectsInFederation(final OrganizationRecord organizationRecord, final String subject) {
+    if (subject == null) {
+      return 0;
+    }
+    final List<TrustMarkSubject> entries = this.organizationService.find(organizationRecord)
+        .map(org -> this.trustMarkSubjectRepository.findByInstanceIdAndSubject(
+            org.getInstance().getInstanceId(), subject))
+        .orElse(List.of());
+    entries.forEach(this::delete);
+    return entries.size();
+  }
+
+  private void delete(final TrustMarkSubject entity) {
+    final TrustmarkSubjectDto dto = TrustmarkToDtoMapper.toDto(entity);
+    final Organization owner = entity.getTrustMark().getTrustmarkIssuer().getEntity().getOrganization();
+    this.trustMarkSubjectRepository.delete(entity);
+    this.auditService.trustmarkSubjectDeleted(entity.getTrustmarksubjectId(), owner.getInstance().getInstanceId(),
+        entity.getTrustMark().getTrustmarkId(), owner.getOrganizationId(), dto);
   }
 
   private static boolean isBlank(final String value) {

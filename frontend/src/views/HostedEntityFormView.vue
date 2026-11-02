@@ -137,17 +137,25 @@
         <v-card-text>
           Are you sure you want to delete entity "{{ entityIdentifier }}"? This action cannot be undone.
           <v-checkbox
-              v-if="hasTrustmarkSources"
+              id="chk-delete-subordinates"
+              v-model="deleteSubordinates"
+              :disabled="deleting"
+              density="compact"
+              hide-details
+              class="mt-2"
+              label="Also delete the subordinate statements of the entity"
+          ></v-checkbox>
+          <v-checkbox
               id="chk-delete-trustmark-subjects"
               v-model="deleteTrustmarkSubjects"
               :disabled="deleting"
               density="compact"
               hide-details
-              class="mt-2"
-              label="Also remove the entity as subject of the trustmarks in its trustmark sources"
+              label="Also remove the entity as subject of its trustmarks"
           ></v-checkbox>
-          <div v-if="hasTrustmarkSources" class="text-caption text-medium-emphasis ml-8">
-            Only trustmarks that belong to this organization are affected.
+          <div class="text-caption text-medium-emphasis ml-8">
+            The subordinate statements and trustmark subjects of the entity in this federation are removed, also
+            those that belong to other organizations.
           </div>
         </v-card-text>
         <v-card-actions>
@@ -200,9 +208,8 @@ const form = ref(null);
 const saving = ref(false);
 const deleteDialog = ref(false);
 const deleting = ref(false);
-const deleteTrustmarkSubjects = ref(false);
-const hasTrustmarkSources = computed(() =>
-    trustmarkSources.value.some((source) => source.trustMarkIssuer && source.trustmarkId));
+const deleteTrustmarkSubjects = ref(true);
+const deleteSubordinates = ref(true);
 const entityId = ref(null);
 const entityIdentifier = ref('');
 const metadata = ref('{}');
@@ -288,9 +295,11 @@ async function deleteEntity() {
   errorStore.clearError();
   try {
     const path = hostedEntityPath(userStore.selectedTenant, userStore.orgNumber, entityId.value);
-    await requestDelete(deleteTrustmarkSubjects.value && hasTrustmarkSources.value
-        ? `${path}?deleteTrustmarkSubjects=true`
-        : path);
+    const query = new URLSearchParams({
+      deleteTrustmarkSubjects: String(deleteTrustmarkSubjects.value),
+      deleteSubordinates: String(deleteSubordinates.value),
+    });
+    await requestDelete(`${path}?${query}`);
     if (ok.value) {
       deleteDialog.value = false;
       router.push({name: 'hosted-entities'});

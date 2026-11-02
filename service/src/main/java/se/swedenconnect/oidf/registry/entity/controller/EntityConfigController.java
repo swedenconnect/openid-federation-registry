@@ -298,8 +298,8 @@ public class EntityConfigController {
    * @param tenant the tenant identifier
    * @param orgNumber the organization number
    * @param id the hosted entity ID
-   * @param deleteTrustmarkSubjects also remove the entity as subject of the trust marks pointed out by its trust mark
-   *     sources, as far as those trust marks belong to the organization
+   * @param deleteTrustmarkSubjects also remove the entity as subject of every trust mark in the federation
+   * @param deleteSubordinates also delete the subordinate statements of the entity in the federation
    * @param organizationRecord the organization record
    * @return empty response
    */
@@ -307,15 +307,17 @@ public class EntityConfigController {
   @PreAuthorize("@orgRightsService.canWrite(authentication, #orgNumber, #tenant)")
   @Operation(summary = "Delete hosted entity",
       description = "Deletes a hosted entity. With deleteTrustmarkSubjects=true the entity is also removed as subject "
-          + "of the trust marks pointed out by its trust mark sources, but only for trust marks that belong to the "
-          + "organization.")
+          + "of every trust mark in the federation, also of trust marks that belong to other organizations. With "
+          + "deleteSubordinates=true its subordinate statements under every Trust Anchor and Intermediate in the "
+          + "federation are also deleted, also under those that belong to other organizations.")
   public ResponseEntity<Void> deleteHostedEntity(
       @PathVariable("tenant") @P("tenant") final String tenant,
       @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
       @PathVariable("entityId") final UUID id,
       @RequestParam(name = "deleteTrustmarkSubjects", defaultValue = "false") final boolean deleteTrustmarkSubjects,
+      @RequestParam(name = "deleteSubordinates", defaultValue = "false") final boolean deleteSubordinates,
       @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
-    this.entityConfigService.deleteHostedEntity(organizationRecord, id, deleteTrustmarkSubjects);
+    this.entityConfigService.deleteHostedEntity(organizationRecord, id, deleteTrustmarkSubjects, deleteSubordinates);
     return ResponseEntity.noContent().build();
   }
 

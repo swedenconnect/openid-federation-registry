@@ -124,13 +124,13 @@ public interface EntityConfigService {
 
 
   /**
-   * Deletes a hosted entity, leaving the trust mark subject entries alone.
+   * Deletes a hosted entity, leaving its subordinates and trust mark subject entries alone.
    *
    * @param organizationRecord the organization record
    * @param id the entity ID
    */
   default void deleteHostedEntity(final OrganizationRecord organizationRecord, final UUID id) {
-    this.deleteHostedEntity(organizationRecord, id, false);
+    this.deleteHostedEntity(organizationRecord, id, false, false);
   }
 
   /**
@@ -138,10 +138,25 @@ public interface EntityConfigService {
    *
    * @param organizationRecord the organization record
    * @param id the entity ID
-   * @param deleteTrustmarkSubjects if {@code true} the entity is also removed as subject of the trust marks pointed
-   *     out by its trust mark sources, as far as those trust marks belong to the organization
+   * @param deleteTrustmarkSubjects if {@code true} the entity is also removed as subject of every trust mark in the
+   *     federation, see {@link #deleteEntityReferences}
+   * @param deleteSubordinates if {@code true} the subordinates of the entity under every Trust Anchor and
+   *     Intermediate in the federation are also deleted, see {@link #deleteEntityReferences}
    */
-  void deleteHostedEntity(OrganizationRecord organizationRecord, UUID id, boolean deleteTrustmarkSubjects);
+  void deleteHostedEntity(OrganizationRecord organizationRecord, UUID id, boolean deleteTrustmarkSubjects,
+      boolean deleteSubordinates);
+
+  /**
+   * Deletes what points at an entity identifier in the federation of the calling organization, whichever organization
+   * owns it. Each deleted row is audited.
+   *
+   * @param organizationRecord the calling organization, which decides the federation
+   * @param entityIdentifier the entity identifier
+   * @param deleteTrustmarkSubjects delete the trust mark subject entries with the entity as subject
+   * @param deleteSubordinates delete the subordinates with the entity as subordinate
+   */
+  void deleteEntityReferences(OrganizationRecord organizationRecord, String entityIdentifier,
+      boolean deleteTrustmarkSubjects, boolean deleteSubordinates);
 
   /**
    * Deletes a subordinate entity.

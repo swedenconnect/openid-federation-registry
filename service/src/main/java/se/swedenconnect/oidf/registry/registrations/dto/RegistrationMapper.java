@@ -50,7 +50,7 @@ public final class RegistrationMapper {
   }
 
   /**
-   * Maps a {@link ProcessReport} and entity identifier to a {@link RegistrationRequestStatusDto}.
+   * Maps a {@link ProcessReport} and entity identifier to a {@link RegistrationDto}.
    *
    * @param registration the registration
    * @param report process report from the pipeline run

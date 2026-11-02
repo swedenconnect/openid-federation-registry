@@ -323,21 +323,41 @@ public class EntityConfigServiceImpl implements EntityConfigService {
    *
    * @param organizationRecord the organization record
    * @param id the entity ID
+   * @param deleteTrustmarkSubjects also delete the trust mark subject entries of the entity in the federation
+   * @param deleteSubordinates also delete the subordinates of the entity in the federation
    */
   @Override
   @Transactional
   public void deleteHostedEntity(final OrganizationRecord organizationRecord, final UUID id,
-      final boolean deleteTrustmarkSubjects) {
+      final boolean deleteTrustmarkSubjects, final boolean deleteSubordinates) {
     final FederationEntity entity = this.findEntityOrThrow(
         organizationRecord, id, EntityType.HOSTED_ENTITY);
     final HostedEntityDto dto = this.toDtoHosted(entity);
-    if (deleteTrustmarkSubjects) {
-      this.trustmarkSubjectService.deleteSubjectsForTrustmarkSources(organizationRecord, dto.getEntityIdentifier(),
-          dto.getTrustMarkSources());
-    }
+    this.deleteEntityReferences(organizationRecord, dto.getEntityIdentifier(), deleteTrustmarkSubjects,
+        deleteSubordinates);
     this.entityRepository.delete(entity);
     this.auditService.hostedEntityDeleted(id, entity.getOrganization().getInstance().getInstanceId(),
         entity.getOrganization().getOrganizationId(), dto);
+  }
+
+  /**
+   * Deletes the trust mark subject entries and subordinates of an entity identifier in the federation.
+   *
+   * @param organizationRecord the calling organization
+   * @param entityIdentifier the entity identifier
+   * @param deleteTrustmarkSubjects delete the trust mark subject entries
+   * @param deleteSubordinates delete the subordinates
+   */
+  @Override
+  @Transactional
+  public void deleteEntityReferences(final OrganizationRecord organizationRecord, final String entityIdentifier,
+      final boolean deleteTrustmarkSubjects, final boolean deleteSubordinates) {
+    if (deleteTrustmarkSubjects) {
+      this.trustmarkSubjectService.deleteSubjectsInFederation(organizationRecord, entityIdentifier);
+    }
+    if (deleteSubordinates) {
+      this.subordinateService.deleteSubordinatesInFederation(organizationRecord, entityIdentifier);
+    }
   }
 
   /**
