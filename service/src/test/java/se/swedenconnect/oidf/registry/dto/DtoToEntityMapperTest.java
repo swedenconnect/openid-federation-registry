@@ -398,6 +398,18 @@ class DtoToEntityMapperTest {
     assertThat(entity.getTrustmarksources()).isNull();
   }
 
+  @Test
+  void updateEntity_hostedEntityDto_withAuthorityHints() {
+    final FederationEntity entity = new FederationEntity();
+    final HostedEntityDto dto = new HostedEntityDto();
+    dto.setEntityIdentifier("https://example.com");
+    dto.setAuthorityhints(List.of("https://ta.example.com"));
+
+    DtoToEntityMapper.updateEntity(entity, dto);
+
+    assertThat(entity.getAuthorityhints()).containsExactly("https://ta.example.com");
+  }
+
 
 
   // -------------------------------------------------------------------------

@@ -74,6 +74,15 @@
             are signed. Ensure the new key is correctly configured and distributed before saving.
           </v-alert>
 
+          <ListField
+              id="authority-hints"
+              v-model="authorityhints"
+              label="Authority Hints"
+              hint="Entity identifiers of superiors to add to authority_hints. Superiors with a subordinate pointing to this entity are added automatically."
+              :rules="[rules.url]"
+              :disabled="saving"
+          />
+
           <v-textarea
               v-model="metadata"
               label="Metadata"
@@ -193,6 +202,7 @@ import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
 import {useSigningKeys} from '@/api/composables/signingKeys';
 import TrustmarkSourcesField from '@/components/TrustmarkSourcesField.vue';
+import ListField from '@/components/ListField.vue';
 import EntityConfigurationViewer from '@/components/EntityConfigurationViewer.vue';
 import {hostedEntitiesPath, hostedEntityPath} from '@/config/path';
 
@@ -214,6 +224,7 @@ const entityId = ref(null);
 const entityIdentifier = ref('');
 const metadata = ref('{}');
 const trustmarkSources = ref([]);
+const authorityhints = ref([]);
 const signingKeyId = ref(null);
 const originalSigningKeyId = ref(null);
 const signingKeyChanged = computed(() =>
@@ -226,6 +237,15 @@ const isEdit = computed(() => !!route.params.id);
 
 const rules = {
   required: (value) => !!value || 'This field is required.',
+  url: (value) => {
+    if (!value) return true;
+    try {
+      new URL(value);
+      return true;
+    } catch (e) {
+      return 'Invalid URL format.';
+    }
+  },
   json: (value) => {
     if (!value) return true;
     try {
@@ -245,6 +265,7 @@ async function loadEntity() {
     entityIdentifier.value = response.entityIdentifier || '';
     metadata.value = JSON.stringify(response.metadata || {}, null, 2);
     trustmarkSources.value = response.trustMarkSources || response.trustmarkSources || [];
+    authorityhints.value = response.authorityhints || [];
     signingKeyId.value = response.signingKeyId?.[0] || null;
     originalSigningKeyId.value = signingKeyId.value;
   }
@@ -271,6 +292,7 @@ async function saveEntity() {
       entityIdentifier: entityIdentifier.value,
       metadata: parsedMetadata,
       trustMarkSources: trustmarkSources.value.filter(s => s.trustMarkIssuer || s.trustmarkId),
+      authorityhints: authorityhints.value.map(h => h?.trim()).filter(h => h),
       signingKeyId: signingKeyId.value ? [signingKeyId.value] : [],
     };
 

@@ -29,9 +29,11 @@ import se.swedenconnect.oidf.registry.federationservice.model.TrustMarkSourcePro
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * The EntityResponseFormatter class provides functionality for formatting responses related to entities. It includes
@@ -121,20 +123,22 @@ public class FederationMetadataCreator {
   }
 
   /**
-   * Trying to find a subordinate statement that are pointing to this entity. If true the superior entity will be set as
-   * a authorityHint
+   * The authority hints of an entity. The superiors with a subordinate statement pointing to the entity come first,
+   * followed by the authority hints stored on the entity. Duplicates are removed.
    *
    * @param entity Entity
-   * @return Issuer for subordinate statement if there is one.
+   * @return the authority hints, empty if there are none
    */
   private List<String> authorityHint(final FederationEntity entity) {
-    return this.subordinateRepository.findByOrganizationIdAndEntityidentifier(
+    final Set<String> hints = new LinkedHashSet<>();
+    this.subordinateRepository.findByOrganizationIdAndEntityidentifier(
             entity.getOrganization().getOrganizationId(), entity.getIssuer())
         .stream()
         .map(Subordinate::getTaIm)
         .map(taImEntity -> taImEntity.getEntity().getSubject())
-        .toList();
-
+        .forEach(hints::add);
+    Optional.ofNullable(entity.getAuthorityhints()).ifPresent(hints::addAll);
+    return List.copyOf(hints);
   }
 
   protected FederationMetadata createFederationMetadata(final FederationEntity entityEntity) {

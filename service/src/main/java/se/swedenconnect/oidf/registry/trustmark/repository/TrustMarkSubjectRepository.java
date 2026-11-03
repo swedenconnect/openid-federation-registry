@@ -99,6 +99,23 @@ public interface TrustMarkSubjectRepository extends JpaRepository<TrustMarkSubje
       @Param("trustmarkType") String trustmarkType);
 
   /**
+   * Finds the subject entries of an entity on the trust marks of the given organization. Subject entries on trust
+   * marks of other organizations are never returned.
+   *
+   * @param organizationId the organization that owns the trust mark issuer
+   * @param subject the subject entity identifier
+   * @return the matching subject entries
+   */
+  @Query("SELECT ts FROM TrustMarkSubject ts "
+      + "JOIN ts.trustMark tm "
+      + "JOIN tm.trustmarkIssuer tmi "
+      + "JOIN tmi.entity e "
+      + "JOIN e.organization o "
+      + "WHERE o.organizationId = :organizationId AND ts.subject = :subject")
+  List<TrustMarkSubject> findByOrganizationIdAndSubject(@Param("organizationId") UUID organizationId,
+      @Param("subject") String subject);
+
+  /**
    * Finds the subject entries of an entity on every trust mark of the instance, whichever organization owns the trust
    * mark issuer.
    *

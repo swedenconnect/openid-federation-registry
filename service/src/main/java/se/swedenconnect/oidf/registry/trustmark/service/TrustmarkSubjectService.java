@@ -91,4 +91,17 @@ public interface TrustmarkSubjectService {
    * @return the number of deleted subject entries
    */
   int deleteSubjectsInFederation(OrganizationRecord organizationRecord, String subject);
+
+  /**
+   * Renames {@code subject} to {@code newSubject} in every entry on a trust mark of the calling organization. Entries
+   * on trust marks of other organizations are left alone. Each change is audited.
+   *
+   * @param organizationRecord the calling organization
+   * @param subject the current subject entity identifier
+   * @param newSubject the new subject entity identifier
+   * @return the number of renamed subject entries
+   * @throws se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException with
+   *     {@code CONFLICT} if a trust mark already has {@code newSubject} as subject
+   */
+  int renameSubjectsInOrganization(OrganizationRecord organizationRecord, String subject, String newSubject);
 }
