@@ -95,8 +95,7 @@ class TrustmarkSubjectCRUDIT {
     final UUID trustmarkIssuerId = UUID.randomUUID();
     final TrustmarkIssuer issuerInput = new TrustmarkIssuer()
         .entityId(entityId)
-        .active(true)
-        .trustMarkTokenValidityDuration("PT1H");
+        .active(true);
 
     final TrustmarkIssuer createdIssuer = this.modulesApi.createTrustmarkIssuerWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, trustmarkIssuerId, issuerInput);
     return createdIssuer.getTrustmarkIssuerId();
@@ -507,7 +506,7 @@ class TrustmarkSubjectCRUDIT {
     entities.createFederationEntityWithId(TENANT, organisation.orgId, entityId,
         new FederationEntity().entityIdentifier(issuerEntityIdentifier));
     final UUID issuerId = modules.createTrustmarkIssuerWithId(TENANT, organisation.orgId, UUID.randomUUID(),
-        new TrustmarkIssuer().entityId(entityId).active(true).trustMarkTokenValidityDuration("PT1H"))
+        new TrustmarkIssuer().entityId(entityId).active(true))
         .getTrustmarkIssuerId();
 
     final UUID trustmarkId = UUID.randomUUID();

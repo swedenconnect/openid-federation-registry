@@ -52,10 +52,6 @@ the registration parameters (`redirect_uris`, `response_types` with `code`, `pri
 `contacts`, `logo_uri`) and limits the signing and encryption algorithms; for OpenID Providers it requires the
 endpoints and supported values the profile needs, including `S256` PKCE, `sv` and `en` UI locales and request objects.
 
-The registry does not support `require_auth_time` (`one_of: [true]`), `id_token_signed_response_alg` and
-`userinfo_signed_response_alg` (`value: null`) yet: it leaves them out when it loads the template, with a warning, see
-[#304](https://github.com/swedenconnect/openid-federation-registry/issues/304).
-
 On the Trust Anchor's settings, choose the `sweden-connect-trust-anchor` template under **Metadata policy for
 subordinates** and select **Load template**. Every subordinate statement the Trust Anchor issues then carries the
 policy, combined with the subordinate's own. See

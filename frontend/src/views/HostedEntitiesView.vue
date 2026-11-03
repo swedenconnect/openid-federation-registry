@@ -63,12 +63,14 @@
             :headers="headers"
             :items="entities"
             :search="search"
-            :filter-keys="['entityIdentifier']"
+            :filter-keys="filterKeys"
+            :custom-filter="filterRow"
             v-model:page="page"
             v-model:items-per-page="itemsPerPage"
             item-value="entityId"
+            :row-props="rowProps"
             hover
-            @click:row="openEntity"
+            @click:row="(_event, {item}) => openEntity(item)"
         >
           <template #no-data>
             <p class="text-grey py-8">No hosted entities found.</p>
@@ -83,9 +85,10 @@
 </template>
 
 <script setup>
-import {computed, onMounted, ref, watch} from 'vue';
+import {onMounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
 import TablePager from '@/components/TablePager.vue';
+import {useListTable} from '@/composables/listTable';
 import {useRequest} from '@/api/composables/request';
 import {useUserStore} from '@/stores/userStore';
 import {hostedEntitiesPath} from '@/config/path';
@@ -95,26 +98,15 @@ const {requestGet, loading, error, ok} = useRequest();
 const userStore = useUserStore();
 
 const entities = ref([]);
-const search = ref('');
-const page = ref(1);
-const itemsPerPage = ref(50);
-
-const filteredCount = computed(() => {
-  const term = (search.value || '').toLowerCase();
-  if (!term) return entities.value.length;
-  return entities.value.filter((entity) => (entity.entityIdentifier || '').toLowerCase().includes(term)).length;
-});
-
-watch(search, () => {
-  page.value = 1;
-});
+const {search, page, itemsPerPage, filteredCount, filterKeys, filterRow, rowProps} =
+    useListTable(entities, ['entityIdentifier'], {open: openEntity});
 
 const headers = [
   {title: 'Entity Identifier', key: 'entityIdentifier', sortable: true},
   {title: 'Signing Key', key: 'signingKeyText', sortable: true},
 ];
 
-function openEntity(_event, {item}) {
+function openEntity(item) {
   router.push(`/entities/hosted/${item.entityId}/edit`);
 }
 

@@ -51,6 +51,7 @@ public final class DtoToTrustmarkMapper {
         .logoUri(dto.getLogoUri())
         .refUri(dto.getRefUri())
         .delegation(dto.getDelegation())
+        .trustMarkTokenValidityDuration(blankToNull(dto.getTrustMarkTokenValidityDuration()))
         .build();
   }
 
@@ -87,6 +88,7 @@ public final class DtoToTrustmarkMapper {
     entity.setLogoUri(dto.getLogoUri());
     entity.setRefUri(dto.getRefUri());
     entity.setDelegation(dto.getDelegation());
+    entity.setTrustMarkTokenValidityDuration(blankToNull(dto.getTrustMarkTokenValidityDuration()));
   }
 
   /**
@@ -100,5 +102,9 @@ public final class DtoToTrustmarkMapper {
     entity.setRevoked(dto.getRevoked());
     entity.setGranted(dto.getGranted());
     entity.setExpires(dto.getExpires());
+  }
+
+  private static String blankToNull(final String value) {
+    return value == null || value.isBlank() ? null : value;
   }
 }

@@ -48,6 +48,7 @@ public final class TrustmarkToDtoMapper {
     dto.setLogoUri(trustMark.getLogoUri());
     dto.setRefUri(trustMark.getRefUri());
     dto.setDelegation(trustMark.getDelegation());
+    dto.setTrustMarkTokenValidityDuration(trustMark.getTrustMarkTokenValidityDuration());
     return dto;
   }
 
@@ -65,6 +66,7 @@ public final class TrustmarkToDtoMapper {
     dto.setLogoUri(trustMark.getLogoUri());
     dto.setRefUri(trustMark.getRefUri());
     dto.setDelegation(trustMark.getDelegation());
+    dto.setTrustMarkTokenValidityDuration(trustMark.getTrustMarkTokenValidityDuration());
 
     Optional.ofNullable(trustMark.getTrustmarksubjects())
         .map(trustMarkSubjects ->
@@ -89,6 +91,7 @@ public final class TrustmarkToDtoMapper {
     dto.setLogoUri(trustMark.getLogoUri());
     dto.setRefUri(trustMark.getRefUri());
     dto.setDelegation(trustMark.getDelegation());
+    dto.setTrustMarkTokenValidityDuration(trustMark.getTrustMarkTokenValidityDuration());
     dto.setTrustmarkSubjects(Collections.emptyList());
     return dto;
   }

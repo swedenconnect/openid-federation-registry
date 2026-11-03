@@ -64,6 +64,17 @@
               class="mb-4"
           ></v-text-field>
 
+          <v-text-field
+              id="trustmark-validity-duration"
+              v-model="trustMarkTokenValidityDuration"
+              label="Trust Mark Token Validity Duration"
+              :disabled="saving"
+              hint="Validity of an issued trustmark as an ISO-8601 duration of at least five minutes, e.g. P2D for two days or PT1H. Leave empty for trustmarks that never expire."
+              persistent-hint
+              clearable
+              class="mb-4"
+          ></v-text-field>
+
           <v-textarea
               v-model="delegation"
               label="Delegation"
@@ -226,6 +237,7 @@ const trustmarkType = ref('');
 const logoUri = ref('');
 const refUri = ref('');
 const delegation = ref('');
+const trustMarkTokenValidityDuration = ref('');
 
 const flowAssignment = ref(null);
 const availableFlows = ref([]);
@@ -303,6 +315,7 @@ async function loadTrustmark() {
     logoUri.value = response.logoUri || '';
     refUri.value = response.refUri || '';
     delegation.value = response.delegation || '';
+    trustMarkTokenValidityDuration.value = response.trustMarkTokenValidityDuration || '';
   }
   await loadFlowData();
 }
@@ -321,6 +334,8 @@ async function submitForm() {
       logoUri: logoUri.value || null,
       refUri: refUri.value || null,
       delegation: delegation.value || null,
+      // Empty means that the trustmark never expires.
+      trustMarkTokenValidityDuration: trustMarkTokenValidityDuration.value?.trim() || null,
     };
 
     if (isEdit.value) {

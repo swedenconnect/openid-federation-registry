@@ -81,7 +81,7 @@
         <dependency>
             <groupId>org.mariadb.jdbc</groupId>
             <artifactId>mariadb-java-client</artifactId>
-            <version>3.5.10</version>
+            <version>3.5.11</version>
         </dependency>
 
         <dependency>
@@ -113,6 +113,11 @@
         <dependency>
             <groupId>com.nimbusds</groupId>
             <artifactId>oauth2-oidc-sdk</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>se.swedenconnect.oidf</groupId>
+            <artifactId>nimbus-extensions</artifactId>
         </dependency>
 
         <dependency>

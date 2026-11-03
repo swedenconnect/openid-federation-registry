@@ -18,9 +18,10 @@ package se.swedenconnect.oidf.registry.validation;
 
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
+import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
 import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyViolationException;
 import lombok.extern.slf4j.Slf4j;
+import se.swedenconnect.oidf.nimbus.policy.ExtendedMetadataPolicy;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
@@ -202,8 +203,8 @@ public class PropertyValidators {
   }
 
   /**
-   * Validates that the value is a valid OIDF (OpenID Federation) policy JSON structure using MetadataPolicy.parse()
-   * from Nimbus OIDC SDK.
+   * Validates that the value is a valid OIDF (OpenID Federation) policy JSON structure using
+   * ExtendedMetadataPolicy.parse() from the Sweden Connect Nimbus extensions.
    */
   private ValidationStatus validateOidfPolicy(final String key, final String value) {
     if (value == null || value.isBlank()) {
@@ -222,7 +223,7 @@ public class PropertyValidators {
     }
     metadataPolicyNode.propertyStream().forEach(s -> {
       try {
-        MetadataPolicy.parse(s.getValue().toPrettyString());
+        ExtendedMetadataPolicy.parse(JSONObjectUtils.parse(s.getValue().toString()));
       }
       catch (com.nimbusds.oauth2.sdk.ParseException | PolicyViolationException e) {
         throw new PropertyValidationFailException(
@@ -448,6 +449,24 @@ public class PropertyValidators {
       this.throwIf(() -> value != null && !value.isBlank() && Double.parseDouble(value) < Double.parseDouble(conf),
           key, "Value has to be greater than %s".formatted(conf), value);
       return ValidationStatusImpl.ok(key, "min(%s)".formatted(conf));
+    };
+  }
+
+  private PropertyValidator validateMinDuration(final java.time.Duration min) {
+    return (key, value) -> {
+      if (value == null || value.isBlank()) {
+        return ValidationStatusImpl.noEval(key, "minDuration(%s)".formatted(min));
+      }
+      final java.time.Duration duration;
+      try {
+        duration = java.time.Duration.parse(value);
+      }
+      catch (final Exception ex) {
+        throw new PropertyValidationFailException(key, value, "Invalid duration format. "
+            + "Expected ISO-8601 duration (e.g., PT1H30M). Error: " + ex.getMessage());
+      }
+      this.throwIf(() -> duration.compareTo(min) < 0, key, "Duration has to be at least %s".formatted(min), value);
+      return ValidationStatusImpl.ok(key, "minDuration(%s)".formatted(min));
     };
   }
 
@@ -769,6 +788,17 @@ public class PropertyValidators {
      */
     public ValidationBuilder max(final int max) {
       this.addValidator(PropertyValidators.this.validateMax(String.valueOf(max)));
+      return this;
+    }
+
+    /**
+     * Adds a minimum duration validation rule for an ISO-8601 duration.
+     *
+     * @param min the shortest allowed duration
+     * @return this builder
+     */
+    public ValidationBuilder minDuration(final java.time.Duration min) {
+      this.addValidator(PropertyValidators.this.validateMinDuration(min));
       return this;
     }
 

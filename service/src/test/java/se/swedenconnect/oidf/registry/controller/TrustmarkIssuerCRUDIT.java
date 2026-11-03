@@ -89,8 +89,7 @@ class TrustmarkIssuerCRUDIT {
 
     final TrustmarkIssuer input = new TrustmarkIssuer()
         .entityId(entityId)
-        .active(true)
-        .trustMarkTokenValidityDuration("PT1H");
+        .active(true);
 
     final TrustmarkIssuer created = this.modulesApi.createTrustmarkIssuer(TENANT, JwtTestUtils.OrganisationType.PM.orgId, input);
 
@@ -98,7 +97,6 @@ class TrustmarkIssuerCRUDIT {
     assertThat(created.getTrustmarkIssuerId()).isNotNull();
     assertThat(created.getEntityId()).isEqualTo(entityId);
     assertThat(created.getActive()).isTrue();
-    assertThat(created.getTrustMarkTokenValidityDuration()).isEqualTo("PT1H");
   }
 
   @Test
@@ -108,8 +106,7 @@ class TrustmarkIssuerCRUDIT {
 
     final TrustmarkIssuer input = new TrustmarkIssuer()
         .entityId(entityId)
-        .active(false)
-        .trustMarkTokenValidityDuration("PT30M");
+        .active(false);
 
     final TrustmarkIssuer created = this.modulesApi.createTrustmarkIssuerWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId, input);
 
@@ -117,7 +114,6 @@ class TrustmarkIssuerCRUDIT {
     assertThat(created.getTrustmarkIssuerId()).isEqualTo(issuerId);
     assertThat(created.getEntityId()).isEqualTo(entityId);
     assertThat(created.getActive()).isFalse();
-    assertThat(created.getTrustMarkTokenValidityDuration()).isEqualTo("PT30M");
   }
 
   @Test
@@ -127,8 +123,7 @@ class TrustmarkIssuerCRUDIT {
 
     this.modulesApi.createTrustmarkIssuerWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId, new TrustmarkIssuer()
         .entityId(entityId)
-        .active(true)
-        .trustMarkTokenValidityDuration("PT2H"));
+        .active(true));
 
     final TrustmarkIssuer retrieved = this.modulesApi.getTrustmarkIssuer(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId);
 
@@ -136,7 +131,6 @@ class TrustmarkIssuerCRUDIT {
     assertThat(retrieved.getTrustmarkIssuerId()).isEqualTo(issuerId);
     assertThat(retrieved.getEntityId()).isEqualTo(entityId);
     assertThat(retrieved.getActive()).isTrue();
-    assertThat(retrieved.getTrustMarkTokenValidityDuration()).isEqualTo("PT2H");
   }
 
   @Test
@@ -147,8 +141,7 @@ class TrustmarkIssuerCRUDIT {
 
     this.modulesApi.createTrustmarkIssuerWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId, new TrustmarkIssuer()
         .entityId(entityId)
-        .active(true)
-        .trustMarkTokenValidityDuration("PT2H"));
+        .active(true));
 
     this.trustmarksApi.createTrustmarkWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, trustmarkId, new Trustmark()
         .trustmarkType("https://loa3.sc.se")
@@ -169,18 +162,15 @@ class TrustmarkIssuerCRUDIT {
 
     this.modulesApi.createTrustmarkIssuerWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId, new TrustmarkIssuer()
         .entityId(entityId)
-        .active(true)
-        .trustMarkTokenValidityDuration("PT1H"));
+        .active(true));
 
     final TrustmarkIssuer updated = this.modulesApi.updateTrustmarkIssuer(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId, new TrustmarkIssuer()
         .entityId(entityId)
-        .active(false)
-        .trustMarkTokenValidityDuration("PT4H"));
+        .active(false));
 
     assertThat(updated).isNotNull();
     assertThat(updated.getTrustmarkIssuerId()).isEqualTo(issuerId);
     assertThat(updated.getActive()).isFalse();
-    assertThat(updated.getTrustMarkTokenValidityDuration()).isEqualTo("PT4H");
   }
 
   @Test
@@ -190,8 +180,7 @@ class TrustmarkIssuerCRUDIT {
 
     this.modulesApi.createTrustmarkIssuerWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId, new TrustmarkIssuer()
         .entityId(entityId)
-        .active(true)
-        .trustMarkTokenValidityDuration("PT1H"));
+        .active(true));
 
     assertThat(this.modulesApi.getTrustmarkIssuer(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId)).isNotNull();
 
@@ -216,8 +205,7 @@ class TrustmarkIssuerCRUDIT {
     final UUID pmIssuerId = UUID.randomUUID();
     this.modulesApi.createTrustmarkIssuerWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, pmIssuerId, new TrustmarkIssuer()
         .entityId(pmEntityId)
-        .active(true)
-        .trustMarkTokenValidityDuration("PT1H"));
+        .active(true));
 
     // AF org should not be able to access PM's issuer
     final ApiClient afClient = new ApiClient();

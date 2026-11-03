@@ -81,6 +81,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class OidfApiService {
 
+  // TODO: Remove when openid-federation-services reads trust-mark-validity-duration per trust mark.
+  //  Until then the services only read the duration of the trust mark issuer, and fail to issue a trust mark
+  //  without one. The duration of each trust mark is sent as well, but is not used before that.
+  private static final Duration TRUST_MARK_ISSUER_VALIDITY_DURATION = Duration.ofDays(7);
 
   private final InstanceRepository instanceRepository;
   private final EntityRepository entityRepository;
@@ -448,6 +452,7 @@ public class OidfApiService {
                 .delegation(Optional.ofNullable(trustMarkEntity.getDelegation())
                     .map(TrustMarkDelegation::new)
                     .orElse(null))
+                .trustMarkValidityDuration(this.toDuration(trustMarkEntity.getTrustMarkTokenValidityDuration()))
                 .trustMarkSubjects(
                     trustMarkEntity.getTrustmarksubjects()
                         .stream()
@@ -465,7 +470,7 @@ public class OidfApiService {
 
     return TrustMarkIssuerProperties.builder()
         .entityIdentifier(new EntityID(tmiModuleEntity.getEntity().getIssuer()))
-        .trustMarkValidityDuration(this.toDuration(tmiModuleEntity.getTrustMarkTokenValidityDuration()))
+        .trustMarkValidityDuration(TRUST_MARK_ISSUER_VALIDITY_DURATION)
         .trustMarks(trustMarks)
         .build();
   }

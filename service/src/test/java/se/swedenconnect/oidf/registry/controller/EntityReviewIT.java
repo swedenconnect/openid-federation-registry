@@ -335,7 +335,7 @@ class EntityReviewIT {
     final FederationEntity tmiEntity = entitiesApi.createFederationEntity(TENANT, OPERATOR.orgId,
         FederationEntity.builder().entityIdentifier(trustMarkIssuerEntityId).build());
     final TrustmarkIssuer trustmarkIssuer = modulesApi.createTrustmarkIssuer(TENANT, OPERATOR.orgId,
-        new TrustmarkIssuer().entityId(tmiEntity.getEntityId()).active(true).trustMarkTokenValidityDuration("PT1H"));
+        new TrustmarkIssuer().entityId(tmiEntity.getEntityId()).active(true));
     final Trustmark trustmark = new TrustmarksApi(operatorClient).createTrustmark(TENANT, OPERATOR.orgId,
         new Trustmark().trustmarkissuerId(trustmarkIssuer.getTrustmarkIssuerId()).trustmarkType(trustMarkType));
     final RegistrationFlowDto trustMarkFlow = flowApi.createFlow(TENANT, OPERATOR.orgId, new RegistrationFlowDto()

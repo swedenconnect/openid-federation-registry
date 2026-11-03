@@ -27,6 +27,21 @@
       </v-btn>
     </div>
 
+    <div class="d-flex align-center mb-4">
+      <v-text-field
+          id="registration-flow-search"
+          v-model="search"
+          prepend-inner-icon="mdi-magnify"
+          label="Search by name or description"
+          single-line
+          hide-details
+          clearable
+          variant="outlined"
+          density="compact"
+          class="flex-grow-1"
+      ></v-text-field>
+    </div>
+
     <v-card v-if="loading">
       <v-card-text>
         <div role="status" aria-live="polite" class="text-center py-12">
@@ -41,22 +56,22 @@
       </v-card-text>
     </v-card>
 
-    <v-card v-else-if="flows.length > 0">
-      <v-table>
-        <caption class="sr-only">List of registration flows</caption>
-        <thead>
-        <tr>
-          <th class="text-left">Name</th>
-          <th class="text-left">Description</th>
-          <th class="text-right">Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr v-for="flow in flows" :key="flow.flowId">
-          <td>
-            {{ flow.name || 'N/A' }}
+    <v-card v-else>
+      <v-card-text>
+        <v-data-table
+            :headers="headers"
+            :items="flows"
+            :search="search"
+            :filter-keys="filterKeys"
+            :custom-filter="filterRow"
+            v-model:page="page"
+            v-model:items-per-page="itemsPerPage"
+            item-value="flowId"
+        >
+          <template #item.name="{ item }">
+            {{ item.name || 'N/A' }}
             <v-chip
-                v-if="flow.enabled === false"
+                v-if="item.enabled === false"
                 color="grey"
                 size="x-small"
                 variant="flat"
@@ -64,39 +79,36 @@
             >
               Disabled
             </v-chip>
-          </td>
-          <td>{{ flow.description || '' }}</td>
-          <td class="text-right">
+          </template>
+          <template #item.description="{ item }">{{ item.description || '' }}</template>
+          <template #item.actions="{ item }">
             <v-btn
-                :id="'btn-edit-flow-' + flow.flowId"
+                :id="'btn-edit-flow-' + item.flowId"
                 color="primary"
                 variant="text"
                 size="small"
-                @click="editFlow(flow.flowId)"
+                @click="editFlow(item.flowId)"
                 class="mr-2"
             >
               Edit
             </v-btn>
             <v-btn
-                :id="'btn-delete-flow-' + flow.flowId"
+                :id="'btn-delete-flow-' + item.flowId"
                 color="error"
                 variant="text"
                 size="small"
-                @click="confirmDelete(flow)"
+                @click="confirmDelete(item)"
             >
               Delete
             </v-btn>
-          </td>
-        </tr>
-        </tbody>
-      </v-table>
-    </v-card>
-
-    <v-card v-else>
-      <v-card-text>
-        <div class="text-center py-12">
-          <p class="text-grey">No registration flows found.</p>
-        </div>
+          </template>
+          <template #no-data>
+            <p class="text-grey py-8">No registration flows found.</p>
+          </template>
+          <template #bottom>
+            <TablePager v-model:page="page" v-model:items-per-page="itemsPerPage" :total="filteredCount"/>
+          </template>
+        </v-data-table>
       </v-card-text>
     </v-card>
 
@@ -136,6 +148,8 @@
 <script setup>
 import {computed, onMounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
+import TablePager from '@/components/TablePager.vue';
+import {useListTable} from '@/composables/listTable';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
@@ -147,6 +161,14 @@ const errorStore = useErrorStore();
 const userStore = useUserStore();
 
 const flows = ref([]);
+const {search, page, itemsPerPage, filteredCount, filterKeys, filterRow} =
+    useListTable(flows, ['name', 'description']);
+
+const headers = [
+  {title: 'Name', key: 'name', sortable: true},
+  {title: 'Description', key: 'description', sortable: true},
+  {title: 'Actions', key: 'actions', sortable: false, align: 'end'},
+];
 const deleteDialog = ref(false);
 const deleting = ref(false);
 const flowToDelete = ref(null);

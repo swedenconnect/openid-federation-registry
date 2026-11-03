@@ -52,6 +52,21 @@
       </v-card-text>
     </v-card>
 
+    <div class="d-flex align-center mb-4">
+      <v-text-field
+          id="trustmark-subject-search"
+          v-model="search"
+          prepend-inner-icon="mdi-magnify"
+          label="Search by subject"
+          single-line
+          hide-details
+          clearable
+          variant="outlined"
+          density="compact"
+          class="flex-grow-1"
+      ></v-text-field>
+    </div>
+
     <v-card v-if="loading">
       <v-card-text>
         <div role="status" aria-live="polite" class="text-center py-12">
@@ -66,44 +81,39 @@
       </v-card-text>
     </v-card>
 
-    <v-card v-else-if="subjects.length > 0">
-      <v-table>
-        <caption class="sr-only">List of trustmark subjects</caption>
-        <thead>
-        <tr>
-          <th class="text-left">Subject</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr
-            v-for="subject in subjects"
-            :key="subject.trustmarksubjectId"
-            :id="'row-subject-' + subject.trustmarksubjectId"
-            class="clickable-row"
-            tabindex="0"
-            @click="editSubject(subject.trustmarksubjectId)"
-            @keydown.enter="editSubject(subject.trustmarksubjectId)"
-        >
-          <td>{{ subject.subject || 'N/A' }}</td>
-        </tr>
-        </tbody>
-      </v-table>
-    </v-card>
-
     <v-card v-else>
       <v-card-text>
-        <div class="text-center py-12">
-          <p class="text-grey">No trustmark subjects found.</p>
-        </div>
+        <v-data-table
+            :headers="headers"
+            :items="subjects"
+            :search="search"
+            :filter-keys="filterKeys"
+            :custom-filter="filterRow"
+            v-model:page="page"
+            v-model:items-per-page="itemsPerPage"
+            item-value="trustmarksubjectId"
+            :row-props="rowProps"
+            hover
+            @click:row="(_event, {item}) => editSubject(item.trustmarksubjectId)"
+        >
+          <template #item.subject="{ item }">{{ item.subject || 'N/A' }}</template>
+          <template #no-data>
+            <p class="text-grey py-8">No trustmark subjects found.</p>
+          </template>
+          <template #bottom>
+            <TablePager v-model:page="page" v-model:items-per-page="itemsPerPage" :total="filteredCount"/>
+          </template>
+        </v-data-table>
       </v-card-text>
     </v-card>
-
   </div>
 </template>
 
 <script setup>
 import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
+import TablePager from '@/components/TablePager.vue';
+import {useListTable} from '@/composables/listTable';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
@@ -118,6 +128,15 @@ const userStore = useUserStore();
 const subjects = ref([]);
 const entityIdentifier = ref(null);
 const trustmarkType = ref(null);
+const {search, page, itemsPerPage, filteredCount, filterKeys, filterRow, rowProps} =
+    useListTable(subjects, ['subject'], {
+      open: (item) => editSubject(item.trustmarksubjectId),
+      rowId: (item) => 'row-subject-' + item.trustmarksubjectId,
+    });
+
+const headers = [
+  {title: 'Subject', key: 'subject', sortable: true},
+];
 
 const entityId = computed(() => route.params.entityId);
 const trustmarkId = computed(() => route.params.trustmarkId);
@@ -180,9 +199,3 @@ onMounted(() => {
   loadSubjects();
 });
 </script>
-
-<style scoped>
-.clickable-row {
-  cursor: pointer;
-}
-</style>
