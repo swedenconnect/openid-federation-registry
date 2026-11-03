@@ -210,6 +210,7 @@ class DtoToEntityMapperTest {
     dto.setLogoUri("https://example.com/logo.png");
     dto.setRefUri("https://example.com/ref");
     dto.setDelegation("delegation-jwt");
+    dto.setTrustMarkTokenValidityDuration("P2D");
     final TrustMarkIssuer issuer = TrustMarkIssuer.builder()
         .trustmarkIssuerId(UUID.randomUUID())
         .build();
@@ -222,6 +223,19 @@ class DtoToEntityMapperTest {
     assertThat(entity.getLogoUri()).isEqualTo("https://example.com/logo.png");
     assertThat(entity.getRefUri()).isEqualTo("https://example.com/ref");
     assertThat(entity.getDelegation()).isEqualTo("delegation-jwt");
+    assertThat(entity.getTrustMarkTokenValidityDuration()).isEqualTo("P2D");
+  }
+
+  @Test
+  void toEntity_trustmarkDto_withoutValidityDuration() {
+    final TrustmarkDto dto = new TrustmarkDto();
+    dto.setTrustmarkType("https://example.com/trustmark");
+    final TrustMarkIssuer issuer = TrustMarkIssuer.builder().trustmarkIssuerId(UUID.randomUUID()).build();
+
+    assertThat(DtoToTrustmarkMapper.toEntity(ID, dto, issuer).getTrustMarkTokenValidityDuration()).isNull();
+
+    dto.setTrustMarkTokenValidityDuration("  ");
+    assertThat(DtoToTrustmarkMapper.toEntity(ID, dto, issuer).getTrustMarkTokenValidityDuration()).isNull();
   }
 
   // -------------------------------------------------------------------------
@@ -259,7 +273,6 @@ class DtoToEntityMapperTest {
   void toEntity_trustmarkIssuerDto() {
     final TrustmarkIssuerDto dto = new TrustmarkIssuerDto();
     dto.setActive(true);
-    dto.setTrustMarkTokenValidityDuration("PT1H");
     final FederationEntity entityEntity = createEntityEntity();
 
     final TrustMarkIssuer entity = DtoToModuleMapper.toEntity(ID, dto, entityEntity);
@@ -267,20 +280,6 @@ class DtoToEntityMapperTest {
     assertThat(entity.getTrustmarkIssuerId()).isEqualTo(ID);
     assertThat(entity.getEntity()).isEqualTo(entityEntity);
     assertThat(entity.getActive()).isTrue();
-    assertThat(entity.getTrustMarkTokenValidityDuration()).isEqualTo("PT1H");
-  }
-
-  @Test
-  void toEntity_trustmarkIssuerDto_withoutValidityDuration() {
-    final TrustmarkIssuerDto dto = new TrustmarkIssuerDto();
-    dto.setActive(true);
-
-    assertThat(DtoToModuleMapper.toEntity(ID, dto, createEntityEntity()).getTrustMarkTokenValidityDuration())
-        .isNull();
-
-    dto.setTrustMarkTokenValidityDuration("  ");
-    assertThat(DtoToModuleMapper.toEntity(ID, dto, createEntityEntity()).getTrustMarkTokenValidityDuration())
-        .isNull();
   }
 
   // -------------------------------------------------------------------------
@@ -526,6 +525,7 @@ class DtoToEntityMapperTest {
     dto.setLogoUri("https://example.com/new-logo.png");
     dto.setRefUri("https://example.com/new-ref");
     dto.setDelegation("new-delegation");
+    dto.setTrustMarkTokenValidityDuration("PT1H");
 
     DtoToTrustmarkMapper.updateEntity(entity, dto);
 
@@ -533,6 +533,19 @@ class DtoToEntityMapperTest {
     assertThat(entity.getLogoUri()).isEqualTo("https://example.com/new-logo.png");
     assertThat(entity.getRefUri()).isEqualTo("https://example.com/new-ref");
     assertThat(entity.getDelegation()).isEqualTo("new-delegation");
+    assertThat(entity.getTrustMarkTokenValidityDuration()).isEqualTo("PT1H");
+  }
+
+  @Test
+  void updateEntity_trustmarkDto_clearsValidityDuration() {
+    final TrustMark entity = TrustMark.builder().trustMarkTokenValidityDuration("P2D").build();
+    final TrustmarkDto dto = new TrustmarkDto();
+    dto.setTrustmarkType("https://example.com/type");
+    dto.setTrustMarkTokenValidityDuration("");
+
+    DtoToTrustmarkMapper.updateEntity(entity, dto);
+
+    assertThat(entity.getTrustMarkTokenValidityDuration()).isNull();
   }
 
   // -------------------------------------------------------------------------
@@ -567,24 +580,10 @@ class DtoToEntityMapperTest {
     final TrustMarkIssuer entity = TrustMarkIssuer.builder().build();
     final TrustmarkIssuerDto dto = new TrustmarkIssuerDto();
     dto.setActive(false);
-    dto.setTrustMarkTokenValidityDuration("PT2H");
 
     DtoToModuleMapper.updateEntity(entity, dto);
 
     assertThat(entity.getActive()).isFalse();
-    assertThat(entity.getTrustMarkTokenValidityDuration()).isEqualTo("PT2H");
-  }
-
-  @Test
-  void updateEntity_trustmarkIssuerDto_clearsValidityDuration() {
-    final TrustMarkIssuer entity = TrustMarkIssuer.builder().trustMarkTokenValidityDuration("PT2H").build();
-    final TrustmarkIssuerDto dto = new TrustmarkIssuerDto();
-    dto.setActive(true);
-    dto.setTrustMarkTokenValidityDuration("");
-
-    DtoToModuleMapper.updateEntity(entity, dto);
-
-    assertThat(entity.getTrustMarkTokenValidityDuration()).isNull();
   }
 
   // -------------------------------------------------------------------------

@@ -70,9 +70,6 @@ public class TrustMarkIssuer extends BaseEntity implements Persistable<UUID> {
   @Column(name = "active", nullable = false)
   private Boolean active;
 
-  @Column(name = "trust_mark_token_validity_duration")
-  private String trustMarkTokenValidityDuration;
-
   @OneToMany(mappedBy = "trustmarkIssuer", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
   private List<TrustMark> trustmarks;
 

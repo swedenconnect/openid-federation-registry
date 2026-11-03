@@ -9,6 +9,10 @@
 ### Version 0.9.12 Unreleased
 **Date:** <ToBeSet>
 
+- The validity duration of an issued trust mark is set per trust mark instead of on the trust mark issuer, and is at
+  least five minutes. Existing trust marks keep the duration of their issuer. Until the federation services read the
+  duration per trust mark, trust marks are issued with a validity of seven days
+  ([#272](https://github.com/swedenconnect/openid-federation-registry/issues/272)).
 - Organizations, Registrations, Trustmarks, Trustmark Subjects and Registration Flows can be searched, sorted by
   column and paged like Hosted Entities and Subordinates
   ([#352](https://github.com/swedenconnect/openid-federation-registry/issues/352)).

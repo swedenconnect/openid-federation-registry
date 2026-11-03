@@ -32,6 +32,8 @@ import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.federationservice.model.EntityRecord;
 import se.swedenconnect.oidf.registry.federationservice.model.ModuleRecord;
 import se.swedenconnect.oidf.registry.federationservice.model.TrustAnchorProperties;
+import se.swedenconnect.oidf.registry.federationservice.model.TrustMarkIssuerProperties;
+import se.swedenconnect.oidf.registry.federationservice.model.TrustMarkProperties;
 import se.swedenconnect.oidf.registry.federationservice.serde.JsonRegistryLoader;
 import se.swedenconnect.oidf.registry.fixture.FederationAPIOperations;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
@@ -39,6 +41,7 @@ import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
 import se.swedenconnect.oidf.registry.fixture.UseMariaDBContainer;
 
 import java.text.ParseException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -170,6 +173,18 @@ class OidfServiceApiControllerIT {
 
     assertFalse(moduleRecord.getTrustMarkIssuers().isEmpty(), "TMI is expected");
 
+    // The validity duration is sent per trust mark. Until the federation services read it from there, the trust
+    // mark issuer always gets seven days.
+    final TrustMarkIssuerProperties tmi = moduleRecord.getTrustMarkIssuers().stream()
+        .filter(issuer -> issuer.entityIdentifier().getValue().equals(this.taEntityId))
+        .findFirst()
+        .orElseThrow();
+    assertEquals(Duration.ofDays(7), tmi.trustMarkValidityDuration());
+    final TrustMarkProperties trustMark = tmi.trustMarks().stream()
+        .filter(tm -> tm.getTrustMarkType().getValue().equals(TestDataOperations.TRUSTMARK_TYPE))
+        .findFirst()
+        .orElseThrow();
+    assertEquals(Duration.ofDays(2), trustMark.getTrustMarkValidityDuration());
   }
 
   @Test

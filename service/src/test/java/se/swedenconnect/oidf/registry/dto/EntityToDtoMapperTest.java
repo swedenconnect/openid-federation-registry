@@ -130,7 +130,6 @@ class EntityToDtoMapperTest {
         .trustmarkIssuerId(UUID.randomUUID())
         .entity(entity)
         .active(true)
-        .trustMarkTokenValidityDuration("PT1H")
         .build();
     entity.setTrustmarkIssuer(tmi);
 
@@ -379,6 +378,7 @@ class EntityToDtoMapperTest {
     assertThat(dto.getLogoUri()).isEqualTo("https://example.com/logo.png");
     assertThat(dto.getRefUri()).isEqualTo("https://example.com/ref");
     assertThat(dto.getDelegation()).isEqualTo("delegation-jwt");
+    assertThat(dto.getTrustMarkTokenValidityDuration()).isEqualTo("P2D");
   }
 
   // -------------------------------------------------------------------------
@@ -468,7 +468,6 @@ class EntityToDtoMapperTest {
         .trustmarkIssuerId(UUID.randomUUID())
         .entity(entity)
         .active(true)
-        .trustMarkTokenValidityDuration("PT1H")
         .build();
 
     final TrustmarkIssuerDto dto = ModuleToDtoMapper.toDto(tmi);
@@ -476,7 +475,6 @@ class EntityToDtoMapperTest {
     assertThat(dto.getTrustmarkIssuerId()).isEqualTo(tmi.getTrustmarkIssuerId());
     assertThat(dto.getEntityId()).isEqualTo(entity.getEntityId());
     assertThat(dto.getActive()).isTrue();
-    assertThat(dto.getTrustMarkTokenValidityDuration()).isEqualTo("PT1H");
   }
 
   // -------------------------------------------------------------------------
@@ -585,7 +583,6 @@ class EntityToDtoMapperTest {
         .trustmarkIssuerId(UUID.randomUUID())
         .entity(entity)
         .active(true)
-        .trustMarkTokenValidityDuration("PT1H")
         .build();
     return TrustMark.builder()
         .trustmarkId(UUID.randomUUID())
@@ -593,6 +590,7 @@ class EntityToDtoMapperTest {
         .trustmarkType("https://example.com/trustmark")
         .logoUri("https://example.com/logo.png")
         .refUri("https://example.com/ref")
+        .trustMarkTokenValidityDuration("P2D")
         .delegation("delegation-jwt")
         .build();
   }

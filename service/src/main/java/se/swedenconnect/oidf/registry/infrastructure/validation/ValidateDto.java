@@ -40,6 +40,7 @@ import se.swedenconnect.oidf.registry.validation.PropertyValidators;
 import se.swedenconnect.oidf.registry.validation.VariableValueResolver;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -65,6 +66,7 @@ public class ValidateDto {
   private static final int MAX_DOMAIN_LENGTH = 255;
   private static final int MIN_LEGAL_NAME_LENGTH = 1;
   private static final int MAX_LEGAL_NAME_LENGTH = 255;
+  private static final Duration MIN_TRUST_MARK_TOKEN_VALIDITY_DURATION = Duration.ofMinutes(5);
 
   private final PropertyValidators.ValidationBuilder v;
 
@@ -493,6 +495,12 @@ public class ValidateDto {
     this.v.jwt()
         .build()
         .ifFailThrow("delegation", dto.getDelegation());
+
+    // Optional, no duration means that the trust mark never expires.
+    this.v.duration()
+        .minDuration(MIN_TRUST_MARK_TOKEN_VALIDITY_DURATION)
+        .build()
+        .ifFailThrow("trustMarkTokenValidityDuration", dto.getTrustMarkTokenValidityDuration());
   }
 
   /**
@@ -536,11 +544,6 @@ public class ValidateDto {
     this.v.required()
         .build()
         .ifFailThrow("active", dto.getActive());
-
-    // Optional, no duration means that the trust marks never expire.
-    this.v.duration()
-        .build()
-        .ifFailThrow("trustMarkTokenValidityDuration", dto.getTrustMarkTokenValidityDuration());
   }
 
   /**

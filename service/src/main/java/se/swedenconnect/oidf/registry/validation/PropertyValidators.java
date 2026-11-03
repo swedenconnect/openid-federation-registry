@@ -452,6 +452,24 @@ public class PropertyValidators {
     };
   }
 
+  private PropertyValidator validateMinDuration(final java.time.Duration min) {
+    return (key, value) -> {
+      if (value == null || value.isBlank()) {
+        return ValidationStatusImpl.noEval(key, "minDuration(%s)".formatted(min));
+      }
+      final java.time.Duration duration;
+      try {
+        duration = java.time.Duration.parse(value);
+      }
+      catch (final Exception ex) {
+        throw new PropertyValidationFailException(key, value, "Invalid duration format. "
+            + "Expected ISO-8601 duration (e.g., PT1H30M). Error: " + ex.getMessage());
+      }
+      this.throwIf(() -> duration.compareTo(min) < 0, key, "Duration has to be at least %s".formatted(min), value);
+      return ValidationStatusImpl.ok(key, "minDuration(%s)".formatted(min));
+    };
+  }
+
   private PropertyValidator validateMax(final String conf) {
     return (key, value) -> {
       this.throwIf(() -> value != null && !value.isBlank() && Double.parseDouble(value) > Double.parseDouble(conf),
@@ -770,6 +788,17 @@ public class PropertyValidators {
      */
     public ValidationBuilder max(final int max) {
       this.addValidator(PropertyValidators.this.validateMax(String.valueOf(max)));
+      return this;
+    }
+
+    /**
+     * Adds a minimum duration validation rule for an ISO-8601 duration.
+     *
+     * @param min the shortest allowed duration
+     * @return this builder
+     */
+    public ValidationBuilder minDuration(final java.time.Duration min) {
+      this.addValidator(PropertyValidators.this.validateMinDuration(min));
       return this;
     }
 

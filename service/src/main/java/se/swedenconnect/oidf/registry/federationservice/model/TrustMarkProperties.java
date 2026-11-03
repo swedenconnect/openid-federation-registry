@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -45,6 +46,8 @@ public final class TrustMarkProperties {
   private TrustMarkDelegation delegation;
   @SerializedName("trust-mark-subjects")
   private List<TrustMarkSubjectProperty> trustMarkSubjects;
+  @SerializedName("trust-mark-validity-duration")
+  private Duration trustMarkValidityDuration;
 
   /**
    * Validate content of configuration.

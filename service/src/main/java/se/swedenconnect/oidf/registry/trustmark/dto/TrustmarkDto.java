@@ -49,4 +49,8 @@ public class TrustmarkDto {
 
   @Schema(description = "Delegation JWT")
   private String delegation;
+
+  @Schema(description = "Trust mark token validity duration (ISO-8601 duration, e.g. P2D), at least five minutes. "
+      + "If left empty the issued trust marks never expire.")
+  private String trustMarkTokenValidityDuration;
 }
