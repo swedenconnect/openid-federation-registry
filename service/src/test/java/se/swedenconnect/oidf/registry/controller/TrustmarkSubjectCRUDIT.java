@@ -518,7 +518,7 @@ class TrustmarkSubjectCRUDIT {
         new FederationEntity().entityIdentifier(issuerEntityIdentifier));
 
     final UUID issuerId = modules.createTrustmarkIssuerWithId(tenant, organisation.orgId, UUID.randomUUID(),
-        new TrustmarkIssuer().entityId(entityId).active(true)).trustMarkTokenValidityDuration("PT1H"))
+        new TrustmarkIssuer().entityId(entityId).active(true))
         .getTrustmarkIssuerId();
 
     final UUID trustmarkId = UUID.randomUUID();
