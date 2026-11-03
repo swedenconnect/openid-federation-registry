@@ -17,10 +17,12 @@ package se.swedenconnect.oidf.registry.infrastructure.config;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import se.swedenconnect.oidf.registry.fixture.TestContainersConfiguration;
 
 import java.io.IOException;
@@ -28,6 +30,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,7 +40,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Verifies the attributes of the session cookie with the session and proxy settings from the main
  * {@code application.yml}, which the test configuration does not include. TLS is terminated in a proxy, and with
  * {@code forward-headers-strategy: framework} Tomcat, which creates the session cookie, never sees https. The cookie
- * must therefore be configured as {@code Secure} explicitly.
+ * must therefore be configured as {@code Secure} explicitly. The session is stored in the database by Spring Session, so
+ * that several instances can serve the same session.
  *
  * @author Per Fredrik Plars
  */
@@ -51,6 +56,9 @@ class SessionCookieIT {
 
   @LocalServerPort
   private int port;
+
+  @Autowired
+  private JdbcTemplate jdbcTemplate;
 
   private final HttpClient httpClient = HttpClient.newHttpClient();
 
@@ -72,6 +80,19 @@ class SessionCookieIT {
         .contains("; SameSite=Lax");
   }
 
+  @Test
+  @DisplayName("The session with the authorization request is stored in the database")
+  void sessionIsStoredInDatabase() throws Exception {
+    final String cookieValue = this.sessionCookie(Map.of()).substring("SESSION=".length()).split(";")[0];
+    final String sessionId = new String(Base64.getDecoder().decode(cookieValue), StandardCharsets.UTF_8);
+
+    assertThat(this.jdbcTemplate.queryForList("""
+        SELECT a.ATTRIBUTE_NAME FROM SPRING_SESSION s
+        JOIN SPRING_SESSION_ATTRIBUTES a ON a.SESSION_PRIMARY_ID = s.PRIMARY_ID
+        WHERE s.SESSION_ID = ?""", String.class, sessionId))
+        .anyMatch(name -> name.endsWith("AUTHORIZATION_REQUEST"));
+  }
+
   /**
    * Starts a login, which stores the authorization request in a new session.
    */
@@ -81,8 +102,8 @@ class SessionCookieIT {
     headers.forEach(request::header);
     final HttpResponse<Void> response = this.httpClient.send(request.build(), HttpResponse.BodyHandlers.discarding());
     return response.headers().allValues("Set-Cookie").stream()
-        .filter(header -> header.startsWith("JSESSIONID="))
+        .filter(header -> header.startsWith("SESSION="))
         .findFirst()
-        .orElseThrow(() -> new AssertionError("No JSESSIONID cookie in " + response.headers().map()));
+        .orElseThrow(() -> new AssertionError("No SESSION cookie in " + response.headers().map()));
   }
 }

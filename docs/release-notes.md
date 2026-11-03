@@ -11,6 +11,8 @@
 **Date:** <ToBeSet>
   
   
+- GUI sessions are stored in the database, so the registry can run on several instances
+  ([#384](https://github.com/swedenconnect/openid-federation-registry/issues/384)).
 - The configuration documentation names `notification_active`, the property that enables notifications to the
   federation services ([#375](https://github.com/swedenconnect/openid-federation-registry/issues/375)).
 - Every Leaf Entity gets `ec_location` in its Subordinate Statement, also when its Entity Configuration is published
