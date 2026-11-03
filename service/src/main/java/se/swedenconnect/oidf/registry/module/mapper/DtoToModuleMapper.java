@@ -176,7 +176,6 @@ public final class DtoToModuleMapper {
         .trustmarkIssuerId(id)
         .entity(federationEntity)
         .active(dto.getActive())
-        .trustMarkTokenValidityDuration(blankToNull(dto.getTrustMarkTokenValidityDuration()))
         .build();
   }
 
@@ -188,11 +187,6 @@ public final class DtoToModuleMapper {
    */
   public static void updateEntity(final TrustMarkIssuer entity, final TrustmarkIssuerDto dto) {
     entity.setActive(dto.getActive());
-    entity.setTrustMarkTokenValidityDuration(blankToNull(dto.getTrustMarkTokenValidityDuration()));
-  }
-
-  private static String blankToNull(final String value) {
-    return value == null || value.isBlank() ? null : value;
   }
 
   /**

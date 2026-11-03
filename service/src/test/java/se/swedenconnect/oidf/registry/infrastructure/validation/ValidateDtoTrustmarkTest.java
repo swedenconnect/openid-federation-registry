@@ -19,21 +19,23 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
-import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
+import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
 import se.swedenconnect.oidf.registry.validation.PropertyValidationFailException;
 
 import java.util.UUID;
 
-class ValidateDtoTrustmarkIssuerTest {
+class ValidateDtoTrustmarkTest {
 
   private final ValidateDto validator =
       ValidateDto.init(new OrganizationRecord("55555", "PM", "https://www.pm.se/oidf/", null));
 
-  private static TrustmarkIssuerDto dto(final String duration) {
-    final TrustmarkIssuerDto dto = new TrustmarkIssuerDto();
-    dto.setEntityId(UUID.randomUUID());
-    dto.setActive(true);
+  private static TrustmarkDto dto(final String duration) {
+    final TrustmarkDto dto = new TrustmarkDto();
+    dto.setTrustmarkissuerId(UUID.randomUUID());
+    dto.setTrustmarkType("https://www.pm.se/oidf/trustmark/loa3");
     dto.setTrustMarkTokenValidityDuration(duration);
     return dto;
   }
@@ -44,9 +46,21 @@ class ValidateDtoTrustmarkIssuerTest {
     assertThatCode(() -> this.validator.validate(dto(""))).doesNotThrowAnyException();
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"PT5M", "PT1H", "P2D"})
+  void validityDurationOfAtLeastFiveMinutesIsValid(final String duration) {
+    assertThatCode(() -> this.validator.validate(dto(duration))).doesNotThrowAnyException();
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"PT4M59S", "PT1M", "PT0S", "-PT1H"})
+  void validityDurationShorterThanFiveMinutesIsRejected(final String duration) {
+    assertThatThrownBy(() -> this.validator.validate(dto(duration)))
+        .isInstanceOf(PropertyValidationFailException.class);
+  }
+
   @Test
-  void givenValidityDurationIsStillValidated() {
-    assertThatCode(() -> this.validator.validate(dto("PT1H"))).doesNotThrowAnyException();
+  void validityDurationMustBeAnIsoDuration() {
     assertThatThrownBy(() -> this.validator.validate(dto("one hour")))
         .isInstanceOf(PropertyValidationFailException.class);
   }

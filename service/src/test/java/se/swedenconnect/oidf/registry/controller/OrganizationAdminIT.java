@@ -90,8 +90,7 @@ class OrganizationAdminIT {
     final TrustmarkIssuer trustmarkIssuer = modulesApi.createTrustmarkIssuer(TENANT, OPERATOR.orgId,
         new TrustmarkIssuer()
             .entityId(tmiEntity.getEntityId())
-            .active(true)
-            .trustMarkTokenValidityDuration("PT1H"));
+            .active(true));
 
     this.trustMarkType = "https://www.pm.se/oidf/tm/" + issuerSuffix;
     new TrustmarksApi(operatorClient).createTrustmark(TENANT, OPERATOR.orgId, new Trustmark()

@@ -146,7 +146,6 @@ public final class ModuleToDtoMapper {
     dto.setTrustmarkIssuerId(entity.getTrustmarkIssuerId());
     dto.setEntityId(entity.getEntity().getEntityId());
     dto.setActive(entity.getActive());
-    dto.setTrustMarkTokenValidityDuration(entity.getTrustMarkTokenValidityDuration());
     return dto;
   }
 }

@@ -26,6 +26,7 @@ import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.api.EntitiesApi;
 import se.swedenconnect.oidf.registry.api.ModulesApi;
 import se.swedenconnect.oidf.registry.api.SubordinatesApi;
+import se.swedenconnect.oidf.registry.api.TrustmarksApi;
 import se.swedenconnect.oidf.registry.api.model.EntityWithModules;
 import se.swedenconnect.oidf.registry.api.model.FederationEntity;
 import se.swedenconnect.oidf.registry.api.model.FederationEntityWithModules;
@@ -33,6 +34,7 @@ import se.swedenconnect.oidf.registry.api.model.HostedEntity;
 import se.swedenconnect.oidf.registry.api.model.Resolver;
 import se.swedenconnect.oidf.registry.api.model.Subordinate;
 import se.swedenconnect.oidf.registry.api.model.TrustAnchor;
+import se.swedenconnect.oidf.registry.api.model.Trustmark;
 import se.swedenconnect.oidf.registry.api.model.TrustmarkIssuer;
 
 import java.security.InvalidAlgorithmParameterException;
@@ -52,6 +54,9 @@ import java.util.UUID;
  */
 @Slf4j
 public class TestDataOperations {
+
+  /** The trust mark type of the trust mark issuer of the scenario, with a validity duration of two days. */
+  public static final String TRUSTMARK_TYPE = "https://www.pm.se/oidf/trustmark/loa3";
 
   public static JWKSet genJWKS() {
     return new JWKSet(List.of(genKey(), genKey()));
@@ -155,12 +160,17 @@ public class TestDataOperations {
 
     final TrustmarkIssuer trustmarkIssuerInput = TrustmarkIssuer.builder()
         .entityId(trustAnchorEntity.getEntityId())
-        .trustMarkTokenValidityDuration("PT1H")
         .active(true)
         .build();
     final TrustmarkIssuer createdTrustmarkIssuer = modulesApi.createTrustmarkIssuer(tenant, orgNumber, trustmarkIssuerInput);
     log.info("Created tmi module with ID: {} for entity: {}",
         createdTrustmarkIssuer.getTrustmarkIssuerId(), trustAnchorEntity.getEntityIdentifier());
+
+    new TrustmarksApi(apiClient).createTrustmark(tenant, orgNumber, Trustmark.builder()
+        .trustmarkissuerId(createdTrustmarkIssuer.getTrustmarkIssuerId())
+        .trustmarkType(TRUSTMARK_TYPE)
+        .trustMarkTokenValidityDuration("P2D")
+        .build());
 
     // Step 4: Create second federation entity with relying_party metadata
     final Map<String, Object> relyingPartyMetadata = new HashMap<>();
