@@ -11,6 +11,8 @@
 **Date:** <ToBeSet>
   
   
+- The save button of an already configured module on the federation entity page says Save instead of Add
+  ([#348](https://github.com/swedenconnect/openid-federation-registry/issues/348)).
 - The configuration documentation names `notification_active`, the property that enables notifications to the
   federation services ([#375](https://github.com/swedenconnect/openid-federation-registry/issues/375)).
 - Every Leaf Entity gets `ec_location` in its Subordinate Statement, also when its Entity Configuration is published
