@@ -75,6 +75,7 @@
         <bouncycastle.version>1.86</bouncycastle.version>
         <tomcat.version>11.0.27</tomcat.version>
         <iam.security.version>0.9.8</iam.security.version>
+        <nimbus.extensions.version>1.0.1</nimbus.extensions.version>
 
         <!-- Frontend build, see service/pom.xml. Use -Dfrontend.skip=true to leave the frontend out of a build. -->
         <frontend.skip>false</frontend.skip>
@@ -153,6 +154,11 @@
                 <groupId>com.nimbusds</groupId>
                 <artifactId>oauth2-oidc-sdk</artifactId>
                 <version>11.29.1</version>
+            </dependency>
+            <dependency>
+                <groupId>se.swedenconnect.oidf</groupId>
+                <artifactId>nimbus-extensions</artifactId>
+                <version>${nimbus.extensions.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.bouncycastle</groupId>

@@ -143,8 +143,6 @@ subordinate's own, operator by operator as OpenID Federation combines a superior
   its subordinates; the message names the subordinate.
 - Saving a subordinate, by hand or through the Publish step of a registration flow, is refused (the registration is
   declined) when its policy cannot be combined with the module's.
-- A parameter with `"value": null` (remove the parameter) is kept as it is, and combining it with any other operator
-  for the same parameter is a conflict.
 
 In the GUI, the module's settings have a **Metadata policy for subordinates** field, with **Load template** for the
 `policy` templates configured under `openid.federation.registry.templates`. A loaded template is copied into the
