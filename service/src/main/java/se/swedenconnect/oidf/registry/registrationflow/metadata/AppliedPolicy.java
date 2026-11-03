@@ -16,10 +16,10 @@
 package se.swedenconnect.oidf.registry.registrationflow.metadata;
 
 import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
 import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyViolationException;
 import net.minidev.json.JSONObject;
 import net.minidev.json.JSONValue;
+import se.swedenconnect.oidf.registry.policy.MetadataPolicies;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -92,7 +92,7 @@ public final class AppliedPolicy {
       set.forEach((key, value) -> start.put(String.valueOf(key), value));
       final JSONObject resolved;
       try {
-        resolved = policy == null ? start : MetadataPolicy.parse(toJson(policy)).apply(start);
+        resolved = policy == null ? start : MetadataPolicies.apply(MetadataPolicies.read(policy), start);
       }
       catch (final ParseException | PolicyViolationException e) {
         errors.add("%s: %s".formatted(entityType, e.getMessage()));
@@ -119,12 +119,6 @@ public final class AppliedPolicy {
     return policy != null && policy.get(parameter) instanceof final Map<?, ?> operators
         ? operators.keySet().stream().map(String::valueOf).toList()
         : List.of();
-  }
-
-  private static JSONObject toJson(final Map<?, ?> map) {
-    final JSONObject json = new JSONObject();
-    map.forEach((key, value) -> json.put(String.valueOf(key), value));
-    return json;
   }
 
   /** Reads a value back from JSON, so that values declared and values resolved compare the same way. */

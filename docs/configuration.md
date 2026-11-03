@@ -369,10 +369,8 @@ deployment configures its own. A template that cannot be read or used stops the 
 
 The list is one setting: a configuration file that sets `templates` replaces the list of an earlier one.
 
-Templates are assumed to follow OpenID Federation. Entries the registry cannot handle yet are left out when a template
-is loaded, with a warning naming each: in a `policy` template `"value": null` and `one_of` with values that are not
-strings, in a `step` template a rule with `"static_value": null`. The template list (`omitted`) and the GUI, when the
-template is loaded, show what was left out.
+Templates should follow OpenID Federation. Entries the registry cannot handle are left out when a template is
+loaded, with a warning naming each entry left out.
 
 #### Example
 
