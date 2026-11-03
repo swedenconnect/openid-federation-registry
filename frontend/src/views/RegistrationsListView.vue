@@ -72,133 +72,117 @@
 
     <!-- Entities: everything an entity waits for, reviewed in one session -->
     <template v-else-if="mode === MODE_ENTITIES">
-      <v-card v-if="filteredEntities.length > 0">
-        <v-table>
-          <caption class="sr-only">Entities and what each waits for</caption>
-          <thead>
-            <tr>
-              <th class="text-left">Entity</th>
-              <th class="text-left">Organization</th>
-              <th class="text-left">Waiting</th>
-              <th class="text-left">Review</th>
-              <th class="text-left">Submitted</th>
-              <th class="text-left"><span class="sr-only">Action</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-                v-for="entity in filteredEntities"
-                :key="entity.registrationId"
-                role="button"
-                tabindex="0"
-                :aria-label="`View ${entity.entityId}`"
-                class="clickable-row"
-                @click="openEntity(entity)"
-                @keydown.enter.prevent="openEntity(entity)"
-                @keydown.space.prevent="openEntity(entity)"
-            >
-              <td>
-                <span class="mono">{{ entity.entityId }}</span>
-                <v-chip v-if="entity.hosted" size="x-small" color="info" label class="ml-2">Hosted</v-chip>
-                <v-chip v-if="entity.update" size="x-small" color="warning" label class="ml-2">Update</v-chip>
-              </td>
-              <td>
-                <div>{{ entity.organizationName }}</div>
-                <div class="text-caption text-grey">{{ entity.organizationNumber }}</div>
-              </td>
-              <td>
-                <div class="d-flex flex-wrap ga-1">
-                  <v-chip v-for="chip in waitingChips(entity)" :key="chip" size="small" label>{{ chip }}</v-chip>
-                  <span v-if="!waitingChips(entity).length" class="text-grey">—</span>
-                </div>
-              </td>
-              <td>
-                <v-chip :color="reviewStateColor(entity.reviewState)" size="small" label>
-                  {{ reviewStateLabel(entity.reviewState) }}
-                </v-chip>
-                <div v-if="entity.reviewState === 'IN_REVIEW'" class="text-caption text-grey">
-                  {{ entity.decidedItems }} decided · started by {{ entity.startedBy }}
-                </div>
-              </td>
-              <td>{{ formatDate(entity.submittedAt) }}</td>
-              <td>
-                <v-btn
-                    v-if="entity.reviewState !== 'COMPLETED'"
-                    :id="'btn-review-' + entity.registrationId"
-                    size="small"
-                    :color="entity.reviewState === 'IN_REVIEW' ? undefined : 'primary'"
-                    :variant="entity.reviewState === 'IN_REVIEW' ? 'outlined' : 'flat'"
-                    @click.stop="openReview(entity)"
-                >
-                  {{ entity.reviewState === 'IN_REVIEW' ? 'Continue review' : 'Start review' }}
-                </v-btn>
-              </td>
-            </tr>
-          </tbody>
-        </v-table>
-      </v-card>
-      <v-card v-else>
+      <v-card>
         <v-card-text>
-          <div class="text-center py-12">
-            <p v-if="!showHistory" class="text-grey">
-              Nothing waits for review. Turn on <strong>Show history</strong> to see reviewed entities.
-            </p>
-            <p v-else class="text-grey">No entities found.</p>
-          </div>
+          <v-data-table
+              :headers="entityHeaders"
+              :items="filteredEntities"
+              :search="search"
+              :filter-keys="entityFilterKeys"
+              :custom-filter="entityFilterRow"
+              v-model:page="entityPage"
+              v-model:items-per-page="entityItemsPerPage"
+              item-value="registrationId"
+              :row-props="entityRowProps"
+              hover
+              @click:row="(_event, {item}) => openEntity(item)"
+          >
+            <template #item.entityId="{ item }">
+              <span class="mono">{{ item.entityId }}</span>
+              <v-chip v-if="item.hosted" size="x-small" color="info" label class="ml-2">Hosted</v-chip>
+              <v-chip v-if="item.update" size="x-small" color="warning" label class="ml-2">Update</v-chip>
+            </template>
+            <template #item.organizationName="{ item }">
+              <div>{{ item.organizationName }}</div>
+              <div class="text-caption text-grey">{{ item.organizationNumber }}</div>
+            </template>
+            <template #item.waiting="{ item }">
+              <div class="d-flex flex-wrap ga-1">
+                <v-chip v-for="chip in waitingChips(item)" :key="chip" size="small" label>{{ chip }}</v-chip>
+                <span v-if="!waitingChips(item).length" class="text-grey">—</span>
+              </div>
+            </template>
+            <template #item.reviewState="{ item }">
+              <v-chip :color="reviewStateColor(item.reviewState)" size="small" label>
+                {{ reviewStateLabel(item.reviewState) }}
+              </v-chip>
+              <div v-if="item.reviewState === 'IN_REVIEW'" class="text-caption text-grey">
+                {{ item.decidedItems }} decided · started by {{ item.startedBy }}
+              </div>
+            </template>
+            <template #item.submittedAt="{ item }">{{ formatDate(item.submittedAt) }}</template>
+            <template #item.action="{ item }">
+              <v-btn
+                  v-if="item.reviewState !== 'COMPLETED'"
+                  :id="'btn-review-' + item.registrationId"
+                  size="small"
+                  :color="item.reviewState === 'IN_REVIEW' ? undefined : 'primary'"
+                  :variant="item.reviewState === 'IN_REVIEW' ? 'outlined' : 'flat'"
+                  @click.stop="openReview(item)"
+              >
+                {{ item.reviewState === 'IN_REVIEW' ? 'Continue review' : 'Start review' }}
+              </v-btn>
+            </template>
+            <template #no-data>
+              <p v-if="!showHistory" class="text-grey py-8">
+                Nothing waits for review. Turn on <strong>Show history</strong> to see reviewed entities.
+              </p>
+              <p v-else class="text-grey py-8">No entities found.</p>
+            </template>
+            <template #bottom>
+              <TablePager
+                  v-model:page="entityPage"
+                  v-model:items-per-page="entityItemsPerPage"
+                  :total="entityFilteredCount"
+              />
+            </template>
+          </v-data-table>
         </v-card-text>
       </v-card>
     </template>
 
     <!-- Domain claims: also those no entity is registered under yet -->
     <template v-else>
-      <v-card v-if="filteredDomains.length > 0">
-        <v-table>
-          <caption class="sr-only">Domain claims</caption>
-          <thead>
-            <tr>
-              <th class="text-left">Domain</th>
-              <th class="text-left">Organization</th>
-              <th class="text-left">Status</th>
-              <th class="text-left">Requested</th>
-              <th class="text-left">Reason</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-                v-for="domain in filteredDomains"
-                :key="domain.domainId"
-                role="button"
-                tabindex="0"
-                :aria-label="`View domain request for ${domain.domain}`"
-                class="clickable-row"
-                @click="openDomain(domain)"
-                @keydown.enter.prevent="openDomain(domain)"
-                @keydown.space.prevent="openDomain(domain)"
-            >
-              <td>{{ domain.domain }}</td>
-              <td>
-                <div>{{ domain.legalName || domain.orgName || domain.orgNumber }}</div>
-                <div v-if="domain.legalName || domain.orgName" class="text-caption text-grey">{{ domain.orgNumber }}</div>
-              </td>
-              <td>
-                <v-chip :color="domainStatusColor(domain.status)" size="small" label>
-                  {{ domainStatusLabel(domain.status) }}
-                </v-chip>
-              </td>
-              <td>{{ formatDate(domain.createdDate) }}</td>
-              <td>{{ domain.rejectionReason || '' }}</td>
-            </tr>
-          </tbody>
-        </v-table>
-      </v-card>
-      <v-card v-else>
+      <v-card>
         <v-card-text>
-          <div class="text-center py-12">
-            <p v-if="!showHistory" class="text-grey">
-              No pending domain claims. Turn on <strong>Show history</strong> to see decided ones.
-            </p>
-            <p v-else class="text-grey">No domain claims found.</p>
-          </div>
+          <v-data-table
+              :headers="domainHeaders"
+              :items="filteredDomains"
+              :search="search"
+              :filter-keys="domainFilterKeys"
+              :custom-filter="domainFilterRow"
+              v-model:page="domainPage"
+              v-model:items-per-page="domainItemsPerPage"
+              item-value="domainId"
+              :row-props="domainRowProps"
+              hover
+              @click:row="(_event, {item}) => openDomain(item)"
+          >
+            <template #item.organizationText="{ item }">
+              <div>{{ item.organizationText }}</div>
+              <div v-if="item.legalName || item.orgName" class="text-caption text-grey">{{ item.orgNumber }}</div>
+            </template>
+            <template #item.status="{ item }">
+              <v-chip :color="domainStatusColor(item.status)" size="small" label>
+                {{ domainStatusLabel(item.status) }}
+              </v-chip>
+            </template>
+            <template #item.createdDate="{ item }">{{ formatDate(item.createdDate) }}</template>
+            <template #item.rejectionReason="{ item }">{{ item.rejectionReason || '' }}</template>
+            <template #no-data>
+              <p v-if="!showHistory" class="text-grey py-8">
+                No pending domain claims. Turn on <strong>Show history</strong> to see decided ones.
+              </p>
+              <p v-else class="text-grey py-8">No domain claims found.</p>
+            </template>
+            <template #bottom>
+              <TablePager
+                  v-model:page="domainPage"
+                  v-model:items-per-page="domainItemsPerPage"
+                  :total="domainFilteredCount"
+              />
+            </template>
+          </v-data-table>
         </v-card-text>
       </v-card>
     </template>
@@ -208,6 +192,8 @@
 <script setup>
 import {computed, onMounted, ref, watch} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
+import TablePager from '@/components/TablePager.vue';
+import {useListTable} from '@/composables/listTable';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
@@ -259,22 +245,67 @@ watch(showHistory, (value) => {
 
 const REVIEW_ORDER = {IN_REVIEW: 0, NOT_STARTED: 1, COMPLETED: 2};
 
-function matches(values) {
-  const q = (search.value ?? '').toLowerCase();
-  return !q || values.some(value => value?.toLowerCase().includes(q));
-}
+const reviewOrder = (entity) => REVIEW_ORDER[entity.reviewState] ?? 9;
 
-const filteredEntities = computed(() => entities.value
-    .filter(entity => matches([entity.entityId, entity.organizationName, entity.organizationNumber]))
-    .sort((a, b) => (REVIEW_ORDER[a.reviewState] ?? 9) - (REVIEW_ORDER[b.reviewState] ?? 9)
-        || dateValue(b.submittedAt) - dateValue(a.submittedAt)));
+// The order of the lists is what is shown until a column is sorted, and again after its sort is cleared.
+const filteredEntities = computed(() => [...entities.value]
+    .sort((a, b) => reviewOrder(a) - reviewOrder(b) || dateValue(b.submittedAt) - dateValue(a.submittedAt)));
 
 const filteredDomains = computed(() => domains.value
-    .filter(domain => matches([domain.domain, domain.orgNumber, domain.legalName, domain.orgName]))
     .filter(domain => showHistory.value || domain.status === 'PENDING')
     .filter(domain => !statusQuery.value || statusQuery.value === 'ALL' || domain.status === statusQuery.value)
+    .map(domain => ({...domain, organizationText: domain.legalName || domain.orgName || domain.orgNumber}))
     .sort((a, b) => (a.status === 'PENDING' ? 0 : 1) - (b.status === 'PENDING' ? 0 : 1)
         || dateValue(b.createdDate) - dateValue(a.createdDate)));
+
+const {
+  page: entityPage,
+  itemsPerPage: entityItemsPerPage,
+  filteredCount: entityFilteredCount,
+  filterKeys: entityFilterKeys,
+  filterRow: entityFilterRow,
+  rowProps: entityRowProps,
+} = useListTable(filteredEntities, ['entityId', 'organizationName', 'organizationNumber'], {
+  search,
+  open: openEntity,
+  rowLabel: (entity) => `View ${entity.entityId}`,
+});
+
+const {
+  page: domainPage,
+  itemsPerPage: domainItemsPerPage,
+  filteredCount: domainFilteredCount,
+  filterKeys: domainFilterKeys,
+  filterRow: domainFilterRow,
+  rowProps: domainRowProps,
+} = useListTable(filteredDomains, ['domain', 'orgNumber', 'legalName', 'orgName'], {
+  search,
+  open: openDomain,
+  rowLabel: (domain) => `View domain request for ${domain.domain}`,
+});
+
+const entityHeaders = [
+  {title: 'Entity', key: 'entityId', sortable: true},
+  {title: 'Organization', key: 'organizationName', sortable: true},
+  {title: 'Waiting', key: 'waiting', sortable: false},
+  {title: 'Review', key: 'reviewState', sortable: true, sortRaw: (a, b) => reviewOrder(a) - reviewOrder(b)},
+  {
+    title: 'Submitted', key: 'submittedAt', sortable: true,
+    sortRaw: (a, b) => dateValue(a.submittedAt) - dateValue(b.submittedAt),
+  },
+  {title: '', key: 'action', sortable: false},
+];
+
+const domainHeaders = [
+  {title: 'Domain', key: 'domain', sortable: true},
+  {title: 'Organization', key: 'organizationText', sortable: true},
+  {title: 'Status', key: 'status', sortable: true},
+  {
+    title: 'Requested', key: 'createdDate', sortable: true,
+    sortRaw: (a, b) => dateValue(a.createdDate) - dateValue(b.createdDate),
+  },
+  {title: 'Reason', key: 'rejectionReason', sortable: false},
+];
 
 function waitingChips(entity) {
   const chips = [];
@@ -346,12 +377,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.clickable-row {
-  cursor: pointer;
-}
-.clickable-row:hover td {
-  background-color: rgba(0, 0, 0, 0.04);
-}
 .gap-3 {
   gap: 12px;
 }

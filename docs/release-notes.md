@@ -9,6 +9,9 @@
 ### Version 0.9.12 Unreleased
 **Date:** <ToBeSet>
 
+- Organizations, Registrations, Trustmarks, Trustmark Subjects and Registration Flows can be searched, sorted by
+  column and paged like Hosted Entities and Subordinates
+  ([#352](https://github.com/swedenconnect/openid-federation-registry/issues/352)).
 - MariaDB driver upgraded to 3.5.11, which no longer exposes the database password through connection metadata (#365).
 - Metadata policies are read with `se.swedenconnect.oidf:nimbus-extensions`: `value: null` and `one_of` with numbers
   or booleans are supported, and are no longer left out of policy templates.

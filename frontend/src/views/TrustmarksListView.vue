@@ -45,6 +45,21 @@
       </v-card-text>
     </v-card>
 
+    <div class="d-flex align-center mb-4">
+      <v-text-field
+          id="trustmark-search"
+          v-model="search"
+          prepend-inner-icon="mdi-magnify"
+          label="Search by trustmark type"
+          single-line
+          hide-details
+          clearable
+          variant="outlined"
+          density="compact"
+          class="flex-grow-1"
+      ></v-text-field>
+    </div>
+
     <v-card v-if="loading">
       <v-card-text>
         <div role="status" aria-live="polite" class="text-center py-12">
@@ -59,47 +74,40 @@
       </v-card-text>
     </v-card>
 
-    <v-card v-else-if="trustmarks.length > 0">
-      <v-table>
-        <caption class="sr-only">List of trustmarks</caption>
-        <thead>
-        <tr>
-          <th class="text-left">Trustmark Type</th>
-          <th class="text-right"><span class="sr-only">Actions</span></th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr
-            v-for="trustmark in trustmarks"
-            :key="trustmark.trustmarkId"
-            class="clickable-row"
-            tabindex="0"
-            @click="viewSubjects(trustmark.trustmarkId)"
-            @keydown.enter="viewSubjects(trustmark.trustmarkId)"
+    <v-card v-else>
+      <v-card-text>
+        <v-data-table
+            :headers="headers"
+            :items="trustmarks"
+            :search="search"
+            :filter-keys="filterKeys"
+            :custom-filter="filterRow"
+            v-model:page="page"
+            v-model:items-per-page="itemsPerPage"
+            item-value="trustmarkId"
+            :row-props="rowProps"
+            hover
+            @click:row="(_event, {item}) => viewSubjects(item.trustmarkId)"
         >
-          <td>{{ trustmark.trustmarkType || 'N/A' }}</td>
-          <td class="text-right">
+          <template #item.trustmarkType="{ item }">{{ item.trustmarkType || 'N/A' }}</template>
+          <template #item.actions="{ item }">
             <v-btn
-                :id="'btn-edit-trustmark-' + trustmark.trustmarkId"
+                :id="'btn-edit-trustmark-' + item.trustmarkId"
                 icon="mdi-cog-outline"
                 variant="text"
                 size="small"
                 aria-label="Edit trustmark"
                 title="Edit trustmark"
-                @click.stop="editTrustmark(trustmark.trustmarkId)"
-                @keydown.enter.stop
+                @click.stop="editTrustmark(item.trustmarkId)"
             ></v-btn>
-          </td>
-        </tr>
-        </tbody>
-      </v-table>
-    </v-card>
-
-    <v-card v-else>
-      <v-card-text>
-        <div class="text-center py-12">
-          <p class="text-grey">No trustmarks found.</p>
-        </div>
+          </template>
+          <template #no-data>
+            <p class="text-grey py-8">No trustmarks found.</p>
+          </template>
+          <template #bottom>
+            <TablePager v-model:page="page" v-model:items-per-page="itemsPerPage" :total="filteredCount"/>
+          </template>
+        </v-data-table>
       </v-card-text>
     </v-card>
   </div>
@@ -108,6 +116,8 @@
 <script setup>
 import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
+import TablePager from '@/components/TablePager.vue';
+import {useListTable} from '@/composables/listTable';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
@@ -121,6 +131,13 @@ const userStore = useUserStore();
 
 const trustmarks = ref([]);
 const entityIdentifier = ref(null);
+const {search, page, itemsPerPage, filteredCount, filterKeys, filterRow, rowProps} =
+    useListTable(trustmarks, ['trustmarkType'], {open: (item) => viewSubjects(item.trustmarkId)});
+
+const headers = [
+  {title: 'Trustmark Type', key: 'trustmarkType', sortable: true},
+  {title: '', key: 'actions', sortable: false, align: 'end'},
+];
 
 const entityId = computed(() => route.params.entityId);
 const trustmarkIssuerId = computed(() => route.query.trustmarkIssuerId || null);
@@ -181,9 +198,3 @@ onMounted(() => {
   loadTrustmarks();
 });
 </script>
-
-<style scoped>
-.clickable-row {
-  cursor: pointer;
-}
-</style>
