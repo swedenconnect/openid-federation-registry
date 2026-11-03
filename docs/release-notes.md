@@ -6,12 +6,16 @@
 
 ---
 
-### Version 0.9.12
+### Version 0.9.12 Unreleased
+**Date:** <ToBeSet>
 
 - The validity duration of an issued trust mark is set per trust mark instead of on the trust mark issuer, and is at
   least five minutes. Existing trust marks keep the duration of their issuer. Until the federation services read the
   duration per trust mark, trust marks are issued with a validity of seven days
   ([#272](https://github.com/swedenconnect/openid-federation-registry/issues/272)).
+- MariaDB driver upgraded to 3.5.11, which no longer exposes the database password through connection metadata (#365).
+- Metadata policies are read with `se.swedenconnect.oidf:nimbus-extensions`: `value: null` and `one_of` with numbers
+  or booleans are supported, and are no longer left out of policy templates.
 
 ---
 

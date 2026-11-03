@@ -16,9 +16,22 @@
 package se.swedenconnect.oidf.registry.policy;
 
 import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
 import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
+import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicyEntry;
+import com.nimbusds.openid.connect.sdk.federation.policy.language.OperationName;
+import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyOperation;
+import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyOperationApplication;
 import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyViolationException;
+import com.nimbusds.openid.connect.sdk.federation.policy.operations.EssentialOperation;
+import com.nimbusds.openid.connect.sdk.federation.policy.operations.OneOfOperation;
+import com.nimbusds.openid.connect.sdk.federation.policy.operations.SubsetOfOperation;
+import com.nimbusds.openid.connect.sdk.federation.policy.operations.SupersetOfOperation;
+import com.nimbusds.openid.connect.sdk.federation.policy.operations.ValueOperation;
 import net.minidev.json.JSONObject;
+import se.swedenconnect.oidf.nimbus.policy.ExtendedMetadataPolicy;
+import se.swedenconnect.oidf.nimbus.policy.ExtendedPolicyOperationCombinationValidator;
+import se.swedenconnect.oidf.nimbus.policy.ExtendedValueOperation;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -28,16 +41,15 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Checks and combines metadata policies, as stored: {@code {"metadata_policy": {<entity type>: {<parameter>:
+ * Checks, combines and applies metadata policies, as stored: {@code {"metadata_policy": {<entity type>: {<parameter>:
  * {<operator>: <value>}}}}}.
  *
  * <p>Combining follows OpenID Federation: a superior's policy (the Trust Anchor's or Intermediate's) and the
  * subordinate's own policy for the same entity type are merged operator by operator, and a conflict refuses the
  * combination.</p>
  *
- * <p>A parameter whose {@code value} operator is {@code null} must be removed from the metadata. The policy library
- * does not accept a {@code null} value, so such parameters are kept aside: they pass through unchanged, and combining
- * one with any other operator for the same parameter is a conflict.</p>
+ * <p>{@code value} accepts any JSON value, including {@code null} to remove a parameter, and {@code one_of} accepts
+ * strings, numbers and booleans.</p>
  *
  * @author Felix Hellman
  */
@@ -45,6 +57,9 @@ public final class MetadataPolicies {
 
   /** The root key of a stored policy. */
   public static final String ROOT = "metadata_policy";
+
+  private static final Set<OperationName> SKIPPED_WITHOUT_VALUE =
+      Set.of(OneOfOperation.NAME, SubsetOfOperation.NAME, SupersetOfOperation.NAME);
 
   private MetadataPolicies() {
   }
@@ -75,14 +90,12 @@ public final class MetadataPolicies {
   }
 
   /**
-   * Leaves out the parameters of a stored policy that the policy library cannot read yet, such as {@code value: null}
-   * or {@code one_of} with values that are not strings. The policy is assumed to follow the specification; what is left
-   * out is reported, so it can be logged.
+   * Leaves out the parameters of a stored policy that the policy library cannot read. What is left out is reported, so
+   * it can be logged.
    *
    * @param policy the policy, with the {@value #ROOT} root key
    * @return the policy without the parameters left out, and one message per parameter left out
    */
-  @SuppressWarnings("unchecked")
   public static Supported supportedOnly(final Map<String, Object> policy) {
     if (policy == null || !(policy.get(ROOT) instanceof final Map<?, ?> types)) {
       return new Supported(policy, List.of());
@@ -99,11 +112,11 @@ public final class MetadataPolicies {
         final Map<String, Object> single = new LinkedHashMap<>();
         single.put(String.valueOf(parameter), operators);
         try {
-          MetadataPolicy.parse(JSONObject.toJSONString(single));
+          read(single);
           keptParameters.put(String.valueOf(parameter), operators);
         }
         catch (final ParseException | PolicyViolationException | RuntimeException e) {
-          omitted.add("%s.%s (%s)".formatted(type, parameter, unsupportedReason(operators, e)));
+          omitted.add("%s.%s (%s)".formatted(type, parameter, e.getMessage()));
         }
       });
       kept.put(String.valueOf(type), keptParameters);
@@ -112,29 +125,131 @@ public final class MetadataPolicies {
   }
 
   /**
-   * Says, for a person, why the policy library cannot read a parameter's operators.
-   */
-  private static String unsupportedReason(final Object operators, final Exception e) {
-    if (operators instanceof final Map<?, ?> ops) {
-      if (ops.containsKey("value") && ops.get("value") == null) {
-        return "value null";
-      }
-      for (final Map.Entry<?, ?> op : ops.entrySet()) {
-        if (op.getValue() instanceof final List<?> values && values.stream().anyMatch(v -> !(v instanceof String))) {
-          return op.getKey() + " with values that are not strings";
-        }
-      }
-    }
-    return e.getMessage();
-  }
-
-  /**
-   * A policy without the parameters the policy library cannot read yet.
-   *
    * @param policy the policy that is kept, with the root key
    * @param omitted one message per parameter left out: entity type, parameter and why
    */
   public record Supported(Map<String, Object> policy, List<String> omitted) {
+  }
+
+  /**
+   * Reads the policy of one entity type.
+   *
+   * @param parameters the policy, keyed by metadata parameter
+   * @return the policy
+   * @throws ParseException if the policy cannot be read
+   * @throws PolicyViolationException if an operator is not supported or the operators cannot be combined
+   */
+  @SuppressWarnings("unchecked")
+  public static MetadataPolicy read(final Map<?, ?> parameters) throws ParseException, PolicyViolationException {
+    return ExtendedMetadataPolicy.parse(
+        JSONObjectUtils.parse(JSONObject.toJSONString((Map<String, ? extends Object>) parameters)));
+  }
+
+  /**
+   * Applies the policy of one entity type to metadata of that type. A parameter whose resolved value is {@code null}
+   * is removed.
+   *
+   * @param policy the policy, see {@link #read(Map)}
+   * @param metadata the metadata
+   * @return the resolved metadata
+   * @throws PolicyViolationException if the metadata does not satisfy the policy
+   */
+  public static JSONObject apply(final MetadataPolicy policy, final JSONObject metadata)
+      throws PolicyViolationException {
+    final JSONObject out = new JSONObject();
+    metadata.forEach((key, value) -> {
+      if (policy.getEntry(key) == null) {
+        out.put(key, value);
+      }
+    });
+    for (final MetadataPolicyEntry entry : policy.entrySet()) {
+      final Object value = apply(entry, metadata.get(entry.getParameterName()));
+      if (value != null) {
+        out.put(entry.getParameterName(), value);
+      }
+    }
+    return out;
+  }
+
+  /**
+   * Applies the operations of one parameter in order, as {@link MetadataPolicyEntry#apply(Object)} does, letting the
+   * extended operations apply themselves.
+   */
+  private static Object apply(final MetadataPolicyEntry entry, final Object value) throws PolicyViolationException {
+    final Resolution resolution = new Resolution(value);
+    try {
+      entry.getOperationsMap().entrySet().stream()
+          .takeWhile(operation -> !resolution.done)
+          .forEach(operation -> resolution.apply(operation.getKey(), operation.getValue()));
+    }
+    catch (final UncheckedPolicyViolation e) {
+      throw e.violation;
+    }
+    return resolution.updated;
+  }
+
+  private static Object applyOperation(final PolicyOperation operation, final Object value) {
+    try {
+      if (operation instanceof final ExtendedValueOperation extended) {
+        return extended.apply(value);
+      }
+      return PolicyOperationApplication.apply(operation, value);
+    }
+    catch (final PolicyViolationException e) {
+      throw new UncheckedPolicyViolation(e);
+    }
+  }
+
+  /**
+   * The state of one parameter while its operations are applied.
+   */
+  private static final class Resolution {
+
+    private final Object value;
+    private Object updated;
+    private boolean essential;
+    private boolean done;
+
+    private Resolution(final Object value) {
+      this.value = value;
+      this.updated = value;
+    }
+
+    private void apply(final OperationName name, final PolicyOperation operation) {
+      if (this.value == null && !this.essential && SKIPPED_WITHOUT_VALUE.contains(name)) {
+        return;
+      }
+      this.updated = applyOperation(operation, this.updated);
+      if (ValueOperation.NAME.equals(name)) {
+        this.done = true;
+        return;
+      }
+      if (EssentialOperation.NAME.equals(name)) {
+        if (((EssentialOperation) operation).getBooleanConfiguration()) {
+          this.essential = true;
+        }
+        else if (this.updated == null) {
+          this.done = true;
+          return;
+        }
+      }
+      if (SubsetOfOperation.NAME.equals(name) && this.essential && this.updated == null) {
+        throw new UncheckedPolicyViolation(
+            new PolicyViolationException("Essential parameter failed subset_of check"));
+      }
+    }
+  }
+
+  private static final class UncheckedPolicyViolation extends RuntimeException {
+
+    private static final long serialVersionUID = 1L;
+
+    private final PolicyViolationException violation;
+
+    private UncheckedPolicyViolation(final PolicyViolationException violation) {
+      super(violation);
+      this.violation = violation;
+    }
   }
 
   /**
@@ -170,74 +285,26 @@ public final class MetadataPolicies {
     if (lower == null) {
       return upper;
     }
-    final Split a = split(type, upper);
-    final Split b = split(type, lower);
-    for (final String removed : a.removed()) {
-      if (b.rest().containsKey(removed)) {
-        throw conflict(type, removed);
-      }
+    try {
+      return MetadataPolicy.combine(List.of(parse(type, upper), parse(type, lower)),
+          new ExtendedPolicyOperationCombinationValidator()).toJSONObject();
     }
-    for (final String removed : b.removed()) {
-      if (a.rest().containsKey(removed)) {
-        throw conflict(type, removed);
-      }
+    catch (final PolicyViolationException e) {
+      throw new IllegalArgumentException("The policies for %s cannot be combined: %s".formatted(type,
+          e.getMessage()), e);
     }
-    final Map<String, Object> result = new LinkedHashMap<>();
-    if (!a.rest().isEmpty() || !b.rest().isEmpty()) {
-      try {
-        result.putAll(MetadataPolicy.combine(List.of(parse(type, a.rest()), parse(type, b.rest()))).toJSONObject());
-      }
-      catch (final PolicyViolationException e) {
-        throw new IllegalArgumentException("The policies for %s cannot be combined: %s".formatted(type,
-            e.getMessage()), e);
-      }
-    }
-    a.removed().forEach(parameter -> result.put(parameter, nullValue()));
-    b.removed().forEach(parameter -> result.put(parameter, nullValue()));
-    return result;
-  }
-
-  private static IllegalArgumentException conflict(final String type, final String parameter) {
-    return new IllegalArgumentException(("The policies for %s cannot be combined: %s is removed (value null) by one "
-        + "policy and has operators in the other").formatted(type, parameter));
   }
 
   private static MetadataPolicy parse(final String type, final Object parameters) {
-    if (!(parameters instanceof Map<?, ?>)) {
+    if (!(parameters instanceof final Map<?, ?> map)) {
       throw new IllegalArgumentException("The policy for %s must be a JSON object".formatted(type));
     }
-    final Split split = split(type, parameters);
     try {
-      return MetadataPolicy.parse(JSONObject.toJSONString(split.rest()));
+      return read(map);
     }
     catch (final ParseException | PolicyViolationException | RuntimeException e) {
       throw new IllegalArgumentException("The policy for %s is not valid: %s".formatted(type, e.getMessage()), e);
     }
-  }
-
-  /**
-   * Separates the parameters removed with {@code value: null} from the rest.
-   */
-  @SuppressWarnings("unchecked")
-  private static Split split(final String type, final Object parameters) {
-    if (!(parameters instanceof final Map<?, ?> map)) {
-      throw new IllegalArgumentException("The policy for %s must be a JSON object".formatted(type));
-    }
-    final Map<String, Object> rest = new LinkedHashMap<>();
-    final List<String> removed = new ArrayList<>();
-    map.forEach((parameter, operators) -> {
-      if (operators instanceof final Map<?, ?> ops && ops.containsKey("value") && ops.get("value") == null) {
-        if (ops.size() > 1) {
-          throw new IllegalArgumentException(("The policy for %s is not valid: %s removes the parameter (value null) "
-              + "and cannot have other operators").formatted(type, parameter));
-        }
-        removed.add(String.valueOf(parameter));
-      }
-      else {
-        rest.put(String.valueOf(parameter), operators);
-      }
-    });
-    return new Split(rest, removed);
   }
 
   @SuppressWarnings("unchecked")
@@ -251,14 +318,5 @@ public final class MetadataPolicies {
     final Map<String, Object> wrapped = new LinkedHashMap<>();
     wrapped.put(ROOT, types);
     return wrapped;
-  }
-
-  private static Map<String, Object> nullValue() {
-    final Map<String, Object> operators = new LinkedHashMap<>();
-    operators.put("value", null);
-    return operators;
-  }
-
-  private record Split(Map<String, Object> rest, List<String> removed) {
   }
 }

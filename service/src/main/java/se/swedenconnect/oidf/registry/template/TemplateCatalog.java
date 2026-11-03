@@ -113,9 +113,7 @@ public class TemplateCatalog {
   }
 
   /**
-   * Leaves out the parameters of a policy template the policy library cannot read yet, with a warning naming each. The
-   * template is assumed to follow the specification. Text that is not JSON is returned as it is, for the check to
-   * report.
+   * Leaves out the parameters of a policy template the policy library cannot read, with a warning naming each. 
    */
   @SuppressWarnings("unchecked")
   private static Supported supportedPolicy(final String name, final String content, final JsonMapper jsonMapper) {
@@ -131,7 +129,7 @@ public class TemplateCatalog {
       return new Supported(content, List.of());
     }
     supported.omitted().forEach(omitted ->
-        log.warn("Policy template '{}': left out {}, not supported yet", name, omitted));
+        log.warn("Policy template '{}': left out {}, not supported", name, omitted));
     return new Supported(jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(supported.policy()),
         supported.omitted());
   }

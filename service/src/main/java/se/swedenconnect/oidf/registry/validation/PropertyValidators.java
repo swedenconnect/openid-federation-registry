@@ -18,9 +18,10 @@ package se.swedenconnect.oidf.registry.validation;
 
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.SignedJWT;
-import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
+import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
 import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyViolationException;
 import lombok.extern.slf4j.Slf4j;
+import se.swedenconnect.oidf.nimbus.policy.ExtendedMetadataPolicy;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
@@ -202,8 +203,8 @@ public class PropertyValidators {
   }
 
   /**
-   * Validates that the value is a valid OIDF (OpenID Federation) policy JSON structure using MetadataPolicy.parse()
-   * from Nimbus OIDC SDK.
+   * Validates that the value is a valid OIDF (OpenID Federation) policy JSON structure using
+   * ExtendedMetadataPolicy.parse() from the Sweden Connect Nimbus extensions.
    */
   private ValidationStatus validateOidfPolicy(final String key, final String value) {
     if (value == null || value.isBlank()) {
@@ -222,7 +223,7 @@ public class PropertyValidators {
     }
     metadataPolicyNode.propertyStream().forEach(s -> {
       try {
-        MetadataPolicy.parse(s.getValue().toPrettyString());
+        ExtendedMetadataPolicy.parse(JSONObjectUtils.parse(s.getValue().toString()));
       }
       catch (com.nimbusds.oauth2.sdk.ParseException | PolicyViolationException e) {
         throw new PropertyValidationFailException(

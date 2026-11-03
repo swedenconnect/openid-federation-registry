@@ -16,13 +16,13 @@
 package se.swedenconnect.oidf.registry.registrationflow.process.step.impl;
 
 import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.openid.connect.sdk.federation.policy.MetadataPolicy;
 import com.nimbusds.openid.connect.sdk.federation.policy.language.PolicyViolationException;
 import net.minidev.json.JSONObject;
 import org.springframework.stereotype.Component;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
+import se.swedenconnect.oidf.registry.policy.MetadataPolicies;
 import se.swedenconnect.oidf.registry.registrationflow.metadata.FetchedResource;
 import se.swedenconnect.oidf.registry.registrationflow.metadata.MetadataPolicyGenerator;
 import se.swedenconnect.oidf.registry.registrationflow.metadata.MetadataPolicyTemplate;
@@ -194,7 +194,7 @@ public class MetadataPolicyCreationStep extends NoConfigStepAdapter implements R
     final List<String> problems = new ArrayList<>(result.failures());
     result.metadataPolicy().forEach((entityType, policy) -> {
       try {
-        MetadataPolicy.parse(new JSONObject((Map<String, Object>) policy));
+        MetadataPolicies.read((Map<String, Object>) policy);
       }
       catch (final ParseException | PolicyViolationException | ClassCastException e) {
         problems.add("The template produces an invalid metadata policy for %s: %s".formatted(entityType,
