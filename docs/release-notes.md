@@ -21,6 +21,8 @@
   column and paged like Hosted Entities and Subordinates
   ([#352](https://github.com/swedenconnect/openid-federation-registry/issues/352)).
 - MariaDB driver upgraded to 3.5.11, which no longer exposes the database password through connection metadata (#365).
+- Deleting a hosted entity or a registration also removes its subordinate statements and trust mark subjects
+  ([#367](https://github.com/swedenconnect/openid-federation-registry/issues/367)).
 - Metadata policies are read with `se.swedenconnect.oidf:nimbus-extensions`: `value: null` and `one_of` with numbers
   or booleans are supported, and are no longer left out of policy templates.
 

@@ -81,4 +81,14 @@ public interface TrustmarkSubjectService {
    */
   int deleteSubjectsForTrustmarkSources(OrganizationRecord organizationRecord, String subject,
       List<TrustmarkSourceDto> sources);
+
+  /**
+   * Deletes every entry where {@code subject} is the subject of a trust mark in the federation of the calling
+   * organization, also on trust marks of other organizations. Each deletion is audited.
+   *
+   * @param organizationRecord the calling organization, which decides the federation
+   * @param subject the subject entity identifier
+   * @return the number of deleted subject entries
+   */
+  int deleteSubjectsInFederation(OrganizationRecord organizationRecord, String subject);
 }

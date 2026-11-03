@@ -1629,7 +1629,7 @@
           "Entities"
         ],
         "summary": "Delete hosted entity",
-        "description": "Deletes a hosted entity. With deleteTrustmarkSubjects=true the entity is also removed as subject of the trust marks pointed out by its trust mark sources, but only for trust marks that belong to the organization.",
+        "description": "Deletes a hosted entity. With deleteTrustmarkSubjects=true the entity is also removed as subject of every trust mark in the federation, also of trust marks that belong to other organizations. With deleteSubordinates=true its subordinate statements under the Trust Anchors and Intermediates of the organization are also deleted. Subordinate statements of other organizations are left alone.",
         "operationId": "deleteHostedEntity",
         "parameters": [
           {
@@ -1659,6 +1659,15 @@
           },
           {
             "name": "deleteTrustmarkSubjects",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "deleteSubordinates",
             "in": "query",
             "required": false,
             "schema": {

@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.registry.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
@@ -27,9 +28,15 @@ import org.springframework.context.annotation.Import;
 import org.springframework.web.client.RestClientResponseException;
 import se.swedenconnect.oidf.registry.ApiClient;
 import se.swedenconnect.oidf.registry.api.EntitiesApi;
+import se.swedenconnect.oidf.registry.api.ModulesApi;
+import se.swedenconnect.oidf.registry.api.SubordinatesApi;
+import se.swedenconnect.oidf.registry.api.model.FederationEntity;
 import se.swedenconnect.oidf.registry.api.model.HostedEntity;
+import se.swedenconnect.oidf.registry.api.model.Subordinate;
+import se.swedenconnect.oidf.registry.api.model.TrustAnchor;
 import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
 import se.swedenconnect.oidf.registry.fixture.TestContainersConfiguration;
+import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
 
 import java.util.List;
 import java.util.Map;
@@ -151,7 +158,7 @@ class EntityHostedEntityCRUDIT {
     assertThat(beforeDelete).isNotNull();
 
     // Act
-    this.entitiesApi.deleteHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, false);
+    this.entitiesApi.deleteHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId, false, false);
 
     // Assert
     assertThatThrownBy(() -> this.entitiesApi.getHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, entityId))
@@ -349,5 +356,127 @@ class EntityHostedEntityCRUDIT {
         .doesNotContain("https://www.pm.se/oidf/pm-list-hosted");
   }
 
-}
 
+  // ========== Deleting a hosted entity together with its subordinates ==========
+
+  private ApiClient clientFor(final JwtTestUtils.OrganisationType organisation) {
+    final ApiClient client = new ApiClient();
+    client.setBasePath("http://localhost:" + this.port);
+    client.setBearerToken(this.jwtTestUtils.createJwt(organisation));
+    return client;
+  }
+
+  /** Creates a Trust Anchor of the given organization and returns its ID. */
+  private UUID createTrustAnchor(final JwtTestUtils.OrganisationType organisation) {
+    final ApiClient client = this.clientFor(organisation);
+    // Pensionsmyndigheten has its own entity prefix, the other organizations share the tenant's base url.
+    final String entityIdentifier = (organisation == JwtTestUtils.OrganisationType.PM
+        ? "https://www.pm.se/oidf/ta/"
+        : "https://registry.swedenconnect.se/oidf/" + organisation.orgId + "/ta/") + UUID.randomUUID();
+    final UUID entityId = UUID.randomUUID();
+    new EntitiesApi(client).createFederationEntityWithId(TENANT, organisation.orgId, entityId,
+        new FederationEntity().entityIdentifier(entityIdentifier));
+    final UUID trustAnchorId = UUID.randomUUID();
+    new ModulesApi(client).createTrustAnchorWithId(TENANT, organisation.orgId, trustAnchorId,
+        new TrustAnchor().entityId(entityId).active(true));
+    return trustAnchorId;
+  }
+
+  private UUID createHostedEntity(final String entityIdentifier) {
+    final UUID hostedId = UUID.randomUUID();
+    this.entitiesApi.createHostedEntityWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, hostedId,
+        new HostedEntity().entityIdentifier(entityIdentifier)
+            .metadata(Map.of("hosted_entity", Map.of("name", "Hosted"))));
+    return hostedId;
+  }
+
+  private UUID createSubordinate(final JwtTestUtils.OrganisationType organisation, final UUID trustAnchorId,
+      final String entityIdentifier, final boolean ecLocationAutomaticResolve) {
+    final Subordinate subordinate = new Subordinate()
+        .taImId(trustAnchorId)
+        .entityIdentifier(entityIdentifier)
+        .jwks(TestDataOperations.genJWKS().toJSONObject())
+        .ecLocationAutomaticResolve(ecLocationAutomaticResolve);
+    if (!ecLocationAutomaticResolve) {
+      subordinate.ecLocation(entityIdentifier + "/.well-known/openid-federation");
+    }
+    return new SubordinatesApi(this.clientFor(organisation))
+        .createSubordinate(TENANT, organisation.orgId, subordinate).getSubordinateId();
+  }
+
+  private boolean subordinateExists(final JwtTestUtils.OrganisationType organisation, final UUID subordinateId) {
+    try {
+      new SubordinatesApi(this.clientFor(organisation)).getSubordinate(TENANT, organisation.orgId, subordinateId);
+      return true;
+    }
+    catch (final RestClientResponseException e) {
+      assertThat(e.getStatusCode().value()).isEqualTo(404);
+      return false;
+    }
+  }
+
+  @Test
+  @DisplayName("Deleting a hosted entity with deleteSubordinates removes its subordinate with automatic ec_location "
+      + "resolve")
+  void testDeleteHostedEntityDeletesSubordinateWithAutomaticResolve() {
+    final String hostedIdentifier = "https://www.pm.se/oidf/hosted/" + UUID.randomUUID();
+    final UUID trustAnchorId = this.createTrustAnchor(JwtTestUtils.OrganisationType.PM);
+    final UUID hostedId = this.createHostedEntity(hostedIdentifier);
+    final UUID subordinateId =
+        this.createSubordinate(JwtTestUtils.OrganisationType.PM, trustAnchorId, hostedIdentifier, true);
+
+    this.entitiesApi.deleteHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, hostedId, false, true);
+
+    assertThat(this.subordinateExists(JwtTestUtils.OrganisationType.PM, subordinateId)).isFalse();
+  }
+
+  @Test
+  @DisplayName("Deleting a hosted entity with deleteSubordinates removes its subordinate with a manual ec_location")
+  void testDeleteHostedEntityDeletesSubordinateWithManualEcLocation() {
+    final String hostedIdentifier = "https://www.pm.se/oidf/hosted/" + UUID.randomUUID();
+    final UUID trustAnchorId = this.createTrustAnchor(JwtTestUtils.OrganisationType.PM);
+    final UUID hostedId = this.createHostedEntity(hostedIdentifier);
+    final UUID subordinateId =
+        this.createSubordinate(JwtTestUtils.OrganisationType.PM, trustAnchorId, hostedIdentifier, false);
+    final UUID otherSubordinateId = this.createSubordinate(JwtTestUtils.OrganisationType.PM, trustAnchorId,
+        "https://www.pm.se/oidf/other/" + UUID.randomUUID(), false);
+
+    this.entitiesApi.deleteHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, hostedId, false, true);
+
+    assertThat(this.subordinateExists(JwtTestUtils.OrganisationType.PM, subordinateId)).isFalse();
+    assertThat(this.subordinateExists(JwtTestUtils.OrganisationType.PM, otherSubordinateId)).isTrue();
+  }
+
+  @Test
+  @DisplayName("deleteSubordinates removes the subordinate of the own organization but leaves the one under a Trust "
+      + "Anchor of another organization")
+  void testDeleteHostedEntityLeavesSubordinateOfOtherOrganization() {
+    final String hostedIdentifier = "https://www.pm.se/oidf/hosted/" + UUID.randomUUID();
+    final UUID ownTrustAnchorId = this.createTrustAnchor(JwtTestUtils.OrganisationType.PM);
+    final UUID otherTrustAnchorId = this.createTrustAnchor(JwtTestUtils.OrganisationType.SKATT);
+    final UUID hostedId = this.createHostedEntity(hostedIdentifier);
+    final UUID ownSubordinateId =
+        this.createSubordinate(JwtTestUtils.OrganisationType.PM, ownTrustAnchorId, hostedIdentifier, false);
+    final UUID otherSubordinateId =
+        this.createSubordinate(JwtTestUtils.OrganisationType.SKATT, otherTrustAnchorId, hostedIdentifier, false);
+
+    this.entitiesApi.deleteHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, hostedId, false, true);
+
+    assertThat(this.subordinateExists(JwtTestUtils.OrganisationType.PM, ownSubordinateId)).isFalse();
+    assertThat(this.subordinateExists(JwtTestUtils.OrganisationType.SKATT, otherSubordinateId)).isTrue();
+  }
+
+  @Test
+  @DisplayName("Deleting a hosted entity without deleteSubordinates keeps its subordinates")
+  void testDeleteHostedEntityKeepsSubordinatesByDefault() {
+    final String hostedIdentifier = "https://www.pm.se/oidf/hosted/" + UUID.randomUUID();
+    final UUID trustAnchorId = this.createTrustAnchor(JwtTestUtils.OrganisationType.PM);
+    final UUID hostedId = this.createHostedEntity(hostedIdentifier);
+    final UUID subordinateId =
+        this.createSubordinate(JwtTestUtils.OrganisationType.PM, trustAnchorId, hostedIdentifier, false);
+
+    this.entitiesApi.deleteHostedEntity(TENANT, JwtTestUtils.OrganisationType.PM.orgId, hostedId, null, null);
+
+    assertThat(this.subordinateExists(JwtTestUtils.OrganisationType.PM, subordinateId)).isTrue();
+  }
+}

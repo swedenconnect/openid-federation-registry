@@ -89,6 +89,16 @@ public interface SubordinateService {
   void deleteSubordinate(OrganizationRecord organizationRecord, UUID id);
 
   /**
+   * Deletes the subordinates of an entity identifier under the Trust Anchors and Intermediates of the calling
+   * organization. Subordinates under those of other organizations are left alone. Each deletion is audited.
+   *
+   * @param organizationRecord the calling organization
+   * @param entityIdentifier the entity identifier of the subordinates
+   * @return the number of deleted subordinates
+   */
+  int deleteSubordinatesInOrganization(OrganizationRecord organizationRecord, String entityIdentifier);
+
+  /**
    * Finding subordinate for this
    *
    * @param entityIdentifier EntityId
