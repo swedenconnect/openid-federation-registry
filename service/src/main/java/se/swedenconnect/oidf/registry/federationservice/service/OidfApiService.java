@@ -370,17 +370,61 @@ public class OidfApiService {
           .map(entity -> EntityToDtoMapper.toDtoHosted(entity, this.hostedPathSegment))
           .map(dto -> {
             sub.setCrit(EmptyToNull.list(dto.getCrit()));
-            final String ecLocation = dto.getEffectiveEcLocation();
-            sub.setVirtualEntityId(Optional.ofNullable(ecLocation).orElse(dto.getEntityIdentifier()));
-            if (ecLocation != null) {
-              sub.setOverrideConfigurationLocation(ecLocation + "/.well-known/openid-federation");
-            }
-            return sub;
+            sub.setVirtualEntityId(
+                Optional.ofNullable(dto.getEffectiveEcLocation()).orElse(dto.getEntityIdentifier()));
+            return this.withEcLocation(sub, dto.getMetadata());
           })
           .orElse(null);
     }
     sub.setVirtualEntityId(Optional.ofNullable(subDto.getEcLocation()).orElse(subDto.getEntityIdentifier()));
+    return this.withEcLocation(sub, null);
+  }
+
+  /**
+   * Sets the ec_location of a subordinate to the well-known location under its virtual entity ID. A subordinate
+   * whose Entity Configuration is found under its own entity identifier gets one too, unless it is an Intermediate
+   * Entity: the Swedish OpenID Federation Profile (section 2.4.2) recommends ec_location for every Leaf Entity,
+   * while OpenID Federation Entity Configuration Hosting (section 2) recommends it for Leaf Entities only.
+   *
+   * @param sub the subordinate, with its virtual entity ID set
+   * @param hostedMetadata the metadata of the hosted entity of the subordinate, or {@code null} if not hosted
+   * @return the subordinate
+   */
+  private TrustAnchorProperties.SubordinateListingProperty withEcLocation(
+      final TrustAnchorProperties.SubordinateListingProperty sub, final Map<String, Object> hostedMetadata) {
+    final String virtualEntityId = sub.getVirtualEntityId();
+    final boolean hostedElsewhere = !virtualEntityId.equals(sub.getEntityIdentifier().getValue());
+    if (hostedElsewhere || !this.isIntermediate(sub, hostedMetadata)) {
+      final String base = virtualEntityId.endsWith("/")
+          ? virtualEntityId.substring(0, virtualEntityId.length() - 1)
+          : virtualEntityId;
+      sub.setOverrideConfigurationLocation(base + "/.well-known/openid-federation");
+    }
     return sub;
+  }
+
+  /**
+   * Tells whether a subordinate is known to be an Intermediate Entity: it is a Trust Anchor or Intermediate of the
+   * registry, or its metadata has a federation_fetch_endpoint.
+   *
+   * @param sub the subordinate
+   * @param hostedMetadata the metadata of the hosted entity of the subordinate, or {@code null} if not hosted
+   * @return true if the subordinate is an Intermediate Entity
+   */
+  private boolean isIntermediate(final TrustAnchorProperties.SubordinateListingProperty sub,
+      final Map<String, Object> hostedMetadata) {
+    return hasFetchEndpoint(sub.getMetadata()) || hasFetchEndpoint(hostedMetadata)
+        || this.entityRepository.findByEntityTypeAndOptionalIssuer(EntityType.FEDERATION_ENTITY,
+            sub.getEntityIdentifier().getValue()).stream()
+        .anyMatch(entity -> entity.getTrustanchorIntermediate() != null);
+  }
+
+  private static boolean hasFetchEndpoint(final Map<String, Object> metadata) {
+    return Optional.ofNullable(metadata)
+        .map(m -> m.get("federation_entity"))
+        .filter(Map.class::isInstance)
+        .map(m -> ((Map<?, ?>) m).get("federation_fetch_endpoint"))
+        .isPresent();
   }
 
   private ResolverProperties toResolver(final Resolver resolverEntity) {

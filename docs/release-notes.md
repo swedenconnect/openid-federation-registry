@@ -6,9 +6,13 @@
 
 ---
 
+
 ### Version 0.9.12 Unreleased
 **Date:** <ToBeSet>
-
+  
+  
+- Every Leaf Entity gets `ec_location` in its Subordinate Statement, also when its Entity Configuration is published
+  at its own entity identifier ([#376](https://github.com/swedenconnect/openid-federation-registry/issues/376)).
 - The validity duration of an issued trust mark is set per trust mark instead of on the trust mark issuer, and is at
   least five minutes. Existing trust marks keep the duration of their issuer. Until the federation services read the
   duration per trust mark, trust marks are issued with a validity of seven days
