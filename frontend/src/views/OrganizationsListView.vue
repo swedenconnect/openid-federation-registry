@@ -22,6 +22,7 @@
 
     <div class="d-flex align-center mb-4">
       <v-text-field
+          id="organization-search"
           v-model="search"
           prepend-inner-icon="mdi-magnify"
           label="Search by name or organization number"
@@ -43,71 +44,64 @@
       </v-card-text>
     </v-card>
 
-    <v-card v-else-if="filteredOrganizations.length > 0">
-      <v-table>
-        <caption class="sr-only">Organizations on this tenant</caption>
-        <thead>
-          <tr>
-            <th class="text-left">Legal name</th>
-            <th class="text-left">Org name</th>
-            <th class="text-left">Org number</th>
-            <th class="text-left">Domains</th>
-            <th class="text-left">Pre-validated trust marks</th>
-            <th class="text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="organization in filteredOrganizations" :key="organization.orgNumber">
-            <td>{{ organization.legalName || '—' }}</td>
-            <td>{{ organization.orgName || '—' }}</td>
-            <td>{{ organization.orgNumber }}</td>
-            <td>
-              <RouterLink :to="domainsLink(organization)" class="domain-link">
-                {{ organization.domainCount ?? 0 }}
-              </RouterLink>
-              <v-chip
-                  v-if="(organization.pendingDomainCount ?? 0) > 0"
-                  color="warning"
-                  size="x-small"
-                  label
-                  class="ml-2"
-              >
-                {{ organization.pendingDomainCount }} pending
-              </v-chip>
-            </td>
-            <td>
-              <span v-if="!organization.preValidatedTrustMarks?.length" class="text-grey">None</span>
-              <v-chip
-                  v-for="trustMarkType in organization.preValidatedTrustMarks ?? []"
-                  :key="trustMarkType"
-                  size="small"
-                  label
-                  class="mr-1 mb-1"
-              >
-                {{ trustMarkType }}
-              </v-chip>
-            </td>
-            <td class="text-right">
-              <v-btn
-                  :id="`btn-edit-trustmarks-${organization.orgNumber}`"
-                  color="primary"
-                  variant="text"
-                  size="small"
-                  @click="openTrustMarkDialog(organization)"
-              >
-                Edit
-              </v-btn>
-            </td>
-          </tr>
-        </tbody>
-      </v-table>
-    </v-card>
-
     <v-card v-else>
       <v-card-text>
-        <div class="text-center py-12">
-          <p class="text-grey">No organizations found.</p>
-        </div>
+        <v-data-table
+            :headers="headers"
+            :items="organizations"
+            :search="search"
+            :filter-keys="filterKeys"
+            :custom-filter="filterRow"
+            v-model:page="page"
+            v-model:items-per-page="itemsPerPage"
+            item-value="orgNumber"
+        >
+          <template #item.legalName="{ item }">{{ item.legalName || '—' }}</template>
+          <template #item.orgName="{ item }">{{ item.orgName || '—' }}</template>
+          <template #item.domainCount="{ item }">
+            <RouterLink :to="domainsLink(item)" class="domain-link">
+              {{ item.domainCount ?? 0 }}
+            </RouterLink>
+            <v-chip
+                v-if="(item.pendingDomainCount ?? 0) > 0"
+                color="warning"
+                size="x-small"
+                label
+                class="ml-2"
+            >
+              {{ item.pendingDomainCount }} pending
+            </v-chip>
+          </template>
+          <template #item.preValidatedTrustMarks="{ item }">
+            <span v-if="!item.preValidatedTrustMarks?.length" class="text-grey">None</span>
+            <v-chip
+                v-for="trustMarkType in item.preValidatedTrustMarks ?? []"
+                :key="trustMarkType"
+                size="small"
+                label
+                class="mr-1 mb-1"
+            >
+              {{ trustMarkType }}
+            </v-chip>
+          </template>
+          <template #item.actions="{ item }">
+            <v-btn
+                :id="`btn-edit-trustmarks-${item.orgNumber}`"
+                color="primary"
+                variant="text"
+                size="small"
+                @click="openTrustMarkDialog(item)"
+            >
+              Edit
+            </v-btn>
+          </template>
+          <template #no-data>
+            <p class="text-grey py-8">No organizations found.</p>
+          </template>
+          <template #bottom>
+            <TablePager v-model:page="page" v-model:items-per-page="itemsPerPage" :total="filteredCount"/>
+          </template>
+        </v-data-table>
       </v-card-text>
     </v-card>
 
@@ -166,8 +160,10 @@
 </template>
 
 <script setup>
-import {computed, onMounted, ref} from 'vue';
+import {onMounted, ref} from 'vue';
 import {RouterLink} from 'vue-router';
+import TablePager from '@/components/TablePager.vue';
+import {useListTable} from '@/composables/listTable';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
@@ -188,7 +184,17 @@ const {requestPut: requestSaveTrustMarks, ok: saveOk, loading: saving} = useRequ
 
 const organizations = ref([]);
 const trustMarkTypes = ref([]);
-const search = ref('');
+const {search, page, itemsPerPage, filteredCount, filterKeys, filterRow} =
+    useListTable(organizations, ['legalName', 'orgName', 'orgNumber']);
+
+const headers = [
+  {title: 'Legal name', key: 'legalName', sortable: true},
+  {title: 'Org name', key: 'orgName', sortable: true},
+  {title: 'Org number', key: 'orgNumber', sortable: true},
+  {title: 'Domains', key: 'domainCount', sortable: true},
+  {title: 'Pre-validated trust marks', key: 'preValidatedTrustMarks', sortable: false},
+  {title: 'Actions', key: 'actions', sortable: false, align: 'end'},
+];
 
 const trustMarkDialog = ref(false);
 const editTarget = ref(null);
@@ -196,14 +202,6 @@ const editTrustMarks = ref([]);
 
 const snackbar = ref(false);
 const snackbarMessage = ref('');
-
-const filteredOrganizations = computed(() => {
-  const q = (search.value ?? '').toLowerCase();
-  return organizations.value.filter(organization => !q
-      || organization.orgNumber?.toLowerCase().includes(q)
-      || organization.legalName?.toLowerCase().includes(q)
-      || organization.orgName?.toLowerCase().includes(q));
-});
 
 function domainsLink(organization) {
   return {path: '/registrations', query: {type: 'DOMAIN', org: organization.orgNumber, status: 'ALL', history: '1'}};
