@@ -83,6 +83,9 @@ public class TrustMark extends BaseEntity implements Persistable<UUID> {
   @Column(name = "delegation", columnDefinition = "TEXT")
   private String delegation;
 
+  @Column(name = "trust_mark_token_validity_duration")
+  private String trustMarkTokenValidityDuration;
+
   @Override
   public UUID getId() {
     return this.trustmarkId;

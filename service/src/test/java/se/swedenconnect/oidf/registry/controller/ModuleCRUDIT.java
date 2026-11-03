@@ -114,15 +114,13 @@ class ModuleCRUDIT {
    * @param entityIssuer the issuer for the federation entity
    * @param trustmarkIssuerId optional trustmark issuer ID (if null, auto-generated)
    * @param trustmarkIssuerActive whether the trustmark issuer should be active
-   * @param trustmarkIssuerValidityDuration validity duration for trustmark issuer
    * @return test data container with entityId and trustmarkIssuerId
    */
   private TrustmarkTestData setupTrustmarkTestData(
       final String entitySubject,
       final String entityIssuer,
       final UUID trustmarkIssuerId,
-      final Boolean trustmarkIssuerActive,
-      final String trustmarkIssuerValidityDuration) {
+      final Boolean trustmarkIssuerActive) {
     // Step 1: Create FederationEntity
     final UUID entityId = UUID.randomUUID();
     final FederationEntity entityInput = new FederationEntity()
@@ -133,8 +131,7 @@ class ModuleCRUDIT {
     final UUID issuerId = trustmarkIssuerId != null ? trustmarkIssuerId : UUID.randomUUID();
     final TrustmarkIssuer issuerInput = new TrustmarkIssuer()
         .entityId(entityId)
-        .active(trustmarkIssuerActive)
-        .trustMarkTokenValidityDuration(trustmarkIssuerValidityDuration);
+        .active(trustmarkIssuerActive);
 
     final TrustmarkIssuer createdIssuer = this.modulesApi.createTrustmarkIssuerWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, issuerId, issuerInput);
 
@@ -149,7 +146,7 @@ class ModuleCRUDIT {
    * @return test data container with entityId and trustmarkIssuerId
    */
   private TrustmarkTestData setupTrustmarkTestData(final String entitySubject, final String entityIssuer) {
-    return this.setupTrustmarkTestData(entitySubject, entityIssuer, null, true, "PT1H");
+    return this.setupTrustmarkTestData(entitySubject, entityIssuer, null, true);
   }
 
   /**
@@ -809,5 +806,39 @@ class ModuleCRUDIT {
           assertThat(apiException.getStatusCode().value()).isEqualTo(404);
         });
   }
-}
 
+  @Test
+  @DisplayName("A trustmark keeps its validity duration, and an empty duration is stored as none")
+  void testTrustmarkValidityDuration() {
+    final String tmiIdentifier = "https://www.pm.se/oidf/tmi-validity-" + UUID.randomUUID();
+    final TrustmarkTestData testData = this.setupTrustmarkTestData(tmiIdentifier, tmiIdentifier);
+    final Trustmark input = new Trustmark()
+        .trustmarkissuerId(testData.getTrustmarkIssuerId())
+        .trustmarkType("https://www.pm.se/oidf/trustmark/validity")
+        .trustMarkTokenValidityDuration("P2D");
+
+    final Trustmark created = this.trustmarksApi.createTrustmark(TENANT, JwtTestUtils.OrganisationType.PM.orgId, input);
+    assertThat(created.getTrustMarkTokenValidityDuration()).isEqualTo("P2D");
+    assertThat(this.trustmarksApi.getTrustmark(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        created.getTrustmarkId()).getTrustMarkTokenValidityDuration()).isEqualTo("P2D");
+
+    final Trustmark updated = this.trustmarksApi.updateTrustmark(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        created.getTrustmarkId(), input.trustMarkTokenValidityDuration(""));
+    assertThat(updated.getTrustMarkTokenValidityDuration()).isNull();
+  }
+
+  @Test
+  @DisplayName("A trustmark validity duration shorter than five minutes is rejected")
+  void testTrustmarkValidityDurationShorterThanFiveMinutesIsRejected() {
+    final String tmiIdentifier = "https://www.pm.se/oidf/tmi-validity-" + UUID.randomUUID();
+    final TrustmarkTestData testData = this.setupTrustmarkTestData(tmiIdentifier, tmiIdentifier);
+    final Trustmark input = new Trustmark()
+        .trustmarkissuerId(testData.getTrustmarkIssuerId())
+        .trustmarkType("https://www.pm.se/oidf/trustmark/too-short")
+        .trustMarkTokenValidityDuration("PT4M59S");
+
+    assertThatThrownBy(() -> this.trustmarksApi.createTrustmark(TENANT, JwtTestUtils.OrganisationType.PM.orgId, input))
+        .isInstanceOf(RestClientResponseException.class)
+        .satisfies(e -> assertThat(((RestClientResponseException) e).getStatusCode().value()).isEqualTo(400));
+  }
+}

@@ -5125,6 +5125,10 @@
           "delegation": {
             "type": "string",
             "description": "Delegation JWT"
+          },
+          "trustMarkTokenValidityDuration": {
+            "type": "string",
+            "description": "Trust mark token validity duration (ISO-8601 duration, e.g. P2D), at least five minutes. If left empty the issued trust marks never expire."
           }
         }
       },
@@ -5327,10 +5331,6 @@
           "active": {
             "type": "boolean",
             "description": "If this trustmark issuer is active"
-          },
-          "trustMarkTokenValidityDuration": {
-            "type": "string",
-            "description": "Trust mark token validity duration (ISO-8601 duration, e.g. PT1H). If left empty the issued trust marks never expire."
           }
         },
         "required": [
@@ -6680,6 +6680,10 @@
               "delegation": {
                 "type": "string",
                 "description": "Delegation JWT"
+              },
+              "trustMarkTokenValidityDuration": {
+                "type": "string",
+                "description": "Trust mark token validity duration (ISO-8601 duration, e.g. P2D), at least five minutes. If left empty the issued trust marks never expire."
               },
               "trustmarkSubjects": {
                 "type": "array",

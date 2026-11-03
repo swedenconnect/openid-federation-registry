@@ -85,12 +85,14 @@
             :headers="headers"
             :items="tableItems"
             :search="search"
-            :filter-keys="['entityIdentifier']"
+            :filter-keys="filterKeys"
+            :custom-filter="filterRow"
             v-model:page="page"
             v-model:items-per-page="itemsPerPage"
             item-value="subordinateId"
+            :row-props="rowProps"
             hover
-            @click:row="openSubordinate"
+            @click:row="(_event, {item}) => openSubordinate(item)"
         >
           <template #item.statusText="{ item }">
             <v-tooltip v-if="hasEcLocation(item)" text="EC Location configured" location="top">
@@ -121,9 +123,10 @@
 </template>
 
 <script setup>
-import {computed, onMounted, ref, watch} from 'vue';
+import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import TablePager from '@/components/TablePager.vue';
+import {useListTable} from '@/composables/listTable';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
@@ -137,9 +140,6 @@ const userStore = useUserStore();
 
 const subordinates = ref([]);
 const entityIdentifier = ref(null);
-const search = ref('');
-const page = ref(1);
-const itemsPerPage = ref(50);
 
 const headers = [
   {title: 'Entity Identifier', key: 'entityIdentifier', sortable: true},
@@ -155,15 +155,8 @@ const tableItems = computed(() => subordinates.value.map((subordinate) => ({
   ].filter(Boolean).join(', '),
 })));
 
-const filteredCount = computed(() => {
-  const term = (search.value || '').toLowerCase();
-  if (!term) return subordinates.value.length;
-  return subordinates.value.filter((subordinate) => (subordinate.entityIdentifier || '').toLowerCase().includes(term)).length;
-});
-
-watch(search, () => {
-  page.value = 1;
-});
+const {search, page, itemsPerPage, filteredCount, filterKeys, filterRow, rowProps} =
+    useListTable(tableItems, ['entityIdentifier'], {open: openSubordinate});
 
 const entityId = computed(() => route.params.entityId);
 const moduleType = computed(() => route.params.moduleType);
@@ -223,7 +216,7 @@ function addSubordinate() {
   router.push(`${listBasePath()}/new?${queryParams()}`);
 }
 
-function openSubordinate(_event, {item}) {
+function openSubordinate(item) {
   router.push(`${listBasePath()}/${item.subordinateId}/edit?${queryParams()}`);
 }
 
