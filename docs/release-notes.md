@@ -10,6 +10,8 @@
 **Date:** <ToBeSet>
 
 - MariaDB driver upgraded to 3.5.11, which no longer exposes the database password through connection metadata (#365).
+- Metadata policies are read with `se.swedenconnect.oidf:nimbus-extensions`: `value: null` and `one_of` with numbers
+  or booleans are supported, and are no longer left out of policy templates.
 
 ---
 
