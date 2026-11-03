@@ -39,6 +39,7 @@ import NoAccessView from '../views/NoAccessView.vue';
 import EntityReviewDetailView from '../views/EntityReviewDetailView.vue';
 import EntityReviewSessionView from '../views/EntityReviewSessionView.vue';
 import {useAuthorizationStatusStore} from '@/authorization/stores/authorizationStatusStore';
+import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
 
 let base = import.meta.env.BASE_URL;
@@ -226,6 +227,7 @@ const router = createRouter({
 
 router.afterEach((to) => {
     document.title = `${to.meta.title ?? to.name} — OpenID Federation Admin`;
+    useErrorStore().clearError();
 });
 
 router.beforeEach((to) => {

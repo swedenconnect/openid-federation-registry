@@ -42,7 +42,11 @@ export function useRequest(logError = true) {
     async function _request(path, payload, method) {
         loading.value = true;
         error.value = null;
-        errorStore.clearError();
+        // A GET may run in the background, e.g. a check while typing, and must not hide the error of a failed save.
+        // The error is cleared when a change is sent, when the user closes it, or on navigation.
+        if (method !== 'GET') {
+            errorStore.clearError();
+        }
         try {
             return await fetchData(path, payload, method);
         } catch (err) {

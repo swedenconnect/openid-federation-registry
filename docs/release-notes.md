@@ -11,6 +11,9 @@
 **Date:** <ToBeSet>
   
   
+- `value: null` in a subordinate's metadata policy is sent to the federation services, an invalid metadata policy is
+  refused with 400 naming the parameter, and the error of a failed save stays visible in the GUI
+  ([#342](https://github.com/swedenconnect/openid-federation-registry/issues/342)).
 - The configuration documentation names `notification_active`, the property that enables notifications to the
   federation services ([#375](https://github.com/swedenconnect/openid-federation-registry/issues/375)).
 - Every Leaf Entity gets `ec_location` in its Subordinate Statement, also when its Entity Configuration is published

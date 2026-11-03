@@ -108,6 +108,48 @@ public class PropertyValidatorsTest {
   }
 
   @Test
+  public void testPolicyValidation_valueNullAndBooleanOneOf() {
+    final String policy = """
+        {
+        "metadata_policy" : {
+          "openid_relying_party": {
+            "id_token_signed_response_alg": { "value": null },
+            "userinfo_signed_response_alg": { "value": null },
+            "require_auth_time": { "one_of": [true] }
+          }
+        }
+        }
+        """;
+
+    final Optional<PropertyValidationFailException> ex = this.builder()
+        .oidfPolicy()
+        .build()
+        .eval("policy", policy);
+    assertTrue(ex.isEmpty(), () -> ex.get().getMessage());
+  }
+
+  @Test
+  public void testPolicyValidation_failNamesTheFailingParameter() {
+    final String policy = """
+        {
+        "metadata_policy" : {
+          "openid_relying_party": {
+            "redirect_uris": { "subset_of": ["https://rp.example.se/cb"] },
+            "require_auth_time": { "one_of": [{ "nested": true }] }
+          }
+        }
+        }
+        """;
+
+    final Optional<PropertyValidationFailException> ex = this.builder()
+        .oidfPolicy()
+        .build()
+        .eval("policy", policy);
+    assertTrue(ex.isPresent());
+    assertEquals("policy.metadata_policy.openid_relying_party.require_auth_time", ex.get().getFiledName());
+  }
+
+  @Test
   public void testResolveValidator_noValidators() {
     final PropertyValidator result = this.builder().build();
     assertNotNull(result);

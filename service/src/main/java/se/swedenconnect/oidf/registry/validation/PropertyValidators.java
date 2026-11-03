@@ -221,15 +221,29 @@ public class PropertyValidators {
       throw new PropertyValidationFailException(key, value,
           "Expected a start node of type: " + rootNodeName);
     }
-    metadataPolicyNode.propertyStream().forEach(s -> {
-      try {
-        ExtendedMetadataPolicy.parse(JSONObjectUtils.parse(s.getValue().toString()));
+    metadataPolicyNode.propertyStream().forEach(type -> {
+      final String typeKey = key + "." + rootNodeName + "." + type.getKey();
+      if (!type.getValue().isObject()) {
+        throw new PropertyValidationFailException(typeKey, value,
+            "Invalid OIDF metadata policy structure: the policy of an entity type must be a JSON object");
       }
-      catch (com.nimbusds.oauth2.sdk.ParseException | PolicyViolationException e) {
-        throw new PropertyValidationFailException(
-            key + "." + rootNodeName + "." + s.getKey() + "."
-                + s.getValue().propertyNames().stream().findFirst().orElse("<novalue>"),
-            value,
+      // Each parameter is read on its own, so that the error names the parameter that failed
+      type.getValue().propertyStream().forEach(parameter -> {
+        final String parameterKey = typeKey + "." + parameter.getKey();
+        try {
+          final String single = mapper.createObjectNode().set(parameter.getKey(), parameter.getValue()).toString();
+          ExtendedMetadataPolicy.parse(JSONObjectUtils.parse(single));
+        }
+        catch (com.nimbusds.oauth2.sdk.ParseException | PolicyViolationException | RuntimeException e) {
+          throw new PropertyValidationFailException(parameterKey, value,
+              "Invalid OIDF metadata policy structure: " + e.getMessage());
+        }
+      });
+      try {
+        ExtendedMetadataPolicy.parse(JSONObjectUtils.parse(type.getValue().toString()));
+      }
+      catch (com.nimbusds.oauth2.sdk.ParseException | PolicyViolationException | RuntimeException e) {
+        throw new PropertyValidationFailException(typeKey, value,
             "Invalid OIDF metadata policy structure: " + e.getMessage());
       }
     });

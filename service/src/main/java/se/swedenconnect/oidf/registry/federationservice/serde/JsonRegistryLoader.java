@@ -44,8 +44,12 @@ import java.util.Map;
  */
 public class JsonRegistryLoader {
   private static final String TRUST_MARK_ISSUERS = "trust-mark-issuers";
+  private static final String POLICY = "policy";
 
   private final Gson GSON;
+
+  /** Keeps null values, so that {@code value: null} in a metadata policy reaches the federation service. */
+  private final Gson moduleGson;
 
   /**
    * Constructor.
@@ -69,6 +73,7 @@ public class JsonRegistryLoader {
         .registerTypeAdapter(JWK.class, new JWKSerializer())
         .registerTypeAdapter(JWKSet.class, new JWKSSerializer())
         .create();
+    this.moduleGson = this.GSON.newBuilder().serializeNulls().create();
   }
 
   /**
@@ -108,37 +113,42 @@ public class JsonRegistryLoader {
   /**
    * Serializes the module record. Values without content (null, empty objects and empty arrays) are left out
    * everywhere below the three top level lists, which are always present. The empty lists of issuers inside a
-   * trust-mark-issuers object are kept, since they have a meaning.
+   * trust-mark-issuers object are kept, since they have a meaning. The metadata policy of a policy record is kept as
+   * it is, since {@code "value": null} means that the parameter must be absent.
    *
    * @param moduleRecord
    * @return json string
    */
   public String toJson(final ModuleRecord moduleRecord) {
-    final JsonObject root = this.GSON.toJsonTree(moduleRecord, ModuleRecord.class).getAsJsonObject();
+    final JsonObject root = this.moduleGson.toJsonTree(moduleRecord, ModuleRecord.class).getAsJsonObject();
     for (final Map.Entry<String, JsonElement> entry : root.entrySet()) {
       if (entry.getValue().isJsonArray()) {
         final JsonArray pruned = new JsonArray();
-        entry.getValue().getAsJsonArray().forEach(element -> pruned.add(prune(element)));
+        entry.getValue().getAsJsonArray().forEach(element -> pruned.add(prune(element, false)));
         entry.setValue(pruned);
       }
     }
-    return this.GSON.toJson(root);
+    return this.moduleGson.toJson(root);
   }
 
   /**
    * Removes null values, empty objects and empty arrays from the given element, recursively.
    *
    * @param element to prune
+   * @param policyRecord whether the element is a policy record, whose policy is kept as it is
    * @return the pruned element
    */
-  private static JsonElement prune(final JsonElement element) {
+  private static JsonElement prune(final JsonElement element, final boolean policyRecord) {
     if (element.isJsonObject()) {
       final JsonObject object = element.getAsJsonObject();
       for (final String name : new ArrayList<>(object.keySet())) {
+        final JsonElement value = object.get(name);
+        final boolean policy = POLICY.equals(name) && value.isJsonObject();
         // An empty list of issuers means that anyone may issue the trust mark type, so it has to be kept.
-        final JsonElement pruned = TRUST_MARK_ISSUERS.equals(name) && object.get(name).isJsonObject()
-            ? object.get(name)
-            : prune(object.get(name));
+        final JsonElement pruned = (TRUST_MARK_ISSUERS.equals(name) && value.isJsonObject())
+            || (policyRecord && policy)
+            ? value
+            : prune(value, policy);
         if (isEmpty(pruned)) {
           object.remove(name);
         }
@@ -150,7 +160,7 @@ public class JsonRegistryLoader {
     else if (element.isJsonArray()) {
       final JsonArray array = element.getAsJsonArray();
       final List<JsonElement> kept = new ArrayList<>();
-      array.forEach(item -> kept.add(prune(item)));
+      array.forEach(item -> kept.add(prune(item, false)));
       kept.removeIf(JsonRegistryLoader::isEmpty);
       final JsonArray result = new JsonArray();
       kept.forEach(result::add);
