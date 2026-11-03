@@ -6,11 +6,12 @@
 
 ---
 
-### Version 0.9.12
+### Version 0.9.12 Unreleased
+**Date:** <ToBeSet>
 
+- MariaDB driver upgraded to 3.5.11, which no longer exposes the database password through connection metadata (#365).
 - Deleting a hosted entity or a registration also removes its subordinate statements and trust mark subjects
   ([#367](https://github.com/swedenconnect/openid-federation-registry/issues/367)).
-
 ---
 
 ### Version 0.9.11
