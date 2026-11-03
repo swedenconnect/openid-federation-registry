@@ -11,6 +11,8 @@
 **Date:** <ToBeSet>
   
   
+- The configuration documentation names `notification_active`, the property that enables notifications to the
+  federation services ([#375](https://github.com/swedenconnect/openid-federation-registry/issues/375)).
 - Every Leaf Entity gets `ec_location` in its Subordinate Statement, also when its Entity Configuration is published
   at its own entity identifier ([#376](https://github.com/swedenconnect/openid-federation-registry/issues/376)).
 - The validity duration of an issued trust mark is set per trust mark instead of on the trust mark issuer, and is at
