@@ -6,6 +6,14 @@
 
 ---
 
+### Version 0.9.12
+
+- Organizations, Registrations, Trustmarks, Trustmark Subjects and Registration Flows can be searched, sorted by
+  column and paged like Hosted Entities and Subordinates
+  ([#352](https://github.com/swedenconnect/openid-federation-registry/issues/352)).
+
+---
+
 ### Version 0.9.11
 **Date:** 26-11-02
 
