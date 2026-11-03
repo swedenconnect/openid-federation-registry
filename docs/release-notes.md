@@ -6,6 +6,13 @@
 
 ---
 
+### Version 0.9.12
+
+- Every Leaf Entity gets `ec_location` in its Subordinate Statement, also when its Entity Configuration is published
+  at its own entity identifier ([#376](https://github.com/swedenconnect/openid-federation-registry/issues/376)).
+
+---
+
 ### Version 0.9.11
 **Date:** 26-11-02
 
