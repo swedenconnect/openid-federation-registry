@@ -19,6 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.audit.listener.AuditApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.AuditorAware;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.Optional;
@@ -30,6 +32,10 @@ import java.util.Optional;
  * events: - Read operations for federation entities - Read operations for trust marks subject to an entity - Read
  * operations for federation policies Audit events are constructed using FederationAuditEvent builder and are published
  * using the configured ApplicationEventPublisher.
+ * <p>
+ * An audit record describes a change that was made, so inside a transaction it is published only once the transaction
+ * has committed. A change that is rolled back, because a later step fails or the commit itself fails, leaves no audit
+ * record. Outside a transaction the record is published at once.
  *
  * @author Per Fredrik Plars
  */
@@ -59,11 +65,24 @@ public class RegistryAuditEventPublisher extends RegistryAuditServiceAdapter {
 
   @Override
   protected void emitEvent(final FederationAuditEvent event) {
+    // Its listener, the notification of the federation services, waits for the commit itself.
     this.publisher.publishEvent(event);
-    this.publisher.publishEvent(new AuditApplicationEvent(
+    // The principal is resolved now, while the security context of the request is at hand.
+    final AuditApplicationEvent auditEvent = new AuditApplicationEvent(
         event.toAuditEvent(Optional.ofNullable(event.getPrincipal())
             .or(this.currentUser::getCurrentAuditor)
-            .orElse("<NoActiveUserSet>"))));
+            .orElse("<NoActiveUserSet>")));
+    if (TransactionSynchronizationManager.isSynchronizationActive()) {
+      TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+        @Override
+        public void afterCommit() {
+          RegistryAuditEventPublisher.this.publisher.publishEvent(auditEvent);
+        }
+      });
+    }
+    else {
+      this.publisher.publishEvent(auditEvent);
+    }
   }
 
 }

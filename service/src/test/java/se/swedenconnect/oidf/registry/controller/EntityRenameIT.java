@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -84,6 +85,8 @@ class EntityRenameIT {
   private RestTestClient restTestClient;
   @Autowired
   private EntityRepository entityRepository;
+  @Autowired
+  private AuditEventRepository auditEventRepository;
 
   private final JsonRegistryLoader jsonRegistryLoader = new JsonRegistryLoader();
 
@@ -151,6 +154,31 @@ class EntityRenameIT {
             e -> assertThat(e.getStatusCode().value()).isEqualTo(409));
     assertThat(this.entitiesApi.getFederationEntity(TENANT, PM.orgId, imEntityId, false).getEntityIdentifier())
         .isEqualTo(imIdentifier);
+  }
+
+  @Test
+  @DisplayName("A rename that is rolled back leaves no audit record of the references it had already updated")
+  void rolledBackRenameIsNotAudited() {
+    final UUID trustAnchorId = this.createTrustAnchor(PM, "https://www.pm.se/oidf/ta/" + UUID.randomUUID());
+    final String imIdentifier = "https://www.pm.se/oidf/im/" + UUID.randomUUID();
+    final UUID imEntityId = this.createIntermediate(imIdentifier);
+    final UUID subordinateId = this.createSubordinate(PM, trustAnchorId, imIdentifier);
+    // The subordinate is renamed first, then the trust mark subjects, where the new name is already taken.
+    final UUID trustmarkId = this.createTrustmark(PM, "https://www.pm.se/oidf/tmi/" + UUID.randomUUID())
+        .trustmarkId();
+    final String renamed = "https://www.pm.se/oidf/im/" + UUID.randomUUID();
+    this.createSubject(PM, trustmarkId, imIdentifier);
+    this.createSubject(PM, trustmarkId, renamed);
+
+    assertThatThrownBy(() -> this.entitiesApi.updateFederationEntity(TENANT, PM.orgId, imEntityId,
+        new FederationEntity().entityIdentifier(renamed)))
+        .isInstanceOfSatisfying(RestClientResponseException.class,
+            e -> assertThat(e.getStatusCode().value()).isEqualTo(409));
+
+    assertThat(this.subordinatesApi.getSubordinate(TENANT, PM.orgId, subordinateId).getEntityIdentifier())
+        .isEqualTo(imIdentifier);
+    assertThat(this.auditEventRepository.find(null, null, "SUBORDINATE_UPDATED"))
+        .noneMatch(event -> subordinateId.toString().equals(event.getData().get("extId")));
   }
 
   @Test
