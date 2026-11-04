@@ -11,6 +11,8 @@
 **Date:** <ToBeSet>
   
   
+- The save button of an already configured module on the federation entity page says Save instead of Add
+  ([#348](https://github.com/swedenconnect/openid-federation-registry/issues/348)).
 - The GUI uses the same words for the same things, and empty lists say how to add an item
   ([#353](https://github.com/swedenconnect/openid-federation-registry/issues/353),
   [#354](https://github.com/swedenconnect/openid-federation-registry/issues/354),

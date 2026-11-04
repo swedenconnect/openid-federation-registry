@@ -413,7 +413,7 @@
                       :loading="savingModule === 'trustanchor'"
                       :disabled="savingModule || deletingModule"
                   >
-                    Add
+                    {{ modules.trustanchor.id ? 'Save' : 'Add' }}
                   </v-btn>
                 </v-card-actions>
               </v-form>
@@ -536,7 +536,7 @@
                       :loading="savingModule === 'intermediate'"
                       :disabled="savingModule || deletingModule"
                   >
-                    Add
+                    {{ modules.intermediate.id ? 'Save' : 'Add' }}
                   </v-btn>
                 </v-card-actions>
               </v-form>
@@ -645,7 +645,7 @@
                       :loading="savingModule === 'resolver'"
                       :disabled="savingModule || deletingModule"
                   >
-                    Add
+                    {{ modules.resolver.id ? 'Save' : 'Add' }}
                   </v-btn>
                 </v-card-actions>
               </v-form>
@@ -705,7 +705,7 @@
                       :loading="savingModule === 'trustmarkissuer'"
                       :disabled="savingModule || deletingModule"
                   >
-                    Add
+                    {{ modules.trustmarkissuer.id ? 'Save' : 'Add' }}
                   </v-btn>
                 </v-card-actions>
               </v-form>
