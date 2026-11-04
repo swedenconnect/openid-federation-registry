@@ -169,7 +169,6 @@ import {computed, onMounted, ref, watch} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useUserStore} from '@/stores/userStore';
-import {useErrorStore} from '@/stores/errorStore';
 import {entityReviewDecisionsPath, entityReviewStartPath} from '@/config/path';
 import StepPreview from '@/components/StepPreview.vue';
 import {GROUP_LABELS, ITEM_LABELS, itemKey, stateColor, stateLabel} from '@/views/entityReview';
@@ -179,7 +178,6 @@ const SHOW_TYPES_STORAGE_KEY = 'oidf.review.showSectionTypes';
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
-const errorStore = useErrorStore();
 const {requestPost, loading, ok} = useRequest();
 
 const review = ref(null);
@@ -308,7 +306,6 @@ async function defer() {
 }
 
 onMounted(async () => {
-  errorStore.clearError();
   const started = await requestPost(
       entityReviewStartPath(userStore.selectedTenant, userStore.orgNumber, registrationId.value));
   review.value = ok.value ? started : null;

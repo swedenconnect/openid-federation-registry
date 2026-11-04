@@ -444,7 +444,6 @@ async function loadAvailableSteps() {
 }
 
 async function loadFlow() {
-  errorStore.clearError();
   const response = await requestGet(registrationFlowPath(userStore.selectedTenant, userStore.orgNumber, route.params.id));
   if (response) {
     name.value = response.name || '';
@@ -519,7 +518,6 @@ function cancel() {
 }
 
 onMounted(async () => {
-  errorStore.clearError();
   await loadAvailableSteps();
   if (isEdit.value) {
     await loadFlow();

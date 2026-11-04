@@ -21,6 +21,8 @@ import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
@@ -147,6 +149,43 @@ public class PropertyValidatorsTest {
         .eval("policy", policy);
     assertTrue(ex.isPresent());
     assertEquals("policy.metadata_policy.openid_relying_party.require_auth_time", ex.get().getFiledName());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"{\"metadata_policy\": \"nonsense\"}", "{\"metadata_policy\": [1, 2]}"})
+  public void testPolicyValidation_failWhenRootIsNotAnObject(final String policy) {
+    final Optional<PropertyValidationFailException> ex = this.builder()
+        .oidfPolicy()
+        .build()
+        .eval("policy", policy);
+    assertTrue(ex.isPresent());
+    assertEquals("policy", ex.get().getFiledName());
+    assertTrue(ex.get().getMessage().contains("needs the root key 'metadata_policy' holding a JSON object"));
+  }
+
+  @Test
+  public void testPolicyValidation_unreadableParameterGivesNoJvmMessage() {
+    final String policy = """
+        {"metadata_policy": {"openid_relying_party": {"contacts": {"add": null}}}}
+        """;
+
+    final Optional<PropertyValidationFailException> ex = this.builder()
+        .oidfPolicy()
+        .build()
+        .eval("policy", policy);
+    assertTrue(ex.isPresent());
+    assertEquals("policy.metadata_policy.openid_relying_party.contacts", ex.get().getFiledName());
+    assertTrue(ex.get().getMessage().contains("the policy could not be read"), ex.get().getMessage());
+  }
+
+  @Test
+  public void testPolicyValidation_failOnInvalidJson() {
+    final Optional<PropertyValidationFailException> ex = this.builder()
+        .oidfPolicy()
+        .build()
+        .eval("policy", "{\"metadata_policy\": ");
+    assertTrue(ex.isPresent());
+    assertEquals("policy", ex.get().getFiledName());
   }
 
   @Test

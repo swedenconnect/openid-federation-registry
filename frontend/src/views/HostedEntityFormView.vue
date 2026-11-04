@@ -259,7 +259,6 @@ const rules = {
 };
 
 async function loadEntity() {
-  errorStore.clearError();
   entityId.value = route.params.id;
   const response = await requestGet(hostedEntityPath(userStore.selectedTenant, userStore.orgNumber, entityId.value));
   if (response) {
@@ -341,7 +340,6 @@ function cancel() {
 }
 
 onMounted(async () => {
-  errorStore.clearError();
   await fetchSigningKeys('HOSTED_ENTITY');
   if (isEdit.value) {
     await loadEntity();

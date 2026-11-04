@@ -176,7 +176,6 @@ function cancel() {
 }
 
 onMounted(async () => {
-  errorStore.clearError();
   if (userStore.entityPrefix) {
     entityIdentifier.value = userStore.entityPrefix;
   }

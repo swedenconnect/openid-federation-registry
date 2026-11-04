@@ -64,8 +64,10 @@ public class SubordinateDto {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private String effectiveEcLocation;
 
-  @Schema(description = "Metadata policy for this subordinate statement. Optional. Must be valid JSON if provided.",
-      example = "{\"openid_provider\": {\"subject_types_supported\": {\"value\": [\"pairwise\"]}}}")
+  @Schema(description = "Metadata policy for this subordinate statement. Optional. A JSON object with the root key "
+      + "metadata_policy, which holds the policy per entity type.",
+      example = "{\"metadata_policy\": {\"openid_provider\": {\"subject_types_supported\": {\"value\": "
+          + "[\"pairwise\"]}}}}")
   private Map<String, Object> metadataPolicy;
 
   @Schema(description = "Metadata for this subordinate statement. Optional. Must be valid JSON if provided.",

@@ -226,7 +226,9 @@ const router = createRouter({
     ],
 });
 
-router.afterEach((to) => {
+router.afterEach((to, from, failure) => {
+    // An aborted navigation, for example one the user stopped in the unsaved-changes dialog, leaves the page as it was.
+    if (failure) return;
     document.title = `${to.meta.title ?? to.name} — ${PRODUCT_NAME}`;
     useErrorStore().clearError();
 });

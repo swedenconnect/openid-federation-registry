@@ -22,8 +22,11 @@
   [#363](https://github.com/swedenconnect/openid-federation-registry/issues/363)).
 - GUI sessions are stored in the database, so the registry can run on several instances
   ([#384](https://github.com/swedenconnect/openid-federation-registry/issues/384)).
-- `value: null` in a subordinate's metadata policy is sent to the federation services, an invalid metadata policy is
-  refused with 400 naming the parameter, and the error of a failed save stays visible in the GUI
+- `value: null` in a subordinate's metadata policy is sent to the federation services
+  ([#342](https://github.com/swedenconnect/openid-federation-registry/issues/342)).
+- An invalid metadata policy is refused with 400 that names the parameter
+  ([#342](https://github.com/swedenconnect/openid-federation-registry/issues/342)).
+- The error of a failed save stays visible in the GUI
   ([#342](https://github.com/swedenconnect/openid-federation-registry/issues/342)).
 - The configuration documentation names `notification_active`, the property that enables notifications to the
   federation services ([#375](https://github.com/swedenconnect/openid-federation-registry/issues/375)).
