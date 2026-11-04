@@ -169,7 +169,7 @@
                         :disabled="approvingStepIndex !== null"
                         @click="rejectDialog = true"
                     >
-                      Decline
+                      Reject
                     </v-btn>
                     <v-btn
                         :id="`btn-diff-step-${i}`"
@@ -233,7 +233,7 @@
         <v-tabs v-model="activeTab" color="primary">
           <v-tab value="entityStatement">Entity Statement</v-tab>
           <v-tab value="metadataPolicy">Metadata Policy</v-tab>
-          <v-tab value="trustmarkRequests">Trustmark requests</v-tab>
+          <v-tab value="trustmarkRequests">Trust Mark requests</v-tab>
         </v-tabs>
 
         <v-divider></v-divider>
@@ -283,13 +283,13 @@
             <v-card-text>
               <div v-if="trustmarksTabLoading" class="text-center py-12">
                 <v-progress-circular indeterminate color="primary" size="48"></v-progress-circular>
-                <p class="mt-4 text-grey">Loading trustmark data…</p>
+                <p class="mt-4 text-grey">Loading Trust Mark data…</p>
               </div>
               <template v-else-if="registration.statusTrustmarks?.length">
                 <v-table density="compact">
                   <thead>
                     <tr>
-                      <th class="text-left">Trustmark type</th>
+                      <th class="text-left">Trust Mark type</th>
                       <th class="text-left">Status</th>
                       <th class="text-left">Action</th>
                     </tr>
@@ -332,7 +332,7 @@
                   </tbody>
                 </v-table>
               </template>
-              <p v-else class="text-grey text-center py-6">No trustmarks requested.</p>
+              <p v-else class="text-grey text-center py-6">No Trust Marks requested.</p>
             </v-card-text>
           </v-window-item>
 
@@ -423,7 +423,7 @@
               :disabled="rejecting"
               @click="submitReject"
           >
-            Confirm Reject
+            Reject Registration
           </v-btn>
         </v-card-actions>
       </v-card>

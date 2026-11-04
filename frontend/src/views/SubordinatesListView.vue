@@ -111,7 +111,7 @@
             </v-tooltip>
           </template>
           <template #no-data>
-            <p class="text-grey py-8">No subordinates found.</p>
+            <EmptyState what="subordinates" action="Add Subordinate" :search="search"/>
           </template>
           <template #bottom>
             <TablePager v-model:page="page" v-model:items-per-page="itemsPerPage" :total="filteredCount"/>
@@ -125,6 +125,7 @@
 <script setup>
 import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
+import EmptyState from '@/components/EmptyState.vue';
 import TablePager from '@/components/TablePager.vue';
 import {useListTable} from '@/composables/listTable';
 import {useRequest} from '@/api/composables/request';

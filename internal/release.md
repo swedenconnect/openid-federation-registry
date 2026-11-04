@@ -24,7 +24,7 @@ The script will:
 4. Fetch tags from `origin` and suggest the next version (latest `vX.Y.Z` tag, patch bumped by one).
 5. Ask you to confirm the suggested version or enter a different one.
 6. Create a `release_X_Y_Z` branch (underscores, e.g. `release_0_11_15`).
-7. Set the new version in every `pom.xml` with `./internal/set-version.sh` (`mvn versions:set` plus the `guitest` parent reference).
+7. Set the new version in every `pom.xml` with `./internal/set-version.sh` (`mvn versions:set`).
 8. Run `mvn clean install` to build and test the release version.
 9. Pause and remind you to update [`docs/release-notes.md`](../docs/release-notes.md) with the changes in this release —
    do this now, before continuing.

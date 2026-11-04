@@ -39,6 +39,7 @@ import NoAccessView from '../views/NoAccessView.vue';
 import EntityReviewDetailView from '../views/EntityReviewDetailView.vue';
 import EntityReviewSessionView from '../views/EntityReviewSessionView.vue';
 import {useAuthorizationStatusStore} from '@/authorization/stores/authorizationStatusStore';
+import {PRODUCT_NAME} from '@/config/product';
 import {useUserStore} from '@/stores/userStore';
 
 let base = import.meta.env.BASE_URL;
@@ -87,7 +88,7 @@ const router = createRouter({
             path: '/entities/federation/new',
             name: 'federation-entity-new',
             component: FederationEntityNewView,
-            meta: {operatorOnly: true, title: 'New Federation Entity'},
+            meta: {operatorOnly: true, title: 'Add Federation Entity'},
         },
         {
             path: '/entities/federation/:id/edit',
@@ -99,7 +100,7 @@ const router = createRouter({
             path: '/entities/hosted/new',
             name: 'hosted-entity-new',
             component: HostedEntityFormView,
-            meta: {title: 'New Hosted Entity'},
+            meta: {title: 'Add Hosted Entity'},
         },
         {
             path: '/entities/hosted/:id/edit',
@@ -117,7 +118,7 @@ const router = createRouter({
             path: '/entities/:entityId/modules/:moduleType/subordinates/new',
             name: 'subordinate-new',
             component: SubordinateFormView,
-            meta: {title: 'New Subordinate'},
+            meta: {title: 'Add Subordinate'},
         },
         {
             path: '/entities/:entityId/modules/:moduleType/subordinates/:id/edit',
@@ -129,37 +130,37 @@ const router = createRouter({
             path: '/entities/:entityId/modules/trustmarkissuer/trustmarks',
             name: 'trustmarks-list',
             component: TrustmarksListView,
-            meta: {title: 'Trustmarks'},
+            meta: {title: 'Trust Marks'},
         },
         {
             path: '/entities/:entityId/modules/trustmarkissuer/trustmarks/new',
             name: 'trustmark-new',
             component: TrustmarkFormView,
-            meta: {title: 'New Trustmark'},
+            meta: {title: 'Add Trust Mark'},
         },
         {
             path: '/entities/:entityId/modules/trustmarkissuer/trustmarks/:id/edit',
             name: 'trustmark-edit',
             component: TrustmarkFormView,
-            meta: {title: 'Edit Trustmark'},
+            meta: {title: 'Edit Trust Mark'},
         },
         {
             path: '/entities/:entityId/modules/trustmarkissuer/trustmarks/:trustmarkId/subjects',
             name: 'trustmark-subjects-list',
             component: TrustmarkSubjectsListView,
-            meta: {title: 'Trustmark Subjects'},
+            meta: {title: 'Trust Mark Subjects'},
         },
         {
             path: '/entities/:entityId/modules/trustmarkissuer/trustmarks/:trustmarkId/subjects/new',
             name: 'trustmark-subject-new',
             component: TrustmarkSubjectFormView,
-            meta: {title: 'New Trustmark Subject'},
+            meta: {title: 'Add Trust Mark Subject'},
         },
         {
             path: '/entities/:entityId/modules/trustmarkissuer/trustmarks/:trustmarkId/subjects/:id/edit',
             name: 'trustmark-subject-edit',
             component: TrustmarkSubjectFormView,
-            meta: {title: 'Edit Trustmark Subject'},
+            meta: {title: 'Edit Trust Mark Subject'},
         },
         {
             path: '/registration-flows',
@@ -171,7 +172,7 @@ const router = createRouter({
             path: '/registration-flows/new',
             name: 'registration-flow-new',
             component: RegistrationFlowFormView,
-            meta: {operatorOnly: true, title: 'New Registration Flow'},
+            meta: {operatorOnly: true, title: 'Add Registration Flow'},
         },
         {
             path: '/registration-flows/:id/edit',
@@ -225,7 +226,7 @@ const router = createRouter({
 });
 
 router.afterEach((to) => {
-    document.title = `${to.meta.title ?? to.name} — OpenID Federation Admin`;
+    document.title = `${to.meta.title ?? to.name} — ${PRODUCT_NAME}`;
 });
 
 router.beforeEach((to) => {

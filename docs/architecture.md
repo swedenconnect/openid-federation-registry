@@ -133,8 +133,6 @@ them. Function groups are **not** persisted
   [Developer Guide](developer.md) for local setup.
 - **Frontend**: standard Vite/npm build in `frontend/`, output copied into the backend's static resources so the
   two ship as one artifact.
-- **End-to-end**: a separate Maven module, `guitest`, drives the running application through the browser with
-  Playwright.
 - **Containerization**: the `service` module builds its container image with Jib (no local Docker daemon needed
   for the image build itself; Docker is still used to run MariaDB for local dev and Testcontainers-based tests).
 - **CI**: GitHub Actions (`.github/workflows`).

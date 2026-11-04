@@ -16,10 +16,10 @@
 
 <template>
   <div class="trustmark-sources-field mb-4">
-    <label class="text-body-2 d-block mb-2">TrustMark Sources</label>
+    <label class="text-body-2 d-block mb-2">Trust Mark Sources</label>
 
     <div v-if="groups.length === 0" class="text-caption text-medium-emphasis mb-2">
-      No trustmark sources added.
+      No Trust Mark sources yet. Use Add Issuer to add one.
     </div>
 
     <v-card
@@ -37,9 +37,9 @@
             item-value="value"
             :return-object="false"
             :hide-no-data="true"
-            label="TrustMark Issuer"
+            label="Trust Mark Issuer"
             :hint="suggest
-                ? 'Entity identifier URL of the issuer. Trustmark issuers in this organization are suggested.'
+                ? 'Entity identifier URL of the issuer. Trust Mark Issuers in this organization are suggested.'
                 : 'Entity identifier URL of the issuer'"
             persistent-hint
             density="compact"
@@ -47,7 +47,7 @@
             class="flex-grow-1 mr-2"
         >
           <template #item="{ props: itemProps, item }">
-            <v-list-item v-bind="itemProps" subtitle="Trustmark issuer in this organization"></v-list-item>
+            <v-list-item v-bind="itemProps" subtitle="Trust Mark Issuer in this organization"></v-list-item>
           </template>
         </v-combobox>
         <v-btn
@@ -64,7 +64,7 @@
       </div>
 
       <div class="ml-2">
-        <label class="text-caption text-medium-emphasis">Trustmarks</label>
+        <label class="text-caption text-medium-emphasis">Trust Marks</label>
         <div
             v-for="(tm, ti) in group.trustmarks"
             :key="ti"
@@ -76,7 +76,7 @@
               :items="trustmarkItems(group.issuer)"
               :return-object="false"
               :hide-no-data="true"
-              hint="Trustmark identifier URL"
+              hint="Trust Mark identifier URL"
               density="compact"
               variant="outlined"
               hide-details="auto"
@@ -101,7 +101,7 @@
               size="x-small"
               color="error"
               variant="text"
-              :aria-label="`Remove trustmark ${ti + 1} from issuer ${gi + 1}`"
+              :aria-label="`Remove Trust Mark ${ti + 1} from issuer ${gi + 1}`"
               @click="removeTrustmark(gi, ti)"
               :disabled="disabled"
           >
@@ -117,7 +117,7 @@
             class="mt-1"
         >
           <v-icon start>mdi-plus</v-icon>
-          Add Trustmark
+          Add Trust Mark
         </v-btn>
       </div>
     </v-card>
@@ -134,7 +134,7 @@
     </v-btn>
 
     <div class="text-caption text-medium-emphasis mt-1">
-      TrustMark sources for the trustmarks to be fetched and included
+      Trust Mark sources for the Trust Marks to be fetched and included
     </div>
   </div>
 </template>
@@ -327,15 +327,15 @@ function status(issuer, type) {
   const trustmarks = trustmarksByIssuer.value.get(issuer);
   if (!trustmarks) return null;
   const trustmark = findTrustmark(issuer, type);
-  if (!trustmark) return {ok: false, text: 'This issuer has no trustmark with this identifier'};
+  if (!trustmark) return {ok: false, text: 'This issuer has no Trust Mark with this identifier'};
   const subjects = subjectsByTrustmark.value.get(trustmark.trustmarkId);
   if (!subjects) return null;
   const entries = subjects.filter((entry) => entry.subject === props.subject);
-  if (entries.length === 0) return {ok: false, text: 'The trustmark is not assigned to this entity'};
+  if (entries.length === 0) return {ok: false, text: 'The Trust Mark is not assigned to this entity'};
   if (entries.some((entry) => isValidSubject(entry, new Date()))) {
-    return {ok: true, text: 'The trustmark is assigned to this entity'};
+    return {ok: true, text: 'The Trust Mark is assigned to this entity'};
   }
-  return {ok: false, text: 'The trustmark is assigned to this entity but is revoked, expired or not yet granted'};
+  return {ok: false, text: 'The Trust Mark is assigned to this entity but is revoked, expired or not yet granted'};
 }
 
 let refreshTimer = null;

@@ -73,7 +73,7 @@
             @click:row="(_event, {item}) => openEntity(item)"
         >
           <template #no-data>
-            <p class="text-grey py-8">No hosted entities found.</p>
+            <EmptyState what="hosted entities" action="Add Hosted Entity" :search="search"/>
           </template>
           <template #bottom>
             <TablePager v-model:page="page" v-model:items-per-page="itemsPerPage" :total="filteredCount"/>
@@ -87,6 +87,7 @@
 <script setup>
 import {onMounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
+import EmptyState from '@/components/EmptyState.vue';
 import TablePager from '@/components/TablePager.vue';
 import {useListTable} from '@/composables/listTable';
 import {useRequest} from '@/api/composables/request';

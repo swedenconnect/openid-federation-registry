@@ -19,7 +19,6 @@
 # Usage: internal/set-version.sh <version>
 #
 # Sets the project version in the parent pom and in every module that refers to it.
-# guitest is not a module of the parent pom, so its parent reference is updated separately.
 set -euo pipefail
 
 VERSION="${1:?Usage: $0 <version>}"
@@ -32,7 +31,3 @@ fi
 cd "$(git rev-parse --show-toplevel)"
 
 mvn --no-transfer-progress -q versions:set -DnewVersion="$VERSION" -DgenerateBackupPoms=false
-
-VERSION="$VERSION" perl -0pi -e \
-  's{(<artifactId>oidf-entity-registry-parent</artifactId>\s*<version>)[^<]+(</version>)}{$1$ENV{VERSION}$2}' \
-  guitest/pom.xml

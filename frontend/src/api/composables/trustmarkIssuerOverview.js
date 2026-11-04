@@ -105,25 +105,25 @@ export function useTrustmarkIssuerOverview() {
             if (!own) {
                 return {
                     level: 'error',
-                    text: 'Auto needs a trust mark issuer of this organization. Turn auto off and list the trust mark types instead.',
+                    text: 'Auto needs a Trust Mark Issuer of this organization. Turn auto off and list the Trust Mark types instead.',
                 };
             }
             if (!own.active) {
-                return {level: 'warning', text: 'The trust mark issuer is not active, so nothing is exported for it.'};
+                return {level: 'warning', text: 'The Trust Mark Issuer is not active, so nothing is exported for it.'};
             }
             if (own.types.length === 0) {
-                return {level: 'warning', text: 'The trust mark issuer has no trust marks yet. Its trust marks are included as soon as it has some.'};
+                return {level: 'warning', text: 'The Trust Mark Issuer has no Trust Marks yet. Its Trust Marks are included as soon as it has some.'};
             }
             return {
                 level: 'ok',
-                text: `Includes all ${own.types.length} trust mark type${own.types.length === 1 ? '' : 's'} of the issuer, and follows it when it changes.`,
+                text: `Includes all ${own.types.length} Trust Mark type${own.types.length === 1 ? '' : 's'} of the issuer, and follows it when it changes.`,
             };
         }
         const types = typesOfEntry(entry);
         if (types.length === 0) {
-            return {level: 'error', text: 'Add at least one trust mark type, or turn auto on.'};
+            return {level: 'error', text: 'Add at least one Trust Mark type, or turn auto on.'};
         }
-        return {level: 'ok', text: `Trusted for the ${types.length} listed trust mark type${types.length === 1 ? '' : 's'}.`};
+        return {level: 'ok', text: `Trusted for the ${types.length} listed Trust Mark type${types.length === 1 ? '' : 's'}.`};
     }
 
     function isBlankType(external) {
@@ -136,7 +136,7 @@ export function useTrustmarkIssuerOverview() {
     function externalStatusOf(external) {
         if (isBlankType(external)) return null;
         if (external.allowAll) {
-            return {level: 'ok', text: 'Anyone may issue the trust mark type. It is exported with an empty list of issuers.'};
+            return {level: 'ok', text: 'Anyone may issue the Trust Mark type. It is exported with an empty list of issuers.'};
         }
         const count = (external.issuers || []).filter((issuer) => issuer && issuer.trim()).length;
         if (count === 0) {

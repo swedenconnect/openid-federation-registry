@@ -17,7 +17,7 @@
 <template>
   <div>
     <div class="d-flex justify-space-between align-center mb-4">
-      <h2>Trustmark Subjects</h2>
+      <h2>Trust Mark Subjects</h2>
       <div>
         <v-btn
             id="btn-add-trustmark-subject"
@@ -25,7 +25,7 @@
             @click="addSubject"
             class="mr-2"
         >
-          Add Trustmark Subject
+          Add Trust Mark Subject
         </v-btn>
         <v-btn
             id="btn-back"
@@ -41,12 +41,12 @@
       <v-card-text class="py-2">
         <div v-if="entityIdentifier" class="d-flex align-center">
           <v-icon aria-hidden="true" class="mr-2">mdi-certificate-outline</v-icon>
-          <span class="text-caption text-uppercase font-weight-medium mr-3">Trustmark Issuer</span>
+          <span class="text-caption text-uppercase font-weight-medium mr-3">Trust Mark Issuer</span>
           <span class="text-body-2">{{ entityIdentifier }}</span>
         </div>
         <div v-if="trustmarkType" class="d-flex align-center" :class="{ 'mt-1': entityIdentifier }">
           <v-icon aria-hidden="true" class="mr-2">mdi-tag-outline</v-icon>
-          <span class="text-caption text-uppercase font-weight-medium mr-3">Trustmark Type</span>
+          <span class="text-caption text-uppercase font-weight-medium mr-3">Trust Mark Type</span>
           <span class="text-body-2">{{ trustmarkType }}</span>
         </div>
       </v-card-text>
@@ -76,7 +76,7 @@
               size="64"
               aria-hidden="true"
           ></v-progress-circular>
-          <p class="mt-4 text-grey">Loading trustmark subjects...</p>
+          <p class="mt-4 text-grey">Loading Trust Mark Subjects...</p>
         </div>
       </v-card-text>
     </v-card>
@@ -98,7 +98,7 @@
         >
           <template #item.subject="{ item }">{{ item.subject || 'N/A' }}</template>
           <template #no-data>
-            <p class="text-grey py-8">No trustmark subjects found.</p>
+            <EmptyState what="Trust Mark Subjects" action="Add Trust Mark Subject" :search="search"/>
           </template>
           <template #bottom>
             <TablePager v-model:page="page" v-model:items-per-page="itemsPerPage" :total="filteredCount"/>
@@ -112,6 +112,7 @@
 <script setup>
 import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
+import EmptyState from '@/components/EmptyState.vue';
 import TablePager from '@/components/TablePager.vue';
 import {useListTable} from '@/composables/listTable';
 import {useRequest} from '@/api/composables/request';

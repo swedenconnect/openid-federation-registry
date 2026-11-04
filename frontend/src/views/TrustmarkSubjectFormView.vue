@@ -24,14 +24,14 @@
               color="primary"
               size="64"
           ></v-progress-circular>
-          <p class="mt-4 text-grey">Loading trustmark subject...</p>
+          <p class="mt-4 text-grey">Loading Trust Mark Subject...</p>
         </div>
       </v-card-text>
     </v-card>
 
     <v-card v-else>
       <v-card-title>
-        <h2>{{ isEdit ? 'Edit Trustmark Subject' : 'Create Trustmark Subject' }}</h2>
+        <h2>{{ isEdit ? 'Edit Trust Mark Subject' : 'Add Trust Mark Subject' }}</h2>
       </v-card-title>
       <v-card-text>
         <v-form ref="form" @submit.prevent="submitForm">
@@ -80,7 +80,7 @@
               id="field-expires"
               v-model="expires"
               label="Expires"
-              hint="Date and time of expiry. Leave empty if the trustmark should be valid forever."
+              hint="Date and time of expiry. Leave empty if the Trust Mark should be valid forever."
               :disabled="saving"
               class="mb-4"
           ></DateTimeField>
@@ -94,7 +94,7 @@
                 @click="deleteDialog = true"
                 :disabled="saving || deleting"
             >
-              Delete
+              Delete Trust Mark Subject
             </v-btn>
             <v-spacer></v-spacer>
             <v-btn
@@ -113,7 +113,7 @@
                 :loading="saving"
                 :disabled="saving"
             >
-              {{ isEdit ? 'Save' : 'Create' }}
+              {{ isEdit ? 'Save' : 'Add' }}
             </v-btn>
           </v-card-actions>
         </v-form>
@@ -123,7 +123,7 @@
     <!-- Delete Confirmation Dialog -->
     <v-dialog v-model="deleteDialog" max-width="500" aria-labelledby="delete-subject-dialog-title">
       <v-card>
-        <v-card-title id="delete-subject-dialog-title" class="text-h5">Confirm Delete</v-card-title>
+        <v-card-title id="delete-subject-dialog-title" class="text-h5">Delete Trust Mark Subject</v-card-title>
         <v-card-text>
           Are you sure you want to delete subject "{{ subject || 'N/A' }}"? This action cannot be undone.
         </v-card-text>
@@ -145,7 +145,7 @@
               :loading="deleting"
               :disabled="deleting"
           >
-            Yes, Delete
+            Delete Trust Mark Subject
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -262,7 +262,7 @@ async function submitForm() {
       navigateBack();
     }
   } catch (error) {
-    console.error('Error saving trustmark subject:', error);
+    console.error('Error saving Trust Mark Subject:', error);
   } finally {
     saving.value = false;
   }
@@ -280,7 +280,7 @@ async function deleteSubject() {
       navigateBack();
     }
   } catch (error) {
-    console.error('Error deleting trustmark subject:', error);
+    console.error('Error deleting Trust Mark Subject:', error);
   } finally {
     deleting.value = false;
   }

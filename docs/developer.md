@@ -12,6 +12,7 @@ This document provides instructions on how to set up a development environment f
 - [Running Locally](#running-locally)
 - [Configuration](#configuration)
 - [Coding Style and Contribution](#coding-style-and-contribution)
+- [GUI Wording](#gui-wording)
 - [Additional Resources](#additional-resources)
 
 ## Prerequisites
@@ -143,6 +144,26 @@ Read more in the [Contributing Guide](../CONTRIBUTING.md).
 The Maven-driven code style rules can be viewed at the
 [openid-federation-commons](https://github.com/swedenconnect/openid-federation-commons/blob/main/pom.xml#L156) repository.
 *   This project uses **Lombok**. Ensure your IDE has the Lombok plugin installed and annotation processing enabled.
+
+---
+## GUI Wording
+
+Texts in the GUI follow these rules, so that the same thing is called the same everywhere.
+
+*   **Product name:** OpenID Federation Registry, from `PRODUCT_NAME` in `frontend/src/config/product.js`.
+*   **Terms from OpenID Federation** are written as in the specification, also in running text: Trust Mark, Trust Mark
+    Issuer, Trust Mark type, Trust Anchor, Intermediate. Trust Mark Subject and Organization follow the same pattern.
+    Code identifiers such as `trustmark` are not changed.
+*   **Creating:** Add, in the list button, the page heading, the browser tab title and the submit button. A saved
+    object is saved with Save.
+*   **Deleting:** Delete followed by the object, for example Delete Subordinate, on the button and in the confirmation
+    dialog. Remove is only used for taking an item out of a field before it is saved.
+*   **Rejecting:** Reject followed by the object, for example Reject Registration. Confirm buttons name the action,
+    without "Yes" or "Confirm".
+*   **Add buttons in list fields** say what they add, for example Add Crit.
+*   **Empty lists** say what is missing and how to add it, with `EmptyState`: "No subordinates yet. Use Add Subordinate
+    to add one." A search that matches nothing gives "No results for …".
+*   **Modules:** Trust Anchor, Intermediate, Resolver and Trust Mark Issuer are called modules, not roles.
 
 Copyright &copy; 2025, [SwedenConnect](https://www.swedenconnect.se). Licensed under version 2.0 of
 the [Apache License](https://www.apache.org/licenses/LICENSE-2.0).
