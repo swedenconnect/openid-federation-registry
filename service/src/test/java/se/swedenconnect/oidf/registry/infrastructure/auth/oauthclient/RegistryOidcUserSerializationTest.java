@@ -25,6 +25,7 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 
+import java.io.ObjectStreamClass;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -61,5 +62,11 @@ class RegistryOidcUserSerializationTest {
     final RegistryOidcUser restoredUser = (RegistryOidcUser) restored.getAuthentication().getPrincipal();
     assertThat(restoredUser.getName()).isEqualTo("test-user-subject");
     assertThat(restoredUser.getIdToken().getClaims()).isEqualTo(idToken.getClaims());
+  }
+
+  @Test
+  @DisplayName("RegistryOidcUser has a fixed serial version, so a change to the class keeps stored sessions readable")
+  void serialVersionIsFixed() {
+    assertThat(ObjectStreamClass.lookup(RegistryOidcUser.class).getSerialVersionUID()).isEqualTo(1L);
   }
 }

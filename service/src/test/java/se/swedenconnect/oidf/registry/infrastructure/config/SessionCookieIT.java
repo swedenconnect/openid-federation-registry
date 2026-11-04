@@ -23,6 +23,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.session.jdbc.JdbcIndexedSessionRepository;
+import org.springframework.test.util.ReflectionTestUtils;
 import se.swedenconnect.oidf.registry.fixture.TestContainersConfiguration;
 
 import java.io.IOException;
@@ -60,6 +62,9 @@ class SessionCookieIT {
   @Autowired
   private JdbcTemplate jdbcTemplate;
 
+  @Autowired
+  private JdbcIndexedSessionRepository sessionRepository;
+
   private final HttpClient httpClient = HttpClient.newHttpClient();
 
   @Test
@@ -91,6 +96,13 @@ class SessionCookieIT {
         JOIN SPRING_SESSION_ATTRIBUTES a ON a.SESSION_PRIMARY_ID = s.PRIMARY_ID
         WHERE s.SESSION_ID = ?""", String.class, sessionId))
         .anyMatch(name -> name.endsWith("AUTHORIZATION_REQUEST"));
+  }
+
+  @Test
+  @DisplayName("The session repository uses the MySQL query that tolerates an attribute stored twice")
+  void sessionRepositoryUsesMySqlQueries() {
+    assertThat((String) ReflectionTestUtils.getField(this.sessionRepository, "createSessionAttributeQuery"))
+        .contains("ON DUPLICATE KEY UPDATE");
   }
 
   /**
