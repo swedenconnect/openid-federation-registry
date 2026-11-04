@@ -51,6 +51,11 @@ public class PropertyValidatorsTest {
         {
         "metadata_policy" : {
           "openid_relying_party": {
+            "require_auth_time": { "one_of": [true] },
+            "id_token_signed_response_alg": { "value": null },
+           "redirect_uris": { "essential": true },
+           "response_types": { "essential": true, "superset_of": ["code"] },
+        
             "id_token_signed_response_alg": {
               "default": "ES256",
               "one_of": ["ES256", "ES384", "ES512"]
@@ -63,12 +68,14 @@ public class PropertyValidatorsTest {
         }
         """;
 
+
     final ValidationStatus vs = this.builder()
-        .json().oidfPolicy()
+        .json()
+        .oidfMetadataPolicy()
         .build()
         .validate("policy", policy);
 
-    assertEquals("json.oidfpolicy", vs.getValidationRule());
+    assertEquals("json.oidfmetadatapolicy", vs.getValidationRule());
   }
 
   @Test
@@ -80,11 +87,11 @@ public class PropertyValidatorsTest {
         """;
 
     final ValidationStatus vs = this.builder()
-        .json().oidfPolicy()
+        .json().oidfMetadataPolicy()
         .build()
         .validate("policy", policy);
 
-    assertEquals("json.oidfpolicy", vs.getValidationRule());
+    assertEquals("json.oidfMetadataPolicy", vs.getValidationRule());
   }
 
   @Test
@@ -101,7 +108,7 @@ public class PropertyValidatorsTest {
         """;
 
     final Optional<PropertyValidationFailException> ex = this.builder()
-        .oidfPolicy()
+        .oidfMetadataPolicy()
         .build()
         .eval("policy", policy);
     assertTrue(ex.isPresent());
@@ -124,7 +131,7 @@ public class PropertyValidatorsTest {
         """;
 
     final Optional<PropertyValidationFailException> ex = this.builder()
-        .oidfPolicy()
+        .oidfMetadataPolicy()
         .build()
         .eval("policy", policy);
     assertTrue(ex.isEmpty(), () -> ex.get().getMessage());
@@ -144,18 +151,19 @@ public class PropertyValidatorsTest {
         """;
 
     final Optional<PropertyValidationFailException> ex = this.builder()
-        .oidfPolicy()
+        .oidfMetadataPolicy()
         .build()
         .eval("policy", policy);
     assertTrue(ex.isPresent());
     assertEquals("policy.metadata_policy.openid_relying_party.require_auth_time", ex.get().getFiledName());
+    assertEquals("{\"require_auth_time\":{\"one_of\":[{\"nested\":true}]}}", ex.get().getInputValue());
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"{\"metadata_policy\": \"nonsense\"}", "{\"metadata_policy\": [1, 2]}"})
   public void testPolicyValidation_failWhenRootIsNotAnObject(final String policy) {
     final Optional<PropertyValidationFailException> ex = this.builder()
-        .oidfPolicy()
+        .oidfMetadataPolicy()
         .build()
         .eval("policy", policy);
     assertTrue(ex.isPresent());
@@ -170,7 +178,7 @@ public class PropertyValidatorsTest {
         """;
 
     final Optional<PropertyValidationFailException> ex = this.builder()
-        .oidfPolicy()
+        .oidfMetadataPolicy()
         .build()
         .eval("policy", policy);
     assertTrue(ex.isPresent());
@@ -181,7 +189,7 @@ public class PropertyValidatorsTest {
   @Test
   public void testPolicyValidation_failOnInvalidJson() {
     final Optional<PropertyValidationFailException> ex = this.builder()
-        .oidfPolicy()
+        .oidfMetadataPolicy()
         .build()
         .eval("policy", "{\"metadata_policy\": ");
     assertTrue(ex.isPresent());

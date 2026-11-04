@@ -581,7 +581,7 @@ public class ValidateDto {
         .build()
         .ifFailThrow("crit", dto.getCrit());
 
-    this.v.oidfPolicy()
+    this.v.oidfMetadataPolicy()
         .build()
         .ifFailThrow("metadataPolicy", dto.getMetadataPolicy());
 

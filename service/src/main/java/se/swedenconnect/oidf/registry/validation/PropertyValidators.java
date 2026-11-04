@@ -204,52 +204,52 @@ public class PropertyValidators {
 
   /**
    * Validates that the value is a valid OIDF (OpenID Federation) policy JSON structure using
-   * ExtendedMetadataPolicy.parse() from the Sweden Connect Nimbus extensions.
+   * ExtendedMetadataPolicy.parse() from the Sweden Connect Nimbus extensions. An error gives only the part of the
+   * policy that failed as its value, not the whole policy, since the value is part of the message shown to the user.
    */
-  private ValidationStatus validateOidfPolicy(final String key, final String value) {
+  private ValidationStatus validateOidfMetadataPolicy(final String key, final String value) {
     if (value == null || value.isBlank()) {
-      return ValidationStatusImpl.noEval(key, "oidfpolicy");
+      return ValidationStatusImpl.noEval(key, "oidfmetadatapolicy");
     }
     final JsonNode node;
     try {
       node = mapper.readTree(value);
     }
     catch (final JacksonException e) {
-      throw new PropertyValidationFailException(key, value, "Value is not a valid JSON. " + e.getMessage());
+      throw new PropertyValidationFailException(key, "Value is not a valid JSON. " + e.getMessage());
     }
     if (node.isEmpty()) {
-      return ValidationStatusImpl.noEval(key, "oidfpolicy");
+      return ValidationStatusImpl.noEval(key, "oidfmetadatapolicy");
     }
 
     final String rootNodeName = "metadata_policy";
     final JsonNode metadataPolicyNode = node.get(rootNodeName);
     if (metadataPolicyNode == null) {
-      throw new PropertyValidationFailException(key, value,
-          "Expected a start node of type: " + rootNodeName);
+      throw new PropertyValidationFailException(key, "Expected a start node of type: " + rootNodeName);
     }
     if (!metadataPolicyNode.isObject()) {
-      throw new PropertyValidationFailException(key, value,
+      throw new PropertyValidationFailException(key, metadataPolicyNode.toString(),
           "A metadata policy needs the root key '%s' holding a JSON object".formatted(rootNodeName));
     }
     metadataPolicyNode.propertyStream().forEach(type -> {
       final String typeKey = key + "." + rootNodeName + "." + type.getKey();
       if (!type.getValue().isObject()) {
-        throw new PropertyValidationFailException(typeKey, value,
+        throw new PropertyValidationFailException(typeKey, type.getValue().toString(),
             "Invalid OIDF metadata policy structure: the policy of an entity type must be a JSON object");
       }
       // Each parameter is read on its own, so that the error names the parameter that failed
       type.getValue().propertyStream().forEach(parameter -> {
         final String parameterKey = typeKey + "." + parameter.getKey();
+        final String single = mapper.createObjectNode().set(parameter.getKey(), parameter.getValue()).toString();
         try {
-          final String single = mapper.createObjectNode().set(parameter.getKey(), parameter.getValue()).toString();
           ExtendedMetadataPolicy.parse(JSONObjectUtils.parse(single));
         }
         catch (com.nimbusds.oauth2.sdk.ParseException | PolicyViolationException e) {
-          throw new PropertyValidationFailException(parameterKey, value,
+          throw new PropertyValidationFailException(parameterKey, single,
               "Invalid OIDF metadata policy structure: " + e.getMessage());
         }
         catch (final RuntimeException e) {
-          throw unreadablePolicy(parameterKey, value, e);
+          throw unreadablePolicy(parameterKey, single, e);
         }
       });
       // The entity type is also read as a whole, exactly as it is stored and exported, so that the result does not
@@ -258,14 +258,14 @@ public class PropertyValidators {
         ExtendedMetadataPolicy.parse(JSONObjectUtils.parse(type.getValue().toString()));
       }
       catch (com.nimbusds.oauth2.sdk.ParseException | PolicyViolationException e) {
-        throw new PropertyValidationFailException(typeKey, value,
+        throw new PropertyValidationFailException(typeKey, type.getValue().toString(),
             "Invalid OIDF metadata policy structure: " + e.getMessage());
       }
       catch (final RuntimeException e) {
-        throw unreadablePolicy(typeKey, value, e);
+        throw unreadablePolicy(typeKey, type.getValue().toString(), e);
       }
     });
-    return ValidationStatusImpl.ok(key, "oidfpolicy");
+    return ValidationStatusImpl.ok(key, "oidfmetadatapolicy");
   }
 
   // The message of an unexpected exception is not meant for the user, so it is only logged.
@@ -863,8 +863,8 @@ public class PropertyValidators {
      *
      * @return this builder
      */
-    public ValidationBuilder oidfPolicy() {
-      this.addValidator(PropertyValidators.this::validateOidfPolicy);
+    public ValidationBuilder oidfMetadataPolicy() {
+      this.addValidator(PropertyValidators.this::validateOidfMetadataPolicy);
       return this;
     }
 
