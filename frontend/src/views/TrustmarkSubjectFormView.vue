@@ -157,8 +157,10 @@
 import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
+import {useUnsavedChanges} from '@/api/composables/unsavedChanges';
 import DateTimeField from '@/components/DateTimeField.vue';
 import {useErrorStore} from '@/stores/errorStore';
+import {useNoticeStore} from '@/stores/noticeStore';
 import {useUserStore} from '@/stores/userStore';
 import {hostedEntitiesPath, trustmarkSubjectsPath} from '@/config/path';
 
@@ -166,6 +168,7 @@ const route = useRoute();
 const router = useRouter();
 const {requestGet, requestPost, requestPut, requestDelete, loading, ok} = useRequest();
 const errorStore = useErrorStore();
+const noticeStore = useNoticeStore();
 const userStore = useUserStore();
 
 const form = ref(null);
@@ -179,6 +182,13 @@ const subject = ref('');
 const revoked = ref(false);
 const granted = ref('');
 const expires = ref('');
+
+const {markSaved} = useUnsavedChanges(() => ({
+  subject: subject.value,
+  revoked: revoked.value,
+  granted: granted.value,
+  expires: expires.value,
+}));
 
 // Suggestions for the subject when creating: the organization's hosted entities.
 const suggestions = ref([]);
@@ -259,6 +269,8 @@ async function submitForm() {
     }
 
     if (ok.value) {
+      noticeStore.show(isEdit.value ? 'Trust Mark Subject saved.' : 'Trust Mark Subject added.');
+      markSaved();
       navigateBack();
     }
   } catch (error) {
@@ -277,6 +289,8 @@ async function deleteSubject() {
 
     if (ok.value) {
       deleteDialog.value = false;
+      noticeStore.show('Trust Mark Subject deleted.');
+      markSaved();
       navigateBack();
     }
   } catch (error) {
@@ -296,15 +310,16 @@ function cancel() {
   navigateBack();
 }
 
-onMounted(() => {
+onMounted(async () => {
   errorStore.clearError();
   if (isEdit.value) {
-    loadSubject();
+    await loadSubject();
   } else {
     if (route.query.subject) {
       subject.value = route.query.subject;
     }
     loadSuggestions();
   }
+  markSaved();
 });
 </script>

@@ -30,7 +30,8 @@ function _errorMap(error) {
     return 'An unexpected error occurred.';
 }
 
-export function useRequest(logError = true) {
+// With showError false, a failure is not shown in the page-level banner. The caller shows it from error instead.
+export function useRequest(logError = true, showError = true) {
     const {fetchData, json, ok, status, traceparent} = useFetch();
     const errorStore = useErrorStore();
 
@@ -42,10 +43,13 @@ export function useRequest(logError = true) {
     async function _request(path, payload, method) {
         loading.value = true;
         error.value = null;
-        errorStore.clearError();
+        if (showError) {
+            errorStore.clearError();
+        }
         try {
             return await fetchData(path, payload, method);
         } catch (err) {
+            const setError = showError ? errorStore.setError : () => {};
             console.log(err);
             let errorMessage = 'Unknown error';
             if (err instanceof Error) {
@@ -56,17 +60,17 @@ export function useRequest(logError = true) {
                     return;
                 } else if (status.value === 403) {
                     // Show a fixed message, the body of a 403 does not contain anything meant for the user.
-                    errorStore.setError(errorMessage);
+                    setError(errorMessage);
                 } else if (err.message.includes('Failed to fetch')) {
-                    errorStore.setError('Failed to connect to server. Please check your connection.');
+                    setError('Failed to connect to server. Please check your connection.');
                 } else {
                     // Try to extract error message from response
                     if (json.value && json.value.detail) {
-                        errorStore.setError(json.value.detail);
+                        setError(json.value.detail);
                     } else if (json.value && json.value.message) {
-                        errorStore.setError(json.value.message);
+                        setError(json.value.message);
                     } else {
-                        errorStore.setError(errorMessage);
+                        setError(errorMessage);
                     }
                 }
             }

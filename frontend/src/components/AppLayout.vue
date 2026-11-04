@@ -162,6 +162,22 @@
       </v-container>
     </v-main>
 
+    <v-dialog :model-value="leaveStore.open" max-width="500" persistent>
+      <v-card>
+        <v-card-title>Discard Unsaved Changes</v-card-title>
+        <v-card-text>The form has changes that are not saved. Leave the page and discard them?</v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn id="btn-leave-stay" @click="leaveStore.answer(false)">Stay on Page</v-btn>
+          <v-btn id="btn-leave-discard" color="error" @click="leaveStore.answer(true)">Discard Changes</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-snackbar v-model="noticeStore.visible" :timeout="6000" color="primary" role="status">
+      {{ noticeStore.message }}
+    </v-snackbar>
+
     <v-footer app class="text-right">
       <v-spacer></v-spacer>
       <span class="text-caption">{{ PRODUCT_NAME }} {{ PRODUCT_VERSION }} · Sweden Connect · Copyright 2026</span>
@@ -171,9 +187,11 @@
 
 <script setup>
 import {computed, onBeforeMount, ref} from 'vue';
-import {RouterLink, RouterView, useRoute, useRouter} from 'vue-router';
+import {isNavigationFailure, NavigationFailureType, RouterLink, RouterView, useRoute, useRouter} from 'vue-router';
 import {PRODUCT_NAME, PRODUCT_VERSION} from '@/config/product';
 import {useErrorStore} from '@/stores/errorStore';
+import {useLeaveStore} from '@/stores/leaveStore';
+import {useNoticeStore} from '@/stores/noticeStore';
 import {useUserStore} from '@/stores/userStore';
 import {useRequest} from '@/api/composables/request';
 import {logout} from '@/authorization/logout';
@@ -187,6 +205,8 @@ import {
 const route = useRoute();
 const router = useRouter();
 const errorStore = useErrorStore();
+const leaveStore = useLeaveStore();
+const noticeStore = useNoticeStore();
 const userStore = useUserStore();
 
 // Federation entities and their edit/module views live under /entities/federation and /entities/:entityId/modules;
@@ -206,14 +226,22 @@ function clearError() {
   errorStore.clearError();
 }
 
+// Goes to the start page before the selection changes, so that a form with unsaved changes can stop it.
+async function leaveForSelection() {
+  const failure = await router.push('/');
+  return !isNavigationFailure(failure, NavigationFailureType.aborted);
+}
+
 async function handleOrgChange(orgNumber) {
-  await userStore.selectOrganization(orgNumber);
-  await router.push('/');
+  if (await leaveForSelection()) {
+    await userStore.selectOrganization(orgNumber);
+  }
 }
 
 async function handleTenantChange(tenantName) {
-  await userStore.selectTenant(tenantName);
-  await router.push('/');
+  if (await leaveForSelection()) {
+    await userStore.selectTenant(tenantName);
+  }
 }
 
 function login() {

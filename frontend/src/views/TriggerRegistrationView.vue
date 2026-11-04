@@ -209,6 +209,7 @@
 import {onMounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
+import {useUnsavedChanges} from '@/api/composables/unsavedChanges';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
 import {registrationPublicFlowsPath, registrationTriggerPath} from '@/config/path';
@@ -226,6 +227,12 @@ const entityIdentifier = ref('');
 const trustmarkSources = ref([]);
 const submitting = ref(false);
 const result = ref(null);
+
+const {markSaved} = useUnsavedChanges(() => ({
+  selectedJoinId: selectedJoinId.value,
+  entityIdentifier: entityIdentifier.value,
+  trustmarkSources: trustmarkSources.value,
+}));
 
 function statusColor(status) {
   const colors = {PENDING_APPROVAL: 'warning', APPROVED: 'success', REJECTED: 'error', STARTED: 'info'};
@@ -279,6 +286,7 @@ async function submit() {
         registrationTriggerPath(userStore.selectedTenant, userStore.orgNumber, selectedJoinId.value), body);
     if (response) {
       result.value = response;
+      markSaved();
     }
   } finally {
     submitting.value = false;
@@ -294,6 +302,7 @@ function resetForm() {
   selectedJoinId.value = null;
   entityIdentifier.value = '';
   trustmarkSources.value = [];
+  markSaved();
 }
 
 function viewRegistration() {
@@ -311,5 +320,6 @@ async function loadFlows() {
 
 onMounted(() => {
   loadFlows();
+  markSaved();
 });
 </script>

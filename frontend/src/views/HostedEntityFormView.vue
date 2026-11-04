@@ -65,6 +65,17 @@
           ></v-select>
 
           <v-alert
+              v-if="signingKeysError"
+              id="alert-signing-keys"
+              type="warning"
+              variant="tonal"
+              density="compact"
+              class="mb-4"
+          >
+            {{ signingKeysError }}
+          </v-alert>
+
+          <v-alert
               v-if="signingKeyChanged"
               type="warning"
               variant="tonal"
@@ -189,7 +200,9 @@
 import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
+import {useUnsavedChanges} from '@/api/composables/unsavedChanges';
 import {useErrorStore} from '@/stores/errorStore';
+import {useNoticeStore} from '@/stores/noticeStore';
 import {useUserStore} from '@/stores/userStore';
 import {useSigningKeys} from '@/api/composables/signingKeys';
 import TrustmarkSourcesField from '@/components/TrustmarkSourcesField.vue';
@@ -200,9 +213,10 @@ const route = useRoute();
 const router = useRouter();
 const {requestGet, requestPost, requestPut, requestDelete, loading, ok} = useRequest();
 const errorStore = useErrorStore();
+const noticeStore = useNoticeStore();
 const userStore = useUserStore();
 
-const {signingKeys, fetchSigningKeys} = useSigningKeys();
+const {signingKeys, signingKeysError, fetchSigningKeys} = useSigningKeys();
 
 const form = ref(null);
 const saving = ref(false);
@@ -216,6 +230,13 @@ const metadata = ref('{}');
 const trustmarkSources = ref([]);
 const signingKeyId = ref(null);
 const originalSigningKeyId = ref(null);
+
+const {markSaved} = useUnsavedChanges(() => ({
+  entityIdentifier: entityIdentifier.value,
+  metadata: metadata.value,
+  trustmarkSources: trustmarkSources.value,
+  signingKeyId: signingKeyId.value,
+}));
 const signingKeyChanged = computed(() =>
     isEdit.value &&
     originalSigningKeyId.value !== null &&
@@ -281,6 +302,8 @@ async function saveEntity() {
     }
 
     if (ok.value) {
+      noticeStore.show(isEdit.value ? 'Hosted Entity saved.' : 'Hosted Entity added.');
+      markSaved();
       router.push({name: 'hosted-entities'});
     }
   } catch (error) {
@@ -302,6 +325,8 @@ async function deleteEntity() {
     await requestDelete(`${path}?${query}`);
     if (ok.value) {
       deleteDialog.value = false;
+      noticeStore.show('Hosted Entity deleted.');
+      markSaved();
       router.push({name: 'hosted-entities'});
     }
   } catch (error) {
@@ -319,8 +344,9 @@ onMounted(async () => {
   errorStore.clearError();
   await fetchSigningKeys('HOSTED_ENTITY');
   if (isEdit.value) {
-    loadEntity();
+    await loadEntity();
   }
+  markSaved();
 });
 </script>
 
