@@ -766,7 +766,7 @@
 
     <v-dialog v-model="deleteDialog" max-width="500" aria-labelledby="delete-module-dialog-title">
       <v-card>
-        <v-card-title id="delete-module-dialog-title" class="text-h5">Delete {{ deleteModuleType }} Module</v-card-title>
+        <v-card-title id="delete-module-dialog-title" class="text-h5">Delete {{ deleteModuleType }} module</v-card-title>
         <v-card-text>
           Are you sure you want to delete the {{ deleteModuleType }} module? This action cannot be undone.
         </v-card-text>
@@ -788,7 +788,7 @@
               :loading="deletingModule"
               :disabled="deletingModule"
           >
-            Delete {{ deleteModuleType }} Module
+            Delete {{ deleteModuleType }} module
           </v-btn>
         </v-card-actions>
       </v-card>

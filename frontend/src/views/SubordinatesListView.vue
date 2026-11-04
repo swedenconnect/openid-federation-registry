@@ -111,7 +111,7 @@
             </v-tooltip>
           </template>
           <template #no-data>
-            <EmptyState what="subordinates" action="Add Subordinate" :search="search"/>
+            <EmptyState what="Subordinates" action="Add Subordinate" :search="search"/>
           </template>
           <template #bottom>
             <TablePager v-model:page="page" v-model:items-per-page="itemsPerPage" :total="filteredCount"/>

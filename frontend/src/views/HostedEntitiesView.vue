@@ -73,7 +73,7 @@
             @click:row="(_event, {item}) => openEntity(item)"
         >
           <template #no-data>
-            <EmptyState what="hosted entities" action="Add Hosted Entity" :search="search"/>
+            <EmptyState what="Hosted Entities" action="Add Hosted Entity" :search="search"/>
           </template>
           <template #bottom>
             <TablePager v-model:page="page" v-model:items-per-page="itemsPerPage" :total="filteredCount"/>

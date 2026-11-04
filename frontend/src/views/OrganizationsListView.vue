@@ -96,7 +96,7 @@
             </v-btn>
           </template>
           <template #no-data>
-            <EmptyState what="organizations" :search="search"/>
+            <EmptyState what="Organizations" :search="search"/>
           </template>
           <template #bottom>
             <TablePager v-model:page="page" v-model:items-per-page="itemsPerPage" :total="filteredCount"/>

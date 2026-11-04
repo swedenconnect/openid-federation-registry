@@ -156,12 +156,15 @@ Texts in the GUI follow these rules, so that the same thing is called the same e
     Code identifiers such as `trustmark` are not changed.
 *   **Creating:** Add, in the list button, the page heading, the browser tab title and the submit button. A saved
     object is saved with Save.
-*   **Deleting:** Delete followed by the object, for example Delete Subordinate, on the button and in the confirmation
-    dialog. Remove is only used for taking an item out of a field before it is saved.
-*   **Rejecting:** Reject followed by the object, for example Reject Registration. Confirm buttons name the action,
-    without "Yes" or "Confirm".
+*   **Deleting:** Delete followed by the object, for example Delete Subordinate, on a page-level button and on every
+    confirmation button. A button inside a panel or row that already names the object says only Delete, for example
+    in a module panel, where the confirmation button then says Delete Trust Anchor module. Remove is only used for
+    taking an item out of a field before it is saved.
+*   **Rejecting:** the same pattern as Delete. Reject Registration on a page-level button and on every confirmation
+    button, only Reject where the surrounding panel or row already names the object. Confirmation buttons name the
+    action, without "Yes" or "Confirm".
 *   **Add buttons in list fields** say what they add, for example Add Crit.
-*   **Empty lists** say what is missing and how to add it, with `EmptyState`: "No subordinates yet. Use Add Subordinate
+*   **Empty lists** say what is missing and how to add it, with `EmptyState`: "No Subordinates yet. Use Add Subordinate
     to add one." A search that matches nothing gives "No results for …".
 *   **Modules:** Trust Anchor, Intermediate, Resolver and Trust Mark Issuer are called modules, not roles.
 

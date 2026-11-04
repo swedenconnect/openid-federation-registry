@@ -97,7 +97,7 @@
     <v-card v-else>
       <v-card-text>
         <div class="text-center py-12">
-          <EmptyState what="federation entities" action="Add Federation Entity"/>
+          <EmptyState what="Federation Entities" action="Add Federation Entity"/>
         </div>
       </v-card-text>
     </v-card>

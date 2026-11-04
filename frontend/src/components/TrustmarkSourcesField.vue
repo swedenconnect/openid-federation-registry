@@ -19,7 +19,7 @@
     <label class="text-body-2 d-block mb-2">Trust Mark Sources</label>
 
     <div v-if="groups.length === 0" class="text-caption text-medium-emphasis mb-2">
-      No Trust Mark sources yet. Use Add Issuer to add one.
+      No Trust Mark Sources yet. Use Add Issuer to add one.
     </div>
 
     <v-card

@@ -103,7 +103,7 @@
             </v-btn>
           </template>
           <template #no-data>
-            <EmptyState what="registration flows" action="Add Registration Flow" :search="search"/>
+            <EmptyState what="Registration Flows" action="Add Registration Flow" :search="search"/>
           </template>
           <template #bottom>
             <TablePager v-model:page="page" v-model:items-per-page="itemsPerPage" :total="filteredCount"/>
