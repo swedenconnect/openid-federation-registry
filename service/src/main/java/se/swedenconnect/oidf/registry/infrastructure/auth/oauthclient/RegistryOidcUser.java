@@ -33,6 +33,9 @@ import java.util.Map;
  */
 public class RegistryOidcUser implements OidcUser, Serializable {
 
+  // Stored Java-serialized in the session table, so a change to the class must not make stored sessions unreadable.
+  private static final long serialVersionUID = 1L;
+
   private static final OrgRightsClaimParser ORG_RIGHTS_CLAIM_PARSER = new OrgRightsClaimParser();
 
   private final OidcUser defaultOidcUser;

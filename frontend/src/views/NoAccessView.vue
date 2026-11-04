@@ -23,7 +23,7 @@
         <p class="mb-2">
           <template v-if="userStore.fullName">You are logged in as {{ userStore.fullName }}, but your</template>
           <template v-else>Your</template>
-          account has no function group that is supported by the OpenID Federation Registry.
+          account has no function group that is supported by the {{ PRODUCT_NAME }}.
         </p>
         <p class="mb-2">
           Read access to a supported function group is enough to log in and view your organization.
@@ -38,6 +38,7 @@
 </template>
 
 <script setup>
+import {PRODUCT_NAME} from '@/config/product';
 import {useUserStore} from '@/stores/userStore';
 import {logout} from '@/authorization/logout';
 

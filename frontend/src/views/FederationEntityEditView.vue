@@ -28,7 +28,8 @@
       </v-btn>
     </div>
 
-    <v-card v-if="loading">
+    <!-- Only the first load replaces the form, so that a save keeps the page where it was. -->
+    <v-card v-if="loading && !loaded">
       <v-card-text>
         <div role="status" aria-live="polite" class="text-center py-12">
           <v-progress-circular
@@ -86,6 +87,17 @@
           ></v-select>
 
           <v-alert
+              v-if="signingKeysError"
+              id="alert-signing-keys"
+              type="warning"
+              variant="tonal"
+              density="compact"
+              class="mb-4"
+          >
+            {{ signingKeysError }}
+          </v-alert>
+
+          <v-alert
               v-if="signingKeyChanged"
               type="warning"
               variant="tonal"
@@ -110,7 +122,7 @@
                 :disabled="saving"
                 @click="deleteEntityDialog = true"
             >
-              Delete Entity
+              Delete Federation Entity
             </v-btn>
             <v-spacer></v-spacer>
             <v-btn
@@ -137,15 +149,15 @@
         <v-divider class="my-6"></v-divider>
 
         <h3 class="mb-4">Module Configuration</h3>
-        <p class="text-caption mb-4">You can only have one module from Group 1 (Trustanchor or Intermediate) and one
-          from Group 2 (Resolver or Trustmark Issuer).</p>
+        <p class="text-caption mb-4">You can only have one module from Group 1 (Trust Anchor or Intermediate) and one
+          from Group 2 (Resolver or Trust Mark Issuer).</p>
 
         <v-expansion-panels v-model="expandedPanels" multiple>
           <!-- Trustanchor Panel -->
           <v-expansion-panel value="trustanchor">
             <v-expansion-panel-title>
               <div class="d-flex align-center">
-                <span class="font-weight-medium">Trustanchor</span>
+                <span class="font-weight-medium">Trust Anchor</span>
                 <v-chip
                     v-if="modules.trustanchor.id"
                     :color="modules.trustanchor.active ? 'success' : 'warning'"
@@ -174,13 +186,13 @@
                 ></v-switch>
                 <div class="text-subtitle-2 mb-1">Trust Mark Issuers</div>
                 <div class="text-caption text-medium-emphasis mb-3">
-                  The trust mark issuers that this trust anchor trusts, exported as trust_mark_issuers. Include every
-                  trust mark of a trust mark issuer of this organization with auto, and the issuer is read when the
-                  configuration is fetched. Otherwise list the trust mark types, for any issuer.
+                  The Trust Mark Issuers that this Trust Anchor trusts, exported as trust_mark_issuers. Include every
+                  Trust Mark of a Trust Mark Issuer of this organization with auto, and the issuer is read when the
+                  configuration is fetched. Otherwise list the Trust Mark types, for any issuer.
                 </div>
 
                 <div v-if="modules.trustanchor.trustMarkIssuers.length === 0" class="text-caption mb-3">
-                  No trust mark issuers added.
+                  No Trust Mark Issuers yet. Use Add Trust Mark Issuer to add one.
                 </div>
 
                 <v-card
@@ -195,7 +207,7 @@
                         v-model="entry.issuer"
                         :items="trustmarkIssuerOverview.ownIssuers.value"
                         label="Issuer"
-                        hint="Entity identifier of the trust mark issuer"
+                        hint="Entity identifier of the Trust Mark Issuer"
                         persistent-hint
                         density="compact"
                         :hide-no-data="true"
@@ -208,7 +220,7 @@
                         variant="text"
                         size="small"
                         color="error"
-                        :aria-label="`Remove trust mark issuer ${index + 1}`"
+                        :aria-label="`Remove Trust Mark Issuer ${index + 1}`"
                         :disabled="savingModule"
                         @click="removeTrustMarkIssuer(index)"
                     ></v-btn>
@@ -217,7 +229,7 @@
                   <v-checkbox
                       :id="'trustanchor-issuer-auto-' + index"
                       v-model="entry.auto"
-                      label="Include all trust marks of the issuer automatically"
+                      label="Include all Trust Marks of the issuer automatically"
                       density="compact"
                       hide-details
                       :disabled="savingModule"
@@ -229,8 +241,8 @@
                       :id="'trustanchor-issuer-types-' + index"
                       v-model="entry.trustMarkTypes"
                       :items="trustmarkIssuerOverview.typesOf(entry.issuer)"
-                      label="Trust mark types"
-                      hint="Trust mark types that the issuer is trusted to issue, press Enter after each"
+                      label="Trust Mark types"
+                      hint="Trust Mark types that the issuer is trusted to issue, press Enter after each"
                       persistent-hint
                       multiple
                       chips
@@ -269,12 +281,12 @@
 
                 <div class="text-subtitle-2 mb-1">External Trust Marks</div>
                 <div class="text-caption text-medium-emphasis mb-3">
-                  Trust mark types with issuers outside this organization, or that anyone may issue. They are exported
-                  as trust_mark_issuers together with the trust mark issuers above.
+                  Trust Mark types with issuers outside this organization, or that anyone may issue. They are exported
+                  as trust_mark_issuers together with the Trust Mark Issuers above.
                 </div>
 
                 <div v-if="modules.trustanchor.externalTrustMarks.length === 0" class="text-caption mb-3">
-                  No external trust marks added.
+                  No external Trust Marks yet. Use Add External Trust Mark to add one.
                 </div>
 
                 <v-card
@@ -287,8 +299,8 @@
                     <v-text-field
                         :id="'trustanchor-external-type-' + index"
                         v-model="external.trustMarkType"
-                        label="Trust mark type"
-                        hint="Trust mark type identifier, a URL"
+                        label="Trust Mark type"
+                        hint="Trust Mark type identifier, a URL"
                         persistent-hint
                         density="compact"
                         :disabled="savingModule"
@@ -300,7 +312,7 @@
                         variant="text"
                         size="small"
                         color="error"
-                        :aria-label="`Remove external trust mark ${index + 1}`"
+                        :aria-label="`Remove external Trust Mark ${index + 1}`"
                         :disabled="savingModule"
                         @click="removeExternalTrustMark(index)"
                     ></v-btn>
@@ -309,7 +321,7 @@
                   <v-checkbox
                       :id="'trustanchor-external-allow-all-' + index"
                       v-model="external.allowAll"
-                      label="Anyone may issue this trust mark type"
+                      label="Anyone may issue this Trust Mark type"
                       density="compact"
                       hide-details
                       :disabled="savingModule"
@@ -359,7 +371,7 @@
 
                 <div class="mb-4">
                   <div class="text-caption text-medium-emphasis mb-1">
-                    Trust mark types that this trust anchor trusts (trust_mark_issuers)
+                    Trust Mark types that this Trust Anchor trusts (trust_mark_issuers)
                   </div>
                   <div v-if="trustedTypes.length === 0" class="text-caption">
                     None.
@@ -392,7 +404,7 @@
                       :disabled="savingModule || deletingModule"
                       class="mr-2"
                   >
-                    Remove
+                    Delete
                   </v-btn>
                   <v-btn
                       id="btn-add-trustanchor"
@@ -515,7 +527,7 @@
                       :disabled="savingModule || deletingModule"
                       class="mr-2"
                   >
-                    Remove
+                    Delete
                   </v-btn>
                   <v-btn
                       id="btn-add-intermediate"
@@ -574,7 +586,7 @@
                     v-model="modules.resolver.trustAnchor"
                     label="Trust Anchor URL"
                     :disabled="savingModule"
-                    hint="URL to trustanchor that will be used to build trust chain"
+                    hint="URL to Trust Anchor that will be used to build trust chain"
                     persistent-hint
                     class="mb-4"
                 ></v-text-field>
@@ -624,7 +636,7 @@
                       :disabled="savingModule || deletingModule"
                       class="mr-2"
                   >
-                    Remove
+                    Delete
                   </v-btn>
                   <v-btn
                       id="btn-add-resolver"
@@ -644,7 +656,7 @@
           <v-expansion-panel value="trustmarkissuer">
             <v-expansion-panel-title>
               <div class="d-flex align-center">
-                <span class="font-weight-medium">Trustmark Issuer</span>
+                <span class="font-weight-medium">Trust Mark Issuer</span>
                 <v-chip
                     v-if="modules.trustmarkissuer.id"
                     :color="modules.trustmarkissuer.active ? 'success' : 'warning'"
@@ -684,7 +696,7 @@
                       :disabled="savingModule || deletingModule"
                       class="mr-2"
                   >
-                    Remove
+                    Delete
                   </v-btn>
                   <v-btn
                       id="btn-add-trustmarkissuer"
@@ -766,7 +778,7 @@
 
     <v-dialog v-model="deleteDialog" max-width="500" aria-labelledby="delete-module-dialog-title">
       <v-card>
-        <v-card-title id="delete-module-dialog-title" class="text-h5">Confirm Delete</v-card-title>
+        <v-card-title id="delete-module-dialog-title" class="text-h5">Delete {{ deleteModuleType }} module</v-card-title>
         <v-card-text>
           Are you sure you want to delete the {{ deleteModuleType }} module? This action cannot be undone.
         </v-card-text>
@@ -788,7 +800,7 @@
               :loading="deletingModule"
               :disabled="deletingModule"
           >
-            Yes, Delete
+            Delete {{ deleteModuleType }} module
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -797,7 +809,7 @@
     <!-- Delete Entity Confirmation Dialog -->
     <v-dialog v-model="deleteEntityDialog" max-width="500" aria-labelledby="delete-entity-dialog-title">
       <v-card>
-        <v-card-title id="delete-entity-dialog-title" class="text-h5">Confirm Delete</v-card-title>
+        <v-card-title id="delete-entity-dialog-title" class="text-h5">Delete Federation Entity</v-card-title>
         <v-card-text>
           Are you sure you want to delete entity "{{ name || entityIdentifier }}"? This action cannot be undone.
         </v-card-text>
@@ -819,7 +831,7 @@
               :loading="deletingEntity"
               :disabled="deletingEntity"
           >
-            Yes, Delete
+            Delete Federation Entity
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -831,7 +843,9 @@
 import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
+import {useUnsavedChanges} from '@/api/composables/unsavedChanges';
 import {useErrorStore} from '@/stores/errorStore';
+import {useNoticeStore} from '@/stores/noticeStore';
 import {useLoadJwks} from '@/api/composables/jwks';
 import {useSigningKeys} from '@/api/composables/signingKeys';
 import ListField from '@/components/ListField.vue';
@@ -855,11 +869,13 @@ import {
 const route = useRoute();
 const router = useRouter();
 const {requestGet, requestPut, requestPost, requestDelete, loading, ok} = useRequest();
+const loaded = ref(false);
 const errorStore = useErrorStore();
+const noticeStore = useNoticeStore();
 const userStore = useUserStore();
 const trustmarkIssuerOverview = useTrustmarkIssuerOverview();
 const {loadJwks: loadJwksFromApi, loading: loadingResolverJwks} = useLoadJwks();
-const {signingKeys, fetchSigningKeys} = useSigningKeys();
+const {signingKeys, signingKeysError, fetchSigningKeys} = useSigningKeys();
 
 const form = ref(null);
 const saving = ref(false);
@@ -899,15 +915,16 @@ const availableFlowsForSelect = computed(() =>
 );
 
 
+const MODULE_LABELS = {
+  trustanchor: 'Trust Anchor',
+  intermediate: 'Intermediate',
+  resolver: 'Resolver',
+  trustmarkissuer: 'Trust Mark Issuer',
+};
+
 const deleteModuleType = computed(() => {
   if (!moduleToDelete.value) return '';
-  const types = {
-    trustanchor: 'Trustanchor',
-    intermediate: 'Intermediate',
-    resolver: 'Resolver',
-    trustmarkissuer: 'Trustmark Issuer',
-  };
-  return types[moduleToDelete.value] || moduleToDelete.value;
+  return MODULE_LABELS[moduleToDelete.value] || moduleToDelete.value;
 });
 
 // Module state - each module has its own object
@@ -938,6 +955,15 @@ const modules = ref({
   },
 });
 
+// The modules are part of the state, each module panel has its own save.
+const {markSaved} = useUnsavedChanges(() => ({
+  entityIdentifier: entityIdentifier.value,
+  name: name.value,
+  crit: crit.value,
+  signingKeyId: signingKeyId.value,
+  modules: modules.value,
+}));
+
 const rules = {
   required: (value) => !!value || 'This field is required.',
   maxName: (value) => !value || value.length <= 255 || 'The name can be at most 255 characters.',
@@ -957,6 +983,7 @@ async function confirmApplyToSubordinates() {
       metadataPolicy: applyToSubordinates.value.metadataPolicy,
     });
     if (ok.value) {
+      noticeStore.show(`Metadata policy applied to ${applyToSubordinates.value.count} Subordinate(s).`);
       applyToSubordinates.value.open = false;
       await loadEntity();
     }
@@ -1010,6 +1037,7 @@ async function loadEntity() {
     crit.value = entity.crit || [];
     signingKeyId.value = entity.signingKeyId?.[0] || null;
     originalSigningKeyId.value = signingKeyId.value;
+    loaded.value = true;
 
     // Load existing modules
     if (response.trustAnchor) {
@@ -1064,6 +1092,7 @@ async function loadEntity() {
         active: response.trustmarkIssuer.active !== false,
       };
     }
+    markSaved();
   }
 }
 
@@ -1128,6 +1157,7 @@ async function saveEntity() {
     await requestPut(federationEntityPath(userStore.selectedTenant, userStore.orgNumber, entityId.value), entityData);
 
     if (ok.value) {
+      noticeStore.show('Federation Entity saved.');
       // Reload to get updated data
       await loadEntity();
     }
@@ -1141,19 +1171,19 @@ async function saveEntity() {
 async function saveModule(moduleType) {
   // Validate that only one module from each group is selected
   if (moduleType === 'trustanchor' && modules.value.intermediate.id) {
-    errorStore.setError('Cannot add Trustanchor when Intermediate already exists. Please delete Intermediate first.');
+    errorStore.setError('Cannot add Trust Anchor when Intermediate already exists. Please delete Intermediate first.');
     return;
   }
   if (moduleType === 'intermediate' && modules.value.trustanchor.id) {
-    errorStore.setError('Cannot add Intermediate when Trustanchor already exists. Please delete Trustanchor first.');
+    errorStore.setError('Cannot add Intermediate when Trust Anchor already exists. Please delete Trust Anchor first.');
     return;
   }
   if (moduleType === 'resolver' && modules.value.trustmarkissuer.id) {
-    errorStore.setError('Cannot add Resolver when Trustmark Issuer already exists. Please delete Trustmark Issuer first.');
+    errorStore.setError('Cannot add Resolver when Trust Mark Issuer already exists. Please delete Trust Mark Issuer first.');
     return;
   }
   if (moduleType === 'trustmarkissuer' && modules.value.resolver.id) {
-    errorStore.setError('Cannot add Trustmark Issuer when Resolver already exists. Please delete Resolver first.');
+    errorStore.setError('Cannot add Trust Mark Issuer when Resolver already exists. Please delete Resolver first.');
     return;
   }
 
@@ -1162,6 +1192,7 @@ async function saveModule(moduleType) {
 
   try {
     const module = modules.value[moduleType];
+    const added = !module.id;
     let moduleData;
     let endpoint;
 
@@ -1266,6 +1297,7 @@ async function saveModule(moduleType) {
     }
 
     if (ok.value) {
+      noticeStore.show(`${MODULE_LABELS[moduleType]} module ${added ? 'added' : 'saved'}.`);
       // A template loaded on a Trust Anchor or Intermediate can also be applied to all its subordinates.
       const offer = (moduleType === 'trustanchor' || moduleType === 'intermediate') && module.loadedTemplate
           && module.subordinateCount > 0 && moduleData.metadataPolicy
@@ -1359,6 +1391,7 @@ async function confirmDeleteModule() {
       }
       deleteDialog.value = false;
       moduleToDelete.value = null;
+      noticeStore.show(`${MODULE_LABELS[moduleType]} module deleted.`);
       // Reload to get updated data
       await loadEntity();
     }
@@ -1376,6 +1409,8 @@ async function deleteEntity() {
     await requestDelete(federationEntityPath(userStore.selectedTenant, userStore.orgNumber, entityId.value));
     if (ok.value) {
       deleteEntityDialog.value = false;
+      noticeStore.show('Federation Entity deleted.');
+      markSaved();
       router.push({name: 'federation-entities'});
     }
   } catch (error) {
