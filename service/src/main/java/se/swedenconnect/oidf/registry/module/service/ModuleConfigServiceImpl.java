@@ -54,6 +54,7 @@ import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
 import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkRepository;
 
 import se.swedenconnect.oidf.registry.policy.MetadataPolicies;
+import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateMapper;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 
 import java.util.ArrayList;
@@ -287,6 +288,7 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   public void deleteTrustAnchor(final OrganizationRecord organizationRecord, final UUID id) {
     final TrustAnchorIntermediateModule module = this.findModuleOrThrow(organizationRecord, id, ModuleType.TRUSTANCHOR);
     final TrustAnchorDto dto = ModuleToDtoMapper.toDto(module);
+    this.auditSubordinatesDeleted(module);
     module.getEntity().setTrustanchorIntermediate(null);
     this.moduleRepository.delete(module);
     this.auditService.trustAnchorDeleted(id, module.getOrganization().getInstance().getInstanceId(),
@@ -384,6 +386,8 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
     final TrustAnchorIntermediateModule module =
         this.findModuleOrThrow(organizationRecord, id, ModuleType.INTERMEDIATE);
     final IntermediateDto dto = ModuleToDtoMapper.toDtoIntermediate(module);
+    this.auditSubordinatesDeleted(module);
+    module.getEntity().setTrustanchorIntermediate(null);
     this.moduleRepository.delete(module);
     this.auditService.intermediateDeleted(id, module.getOrganization().getInstance().getInstanceId(),
         module.getOrganization().getOrganizationId(), dto);
@@ -587,11 +591,9 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   @Transactional
   public void deleteTrustmark(final OrganizationRecord organizationRecord, final UUID id) {
     final TrustMark entity = this.findTrustmarkOrThrow(organizationRecord, id);
-    final TrustmarkDto dto = TrustmarkToDtoMapper.toDto(entity);
+    this.auditTrustmarkSubjectsDeleted(entity);
     this.trustMarkRepository.delete(entity);
-    this.auditService.trustmarkDeleted(id,
-        entity.getTrustmarkIssuer().getEntity().getOrganization().getInstance().getInstanceId(),
-        entity.getTrustmarkIssuer().getEntity().getOrganization().getOrganizationId(), dto);
+    this.auditTrustmarkDeleted(entity);
   }
 
   // ---------------------------------------------------------------------------
@@ -675,10 +677,41 @@ public class ModuleConfigServiceImpl implements ModuleConfigService {
   public void deleteTrustmarkIssuer(final OrganizationRecord organizationRecord, final UUID id) {
     final TrustMarkIssuer entity = this.findTrustmarkIssuerOrThrow(organizationRecord, id);
     final TrustmarkIssuerDto dto = ModuleToDtoMapper.toDto(entity);
+    Optional.ofNullable(entity.getTrustmarks()).orElse(List.of()).forEach(trustMark -> {
+      this.auditTrustmarkSubjectsDeleted(trustMark);
+      this.auditTrustmarkDeleted(trustMark);
+    });
     entity.getEntity().setTrustmarkIssuer(null);
     this.trustmarkIssuerRepository.delete(entity);
     this.auditService.trustmarkIssuerDeleted(id, entity.getEntity().getOrganization().getInstance().getInstanceId(),
         entity.getEntity().getOrganization().getOrganizationId(), dto);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Records deleted with their parent
+  // ---------------------------------------------------------------------------
+  // JPA cascades the delete of a module or a trust mark to the records below it. Each of them is audited here, as
+  // when it is deleted on its own.
+
+  private void auditSubordinatesDeleted(final TrustAnchorIntermediateModule module) {
+    final Organization organization = module.getOrganization();
+    module.getSubordinates().forEach(subordinate -> this.auditService.subordinateDeleted(
+        subordinate.getSubordinateId(), organization.getInstance().getInstanceId(),
+        organization.getOrganizationId(), SubordinateMapper.toDto(subordinate)));
+  }
+
+  private void auditTrustmarkSubjectsDeleted(final TrustMark trustMark) {
+    final Organization organization = trustMark.getTrustmarkIssuer().getEntity().getOrganization();
+    Optional.ofNullable(trustMark.getTrustmarksubjects()).orElse(List.of())
+        .forEach(subject -> this.auditService.trustmarkSubjectDeleted(subject.getTrustmarksubjectId(),
+            organization.getInstance().getInstanceId(), trustMark.getTrustmarkId(), organization.getOrganizationId(),
+            TrustmarkToDtoMapper.toDto(subject)));
+  }
+
+  private void auditTrustmarkDeleted(final TrustMark trustMark) {
+    final Organization organization = trustMark.getTrustmarkIssuer().getEntity().getOrganization();
+    this.auditService.trustmarkDeleted(trustMark.getTrustmarkId(), organization.getInstance().getInstanceId(),
+        organization.getOrganizationId(), TrustmarkToDtoMapper.toDto(trustMark));
   }
 
   // ---------------------------------------------------------------------------
