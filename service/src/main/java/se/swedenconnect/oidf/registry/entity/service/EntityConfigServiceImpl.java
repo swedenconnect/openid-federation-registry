@@ -43,6 +43,7 @@ import se.swedenconnect.oidf.registry.module.model.Resolver;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIssuer;
 import se.swedenconnect.oidf.registry.module.repository.ResolverRepository;
+import se.swedenconnect.oidf.registry.module.service.ModuleConfigService;
 import se.swedenconnect.oidf.registry.module.repository.TaImRepository;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
@@ -73,6 +74,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   private final TrustmarkSubjectService trustmarkSubjectService;
   private final TaImRepository taImRepository;
   private final ResolverRepository resolverRepository;
+  private final ModuleConfigService moduleConfigService;
   private final String hostedPathSegment;
 
   /**
@@ -86,6 +88,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
    * @param trustmarkSubjectService the trust mark subject service
    * @param taImRepository the trust anchor and intermediate repository
    * @param resolverRepository the resolver repository
+   * @param moduleConfigService the module service, which deletes the modules of a deleted federation entity
    * @param registryProperties the registry properties, for the hosted path segment of a calculated ec_location
    */
   public EntityConfigServiceImpl(final EntityRepository entityRepository,
@@ -96,6 +99,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
       final TrustmarkSubjectService trustmarkSubjectService,
       final TaImRepository taImRepository,
       final ResolverRepository resolverRepository,
+      final ModuleConfigService moduleConfigService,
       final RegistryProperties registryProperties) {
     this.entityRepository = entityRepository;
     this.organizationService = organizationService;
@@ -105,6 +109,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     this.trustmarkSubjectService = trustmarkSubjectService;
     this.taImRepository = taImRepository;
     this.resolverRepository = resolverRepository;
+    this.moduleConfigService = moduleConfigService;
     this.hostedPathSegment = registryProperties.effectiveHostedPathSegment();
   }
 
@@ -205,7 +210,8 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   }
 
   /**
-   * Deletes a federation entity.
+   * Deletes a federation entity. Its modules are deleted first, each with the records below it, so that every removed
+   * record is audited as when it is deleted on its own.
    *
    * @param organizationRecord the organization record
    * @param id the entity ID
@@ -216,6 +222,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     final FederationEntity entity = this.findEntityOrThrow(
         organizationRecord, id, EntityType.FEDERATION_ENTITY);
     final FederationEntityDto dto = EntityToDtoMapper.toFederationEntity(entity, false);
+    this.deleteModules(organizationRecord, entity);
     this.entityRepository.delete(entity);
     this.auditService.federationEntityDeleted(id, entity.getOrganization().getInstance().getInstanceId(),
         entity.getOrganization().getOrganizationId(),
@@ -278,6 +285,25 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     this.auditService.hostedEntityUpdated(id, existing.getOrganization().getInstance().getInstanceId(),
         existing.getOrganization().getOrganizationId(), oldDto, newDto);
     return newDto;
+  }
+
+  private void deleteModules(final OrganizationRecord organizationRecord, final FederationEntity entity) {
+    final TrustAnchorIntermediateModule taIm = entity.getTrustanchorIntermediate();
+    if (taIm != null) {
+      if (taIm.getModuleType() == ModuleType.TRUSTANCHOR) {
+        this.moduleConfigService.deleteTrustAnchor(organizationRecord, taIm.getTaImId());
+      }
+      else {
+        this.moduleConfigService.deleteIntermediate(organizationRecord, taIm.getTaImId());
+      }
+    }
+    if (entity.getResolver() != null) {
+      this.moduleConfigService.deleteResolver(organizationRecord, entity.getResolver().getResolverId());
+    }
+    if (entity.getTrustmarkIssuer() != null) {
+      this.moduleConfigService.deleteTrustmarkIssuer(organizationRecord,
+          entity.getTrustmarkIssuer().getTrustmarkIssuerId());
+    }
   }
 
   /**
