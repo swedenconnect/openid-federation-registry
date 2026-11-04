@@ -91,7 +91,7 @@ public class PropertyValidatorsTest {
         .build()
         .validate("policy", policy);
 
-    assertEquals("json.oidfMetadataPolicy", vs.getValidationRule());
+    assertEquals("json.oidfmetadatapolicy", vs.getValidationRule());
   }
 
   @Test
