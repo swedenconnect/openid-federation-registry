@@ -16,8 +16,8 @@
 
 // Shared by the entity page and the review view.
 
-export const GROUP_LABELS = {DOMAIN: 'Domain', TRUST_MARK: 'Trust marks', ENTITY: 'Entity'};
-export const ITEM_LABELS = {DOMAIN: 'Domain', TRUST_MARK: 'Trust mark', ENTITY: 'Entity'};
+export const GROUP_LABELS = {DOMAIN: 'Domain', TRUST_MARK: 'Trust Marks', ENTITY: 'Entity'};
+export const ITEM_LABELS = {DOMAIN: 'Domain', TRUST_MARK: 'Trust Mark', ENTITY: 'Entity'};
 
 export function itemKey(item) {
   return `${item.type}:${item.itemId}:${item.type === 'DOMAIN' ? '' : item.stepIndex}`;

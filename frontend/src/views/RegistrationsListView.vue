@@ -124,10 +124,10 @@
               </v-btn>
             </template>
             <template #no-data>
-              <p v-if="!showHistory" class="text-grey py-8">
+              <p v-if="!showHistory && !search" class="text-grey py-8">
                 Nothing waits for review. Turn on <strong>Show history</strong> to see reviewed entities.
               </p>
-              <p v-else class="text-grey py-8">No entities found.</p>
+              <EmptyState v-else what="reviewed entities" :search="search"/>
             </template>
             <template #bottom>
               <TablePager
@@ -170,10 +170,10 @@
             <template #item.createdDate="{ item }">{{ formatDate(item.createdDate) }}</template>
             <template #item.rejectionReason="{ item }">{{ item.rejectionReason || '' }}</template>
             <template #no-data>
-              <p v-if="!showHistory" class="text-grey py-8">
+              <p v-if="!showHistory && !search" class="text-grey py-8">
                 No pending domain claims. Turn on <strong>Show history</strong> to see decided ones.
               </p>
-              <p v-else class="text-grey py-8">No domain claims found.</p>
+              <EmptyState v-else what="domain claims" :search="search"/>
             </template>
             <template #bottom>
               <TablePager
@@ -192,10 +192,10 @@
 <script setup>
 import {computed, onMounted, ref, watch} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
+import EmptyState from '@/components/EmptyState.vue';
 import TablePager from '@/components/TablePager.vue';
 import {useListTable} from '@/composables/listTable';
 import {useRequest} from '@/api/composables/request';
-import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
 import {entityReviewsPath, registrationAdminDomainsPath} from '@/config/path';
 
@@ -205,7 +205,6 @@ const {requestGet, loading} = useRequest();
 // The domain list is an operator-only endpoint: a caller without a review queue gets a 404, which is the normal
 // answer for everyone else and must not raise an error banner.
 const {requestGet: requestDomains, ok: domainsOk, loading: domainsLoading} = useRequest(false);
-const errorStore = useErrorStore();
 const userStore = useUserStore();
 
 const MODE_ENTITIES = 'ENTITIES';
@@ -313,7 +312,7 @@ function waitingChips(entity) {
     if (count > 0) chips.push(`${count} ${count === 1 ? one : many}`);
   };
   add(entity.pendingDomains, 'domain', 'domains');
-  add(entity.pendingTrustMarks, 'trust mark', 'trust marks');
+  add(entity.pendingTrustMarks, 'Trust Mark', 'Trust Marks');
   add(entity.pendingEntitySteps, 'entity step', 'entity steps');
   return chips;
 }
@@ -371,7 +370,6 @@ async function loadDomains() {
 }
 
 onMounted(() => {
-  errorStore.clearError();
   Promise.all([loadEntities(), loadDomains()]);
 });
 </script>

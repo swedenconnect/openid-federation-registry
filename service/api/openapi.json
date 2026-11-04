@@ -5285,13 +5285,15 @@
           "metadataPolicy": {
             "type": "object",
             "additionalProperties": {},
-            "description": "Metadata policy for this subordinate statement. Optional. Must be valid JSON if provided.",
+            "description": "Metadata policy for this subordinate statement. Optional. A JSON object with the root key metadata_policy, which holds the policy per entity type.",
             "example": {
-              "openid_provider": {
-                "subject_types_supported": {
-                  "value": [
-                    "pairwise"
-                  ]
+              "metadata_policy": {
+                "openid_provider": {
+                  "subject_types_supported": {
+                    "value": [
+                      "pairwise"
+                    ]
+                  }
                 }
               }
             }

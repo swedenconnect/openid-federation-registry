@@ -31,7 +31,7 @@
 
     <v-card v-else>
       <v-card-title>
-        <h2>{{ isEdit ? 'Edit Hosted Entity' : 'Create Hosted Entity' }}</h2>
+        <h2>{{ isEdit ? 'Edit Hosted Entity' : 'Add Hosted Entity' }}</h2>
       </v-card-title>
       <v-card-text>
         <v-form ref="form" @submit.prevent="saveEntity">
@@ -63,6 +63,17 @@
               clearable
               class="mb-4"
           ></v-select>
+
+          <v-alert
+              v-if="signingKeysError"
+              id="alert-signing-keys"
+              type="warning"
+              variant="tonal"
+              density="compact"
+              class="mb-4"
+          >
+            {{ signingKeysError }}
+          </v-alert>
 
           <v-alert
               v-if="signingKeyChanged"
@@ -113,7 +124,7 @@
                 :disabled="saving"
                 @click="deleteDialog = true"
             >
-              Delete Entity
+              Delete Hosted Entity
             </v-btn>
             <v-spacer></v-spacer>
             <v-btn
@@ -132,7 +143,7 @@
                 :loading="saving"
                 :disabled="saving"
             >
-              {{ isEdit ? 'Save' : 'Create' }}
+              {{ isEdit ? 'Save' : 'Add' }}
             </v-btn>
           </v-card-actions>
         </v-form>
@@ -142,7 +153,7 @@
     <!-- Delete Confirmation Dialog -->
     <v-dialog v-model="deleteDialog" max-width="500" aria-labelledby="delete-entity-dialog-title">
       <v-card>
-        <v-card-title id="delete-entity-dialog-title" class="text-h5">Confirm Delete</v-card-title>
+        <v-card-title id="delete-entity-dialog-title" class="text-h5">Delete Hosted Entity</v-card-title>
         <v-card-text>
           Are you sure you want to delete entity "{{ entityIdentifier }}"? This action cannot be undone.
           <v-checkbox
@@ -160,11 +171,11 @@
               :disabled="deleting"
               density="compact"
               hide-details
-              label="Also remove the entity as subject of its trustmarks"
+              label="Also remove the entity as subject of its Trust Marks"
           ></v-checkbox>
           <div class="text-caption text-medium-emphasis ml-8">
-            Subordinate statements of this organization are removed. Trustmark subjects are removed in the whole
-            federation, also on trustmarks of other organizations.
+            Subordinate statements of this organization are removed. Trust Mark Subjects are removed in the whole
+            federation, also on Trust Marks of other organizations.
           </div>
         </v-card-text>
         <v-card-actions>
@@ -185,7 +196,7 @@
               :loading="deleting"
               :disabled="deleting"
           >
-            Yes, Delete
+            Delete Hosted Entity
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -198,7 +209,9 @@
 import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
+import {useUnsavedChanges} from '@/api/composables/unsavedChanges';
 import {useErrorStore} from '@/stores/errorStore';
+import {useNoticeStore} from '@/stores/noticeStore';
 import {useUserStore} from '@/stores/userStore';
 import {useSigningKeys} from '@/api/composables/signingKeys';
 import TrustmarkSourcesField from '@/components/TrustmarkSourcesField.vue';
@@ -210,9 +223,10 @@ const route = useRoute();
 const router = useRouter();
 const {requestGet, requestPost, requestPut, requestDelete, loading, ok} = useRequest();
 const errorStore = useErrorStore();
+const noticeStore = useNoticeStore();
 const userStore = useUserStore();
 
-const {signingKeys, fetchSigningKeys} = useSigningKeys();
+const {signingKeys, signingKeysError, fetchSigningKeys} = useSigningKeys();
 
 const form = ref(null);
 const saving = ref(false);
@@ -227,6 +241,13 @@ const trustmarkSources = ref([]);
 const authorityhints = ref([]);
 const signingKeyId = ref(null);
 const originalSigningKeyId = ref(null);
+
+const {markSaved} = useUnsavedChanges(() => ({
+  entityIdentifier: entityIdentifier.value,
+  metadata: metadata.value,
+  trustmarkSources: trustmarkSources.value,
+  signingKeyId: signingKeyId.value,
+}));
 const signingKeyChanged = computed(() =>
     isEdit.value &&
     originalSigningKeyId.value !== null &&
@@ -258,7 +279,6 @@ const rules = {
 };
 
 async function loadEntity() {
-  errorStore.clearError();
   entityId.value = route.params.id;
   const response = await requestGet(hostedEntityPath(userStore.selectedTenant, userStore.orgNumber, entityId.value));
   if (response) {
@@ -303,6 +323,8 @@ async function saveEntity() {
     }
 
     if (ok.value) {
+      noticeStore.show(isEdit.value ? 'Hosted Entity saved.' : 'Hosted Entity added.');
+      markSaved();
       router.push({name: 'hosted-entities'});
     }
   } catch (error) {
@@ -324,6 +346,8 @@ async function deleteEntity() {
     await requestDelete(`${path}?${query}`);
     if (ok.value) {
       deleteDialog.value = false;
+      noticeStore.show('Hosted Entity deleted.');
+      markSaved();
       router.push({name: 'hosted-entities'});
     }
   } catch (error) {
@@ -338,11 +362,11 @@ function cancel() {
 }
 
 onMounted(async () => {
-  errorStore.clearError();
   await fetchSigningKeys('HOSTED_ENTITY');
   if (isEdit.value) {
-    loadEntity();
+    await loadEntity();
   }
+  markSaved();
 });
 </script>
 

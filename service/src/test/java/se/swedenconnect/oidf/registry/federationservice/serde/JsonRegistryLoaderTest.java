@@ -18,6 +18,7 @@ package se.swedenconnect.oidf.registry.federationservice.serde;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.nimbusds.jose.shaded.gson.JsonArray;
+import com.nimbusds.jose.shaded.gson.JsonNull;
 import com.nimbusds.jose.shaded.gson.JsonObject;
 import com.nimbusds.jose.shaded.gson.JsonParser;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
@@ -29,6 +30,7 @@ import se.swedenconnect.oidf.registry.federationservice.model.PolicyRecord;
 import se.swedenconnect.oidf.registry.federationservice.model.TrustAnchorProperties;
 import se.swedenconnect.oidf.registry.federationservice.model.TrustAnchorProperties.SubordinateListingProperty;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -63,6 +65,33 @@ class JsonRegistryLoaderTest {
         .getAsJsonArray("subordinates").get(0).getAsJsonObject();
     assertThat(sub.keySet()).containsExactlyInAnyOrder("entity-identifier", "virtual-entity-id", "policy");
     assertThat(sub.getAsJsonObject("policy").keySet()).containsExactly("id");
+  }
+
+  @Test
+  void policyWithValueNullIsKept() {
+    final Map<String, Object> removed = new HashMap<>();
+    removed.put("value", null);
+    final SubordinateListingProperty subordinate = SubordinateListingProperty.builder()
+        .entityIdentifier(new EntityID("https://sub.example.com"))
+        .policy(new PolicyRecord("policy-id", Map.of("openid_relying_party", Map.of(
+            "id_token_signed_response_alg", removed,
+            "require_auth_time", Map.of("one_of", List.of(true))))))
+        .build();
+    final ModuleRecord record = new ModuleRecord();
+    record.setTrustAnchors(List.of(TrustAnchorProperties.builder()
+        .entityIdentifier(new EntityID("https://ta.example.com"))
+        .subordinates(List.of(subordinate))
+        .build()));
+
+    final JsonObject json = JsonParser.parseString(this.loader.toJson(record)).getAsJsonObject();
+
+    final JsonObject sub = json.getAsJsonArray("trust-anchors").get(0).getAsJsonObject()
+        .getAsJsonArray("subordinates").get(0).getAsJsonObject();
+    assertThat(sub.keySet()).containsExactlyInAnyOrder("entity-identifier", "policy");
+    final JsonObject policy = sub.getAsJsonObject("policy").getAsJsonObject("policy")
+        .getAsJsonObject("openid_relying_party");
+    assertThat(policy.getAsJsonObject("id_token_signed_response_alg").get("value")).isEqualTo(JsonNull.INSTANCE);
+    assertThat(policy.getAsJsonObject("require_auth_time").getAsJsonArray("one_of").get(0).getAsBoolean()).isTrue();
   }
 
   @Test

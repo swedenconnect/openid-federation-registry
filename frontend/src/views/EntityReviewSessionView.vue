@@ -15,7 +15,7 @@
   -->
 
 <!--
-  Reviews one entity item by item: domain, then trust marks, then the steps of its registration. Opening the view
+  Reviews one entity item by item: domain, then Trust Marks, then the steps of its registration. Opening the view
   starts the review, or continues the open one. "Defer decision" leaves the current item undecided and goes back to
   the list, where the entity shows "Continue review".
 -->
@@ -126,7 +126,7 @@
             <v-alert type="warning" variant="tonal" density="compact" class="mt-3">{{ rejectConsequence }}</v-alert>
             <div class="d-flex ga-2 mt-3">
               <v-btn id="btn-confirm-reject" color="error" variant="flat" :loading="rejectingBusy" @click="decide('REJECTED')">
-                Reject
+                Reject {{ ITEM_LABELS[current.type] }}
               </v-btn>
               <v-btn variant="text" :disabled="deciding" @click="cancelReject">Cancel</v-btn>
             </div>
@@ -169,7 +169,6 @@ import {computed, onMounted, ref, watch} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useUserStore} from '@/stores/userStore';
-import {useErrorStore} from '@/stores/errorStore';
 import {entityReviewDecisionsPath, entityReviewStartPath} from '@/config/path';
 import StepPreview from '@/components/StepPreview.vue';
 import {GROUP_LABELS, ITEM_LABELS, itemKey, stateColor, stateLabel} from '@/views/entityReview';
@@ -179,7 +178,6 @@ const SHOW_TYPES_STORAGE_KEY = 'oidf.review.showSectionTypes';
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
-const errorStore = useErrorStore();
 const {requestPost, loading, ok} = useRequest();
 
 const review = ref(null);
@@ -221,7 +219,7 @@ const rejectConsequence = computed(() => {
       return `Rejecting ${current.value.title} also rejects every pending registration under it that no other `
           + 'domain of the organization covers, with reason "Not Accepted Domain". This review ends.';
     case 'TRUST_MARK':
-      return 'Only this trust mark request is rejected. The review continues with the next item.';
+      return 'Only this Trust Mark request is rejected. The review continues with the next item.';
     default:
       return 'The entity registration is rejected. This review ends.';
   }
@@ -308,7 +306,6 @@ async function defer() {
 }
 
 onMounted(async () => {
-  errorStore.clearError();
   const started = await requestPost(
       entityReviewStartPath(userStore.selectedTenant, userStore.orgNumber, registrationId.value));
   review.value = ok.value ? started : null;

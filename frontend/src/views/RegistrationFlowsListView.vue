@@ -103,7 +103,7 @@
             </v-btn>
           </template>
           <template #no-data>
-            <p class="text-grey py-8">No registration flows found.</p>
+            <EmptyState what="Registration Flows" action="Add Registration Flow" :search="search"/>
           </template>
           <template #bottom>
             <TablePager v-model:page="page" v-model:items-per-page="itemsPerPage" :total="filteredCount"/>
@@ -115,7 +115,7 @@
     <!-- Delete Confirmation Dialog -->
     <v-dialog v-model="deleteDialog" max-width="500" aria-labelledby="delete-flow-dialog-title">
       <v-card>
-        <v-card-title id="delete-flow-dialog-title" class="text-h5">Confirm Delete</v-card-title>
+        <v-card-title id="delete-flow-dialog-title" class="text-h5">Delete Registration Flow</v-card-title>
         <v-card-text>
           Are you sure you want to delete registration flow "{{ deleteFlowLabel }}"? This action cannot be undone.
         </v-card-text>
@@ -137,7 +137,7 @@
               :loading="deleting"
               :disabled="deleting"
           >
-            Yes, Delete
+            Delete Registration Flow
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -148,16 +148,19 @@
 <script setup>
 import {computed, onMounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
+import EmptyState from '@/components/EmptyState.vue';
 import TablePager from '@/components/TablePager.vue';
 import {useListTable} from '@/composables/listTable';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
+import {useNoticeStore} from '@/stores/noticeStore';
 import {useUserStore} from '@/stores/userStore';
 import {registrationFlowPath, registrationFlowsPath} from '@/config/path';
 
 const router = useRouter();
 const {requestGet, requestDelete, loading, ok} = useRequest();
 const errorStore = useErrorStore();
+const noticeStore = useNoticeStore();
 const userStore = useUserStore();
 
 const flows = ref([]);
@@ -205,6 +208,7 @@ async function deleteFlow() {
     if (ok.value) {
       deleteDialog.value = false;
       flowToDelete.value = null;
+      noticeStore.show('Registration Flow deleted.');
       await loadFlows();
     }
   } catch (error) {

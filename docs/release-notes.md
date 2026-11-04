@@ -15,6 +15,23 @@
   own organization that refer to it ([#326](https://github.com/swedenconnect/openid-federation-registry/issues/326)).
 - Authority hints set on a hosted entity or federation entity are sent to the federation services together with the
   calculated ones, and can be edited in the GUI.
+- The save button of an already configured module on the federation entity page says Save instead of Add
+  ([#348](https://github.com/swedenconnect/openid-federation-registry/issues/348)).
+- The GUI uses the same words for the same things, and empty lists say how to add an item
+  ([#353](https://github.com/swedenconnect/openid-federation-registry/issues/353),
+  [#354](https://github.com/swedenconnect/openid-federation-registry/issues/354),
+  [#358](https://github.com/swedenconnect/openid-federation-registry/issues/358),
+  [#359](https://github.com/swedenconnect/openid-federation-registry/issues/359),
+  [#361](https://github.com/swedenconnect/openid-federation-registry/issues/361),
+  [#363](https://github.com/swedenconnect/openid-federation-registry/issues/363)).
+- GUI sessions are stored in the database, so the registry can run on several instances
+  ([#384](https://github.com/swedenconnect/openid-federation-registry/issues/384)).
+- `value: null` in a subordinate's metadata policy is sent to the federation services
+  ([#342](https://github.com/swedenconnect/openid-federation-registry/issues/342)).
+- An invalid metadata policy is refused with 400 that names the parameter
+  ([#342](https://github.com/swedenconnect/openid-federation-registry/issues/342)).
+- The error of a failed save stays visible in the GUI
+  ([#342](https://github.com/swedenconnect/openid-federation-registry/issues/342)).
 - The configuration documentation names `notification_active`, the property that enables notifications to the
   federation services ([#375](https://github.com/swedenconnect/openid-federation-registry/issues/375)).
 - Every Leaf Entity gets `ec_location` in its Subordinate Statement, also when its Entity Configuration is published
@@ -26,6 +43,12 @@
 - Organizations, Registrations, Trustmarks, Trustmark Subjects and Registration Flows can be searched, sorted by
   column and paged like Hosted Entities and Subordinates
   ([#352](https://github.com/swedenconnect/openid-federation-registry/issues/352)).
+- The GUI confirms when something is added, saved or deleted, and Edit Federation Entity stays where it was after
+  a save ([#343](https://github.com/swedenconnect/openid-federation-registry/issues/343)).
+- When the signing keys cannot be loaded, the GUI says so at the Signing Key field instead of in a general error
+  banner ([#364](https://github.com/swedenconnect/openid-federation-registry/issues/364)).
+- The GUI asks before leaving a form with unsaved changes
+  ([#346](https://github.com/swedenconnect/openid-federation-registry/issues/346)).
 - MariaDB driver upgraded to 3.5.11, which no longer exposes the database password through connection metadata (#365).
 - Deleting a hosted entity or a registration also removes its subordinate statements and trust mark subjects
   ([#367](https://github.com/swedenconnect/openid-federation-registry/issues/367)).

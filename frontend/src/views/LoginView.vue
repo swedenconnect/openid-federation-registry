@@ -17,7 +17,7 @@
 <template>
   <div class="d-flex justify-center align-center" style="min-height: 60vh;">
     <v-card class="pa-8 text-center" min-width="400">
-      <v-card-title class="text-h4 mb-4">OpenID Federation - Administration</v-card-title>
+      <v-card-title class="text-h4 mb-4">{{ PRODUCT_NAME }}</v-card-title>
       <v-card-text class="mb-4">
         <v-alert
             v-if="errorMessage"
@@ -51,6 +51,7 @@
 import {computed, onMounted, onUnmounted} from 'vue';
 import {useRoute} from 'vue-router';
 import {adminAuthenticatePath} from '@/config/path';
+import {PRODUCT_NAME} from '@/config/product';
 
 const ERROR_MESSAGES = {
   'backend.login.failed': 'Login failed. Please try again or contact support if the problem persists.',

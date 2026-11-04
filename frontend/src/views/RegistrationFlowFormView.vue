@@ -27,7 +27,7 @@
 
     <v-card v-else>
       <v-card-title>
-        <h2>{{ isEdit ? 'Edit Registration Flow' : 'Create Registration Flow' }}</h2>
+        <h2>{{ isEdit ? 'Edit Registration Flow' : 'Add Registration Flow' }}</h2>
       </v-card-title>
 
       <v-card-text>
@@ -233,7 +233,7 @@
                 :loading="saving"
                 :disabled="saving"
             >
-              {{ isEdit ? 'Save' : 'Create' }}
+              {{ isEdit ? 'Save' : 'Add' }}
             </v-btn>
           </v-card-actions>
 
@@ -297,7 +297,9 @@
 import {computed, nextTick, onMounted, ref, watch} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
+import {useUnsavedChanges} from '@/api/composables/unsavedChanges';
 import {useErrorStore} from '@/stores/errorStore';
+import {useNoticeStore} from '@/stores/noticeStore';
 import {useUserStore} from '@/stores/userStore';
 import {registrationFlowCreatePath, registrationFlowPath, registrationFlowStepsPath} from '@/config/path';
 import MetadataPolicyTemplateEditor from '@/components/MetadataPolicyTemplateEditor.vue';
@@ -306,6 +308,7 @@ const route = useRoute();
 const router = useRouter();
 const {requestGet, requestPost, requestPut, loading, ok} = useRequest();
 const errorStore = useErrorStore();
+const noticeStore = useNoticeStore();
 const userStore = useUserStore();
 
 const form = ref(null);
@@ -321,6 +324,17 @@ const flowType = ref('INTERMEDIATE');
 const enabled = ref(true);
 const availableSteps = ref([]);
 const selectedSteps = ref([]);
+
+const {markSaved} = useUnsavedChanges(() => ({
+  name: name.value,
+  description: description.value,
+  descriptionSv: descriptionSv.value,
+  technology: technology.value,
+  entityType: entityType.value,
+  flowType: flowType.value,
+  enabled: enabled.value,
+  selectedSteps: selectedSteps.value,
+}));
 const stepToAdd = ref(null);
 
 const technologyOptions = ['OIDC', 'SAML'];
@@ -430,7 +444,6 @@ async function loadAvailableSteps() {
 }
 
 async function loadFlow() {
-  errorStore.clearError();
   const response = await requestGet(registrationFlowPath(userStore.selectedTenant, userStore.orgNumber, route.params.id));
   if (response) {
     name.value = response.name || '';
@@ -489,6 +502,8 @@ async function submitForm() {
     }
 
     if (ok.value) {
+      noticeStore.show(isEdit.value ? 'Registration Flow saved.' : 'Registration Flow added.');
+      markSaved();
       router.push({name: 'registration-flows-list'});
     }
   } catch (error) {
@@ -503,10 +518,10 @@ function cancel() {
 }
 
 onMounted(async () => {
-  errorStore.clearError();
   await loadAvailableSteps();
   if (isEdit.value) {
     await loadFlow();
   }
+  markSaved();
 });
 </script>
