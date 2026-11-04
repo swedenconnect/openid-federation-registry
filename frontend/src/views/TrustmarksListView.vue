@@ -17,7 +17,7 @@
 <template>
   <div>
     <div class="d-flex justify-space-between align-center mb-4">
-      <h2>Trustmarks</h2>
+      <h2>Trust Marks</h2>
       <div>
         <v-btn
             id="btn-add-trustmark"
@@ -25,7 +25,7 @@
             @click="addTrustmark"
             class="mr-2"
         >
-          Add Trustmark
+          Add Trust Mark
         </v-btn>
         <v-btn
             id="btn-back"
@@ -40,7 +40,7 @@
     <v-card v-if="entityIdentifier" variant="tonal" color="primary" class="mb-4">
       <v-card-text class="d-flex align-center py-2">
         <v-icon aria-hidden="true" class="mr-2">mdi-certificate-outline</v-icon>
-        <span class="text-caption text-uppercase font-weight-medium mr-3">Trustmark Issuer</span>
+        <span class="text-caption text-uppercase font-weight-medium mr-3">Trust Mark Issuer</span>
         <span class="text-body-2">{{ entityIdentifier }}</span>
       </v-card-text>
     </v-card>
@@ -50,7 +50,7 @@
           id="trustmark-search"
           v-model="search"
           prepend-inner-icon="mdi-magnify"
-          label="Search by trustmark type"
+          label="Search by Trust Mark type"
           single-line
           hide-details
           clearable
@@ -69,7 +69,7 @@
               size="64"
               aria-hidden="true"
           ></v-progress-circular>
-          <p class="mt-4 text-grey">Loading trustmarks...</p>
+          <p class="mt-4 text-grey">Loading Trust Marks...</p>
         </div>
       </v-card-text>
     </v-card>
@@ -96,13 +96,13 @@
                 icon="mdi-cog-outline"
                 variant="text"
                 size="small"
-                aria-label="Edit trustmark"
-                title="Edit trustmark"
+                aria-label="Edit Trust Mark"
+                title="Edit Trust Mark"
                 @click.stop="editTrustmark(item.trustmarkId)"
             ></v-btn>
           </template>
           <template #no-data>
-            <p class="text-grey py-8">No trustmarks found.</p>
+            <EmptyState what="Trust Marks" action="Add Trust Mark" :search="search"/>
           </template>
           <template #bottom>
             <TablePager v-model:page="page" v-model:items-per-page="itemsPerPage" :total="filteredCount"/>
@@ -116,6 +116,7 @@
 <script setup>
 import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
+import EmptyState from '@/components/EmptyState.vue';
 import TablePager from '@/components/TablePager.vue';
 import {useListTable} from '@/composables/listTable';
 import {useRequest} from '@/api/composables/request';
@@ -135,7 +136,7 @@ const {search, page, itemsPerPage, filteredCount, filterKeys, filterRow, rowProp
     useListTable(trustmarks, ['trustmarkType'], {open: (item) => viewSubjects(item.trustmarkId)});
 
 const headers = [
-  {title: 'Trustmark Type', key: 'trustmarkType', sortable: true},
+  {title: 'Trust Mark Type', key: 'trustmarkType', sortable: true},
   {title: '', key: 'actions', sortable: false, align: 'end'},
 ];
 

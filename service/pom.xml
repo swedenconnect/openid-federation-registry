@@ -292,6 +292,10 @@
                         </goals>
                         <configuration>
                             <arguments>run build</arguments>
+                            <!-- The version is shown in the footer of the GUI -->
+                            <environmentVariables>
+                                <VITE_APP_VERSION>${project.version}</VITE_APP_VERSION>
+                            </environmentVariables>
                         </configuration>
                     </execution>
                 </executions>

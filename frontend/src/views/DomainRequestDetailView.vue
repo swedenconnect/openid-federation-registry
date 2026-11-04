@@ -152,7 +152,7 @@
               :disabled="rejecting"
               @click="submitReject"
           >
-            Confirm Reject
+            Reject Domain
           </v-btn>
         </v-card-actions>
       </v-card>

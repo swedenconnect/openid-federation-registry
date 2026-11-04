@@ -18,7 +18,7 @@
   <div>
     <v-card>
       <v-card-title>
-        <h2>Create Federation Entity</h2>
+        <h2>Add Federation Entity</h2>
       </v-card-title>
       <v-card-text>
         <v-form ref="form" @submit.prevent="saveEntity">
@@ -82,7 +82,7 @@
                 :loading="saving"
                 :disabled="saving"
             >
-              Create
+              Add
             </v-btn>
           </v-card-actions>
         </v-form>
