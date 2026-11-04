@@ -21,6 +21,8 @@ import io.micrometer.tracing.Tracer;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.ConcurrencyFailureException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
@@ -34,6 +36,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import se.swedenconnect.oidf.registry.validation.PropertyValidationFailException;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -52,6 +55,12 @@ import java.util.Optional;
 public class ErrorHandler extends ResponseEntityExceptionHandler {
 
   private static final String TRACEPARENT_HEADER = "traceparent";
+
+  /**
+   * MariaDB and MySQL error 1020, "Record has changed since last read". MariaDB 11.6 and later report a write
+   * conflict between concurrent transactions this way (innodb_snapshot_isolation), and Spring does not translate it.
+   */
+  private static final int ER_CHECKREAD = 1020;
 
   private final Tracer tracer;
 
@@ -165,6 +174,44 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         this.headersWithTraceparent(),
         HttpStatusCode.valueOf(problemDetail.getStatus()),
         request);
+  }
+
+  /**
+   * Maps a write conflict between concurrent requests to 409 Conflict, so the client can read the record again and
+   * retry. Any other {@code DataAccessException} is thrown on and handled as before.
+   *
+   * @param e the exception
+   * @param request the {@link WebRequest} during which the exception occurred
+   * @return a {@link ResponseEntity} with 409 Conflict
+   * @throws DataAccessException when it is not a write conflict
+   */
+  @ExceptionHandler(DataAccessException.class)
+  public ResponseEntity<Object> handle(final DataAccessException e, final WebRequest request) {
+    if (!isWriteConflict(e)) {
+      throw e;
+    }
+    log.info("Write conflict with a concurrent request: {}", e.getMessage());
+    final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(409),
+        "The record was changed by another request, try again");
+    problemDetail.setType(ErrorTypes.CONFLICT.errorURI);
+
+    return this.handleExceptionInternal(e,
+        problemDetail,
+        this.headersWithTraceparent(),
+        HttpStatusCode.valueOf(problemDetail.getStatus()),
+        request);
+  }
+
+  private static boolean isWriteConflict(final DataAccessException e) {
+    if (e instanceof ConcurrencyFailureException) {
+      return true;
+    }
+    for (Throwable cause = e; cause != null; cause = cause.getCause()) {
+      if (cause instanceof final SQLException sqlException && sqlException.getErrorCode() == ER_CHECKREAD) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

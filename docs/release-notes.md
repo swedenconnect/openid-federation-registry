@@ -13,6 +13,8 @@
   
 - A change that is rolled back no longer leaves an audit record
   ([#332](https://github.com/swedenconnect/openid-federation-registry/issues/332)).
+- A write conflict between concurrent requests is answered with 409 instead of 500
+  ([#332](https://github.com/swedenconnect/openid-federation-registry/issues/332)).
 - Renaming an entity updates the subordinates, trust mark subjects, trust mark sources, trust mark issuers and
   resolvers of the own organization that refer to it ([#326](https://github.com/swedenconnect/openid-federation-registry/issues/326)).
 - Authority hints set on a hosted entity or federation entity are sent to the federation services together with the
