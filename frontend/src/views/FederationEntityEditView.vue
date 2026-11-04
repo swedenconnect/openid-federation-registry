@@ -983,7 +983,7 @@ async function confirmApplyToSubordinates() {
       metadataPolicy: applyToSubordinates.value.metadataPolicy,
     });
     if (ok.value) {
-      noticeStore.show(`Metadata policy applied to ${applyToSubordinates.value.count} subordinate(s).`);
+      noticeStore.show(`Metadata policy applied to ${applyToSubordinates.value.count} Subordinate(s).`);
       applyToSubordinates.value.open = false;
       await loadEntity();
     }
