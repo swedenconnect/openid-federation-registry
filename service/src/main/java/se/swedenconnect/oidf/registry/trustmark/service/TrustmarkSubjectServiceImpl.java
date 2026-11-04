@@ -236,6 +236,43 @@ public class TrustmarkSubjectServiceImpl implements TrustmarkSubjectService {
     return entries.size();
   }
 
+  /**
+   * Renames the subject of every entry on a trust mark of the calling organization.
+   *
+   * @param organizationRecord the calling organization
+   * @param subject the current subject entity identifier
+   * @param newSubject the new subject entity identifier
+   * @return the number of renamed subject entries
+   */
+  @Override
+  @Transactional
+  public int renameSubjectsInOrganization(final OrganizationRecord organizationRecord, final String subject,
+      final String newSubject) {
+    if (subject == null || newSubject == null || subject.equals(newSubject)) {
+      return 0;
+    }
+    final List<TrustMarkSubject> entries = this.organizationService.find(organizationRecord)
+        .map(org -> this.trustMarkSubjectRepository.findByOrganizationIdAndSubject(org.getOrganizationId(), subject))
+        .orElse(List.of());
+    for (final TrustMarkSubject entry : entries) {
+      final TrustMark trustMark = entry.getTrustMark();
+      if (this.trustMarkSubjectRepository.findByTrustMarkTrustmarkIdAndSubject(trustMark.getTrustmarkId(), newSubject)
+          .isPresent()) {
+        throw new RegistryServerException(ErrorTypes.CONFLICT,
+            "The trust mark '%s' already has the subject '%s'".formatted(trustMark.getTrustmarkType(), newSubject));
+      }
+    }
+    for (final TrustMarkSubject entry : entries) {
+      final TrustmarkSubjectDto oldDto = TrustmarkToDtoMapper.toDto(entry);
+      entry.setSubject(newSubject);
+      this.trustMarkSubjectRepository.save(entry);
+      final Organization owner = entry.getTrustMark().getTrustmarkIssuer().getEntity().getOrganization();
+      this.auditService.trustmarkSubjectUpdated(entry.getTrustmarksubjectId(), owner.getInstance().getInstanceId(),
+          entry.getTrustMark().getTrustmarkId(), owner.getOrganizationId(), oldDto, TrustmarkToDtoMapper.toDto(entry));
+    }
+    return entries.size();
+  }
+
   private void delete(final TrustMarkSubject entity) {
     final TrustmarkSubjectDto dto = TrustmarkToDtoMapper.toDto(entity);
     final Organization owner = entity.getTrustMark().getTrustmarkIssuer().getEntity().getOrganization();

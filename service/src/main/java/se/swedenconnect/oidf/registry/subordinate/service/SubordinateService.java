@@ -99,6 +99,20 @@ public interface SubordinateService {
   int deleteSubordinatesInOrganization(OrganizationRecord organizationRecord, String entityIdentifier);
 
   /**
+   * Renames the subordinates of an entity identifier under the Trust Anchors and Intermediates of the calling
+   * organization. Subordinates under those of other organizations are left alone. Each change is audited.
+   *
+   * @param organizationRecord the calling organization
+   * @param entityIdentifier the current entity identifier of the subordinates
+   * @param newEntityIdentifier the new entity identifier of the subordinates
+   * @return the number of renamed subordinates
+   * @throws se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException with
+   *     {@code CONFLICT} if a Trust Anchor or Intermediate already has a subordinate with the new entity identifier
+   */
+  int renameSubordinatesInOrganization(OrganizationRecord organizationRecord, String entityIdentifier,
+      String newEntityIdentifier);
+
+  /**
    * Finding subordinate for this
    *
    * @param entityIdentifier EntityId

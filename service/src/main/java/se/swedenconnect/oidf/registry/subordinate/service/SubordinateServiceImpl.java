@@ -262,6 +262,36 @@ public class SubordinateServiceImpl implements SubordinateService {
     return subordinates.size();
   }
 
+  @Override
+  @Transactional
+  public int renameSubordinatesInOrganization(final OrganizationRecord organizationRecord,
+      final String entityIdentifier, final String newEntityIdentifier) {
+    if (entityIdentifier == null || newEntityIdentifier == null || entityIdentifier.equals(newEntityIdentifier)) {
+      return 0;
+    }
+    final List<Subordinate> subordinates = this.organizationService.find(organizationRecord)
+        .map(org -> this.subordinateRepository.findByOrganizationIdAndEntityidentifier(
+            org.getOrganizationId(), entityIdentifier))
+        .orElse(List.of());
+    for (final Subordinate subordinate : subordinates) {
+      if (this.subordinateRepository.findByEntityidentifierAndTaIm_TaImId(newEntityIdentifier,
+          subordinate.getTaIm().getTaImId()).isPresent()) {
+        throw new RegistryServerException(ErrorTypes.CONFLICT,
+            "A subordinate with entityIdentifier '%s' already exists for this intermediate"
+                .formatted(newEntityIdentifier));
+      }
+    }
+    for (final Subordinate subordinate : subordinates) {
+      final SubordinateDto oldDto = SubordinateMapper.toDto(subordinate);
+      subordinate.setEntityidentifier(newEntityIdentifier);
+      this.subordinateRepository.save(subordinate);
+      this.auditService.subordinateUpdated(subordinate.getSubordinateId(),
+          subordinate.getTaIm().getOrganization().getInstance().getInstanceId(),
+          subordinate.getTaIm().getOrganization().getOrganizationId(), oldDto, SubordinateMapper.toDto(subordinate));
+    }
+    return subordinates.size();
+  }
+
   private void delete(final Subordinate entity) {
     final SubordinateDto dto = SubordinateMapper.toDto(entity);
     this.subordinateRepository.delete(entity);

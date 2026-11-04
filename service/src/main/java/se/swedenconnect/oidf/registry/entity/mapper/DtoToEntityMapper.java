@@ -94,9 +94,21 @@ public final class DtoToEntityMapper {
   public static void updateEntity(final FederationEntity entity, final HostedEntityDto dto) {
     entity.setIssuer(dto.getEntityIdentifier());
     entity.setSubject(dto.getEntityIdentifier());
-    entity.setTrustmarksources(writeTrustMarkSourcesToJson(dto.getTrustMarkSources()));
+    setTrustMarkSources(entity, dto.getTrustMarkSources());
     entity.setMetadata(dto.getMetadata());
+    entity.setAuthorityhints(dto.getAuthorityhints());
     entity.setSigningKeyIds(dto.getSigningKeyId());
+  }
+
+  /**
+   * Sets the trust mark sources of a hosted entity.
+   *
+   * @param entity the federation entity
+   * @param trustMarkSources the trust mark sources, {@code null} or empty for none
+   */
+  public static void setTrustMarkSources(final FederationEntity entity,
+      final List<se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSourceDto> trustMarkSources) {
+    entity.setTrustmarksources(writeTrustMarkSourcesToJson(trustMarkSources));
   }
 
   /**

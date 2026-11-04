@@ -114,6 +114,15 @@
               :disabled="saving"
           />
 
+          <ListField
+              id="authority-hints"
+              v-model="authorityhints"
+              label="Authority Hints"
+              hint="Entity identifiers of superiors to add to authority_hints. Superiors with a subordinate pointing to this entity are added automatically."
+              :rules="[rules.url]"
+              :disabled="saving"
+          />
+
           <v-card-actions class="px-0">
             <v-btn
                 id="btn-delete-entity"
@@ -885,6 +894,7 @@ const name = ref('');
 const deleteEntityDialog = ref(false);
 const deletingEntity = ref(false);
 const crit = ref([]);
+const authorityhints = ref([]);
 const signingKeyId = ref(null);
 const originalSigningKeyId = ref(null);
 const signingKeyChanged = computed(() =>
@@ -962,11 +972,21 @@ const {markSaved} = useUnsavedChanges(() => ({
   crit: crit.value,
   signingKeyId: signingKeyId.value,
   modules: modules.value,
+  authorityhints: authorityhints.value,
 }));
 
 const rules = {
   required: (value) => !!value || 'This field is required.',
   maxName: (value) => !value || value.length <= 255 || 'The name can be at most 255 characters.',
+  url: (value) => {
+    if (!value) return true;
+    try {
+      new URL(value);
+      return true;
+    } catch (e) {
+      return 'Invalid URL format.';
+    }
+  },
 };
 
 // Offered after a template was loaded on a Trust Anchor or Intermediate and saved.
@@ -1035,6 +1055,7 @@ async function loadEntity() {
     entityIdentifier.value = entity.entityIdentifier || '';
     name.value = entity.name || '';
     crit.value = entity.crit || [];
+    authorityhints.value = entity.authorityhints || [];
     signingKeyId.value = entity.signingKeyId?.[0] || null;
     originalSigningKeyId.value = signingKeyId.value;
     loaded.value = true;
@@ -1151,6 +1172,7 @@ async function saveEntity() {
       entityIdentifier: entityIdentifier.value,
       name: name.value?.trim() || null,
       crit: crit.value.filter(c => c && c.trim() !== ''),
+      authorityhints: authorityhints.value.map(h => h?.trim()).filter(h => h),
       signingKeyId: signingKeyId.value ? [signingKeyId.value] : [],
     };
 

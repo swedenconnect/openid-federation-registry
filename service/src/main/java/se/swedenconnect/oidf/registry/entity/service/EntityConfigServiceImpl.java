@@ -35,15 +35,27 @@ import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.InsertOnly;
 import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
+import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
+import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
+import se.swedenconnect.oidf.registry.module.mapper.ModuleToDtoMapper;
+import se.swedenconnect.oidf.registry.module.model.ModuleType;
+import se.swedenconnect.oidf.registry.module.model.Resolver;
+import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
+import se.swedenconnect.oidf.registry.module.model.TrustAnchorIssuer;
+import se.swedenconnect.oidf.registry.module.repository.ResolverRepository;
+import se.swedenconnect.oidf.registry.module.repository.TaImRepository;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 import se.swedenconnect.oidf.registry.subordinate.service.SubordinateService;
+import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkSourceDto;
 import se.swedenconnect.oidf.registry.trustmark.service.TrustmarkSubjectService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Default implementation of {@link EntityConfigService} using JPA entities.
@@ -59,6 +71,8 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   private final SubordinateService subordinateService;
   private final JwksKeysCacheService jwksKeysCacheService;
   private final TrustmarkSubjectService trustmarkSubjectService;
+  private final TaImRepository taImRepository;
+  private final ResolverRepository resolverRepository;
   private final String hostedPathSegment;
 
   /**
@@ -70,6 +84,8 @@ public class EntityConfigServiceImpl implements EntityConfigService {
    * @param auditService the audit service
    * @param jwksKeysCacheService the JWKS key cache service for signing key validation
    * @param trustmarkSubjectService the trust mark subject service
+   * @param taImRepository the trust anchor and intermediate repository
+   * @param resolverRepository the resolver repository
    * @param registryProperties the registry properties, for the hosted path segment of a calculated ec_location
    */
   public EntityConfigServiceImpl(final EntityRepository entityRepository,
@@ -78,6 +94,8 @@ public class EntityConfigServiceImpl implements EntityConfigService {
       final SubordinateService subordinateService,
       final JwksKeysCacheService jwksKeysCacheService,
       final TrustmarkSubjectService trustmarkSubjectService,
+      final TaImRepository taImRepository,
+      final ResolverRepository resolverRepository,
       final RegistryProperties registryProperties) {
     this.entityRepository = entityRepository;
     this.organizationService = organizationService;
@@ -85,6 +103,8 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     this.subordinateService = subordinateService;
     this.jwksKeysCacheService = jwksKeysCacheService;
     this.trustmarkSubjectService = trustmarkSubjectService;
+    this.taImRepository = taImRepository;
+    this.resolverRepository = resolverRepository;
     this.hostedPathSegment = registryProperties.effectiveHostedPathSegment();
   }
 
@@ -153,10 +173,12 @@ public class EntityConfigServiceImpl implements EntityConfigService {
 
     final FederationEntity existing = this.findEntityOrThrow(organizationRecord, id, EntityType.FEDERATION_ENTITY);
     final FederationEntityDto oldDto = EntityToDtoMapper.toFederationEntity(existing, false);
+    final String oldEntityIdentifier = existing.getIssuer();
 
     DtoToEntityMapper.updateEntity(existing, input);
 
     this.entityRepository.save(existing);
+    this.renameEntityReferences(organizationRecord, existing, oldEntityIdentifier);
     final FederationEntityDto newDto = EntityToDtoMapper.toFederationEntity(existing, false);
     this.auditService.federationEntityUpdated(id, existing.getOrganization().getInstance().getInstanceId(),
         existing.getOrganization().getOrganizationId(),
@@ -247,9 +269,11 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     final FederationEntity existing = this.findEntityOrThrow(
         organizationRecord, id, EntityType.HOSTED_ENTITY);
     final HostedEntityDto oldDto = this.toDtoHosted(existing);
+    final String oldEntityIdentifier = existing.getIssuer();
     DtoToEntityMapper.updateEntity(existing, input);
     existing.setSubject(organizationRecord.entityPrefix());
     this.entityRepository.save(existing);
+    this.renameEntityReferences(organizationRecord, existing, oldEntityIdentifier);
     final HostedEntityDto newDto = this.toDtoHosted(existing);
     this.auditService.hostedEntityUpdated(id, existing.getOrganization().getInstance().getInstanceId(),
         existing.getOrganization().getOrganizationId(), oldDto, newDto);
@@ -359,6 +383,95 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     if (deleteSubordinates) {
       this.subordinateService.deleteSubordinatesInOrganization(organizationRecord, entityIdentifier);
     }
+  }
+
+  /**
+   * Updates the references to an entity that has got a new entity identifier. Only references of the calling
+   * organization are updated: subordinates under its Trust Anchors and Intermediates, subjects of its trust marks,
+   * trust mark sources of its hosted entities, trust mark issuers of its Trust Anchors and the Trust Anchor of its
+   * Resolvers. References of other organizations are left alone. Each change is audited.
+   * <p>
+   * Authority hints stored on entities are not updated. A hint may point to a superior outside the organization, so
+   * it is left to the user to change.
+   *
+   * @param organizationRecord the calling organization
+   * @param entity the renamed entity
+   * @param oldEntityIdentifier the entity identifier before the update
+   */
+  private void renameEntityReferences(final OrganizationRecord organizationRecord, final FederationEntity entity,
+      final String oldEntityIdentifier) {
+    final String newEntityIdentifier = entity.getIssuer();
+    if (oldEntityIdentifier == null || Objects.equals(oldEntityIdentifier, newEntityIdentifier)) {
+      return;
+    }
+    this.subordinateService.renameSubordinatesInOrganization(organizationRecord, oldEntityIdentifier,
+        newEntityIdentifier);
+    this.trustmarkSubjectService.renameSubjectsInOrganization(organizationRecord, oldEntityIdentifier,
+        newEntityIdentifier);
+
+    final UUID organizationId = entity.getOrganization().getOrganizationId();
+    final UUID instanceId = entity.getOrganization().getInstance().getInstanceId();
+    this.entityRepository.findByOrganizationIdAndOptionalEntityKeyType(organizationId, EntityType.HOSTED_ENTITY)
+        .stream()
+        .filter(hosted -> !hosted.getEntityId().equals(entity.getEntityId()))
+        .forEach(hosted -> this.renameTrustMarkSourceIssuer(hosted, instanceId, oldEntityIdentifier,
+            newEntityIdentifier));
+    this.taImRepository.findByOrganizationIdAndModuleType(organizationId, ModuleType.TRUSTANCHOR)
+        .forEach(trustAnchor -> this.renameTrustAnchorIssuer(trustAnchor, instanceId, oldEntityIdentifier,
+            newEntityIdentifier));
+    this.resolverRepository.findByOrganizationId(organizationId)
+        .forEach(resolver -> this.renameResolverTrustAnchor(resolver, instanceId, oldEntityIdentifier,
+            newEntityIdentifier));
+  }
+
+  private void renameTrustMarkSourceIssuer(final FederationEntity hosted, final UUID instanceId,
+      final String oldEntityIdentifier, final String newEntityIdentifier) {
+    final HostedEntityDto oldDto = this.toDtoHosted(hosted);
+    if (oldDto.getTrustMarkSources().stream()
+        .noneMatch(source -> oldEntityIdentifier.equals(source.getTrustMarkIssuer()))) {
+      return;
+    }
+    DtoToEntityMapper.setTrustMarkSources(hosted, oldDto.getTrustMarkSources().stream()
+        .map(source -> {
+          final TrustmarkSourceDto renamed = new TrustmarkSourceDto();
+          renamed.setTrustMarkIssuer(oldEntityIdentifier.equals(source.getTrustMarkIssuer())
+              ? newEntityIdentifier
+              : source.getTrustMarkIssuer());
+          renamed.setTrustmarkId(source.getTrustmarkId());
+          return renamed;
+        })
+        .toList());
+    this.entityRepository.save(hosted);
+    this.auditService.hostedEntityUpdated(hosted.getEntityId(), instanceId,
+        hosted.getOrganization().getOrganizationId(), oldDto, this.toDtoHosted(hosted));
+  }
+
+  private void renameTrustAnchorIssuer(final TrustAnchorIntermediateModule trustAnchor, final UUID instanceId,
+      final String oldEntityIdentifier, final String newEntityIdentifier) {
+    if (trustAnchor.getTrustMarkIssuers().stream().noneMatch(issuer -> oldEntityIdentifier.equals(issuer.issuer()))) {
+      return;
+    }
+    final TrustAnchorDto oldDto = ModuleToDtoMapper.toDto(trustAnchor);
+    trustAnchor.setTrustMarkIssuers(trustAnchor.getTrustMarkIssuers().stream()
+        .map(issuer -> oldEntityIdentifier.equals(issuer.issuer())
+            ? new TrustAnchorIssuer(newEntityIdentifier, issuer.auto(), issuer.trustMarkTypes())
+            : issuer)
+        .collect(Collectors.toCollection(ArrayList::new)));
+    this.taImRepository.save(trustAnchor);
+    this.auditService.trustAnchorUpdated(trustAnchor.getTaImId(), instanceId,
+        trustAnchor.getOrganization().getOrganizationId(), oldDto, ModuleToDtoMapper.toDto(trustAnchor));
+  }
+
+  private void renameResolverTrustAnchor(final Resolver resolver, final UUID instanceId,
+      final String oldEntityIdentifier, final String newEntityIdentifier) {
+    if (!oldEntityIdentifier.equals(resolver.getTrustAnchor())) {
+      return;
+    }
+    final ResolverDto oldDto = ModuleToDtoMapper.toDto(resolver);
+    resolver.setTrustAnchor(newEntityIdentifier);
+    this.resolverRepository.save(resolver);
+    this.auditService.resolverUpdated(resolver.getResolverId(), instanceId,
+        resolver.getEntity().getOrganization().getOrganizationId(), oldDto, ModuleToDtoMapper.toDto(resolver));
   }
 
   /**

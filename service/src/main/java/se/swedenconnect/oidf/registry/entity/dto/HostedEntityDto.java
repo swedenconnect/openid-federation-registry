@@ -55,9 +55,9 @@ public class HostedEntityDto {
       + "the set of Claims specified for use in this type of JWT")
   private List<String> crit;
 
-  @Schema(description = "authorityhints", example = "An array of strings representing the Entity Identifiers of "
-      + "Intermediate Entities or Trust Anchors that are Immediate Superiors of the Entity. "
-      + "the set of Claims specified for use in this type of JWT")
+  @Schema(description = "Entity identifiers of Immediate Superiors that are added to authority_hints. The "
+      + "superiors with a subordinate pointing to the entity are always added as well.",
+      example = "[\"https://ta.example.se\"]")
   private List<String> authorityhints;
 
   @Schema(description = "Key reference to signkeys from oidf-service")
