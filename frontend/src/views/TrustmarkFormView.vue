@@ -210,7 +210,9 @@
 import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
+import {useUnsavedChanges} from '@/api/composables/unsavedChanges';
 import {useErrorStore} from '@/stores/errorStore';
+import {useNoticeStore} from '@/stores/noticeStore';
 import {useUserStore} from '@/stores/userStore';
 import {
   registrationFlowsPath,
@@ -224,6 +226,7 @@ const route = useRoute();
 const router = useRouter();
 const {requestGet, requestPost, requestPut, requestDelete, loading, ok} = useRequest();
 const errorStore = useErrorStore();
+const noticeStore = useNoticeStore();
 const userStore = useUserStore();
 
 const form = ref(null);
@@ -238,6 +241,14 @@ const logoUri = ref('');
 const refUri = ref('');
 const delegation = ref('');
 const trustMarkTokenValidityDuration = ref('');
+
+const {markSaved} = useUnsavedChanges(() => ({
+  trustmarkType: trustmarkType.value,
+  logoUri: logoUri.value,
+  refUri: refUri.value,
+  delegation: delegation.value,
+  trustMarkTokenValidityDuration: trustMarkTokenValidityDuration.value,
+}));
 
 const flowAssignment = ref(null);
 const availableFlows = ref([]);
@@ -345,6 +356,8 @@ async function submitForm() {
     }
 
     if (ok.value) {
+      noticeStore.show(isEdit.value ? 'Trust Mark saved.' : 'Trust Mark added.');
+      markSaved();
       navigateBack();
     }
   } catch (error) {
@@ -361,6 +374,8 @@ async function deleteTrustmark() {
     await requestDelete(`${trustmarksPath(userStore.selectedTenant, userStore.orgNumber)}/${trustmarkId.value}`);
     if (ok.value) {
       deleteDialog.value = false;
+      noticeStore.show('Trust Mark deleted.');
+      markSaved();
       navigateBack();
     }
   } catch (error) {
@@ -380,11 +395,12 @@ function cancel() {
   navigateBack();
 }
 
-onMounted(() => {
+onMounted(async () => {
   errorStore.clearError();
   if (isEdit.value) {
-    loadTrustmark();
+    await loadTrustmark();
   }
+  markSaved();
 });
 </script>
 

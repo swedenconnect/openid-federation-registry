@@ -152,12 +152,14 @@ import TablePager from '@/components/TablePager.vue';
 import {useListTable} from '@/composables/listTable';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
+import {useNoticeStore} from '@/stores/noticeStore';
 import {useUserStore} from '@/stores/userStore';
 import {registrationFlowPath, registrationFlowsPath} from '@/config/path';
 
 const router = useRouter();
 const {requestGet, requestDelete, loading, ok} = useRequest();
 const errorStore = useErrorStore();
+const noticeStore = useNoticeStore();
 const userStore = useUserStore();
 
 const flows = ref([]);
@@ -205,6 +207,7 @@ async function deleteFlow() {
     if (ok.value) {
       deleteDialog.value = false;
       flowToDelete.value = null;
+      noticeStore.show('Registration Flow deleted.');
       await loadFlows();
     }
   } catch (error) {

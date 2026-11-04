@@ -28,7 +28,8 @@
       </v-btn>
     </div>
 
-    <v-card v-if="loading">
+    <!-- Only the first load replaces the form, so that a save keeps the page where it was. -->
+    <v-card v-if="loading && !loaded">
       <v-card-text>
         <div role="status" aria-live="polite" class="text-center py-12">
           <v-progress-circular
@@ -84,6 +85,17 @@
               clearable
               class="mb-4"
           ></v-select>
+
+          <v-alert
+              v-if="signingKeysError"
+              id="alert-signing-keys"
+              type="warning"
+              variant="tonal"
+              density="compact"
+              class="mb-4"
+          >
+            {{ signingKeysError }}
+          </v-alert>
 
           <v-alert
               v-if="signingKeyChanged"
@@ -831,7 +843,9 @@
 import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
+import {useUnsavedChanges} from '@/api/composables/unsavedChanges';
 import {useErrorStore} from '@/stores/errorStore';
+import {useNoticeStore} from '@/stores/noticeStore';
 import {useLoadJwks} from '@/api/composables/jwks';
 import {useSigningKeys} from '@/api/composables/signingKeys';
 import ListField from '@/components/ListField.vue';
@@ -855,11 +869,13 @@ import {
 const route = useRoute();
 const router = useRouter();
 const {requestGet, requestPut, requestPost, requestDelete, loading, ok} = useRequest();
+const loaded = ref(false);
 const errorStore = useErrorStore();
+const noticeStore = useNoticeStore();
 const userStore = useUserStore();
 const trustmarkIssuerOverview = useTrustmarkIssuerOverview();
 const {loadJwks: loadJwksFromApi, loading: loadingResolverJwks} = useLoadJwks();
-const {signingKeys, fetchSigningKeys} = useSigningKeys();
+const {signingKeys, signingKeysError, fetchSigningKeys} = useSigningKeys();
 
 const form = ref(null);
 const saving = ref(false);
@@ -899,15 +915,16 @@ const availableFlowsForSelect = computed(() =>
 );
 
 
+const MODULE_LABELS = {
+  trustanchor: 'Trust Anchor',
+  intermediate: 'Intermediate',
+  resolver: 'Resolver',
+  trustmarkissuer: 'Trust Mark Issuer',
+};
+
 const deleteModuleType = computed(() => {
   if (!moduleToDelete.value) return '';
-  const types = {
-    trustanchor: 'Trustanchor',
-    intermediate: 'Intermediate',
-    resolver: 'Resolver',
-    trustmarkissuer: 'Trustmark Issuer',
-  };
-  return types[moduleToDelete.value] || moduleToDelete.value;
+  return MODULE_LABELS[moduleToDelete.value] || moduleToDelete.value;
 });
 
 // Module state - each module has its own object
@@ -938,6 +955,15 @@ const modules = ref({
   },
 });
 
+// The modules are part of the state, each module panel has its own save.
+const {markSaved} = useUnsavedChanges(() => ({
+  entityIdentifier: entityIdentifier.value,
+  name: name.value,
+  crit: crit.value,
+  signingKeyId: signingKeyId.value,
+  modules: modules.value,
+}));
+
 const rules = {
   required: (value) => !!value || 'This field is required.',
   maxName: (value) => !value || value.length <= 255 || 'The name can be at most 255 characters.',
@@ -957,6 +983,7 @@ async function confirmApplyToSubordinates() {
       metadataPolicy: applyToSubordinates.value.metadataPolicy,
     });
     if (ok.value) {
+      noticeStore.show(`Metadata policy applied to ${applyToSubordinates.value.count} subordinate(s).`);
       applyToSubordinates.value.open = false;
       await loadEntity();
     }
@@ -1010,6 +1037,7 @@ async function loadEntity() {
     crit.value = entity.crit || [];
     signingKeyId.value = entity.signingKeyId?.[0] || null;
     originalSigningKeyId.value = signingKeyId.value;
+    loaded.value = true;
 
     // Load existing modules
     if (response.trustAnchor) {
@@ -1064,6 +1092,7 @@ async function loadEntity() {
         active: response.trustmarkIssuer.active !== false,
       };
     }
+    markSaved();
   }
 }
 
@@ -1128,6 +1157,7 @@ async function saveEntity() {
     await requestPut(federationEntityPath(userStore.selectedTenant, userStore.orgNumber, entityId.value), entityData);
 
     if (ok.value) {
+      noticeStore.show('Federation Entity saved.');
       // Reload to get updated data
       await loadEntity();
     }
@@ -1162,6 +1192,7 @@ async function saveModule(moduleType) {
 
   try {
     const module = modules.value[moduleType];
+    const added = !module.id;
     let moduleData;
     let endpoint;
 
@@ -1266,6 +1297,7 @@ async function saveModule(moduleType) {
     }
 
     if (ok.value) {
+      noticeStore.show(`${MODULE_LABELS[moduleType]} module ${added ? 'added' : 'saved'}.`);
       // A template loaded on a Trust Anchor or Intermediate can also be applied to all its subordinates.
       const offer = (moduleType === 'trustanchor' || moduleType === 'intermediate') && module.loadedTemplate
           && module.subordinateCount > 0 && moduleData.metadataPolicy
@@ -1359,6 +1391,7 @@ async function confirmDeleteModule() {
       }
       deleteDialog.value = false;
       moduleToDelete.value = null;
+      noticeStore.show(`${MODULE_LABELS[moduleType]} module deleted.`);
       // Reload to get updated data
       await loadEntity();
     }
@@ -1376,6 +1409,8 @@ async function deleteEntity() {
     await requestDelete(federationEntityPath(userStore.selectedTenant, userStore.orgNumber, entityId.value));
     if (ok.value) {
       deleteEntityDialog.value = false;
+      noticeStore.show('Federation Entity deleted.');
+      markSaved();
       router.push({name: 'federation-entities'});
     }
   } catch (error) {

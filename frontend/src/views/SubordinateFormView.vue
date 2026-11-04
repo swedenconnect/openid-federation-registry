@@ -326,8 +326,10 @@ import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue';
 import ModulePolicyEditor from '@/components/ModulePolicyEditor.vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
+import {useUnsavedChanges} from '@/api/composables/unsavedChanges';
 import {csrfHeaders} from '@/api/composables/fetch';
 import {useErrorStore} from '@/stores/errorStore';
+import {useNoticeStore} from '@/stores/noticeStore';
 import {useLoadJwks} from '@/api/composables/jwks';
 import {entityConfigurationViewPath, federationEntityPath, subordinatePath, subordinatesPath} from '@/config/path';
 import {useUserStore} from '@/stores/userStore';
@@ -338,6 +340,7 @@ const route = useRoute();
 const router = useRouter();
 const {requestGet, requestPost, requestPut, requestDelete, loading, ok} = useRequest();
 const errorStore = useErrorStore();
+const noticeStore = useNoticeStore();
 const userStore = useUserStore();
 const {loadJwks: loadJwksFromApi, loading: loadingJwks} = useLoadJwks();
 
@@ -369,6 +372,21 @@ const entityTypeSuggestions = [
 const issuerEntityIdentifier = ref('');
 const ecLocation = ref('');
 const ecLocationAutomaticResolve = ref(false);
+
+const {markSaved} = useUnsavedChanges(() => ({
+  entityIdentifier: entityIdentifier.value,
+  jwks: jwks.value,
+  metadataPolicyCrit: metadataPolicyCrit.value,
+  crit: crit.value,
+  metadataPolicy: metadataPolicy.value,
+  metadata: metadata.value,
+  maxPathLength: maxPathLength.value,
+  namingPermitted: namingPermitted.value,
+  namingExcluded: namingExcluded.value,
+  allowedEntityTypes: allowedEntityTypes.value,
+  ecLocation: ecLocation.value,
+  ecLocationAutomaticResolve: ecLocationAutomaticResolve.value,
+}));
 const effectiveEcLocation = ref('');
 const jwksLoadedFrom = ref('');
 // Result of the automatic check that the entered entity's entity configuration can be loaded (create only):
@@ -553,6 +571,8 @@ async function submitForm() {
     }
 
     if (ok.value) {
+      noticeStore.show(isEdit.value ? 'Subordinate saved.' : 'Subordinate added.');
+      markSaved();
       navigateBack();
     }
   } catch (error) {
@@ -569,6 +589,8 @@ async function deleteSubordinate() {
     await requestDelete(subordinatePath(userStore.selectedTenant, userStore.orgNumber, subordinateId.value));
     if (ok.value) {
       deleteDialog.value = false;
+      noticeStore.show('Subordinate deleted.');
+      markSaved();
       navigateBack();
     }
   } catch (error) {
@@ -595,12 +617,13 @@ async function loadIssuerEntityIdentifier() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   errorStore.clearError();
   if (isEdit.value) {
     loadIssuerEntityIdentifier();
-    loadSubordinate();
+    await loadSubordinate();
   }
+  markSaved();
 });
 </script>
 

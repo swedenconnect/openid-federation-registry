@@ -153,9 +153,6 @@
       </v-card>
     </v-dialog>
 
-    <v-snackbar v-model="snackbar" :timeout="6000" color="primary">
-      {{ snackbarMessage }}
-    </v-snackbar>
   </div>
 </template>
 
@@ -166,6 +163,7 @@ import TablePager from '@/components/TablePager.vue';
 import {useListTable} from '@/composables/listTable';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
+import {useNoticeStore} from '@/stores/noticeStore';
 import {useUserStore} from '@/stores/userStore';
 import {
   registrationAdminOrganizationTrustmarksPath,
@@ -174,6 +172,7 @@ import {
 } from '@/config/path';
 
 const errorStore = useErrorStore();
+const noticeStore = useNoticeStore();
 const userStore = useUserStore();
 
 const {requestGet, loading} = useRequest();
@@ -200,16 +199,8 @@ const trustMarkDialog = ref(false);
 const editTarget = ref(null);
 const editTrustMarks = ref([]);
 
-const snackbar = ref(false);
-const snackbarMessage = ref('');
-
 function domainsLink(organization) {
   return {path: '/registrations', query: {type: 'DOMAIN', org: organization.orgNumber, status: 'ALL', history: '1'}};
-}
-
-function showSnackbar(message) {
-  snackbarMessage.value = message;
-  snackbar.value = true;
 }
 
 async function loadOrganizations() {
@@ -258,7 +249,7 @@ async function saveTrustMarks() {
     // A newly invented type becomes a suggestion for the next organization without a round trip.
     trustMarkTypes.value = [...new Set([...trustMarkTypes.value, ...payload])].sort();
     closeTrustMarkDialog();
-    showSnackbar(`Pre-validated trust marks updated for ${target.legalName || target.orgNumber}.`);
+    noticeStore.show(`Pre-validated trust marks updated for ${target.legalName || target.orgNumber}.`);
   }
 }
 

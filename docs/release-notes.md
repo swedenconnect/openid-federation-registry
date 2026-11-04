@@ -22,6 +22,12 @@
 - Organizations, Registrations, Trustmarks, Trustmark Subjects and Registration Flows can be searched, sorted by
   column and paged like Hosted Entities and Subordinates
   ([#352](https://github.com/swedenconnect/openid-federation-registry/issues/352)).
+- The GUI confirms when something is added, saved or deleted, and Edit Federation Entity stays where it was after
+  a save ([#343](https://github.com/swedenconnect/openid-federation-registry/issues/343)).
+- When the signing keys cannot be loaded, the GUI says so at the Signing Key field instead of in a general error
+  banner ([#364](https://github.com/swedenconnect/openid-federation-registry/issues/364)).
+- The GUI asks before leaving a form with unsaved changes
+  ([#346](https://github.com/swedenconnect/openid-federation-registry/issues/346)).
 - MariaDB driver upgraded to 3.5.11, which no longer exposes the database password through connection metadata (#365).
 - Deleting a hosted entity or a registration also removes its subordinate statements and trust mark subjects
   ([#367](https://github.com/swedenconnect/openid-federation-registry/issues/367)).

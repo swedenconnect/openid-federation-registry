@@ -438,6 +438,7 @@ import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {csrfHeaders} from '@/api/composables/fetch';
 import {useErrorStore} from '@/stores/errorStore';
+import {useNoticeStore} from '@/stores/noticeStore';
 import {useUserStore} from '@/stores/userStore';
 import {
   entityConfigurationViewPath,
@@ -451,6 +452,7 @@ import {
 const route = useRoute();
 const router = useRouter();
 const errorStore = useErrorStore();
+const noticeStore = useNoticeStore();
 const userStore = useUserStore();
 
 const {requestGet, loading} = useRequest();
@@ -589,6 +591,7 @@ async function submitReject() {
 
   if (ok.value) {
     closeRejectDialog();
+    noticeStore.show('Registration rejected.');
     router.push({name: 'registrations-list'});
   }
 }
