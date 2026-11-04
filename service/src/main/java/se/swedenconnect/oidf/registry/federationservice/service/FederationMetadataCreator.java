@@ -124,7 +124,7 @@ public class FederationMetadataCreator {
 
   /**
    * The authority hints of an entity. The superiors with a subordinate statement pointing to the entity come first,
-   * followed by the authority hints stored on the entity. Duplicates are removed.
+   * followed by the authority hints stored on the entity. Duplicates and empty hints are removed.
    *
    * @param entity Entity
    * @return the authority hints, empty if there are none
@@ -137,7 +137,11 @@ public class FederationMetadataCreator {
         .map(Subordinate::getTaIm)
         .map(taImEntity -> taImEntity.getEntity().getSubject())
         .forEach(hints::add);
-    Optional.ofNullable(entity.getAuthorityhints()).ifPresent(hints::addAll);
+    // Hints stored before they were validated may hold null or blank values, which must not break the export.
+    Optional.ofNullable(entity.getAuthorityhints()).stream()
+        .flatMap(List::stream)
+        .filter(hint -> hint != null && !hint.isBlank())
+        .forEach(hints::add);
     return List.copyOf(hints);
   }
 

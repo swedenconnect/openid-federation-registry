@@ -11,8 +11,8 @@
 **Date:** <ToBeSet>
   
   
-- Renaming an entity updates the subordinates, trust mark subjects, trust mark sources and trust mark issuers of the
-  own organization that refer to it ([#326](https://github.com/swedenconnect/openid-federation-registry/issues/326)).
+- Renaming an entity updates the subordinates, trust mark subjects, trust mark sources, trust mark issuers and
+  resolvers of the own organization that refer to it ([#326](https://github.com/swedenconnect/openid-federation-registry/issues/326)).
 - Authority hints set on a hosted entity or federation entity are sent to the federation services together with the
   calculated ones, and can be edited in the GUI.
 - The save button of an already configured module on the federation entity page says Save instead of Add

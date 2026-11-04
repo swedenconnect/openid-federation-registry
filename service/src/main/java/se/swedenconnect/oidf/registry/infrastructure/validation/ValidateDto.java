@@ -238,9 +238,7 @@ public class ValidateDto {
         .build()
         .ifFailThrow("crit", dto.getCrit());
 
-    this.v.url()
-        .build()
-        .ifFailThrow("authorityHints", dto.getAuthorityhints());
+    this.validateAuthorityHints(dto.getAuthorityhints());
   }
 
   /**
@@ -266,9 +264,21 @@ public class ValidateDto {
         .build()
         .ifFailThrow("crit", dto.getCrit());
 
-    this.v.url()
+    this.validateAuthorityHints(dto.getAuthorityhints());
+  }
+
+  /**
+   * Validates the authority hints of an entity. The list is optional, but each hint is a URL, so a null or blank
+   * element is refused.
+   */
+  private void validateAuthorityHints(final List<String> authorityHints) {
+    if (authorityHints == null || authorityHints.isEmpty()) {
+      return;
+    }
+    this.v.required()
+        .url()
         .build()
-        .ifFailThrow("authorityHints", dto.getAuthorityhints());
+        .ifFailThrow("authorityHints", authorityHints);
   }
 
   /**

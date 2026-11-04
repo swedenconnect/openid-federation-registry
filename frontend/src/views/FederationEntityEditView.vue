@@ -972,6 +972,7 @@ const {markSaved} = useUnsavedChanges(() => ({
   crit: crit.value,
   signingKeyId: signingKeyId.value,
   modules: modules.value,
+  authorityhints: authorityhints.value,
 }));
 
 const rules = {

@@ -247,6 +247,7 @@ const {markSaved} = useUnsavedChanges(() => ({
   metadata: metadata.value,
   trustmarkSources: trustmarkSources.value,
   signingKeyId: signingKeyId.value,
+  authorityhints: authorityhints.value,
 }));
 const signingKeyChanged = computed(() =>
     isEdit.value &&

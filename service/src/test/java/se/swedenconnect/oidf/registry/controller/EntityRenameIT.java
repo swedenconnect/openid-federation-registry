@@ -35,6 +35,7 @@ import se.swedenconnect.oidf.registry.api.TrustmarksApi;
 import se.swedenconnect.oidf.registry.api.model.FederationEntity;
 import se.swedenconnect.oidf.registry.api.model.HostedEntity;
 import se.swedenconnect.oidf.registry.api.model.Intermediate;
+import se.swedenconnect.oidf.registry.api.model.Resolver;
 import se.swedenconnect.oidf.registry.api.model.Subordinate;
 import se.swedenconnect.oidf.registry.api.model.TrustAnchor;
 import se.swedenconnect.oidf.registry.api.model.TrustAnchorIssuer;
@@ -42,6 +43,7 @@ import se.swedenconnect.oidf.registry.api.model.Trustmark;
 import se.swedenconnect.oidf.registry.api.model.TrustmarkIssuer;
 import se.swedenconnect.oidf.registry.api.model.TrustmarkSource;
 import se.swedenconnect.oidf.registry.api.model.TrustmarkSubject;
+import se.swedenconnect.oidf.registry.entity.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.federationservice.model.EntityRecord;
 import se.swedenconnect.oidf.registry.federationservice.serde.JsonRegistryLoader;
 import se.swedenconnect.oidf.registry.fixture.FederationAPIOperations;
@@ -49,6 +51,7 @@ import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
 import se.swedenconnect.oidf.registry.fixture.TestContainersConfiguration;
 import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -79,6 +82,8 @@ class EntityRenameIT {
   private JwtTestUtils jwtTestUtils;
   @Autowired
   private RestTestClient restTestClient;
+  @Autowired
+  private EntityRepository entityRepository;
 
   private final JsonRegistryLoader jsonRegistryLoader = new JsonRegistryLoader();
 
@@ -232,6 +237,58 @@ class EntityRenameIT {
     assertThat(this.exportedRecord(imIdentifier).getAuthorityHints()).containsExactly(external);
   }
 
+  @Test
+  @DisplayName("Renaming a trust anchor renames the trust anchor of the resolvers of the organization only")
+  void renamingTrustAnchorUpdatesResolversInOrganization() {
+    final String taIdentifier = "https://www.pm.se/oidf/ta/" + UUID.randomUUID();
+    final UUID taEntityId = UUID.randomUUID();
+    this.entitiesApi.createFederationEntityWithId(TENANT, PM.orgId, taEntityId,
+        new FederationEntity().entityIdentifier(taIdentifier));
+    final UUID ownResolverId = this.createResolver(PM, "https://www.pm.se/oidf/resolver/" + UUID.randomUUID(),
+        taIdentifier);
+    final UUID otherResolverId = this.createResolver(SKATT,
+        "https://registry.swedenconnect.se/oidf/" + SKATT.orgId + "/resolver/" + UUID.randomUUID(), taIdentifier);
+
+    final String renamed = "https://www.pm.se/oidf/ta/" + UUID.randomUUID();
+    this.entitiesApi.updateFederationEntity(TENANT, PM.orgId, taEntityId,
+        new FederationEntity().entityIdentifier(renamed));
+
+    assertThat(this.modulesApi.getResolver(TENANT, PM.orgId, ownResolverId).getTrustAnchor()).isEqualTo(renamed);
+    assertThat(new ModulesApi(this.apiClient(SKATT)).getResolver(TENANT, SKATT.orgId, otherResolverId)
+        .getTrustAnchor()).isEqualTo(taIdentifier);
+  }
+
+  @Test
+  @DisplayName("An empty authority hint is refused")
+  void emptyAuthorityHintIsRefused() {
+    for (final String empty : Arrays.asList(null, "", " ")) {
+      final List<String> hints = Arrays.asList("https://external.example.se/oidf/ta", empty);
+      assertThatThrownBy(() -> this.entitiesApi.createHostedEntityWithId(TENANT, PM.orgId, UUID.randomUUID(),
+          this.hostedEntity("https://www.pm.se/oidf/hosted/" + UUID.randomUUID()).authorityhints(hints)))
+          .isInstanceOfSatisfying(RestClientResponseException.class,
+              e -> assertThat(e.getStatusCode().value()).isEqualTo(400));
+      assertThatThrownBy(() -> this.entitiesApi.createFederationEntityWithId(TENANT, PM.orgId, UUID.randomUUID(),
+          new FederationEntity().entityIdentifier("https://www.pm.se/oidf/im/" + UUID.randomUUID())
+              .authorityhints(hints)))
+          .isInstanceOfSatisfying(RestClientResponseException.class,
+              e -> assertThat(e.getStatusCode().value()).isEqualTo(400));
+    }
+  }
+
+  @Test
+  @DisplayName("An empty authority hint already stored is left out of the export")
+  void storedEmptyAuthorityHintIsLeftOutOfExport() throws Exception {
+    final String hostedIdentifier = "https://www.pm.se/oidf/hosted/" + UUID.randomUUID();
+    final UUID hostedId = this.createHostedEntity(hostedIdentifier, null);
+    final String external = "https://external.example.se/oidf/ta";
+    final se.swedenconnect.oidf.registry.entity.model.FederationEntity stored =
+        this.entityRepository.findById(hostedId).orElseThrow();
+    stored.setAuthorityhints(Arrays.asList(external, null, ""));
+    this.entityRepository.save(stored);
+
+    assertThat(this.exportedRecord(hostedIdentifier).getAuthorityHints()).containsExactly(external);
+  }
+
   private EntityRecord exportedRecord(final String entityIdentifier) throws Exception {
     final String json = new FederationAPIOperations(this.restTestClient).callEntity(INSTANCE_ID)
         .getJWTClaimsSet().getClaimAsString("entity_records");
@@ -248,6 +305,23 @@ class EntityRenameIT {
         new FederationEntity().entityIdentifier(entityIdentifier));
     return new ModulesApi(client).createTrustAnchorWithId(TENANT, organisation.orgId, UUID.randomUUID(),
         new TrustAnchor().entityId(entityId).active(true)).getTrustAnchorId();
+  }
+
+  private UUID createResolver(final JwtTestUtils.OrganisationType organisation, final String entityIdentifier,
+      final String trustAnchor) {
+    final ApiClient client = this.apiClient(organisation);
+    final UUID entityId = UUID.randomUUID();
+    new EntitiesApi(client).createFederationEntityWithId(TENANT, organisation.orgId, entityId,
+        new FederationEntity().entityIdentifier(entityIdentifier));
+    return new ModulesApi(client).createResolverWithId(TENANT, organisation.orgId, UUID.randomUUID(),
+        new Resolver()
+            .entityId(entityId)
+            .active(true)
+            .trustAnchor(trustAnchor)
+            .trustedKeys(TestDataOperations.genJWKS().toJSONObject())
+            .stepCachedValueThreshold(10)
+            .resolveResponseDuration("PT1H"))
+        .getResolverId();
   }
 
   private UUID createIntermediate(final String entityIdentifier) {

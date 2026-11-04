@@ -35,11 +35,14 @@ import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.InsertOnly;
 import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
+import se.swedenconnect.oidf.registry.module.dto.ResolverDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.module.mapper.ModuleToDtoMapper;
 import se.swedenconnect.oidf.registry.module.model.ModuleType;
+import se.swedenconnect.oidf.registry.module.model.Resolver;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIssuer;
+import se.swedenconnect.oidf.registry.module.repository.ResolverRepository;
 import se.swedenconnect.oidf.registry.module.repository.TaImRepository;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
@@ -69,6 +72,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   private final JwksKeysCacheService jwksKeysCacheService;
   private final TrustmarkSubjectService trustmarkSubjectService;
   private final TaImRepository taImRepository;
+  private final ResolverRepository resolverRepository;
   private final String hostedPathSegment;
 
   /**
@@ -81,6 +85,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
    * @param jwksKeysCacheService the JWKS key cache service for signing key validation
    * @param trustmarkSubjectService the trust mark subject service
    * @param taImRepository the trust anchor and intermediate repository
+   * @param resolverRepository the resolver repository
    * @param registryProperties the registry properties, for the hosted path segment of a calculated ec_location
    */
   public EntityConfigServiceImpl(final EntityRepository entityRepository,
@@ -90,6 +95,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
       final JwksKeysCacheService jwksKeysCacheService,
       final TrustmarkSubjectService trustmarkSubjectService,
       final TaImRepository taImRepository,
+      final ResolverRepository resolverRepository,
       final RegistryProperties registryProperties) {
     this.entityRepository = entityRepository;
     this.organizationService = organizationService;
@@ -98,6 +104,7 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     this.jwksKeysCacheService = jwksKeysCacheService;
     this.trustmarkSubjectService = trustmarkSubjectService;
     this.taImRepository = taImRepository;
+    this.resolverRepository = resolverRepository;
     this.hostedPathSegment = registryProperties.effectiveHostedPathSegment();
   }
 
@@ -381,8 +388,11 @@ public class EntityConfigServiceImpl implements EntityConfigService {
   /**
    * Updates the references to an entity that has got a new entity identifier. Only references of the calling
    * organization are updated: subordinates under its Trust Anchors and Intermediates, subjects of its trust marks,
-   * trust mark sources of its hosted entities and trust mark issuers of its Trust Anchors. References of other
-   * organizations are left alone. Each change is audited.
+   * trust mark sources of its hosted entities, trust mark issuers of its Trust Anchors and the Trust Anchor of its
+   * Resolvers. References of other organizations are left alone. Each change is audited.
+   * <p>
+   * Authority hints stored on entities are not updated. A hint may point to a superior outside the organization, so
+   * it is left to the user to change.
    *
    * @param organizationRecord the calling organization
    * @param entity the renamed entity
@@ -408,6 +418,9 @@ public class EntityConfigServiceImpl implements EntityConfigService {
             newEntityIdentifier));
     this.taImRepository.findByOrganizationIdAndModuleType(organizationId, ModuleType.TRUSTANCHOR)
         .forEach(trustAnchor -> this.renameTrustAnchorIssuer(trustAnchor, instanceId, oldEntityIdentifier,
+            newEntityIdentifier));
+    this.resolverRepository.findByOrganizationId(organizationId)
+        .forEach(resolver -> this.renameResolverTrustAnchor(resolver, instanceId, oldEntityIdentifier,
             newEntityIdentifier));
   }
 
@@ -447,6 +460,18 @@ public class EntityConfigServiceImpl implements EntityConfigService {
     this.taImRepository.save(trustAnchor);
     this.auditService.trustAnchorUpdated(trustAnchor.getTaImId(), instanceId,
         trustAnchor.getOrganization().getOrganizationId(), oldDto, ModuleToDtoMapper.toDto(trustAnchor));
+  }
+
+  private void renameResolverTrustAnchor(final Resolver resolver, final UUID instanceId,
+      final String oldEntityIdentifier, final String newEntityIdentifier) {
+    if (!oldEntityIdentifier.equals(resolver.getTrustAnchor())) {
+      return;
+    }
+    final ResolverDto oldDto = ModuleToDtoMapper.toDto(resolver);
+    resolver.setTrustAnchor(newEntityIdentifier);
+    this.resolverRepository.save(resolver);
+    this.auditService.resolverUpdated(resolver.getResolverId(), instanceId,
+        resolver.getEntity().getOrganization().getOrganizationId(), oldDto, ModuleToDtoMapper.toDto(resolver));
   }
 
   /**
