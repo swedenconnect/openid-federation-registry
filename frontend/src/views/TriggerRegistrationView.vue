@@ -310,7 +310,6 @@ function viewRegistration() {
 }
 
 async function loadFlows() {
-  errorStore.clearError();
   const response = await requestGet(registrationPublicFlowsPath);
   flows.value = (Array.isArray(response) ? response : []).map(f => ({
     ...f,

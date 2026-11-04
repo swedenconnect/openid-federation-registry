@@ -40,6 +40,7 @@ import se.swedenconnect.oidf.registry.fixture.TestContainersConfiguration;
 import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -112,6 +113,32 @@ class SubordinateCRUDIT {
     assertThat(created).isNotNull();
     assertThat(created.getSubordinateId()).isNotNull();
     assertThat(created.getMetadataPolicy()).isEqualTo(policy);
+  }
+
+  @Test
+  @DisplayName("Create and update subordinate with value null and one_of with a boolean stores the policy unchanged")
+  void subordinatePolicyWithValueNullAndBooleanOneOf() {
+    final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-policy-value-null");
+    final Map<String, Object> removed = new HashMap<>();
+    removed.put("value", null);
+    final Map<String, Object> policy = Map.of("metadata_policy", Map.of(
+        "openid_relying_party", Map.of(
+            "id_token_signed_response_alg", removed,
+            "require_auth_time", Map.of("one_of", List.of(true)))));
+
+    final Subordinate created = this.subordinatesApi.createSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        new Subordinate()
+            .taImId(trustAnchorId)
+            .entityIdentifier("https://sub.example.se/policy-null")
+            .jwks(TestDataOperations.genJWKS().toJSONObject())
+            .metadataPolicy(policy));
+    assertThat(created.getMetadataPolicy()).isEqualTo(policy);
+
+    final Subordinate updated = this.subordinatesApi.updateSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        created.getSubordinateId(), created.metadataPolicy(policy));
+    assertThat(updated.getMetadataPolicy()).isEqualTo(policy);
+    assertThat(this.subordinatesApi.getSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        created.getSubordinateId()).getMetadataPolicy()).isEqualTo(policy);
   }
 
   // ========== constraints CRUD ==========

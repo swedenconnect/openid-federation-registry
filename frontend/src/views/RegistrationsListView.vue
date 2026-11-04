@@ -196,7 +196,6 @@ import EmptyState from '@/components/EmptyState.vue';
 import TablePager from '@/components/TablePager.vue';
 import {useListTable} from '@/composables/listTable';
 import {useRequest} from '@/api/composables/request';
-import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
 import {entityReviewsPath, registrationAdminDomainsPath} from '@/config/path';
 
@@ -206,7 +205,6 @@ const {requestGet, loading} = useRequest();
 // The domain list is an operator-only endpoint: a caller without a review queue gets a 404, which is the normal
 // answer for everyone else and must not raise an error banner.
 const {requestGet: requestDomains, ok: domainsOk, loading: domainsLoading} = useRequest(false);
-const errorStore = useErrorStore();
 const userStore = useUserStore();
 
 const MODE_ENTITIES = 'ENTITIES';
@@ -372,7 +370,6 @@ async function loadDomains() {
 }
 
 onMounted(() => {
-  errorStore.clearError();
   Promise.all([loadEntities(), loadDomains()]);
 });
 </script>

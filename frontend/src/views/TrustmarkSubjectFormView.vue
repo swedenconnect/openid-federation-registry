@@ -233,7 +233,6 @@ async function loadSuggestions() {
 }
 
 async function loadSubject() {
-  errorStore.clearError();
   subjectId.value = route.params.id;
 
   const response = await requestGet(`${trustmarkSubjectsPath(userStore.selectedTenant, userStore.orgNumber)}/${subjectId.value}`);
@@ -311,7 +310,6 @@ function cancel() {
 }
 
 onMounted(async () => {
-  errorStore.clearError();
   if (isEdit.value) {
     await loadSubject();
   } else {

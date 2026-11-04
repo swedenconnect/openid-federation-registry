@@ -21,6 +21,8 @@ import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
@@ -49,6 +51,11 @@ public class PropertyValidatorsTest {
         {
         "metadata_policy" : {
           "openid_relying_party": {
+            "require_auth_time": { "one_of": [true] },
+            "id_token_signed_response_alg": { "value": null },
+           "redirect_uris": { "essential": true },
+           "response_types": { "essential": true, "superset_of": ["code"] },
+        
             "id_token_signed_response_alg": {
               "default": "ES256",
               "one_of": ["ES256", "ES384", "ES512"]
@@ -61,12 +68,14 @@ public class PropertyValidatorsTest {
         }
         """;
 
+
     final ValidationStatus vs = this.builder()
-        .json().oidfPolicy()
+        .json()
+        .oidfMetadataPolicy()
         .build()
         .validate("policy", policy);
 
-    assertEquals("json.oidfpolicy", vs.getValidationRule());
+    assertEquals("json.oidfmetadatapolicy", vs.getValidationRule());
   }
 
   @Test
@@ -78,11 +87,11 @@ public class PropertyValidatorsTest {
         """;
 
     final ValidationStatus vs = this.builder()
-        .json().oidfPolicy()
+        .json().oidfMetadataPolicy()
         .build()
         .validate("policy", policy);
 
-    assertEquals("json.oidfpolicy", vs.getValidationRule());
+    assertEquals("json.oidfmetadatapolicy", vs.getValidationRule());
   }
 
   @Test
@@ -99,12 +108,92 @@ public class PropertyValidatorsTest {
         """;
 
     final Optional<PropertyValidationFailException> ex = this.builder()
-        .oidfPolicy()
+        .oidfMetadataPolicy()
         .build()
         .eval("policy", policy);
     assertTrue(ex.isPresent());
     assertEquals("policy.metadata_policy.openid_relying_party.id_token_signed_response_alg",
         ex.get().getFiledName());
+  }
+
+  @Test
+  public void testPolicyValidation_valueNullAndBooleanOneOf() {
+    final String policy = """
+        {
+        "metadata_policy" : {
+          "openid_relying_party": {
+            "id_token_signed_response_alg": { "value": null },
+            "userinfo_signed_response_alg": { "value": null },
+            "require_auth_time": { "one_of": [true] }
+          }
+        }
+        }
+        """;
+
+    final Optional<PropertyValidationFailException> ex = this.builder()
+        .oidfMetadataPolicy()
+        .build()
+        .eval("policy", policy);
+    assertTrue(ex.isEmpty(), () -> ex.get().getMessage());
+  }
+
+  @Test
+  public void testPolicyValidation_failNamesTheFailingParameter() {
+    final String policy = """
+        {
+        "metadata_policy" : {
+          "openid_relying_party": {
+            "redirect_uris": { "subset_of": ["https://rp.example.se/cb"] },
+            "require_auth_time": { "one_of": [{ "nested": true }] }
+          }
+        }
+        }
+        """;
+
+    final Optional<PropertyValidationFailException> ex = this.builder()
+        .oidfMetadataPolicy()
+        .build()
+        .eval("policy", policy);
+    assertTrue(ex.isPresent());
+    assertEquals("policy.metadata_policy.openid_relying_party.require_auth_time", ex.get().getFiledName());
+    assertEquals("{\"require_auth_time\":{\"one_of\":[{\"nested\":true}]}}", ex.get().getInputValue());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"{\"metadata_policy\": \"nonsense\"}", "{\"metadata_policy\": [1, 2]}"})
+  public void testPolicyValidation_failWhenRootIsNotAnObject(final String policy) {
+    final Optional<PropertyValidationFailException> ex = this.builder()
+        .oidfMetadataPolicy()
+        .build()
+        .eval("policy", policy);
+    assertTrue(ex.isPresent());
+    assertEquals("policy", ex.get().getFiledName());
+    assertTrue(ex.get().getMessage().contains("needs the root key 'metadata_policy' holding a JSON object"));
+  }
+
+  @Test
+  public void testPolicyValidation_unreadableParameterGivesNoJvmMessage() {
+    final String policy = """
+        {"metadata_policy": {"openid_relying_party": {"contacts": {"add": null}}}}
+        """;
+
+    final Optional<PropertyValidationFailException> ex = this.builder()
+        .oidfMetadataPolicy()
+        .build()
+        .eval("policy", policy);
+    assertTrue(ex.isPresent());
+    assertEquals("policy.metadata_policy.openid_relying_party.contacts", ex.get().getFiledName());
+    assertTrue(ex.get().getMessage().contains("the policy could not be read"), ex.get().getMessage());
+  }
+
+  @Test
+  public void testPolicyValidation_failOnInvalidJson() {
+    final Optional<PropertyValidationFailException> ex = this.builder()
+        .oidfMetadataPolicy()
+        .build()
+        .eval("policy", "{\"metadata_policy\": ");
+    assertTrue(ex.isPresent());
+    assertEquals("policy", ex.get().getFiledName());
   }
 
   @Test

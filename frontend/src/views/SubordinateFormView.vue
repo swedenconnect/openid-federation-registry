@@ -481,7 +481,6 @@ async function loadJwks() {
 }
 
 async function loadSubordinate() {
-  errorStore.clearError();
   subordinateId.value = route.params.id;
 
   const response = await requestGet(subordinatePath(userStore.selectedTenant, userStore.orgNumber, subordinateId.value));
@@ -620,7 +619,6 @@ async function loadIssuerEntityIdentifier() {
 }
 
 onMounted(async () => {
-  errorStore.clearError();
   if (isEdit.value) {
     loadIssuerEntityIdentifier();
     await loadSubordinate();

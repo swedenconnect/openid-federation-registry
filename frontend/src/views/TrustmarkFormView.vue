@@ -316,7 +316,6 @@ async function unassignFlow(assignId) {
 }
 
 async function loadTrustmark() {
-  errorStore.clearError();
   trustmarkId.value = route.params.id;
 
   const response = await requestGet(`${trustmarksPath(userStore.selectedTenant, userStore.orgNumber)}/${trustmarkId.value}`);
@@ -396,7 +395,6 @@ function cancel() {
 }
 
 onMounted(async () => {
-  errorStore.clearError();
   if (isEdit.value) {
     await loadTrustmark();
   }

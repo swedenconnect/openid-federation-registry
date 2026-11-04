@@ -40,16 +40,34 @@ export function useRequest(logError = true, showError = true) {
 
     const errorInterpreter = ref(_errorMap);
 
+    // The error this composable showed last. A later success clears it, so a list that failed to load once does not
+    // keep the banner after a successful reload. An error shown by another request, such as a failed save, is kept.
+    let shownError = null;
+
+    function setError(message) {
+        shownError = message;
+        errorStore.setError(message);
+    }
+
     async function _request(path, payload, method) {
         loading.value = true;
         error.value = null;
-        if (showError) {
+        // A GET may run in the background, e.g. the template list of a policy editor when it is mounted, and must not hide
+        // the error of a failed save.
+        // The error is cleared when a change is sent, when the request that showed it succeeds, when the user closes it,
+        // or on navigation.
+        if (showError && method !== 'GET') {
             errorStore.clearError();
         }
         try {
-            return await fetchData(path, payload, method);
+            const result = await fetchData(path, payload, method);
+            if (showError && shownError !== null && errorStore.message === shownError) {
+                errorStore.clearError();
+            }
+            shownError = null;
+            return result;
         } catch (err) {
-            const setError = showError ? errorStore.setError : () => {};
+            const showMessage = showError ? setError : () => {};
             console.log(err);
             let errorMessage = 'Unknown error';
             if (err instanceof Error) {
@@ -60,17 +78,17 @@ export function useRequest(logError = true, showError = true) {
                     return;
                 } else if (status.value === 403) {
                     // Show a fixed message, the body of a 403 does not contain anything meant for the user.
-                    setError(errorMessage);
+                    showMessage(errorMessage);
                 } else if (err.message.includes('Failed to fetch')) {
-                    setError('Failed to connect to server. Please check your connection.');
+                    showMessage('Failed to connect to server. Please check your connection.');
                 } else {
                     // Try to extract error message from response
                     if (json.value && json.value.detail) {
-                        setError(json.value.detail);
+                        showMessage(json.value.detail);
                     } else if (json.value && json.value.message) {
-                        setError(json.value.message);
+                        showMessage(json.value.message);
                     } else {
-                        setError(errorMessage);
+                        showMessage(errorMessage);
                     }
                 }
             }

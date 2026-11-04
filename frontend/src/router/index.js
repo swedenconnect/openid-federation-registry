@@ -39,6 +39,7 @@ import NoAccessView from '../views/NoAccessView.vue';
 import EntityReviewDetailView from '../views/EntityReviewDetailView.vue';
 import EntityReviewSessionView from '../views/EntityReviewSessionView.vue';
 import {useAuthorizationStatusStore} from '@/authorization/stores/authorizationStatusStore';
+import {useErrorStore} from '@/stores/errorStore';
 import {PRODUCT_NAME} from '@/config/product';
 import {useUserStore} from '@/stores/userStore';
 
@@ -225,8 +226,11 @@ const router = createRouter({
     ],
 });
 
-router.afterEach((to) => {
+router.afterEach((to, from, failure) => {
+    // An aborted navigation, for example one the user stopped in the unsaved-changes dialog, leaves the page as it was.
+    if (failure) return;
     document.title = `${to.meta.title ?? to.name} — ${PRODUCT_NAME}`;
+    useErrorStore().clearError();
 });
 
 router.beforeEach((to) => {
