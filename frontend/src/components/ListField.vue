@@ -62,7 +62,7 @@
         class="mt-2"
     >
       <v-icon start>mdi-plus</v-icon>
-      Add
+      {{ addLabel || `Add ${label}` }}
     </v-btn>
 
     <div v-if="hint" class="text-caption text-medium-emphasis mt-1">
@@ -88,6 +88,11 @@ const props = defineProps({
     required: true,
   },
   hint: {
+    type: String,
+    default: '',
+  },
+  // Text of the add button, "Add <label>" when not set
+  addLabel: {
     type: String,
     default: '',
   },

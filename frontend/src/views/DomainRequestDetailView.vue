@@ -152,15 +152,12 @@
               :disabled="rejecting"
               @click="submitReject"
           >
-            Confirm Reject
+            Reject Domain
           </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
-    <v-snackbar v-model="snackbar" :timeout="6000" color="primary">
-      {{ snackbarMessage }}
-    </v-snackbar>
   </div>
 </template>
 
@@ -169,6 +166,7 @@ import {computed, onMounted, ref} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
+import {useNoticeStore} from '@/stores/noticeStore';
 import {useUserStore} from '@/stores/userStore';
 import {
   registrationAdminDomainApprovePath,
@@ -179,6 +177,7 @@ import {
 const route = useRoute();
 const router = useRouter();
 const errorStore = useErrorStore();
+const noticeStore = useNoticeStore();
 const userStore = useUserStore();
 
 const {requestGet, loading} = useRequest();
@@ -190,9 +189,6 @@ const domain = ref(null);
 const rejectDialog = ref(false);
 const rejectionReason = ref('');
 const reasonError = ref(false);
-
-const snackbar = ref(false);
-const snackbarMessage = ref('');
 
 const isPending = computed(() => domain.value?.status === 'PENDING');
 
@@ -212,11 +208,6 @@ function formatDate(value) {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
 }
 
-function showSnackbar(message) {
-  snackbarMessage.value = message;
-  snackbar.value = true;
-}
-
 // There is no single-domain operator endpoint: the review list is the source, filtered down to the one domain
 // this page is about.
 async function loadDomain() {
@@ -232,7 +223,7 @@ async function approve() {
   await requestApprove(
       registrationAdminDomainApprovePath(userStore.selectedTenant, userStore.orgNumber, route.params.domainId));
   if (approveOk.value) {
-    showSnackbar(`${domain.value?.domain} approved.`);
+    noticeStore.show(`${domain.value?.domain} approved.`);
     await loadDomain();
   }
 }
@@ -260,7 +251,7 @@ async function submitReject() {
   if (rejectOk.value) {
     const cascaded = response?.cascadedRegistrationIds?.length ?? 0;
     closeRejectDialog();
-    showSnackbar(cascaded === 0
+    noticeStore.show(cascaded === 0
         ? `${rejected?.domain} rejected. No registrations were affected.`
         : `${rejected?.domain} rejected. ${cascaded} registration(s) rejected with it.`);
     await loadDomain();

@@ -132,7 +132,7 @@
           </v-table>
 
           <div v-if="result.trustmarksRequested && result.trustmarksRequested.length > 0" class="mt-3">
-            <div class="text-body-2 font-weight-medium mb-1">Requested Trustmarks</div>
+            <div class="text-body-2 font-weight-medium mb-1">Requested Trust Marks</div>
             <v-chip
                 v-for="tm in result.trustmarksRequested"
                 :key="tm"
@@ -192,7 +192,7 @@
             class="mr-2"
             @click="resetForm"
         >
-          New Registration
+          Trigger Another Registration
         </v-btn>
         <v-btn
             color="primary"
@@ -209,6 +209,7 @@
 import {onMounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
+import {useUnsavedChanges} from '@/api/composables/unsavedChanges';
 import {useErrorStore} from '@/stores/errorStore';
 import {useUserStore} from '@/stores/userStore';
 import {registrationPublicFlowsPath, registrationTriggerPath} from '@/config/path';
@@ -226,6 +227,12 @@ const entityIdentifier = ref('');
 const trustmarkSources = ref([]);
 const submitting = ref(false);
 const result = ref(null);
+
+const {markSaved} = useUnsavedChanges(() => ({
+  selectedJoinId: selectedJoinId.value,
+  entityIdentifier: entityIdentifier.value,
+  trustmarkSources: trustmarkSources.value,
+}));
 
 function statusColor(status) {
   const colors = {PENDING_APPROVAL: 'warning', APPROVED: 'success', REJECTED: 'error', STARTED: 'info'};
@@ -279,6 +286,7 @@ async function submit() {
         registrationTriggerPath(userStore.selectedTenant, userStore.orgNumber, selectedJoinId.value), body);
     if (response) {
       result.value = response;
+      markSaved();
     }
   } finally {
     submitting.value = false;
@@ -294,6 +302,7 @@ function resetForm() {
   selectedJoinId.value = null;
   entityIdentifier.value = '';
   trustmarkSources.value = [];
+  markSaved();
 }
 
 function viewRegistration() {
@@ -311,5 +320,6 @@ async function loadFlows() {
 
 onMounted(() => {
   loadFlows();
+  markSaved();
 });
 </script>

@@ -14,13 +14,14 @@
  *  limitations under the License.
  */
 
-import {ref} from 'vue'
+import {computed, ref} from 'vue'
 import {useRequest} from './request'
 import {signingKeysPath} from '@/config/path'
 import {useUserStore} from '@/stores/userStore'
 
 export function useSigningKeys() {
-    const {requestGet, loading} = useRequest(false)
+    // A failure is shown at the Signing Key field, the rest of the page still works without the keys.
+    const {requestGet, loading, error} = useRequest(false, false)
     const userStore = useUserStore()
     const signingKeys = ref([])
 
@@ -32,5 +33,7 @@ export function useSigningKeys() {
         }))
     }
 
-    return {signingKeys, fetchSigningKeys, loading}
+    const signingKeysError = computed(() => error.value ? 'Signing keys could not be loaded.' : null)
+
+    return {signingKeys, signingKeysError, fetchSigningKeys, loading}
 }

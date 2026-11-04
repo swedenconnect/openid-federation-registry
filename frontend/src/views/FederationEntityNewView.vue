@@ -18,7 +18,7 @@
   <div>
     <v-card>
       <v-card-title>
-        <h2>Create Federation Entity</h2>
+        <h2>Add Federation Entity</h2>
       </v-card-title>
       <v-card-text>
         <v-form ref="form" @submit.prevent="saveEntity">
@@ -56,6 +56,17 @@
               class="mb-4"
           ></v-select>
 
+          <v-alert
+              v-if="signingKeysError"
+              id="alert-signing-keys"
+              type="warning"
+              variant="tonal"
+              density="compact"
+              class="mb-4"
+          >
+            {{ signingKeysError }}
+          </v-alert>
+
           <ListField
               id="crit"
               v-model="crit"
@@ -82,7 +93,7 @@
                 :loading="saving"
                 :disabled="saving"
             >
-              Create
+              Add
             </v-btn>
           </v-card-actions>
         </v-form>
@@ -95,7 +106,9 @@
 import {onMounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
+import {useUnsavedChanges} from '@/api/composables/unsavedChanges';
 import {useErrorStore} from '@/stores/errorStore';
+import {useNoticeStore} from '@/stores/noticeStore';
 import {useUserStore} from '@/stores/userStore';
 import {useSigningKeys} from '@/api/composables/signingKeys';
 import ListField from '@/components/ListField.vue';
@@ -104,9 +117,10 @@ import {federationEntitiesPath} from '@/config/path';
 const router = useRouter();
 const {requestPost, ok} = useRequest();
 const errorStore = useErrorStore();
+const noticeStore = useNoticeStore();
 const userStore = useUserStore();
 
-const {signingKeys, fetchSigningKeys} = useSigningKeys();
+const {signingKeys, signingKeysError, fetchSigningKeys} = useSigningKeys();
 
 const form = ref(null);
 const saving = ref(false);
@@ -114,6 +128,13 @@ const entityIdentifier = ref('');
 const name = ref('');
 const crit = ref([]);
 const signingKeyId = ref(null);
+
+const {markSaved} = useUnsavedChanges(() => ({
+  entityIdentifier: entityIdentifier.value,
+  name: name.value,
+  crit: crit.value,
+  signingKeyId: signingKeyId.value,
+}));
 
 const rules = {
   required: (value) => !!value || 'This field is required.',
@@ -138,6 +159,8 @@ async function saveEntity() {
     const response = await requestPost(federationEntitiesPath(userStore.selectedTenant, userStore.orgNumber), entityData);
 
     if (ok.value && response?.entityId) {
+      noticeStore.show('Federation Entity added.');
+      markSaved();
       router.push({name: 'federation-entity-edit', params: {id: response.entityId}});
     }
   } catch (error) {
@@ -158,6 +181,7 @@ onMounted(async () => {
     entityIdentifier.value = userStore.entityPrefix;
   }
   await fetchSigningKeys('FEDERATION_ENTITY');
+  markSaved();
 });
 </script>
 
