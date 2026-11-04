@@ -7,8 +7,8 @@
 ---
 
 
-### Version 0.9.12 Unreleased
-**Date:** <ToBeSet>
+### Version 0.9.12
+**Date:** 2026-11-04
   
   
 - A change that is rolled back no longer leaves an audit record
