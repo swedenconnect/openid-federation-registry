@@ -94,6 +94,12 @@
             <artifactId>flyway-mysql</artifactId>
         </dependency>
 
+        <!-- Sessions are stored in the database, so that several instances can serve the GUI -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-session-jdbc</artifactId>
+        </dependency>
+
         <!-- Security -->
         <dependency>
             <groupId>com.nimbusds</groupId>
