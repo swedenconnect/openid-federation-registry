@@ -115,6 +115,10 @@ dual `org_rights`-or-`scope` bearer-token handling above remain this registry's 
 tenant concept and its auto-configured resource-server converter only understands the `scope` claim. See
 [Authorization Model](oauth.md) for the full JWT claim shape and endpoint-by-endpoint access rules.
 
+The browser session is stored in the registry database by Spring Session JDBC (tables `SPRING_SESSION` and
+`SPRING_SESSION_ATTRIBUTES`, created by Flyway), so several instances of the registry can run behind a load balancer
+without sticky sessions. The session cookie is called `SESSION`.
+
 ## Data Model
 
 Persistence is JPA/Hibernate over MariaDB, schema evolution managed by Flyway migrations under
@@ -133,8 +137,6 @@ them. Function groups are **not** persisted
   [Developer Guide](developer.md) for local setup.
 - **Frontend**: standard Vite/npm build in `frontend/`, output copied into the backend's static resources so the
   two ship as one artifact.
-- **End-to-end**: a separate Maven module, `guitest`, drives the running application through the browser with
-  Playwright.
 - **Containerization**: the `service` module builds its container image with Jib (no local Docker daemon needed
   for the image build itself; Docker is still used to run MariaDB for local dev and Testcontainers-based tests).
 - **CI**: GitHub Actions (`.github/workflows`).

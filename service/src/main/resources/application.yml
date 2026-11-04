@@ -46,6 +46,11 @@ spring:
   flyway:
     enabled: true
 
+  session:
+    jdbc:
+      # The session tables are created by Flyway
+      initialize-schema: never
+
   jpa:
     open-in-view: false
     properties:

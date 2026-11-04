@@ -88,7 +88,7 @@
                 {{ role.label }}
               </v-btn>
             </div>
-            <span v-else class="text-grey">No roles configured</span>
+            <span v-else-if="!entity.resolver" class="text-grey">No modules configured</span>
           </v-card-text>
         </v-card>
       </v-col>
@@ -97,7 +97,7 @@
     <v-card v-else>
       <v-card-text>
         <div class="text-center py-12">
-          <p class="text-grey">No federation entities found.</p>
+          <EmptyState what="Federation Entities" action="Add Federation Entity"/>
         </div>
       </v-card-text>
     </v-card>
@@ -109,6 +109,7 @@ import {onMounted, ref} from 'vue';
 import {useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useUserStore} from '@/stores/userStore';
+import EmptyState from '@/components/EmptyState.vue';
 import EntityConfigurationViewer from '@/components/EntityConfigurationViewer.vue';
 import {adminPath} from '@/config/path';
 
@@ -128,7 +129,7 @@ function roles(entity) {
   return [
     entity.trustAnchor && {type: 'trustanchor', label: 'Subordinates'},
     entity.intermediate && {type: 'intermediate', label: 'Subordinates'},
-    entity.trustmarkIssuer && {type: 'trustmarkissuer', label: 'Trustmarks'},
+    entity.trustmarkIssuer && {type: 'trustmarkissuer', label: 'Trust Marks'},
   ].filter(Boolean);
 }
 
@@ -138,7 +139,7 @@ function activeModules(entity) {
     entity.resolver?.active && {type: 'resolver', title: 'Resolver', icon: 'mdi-magnify-scan'},
     entity.trustAnchor?.active && {type: 'trustanchor', title: 'Trust Anchor', icon: 'mdi-shield-check'},
     entity.intermediate?.active && {type: 'intermediate', title: 'Intermediate', icon: 'mdi-transit-connection-variant'},
-    entity.trustmarkIssuer?.active && {type: 'trustmarkissuer', title: 'Trustmark Issuer', icon: 'mdi-certificate-outline'},
+    entity.trustmarkIssuer?.active && {type: 'trustmarkissuer', title: 'Trust Mark Issuer', icon: 'mdi-certificate-outline'},
   ].filter(Boolean);
 }
 

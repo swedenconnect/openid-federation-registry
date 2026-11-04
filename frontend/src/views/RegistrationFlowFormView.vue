@@ -27,7 +27,7 @@
 
     <v-card v-else>
       <v-card-title>
-        <h2>{{ isEdit ? 'Edit Registration Flow' : 'Create Registration Flow' }}</h2>
+        <h2>{{ isEdit ? 'Edit Registration Flow' : 'Add Registration Flow' }}</h2>
       </v-card-title>
 
       <v-card-text>
@@ -233,7 +233,7 @@
                 :loading="saving"
                 :disabled="saving"
             >
-              {{ isEdit ? 'Save' : 'Create' }}
+              {{ isEdit ? 'Save' : 'Add' }}
             </v-btn>
           </v-card-actions>
 

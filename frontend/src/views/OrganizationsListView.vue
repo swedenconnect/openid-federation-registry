@@ -96,7 +96,7 @@
             </v-btn>
           </template>
           <template #no-data>
-            <p class="text-grey py-8">No organizations found.</p>
+            <EmptyState what="Organizations" :search="search"/>
           </template>
           <template #bottom>
             <TablePager v-model:page="page" v-model:items-per-page="itemsPerPage" :total="filteredCount"/>
@@ -108,10 +108,10 @@
     <!-- Edit trust marks dialog -->
     <v-dialog v-model="trustMarkDialog" max-width="640" aria-labelledby="edit-trustmarks-dialog-title">
       <v-card>
-        <v-card-title id="edit-trustmarks-dialog-title" class="text-h5">Pre-validated trust marks</v-card-title>
+        <v-card-title id="edit-trustmarks-dialog-title" class="text-h5">Pre-validated Trust Marks</v-card-title>
         <v-card-text>
           <p class="mb-3">
-            Trust mark types pre-approved for
+            Trust Mark types pre-approved for
             <strong>{{ editTarget?.legalName || editTarget?.orgName || editTarget?.orgNumber }}</strong>.
             A registration requesting one of these enrolls without stopping for manual review.
           </p>
@@ -119,7 +119,7 @@
               id="input-prevalidated-trustmarks"
               v-model="editTrustMarks"
               :items="trustMarkTypes"
-              label="Trust mark types"
+              label="Trust Mark types"
               hint="Pick a type issued on this tenant, or type a new one and press enter."
               persistent-hint
               multiple
@@ -159,6 +159,7 @@
 <script setup>
 import {onMounted, ref} from 'vue';
 import {RouterLink} from 'vue-router';
+import EmptyState from '@/components/EmptyState.vue';
 import TablePager from '@/components/TablePager.vue';
 import {useListTable} from '@/composables/listTable';
 import {useRequest} from '@/api/composables/request';
@@ -188,10 +189,10 @@ const {search, page, itemsPerPage, filteredCount, filterKeys, filterRow} =
 
 const headers = [
   {title: 'Legal name', key: 'legalName', sortable: true},
-  {title: 'Org name', key: 'orgName', sortable: true},
-  {title: 'Org number', key: 'orgNumber', sortable: true},
+  {title: 'Organization name', key: 'orgName', sortable: true},
+  {title: 'Organization number', key: 'orgNumber', sortable: true},
   {title: 'Domains', key: 'domainCount', sortable: true},
-  {title: 'Pre-validated trust marks', key: 'preValidatedTrustMarks', sortable: false},
+  {title: 'Pre-validated Trust Marks', key: 'preValidatedTrustMarks', sortable: false},
   {title: 'Actions', key: 'actions', sortable: false, align: 'end'},
 ];
 
@@ -249,7 +250,7 @@ async function saveTrustMarks() {
     // A newly invented type becomes a suggestion for the next organization without a round trip.
     trustMarkTypes.value = [...new Set([...trustMarkTypes.value, ...payload])].sort();
     closeTrustMarkDialog();
-    noticeStore.show(`Pre-validated trust marks updated for ${target.legalName || target.orgNumber}.`);
+    noticeStore.show(`Pre-validated Trust Marks updated for ${target.legalName || target.orgNumber}.`);
   }
 }
 

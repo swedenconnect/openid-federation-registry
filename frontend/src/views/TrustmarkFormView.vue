@@ -24,24 +24,24 @@
               color="primary"
               size="64"
           ></v-progress-circular>
-          <p class="mt-4 text-grey">Loading trustmark...</p>
+          <p class="mt-4 text-grey">Loading Trust Mark...</p>
         </div>
       </v-card-text>
     </v-card>
 
     <v-card v-else>
       <v-card-title>
-        <h2>{{ isEdit ? 'Edit Trustmark' : 'Create Trustmark' }}</h2>
+        <h2>{{ isEdit ? 'Edit Trust Mark' : 'Add Trust Mark' }}</h2>
       </v-card-title>
       <v-card-text>
         <v-form ref="form" @submit.prevent="submitForm">
           <v-text-field
               v-model="trustmarkType"
-              label="Trustmark Type"
+              label="Trust Mark Type"
               :rules="[rules.required]"
               :disabled="saving"
               required
-              hint="Type of trustmark (required)"
+              hint="Type of Trust Mark (required)"
               persistent-hint
               class="mb-4"
           ></v-text-field>
@@ -69,7 +69,7 @@
               v-model="trustMarkTokenValidityDuration"
               label="Trust Mark Token Validity Duration"
               :disabled="saving"
-              hint="Validity of an issued trustmark as an ISO-8601 duration of at least five minutes, e.g. P2D for two days or PT1H. Leave empty for trustmarks that never expire."
+              hint="Validity of an issued Trust Mark as an ISO-8601 duration of at least five minutes, e.g. P2D for two days or PT1H. Leave empty for Trust Marks that never expire."
               persistent-hint
               clearable
               class="mb-4"
@@ -147,7 +147,7 @@
                 :disabled="saving"
                 @click="deleteDialog = true"
             >
-              Delete Trustmark
+              Delete Trust Mark
             </v-btn>
             <v-spacer></v-spacer>
             <v-btn
@@ -166,7 +166,7 @@
                 :loading="saving"
                 :disabled="saving"
             >
-              {{ isEdit ? 'Save' : 'Create' }}
+              {{ isEdit ? 'Save' : 'Add' }}
             </v-btn>
           </v-card-actions>
         </v-form>
@@ -176,9 +176,9 @@
     <!-- Delete Confirmation Dialog -->
     <v-dialog v-model="deleteDialog" max-width="500" aria-labelledby="delete-trustmark-dialog-title">
       <v-card>
-        <v-card-title id="delete-trustmark-dialog-title" class="text-h5">Confirm Delete</v-card-title>
+        <v-card-title id="delete-trustmark-dialog-title" class="text-h5">Delete Trust Mark</v-card-title>
         <v-card-text>
-          Are you sure you want to delete trustmark "{{ trustmarkType || 'N/A' }}"? This action cannot be undone.
+          Are you sure you want to delete Trust Mark "{{ trustmarkType || 'N/A' }}"? This action cannot be undone.
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -198,7 +198,7 @@
               :loading="deleting"
               :disabled="deleting"
           >
-            Yes, Delete
+            Delete Trust Mark
           </v-btn>
         </v-card-actions>
       </v-card>

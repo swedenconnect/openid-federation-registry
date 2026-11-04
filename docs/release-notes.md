@@ -11,6 +11,15 @@
 **Date:** <ToBeSet>
   
   
+- The GUI uses the same words for the same things, and empty lists say how to add an item
+  ([#353](https://github.com/swedenconnect/openid-federation-registry/issues/353),
+  [#354](https://github.com/swedenconnect/openid-federation-registry/issues/354),
+  [#358](https://github.com/swedenconnect/openid-federation-registry/issues/358),
+  [#359](https://github.com/swedenconnect/openid-federation-registry/issues/359),
+  [#361](https://github.com/swedenconnect/openid-federation-registry/issues/361),
+  [#363](https://github.com/swedenconnect/openid-federation-registry/issues/363)).
+- GUI sessions are stored in the database, so the registry can run on several instances
+  ([#384](https://github.com/swedenconnect/openid-federation-registry/issues/384)).
 - The configuration documentation names `notification_active`, the property that enables notifications to the
   federation services ([#375](https://github.com/swedenconnect/openid-federation-registry/issues/375)).
 - Every Leaf Entity gets `ec_location` in its Subordinate Statement, also when its Entity Configuration is published

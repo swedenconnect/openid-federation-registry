@@ -132,7 +132,7 @@
           </v-table>
 
           <div v-if="result.trustmarksRequested && result.trustmarksRequested.length > 0" class="mt-3">
-            <div class="text-body-2 font-weight-medium mb-1">Requested Trustmarks</div>
+            <div class="text-body-2 font-weight-medium mb-1">Requested Trust Marks</div>
             <v-chip
                 v-for="tm in result.trustmarksRequested"
                 :key="tm"
@@ -192,7 +192,7 @@
             class="mr-2"
             @click="resetForm"
         >
-          New Registration
+          Trigger Another Registration
         </v-btn>
         <v-btn
             color="primary"
