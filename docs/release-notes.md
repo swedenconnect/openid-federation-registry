@@ -6,13 +6,18 @@
 
 ---
 
+### Version 0.9.13
 
-### Version 0.9.12 Unreleased
-**Date:** <ToBeSet>
-  
-  
+**Date:** <UnReleased>
+
 - `value: null` in a metadata policy is stored, returned and published instead of being turned into `{}`
   ([#395](https://github.com/swedenconnect/openid-federation-registry/issues/395)).
+
+
+### Version 0.9.12
+**Date:** 2026-11-04
+  
+  
 - A change that is rolled back no longer leaves an audit record
   ([#332](https://github.com/swedenconnect/openid-federation-registry/issues/332)).
 - A write conflict between concurrent requests is answered with 409 instead of 500
