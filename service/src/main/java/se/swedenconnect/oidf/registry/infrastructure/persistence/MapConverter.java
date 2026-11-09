@@ -39,7 +39,7 @@ public class MapConverter implements AttributeConverter<Map<String, Object>, Str
    * @param objectMapper mapper to convert values
    */
   public MapConverter(final JsonMapper objectMapper) {
-    this.mapper = objectMapper;
+    this.mapper = PersistenceJsonMapper.keepingNullMapEntries(objectMapper);
   }
 
   /**

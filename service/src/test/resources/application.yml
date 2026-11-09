@@ -78,6 +78,11 @@ iam:
 
 
 spring:
+  # Same as the production configuration. It must be set here so that the tests verify that null values in
+  # metadata_policy (e.g. {"value": null}) are preserved when written to the database, see #395.
+  jackson:
+    default-property-inclusion: non_null
+
   security:
     oauth2:
       resourceserver:

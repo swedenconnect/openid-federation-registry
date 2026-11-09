@@ -11,6 +11,8 @@
 **Date:** <ToBeSet>
   
   
+- `value: null` in a metadata policy is stored, returned and published instead of being turned into `{}`
+  ([#395](https://github.com/swedenconnect/openid-federation-registry/issues/395)).
 - A change that is rolled back no longer leaves an audit record
   ([#332](https://github.com/swedenconnect/openid-federation-registry/issues/332)).
 - A write conflict between concurrent requests is answered with 409 instead of 500
