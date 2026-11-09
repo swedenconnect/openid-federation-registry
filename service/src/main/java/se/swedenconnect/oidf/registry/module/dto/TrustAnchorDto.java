@@ -15,6 +15,7 @@
  */
 package se.swedenconnect.oidf.registry.module.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -55,6 +56,7 @@ public class TrustAnchorDto {
 
   @Schema(description = "Metadata policy applied to every subordinate statement it issues, combined with the "
       + "subordinate's own policy. JSON object with the root key metadata_policy.")
+  @JsonInclude(content = JsonInclude.Include.ALWAYS)
   private Map<String, Object> metadataPolicy;
 
   @Schema(description = "List of subordinates for this trust anchor")

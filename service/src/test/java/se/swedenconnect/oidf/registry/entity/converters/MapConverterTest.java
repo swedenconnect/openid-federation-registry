@@ -16,6 +16,7 @@
 
 package se.swedenconnect.oidf.registry.entity.converters;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.junit.jupiter.api.Test;
 import se.swedenconnect.oidf.registry.infrastructure.persistence.MapConverter;
 import tools.jackson.databind.json.JsonMapper;
@@ -108,5 +109,26 @@ class MapConverterTest {
     final Map<String, Object> restored = this.converter.convertToEntityAttribute(json);
 
     assertThat(restored).isEqualTo(original);
+  }
+
+  @Test
+  void roundTrip_keepsNullValuesWithNonNullInclusion() {
+    // As configured by spring.jackson.default-property-inclusion: non_null
+    final JsonMapper nonNull = JsonMapper.builder()
+        .changeDefaultPropertyInclusion(inclusion -> inclusion
+            .withValueInclusion(JsonInclude.Include.NON_NULL)
+            .withContentInclusion(JsonInclude.Include.NON_NULL))
+        .build();
+    final MapConverter nonNullConverter = new MapConverter(nonNull);
+    final Map<String, Object> operators = new LinkedHashMap<>();
+    operators.put("value", null);
+    final Map<String, Object> policy =
+        Map.of("metadata_policy", Map.of("openid_relying_party", Map.of("id_token_signed_response_alg", operators)));
+
+    final String json = nonNullConverter.convertToDatabaseColumn(policy);
+    final Map<String, Object> restored = nonNullConverter.convertToEntityAttribute(json);
+
+    assertThat(json).contains("\"value\" : null");
+    assertThat(restored).isEqualTo(policy);
   }
 }

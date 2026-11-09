@@ -56,7 +56,7 @@ public abstract class JsonConverter<T> implements AttributeConverter<T, String> 
    * @param type the target class to deserialize into
    */
   protected JsonConverter(final JsonMapper mapper, final Class<T> type) {
-    this.mapper = mapper;
+    this.mapper = PersistenceJsonMapper.keepingNullMapEntries(mapper);
     this.type = type;
     this.typeReference = null;
   }
@@ -68,7 +68,7 @@ public abstract class JsonConverter<T> implements AttributeConverter<T, String> 
    * @param typeReference Jackson type reference capturing the full generic type
    */
   protected JsonConverter(final JsonMapper mapper, final TypeReference<T> typeReference) {
-    this.mapper = mapper;
+    this.mapper = PersistenceJsonMapper.keepingNullMapEntries(mapper);
     this.type = null;
     this.typeReference = typeReference;
   }

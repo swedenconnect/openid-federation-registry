@@ -16,6 +16,7 @@
 
 package se.swedenconnect.oidf.registry.subordinate.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -68,10 +69,12 @@ public class SubordinateDto {
       + "metadata_policy, which holds the policy per entity type.",
       example = "{\"metadata_policy\": {\"openid_provider\": {\"subject_types_supported\": {\"value\": "
           + "[\"pairwise\"]}}}}")
+  @JsonInclude(value = JsonInclude.Include.ALWAYS, content = JsonInclude.Include.ALWAYS)
   private Map<String, Object> metadataPolicy;
 
   @Schema(description = "Metadata for this subordinate statement. Optional. Must be valid JSON if provided.",
       example = "{\"openid_provider\": {\"subject_types_supported\": [\"pairwise\"]}}")
+  @JsonInclude(value = JsonInclude.Include.ALWAYS, content = JsonInclude.Include.ALWAYS)
   private Map<String, Object> metadata;
 
   @Schema(description = "Constraints for this subordinate statement, see OpenID Federation 1.0 section 6.2. "

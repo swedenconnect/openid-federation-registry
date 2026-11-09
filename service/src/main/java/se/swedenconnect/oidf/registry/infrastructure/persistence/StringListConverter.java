@@ -39,7 +39,7 @@ public class StringListConverter implements AttributeConverter<List<String>, Str
    * @param objectMapper mapper to convert values
    */
   public StringListConverter(final JsonMapper objectMapper) {
-    this.mapper = objectMapper;
+    this.mapper = PersistenceJsonMapper.keepingNullMapEntries(objectMapper);
   }
 
   /**

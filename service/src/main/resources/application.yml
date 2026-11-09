@@ -40,6 +40,9 @@ spring:
     virtual:
       enabled: true
 
+  # Drops null POJO properties and null map entries. The JPA converters write with their own mapper that keeps
+  # null map entries, so null values in metadata_policy (e.g. {"value": null}) survive persistence, see #395.
+  # The test configuration sets the same value so that this is covered by the tests.
   jackson:
     default-property-inclusion: non_null
 

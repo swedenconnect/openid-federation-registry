@@ -10,6 +10,9 @@
 
 **Date:** <UnReleased>
 
+- `value: null` in a metadata policy is stored, returned and published instead of being turned into `{}`
+  ([#395](https://github.com/swedenconnect/openid-federation-registry/issues/395)).
+
 
 ### Version 0.9.12
 **Date:** 2026-11-04
