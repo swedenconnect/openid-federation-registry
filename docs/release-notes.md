@@ -8,7 +8,7 @@
 
 ### Version 0.9.13
 
-**Date:** <UnReleased>
+**Date:** 26-11-10
 
 - `value: null` in a metadata policy is stored, returned and published instead of being turned into `{}`
   ([#395](https://github.com/swedenconnect/openid-federation-registry/issues/395)).
