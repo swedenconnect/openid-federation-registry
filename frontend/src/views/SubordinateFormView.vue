@@ -90,13 +90,11 @@
               label="JWKS (Public Keys)"
               :rules="[rules.required, rules.json]"
               :disabled="saving"
-              :rows="5"
-              auto-grow
+              rows="10"
               required
               hint="Public keys in JWKS format (required, JSON)"
               persistent-hint
-              class="mb-4"
-              style="font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;"
+              class="mb-4 mono"
           ></v-textarea>
           <div v-if="jwksLoadedFrom" class="text-body-2 text-medium-emphasis mb-4">
             JWKS was loaded from url: {{ jwksLoadedFrom }}
@@ -122,20 +120,33 @@
               of the subordinate listing, so at least one entity type is required.
             </p>
 
-            <v-combobox
-                id="subordinate-entity-types"
-                v-model="entityTypes"
-                :items="subordinateEntityTypeSuggestions"
-                label="Entity Types"
-                multiple
-                chips
-                closable-chips
-                :rules="[rules.requiredList]"
-                :disabled="saving"
-                hint="Entity types of the subordinate (required). Pick from the list or type your own and press Enter."
-                persistent-hint
-                class="mb-4"
-            ></v-combobox>
+            <div class="d-flex align-start gap-2 mb-4">
+              <v-combobox
+                  id="subordinate-entity-types"
+                  v-model="entityTypes"
+                  :items="subordinateEntityTypeSuggestions"
+                  label="Entity Types"
+                  multiple
+                  chips
+                  closable-chips
+                  :rules="[rules.requiredList]"
+                  :disabled="saving"
+                  hint="Entity types of the subordinate (required). Pick from the list or type your own and press Enter. AutoFill takes them from the subordinate's entity configuration."
+                  persistent-hint
+                  class="flex-grow-1"
+              ></v-combobox>
+              <v-btn
+                  id="btn-autofill-entity-types"
+                  color="secondary"
+                  variant="outlined"
+                  :disabled="!entityIdentifier || !entityIdentifier.trim() || autoFilling || saving"
+                  :loading="autoFilling"
+                  @click="autoFill"
+                  class="mt-2"
+              >
+                AutoFill
+              </v-btn>
+            </div>
 
             <v-switch
                 id="subordinate-is-intermediate"
@@ -171,12 +182,10 @@
               label="Metadata"
               :rules="[rules.json]"
               :disabled="saving"
-              :rows="5"
-              auto-grow
+              rows="10"
               hint="Metadata for this subordinate statement (optional, JSON)"
               persistent-hint
-              class="mb-4"
-              style="font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;"
+              class="mb-4 mono"
           ></v-textarea>
 
           <v-card variant="outlined" class="mb-4 pa-4" role="group" aria-labelledby="constraints-title">
@@ -441,6 +450,7 @@ let ecCheckSeq = 0;
 
 const jwksPickerDialog = ref(false);
 const jwksPickerItems = ref([]);
+const autoFilling = ref(false);
 
 const isEdit = computed(() => !!route.params.id);
 const entityId = computed(() => route.params.entityId);
@@ -512,6 +522,35 @@ watch(entityIdentifier, (value) => {
 });
 
 onBeforeUnmount(() => clearTimeout(ecCheckTimer));
+
+// Fills in the entity types from the metadata of the subordinate's entity configuration. The entity types are the
+// top-level keys of the metadata. An entity with both a fetch and a list endpoint has subordinates of its own, and is
+// an Intermediate Entity.
+async function autoFill() {
+  autoFilling.value = true;
+  errorStore.clearError();
+  try {
+    const response = await fetch(entityConfigurationViewPath(userStore.selectedTenant, userStore.orgNumber), {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type': 'text/plain', ...csrfHeaders()},
+      body: entityIdentifier.value.trim(),
+    });
+    if (!response.ok) {
+      errorStore.setError('The entity configuration could not be loaded.');
+      return;
+    }
+    const loadedMetadata = (await response.json()).payload?.metadata || {};
+    entityTypes.value = Object.keys(loadedMetadata);
+    const federationEntity = loadedMetadata.federation_entity || {};
+    isIntermediate.value = !!federationEntity.federation_fetch_endpoint
+        && !!federationEntity.federation_list_endpoint;
+  } catch (e) {
+    errorStore.setError('The entity configuration could not be loaded.');
+  } finally {
+    autoFilling.value = false;
+  }
+}
 
 async function loadJwks() {
   const result = await loadJwksFromApi(entityIdentifier.value);
@@ -678,5 +717,10 @@ onMounted(async () => {
 <style scoped>
 .gap-2 {
   gap: 8px;
+}
+
+.mono :deep(textarea) {
+  font-family: monospace;
+  font-size: 0.85rem;
 }
 </style>
