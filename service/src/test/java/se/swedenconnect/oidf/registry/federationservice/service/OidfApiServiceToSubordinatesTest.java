@@ -150,6 +150,18 @@ class OidfApiServiceToSubordinatesTest {
   }
 
   @Test
+  void entityTypesAndIsIntermediateAreMapped() {
+    final Subordinate sub = subordinate("https://entity.example.com", false);
+    sub.setEntityTypes(List.of("federation_entity", "openid_provider"));
+    sub.setIntermediate(true);
+
+    final TrustAnchorProperties.SubordinateListingProperty result = this.service.toSubordinates(sub);
+
+    assertThat(result.getEntityTypes()).containsExactly("federation_entity", "openid_provider");
+    assertThat(result.getIsIntermediate()).isTrue();
+  }
+
+  @Test
   void emptyCritAndMetadataPolicyCritBecomeNull() {
     final Subordinate sub = subordinate("https://entity.example.com", false);
     sub.setCrit(List.of());

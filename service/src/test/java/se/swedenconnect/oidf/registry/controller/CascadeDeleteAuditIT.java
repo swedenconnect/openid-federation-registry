@@ -42,6 +42,7 @@ import se.swedenconnect.oidf.registry.fixture.JwtTestUtils;
 import se.swedenconnect.oidf.registry.fixture.TestContainersConfiguration;
 import se.swedenconnect.oidf.registry.fixture.TestDataOperations;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -181,6 +182,7 @@ class CascadeDeleteAuditIT {
         new Subordinate()
             .taImId(taImId)
             .entityIdentifier(entityIdentifier)
+            .entityTypes(List.of("openid_relying_party"))
             .jwks(TestDataOperations.genJWKS().toJSONObject())
             .ecLocationAutomaticResolve(false)
             .ecLocation(entityIdentifier + "/.well-known/openid-federation"))

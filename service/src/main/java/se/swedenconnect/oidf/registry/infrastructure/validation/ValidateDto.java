@@ -575,6 +575,8 @@ public class ValidateDto {
         .build()
         .ifFailThrow("entityIdentifier", dto.getEntityIdentifier());
 
+    validateEntityTypes(dto.getEntityTypes(), dto.getIsIntermediate());
+
     this.v.jwks()
         .build()
         .ifFailThrow("jwks", dto.getJwks());
@@ -620,6 +622,25 @@ public class ValidateDto {
       validateStringList("constraints.naming_constraints.excluded", naming.getExcluded());
     }
     validateStringList("constraints.allowed_entity_types", constraints.getAllowedEntityTypes());
+  }
+
+  /**
+   * Validates the entity types of a subordinate. At least one entity type is required, and an Intermediate Entity must
+   * have the entity type federation_entity.
+   *
+   * @param entityTypes the entity types
+   * @param isIntermediate true if the subordinate is an Intermediate Entity, may be null
+   * @throws PropertyValidationFailException if validation fails
+   */
+  static void validateEntityTypes(final List<String> entityTypes, final Boolean isIntermediate) {
+    if (entityTypes == null || entityTypes.isEmpty()) {
+      throw new PropertyValidationFailException("entityTypes", "At least one entity type is required");
+    }
+    validateStringList("entityTypes", entityTypes);
+    if (Boolean.TRUE.equals(isIntermediate) && !entityTypes.contains("federation_entity")) {
+      throw new PropertyValidationFailException("isIntermediate",
+          "An Intermediate Entity must have the entity type federation_entity");
+    }
   }
 
   private static void validateStringList(final String key, final List<String> list) {

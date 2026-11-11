@@ -360,6 +360,8 @@ public class OidfApiService {
     sub.setCrit(EmptyToNull.list(subDto.getCrit()));
     Optional.ofNullable(subDto.getConstraints()).map(this::toConstraintRecord).ifPresent(sub::setConstraints);
     sub.setEntityIdentifier(new EntityID(subDto.getEntityIdentifier()));
+    sub.setEntityTypes(EmptyToNull.list(subDto.getEntityTypes()));
+    sub.setIsIntermediate(subDto.getIsIntermediate());
     // if autoresolve is marked true. System tries to get the hosted entity.
     // If not found this subordinate relation is removed since it can not be resolved
     if (subDto.getEcLocationAutomaticResolve()) {

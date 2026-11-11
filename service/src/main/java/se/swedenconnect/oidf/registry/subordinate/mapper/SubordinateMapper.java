@@ -53,6 +53,8 @@ public final class SubordinateMapper {
     entity.setTaIm(taIm);
     entity.setJwks(dto.getJwks());
     entity.setEntityidentifier(dto.getEntityIdentifier());
+    entity.setEntityTypes(dto.getEntityTypes());
+    entity.setIntermediate(Optional.ofNullable(dto.getIsIntermediate()).orElse(false));
 
     Optional.ofNullable(dto.getCrit()).ifPresent(entity::setCrit);
     Optional.ofNullable(dto.getMetadataPolicyCrit()).ifPresent(entity::setMetadataPolicyCrit);
@@ -76,6 +78,8 @@ public final class SubordinateMapper {
   public static void updateEntity(final Subordinate entity, final SubordinateDto dto) {
     entity.setJwks(dto.getJwks());
     entity.setEntityidentifier(dto.getEntityIdentifier());
+    entity.setEntityTypes(dto.getEntityTypes());
+    entity.setIntermediate(Optional.ofNullable(dto.getIsIntermediate()).orElse(false));
 
     entity.setCrit(Optional.ofNullable(dto.getCrit()).orElse(Collections.emptyList()));
     entity.setMetadataPolicyCrit(Optional.ofNullable(dto.getMetadataPolicyCrit()).orElse(Collections.emptyList()));
@@ -99,6 +103,8 @@ public final class SubordinateMapper {
     dto.setTaImId(subordinate.getTaIm().getTaImId());
     dto.setJwks(subordinate.getJwks());
     dto.setEntityIdentifier(subordinate.getEntityidentifier());
+    dto.setEntityTypes(subordinate.getEntityTypes());
+    dto.setIsIntermediate(subordinate.isIntermediate());
 
     Optional.ofNullable(subordinate.getCrit()).ifPresent(dto::setCrit);
     Optional.ofNullable(subordinate.getMetadataPolicyCrit()).ifPresent(dto::setMetadataPolicyCrit);

@@ -113,6 +113,42 @@
             Load JWKS
           </v-btn>
 
+          <v-card variant="outlined" class="mb-4 pa-4" role="group" aria-labelledby="entity-types-title">
+            <h3 id="entity-types-title" class="text-subtitle-1 mb-1">Entity Types</h3>
+            <p class="text-caption mb-4">
+              The Entity Type Identifiers of the subordinate, such as openid_relying_party for a Relying Party.
+              They are normally the same as the top-level keys of the metadata in the subordinate's entity
+              configuration. The federation services use them to answer the entity_type and intermediate filters
+              of the subordinate listing, so at least one entity type is required.
+            </p>
+
+            <v-combobox
+                id="subordinate-entity-types"
+                v-model="entityTypes"
+                :items="subordinateEntityTypeSuggestions"
+                label="Entity Types"
+                multiple
+                chips
+                closable-chips
+                :rules="[rules.requiredList]"
+                :disabled="saving"
+                hint="Entity types of the subordinate (required). Pick from the list or type your own and press Enter."
+                persistent-hint
+                class="mb-4"
+            ></v-combobox>
+
+            <v-switch
+                id="subordinate-is-intermediate"
+                v-model="isIntermediate"
+                label="Intermediate Entity"
+                color="primary"
+                :rules="[rules.intermediateNeedsFederationEntity]"
+                :disabled="saving"
+                hint="Turn on if the subordinate is an Intermediate Entity, that is, it has subordinates of its own. Requires the entity type federation_entity."
+                persistent-hint
+            ></v-switch>
+          </v-card>
+
 
           <ListField
               v-model="metadataPolicyCrit"
@@ -363,6 +399,8 @@ const maxPathLength = ref('');
 const namingPermitted = ref([]);
 const namingExcluded = ref([]);
 const allowedEntityTypes = ref([]);
+const entityTypes = ref([]);
+const isIntermediate = ref(false);
 const entityTypeSuggestions = [
   'openid_provider',
   'openid_relying_party',
@@ -370,6 +408,7 @@ const entityTypeSuggestions = [
   'oauth_client',
   'oauth_resource',
 ];
+const subordinateEntityTypeSuggestions = ['federation_entity', ...entityTypeSuggestions];
 // Entity identifier of the Trust Anchor or Intermediate that issues the subordinate statement.
 const issuerEntityIdentifier = ref('');
 const ecLocation = ref('');
@@ -386,6 +425,8 @@ const {markSaved} = useUnsavedChanges(() => ({
   namingPermitted: namingPermitted.value,
   namingExcluded: namingExcluded.value,
   allowedEntityTypes: allowedEntityTypes.value,
+  entityTypes: entityTypes.value,
+  isIntermediate: isIntermediate.value,
   ecLocation: ecLocation.value,
   ecLocationAutomaticResolve: ecLocationAutomaticResolve.value,
 }));
@@ -413,6 +454,9 @@ const rules = {
     }
     return !!value || 'This field is required.';
   },
+  requiredList: (value) => cleanList(value).length > 0 || 'At least one entity type is required.',
+  intermediateNeedsFederationEntity: (value) => !value || cleanList(entityTypes.value).includes('federation_entity')
+      || 'An Intermediate Entity must have the entity type federation_entity.',
   nonNegativeInteger: (value) => {
     if (value === '' || value === null || value === undefined) return true;
     return /^\d+$/.test(String(value)) || 'Must be a whole number, 0 or more.';
@@ -487,6 +531,8 @@ async function loadSubordinate() {
   if (response) {
     taImIdValue.value = response.taImId || taImId.value || null;
     entityIdentifier.value = response.entityIdentifier || '';
+    entityTypes.value = response.entityTypes || [];
+    isIntermediate.value = response.isIntermediate || false;
     jwks.value = response.jwks ? JSON.stringify(response.jwks, null, 2) : '';
     metadataPolicyCrit.value = response.metadataPolicyCrit || [];
     crit.value = response.crit || [];
@@ -548,6 +594,8 @@ async function submitForm() {
       taImId: taImIdValue.value || taImId.value || null,
       jwks: jwks.value && jwks.value.trim() ? JSON.parse(jwks.value) : null,
       entityIdentifier: entityIdentifier.value || '',
+      entityTypes: cleanList(entityTypes.value),
+      isIntermediate: isIntermediate.value || false,
       crit: Array.isArray(crit.value)
           ? crit.value.filter(c => c && (typeof c === 'string' ? c.trim() !== '' : true))
           : [],

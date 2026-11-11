@@ -48,6 +48,14 @@ public class SubordinateDto {
   @Schema(description = "Subject (entity identifier)", example = "https://subordinate.example.se")
   private String entityIdentifier;
 
+  @Schema(description = "Entity Type Identifiers of the subordinate. Required. Used by the entity_type filter of "
+      + "the subordinate listing.", example = "[\"openid_relying_party\"]")
+  private List<String> entityTypes;
+
+  @Schema(description = "True if the subordinate is an Intermediate Entity. Used by the intermediate filter of the "
+      + "subordinate listing. Requires federation_entity in entityTypes.")
+  private Boolean isIntermediate;
+
   @Schema(description = "List of crit claims", example = "[\"claim1\", \"claim2\"]")
   private List<String> crit;
 

@@ -367,6 +367,7 @@ class EntityRenameIT {
         new Subordinate()
             .taImId(taImId)
             .entityIdentifier(entityIdentifier)
+            .entityTypes(List.of("openid_relying_party"))
             .jwks(TestDataOperations.genJWKS().toJSONObject())
             .ecLocationAutomaticResolve(false)
             .ecLocation(entityIdentifier + "/.well-known/openid-federation"))

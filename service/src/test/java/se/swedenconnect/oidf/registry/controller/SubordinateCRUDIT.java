@@ -107,6 +107,7 @@ class SubordinateCRUDIT {
     final Subordinate created = this.subordinatesApi.createSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/create")
+        .entityTypes(List.of("openid_relying_party"))
         .jwks(TestDataOperations.genJWKS().toJSONObject())
         .metadataPolicy(policy));
 
@@ -130,6 +131,7 @@ class SubordinateCRUDIT {
         new Subordinate()
             .taImId(trustAnchorId)
             .entityIdentifier("https://sub.example.se/policy-null")
+            .entityTypes(List.of("openid_relying_party"))
             .jwks(TestDataOperations.genJWKS().toJSONObject())
             .metadataPolicy(policy));
     assertThat(created.getMetadataPolicy()).isEqualTo(policy);
@@ -148,6 +150,7 @@ class SubordinateCRUDIT {
     return new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier(entityIdentifier)
+        .entityTypes(List.of("openid_relying_party"))
         .jwks(TestDataOperations.genJWKS().toJSONObject())
         .constraints(constraints);
   }
@@ -230,6 +233,42 @@ class SubordinateCRUDIT {
     }
   }
 
+  // ========== entity types CRUD ==========
+
+  @Test
+  @DisplayName("Create subordinate stores and returns the entity types and is intermediate")
+  void createSubordinateWithEntityTypes() {
+    final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-entity-types");
+
+    final Subordinate created = this.subordinatesApi.createSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        this.subordinateWith(trustAnchorId, "https://sub.example.se/entity-types", null)
+            .entityTypes(List.of("federation_entity", "openid_provider"))
+            .isIntermediate(true));
+
+    final Subordinate loaded = this.subordinatesApi.getSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId,
+        created.getSubordinateId());
+    assertThat(loaded.getEntityTypes()).containsExactly("federation_entity", "openid_provider");
+    assertThat(loaded.getIsIntermediate()).isTrue();
+  }
+
+  @Test
+  @DisplayName("Subordinate without entity types, or intermediate without federation_entity, is rejected")
+  void createSubordinateWithInvalidEntityTypesIsRejected() {
+    final UUID trustAnchorId = this.setupTrustAnchor("https://www.pm.se/oidf/sub-entity-types-invalid");
+
+    for (final Subordinate subordinate : List.of(
+        this.subordinateWith(trustAnchorId, "https://sub.example.se/no-entity-types", null).entityTypes(null),
+        this.subordinateWith(trustAnchorId, "https://sub.example.se/empty-entity-types", null)
+            .entityTypes(List.of()),
+        this.subordinateWith(trustAnchorId, "https://sub.example.se/intermediate-without-fe", null)
+            .isIntermediate(true))) {
+      assertThatThrownBy(() -> this.subordinatesApi.createSubordinate(TENANT,
+          JwtTestUtils.OrganisationType.PM.orgId, subordinate))
+          .isInstanceOf(RestClientResponseException.class)
+          .satisfies(ex -> assertThat(((RestClientResponseException) ex).getStatusCode().value()).isEqualTo(400));
+    }
+  }
+
   @Test
   @DisplayName("Create subordinate without metadataPolicy stores null")
   void createSubordinateWithoutSubordinatePolicyStoresNull() {
@@ -239,6 +278,7 @@ class SubordinateCRUDIT {
     final Subordinate created = this.subordinatesApi.createSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/no-policy")
+        .entityTypes(List.of("openid_relying_party"))
         .jwks(TestDataOperations.genJWKS().toJSONObject()));
 
     assertThat(created.getMetadataPolicy()).isEqualTo(Collections.emptyMap());
@@ -256,6 +296,7 @@ class SubordinateCRUDIT {
     this.subordinatesApi.createSubordinateWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/get")
+        .entityTypes(List.of("openid_relying_party"))
         .jwks(TestDataOperations.genJWKS().toJSONObject())
         .metadataPolicy(policy));
 
@@ -279,12 +320,14 @@ class SubordinateCRUDIT {
     this.subordinatesApi.createSubordinateWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/update")
+        .entityTypes(List.of("openid_relying_party"))
         .jwks(TestDataOperations.genJWKS().toJSONObject())
         .metadataPolicy(initialPolicy));
 
     final Subordinate updated = this.subordinatesApi.updateSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/update")
+        .entityTypes(List.of("openid_relying_party"))
         .jwks(TestDataOperations.genJWKS().toJSONObject())
         .metadataPolicy(updatedPolicy));
 
@@ -303,12 +346,14 @@ class SubordinateCRUDIT {
     this.subordinatesApi.createSubordinateWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/clear")
+        .entityTypes(List.of("openid_relying_party"))
         .jwks(TestDataOperations.genJWKS().toJSONObject())
         .metadataPolicy(policy));
 
     final Subordinate updated = this.subordinatesApi.updateSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/clear")
+        .entityTypes(List.of("openid_relying_party"))
         .jwks(TestDataOperations.genJWKS().toJSONObject())
         .metadataPolicy(null));
 
@@ -328,6 +373,7 @@ class SubordinateCRUDIT {
         this.subordinatesApi.createSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, new Subordinate()
             .taImId(trustAnchorId)
             .entityIdentifier("https://sub.example.se/metadata-create")
+            .entityTypes(List.of("openid_relying_party"))
             .jwks(TestDataOperations.genJWKS().toJSONObject())
             .metadata(metadata));
 
@@ -345,6 +391,7 @@ class SubordinateCRUDIT {
         this.subordinatesApi.createSubordinate(TENANT, JwtTestUtils.OrganisationType.PM.orgId, new Subordinate()
             .taImId(trustAnchorId)
             .entityIdentifier("https://sub.example.se/no-metadata")
+            .entityTypes(List.of("openid_relying_party"))
             .jwks(TestDataOperations.genJWKS().toJSONObject()));
 
     assertThat(created.getMetadata()).isEqualTo(Collections.emptyMap());
@@ -362,6 +409,7 @@ class SubordinateCRUDIT {
         new Subordinate()
             .taImId(trustAnchorId)
             .entityIdentifier("https://sub.example.se/metadata-get")
+            .entityTypes(List.of("openid_relying_party"))
             .jwks(TestDataOperations.genJWKS().toJSONObject())
             .metadata(metadata));
 
@@ -385,6 +433,7 @@ class SubordinateCRUDIT {
         new Subordinate()
             .taImId(trustAnchorId)
             .entityIdentifier("https://sub.example.se/metadata-update")
+            .entityTypes(List.of("openid_relying_party"))
             .jwks(TestDataOperations.genJWKS().toJSONObject())
             .metadata(initialMetadata));
 
@@ -393,6 +442,7 @@ class SubordinateCRUDIT {
             new Subordinate()
                 .taImId(trustAnchorId)
                 .entityIdentifier("https://sub.example.se/metadata-update")
+                .entityTypes(List.of("openid_relying_party"))
                 .jwks(TestDataOperations.genJWKS().toJSONObject())
                 .metadata(updatedMetadata));
 
@@ -411,6 +461,7 @@ class SubordinateCRUDIT {
         new Subordinate()
             .taImId(trustAnchorId)
             .entityIdentifier("https://sub.example.se/metadata-clear")
+            .entityTypes(List.of("openid_relying_party"))
             .jwks(TestDataOperations.genJWKS().toJSONObject())
             .metadata(metadata));
 
@@ -419,6 +470,7 @@ class SubordinateCRUDIT {
             new Subordinate()
                 .taImId(trustAnchorId)
                 .entityIdentifier("https://sub.example.se/metadata-clear")
+                .entityTypes(List.of("openid_relying_party"))
                 .jwks(TestDataOperations.genJWKS().toJSONObject())
                 .metadata(null));
 
@@ -436,6 +488,7 @@ class SubordinateCRUDIT {
     this.subordinatesApi.createSubordinateWithId(TENANT, JwtTestUtils.OrganisationType.PM.orgId, subordinateId, new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier("https://sub.example.se/delete")
+        .entityTypes(List.of("openid_relying_party"))
         .jwks(TestDataOperations.genJWKS().toJSONObject())
         .metadataPolicy(policy));
 
