@@ -10,6 +10,8 @@
 
 - Subordinates have entity types and can be marked as Intermediate Entity, which are sent to the federation services
   and can be edited in the GUI ([#400](https://github.com/swedenconnect/openid-federation-registry/issues/400)).
+- Subordinate statements only contain `ec_location` for Relying Parties and hosted entities, not for OpenID Providers
+  ([#402](https://github.com/swedenconnect/openid-federation-registry/issues/402)).
 
 
 ### Version 0.9.13

@@ -374,59 +374,36 @@ public class OidfApiService {
             sub.setCrit(EmptyToNull.list(dto.getCrit()));
             sub.setVirtualEntityId(
                 Optional.ofNullable(dto.getEffectiveEcLocation()).orElse(dto.getEntityIdentifier()));
-            return this.withEcLocation(sub, dto.getMetadata());
+            return this.withEcLocation(sub, true);
           })
           .orElse(null);
     }
     sub.setVirtualEntityId(Optional.ofNullable(subDto.getEcLocation()).orElse(subDto.getEntityIdentifier()));
-    return this.withEcLocation(sub, null);
+    return this.withEcLocation(sub, !sub.getVirtualEntityId().equals(subDto.getEntityIdentifier()));
   }
 
   /**
-   * Sets the ec_location of a subordinate to the well-known location under its virtual entity ID. A subordinate
-   * whose Entity Configuration is found under its own entity identifier gets one too, unless it is an Intermediate
-   * Entity: the Swedish OpenID Federation Profile (section 2.4.2) recommends ec_location for every Leaf Entity,
-   * while OpenID Federation Entity Configuration Hosting (section 2) recommends it for Leaf Entities only.
+   * Sets the ec_location of a subordinate to the well-known location under its virtual entity ID. Only a Relying Party
+   * gets one, or a subordinate that is hosted: the Swedish OpenID Federation Rules and Policies (section 3.2) include
+   * ec_location for every Relying Party, but not for an OpenID Provider, which publishes its own Entity Configuration.
    *
-   * @param sub the subordinate, with its virtual entity ID set
-   * @param hostedMetadata the metadata of the hosted entity of the subordinate, or {@code null} if not hosted
+   * @param sub the subordinate, with its virtual entity ID and entity types set
+   * @param hosted true if the Entity Configuration of the subordinate is hosted
    * @return the subordinate
    */
   private TrustAnchorProperties.SubordinateListingProperty withEcLocation(
-      final TrustAnchorProperties.SubordinateListingProperty sub, final Map<String, Object> hostedMetadata) {
+      final TrustAnchorProperties.SubordinateListingProperty sub, final boolean hosted) {
     final String virtualEntityId = sub.getVirtualEntityId();
-    final boolean hostedElsewhere = !virtualEntityId.equals(sub.getEntityIdentifier().getValue());
-    if (hostedElsewhere || !this.isIntermediate(sub, hostedMetadata)) {
+    final boolean relyingParty = Optional.ofNullable(sub.getEntityTypes())
+        .map(types -> types.contains("openid_relying_party"))
+        .orElse(false);
+    if (hosted || relyingParty) {
       final String base = virtualEntityId.endsWith("/")
           ? virtualEntityId.substring(0, virtualEntityId.length() - 1)
           : virtualEntityId;
       sub.setOverrideConfigurationLocation(base + "/.well-known/openid-federation");
     }
     return sub;
-  }
-
-  /**
-   * Tells whether a subordinate is known to be an Intermediate Entity: it is a Trust Anchor or Intermediate of the
-   * registry, or its metadata has a federation_fetch_endpoint.
-   *
-   * @param sub the subordinate
-   * @param hostedMetadata the metadata of the hosted entity of the subordinate, or {@code null} if not hosted
-   * @return true if the subordinate is an Intermediate Entity
-   */
-  private boolean isIntermediate(final TrustAnchorProperties.SubordinateListingProperty sub,
-      final Map<String, Object> hostedMetadata) {
-    return hasFetchEndpoint(sub.getMetadata()) || hasFetchEndpoint(hostedMetadata)
-        || this.entityRepository.findByEntityTypeAndOptionalIssuer(EntityType.FEDERATION_ENTITY,
-            sub.getEntityIdentifier().getValue()).stream()
-        .anyMatch(entity -> entity.getTrustanchorIntermediate() != null);
-  }
-
-  private static boolean hasFetchEndpoint(final Map<String, Object> metadata) {
-    return Optional.ofNullable(metadata)
-        .map(m -> m.get("federation_entity"))
-        .filter(Map.class::isInstance)
-        .map(m -> ((Map<?, ?>) m).get("federation_fetch_endpoint"))
-        .isPresent();
   }
 
   private ResolverProperties toResolver(final Resolver resolverEntity) {
