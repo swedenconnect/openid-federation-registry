@@ -90,6 +90,7 @@ class OidfApiServiceToSubordinatesTest {
   @Test
   void mapsEntityIdentifierCritAndEcLocation() {
     final Subordinate sub = subordinate("https://entity.example.com", false);
+    sub.setEntityTypes(List.of("openid_relying_party"));
     sub.setCrit(List.of("claim1", "claim2"));
     sub.setMetadataPolicyCrit(List.of("op1"));
 
@@ -258,48 +259,34 @@ class OidfApiServiceToSubordinatesTest {
   @Test
   void ecLocationOfEntityIdentifierWithTrailingSlash_hasNoDoubleSlash() {
     final Subordinate sub = subordinate("https://entity.example.com/", false);
+    sub.setEntityTypes(List.of("openid_relying_party"));
 
     assertThat(this.service.toSubordinates(sub).getOverrideConfigurationLocation())
         .isEqualTo("https://entity.example.com/.well-known/openid-federation");
   }
 
   @Test
-  void intermediateOfTheRegistry_getsNoEcLocation() {
-    final Subordinate sub = subordinate("https://intermediate.example.com", false);
-
-    final FederationEntity intermediate = new FederationEntity();
-    intermediate.setEntityType(EntityType.FEDERATION_ENTITY);
-    intermediate.setIssuer("https://intermediate.example.com");
-    intermediate.setTrustanchorIntermediate(new TrustAnchorIntermediateModule());
-    when(this.entityRepository.findByEntityTypeAndOptionalIssuer(
-        eq(EntityType.FEDERATION_ENTITY), eq("https://intermediate.example.com")))
-        .thenReturn(List.of(intermediate));
+  void openIdProvider_getsNoEcLocation() {
+    final Subordinate sub = subordinate("https://op.example.com", false);
+    sub.setEntityTypes(List.of("federation_entity", "openid_provider"));
 
     assertThat(this.service.toSubordinates(sub).getOverrideConfigurationLocation()).isNull();
   }
 
   @Test
-  void subordinateWithFetchEndpointInMetadata_getsNoEcLocation() {
+  void intermediate_getsNoEcLocation() {
     final Subordinate sub = subordinate("https://intermediate.example.com", false);
-    sub.setMetadata(Map.of("federation_entity",
-        Map.of("federation_fetch_endpoint", "https://intermediate.example.com/fetch")));
+    sub.setEntityTypes(List.of("federation_entity"));
+    sub.setIntermediate(true);
 
     assertThat(this.service.toSubordinates(sub).getOverrideConfigurationLocation()).isNull();
   }
 
   @Test
-  void federationEntityWithoutIntermediateModule_getsEcLocation() {
-    final Subordinate sub = subordinate("https://leaf.example.com", false);
+  void subordinateWithoutEntityTypes_getsNoEcLocation() {
+    final Subordinate sub = subordinate("https://entity.example.com", false);
 
-    final FederationEntity leaf = new FederationEntity();
-    leaf.setEntityType(EntityType.FEDERATION_ENTITY);
-    leaf.setIssuer("https://leaf.example.com");
-    when(this.entityRepository.findByEntityTypeAndOptionalIssuer(
-        eq(EntityType.FEDERATION_ENTITY), eq("https://leaf.example.com")))
-        .thenReturn(List.of(leaf));
-
-    assertThat(this.service.toSubordinates(sub).getOverrideConfigurationLocation())
-        .isEqualTo("https://leaf.example.com/.well-known/openid-federation");
+    assertThat(this.service.toSubordinates(sub).getOverrideConfigurationLocation()).isNull();
   }
 
   @Test
