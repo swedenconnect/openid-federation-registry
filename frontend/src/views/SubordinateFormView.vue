@@ -90,13 +90,11 @@
               label="JWKS (Public Keys)"
               :rules="[rules.required, rules.json]"
               :disabled="saving"
-              :rows="5"
-              auto-grow
+              rows="10"
               required
               hint="Public keys in JWKS format (required, JSON)"
               persistent-hint
-              class="mb-4"
-              style="font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;"
+              class="mb-4 mono"
           ></v-textarea>
           <div v-if="jwksLoadedFrom" class="text-body-2 text-medium-emphasis mb-4">
             JWKS was loaded from url: {{ jwksLoadedFrom }}
@@ -112,6 +110,55 @@
           >
             Load JWKS
           </v-btn>
+
+          <v-card variant="outlined" class="mb-4 pa-4" role="group" aria-labelledby="entity-types-title">
+            <h3 id="entity-types-title" class="text-subtitle-1 mb-1">Entity Types</h3>
+            <p class="text-caption mb-4">
+              The Entity Type Identifiers of the subordinate, such as openid_relying_party for a Relying Party.
+              They are normally the same as the top-level keys of the metadata in the subordinate's entity
+              configuration. The federation services use them to answer the entity_type and intermediate filters
+              of the subordinate listing, so at least one entity type is required.
+            </p>
+
+            <div class="d-flex align-start gap-2 mb-4">
+              <v-combobox
+                  id="subordinate-entity-types"
+                  v-model="entityTypes"
+                  :items="subordinateEntityTypeSuggestions"
+                  label="Entity Types"
+                  multiple
+                  chips
+                  closable-chips
+                  :rules="[rules.requiredList]"
+                  :disabled="saving"
+                  hint="Entity types of the subordinate (required). Pick from the list or type your own and press Enter. AutoFill takes them from the subordinate's entity configuration."
+                  persistent-hint
+                  class="flex-grow-1"
+              ></v-combobox>
+              <v-btn
+                  id="btn-autofill-entity-types"
+                  color="secondary"
+                  variant="outlined"
+                  :disabled="!entityIdentifier || !entityIdentifier.trim() || autoFilling || saving"
+                  :loading="autoFilling"
+                  @click="autoFill"
+                  class="mt-2"
+              >
+                AutoFill
+              </v-btn>
+            </div>
+
+            <v-switch
+                id="subordinate-is-intermediate"
+                v-model="isIntermediate"
+                label="Intermediate Entity"
+                color="primary"
+                :rules="[rules.intermediateNeedsFederationEntity]"
+                :disabled="saving"
+                hint="Turn on if the subordinate is an Intermediate Entity, that is, it has subordinates of its own. Requires the entity type federation_entity."
+                persistent-hint
+            ></v-switch>
+          </v-card>
 
 
           <ListField
@@ -135,12 +182,10 @@
               label="Metadata"
               :rules="[rules.json]"
               :disabled="saving"
-              :rows="5"
-              auto-grow
+              rows="10"
               hint="Metadata for this subordinate statement (optional, JSON)"
               persistent-hint
-              class="mb-4"
-              style="font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;"
+              class="mb-4 mono"
           ></v-textarea>
 
           <v-card variant="outlined" class="mb-4 pa-4" role="group" aria-labelledby="constraints-title">
@@ -363,6 +408,8 @@ const maxPathLength = ref('');
 const namingPermitted = ref([]);
 const namingExcluded = ref([]);
 const allowedEntityTypes = ref([]);
+const entityTypes = ref([]);
+const isIntermediate = ref(false);
 const entityTypeSuggestions = [
   'openid_provider',
   'openid_relying_party',
@@ -370,6 +417,7 @@ const entityTypeSuggestions = [
   'oauth_client',
   'oauth_resource',
 ];
+const subordinateEntityTypeSuggestions = ['federation_entity', ...entityTypeSuggestions];
 // Entity identifier of the Trust Anchor or Intermediate that issues the subordinate statement.
 const issuerEntityIdentifier = ref('');
 const ecLocation = ref('');
@@ -386,6 +434,8 @@ const {markSaved} = useUnsavedChanges(() => ({
   namingPermitted: namingPermitted.value,
   namingExcluded: namingExcluded.value,
   allowedEntityTypes: allowedEntityTypes.value,
+  entityTypes: entityTypes.value,
+  isIntermediate: isIntermediate.value,
   ecLocation: ecLocation.value,
   ecLocationAutomaticResolve: ecLocationAutomaticResolve.value,
 }));
@@ -400,6 +450,7 @@ let ecCheckSeq = 0;
 
 const jwksPickerDialog = ref(false);
 const jwksPickerItems = ref([]);
+const autoFilling = ref(false);
 
 const isEdit = computed(() => !!route.params.id);
 const entityId = computed(() => route.params.entityId);
@@ -413,6 +464,9 @@ const rules = {
     }
     return !!value || 'This field is required.';
   },
+  requiredList: (value) => cleanList(value).length > 0 || 'At least one entity type is required.',
+  intermediateNeedsFederationEntity: (value) => !value || cleanList(entityTypes.value).includes('federation_entity')
+      || 'An Intermediate Entity must have the entity type federation_entity.',
   nonNegativeInteger: (value) => {
     if (value === '' || value === null || value === undefined) return true;
     return /^\d+$/.test(String(value)) || 'Must be a whole number, 0 or more.';
@@ -469,6 +523,35 @@ watch(entityIdentifier, (value) => {
 
 onBeforeUnmount(() => clearTimeout(ecCheckTimer));
 
+// Fills in the entity types from the metadata of the subordinate's entity configuration. The entity types are the
+// top-level keys of the metadata. An entity with both a fetch and a list endpoint has subordinates of its own, and is
+// an Intermediate Entity.
+async function autoFill() {
+  autoFilling.value = true;
+  errorStore.clearError();
+  try {
+    const response = await fetch(entityConfigurationViewPath(userStore.selectedTenant, userStore.orgNumber), {
+      method: 'POST',
+      credentials: 'include',
+      headers: {'Content-Type': 'text/plain', ...csrfHeaders()},
+      body: entityIdentifier.value.trim(),
+    });
+    if (!response.ok) {
+      errorStore.setError('The entity configuration could not be loaded.');
+      return;
+    }
+    const loadedMetadata = (await response.json()).payload?.metadata || {};
+    entityTypes.value = Object.keys(loadedMetadata);
+    const federationEntity = loadedMetadata.federation_entity || {};
+    isIntermediate.value = !!federationEntity.federation_fetch_endpoint
+        && !!federationEntity.federation_list_endpoint;
+  } catch (e) {
+    errorStore.setError('The entity configuration could not be loaded.');
+  } finally {
+    autoFilling.value = false;
+  }
+}
+
 async function loadJwks() {
   const result = await loadJwksFromApi(entityIdentifier.value);
   if (!result || !Array.isArray(result) || result.length === 0) return;
@@ -487,6 +570,8 @@ async function loadSubordinate() {
   if (response) {
     taImIdValue.value = response.taImId || taImId.value || null;
     entityIdentifier.value = response.entityIdentifier || '';
+    entityTypes.value = response.entityTypes || [];
+    isIntermediate.value = response.isIntermediate || false;
     jwks.value = response.jwks ? JSON.stringify(response.jwks, null, 2) : '';
     metadataPolicyCrit.value = response.metadataPolicyCrit || [];
     crit.value = response.crit || [];
@@ -548,6 +633,8 @@ async function submitForm() {
       taImId: taImIdValue.value || taImId.value || null,
       jwks: jwks.value && jwks.value.trim() ? JSON.parse(jwks.value) : null,
       entityIdentifier: entityIdentifier.value || '',
+      entityTypes: cleanList(entityTypes.value),
+      isIntermediate: isIntermediate.value || false,
       crit: Array.isArray(crit.value)
           ? crit.value.filter(c => c && (typeof c === 'string' ? c.trim() !== '' : true))
           : [],
@@ -630,5 +717,10 @@ onMounted(async () => {
 <style scoped>
 .gap-2 {
   gap: 8px;
+}
+
+.mono :deep(textarea) {
+  font-family: monospace;
+  font-size: 0.85rem;
 }
 </style>

@@ -106,6 +106,10 @@ public class TrustAnchorProperties {
     private List<String> metadataPolicyCrit;
     @SerializedName("entity-identifier")
     private EntityID entityIdentifier;
+    @SerializedName("entity-types")
+    private List<String> entityTypes;
+    @SerializedName("is-intermediate")
+    private Boolean isIntermediate;
     @SerializedName("ec-location")
     private String overrideConfigurationLocation;
     @SerializedName("virtual-entity-id")

@@ -192,6 +192,7 @@ public class TestDataOperations {
     subordinatesApi.createSubordinate(tenant, orgNumber, Subordinate.builder()
         .taImId(createdTrustAnchor.getTrustAnchorId())
         .entityIdentifier(secondFederationEntity.getEntityIdentifier())
+        .entityTypes(List.of("openid_relying_party"))
         .metadataPolicy(this.createPolicy())
         .jwks(genJWKS().toJSONObject())
         .build());
@@ -205,6 +206,7 @@ public class TestDataOperations {
     subordinatesApi.createSubordinate(tenant, orgNumber, Subordinate.builder()
         .taImId(createdTrustAnchor.getTrustAnchorId())
         .entityIdentifier(hostedPolisen.getEntityIdentifier())
+        .entityTypes(List.of("openid_relying_party"))
         .ecLocationAutomaticResolve(true)
         .jwks(genJWKS().toJSONObject())
         .build());

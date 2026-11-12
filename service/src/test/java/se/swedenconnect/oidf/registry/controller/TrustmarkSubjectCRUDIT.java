@@ -655,6 +655,7 @@ class TrustmarkSubjectCRUDIT {
     final Subordinate subordinate = new Subordinate()
         .taImId(trustAnchorId)
         .entityIdentifier(hostedIdentifier)
+        .entityTypes(List.of("openid_relying_party"))
         .jwks(TestDataOperations.genJWKS().toJSONObject())
         .ecLocationAutomaticResolve(ecLocationAutomaticResolve);
     if (!ecLocationAutomaticResolve) {

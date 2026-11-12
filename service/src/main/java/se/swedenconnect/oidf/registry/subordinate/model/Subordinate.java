@@ -114,6 +114,13 @@ public class Subordinate extends BaseEntity implements Persistable<UUID> {
   @Convert(converter = StringListConverter.class)
   private List<String> constraintsAllowedEntityTypes;
 
+  @Column(name = "entity_types", columnDefinition = "TEXT")
+  @Convert(converter = StringListConverter.class)
+  private List<String> entityTypes;
+
+  @Column(name = "is_intermediate", nullable = false)
+  private boolean intermediate;
+
   @Override
   public UUID getId() {
     return this.subordinateId;

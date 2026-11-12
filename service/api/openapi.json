@@ -5247,6 +5247,20 @@
             "description": "Subject (entity identifier)",
             "example": "https://subordinate.example.se"
           },
+          "entityTypes": {
+            "type": "array",
+            "description": "Entity Type Identifiers of the subordinate. Required. Used by the entity_type filter of the subordinate listing.",
+            "example": [
+              "openid_relying_party"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "isIntermediate": {
+            "type": "boolean",
+            "description": "True if the subordinate is an Intermediate Entity. Used by the intermediate filter of the subordinate listing. Requires federation_entity in entityTypes."
+          },
           "crit": {
             "type": "array",
             "description": "List of crit claims",

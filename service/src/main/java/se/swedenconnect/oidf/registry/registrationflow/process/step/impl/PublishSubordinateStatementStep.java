@@ -95,6 +95,9 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
     final Optional<JSONObject> metadataPolicy = ctx.get(ContextKey.METADATA_POLICY);
     final Optional<JSONObject> subordinateMetadata = ctx.get(ContextKey.SUBORDINATE_METADATA);
     final JWKSet ecJwks = ctx.getRequired(ContextKey.ENTITY_CONFIGURATION_JWKS, JWKSet.class);
+    // The entity types of the subordinate are the entity types of its metadata.
+    final List<String> entityTypes = List.copyOf(
+        ctx.getRequired(ContextKey.ENTITY_CONFIGURATION_METADATA, JSONObject.class).keySet());
 
     final Registration registration = this.registrationRepository.findById(registrationId)
         .orElseThrow();
@@ -126,6 +129,7 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
           metadataPolicy.ifPresent(subordinateDto::setMetadataPolicy);
           subordinateMetadata.ifPresent(subordinateDto::setMetadata);
           subordinateDto.setJwks(ecJwks.toJSONObject());
+          subordinateDto.setEntityTypes(entityTypes);
           subordinateDto.setEcLocationAutomaticResolve(isHosted);
           this.subordinateService.updateSubordinate(org,subordinateDto.getSubordinateId(),subordinateDto);
            }, () -> {
@@ -137,6 +141,7 @@ public class PublishSubordinateStatementStep extends NoConfigStepAdapter {
             metadataPolicy.ifPresent(newSubordinate::setMetadataPolicy);
             subordinateMetadata.ifPresent(newSubordinate::setMetadata);
             newSubordinate.setJwks(ecJwks.toJSONObject());
+            newSubordinate.setEntityTypes(entityTypes);
             newSubordinate.setEcLocationAutomaticResolve(isHosted);
             this.subordinateService.createSubordinate(org, newSubordinate);
         });
