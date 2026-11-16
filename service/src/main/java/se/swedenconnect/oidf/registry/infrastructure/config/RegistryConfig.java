@@ -122,7 +122,8 @@ public class RegistryConfig {
         federationAPIProperties.issuer(),
         this.instanceRepository,
         tokenExpiryDuration,
-        this.registryProperties.effectiveHostedPathSegment()
+        this.registryProperties.effectiveHostedPathSegment(),
+        this.registryProperties.crossOrganizationAuthorityHintInstances()
     );
   }
 

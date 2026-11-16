@@ -6,6 +6,12 @@
 
 ---
 
+### Version 1.0.1
+
+- An instance can be configured to let the authority hints of an entity include superiors in the other
+  organizations of the instance ([#409](https://github.com/swedenconnect/openid-federation-registry/issues/409)).
+
+
 ### Version 1.0.0
 
 - Subordinates have entity types and can be marked as Intermediate Entity, which are sent to the federation services

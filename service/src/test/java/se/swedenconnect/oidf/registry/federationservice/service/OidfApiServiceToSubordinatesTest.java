@@ -38,6 +38,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -77,7 +78,8 @@ class OidfApiServiceToSubordinatesTest {
         "https://issuer.example.com",
         this.instanceRepository,
         Duration.ofHours(1),
-        ""
+        "",
+        Set.of()
     );
 
     this.organization = new Organization();

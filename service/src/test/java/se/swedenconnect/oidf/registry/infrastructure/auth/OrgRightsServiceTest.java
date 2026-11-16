@@ -55,7 +55,7 @@ class OrgRightsServiceTest {
   private RegistryProperties.InstanceProperties instanceProperties(
       final String name, final String... functionGroups) {
     return new RegistryProperties.InstanceProperties(
-        UUID.randomUUID(), name, TEST_BASE_URL, null, List.of(functionGroups), null, null);
+        UUID.randomUUID(), name, TEST_BASE_URL, null, List.of(functionGroups), null, null, null);
   }
 
   private RegistryProperties registryPropertiesWith(final RegistryProperties.InstanceProperties... instances) {
@@ -231,7 +231,7 @@ class OrgRightsServiceTest {
   private RegistryProperties.InstanceProperties operatedInstanceProperties(
       final String name, final String operatorOrgNumber, final String functionGroup) {
     return new RegistryProperties.InstanceProperties(
-        UUID.randomUUID(), name, TEST_BASE_URL, null, List.of(functionGroup), List.of(operatorOrgNumber), null);
+        UUID.randomUUID(), name, TEST_BASE_URL, null, List.of(functionGroup), List.of(operatorOrgNumber), null, null);
   }
 
   @Test
