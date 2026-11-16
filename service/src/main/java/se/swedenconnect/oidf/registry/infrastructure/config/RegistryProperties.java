@@ -238,6 +238,10 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
    *     domain requests and manage the tenant's organizations. Optional; when empty only a superuser can do so
    * @param oidfServiceApiValidationKey optional public key used to verify signed JWT responses from the oidf-service
    *     node attached to this instance
+   * @param crossOrganizationAuthorityHints whether the authority hints of a hosted entity pick up superiors in every
+   *     organization of this instance. A subordinate belongs to the organization of its Trust Anchor or Intermediate,
+   *     so an entity registered under an Intermediate of another organization gets no hint from it. Unset or
+   *     {@code false} keeps the lookup within the entity's own organization
    */
   public record InstanceProperties(UUID instanceId,
       String name,
@@ -245,7 +249,8 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
       Map<String, URI> orgBaseUrlOverrides,
       List<String> functionGroups,
       List<String> operatorOrganizations,
-      @NestedConfigurationProperty KeyEntry oidfServiceApiValidationKey) {
+      @NestedConfigurationProperty KeyEntry oidfServiceApiValidationKey,
+      Boolean crossOrganizationAuthorityHints) {
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
@@ -281,6 +286,17 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
      */
     public static String toSlug(final String name) {
       return name == null ? null : WHITESPACE.matcher(name.trim()).replaceAll("-").toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * Whether the authority hints of a hosted entity on this instance are resolved across all of its organizations.
+     * Disabled unless the instance turns it on, so an installation that has not configured anything keeps the
+     * lookup within the entity's own organization.
+     *
+     * @return true if authority hints are resolved across the organizations of this instance
+     */
+    public boolean crossOrganizationAuthorityHintsEnabled() {
+      return Optional.ofNullable(this.crossOrganizationAuthorityHints).orElse(false);
     }
 
     /**
