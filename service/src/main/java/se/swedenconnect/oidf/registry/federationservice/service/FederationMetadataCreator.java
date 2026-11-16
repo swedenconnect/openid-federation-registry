@@ -125,14 +125,18 @@ public class FederationMetadataCreator {
   /**
    * The authority hints of an entity. The superiors with a subordinate statement pointing to the entity come first,
    * followed by the authority hints stored on the entity. Duplicates and empty hints are removed.
+   * <p>
+   * A subordinate belongs to the organization of its Trust Anchor or Intermediate, which is another organization than
+   * the entity's own when the entity was registered under an Intermediate of another organization. The superiors are
+   * therefore taken from the whole instance, the same scope as the records exported for it.
    *
    * @param entity Entity
    * @return the authority hints, empty if there are none
    */
   private List<String> authorityHint(final FederationEntity entity) {
     final Set<String> hints = new LinkedHashSet<>();
-    this.subordinateRepository.findByOrganizationIdAndEntityidentifier(
-            entity.getOrganization().getOrganizationId(), entity.getIssuer())
+    this.subordinateRepository.findByInstanceIdAndEntityidentifier(
+            entity.getOrganization().getInstance().getInstanceId(), entity.getIssuer())
         .stream()
         .map(Subordinate::getTaIm)
         .map(taImEntity -> taImEntity.getEntity().getSubject())

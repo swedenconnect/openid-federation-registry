@@ -47,6 +47,18 @@ public interface SubordinateRepository extends JpaRepository<Subordinate, UUID> 
       @Param("organizationId") UUID organizationId, @Param("entityidentifier") String entityidentifier);
 
   /**
+   * Finds the subordinates pointing at an entityidentifier within an instance, in any of its organizations
+   *
+   * @param instanceId the instance ID
+   * @param entityidentifier entityidentifier
+   * @return List of Subordinate
+   */
+  @Query("SELECT s FROM Subordinate s JOIN s.taIm m JOIN m.organization o JOIN o.instance i "
+      + "WHERE i.instanceId = :instanceId AND s.entityidentifier = :entityidentifier ")
+  List<Subordinate> findByInstanceIdAndEntityidentifier(
+      @Param("instanceId") UUID instanceId, @Param("entityidentifier") String entityidentifier);
+
+  /**
    * Finds subordinate by entityidentifier
    *
    * @param entityidentifier entityidentifier
