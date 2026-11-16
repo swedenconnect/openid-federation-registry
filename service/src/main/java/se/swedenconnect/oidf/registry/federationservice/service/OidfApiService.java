@@ -106,6 +106,8 @@ public class OidfApiService {
    * @param jwkIssuer the issuer associated with the JSON Web Key (JWK)
    * @param jwkExpiryDuration jwkExpiryDuration
    * @param hostedPathSegment path segment of a calculated ec_location of a hosted entity, empty for none
+   * @param crossOrganizationInstances the instances whose authority hints are resolved across every organization of
+   *     the instance, empty for none
    */
   public OidfApiService(
       final JWK signKey,
@@ -114,14 +116,16 @@ public class OidfApiService {
       final String jwkIssuer,
       final InstanceRepository instanceRepository,
       final Duration jwkExpiryDuration,
-      final String hostedPathSegment) {
+      final String hostedPathSegment,
+      final Set<UUID> crossOrganizationInstances) {
     this.hostedPathSegment = hostedPathSegment;
     this.entityRepository = entityRepository;
     this.jwkIssuer = jwkIssuer;
     this.instanceRepository = instanceRepository;
     this.jwkExpiryDuration = jwkExpiryDuration;
     this.jwtSupport = new JWTSupport(signKey);
-    this.entityResponseFormatter = new FederationMetadataCreator(subordinateRepository, hostedPathSegment);
+    this.entityResponseFormatter =
+        new FederationMetadataCreator(subordinateRepository, hostedPathSegment, crossOrganizationInstances);
   }
 
   /**

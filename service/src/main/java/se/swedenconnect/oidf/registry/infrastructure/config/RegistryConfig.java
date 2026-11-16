@@ -115,6 +115,11 @@ public class RegistryConfig {
     final JWK jwk = this.resolveSigningKey(credentialBundles, federationAPIProperties);
     final Duration tokenExpiryDuration = federationAPIProperties.tokenExpiryDuration();
 
+    final Set<UUID> crossOrganizationInstances = this.registryProperties.instances().stream()
+        .filter(RegistryProperties.InstanceProperties::crossOrganizationAuthorityHintsEnabled)
+        .map(RegistryProperties.InstanceProperties::instanceId)
+        .collect(Collectors.toUnmodifiableSet());
+
     return new OidfApiService(
         jwk,
         this.subordinateRepository,
@@ -122,7 +127,8 @@ public class RegistryConfig {
         federationAPIProperties.issuer(),
         this.instanceRepository,
         tokenExpiryDuration,
-        this.registryProperties.effectiveHostedPathSegment()
+        this.registryProperties.effectiveHostedPathSegment(),
+        crossOrganizationInstances
     );
   }
 

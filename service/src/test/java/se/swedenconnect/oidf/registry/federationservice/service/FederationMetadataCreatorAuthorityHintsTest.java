@@ -34,9 +34,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -54,15 +58,17 @@ class FederationMetadataCreatorAuthorityHintsTest {
   @Mock
   private SubordinateRepository subordinateRepository;
 
-  private FederationMetadataCreator creator;
-
   private Instance instance;
 
   @BeforeEach
   void setUp() {
-    this.creator = new FederationMetadataCreator(this.subordinateRepository, "hosted");
     this.instance = new Instance();
     this.instance.setInstanceId(INSTANCE_ID);
+  }
+
+  /** A creator where the given instances resolve authority hints across every organization of the instance. */
+  private FederationMetadataCreator creator(final Set<UUID> crossOrganizationInstances) {
+    return new FederationMetadataCreator(this.subordinateRepository, "hosted", crossOrganizationInstances);
   }
 
   @Test
@@ -73,7 +79,7 @@ class FederationMetadataCreatorAuthorityHintsTest {
     when(this.subordinateRepository.findByInstanceIdAndEntityidentifier(INSTANCE_ID, ENTITY_ID))
         .thenReturn(List.of(subordinate));
 
-    final EntityRecord record = this.creator.createEntityResponse(hostedEntity);
+    final EntityRecord record = this.creator(Set.of(INSTANCE_ID)).createEntityResponse(hostedEntity);
 
     assertThat(record.getAuthorityHints()).containsExactly(INTERMEDIATE_ID);
   }
@@ -88,7 +94,7 @@ class FederationMetadataCreatorAuthorityHintsTest {
     when(this.subordinateRepository.findByInstanceIdAndEntityidentifier(INSTANCE_ID, ENTITY_ID))
         .thenReturn(List.of(this.subordinate(organization)));
 
-    final EntityRecord record = this.creator.createEntityResponse(hostedEntity);
+    final EntityRecord record = this.creator(Set.of(INSTANCE_ID)).createEntityResponse(hostedEntity);
 
     assertThat(record.getAuthorityHints()).containsExactly(INTERMEDIATE_ID, "https://www.pm.se/oidf/ta");
   }
@@ -100,9 +106,39 @@ class FederationMetadataCreatorAuthorityHintsTest {
     when(this.subordinateRepository.findByInstanceIdAndEntityidentifier(INSTANCE_ID, ENTITY_ID))
         .thenReturn(List.of());
 
-    final EntityRecord record = this.creator.createEntityResponse(hostedEntity);
+    final EntityRecord record = this.creator(Set.of(INSTANCE_ID)).createEntityResponse(hostedEntity);
 
     assertThat(record.getAuthorityHints()).isNull();
+  }
+
+  @Test
+  void superiorInAnotherOrganizationIsNotAnAuthorityHintWhenTheInstanceIsNotEnabled() {
+    final Organization entityOrganization = this.organization();
+    final FederationEntity hostedEntity = this.hostedEntity(entityOrganization);
+
+    when(this.subordinateRepository.findByOrganizationIdAndEntityidentifier(
+        entityOrganization.getOrganizationId(), ENTITY_ID)).thenReturn(List.of());
+
+    final EntityRecord record = this.creator(Set.of()).createEntityResponse(hostedEntity);
+
+    assertThat(record.getAuthorityHints()).isNull();
+    verify(this.subordinateRepository, never()).findByInstanceIdAndEntityidentifier(any(), any());
+  }
+
+  @Test
+  void anotherInstanceBeingEnabledDoesNotWidenThisOne() {
+    final Organization entityOrganization = this.organization();
+    final FederationEntity hostedEntity = this.hostedEntity(entityOrganization);
+
+    when(this.subordinateRepository.findByOrganizationIdAndEntityidentifier(
+        entityOrganization.getOrganizationId(), ENTITY_ID))
+        .thenReturn(List.of(this.subordinate(entityOrganization)));
+
+    final EntityRecord record =
+        this.creator(Set.of(UUID.randomUUID())).createEntityResponse(hostedEntity);
+
+    assertThat(record.getAuthorityHints()).containsExactly(INTERMEDIATE_ID);
+    verify(this.subordinateRepository, never()).findByInstanceIdAndEntityidentifier(any(), any());
   }
 
   /** An organization of the instance, each call a different one. */

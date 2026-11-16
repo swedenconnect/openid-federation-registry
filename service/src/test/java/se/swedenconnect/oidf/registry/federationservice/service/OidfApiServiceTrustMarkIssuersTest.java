@@ -44,6 +44,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -78,7 +79,8 @@ class OidfApiServiceTrustMarkIssuersTest {
   @BeforeEach
   void setUp() throws Exception {
     this.service = new OidfApiService(TestDataOperations.genKey(), this.subordinateRepository,
-        this.entityRepository, "https://issuer.example.com", this.instanceRepository, Duration.ofHours(1), "");
+        this.entityRepository, "https://issuer.example.com", this.instanceRepository, Duration.ofHours(1), "",
+        Set.of());
   }
 
   /** A trust mark issuer entity with the given trust marks, that the repository finds for the organization. */

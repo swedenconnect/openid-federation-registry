@@ -26,6 +26,7 @@ import se.swedenconnect.oidf.registry.entity.model.FederationEntity;
 import se.swedenconnect.oidf.registry.federationservice.model.EntityRecord;
 import se.swedenconnect.oidf.registry.federationservice.model.FederationMetadata;
 import se.swedenconnect.oidf.registry.federationservice.model.TrustMarkSourceProperty;
+import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
 
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * The EntityResponseFormatter class provides functionality for formatting responses related to entities. It includes
@@ -47,17 +49,22 @@ public class FederationMetadataCreator {
 
   final SubordinateRepository subordinateRepository;
   private final String hostedPathSegment;
+  private final Set<UUID> crossOrganizationInstances;
 
   /**
    * Create federation metadata
    *
    * @param subordinateRepository subordinateRepository
    * @param hostedPathSegment path segment of a calculated ec_location of a hosted entity, empty for none
+   * @param crossOrganizationInstances the instances whose authority hints are resolved across every organization of
+   *     the instance, empty for none
    */
   public FederationMetadataCreator(final SubordinateRepository subordinateRepository,
-      final String hostedPathSegment) {
+      final String hostedPathSegment,
+      final Set<UUID> crossOrganizationInstances) {
     this.subordinateRepository = subordinateRepository;
     this.hostedPathSegment = hostedPathSegment;
+    this.crossOrganizationInstances = Set.copyOf(crossOrganizationInstances);
   }
 
   /**
@@ -127,16 +134,22 @@ public class FederationMetadataCreator {
    * followed by the authority hints stored on the entity. Duplicates and empty hints are removed.
    * <p>
    * A subordinate belongs to the organization of its Trust Anchor or Intermediate, which is another organization than
-   * the entity's own when the entity was registered under an Intermediate of another organization. The superiors are
-   * therefore taken from the whole instance, the same scope as the records exported for it.
+   * the entity's own when the entity was registered under an Intermediate of another organization. An instance that
+   * has turned on {@code cross_organization_authority_hints} therefore takes the superiors from the whole instance,
+   * the same scope as the records exported for it. Without it the superiors come from the entity's own organization.
    *
    * @param entity Entity
    * @return the authority hints, empty if there are none
    */
   private List<String> authorityHint(final FederationEntity entity) {
     final Set<String> hints = new LinkedHashSet<>();
-    this.subordinateRepository.findByInstanceIdAndEntityidentifier(
-            entity.getOrganization().getInstance().getInstanceId(), entity.getIssuer())
+    final Organization organization = entity.getOrganization();
+    final UUID instanceId = organization.getInstance().getInstanceId();
+    final List<Subordinate> superiors = this.crossOrganizationInstances.contains(instanceId)
+        ? this.subordinateRepository.findByInstanceIdAndEntityidentifier(instanceId, entity.getIssuer())
+        : this.subordinateRepository.findByOrganizationIdAndEntityidentifier(
+            organization.getOrganizationId(), entity.getIssuer());
+    superiors
         .stream()
         .map(Subordinate::getTaIm)
         .map(taImEntity -> taImEntity.getEntity().getSubject())
