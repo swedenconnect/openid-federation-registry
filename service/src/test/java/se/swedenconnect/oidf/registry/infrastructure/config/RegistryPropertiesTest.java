@@ -65,6 +65,17 @@ class RegistryPropertiesTest {
   }
 
   @Test
+  @DisplayName("Only the instances that turned it on resolve authority hints across organizations")
+  void crossOrganizationAuthorityHintInstancesHoldsOnlyTheEnabledOnes() {
+    final RegistryProperties.InstanceProperties enabled = this.instanceWithCrossOrganizationHints(true);
+    final RegistryProperties.InstanceProperties disabled = this.instanceWithCrossOrganizationHints(null);
+
+    final RegistryProperties properties = this.propertiesWith(enabled, disabled);
+
+    assertThat(properties.crossOrganizationAuthorityHintInstances()).containsExactly(enabled.instanceId());
+  }
+
+  @Test
   @DisplayName("The hosted path segment is hosted when not configured, and can be changed or left out")
   void hostedPathSegment() {
     assertThat(this.propertiesWithSegment(null).effectiveHostedPathSegment()).isEqualTo("hosted");

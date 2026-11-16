@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -81,6 +82,19 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
     return Optional.ofNullable(this.registration)
         .map(RegistrationProperties::requireRegisteredDomain)
         .orElse(true);
+  }
+
+  /**
+   * The instances that resolve the authority hints of an entity across every organization of the instance, see
+   * {@link InstanceProperties#crossOrganizationAuthorityHintsEnabled()}.
+   *
+   * @return the instance ids that have it turned on, empty if none has
+   */
+  public Set<UUID> crossOrganizationAuthorityHintInstances() {
+    return this.instances.stream()
+        .filter(InstanceProperties::crossOrganizationAuthorityHintsEnabled)
+        .map(InstanceProperties::instanceId)
+        .collect(Collectors.toUnmodifiableSet());
   }
 
   /**
@@ -238,7 +252,7 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
    *     domain requests and manage the tenant's organizations. Optional; when empty only a superuser can do so
    * @param oidfServiceApiValidationKey optional public key used to verify signed JWT responses from the oidf-service
    *     node attached to this instance
-   * @param crossOrganizationAuthorityHints whether the authority hints of a hosted entity pick up superiors in every
+   * @param crossOrganizationAuthorityHints whether the authority hints of an entity pick up superiors in every
    *     organization of this instance. A subordinate belongs to the organization of its Trust Anchor or Intermediate,
    *     so an entity registered under an Intermediate of another organization gets no hint from it. Unset or
    *     {@code false} keeps the lookup within the entity's own organization
@@ -289,7 +303,7 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
     }
 
     /**
-     * Whether the authority hints of a hosted entity on this instance are resolved across all of its organizations.
+     * Whether the authority hints of an entity on this instance are resolved across all of its organizations.
      * Disabled unless the instance turns it on, so an installation that has not configured anything keeps the
      * lookup within the entity's own organization.
      *
