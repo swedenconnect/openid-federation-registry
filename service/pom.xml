@@ -284,6 +284,18 @@
                             <arguments>ci</arguments>
                         </configuration>
                     </execution>
+                    <!-- The frontend unit tests. Skipped together with the rest of the frontend build
+                         (-Dfrontend.skip=true). -->
+                    <execution>
+                        <id>npm-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>test</arguments>
+                        </configuration>
+                    </execution>
                     <execution>
                         <id>npm-build</id>
                         <phase>generate-resources</phase>

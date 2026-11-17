@@ -4622,6 +4622,49 @@
         }
       }
     },
+    "/registration-admin/v1/{tenant}/{orgNumber}/entity-reviews/count": {
+      "get": {
+        "tags": [
+          "EntityReview"
+        ],
+        "summary": "Count what awaits review on this tenant",
+        "operationId": "countPendingReviews",
+        "parameters": [
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/registration-admin/v1/{tenant}/{orgNumber}/entity-reviews": {
       "get": {
         "tags": [

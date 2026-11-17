@@ -6,6 +6,12 @@
 
 ---
 
+### Version 1.0.2
+
+- The number on the Registrations tab matches the review list and is updated when something is decided
+  ([#408](https://github.com/swedenconnect/openid-federation-registry/issues/408)).
+
+
 ### Version 1.0.1
 
 - An instance can be configured to let the authority hints of an entity include superiors in the other
