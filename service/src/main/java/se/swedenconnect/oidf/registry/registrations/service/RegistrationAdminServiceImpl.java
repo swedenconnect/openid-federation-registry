@@ -262,6 +262,17 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
   }
 
   @Override
+  @Transactional(readOnly = true)
+  public List<UUID> pendingDomainIds(final OrganizationRecord organizationRecord) {
+    final UUID instanceId = this.requireReviewerInstance(organizationRecord);
+    return this.organizationDomainRepository
+        .findByOrganization_Instance_InstanceIdAndStatus(instanceId, DomainStatus.PENDING)
+        .stream()
+        .map(OrganizationDomain::getDomainId)
+        .toList();
+  }
+
+  @Override
   @Transactional
   public AdminDomainDto approveDomain(final OrganizationRecord organizationRecord, final UUID domainId) {
     final UUID instanceId = this.requireReviewerInstance(organizationRecord);

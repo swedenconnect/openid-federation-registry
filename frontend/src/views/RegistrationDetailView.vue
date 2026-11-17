@@ -439,6 +439,7 @@ import {useRequest} from '@/api/composables/request';
 import {csrfHeaders} from '@/api/composables/fetch';
 import {useErrorStore} from '@/stores/errorStore';
 import {useNoticeStore} from '@/stores/noticeStore';
+import {useReviewCountStore} from '@/stores/reviewCountStore';
 import {useUserStore} from '@/stores/userStore';
 import {
   entityConfigurationViewPath,
@@ -454,6 +455,7 @@ const router = useRouter();
 const errorStore = useErrorStore();
 const noticeStore = useNoticeStore();
 const userStore = useUserStore();
+const reviewCountStore = useReviewCountStore();
 
 const {requestGet, loading} = useRequest();
 const {requestPost, loading: rejecting, ok} = useRequest();
@@ -530,7 +532,7 @@ async function approveStep(stepIndex) {
         registrationAdminApproveStepPath(userStore.selectedTenant, userStore.orgNumber, route.params.id, stepIndex),
         {});
     if (approveOk.value) {
-      await loadRegistration();
+      await Promise.all([loadRegistration(), reviewCountStore.refresh()]);
     }
   } finally {
     approvingStepIndex.value = null;
@@ -592,6 +594,7 @@ async function submitReject() {
   if (ok.value) {
     closeRejectDialog();
     noticeStore.show('Registration rejected.');
+    await reviewCountStore.refresh();
     router.push({name: 'registrations-list'});
   }
 }

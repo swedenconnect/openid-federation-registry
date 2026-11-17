@@ -168,6 +168,7 @@ import {useRequest} from '@/api/composables/request';
 import {useErrorStore} from '@/stores/errorStore';
 import {useNoticeStore} from '@/stores/noticeStore';
 import {useUserStore} from '@/stores/userStore';
+import {useReviewCountStore} from '@/stores/reviewCountStore';
 import {
   registrationAdminDomainApprovePath,
   registrationAdminDomainRejectPath,
@@ -179,6 +180,7 @@ const router = useRouter();
 const errorStore = useErrorStore();
 const noticeStore = useNoticeStore();
 const userStore = useUserStore();
+const reviewCountStore = useReviewCountStore();
 
 const {requestGet, loading} = useRequest();
 const {requestPost: requestApprove, ok: approveOk, loading: approving} = useRequest();
@@ -224,7 +226,7 @@ async function approve() {
       registrationAdminDomainApprovePath(userStore.selectedTenant, userStore.orgNumber, route.params.domainId));
   if (approveOk.value) {
     noticeStore.show(`${domain.value?.domain} approved.`);
-    await loadDomain();
+    await Promise.all([loadDomain(), reviewCountStore.refresh()]);
   }
 }
 
@@ -254,7 +256,7 @@ async function submitReject() {
     noticeStore.show(cascaded === 0
         ? `${rejected?.domain} rejected. No registrations were affected.`
         : `${rejected?.domain} rejected. ${cascaded} registration(s) rejected with it.`);
-    await loadDomain();
+    await Promise.all([loadDomain(), reviewCountStore.refresh()]);
   }
 }
 

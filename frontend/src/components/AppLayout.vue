@@ -103,11 +103,11 @@
           <RouterLink v-if="userStore.isOperator" to="/registrations" class="nav-link" :class="{ active: isRegistrationsRoute }">
             Registrations
             <v-badge
-                v-if="pendingReviewCount > 0"
-                :content="pendingReviewCount"
+                v-if="reviewCountStore.count > 0"
+                :content="reviewCountStore.count"
                 color="warning"
                 inline
-                :aria-label="`${pendingReviewCount} requests awaiting review`"
+                :aria-label="`${reviewCountStore.count} requests awaiting review`"
             ></v-badge>
           </RouterLink>
           <RouterLink v-if="userStore.isOperator" to="/organizations" class="nav-link" :class="{ active: isOrganizationsRoute }">
@@ -186,21 +186,16 @@
 </template>
 
 <script setup>
-import {computed, onBeforeMount, ref} from 'vue';
+import {computed, onBeforeMount, onBeforeUnmount, ref, watch} from 'vue';
 import {isNavigationFailure, NavigationFailureType, RouterLink, RouterView, useRoute, useRouter} from 'vue-router';
 import {PRODUCT_NAME, PRODUCT_VERSION} from '@/config/product';
 import {useErrorStore} from '@/stores/errorStore';
 import {useLeaveStore} from '@/stores/leaveStore';
 import {useNoticeStore} from '@/stores/noticeStore';
+import {useReviewCountStore} from '@/stores/reviewCountStore';
 import {useUserStore} from '@/stores/userStore';
-import {useRequest} from '@/api/composables/request';
 import {logout} from '@/authorization/logout';
-import {
-  adminAuthenticatePath,
-  registrationAdminDomainsCountPath,
-  registrationAdminPath,
-  swaggerUiPath,
-} from '@/config/path';
+import {adminAuthenticatePath, swaggerUiPath} from '@/config/path';
 
 const route = useRoute();
 const router = useRouter();
@@ -208,6 +203,7 @@ const errorStore = useErrorStore();
 const leaveStore = useLeaveStore();
 const noticeStore = useNoticeStore();
 const userStore = useUserStore();
+const reviewCountStore = useReviewCountStore();
 
 // Federation entities and their edit/module views live under /entities/federation and /entities/:entityId/modules;
 // hosted entities under /hosted and /entities/hosted.
@@ -254,29 +250,28 @@ function reload() {
 
 const ready = ref(false);
 
-// Badge on the Registrations nav link: everything waiting for this operator to act, registrations and domain
-// requests alike, since both are reviewed from the same view. The tab only exists while the selected organization
-// is one of the tenant's configured operators (the /tenants `operator` flag), so nothing is asked for otherwise.
-// The registrations part is derived from the list because /count is per intermediate.
-const {requestGet: requestDomainCount, ok: domainCountOk} = useRequest(false);
-const {requestGet: requestRegistrations, ok: registrationsOk} = useRequest(false);
-const pendingDomainCount = ref(0);
-const pendingRegistrationCount = ref(0);
-const pendingReviewCount = computed(() => pendingDomainCount.value + pendingRegistrationCount.value);
+// Badge on the Registrations nav link: what waits for this operator to act, as the server counts it. The tab only
+// exists while the selected organization is one of the tenant's configured operators (the /tenants `operator` flag),
+// and the store asks for nothing otherwise.
+//
+// This component mounts once per page load, so the number is kept fresh from three sides: the views refresh the store
+// after every decision, a tenant or organization switch refreshes it here, and so does coming back to the tab, which
+// picks up what other operators have done in the meantime.
+watch([() => userStore.selectedTenant, () => userStore.orgNumber], () => reviewCountStore.refresh());
 
-async function loadPendingReviewCount() {
-  if (!userStore.selectedTenant || !userStore.orgNumber || !userStore.isOperator) {
-    return;
+function refreshReviewCountWhenVisible() {
+  if (globalThis.document?.visibilityState === 'visible') {
+    reviewCountStore.refresh();
   }
-  const [domainResponse, registrationResponse] = await Promise.all([
-    requestDomainCount(registrationAdminDomainsCountPath(userStore.selectedTenant, userStore.orgNumber)),
-    requestRegistrations(registrationAdminPath(userStore.selectedTenant, userStore.orgNumber)),
-  ]);
-  pendingDomainCount.value = domainCountOk.value ? (domainResponse?.count ?? 0) : 0;
-  pendingRegistrationCount.value = registrationsOk.value && Array.isArray(registrationResponse)
-      ? registrationResponse.filter(registration => registration.statusFedreg === 'PENDING_APPROVAL').length
-      : 0;
 }
+
+globalThis.addEventListener('visibilitychange', refreshReviewCountWhenVisible);
+globalThis.addEventListener('focus', refreshReviewCountWhenVisible);
+
+onBeforeUnmount(() => {
+  globalThis.removeEventListener('visibilitychange', refreshReviewCountWhenVisible);
+  globalThis.removeEventListener('focus', refreshReviewCountWhenVisible);
+});
 
 onBeforeMount(async () => {
   if (route.name !== 'login') {
@@ -287,7 +282,7 @@ onBeforeMount(async () => {
     } else if (route.name === 'no-access' && userStore.tenantsLoaded) {
       await router.replace('/');
     }
-    await loadPendingReviewCount();
+    await reviewCountStore.refresh();
     if (!userStore.isOperator && route.meta.operatorOnly) {
       await router.replace('/');
     }

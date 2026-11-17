@@ -36,6 +36,7 @@ import se.swedenconnect.oidf.registry.registrations.review.dto.ReviewDecisionReq
 import se.swedenconnect.oidf.registry.registrations.review.service.EntityReviewService;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -71,6 +72,24 @@ public class EntityReviewController {
       @Parameter(description = "Include entities with nothing left to review")
       @RequestParam(name = "all", defaultValue = "false") final boolean all) {
     return ResponseEntity.ok(this.entityReviewService.list(organizationRecord, !all));
+  }
+
+  /**
+   * Counts what waits for the operator to act, the same number the review list shows rows for.
+   *
+   * @param tenant the tenant identifier
+   * @param orgNumber the organization number
+   * @param organizationRecord the calling organization
+   * @return map containing the count
+   */
+  @GetMapping("/count")
+  @PreAuthorize("@orgRightsService.canReadAsOperator(authentication, #orgNumber, #tenant)")
+  @Operation(summary = "Count what awaits review on this tenant")
+  public ResponseEntity<Map<String, Long>> countPendingReviews(
+      @PathVariable("tenant") @P("tenant") final String tenant,
+      @PathVariable("orgNumber") @P("orgNumber") final String orgNumber,
+      @Parameter(hidden = true) final OrganizationRecord organizationRecord) {
+    return ResponseEntity.ok(Map.of("count", this.entityReviewService.countPending(organizationRecord)));
   }
 
   /**

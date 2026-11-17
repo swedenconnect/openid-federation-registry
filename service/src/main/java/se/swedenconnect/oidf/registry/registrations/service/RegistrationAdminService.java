@@ -92,6 +92,14 @@ public interface RegistrationAdminService {
   long countPendingDomains(OrganizationRecord organizationRecord);
 
   /**
+   * The domains still awaiting review on this tenant, by ID.
+   *
+   * @param organizationRecord the calling tenant operator
+   * @return the IDs of the pending domains, empty if there are none
+   */
+  List<UUID> pendingDomainIds(OrganizationRecord organizationRecord);
+
+  /**
    * Approves a pending domain.
    *
    * @param organizationRecord the calling tenant operator

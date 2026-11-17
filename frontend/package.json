@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run"
   },
   "dependencies": {
     "@formkit/vue": "^1.6.9",
@@ -19,7 +20,9 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.1",
     "autoprefixer": "^10.6.1",
+    "jsdom": "^26.1.0",
     "postcss": "^8.5.29",
-    "vite": "^6.4.4"
+    "vite": "^6.4.4",
+    "vitest": "^3.2.4"
   }
 }

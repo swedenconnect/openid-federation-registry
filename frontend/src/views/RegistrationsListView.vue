@@ -197,6 +197,7 @@ import TablePager from '@/components/TablePager.vue';
 import {useListTable} from '@/composables/listTable';
 import {useRequest} from '@/api/composables/request';
 import {useUserStore} from '@/stores/userStore';
+import {useReviewCountStore} from '@/stores/reviewCountStore';
 import {entityReviewsPath, registrationAdminDomainsPath} from '@/config/path';
 
 const route = useRoute();
@@ -206,6 +207,7 @@ const {requestGet, loading} = useRequest();
 // answer for everyone else and must not raise an error banner.
 const {requestGet: requestDomains, ok: domainsOk, loading: domainsLoading} = useRequest(false);
 const userStore = useUserStore();
+const reviewCountStore = useReviewCountStore();
 
 const MODE_ENTITIES = 'ENTITIES';
 const MODE_DOMAINS = 'DOMAINS';
@@ -370,7 +372,7 @@ async function loadDomains() {
 }
 
 onMounted(() => {
-  Promise.all([loadEntities(), loadDomains()]);
+  Promise.all([loadEntities(), loadDomains(), reviewCountStore.refresh()]);
 });
 </script>
 
