@@ -165,6 +165,16 @@ automatically generated names differ between environments.
 | `openid.federation.registry.federation_service_api.notifications[0].endpoint`    | `https://example.com/notify`            | The URI of the notification endpoint.                                                      |
 | `openid.federation.registry.federation_service_api.notifications[0].instance_id` | `UUID`                                  | The unique identifier for the instance sending notifications.                              |
 
+### Federation Service State Sync
+
+Settings for `/api/v1/federationservice/changes`, see [State Sync](architecture.md#state-sync).
+
+| Setting                                                       | Required | Example Value | Description |
+|---------------------------------------------------------------|----------|---------------|-------------|
+| `openid.federation.registry.state-sync.page-size`             | No       | `1000`        | Maximum number of changes on a page. Defaults to `1000`. |
+| `openid.federation.registry.state-sync.retention`             | No       | `P7D`         | How long a `delete` change is kept. Defaults to `P7D`. |
+| `openid.federation.registry.state-sync.compaction-interval`   | No       | `PT1H`        | How often old changes are removed. Defaults to `PT1H`. |
+
 ### Hosted Entities
 
 | Setting                                          | Required | Example Value | Description |

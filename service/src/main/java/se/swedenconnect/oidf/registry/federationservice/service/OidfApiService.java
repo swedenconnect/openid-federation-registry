@@ -17,6 +17,7 @@ package se.swedenconnect.oidf.registry.federationservice.service;
 
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.shaded.gson.JsonElement;
 import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -39,11 +40,15 @@ import se.swedenconnect.oidf.registry.federationservice.model.TrustMarkIssuerPro
 import se.swedenconnect.oidf.registry.federationservice.model.TrustMarkProperties;
 import se.swedenconnect.oidf.registry.federationservice.model.TrustMarkSubjectProperty;
 import se.swedenconnect.oidf.registry.federationservice.serde.JsonRegistryLoader;
+import se.swedenconnect.oidf.registry.federationservice.state.StateKey;
 import se.swedenconnect.oidf.registry.module.model.Resolver;
 import se.swedenconnect.oidf.registry.module.model.ExternalTrustMark;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIntermediateModule;
 import se.swedenconnect.oidf.registry.module.model.TrustAnchorIssuer;
 import se.swedenconnect.oidf.registry.module.model.TrustMarkIssuer;
+import se.swedenconnect.oidf.registry.module.repository.ResolverRepository;
+import se.swedenconnect.oidf.registry.module.repository.TaImRepository;
+import se.swedenconnect.oidf.registry.module.repository.TrustmarkIssuerRepository;
 import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
@@ -88,6 +93,10 @@ public class OidfApiService {
 
   private final InstanceRepository instanceRepository;
   private final EntityRepository entityRepository;
+  private final SubordinateRepository subordinateRepository;
+  private final TaImRepository taImRepository;
+  private final TrustmarkIssuerRepository trustmarkIssuerRepository;
+  private final ResolverRepository resolverRepository;
 
   private final String jwkIssuer;
   private final Duration jwkExpiryDuration;
@@ -118,6 +127,42 @@ public class OidfApiService {
       final Duration jwkExpiryDuration,
       final String hostedPathSegment,
       final Set<UUID> crossOrganizationInstances) {
+    this(signKey, subordinateRepository, entityRepository, jwkIssuer, instanceRepository, jwkExpiryDuration,
+        hostedPathSegment, crossOrganizationInstances, null, null, null);
+  }
+
+  /**
+   * Constructs a FederationApiService instance that also renders single records by key.
+   *
+   * @param signKey the JSON Web Key (JWK) used for signing operations
+   * @param subordinateRepository SubordinateRepository
+   * @param entityRepository the repository for managing entity
+   * @param jwkIssuer the issuer associated with the JSON Web Key (JWK)
+   * @param instanceRepository the repository for managing instances
+   * @param jwkExpiryDuration jwkExpiryDuration
+   * @param hostedPathSegment path segment of a calculated ec_location of a hosted entity, empty for none
+   * @param crossOrganizationInstances the instances whose authority hints are resolved across every organization of
+   *     the instance, empty for none
+   * @param taImRepository the repository of Trust Anchors and Intermediates, {@code null} without rendering by key
+   * @param trustmarkIssuerRepository the repository of trust mark issuers, {@code null} without rendering by key
+   * @param resolverRepository the repository of resolvers, {@code null} without rendering by key
+   */
+  public OidfApiService(
+      final JWK signKey,
+      final SubordinateRepository subordinateRepository,
+      final EntityRepository entityRepository,
+      final String jwkIssuer,
+      final InstanceRepository instanceRepository,
+      final Duration jwkExpiryDuration,
+      final String hostedPathSegment,
+      final Set<UUID> crossOrganizationInstances,
+      final TaImRepository taImRepository,
+      final TrustmarkIssuerRepository trustmarkIssuerRepository,
+      final ResolverRepository resolverRepository) {
+    this.subordinateRepository = subordinateRepository;
+    this.taImRepository = taImRepository;
+    this.trustmarkIssuerRepository = trustmarkIssuerRepository;
+    this.resolverRepository = resolverRepository;
     this.hostedPathSegment = hostedPathSegment;
     this.entityRepository = entityRepository;
     this.jwkIssuer = jwkIssuer;
@@ -138,18 +183,7 @@ public class OidfApiService {
   @Transactional(readOnly = true)
   public String entityRecord(final UUID instanceId, final boolean plainJson) {
     Assert.notNull(instanceId, "InstanceId is mandatory");
-    if (plainJson) {
-      return this.serdeLoader.toJson(this.resolveEntity(instanceId));
-    }
-    final String claimName = "entity_records";
-    final String jwt = this.jwtSupport.signJWT(claimName, builder -> builder
-            .claim(claimName, this.serdeLoader.toJson(this.resolveEntity(instanceId)))
-            .expirationTime(new Date(System.currentTimeMillis() + this.jwkExpiryDuration.toMillis()))
-            .issuer(this.jwkIssuer))
-        .serialize();
-    log.debug("trustMarkRecord Signed JWT: {}", jwt);
-
-    return jwt;
+    return this.toResponse("entity_records", this.serdeLoader.toJson(this.resolveEntity(instanceId)), plainJson);
   }
 
   /**
@@ -162,18 +196,141 @@ public class OidfApiService {
   @Transactional(readOnly = true)
   public String moduleRecord(final UUID instanceId, final boolean plainJson) {
     Assert.notNull(instanceId, "instanceId is mandatory");
+    return this.toResponse("module_records", this.serdeLoader.toJson(this.resolveModules(instanceId)), plainJson);
+  }
+
+  /**
+   * The response of the federation service API: the JSON as it is, or a signed JWT that carries the JSON as a string
+   * claim.
+   *
+   * @param claimName the name of the claim
+   * @param json the JSON
+   * @param plainJson whether to return plain JSON
+   * @return the JSON or the signed JWT
+   */
+  public String toResponse(final String claimName, final String json, final boolean plainJson) {
     if (plainJson) {
-      return this.serdeLoader.toJson(this.resolveModules(instanceId));
+      return json;
     }
-    final String claimName = "module_records";
     final String jwt = this.jwtSupport.signJWT(claimName, builder -> builder
-            .claim(claimName, this.serdeLoader.toJson(this.resolveModules(instanceId)))
+            .claim(claimName, json)
             .expirationTime(new Date(System.currentTimeMillis() + this.jwkExpiryDuration.toMillis()))
             .issuer(this.jwkIssuer))
         .serialize();
-    log.debug("Submodule Signed JWT: {}", jwt);
-
+    log.debug("{} Signed JWT: {}", claimName, jwt);
     return jwt;
+  }
+
+  /**
+   * Serializes a JSON element of the federation service API, null values included.
+   *
+   * @param element the JSON element
+   * @return the JSON
+   */
+  public String toJson(final JsonElement element) {
+    return this.serdeLoader.toJson(element);
+  }
+
+  /**
+   * Fails with 404 if the instance is unknown.
+   *
+   * @param instanceId the instance ID
+   */
+  @Transactional(readOnly = true)
+  public void requireInstance(final UUID instanceId) {
+    if (!this.instanceRepository.existsById(instanceId)) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No instance found for:%s".formatted(instanceId));
+    }
+  }
+
+  /**
+   * The keys of every record of an instance, sorted. A key may still give no record, for example a subordinate
+   * whose hosted entity is gone, see {@link #findRecord(UUID, String)}.
+   *
+   * @param instanceId the instance ID
+   * @return the keys, sorted
+   */
+  @Transactional(readOnly = true)
+  public List<String> stateKeys(final UUID instanceId) {
+    final Instance instanceEntity = this.instanceRepository.findById(instanceId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "No instance found for:%s".formatted(instanceId)));
+    final TreeSet<String> keys = new TreeSet<>();
+    instanceEntity.getOrganizations().stream()
+        .flatMap(organization -> organization.getEntities().stream())
+        .forEach(entity -> {
+          keys.add(StateKey.entity(entity.getEntityId()));
+          if (entity.getEntityType() != EntityType.FEDERATION_ENTITY) {
+            return;
+          }
+          Optional.ofNullable(entity.getTrustanchorIntermediate())
+              .filter(TrustAnchorIntermediateModule::getActive)
+              .ifPresent(module -> {
+                keys.add(StateKey.trustAnchor(module.getTaImId()));
+                module.getSubordinates().forEach(subordinate ->
+                    keys.add(StateKey.subordinate(module.getTaImId(), subordinate.getSubordinateId())));
+              });
+          Optional.ofNullable(entity.getTrustmarkIssuer())
+              .filter(TrustMarkIssuer::getActive)
+              .ifPresent(module -> keys.add(StateKey.trustMarkIssuer(module.getTrustmarkIssuerId())));
+          Optional.ofNullable(entity.getResolver())
+              .filter(Resolver::getActive)
+              .ifPresent(module -> keys.add(StateKey.resolver(module.getResolverId())));
+        });
+    return List.copyOf(keys);
+  }
+
+  /**
+   * Finds one record of an instance at its current state, in the same form as the element in
+   * {@link #entityRecord(UUID, boolean)} or {@link #moduleRecord(UUID, boolean)}. A Trust Anchor or Intermediate is
+   * given without its subordinates, which have keys of their own.
+   *
+   * @param instanceId the instance ID
+   * @param key the key of the record
+   * @return the record, or empty if the key gives no record: an unknown key, a record that is deleted or not in the
+   *     instance, an inactive module, or a subordinate that is not exported
+   */
+  @Transactional(readOnly = true)
+  public Optional<JsonElement> findRecord(final UUID instanceId, final String key) {
+    Assert.notNull(this.taImRepository, "Rendering by key is not configured");
+    return StateKey.parse(key).flatMap(parsed -> switch (parsed.type()) {
+      case ENTITY -> this.entityRepository.findById(parsed.id())
+          .filter(entity -> this.inInstance(entity, instanceId))
+          .map(this.entityResponseFormatter::createEntityResponse)
+          .map(this.serdeLoader::toEntityRecordTree);
+      case TRUST_ANCHOR -> this.taImRepository.findById(parsed.id())
+          .filter(module -> this.isExported(module, instanceId))
+          .map(module -> this.toTaIm(module, false))
+          .map(this.serdeLoader::toModuleElementTree);
+      case SUBORDINATE -> this.subordinateRepository.findById(parsed.id())
+          .filter(subordinate -> subordinate.getTaIm().getTaImId().equals(parsed.trustAnchorId()))
+          .filter(subordinate -> this.isExported(subordinate.getTaIm(), instanceId))
+          .map(this::toSubordinates)
+          .map(this.serdeLoader::toModuleElementTree);
+      case TRUST_MARK_ISSUER -> this.trustmarkIssuerRepository.findById(parsed.id())
+          .filter(module -> Boolean.TRUE.equals(module.getActive()) && this.isExported(module.getEntity(), instanceId))
+          .map(this::toTrustMarkIssuer)
+          .map(this.serdeLoader::toModuleElementTree);
+      case RESOLVER -> this.resolverRepository.findById(parsed.id())
+          .filter(module -> Boolean.TRUE.equals(module.getActive()) && this.isExported(module.getEntity(), instanceId))
+          .map(this::toResolver)
+          .map(this.serdeLoader::toModuleElementTree);
+    });
+  }
+
+  private boolean isExported(final TrustAnchorIntermediateModule module, final UUID instanceId) {
+    return Boolean.TRUE.equals(module.getActive()) && this.isExported(module.getEntity(), instanceId);
+  }
+
+  /** A module is exported when it belongs to a federation entity of the instance. */
+  private boolean isExported(final FederationEntity entity, final UUID instanceId) {
+    return entity != null && entity.getEntityType() == EntityType.FEDERATION_ENTITY
+        && this.inInstance(entity, instanceId);
+  }
+
+  private boolean inInstance(final FederationEntity entity, final UUID instanceId) {
+    return entity.getOrganization() != null && entity.getOrganization().getInstance() != null
+        && instanceId.equals(entity.getOrganization().getInstance().getInstanceId());
   }
 
   private ModuleRecord resolveModules(final UUID instanceId) {
@@ -235,15 +392,24 @@ public class OidfApiService {
   }
 
   TrustAnchorProperties toTaIm(final TrustAnchorIntermediateModule taImModuleEntity) {
+    return this.toTaIm(taImModuleEntity, true);
+  }
+
+  TrustAnchorProperties toTaIm(final TrustAnchorIntermediateModule taImModuleEntity,
+      final boolean includeSubordinates) {
+    List<TrustAnchorProperties.SubordinateListingProperty> subordinates = null;
+    if (includeSubordinates) {
+      subordinates = taImModuleEntity.getSubordinates()
+          .stream()
+          .map(this::toSubordinates)
+          .filter(Objects::nonNull)
+          .toList();
+    }
     return TrustAnchorProperties.builder()
         .entityIdentifier(new EntityID(taImModuleEntity.getEntity().getIssuer()))
         //.trustMarkOwners()
         .trustMarkIssuers(this.toTrustMarkIssuers(taImModuleEntity))
-        .subordinates(taImModuleEntity.getSubordinates()
-            .stream()
-            .map(this::toSubordinates)
-            .filter(Objects::nonNull)
-            .toList())
+        .subordinates(subordinates)
         .build();
   }
 

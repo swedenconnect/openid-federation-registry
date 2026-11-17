@@ -6,6 +6,11 @@
 
 ---
 
+### Version 1.0.2
+
+- New federation service endpoint `/changes` for reading changes in a sequence.
+
+
 ### Version 1.0.1
 
 - An instance can be configured to let the authority hints of an entity include superiors in the other

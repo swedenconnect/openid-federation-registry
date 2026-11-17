@@ -182,5 +182,36 @@ public class JsonRegistryLoader {
   public String toJson(final List<EntityRecord> entityRecords) {
     return this.GSON.getAdapter(new TypeToken<List<EntityRecord>>() {}).toJson(entityRecords);
   }
+
+  /**
+   * Serializes one entity record, as it is serialized as an element of the list in {@link #toJson(List)}.
+   *
+   * @param entityRecord the entity record
+   * @return the json element
+   */
+  public JsonElement toEntityRecordTree(final EntityRecord entityRecord) {
+    return this.GSON.toJsonTree(entityRecord, EntityRecord.class);
+  }
+
+  /**
+   * Serializes one element of a top level list of the module record (a trust anchor, a subordinate of a trust
+   * anchor, a trust mark issuer or a resolver), as it is serialized in {@link #toJson(ModuleRecord)}.
+   *
+   * @param element the element
+   * @return the json element
+   */
+  public JsonElement toModuleElementTree(final Object element) {
+    return prune(this.moduleGson.toJsonTree(element), false);
+  }
+
+  /**
+   * Serializes a json element as it is, null values included.
+   *
+   * @param element the json element
+   * @return json string
+   */
+  public String toJson(final JsonElement element) {
+    return this.moduleGson.toJson(element);
+  }
 }
 

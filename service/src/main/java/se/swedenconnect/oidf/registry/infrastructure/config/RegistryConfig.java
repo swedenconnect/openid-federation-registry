@@ -42,6 +42,9 @@ import org.springframework.web.client.RestClient;
 import se.swedenconnect.oidf.registry.entity.repository.EntityRepository;
 import se.swedenconnect.oidf.registry.federationservice.service.NotifyService;
 import se.swedenconnect.oidf.registry.federationservice.service.OidfApiService;
+import se.swedenconnect.oidf.registry.module.repository.ResolverRepository;
+import se.swedenconnect.oidf.registry.module.repository.TaImRepository;
+import se.swedenconnect.oidf.registry.module.repository.TrustmarkIssuerRepository;
 import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
@@ -103,11 +106,17 @@ public class RegistryConfig {
    * Provides an instance of the FederationApiService for managing federation-related operations.
    *
    * @param credentialBundles Bundle for reading keys
+   * @param taImRepository repository of Trust Anchors and Intermediates
+   * @param trustmarkIssuerRepository repository of trust mark issuers
+   * @param resolverRepository repository of resolvers
    * @return an instance of FederationApiService configured with the necessary dependencies.
    */
   @Bean
   public OidfApiService federationServiceApiService(
-      final Optional<CredentialBundles> credentialBundles) {
+      final Optional<CredentialBundles> credentialBundles,
+      final TaImRepository taImRepository,
+      final TrustmarkIssuerRepository trustmarkIssuerRepository,
+      final ResolverRepository resolverRepository) {
 
     final RegistryProperties.FederationAPIProperties federationAPIProperties =
         this.registryProperties.federationServiceApi();
@@ -123,7 +132,10 @@ public class RegistryConfig {
         this.instanceRepository,
         tokenExpiryDuration,
         this.registryProperties.effectiveHostedPathSegment(),
-        this.registryProperties.crossOrganizationAuthorityHintInstances()
+        this.registryProperties.crossOrganizationAuthorityHintInstances(),
+        taImRepository,
+        trustmarkIssuerRepository,
+        resolverRepository
     );
   }
 

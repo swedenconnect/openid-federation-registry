@@ -12,6 +12,7 @@ request flows through the system, and where to look for a given concern.
 - [Backend Package Map](#backend-package-map)
 - [Multi-tenancy and Authorization Model](#multi-tenancy-and-authorization-model)
 - [Data Model](#data-model)
+- [State Sync](#state-sync)
 - [Build, Test and Deployment](#build-test-and-deployment)
 - [Where to Go Next](#where-to-go-next)
 
@@ -29,6 +30,8 @@ The relationship is two-way:
 - The **oidf-service** node reads entity data from this registry through its public API,
   `GET /api/v1/federationservice/entity_record` and `/submodules` (see
   `federationservice.controller.OidfServiceApiController`), and uses it to publish signed subordinate statements.
+  It can also read only the changed records through `/changes` (see
+  `federationservice.controller.FederationStateController` and [State Sync](#state-sync)).
 - The **registry**, in turn, calls out to the oidf-service node for its published keys (`JwksKeysCacheService`)
   and validates the signed JWT responses using the public key configured per instance
   (`instances[i].oidf_service_api_validation_key`, see [Application Configuration](configuration.md)).
@@ -75,7 +78,7 @@ within each domain package you'll typically find the same shape: `controller`, `
 | `trustmark`         | Trustmark issuers and trustmark subjects.                                                                                                                                            |
 | `registrationflow`  | The step-by-step flow for onboarding a new entity to the federation (state machine under `process`). `process.review` holds the manual-review contract (`ReviewableStep`) and the typed step previews; `metadata` builds the Subordinate Statement's `metadata`/`metadata_policy` from a template, see [Metadata Review and Metadata Policy](metadata_policy.md). |
 | `registrations`     | Registration requests/applications and their admin review, including scheduled cleanup (`scheduler`). `review` holds the per-entity review sessions (domain → trust marks → entity), see UC-2b in [Registration Flow](use_case_registration_flow.md). |
-| `federationservice` | The public API the external oidf-service node reads from (`entity_record`, `submodules`).                                                                                            |
+| `federationservice` | The public API the external oidf-service node reads from (`entity_record`, `submodules`, `changes`).                                                                                 |
 | `guioperations`     | Endpoints that exist to serve the SPA directly (e.g. `/tenants`, `/userinfo`), not general REST resources.                                                                           |
 | `infrastructure`    | Cross-cutting concerns: `config` (Spring `@ConfigurationProperties`, security config), `auth` (JWT/OIDC, `org_rights`, rights model), `audit`, `persistence`, `error`, `validation`. |
 | `validation`        | The generic, string-based property validation DSL — see [Validation](validation.md).                                                                                                 |
@@ -129,6 +132,25 @@ and preview (`step_results`) and, while paused for review, the context the earli
 (`process_context`); `entity_review` and `entity_review_decision` record review sessions and the decisions taken in
 them. Function groups are **not** persisted
 — they exist only in application configuration and are used purely for request-time routing and authorization.
+
+## State Sync
+
+`GET /api/v1/federationservice/changes?instanceid=<uuid>&since=<seq>[&plain=true]`
+
+Gives the changes after `since`, one change for each key. The response is a signed JWT (claim `state_changes`), or
+JSON with `plain=true`.
+
+Keys: `entity:<entityId>`, `ta:<moduleId>`, `ta:<moduleId>|sub:<subordinateId>`, `tmi:<moduleId>`,
+`resolver:<moduleId>`.
+
+```json
+{"next": 1008, "full": false,
+ "changes": [{"seq": 9, "op": "upsert", "key": "entity:...", "record": {...}},
+             {"seq": 10, "op": "delete", "key": "tmi:..."}]}
+```
+
+- `next`: use as `since` for the next page. `null` on the last page.
+- `full`: replace all state with the pages from `since=0`.
 
 ## Build, Test and Deployment
 
