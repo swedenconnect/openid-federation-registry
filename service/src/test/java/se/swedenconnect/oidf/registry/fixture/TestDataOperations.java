@@ -120,7 +120,7 @@ public class TestDataOperations {
     final SubordinatesApi subordinatesApi = new SubordinatesApi(apiClient);
 
     final EntityWithModules e = entitiesApi.listEntities(tenant, orgNumber, "federation", true);
-    final String taEntityid = "https://www.pm.se/oidf/ta/";
+    final String taEntityid = "https://www.pm.se/oidf/ta";
     if (e.getFederationEntity().stream()
         .map(FederationEntityWithModules::getEntityIdentifier)
         .anyMatch(s -> s.equals(taEntityid))) {

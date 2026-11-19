@@ -139,6 +139,10 @@ public class PropertyValidators {
           key, "No query parameters allowed in entityID", value);
       this.throwIf(() -> !url.getProtocol().equalsIgnoreCase("https"),
           key, "EntityId has to use https protocol", value);
+      // A trailing slash makes a different entityID of the same entity, and the endpoints and ec_location the
+      // registry builds from it get a double slash.
+      this.throwIf(() -> value.endsWith("/"),
+          key, "EntityId must not end with /", value);
     }
     catch (final IllegalArgumentException | MalformedURLException e) {
       throw new PropertyValidationFailException(key, value, "Invalid entityid format: " + e.getMessage());

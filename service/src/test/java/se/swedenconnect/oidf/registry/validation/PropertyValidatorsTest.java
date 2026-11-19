@@ -277,8 +277,11 @@ public class PropertyValidatorsTest {
         () -> result.validate("key", "https://example.com/entityid?query=123"));
     assertThrows(PropertyValidationFailException.class,
         () -> result.validate("key", "https://example.com/entityid#fragment"));
+    // A trailing slash is a different entityID of the same entity, see #100.
+    assertThrows(PropertyValidationFailException.class,
+        () -> result.validate("key", "https://example.com/entityid/"));
+    assertThrows(PropertyValidationFailException.class, () -> result.validate("key", "https://example.com/"));
     assertDoesNotThrow(() -> result.validate("key", "https://example.com/entityid"));
-    assertDoesNotThrow(() -> result.validate("key", "https://example.com/"));
     assertDoesNotThrow(() -> result.validate("key", "https://example.com"));
   }
 
