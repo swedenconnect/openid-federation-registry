@@ -217,7 +217,8 @@ claim. A rejection requires a reason. The result shows how many registrations th
 list. `OrganizationDto.preValidatedTrustMarks` exposes it.
 
 Each entry is a trust mark type URI with the same shape rules as an entity identifier: `https`, no query, no
-fragment. A blank or duplicate entry returns `400`. An empty list is valid and removes every pre-approval.
+fragment, no trailing slash. A blank or duplicate entry returns `400`. An empty list is valid and removes every
+pre-approval.
 
 ### Operator views in the admin UI
 
