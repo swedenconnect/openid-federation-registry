@@ -92,12 +92,12 @@ export const registrationAdminRejectPath = (tenant, orgNumber, id) => getAbsolut
 export const registrationAdminApproveStepPath = (tenant, orgNumber, id, stepIndex) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/${id}/steps/${stepIndex}/approve`);
 
 export const entityReviewsPath = (tenant, orgNumber, all = false) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/entity-reviews${all ? '?all=true' : ''}`);
+export const entityReviewCountPath = (tenant, orgNumber) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/entity-reviews/count`);
 export const entityReviewPath = (tenant, orgNumber, registrationId) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/entity-reviews/${registrationId}`);
 export const entityReviewStartPath = (tenant, orgNumber, registrationId) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/entity-reviews/${registrationId}/start`);
 export const entityReviewDecisionsPath = (tenant, orgNumber, registrationId) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/entity-reviews/${registrationId}/decisions`);
 
 export const registrationAdminDomainsPath = (tenant, orgNumber) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/domains`);
-export const registrationAdminDomainsCountPath = (tenant, orgNumber) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/domains/count`);
 export const registrationAdminDomainApprovePath = (tenant, orgNumber, domainId) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/domains/${domainId}/approve`);
 export const registrationAdminDomainRejectPath = (tenant, orgNumber, domainId) => getAbsolutePath(`registration-admin/v1/${tenant}/${orgNumber}/domains/${domainId}/reject`);
 

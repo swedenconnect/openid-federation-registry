@@ -9,6 +9,9 @@
 ### Version 1.0.2
 
 - New federation service endpoint `/changes` for reading changes in a sequence.
+- An entity identifier that ends with a slash is refused instead of stored
+  ([#100](https://github.com/swedenconnect/openid-federation-registry/issues/100)).
+  ([#408](https://github.com/swedenconnect/openid-federation-registry/issues/408)).
 
 
 ### Version 1.0.1

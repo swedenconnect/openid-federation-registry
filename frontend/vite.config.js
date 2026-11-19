@@ -46,6 +46,19 @@ export default defineConfig({
             '@': fileURLToPath(new URL('./src', import.meta.url)),
         },
     },
-    base: './'
+    base: './',
+    // jsdom because the modules under test read the document at load time, e.g. the base href the paths are built
+    // from and the XSRF-TOKEN cookie.
+    test: {
+        environment: 'jsdom',
+        // An origin of its own: localStorage, which the stores and Pinia's devtools support use, is not available
+        // on the opaque origin of the default about:blank.
+        environmentOptions: {jsdom: {url: 'http://localhost/'}},
+        // Node brings a localStorage of its own, which takes precedence over the one of the jsdom environment and
+        // throws unless node is started with --localstorage-file. The test processes run without it.
+        pool: 'forks',
+        poolOptions: {forks: {execArgv: ['--no-experimental-webstorage']}},
+        include: ['src/**/*.spec.js'],
+    }
 });
 

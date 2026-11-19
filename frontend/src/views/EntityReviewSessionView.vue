@@ -169,6 +169,7 @@ import {computed, onMounted, ref, watch} from 'vue';
 import {useRoute, useRouter} from 'vue-router';
 import {useRequest} from '@/api/composables/request';
 import {useUserStore} from '@/stores/userStore';
+import {useReviewCountStore} from '@/stores/reviewCountStore';
 import {entityReviewDecisionsPath, entityReviewStartPath} from '@/config/path';
 import StepPreview from '@/components/StepPreview.vue';
 import {GROUP_LABELS, ITEM_LABELS, itemKey, stateColor, stateLabel} from '@/views/entityReview';
@@ -178,6 +179,7 @@ const SHOW_TYPES_STORAGE_KEY = 'oidf.review.showSectionTypes';
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
+const reviewCountStore = useReviewCountStore();
 const {requestPost, loading, ok} = useRequest();
 
 const review = ref(null);
@@ -272,7 +274,11 @@ async function post(decision) {
         decision,
         reason: decision === 'REJECTED' ? reason.value.trim() : null,
       });
-  return ok.value ? response : null;
+  if (ok.value) {
+    await reviewCountStore.refresh();
+    return response;
+  }
+  return null;
 }
 
 async function decide(decision) {

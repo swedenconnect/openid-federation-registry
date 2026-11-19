@@ -139,6 +139,43 @@ public class EntityReviewService {
    */
   @Transactional(readOnly = true)
   public List<EntityReviewSummaryDto> list(final OrganizationRecord organizationRecord, final boolean openOnly) {
+    return this.reviewedEntities(organizationRecord, openOnly).stream()
+        .map(ReviewedEntity::summary)
+        .toList();
+  }
+
+  /**
+   * Counts what waits for the operator to act, the same way the review list shows it: one per entity that waits for a
+   * decision or has an open review, plus the pending domains no such entity waits for. A domain claimed without a
+   * registration behind it is reviewed on its own, so it is counted on its own; a domain an entity waits for is
+   * counted once, through that entity.
+   *
+   * @param organizationRecord the calling operator
+   * @return the number of items awaiting review
+   */
+  @Transactional(readOnly = true)
+  public long countPending(final OrganizationRecord organizationRecord) {
+    final List<ReviewedEntity> pending = this.reviewedEntities(organizationRecord, true);
+    final Set<UUID> countedThroughAnEntity = pending.stream()
+        .flatMap(entity -> entity.items().stream())
+        .filter(item -> item.type() == ReviewItemType.DOMAIN && item.state() == ReviewItemState.PENDING)
+        .map(ReviewItemDto::itemId)
+        .collect(Collectors.toSet());
+    return pending.size() + this.registrationAdminService.pendingDomainIds(organizationRecord).stream()
+        .filter(domainId -> !countedThroughAnEntity.contains(domainId))
+        .count();
+  }
+
+  /**
+   * An entity of the review list, together with the items its summary was built from.
+   *
+   * @param summary the entity as the review list shows it
+   * @param items the entity's review items, in review order
+   */
+  private record ReviewedEntity(EntityReviewSummaryDto summary, List<ReviewItemDto> items) {
+  }
+
+  private List<ReviewedEntity> reviewedEntities(final OrganizationRecord organizationRecord, final boolean openOnly) {
     final UUID instanceId = this.registrationAdminService.requireReviewerInstance(organizationRecord);
     final Set<String> hosted = this.entityConfigService.listHostedEntity((String) null).stream()
         .map(HostedEntityDto::getEntityIdentifier)
@@ -148,7 +185,7 @@ public class EntityReviewService {
         .collect(Collectors.toMap(review -> review.getRegistration().getRegistrationId(), review -> review,
             (first, second) -> first));
 
-    final List<EntityReviewSummaryDto> summaries = new ArrayList<>();
+    final List<ReviewedEntity> summaries = new ArrayList<>();
     for (final Registration entity : this.registrationRepository.findByOrganization_Instance_InstanceId(instanceId)) {
       if (entity.getRegistrationType() != RegistrationType.SUBORDINATE) {
         continue;
@@ -159,15 +196,15 @@ public class EntityReviewService {
       if (openOnly && state == EntityReviewState.COMPLETED) {
         continue;
       }
-      summaries.add(new EntityReviewSummaryDto(entity.getRegistrationId(), entity.getEntityId(),
+      summaries.add(new ReviewedEntity(new EntityReviewSummaryDto(entity.getRegistrationId(), entity.getEntityId(),
           organizationName(entity.getOrganization()), entity.getOrganization().getOrgNumber(),
           toOffsetDateTime(entity.getCreatedDate()), entity.getStatus().name(), hosted.contains(entity.getEntityId()),
           this.isUpdate(entity), count(items, ReviewItemType.DOMAIN), count(items, ReviewItemType.TRUST_MARK),
           count(items, ReviewItemType.ENTITY), state,
           open == null ? null : open.getStartedBy(), open == null ? null : toOffsetDateTime(open.getStartedAt()),
-          open == null ? 0 : this.decidedIn(open)));
+          open == null ? 0 : this.decidedIn(open)), items));
     }
-    summaries.sort(Comparator.comparing(EntityReviewSummaryDto::submittedAt,
+    summaries.sort(Comparator.comparing(reviewed -> reviewed.summary().submittedAt(),
         Comparator.nullsLast(Comparator.reverseOrder())));
     return summaries;
   }
