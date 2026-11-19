@@ -12,6 +12,8 @@
 - An entity identifier that ends with a slash is refused instead of stored
   ([#100](https://github.com/swedenconnect/openid-federation-registry/issues/100)).
   ([#408](https://github.com/swedenconnect/openid-federation-registry/issues/408)).
+- `signed_jwks_uri` is removed in the metadata policy of a hosted Relying Party
+  ([#426](https://github.com/swedenconnect/openid-federation-registry/issues/426)).
 
 
 ### Version 1.0.1

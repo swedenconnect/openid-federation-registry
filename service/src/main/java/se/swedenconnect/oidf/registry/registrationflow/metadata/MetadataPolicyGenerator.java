@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,13 +76,14 @@ public final class MetadataPolicyGenerator {
    *
    * @param template the template
    * @param entityMetadata the entity's metadata, keyed by entity type
+   * @param hosted whether the registry hosts the entity
    * @param organization the registry's data about the organization behind the entity
    * @param images looks up an image URL; used by the {@code image} check
    * @return the claims and the check outcomes
    */
   public static Result generate(final MetadataPolicyTemplate template, final Map<String, Object> entityMetadata,
-      final OrganizationData organization, final Function<String, FetchedResource> images) {
-    return generate(template, entityMetadata, organization, images,
+      final boolean hosted, final OrganizationData organization, final Function<String, FetchedResource> images) {
+    return generate(template, entityMetadata, hosted, organization, images,
         url -> FetchedResource.notFetched(url, "Not fetched"));
   }
 
@@ -90,13 +92,14 @@ public final class MetadataPolicyGenerator {
    *
    * @param template the template
    * @param entityMetadata the entity's metadata, keyed by entity type
+   * @param hosted whether the registry hosts the entity; a rule with {@code hosted_only} is skipped when it does not
    * @param organization the registry's data about the organization behind the entity
    * @param images looks up an image URL; used by the {@code image} check
    * @param documents looks up a JSON document URL; used by the {@code lists_redirect_uris} check
    * @return the claims and the check outcomes
    */
   public static Result generate(final MetadataPolicyTemplate template, final Map<String, Object> entityMetadata,
-      final OrganizationData organization, final Function<String, FetchedResource> images,
+      final boolean hosted, final OrganizationData organization, final Function<String, FetchedResource> images,
       final Function<String, FetchedResource> documents) {
     final Map<String, Object> metadata = new LinkedHashMap<>();
     final Map<String, Object> metadataPolicy = new LinkedHashMap<>();
@@ -110,6 +113,9 @@ public final class MetadataPolicyGenerator {
       final Map<String, Object> typeMetadata = new LinkedHashMap<>();
       final Map<String, Object> typePolicy = new LinkedHashMap<>();
       for (final Rule rule : rules) {
+        if (rule.isHostedOnly() && !hosted) {
+          continue;
+        }
         final Context context = new Context(template, declared, organization, images, documents, checks);
         final Map<String, Object> values = context.values(rule);
         if (values.isEmpty()) {
@@ -122,7 +128,7 @@ public final class MetadataPolicyGenerator {
             typeMetadata.put(name, value);
           }
           else {
-            typePolicy.put(name, Map.of(rule.operatorOrValue(), value));
+            typePolicy.put(name, Collections.singletonMap(rule.operatorOrValue(), value));
             if ("value".equals(rule.operatorOrValue())) {
               pinned.add(new PreviewSection.Field(name, render(value)));
             }
@@ -184,7 +190,12 @@ public final class MetadataPolicyGenerator {
       final String parameter = rule.parameter();
       switch (rule.source()) {
       case ORGANIZATION -> putIfPresent(values, "", this.organization.value(rule.organizationField(), rule.icd()));
-      case STATIC -> putIfPresent(values, "", rule.staticValue());
+      case STATIC -> {
+        // A static value of null removes the parameter, so it is written as it is instead of being left out.
+        if (rule.staticValue() != null) {
+          values.put("", rule.staticValue().value());
+        }
+      }
       case ENTITY -> {
         String from = parameter;
         if (!this.declares(parameter) && rule.fallback() != null && this.declares(rule.fallback())) {

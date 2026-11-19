@@ -15,13 +15,25 @@
  */
 package se.swedenconnect.oidf.registry.registrationflow.metadata;
 
+import com.nimbusds.jose.shaded.gson.JsonNull;
+import com.nimbusds.jose.shaded.gson.JsonObject;
+import com.nimbusds.jose.shaded.gson.JsonParser;
+import com.nimbusds.openid.connect.sdk.federation.entities.EntityID;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import se.swedenconnect.oidf.registry.federationservice.model.ModuleRecord;
+import se.swedenconnect.oidf.registry.federationservice.model.PolicyRecord;
+import se.swedenconnect.oidf.registry.federationservice.model.TrustAnchorProperties;
+import se.swedenconnect.oidf.registry.federationservice.serde.JsonRegistryLoader;
+import se.swedenconnect.oidf.registry.infrastructure.persistence.MapConverter;
 import se.swedenconnect.oidf.registry.registrationflow.process.review.PreviewSection;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -35,6 +47,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MetadataPolicyGeneratorTest {
 
   private static MetadataPolicyTemplate swedenConnect;
+  private static MetadataPolicyTemplate registrationIntermediate;
 
   private static final Function<String, FetchedResource> AN_IMAGE =
       url -> new FetchedResource(url, "image/svg+xml", 14_000L, "data:image/svg+xml;base64,PHN2Zy8+", null);
@@ -45,6 +58,16 @@ class MetadataPolicyGeneratorTest {
         "/metadata-policy/default.json")) {
       swedenConnect = JsonMapper.builder().build().readValue(preset, MetadataPolicyTemplate.class);
     }
+    registrationIntermediate = JsonMapper.builder().build()
+        .readValue(registrationTemplate().toFile(), MetadataPolicyTemplate.class);
+  }
+
+  /** The Sweden Connect registration template, read from the profile in {@code docs}. */
+  private static Path registrationTemplate() {
+    final Path inProfile = Path.of("docs", "profiles", "sweden-connect", "registration-template.json");
+    final Path path = Files.exists(inProfile) ? inProfile : Path.of("..").resolve(inProfile);
+    assertThat(path).exists();
+    return path;
   }
 
   @Test
@@ -65,7 +88,7 @@ class MetadataPolicyGeneratorTest {
         "logo_uri", "https://www.example.se/logo.svg",
         "redirect_uris", List.of("https://rp.example.se/cb")));
 
-    final MetadataPolicyGenerator.Result result = MetadataPolicyGenerator.generate(swedenConnect, metadata,
+    final MetadataPolicyGenerator.Result result = MetadataPolicyGenerator.generate(swedenConnect, metadata, false,
         new OrganizationData("Myndigheten för digital förvaltning", "2021006883"), AN_IMAGE);
 
     assertThat(result.failures()).isEmpty();
@@ -100,7 +123,7 @@ class MetadataPolicyGeneratorTest {
         "logo_uri", "https://www.acme.se/logo.svg",
         "acr_values_supported", acr));
 
-    final MetadataPolicyGenerator.Result result = MetadataPolicyGenerator.generate(swedenConnect, metadata,
+    final MetadataPolicyGenerator.Result result = MetadataPolicyGenerator.generate(swedenConnect, metadata, false,
         new OrganizationData("Acme AB", "2021006883"), AN_IMAGE);
 
     assertThat(result.failures()).isEmpty();
@@ -121,7 +144,7 @@ class MetadataPolicyGeneratorTest {
         "client_name#en", "Citizen portal",
         "logo_uri", "http://bad.example.se/logo.png"));
 
-    final MetadataPolicyGenerator.Result result = MetadataPolicyGenerator.generate(swedenConnect, metadata,
+    final MetadataPolicyGenerator.Result result = MetadataPolicyGenerator.generate(swedenConnect, metadata, false,
         new OrganizationData("Exempelkommun", "2120000001"),
         url -> FetchedResource.notFetched(url, "Not fetched: only HTTPS URLs are fetched"));
 
@@ -142,16 +165,81 @@ class MetadataPolicyGeneratorTest {
         "federation_entity", List.of(
             new MetadataPolicyTemplate.Rule("organization_name", MetadataPolicyTemplate.Claim.METADATA, null,
                 MetadataPolicyTemplate.Source.ORGANIZATION, MetadataPolicyTemplate.OrganizationField.LEGAL_NAME,
-                null, null, null, true, null, null, null, null),
+                null, null, null, true, null, null, null, null, null),
             new MetadataPolicyTemplate.Rule("contacts", MetadataPolicyTemplate.Claim.METADATA_POLICY, "essential",
-                MetadataPolicyTemplate.Source.STATIC, null, null, null, true, null, null, null, null, null))));
+                MetadataPolicyTemplate.Source.STATIC, null, null, null,
+                new MetadataPolicyTemplate.StaticValue(true), null, null, null, null, null, null))));
 
     final MetadataPolicyGenerator.Result result = MetadataPolicyGenerator.generate(template,
-        Map.of("federation_entity", Map.of(), "openid_relying_party", Map.of("client_name", "x")),
+        Map.of("federation_entity", Map.of(), "openid_relying_party", Map.of("client_name", "x")), false,
         new OrganizationData("Acme AB", "5560000001"), AN_IMAGE);
 
     assertThat(result.metadata()).isEqualTo(Map.of("federation_entity", Map.of("organization_name", "Acme AB")));
     assertThat(result.metadataPolicy())
         .isEqualTo(Map.of("federation_entity", Map.of("contacts", Map.of("essential", true))));
+  }
+
+  @Test
+  @DisplayName("A hosted Relying Party has signed_jwks_uri removed")
+  @SuppressWarnings("unchecked")
+  void hostedRelyingPartyHasSignedJwksUriRemoved() {
+    final MetadataPolicyGenerator.Result result = MetadataPolicyGenerator.generate(registrationIntermediate,
+        relyingPartyMetadata(), true, new OrganizationData("Acme AB", "2021006883"), AN_IMAGE);
+
+    assertThat(result.failures()).isEmpty();
+    assertThat((Map<String, Object>) result.metadataPolicy().get("openid_relying_party"))
+        .containsEntry("signed_jwks_uri", Collections.singletonMap("value", null));
+  }
+
+  @Test
+  @DisplayName("A self-hosted Relying Party keeps its signed_jwks_uri")
+  @SuppressWarnings("unchecked")
+  void selfHostedRelyingPartyKeepsSignedJwksUri() {
+    final MetadataPolicyGenerator.Result result = MetadataPolicyGenerator.generate(registrationIntermediate,
+        relyingPartyMetadata(), false, new OrganizationData("Acme AB", "2021006883"), AN_IMAGE);
+
+    assertThat(result.failures()).isEmpty();
+    assertThat((Map<String, Object>) result.metadataPolicy().get("openid_relying_party"))
+        .doesNotContainKey("signed_jwks_uri");
+  }
+
+  @Test
+  @DisplayName("The removal is stored and published in the federation feed as value null")
+  @SuppressWarnings("unchecked")
+  void removalIsStoredAndPublished() {
+    final Map<String, Object> policy = MetadataPolicyGenerator.generate(registrationIntermediate,
+        relyingPartyMetadata(), true, new OrganizationData("Acme AB", "2021006883"), AN_IMAGE).metadataPolicy();
+
+    final MapConverter converter = new MapConverter(JsonMapper.builder().build());
+    final Map<String, Object> stored = converter.convertToEntityAttribute(
+        converter.convertToDatabaseColumn(Map.of("metadata_policy", policy)));
+    assertThat((Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>) stored.get("metadata_policy"))
+        .get("openid_relying_party")).get("signed_jwks_uri"))
+        .containsEntry("value", null);
+
+    final ModuleRecord record = new ModuleRecord();
+    record.setTrustAnchors(List.of(TrustAnchorProperties.builder()
+        .entityIdentifier(new EntityID("https://ta.example.se"))
+        .subordinates(List.of(TrustAnchorProperties.SubordinateListingProperty.builder()
+            .entityIdentifier(new EntityID("https://rp.example.se"))
+            .policy(new PolicyRecord("policy-id", policy))
+            .build()))
+        .build()));
+    final JsonObject published = JsonParser.parseString(new JsonRegistryLoader().toJson(record)).getAsJsonObject()
+        .getAsJsonArray("trust-anchors").get(0).getAsJsonObject()
+        .getAsJsonArray("subordinates").get(0).getAsJsonObject()
+        .getAsJsonObject("policy").getAsJsonObject("policy").getAsJsonObject("openid_relying_party");
+    assertThat(published.getAsJsonObject("signed_jwks_uri").get("value")).isEqualTo(JsonNull.INSTANCE);
+  }
+
+  private static Map<String, Object> relyingPartyMetadata() {
+    return Map.of("openid_relying_party", Map.of(
+        "organization_name#sv", "Acme AB",
+        "organization_name#en", "Acme Inc.",
+        "organization_identifier", "urn:glue:iso6523:0007:2021006883",
+        "client_name#sv", "Min tjänst",
+        "client_name#en", "My service",
+        "logo_uri", "https://www.acme.se/logo.svg",
+        "redirect_uris", List.of("https://rp.example.se/cb")));
   }
 }
