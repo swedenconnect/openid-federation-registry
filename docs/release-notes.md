@@ -14,6 +14,8 @@
   ([#408](https://github.com/swedenconnect/openid-federation-registry/issues/408)).
 - `signed_jwks_uri` is removed in the metadata policy of a hosted Relying Party
   ([#426](https://github.com/swedenconnect/openid-federation-registry/issues/426)).
+- A change to a registration flow, or to the assignment of a flow, is written to the audit log
+  ([#370](https://github.com/swedenconnect/openid-federation-registry/issues/370)).
 
 
 ### Version 1.0.1

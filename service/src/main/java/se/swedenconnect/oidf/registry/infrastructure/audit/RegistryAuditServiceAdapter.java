@@ -24,6 +24,8 @@ import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.organization.dto.DomainDto;
 import se.swedenconnect.oidf.registry.organization.dto.OrganizationDto;
+import se.swedenconnect.oidf.registry.registrationflow.dto.FlowAssignmentAuditDto;
+import se.swedenconnect.oidf.registry.registrationflow.dto.RegistrationFlowDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationReviewDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
@@ -560,6 +562,64 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
             .organizationId(organizationId.toString())
             .extId(id.toString())
             .newData(this.toJson(review))
+            .build());
+  }
+
+  @Override
+  public void registrationFlowCreated(final UUID flowId, final UUID instanceId, final UUID organizationId,
+      final RegistrationFlowDto oldData, final RegistrationFlowDto newData) {
+    this.emitFlowEvent(RegistryAuditEventType.REGISTRATION_FLOW_CREATED, flowId, instanceId, organizationId, oldData,
+        newData);
+  }
+
+  @Override
+  public void registrationFlowUpdated(final UUID flowId, final UUID instanceId, final UUID organizationId,
+      final RegistrationFlowDto oldData, final RegistrationFlowDto newData) {
+    this.emitFlowEvent(RegistryAuditEventType.REGISTRATION_FLOW_UPDATED, flowId, instanceId, organizationId, oldData,
+        newData);
+  }
+
+  @Override
+  public void registrationFlowDeleted(final UUID flowId, final UUID instanceId, final UUID organizationId,
+      final RegistrationFlowDto deletedData) {
+    this.emitFlowEvent(RegistryAuditEventType.REGISTRATION_FLOW_DELETED, flowId, instanceId, organizationId,
+        deletedData, null);
+  }
+
+  @Override
+  public void registrationFlowAssigned(final UUID assignId, final UUID instanceId, final UUID organizationId,
+      final FlowAssignmentAuditDto oldData, final FlowAssignmentAuditDto newData) {
+    this.emitFlowEvent(RegistryAuditEventType.REGISTRATION_FLOW_ASSIGNED, assignId, instanceId, organizationId,
+        oldData, newData);
+  }
+
+  @Override
+  public void registrationFlowUnassigned(final UUID assignId, final UUID instanceId, final UUID organizationId,
+      final FlowAssignmentAuditDto deletedData) {
+    this.emitFlowEvent(RegistryAuditEventType.REGISTRATION_FLOW_UNASSIGNED, assignId, instanceId, organizationId,
+        deletedData, null);
+  }
+
+  /**
+   * Emits an event about a registration flow or one of its assignments.
+   *
+   * @param event the event type
+   * @param extId the flow ID, or the assignment ID
+   * @param instanceId the instance the record belongs to
+   * @param organizationId the organization owning the record
+   * @param oldData the state before the change, {@code null} for a creation
+   * @param newData the state after the change, {@code null} for a deletion
+   */
+  private void emitFlowEvent(final RegistryAuditEventType event, final UUID extId, final UUID instanceId,
+      final UUID organizationId, final Object oldData, final Object newData) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(event)
+            .instanceId(instanceId.toString())
+            .organizationId(organizationId.toString())
+            .extId(extId.toString())
+            .oldData(this.toJson(oldData))
+            .newData(this.toJson(newData))
             .build());
   }
 

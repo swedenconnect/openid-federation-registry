@@ -23,6 +23,8 @@ import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.organization.dto.DomainDto;
 import se.swedenconnect.oidf.registry.organization.dto.OrganizationDto;
+import se.swedenconnect.oidf.registry.registrationflow.dto.FlowAssignmentAuditDto;
+import se.swedenconnect.oidf.registry.registrationflow.dto.RegistrationFlowDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationReviewDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
@@ -461,6 +463,63 @@ public interface RegistryAuditService {
    * @param review the decline, with no reviewer.
    */
   void registrationDeclinedAutomatically(UUID id, UUID instanceId, UUID organizationId, RegistrationReviewDto review);
+
+  /**
+   * Audits the creation of a registration flow.
+   *
+   * @param flowId the unique identifier of the flow.
+   * @param instanceId the unique identifier of the instance the flow belongs to.
+   * @param organizationId the unique identifier of the organization owning the flow.
+   * @param oldData the previous state, always {@code null} for a creation.
+   * @param newData the created flow.
+   */
+  void registrationFlowCreated(UUID flowId, UUID instanceId, UUID organizationId, RegistrationFlowDto oldData,
+      RegistrationFlowDto newData);
+
+  /**
+   * Audits a change to a registration flow, including its steps and their configuration.
+   *
+   * @param flowId the unique identifier of the flow.
+   * @param instanceId the unique identifier of the instance the flow belongs to.
+   * @param organizationId the unique identifier of the organization owning the flow.
+   * @param oldData the flow as it was.
+   * @param newData the flow as it is now.
+   */
+  void registrationFlowUpdated(UUID flowId, UUID instanceId, UUID organizationId, RegistrationFlowDto oldData,
+      RegistrationFlowDto newData);
+
+  /**
+   * Audits the deletion of a registration flow.
+   *
+   * @param flowId the unique identifier of the flow.
+   * @param instanceId the unique identifier of the instance the flow belonged to.
+   * @param organizationId the unique identifier of the organization that owned the flow.
+   * @param deletedData the flow that was deleted.
+   */
+  void registrationFlowDeleted(UUID flowId, UUID instanceId, UUID organizationId, RegistrationFlowDto deletedData);
+
+  /**
+   * Audits a flow being assigned to an intermediate, a trust mark issuer or a trust mark.
+   *
+   * @param assignId the unique identifier of the assignment.
+   * @param instanceId the unique identifier of the instance the assignment belongs to.
+   * @param organizationId the unique identifier of the organization owning the assignment.
+   * @param oldData the previous state, always {@code null} for a new assignment.
+   * @param newData the assignment that was made.
+   */
+  void registrationFlowAssigned(UUID assignId, UUID instanceId, UUID organizationId, FlowAssignmentAuditDto oldData,
+      FlowAssignmentAuditDto newData);
+
+  /**
+   * Audits a flow assignment being removed.
+   *
+   * @param assignId the unique identifier of the assignment.
+   * @param instanceId the unique identifier of the instance the assignment belonged to.
+   * @param organizationId the unique identifier of the organization that owned the assignment.
+   * @param deletedData the assignment that was removed.
+   */
+  void registrationFlowUnassigned(UUID assignId, UUID instanceId, UUID organizationId,
+      FlowAssignmentAuditDto deletedData);
 
   /**
    * Trigger when a entity configuration resolve is made
