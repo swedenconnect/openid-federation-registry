@@ -151,7 +151,7 @@
                   </v-chip>
                 </td>
                 <td class="mono">{{ rule.claim === 'metadata' ? '—' : (rule.operator ?? 'value') }}</td>
-                <td>{{ sourceLabel(rule) }}</td>
+                <td>{{ sourceLabel(rule) }}<span v-if="rule.hosted_only" class="text-grey"> · hosted only</span></td>
                 <td>{{ rule.multilingual ? languagesLabel(rule) : '—' }}</td>
                 <td>
                   <div class="d-flex flex-wrap ga-1">
@@ -200,9 +200,13 @@
                         label="Fallback parameter if absent" placeholder="e.g. client_name" density="compact"
                         class="mono" @update:model-value="value => setOptional(rule, 'fallback', value)"></v-text-field>
           <v-text-field v-if="rule.source === 'static'" :model-value="staticText(rule)" class="full mono"
-                        label="Static value" hint="Text, or JSON for lists and true/false" persistent-hint
+                        label="Static value" persistent-hint
+                        hint="Text, or JSON for lists, true/false and null; null removes the parameter"
                         density="compact" @update:model-value="value => rule.static_value = parseStatic(value)"></v-text-field>
           <v-checkbox v-model="rule.required" label="Required" density="compact" hide-details></v-checkbox>
+          <v-checkbox :model-value="rule.hosted_only === true" label="Hosted entities only" density="compact"
+                      hide-details title="Applied only to an entity the registry hosts"
+                      @update:model-value="on => setOptional(rule, 'hosted_only', on)"></v-checkbox>
           <v-checkbox v-model="rule.multilingual" label="Multilingual" density="compact" hide-details
                       :disabled="rule.source !== 'entity'"></v-checkbox>
           <v-select v-if="rule.multilingual" v-model="rule.untagged" :items="UNTAGGED" label="Untagged value"
@@ -419,7 +423,8 @@ function setOptional(target, key, value) {
 
 function staticText(target) {
   const value = target.static_value;
-  return value === undefined || value === null ? '' : typeof value === 'string' ? value : JSON.stringify(value);
+  if (value === undefined) return '';
+  return typeof value === 'string' ? value : JSON.stringify(value);
 }
 
 function parseStatic(text) {
@@ -466,7 +471,9 @@ function sourceLabel(target) {
   if (target.source === 'organization') {
     return `Organization: ${ORG_FIELDS.find(f => f.value === target.organization_field)?.title ?? '?'}`;
   }
-  if (target.source === 'static') return `Static: ${staticText(target)}`;
+  if (target.source === 'static') {
+    return target.static_value === null ? 'Static: null, removes the parameter' : `Static: ${staticText(target)}`;
+  }
   return target.fallback ? `Entity's metadata, else ${target.fallback}` : "Entity's metadata";
 }
 
