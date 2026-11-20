@@ -20,6 +20,7 @@ import com.nimbusds.jose.jwk.JWKSet;
 import net.minidev.json.JSONObject;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
@@ -34,6 +35,7 @@ import se.swedenconnect.oidf.registry.organization.service.InstancePlacementServ
 import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 import se.swedenconnect.oidf.registry.registrationflow.dto.AssignFlowResponse;
 import se.swedenconnect.oidf.registry.registrationflow.dto.ConfigValueDto;
+import se.swedenconnect.oidf.registry.registrationflow.dto.FlowAssignmentAuditDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.FlowSummaryDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.IntermediateFlowAssignmentDto;
 import se.swedenconnect.oidf.registry.registrationflow.dto.Mapper;
@@ -114,6 +116,7 @@ public class RegistrationFlowService {
   private final OrganizationTrustMarkRepository organizationTrustMarkRepository;
   private final AutomaticDecline automaticDecline;
   private final SubordinateService subordinateService;
+  private final RegistryAuditService auditService;
 
   /**
    * Constructs a new RegistrationFlowService.
@@ -133,6 +136,7 @@ public class RegistrationFlowService {
    * @param organizationTrustMarkRepository repository of the trust mark types pre-approved per organization
    * @param automaticDecline declines a registration whose run failed
    * @param subordinateService service for reading the published subordinate statement of an entity
+   * @param auditService service writing the audit record of a change
    */
   public RegistrationFlowService(final RegistrationStepRepository registrationStepRepository,
       final TaImRepository taImRepository, final FlowRepository flowRepository,
@@ -146,7 +150,8 @@ public class RegistrationFlowService {
       final RegistrationRepository registrationRepository,
       final OrganizationTrustMarkRepository organizationTrustMarkRepository,
       final AutomaticDecline automaticDecline,
-      final SubordinateService subordinateService) {
+      final SubordinateService subordinateService,
+      final RegistryAuditService auditService) {
     this.registrationStepRepository = registrationStepRepository;
     this.taImRepository = taImRepository;
     this.flowRepository = flowRepository;
@@ -162,6 +167,7 @@ public class RegistrationFlowService {
     this.organizationTrustMarkRepository = organizationTrustMarkRepository;
     this.automaticDecline = automaticDecline;
     this.subordinateService = subordinateService;
+    this.auditService = auditService;
   }
 
   private String resolveTenantOrThrow(final Organization organization) {
@@ -186,6 +192,46 @@ public class RegistrationFlowService {
             ErrorTypes.NOT_FOUND, "Flow not found: " + flowId));
   }
 
+  private void auditAssigned(final UUID assignId, final RegistrationFlow flow,
+      final FlowAssignmentAuditDto.TargetType targetType, final UUID targetId) {
+    this.auditService.registrationFlowAssigned(assignId, instanceOf(flow), organizationOf(flow), null,
+        new FlowAssignmentAuditDto(assignId, flow.getFlowId(), flow.getName(), targetType, targetId));
+  }
+
+  private void auditUnassigned(final UUID assignId, final RegistrationFlow flow,
+      final FlowAssignmentAuditDto.TargetType targetType, final UUID targetId) {
+    this.auditService.registrationFlowUnassigned(assignId, instanceOf(flow), organizationOf(flow),
+        new FlowAssignmentAuditDto(assignId, flow.getFlowId(), flow.getName(), targetType, targetId));
+  }
+
+  /**
+   * The flow as it is stored, for the audit record. The steps are taken from the stored definition and are not
+   * resolved against the steps the service defines, so a flow referring to a step that is no longer defined is
+   * audited as it is instead of failing.
+   *
+   * @param flow the stored flow
+   * @return the flow as a DTO
+   */
+  private static RegistrationFlowDto storedFlow(final RegistrationFlow flow) {
+    final List<StepDto> steps = Optional.ofNullable(flow.getFlowDefinition()).orElse(List.of()).stream()
+        .map(step -> new StepDto(step.stepId(), null, null,
+            Optional.ofNullable(step.config()).orElse(List.of()).stream()
+                .map(value -> new ConfigValueDto(value.key(), null, value.value(), null, null))
+                .toList(),
+            null))
+        .toList();
+    return new RegistrationFlowDto(flow.getFlowId(), flow.getName(), flow.getDescription(), flow.getDescriptionSv(),
+        flow.getTechnology(), flow.getEntityType(), steps, flow.getFlowType(), flow.isEnabled());
+  }
+
+  private static UUID instanceOf(final RegistrationFlow flow) {
+    return flow.getOrganization().getInstance().getInstanceId();
+  }
+
+  private static UUID organizationOf(final RegistrationFlow flow) {
+    return flow.getOrganization().getOrganizationId();
+  }
+
   /**
    * Creates a new registration flow owned by the given organization.
    *
@@ -205,6 +251,8 @@ public class RegistrationFlowService {
     final RegistrationFlow registrationFlow = Mapper.toModel(dtoWithId, flowId, org,
         this.registrationStepRepository);
     InsertOnly.save(this.flowRepository, registrationFlow, "A flow with this ID already exists: " + flowId);
+    this.auditService.registrationFlowCreated(flowId, instanceOf(registrationFlow), organizationOf(registrationFlow),
+        null, storedFlow(registrationFlow));
     return dtoWithId;
   }
 
@@ -221,8 +269,11 @@ public class RegistrationFlowService {
       final UUID flowId, final RegistrationFlowDto registrationFlowDto) {
     ValidateDto.init(organizationRecord).validate(registrationFlowDto);
     final RegistrationFlow existing = this.findOwnedFlowOrThrow(organizationRecord, flowId);
+    final RegistrationFlowDto before = storedFlow(existing);
     Mapper.applyUpdate(existing, registrationFlowDto, this.registrationStepRepository);
     this.flowRepository.save(existing);
+    this.auditService.registrationFlowUpdated(flowId, instanceOf(existing), organizationOf(existing), before,
+        storedFlow(existing));
     return new RegistrationFlowDto(existing.getFlowId(), existing.getName(), existing.getDescription(),
         existing.getDescriptionSv(), existing.getTechnology(), existing.getEntityType(), List.of(),
         existing.getFlowType(), existing.isEnabled());
@@ -235,8 +286,12 @@ public class RegistrationFlowService {
    * @param registrationFlowId the ID of the flow to delete
    */
   public void deleteRegistrationFlow(final OrganizationRecord organizationRecord, final UUID registrationFlowId) {
-    this.findOwnedFlowOrThrow(organizationRecord, registrationFlowId);
+    final RegistrationFlow flow = this.findOwnedFlowOrThrow(organizationRecord, registrationFlowId);
+    final RegistrationFlowDto deleted = storedFlow(flow);
+    final UUID instanceId = instanceOf(flow);
+    final UUID organizationId = organizationOf(flow);
     this.flowRepository.deleteById(registrationFlowId);
+    this.auditService.registrationFlowDeleted(registrationFlowId, instanceId, organizationId, deleted);
   }
 
   /**
@@ -717,6 +772,8 @@ public class RegistrationFlowService {
         .orElseGet(() -> {
           final FlowAssignment assignment = new FlowAssignment(UUID.randomUUID(), taIm, flow);
           this.flowAssignmentRepository.save(assignment);
+          this.auditAssigned(assignment.getAssignId(), flow, FlowAssignmentAuditDto.TargetType.INTERMEDIATE,
+              taIm.getTaImId());
           return new AssignFlowResponse(assignment.getAssignId());
         });
   }
@@ -738,6 +795,8 @@ public class RegistrationFlowService {
         .findByAssignIdAndTaImTaImId(assignId, taImId)
         .orElseThrow(() -> notFound);
     this.flowAssignmentRepository.delete(assignment);
+    this.auditUnassigned(assignId, assignment.getRegistrationFlow(),
+        FlowAssignmentAuditDto.TargetType.INTERMEDIATE, taImId);
   }
 
   /**
@@ -793,6 +852,8 @@ public class RegistrationFlowService {
           final TrustMarkIssuerFlowAssignment assignment =
               new TrustMarkIssuerFlowAssignment(UUID.randomUUID(), issuer, flow);
           this.tmIssuerFlowAssignmentRepository.save(assignment);
+          this.auditAssigned(assignment.getAssignId(), flow, FlowAssignmentAuditDto.TargetType.TRUSTMARK_ISSUER,
+              issuer.getTrustmarkIssuerId());
           return new AssignFlowResponse(assignment.getAssignId());
         });
   }
@@ -815,6 +876,8 @@ public class RegistrationFlowService {
         .findByAssignIdAndTrustMarkIssuerTrustmarkIssuerId(assignId, tmIssuerId)
         .orElseThrow(() -> notFound);
     this.tmIssuerFlowAssignmentRepository.delete(assignment);
+    this.auditUnassigned(assignId, assignment.getRegistrationFlow(),
+        FlowAssignmentAuditDto.TargetType.TRUSTMARK_ISSUER, tmIssuerId);
   }
 
   /**
@@ -869,6 +932,8 @@ public class RegistrationFlowService {
           final TrustMarkFlowAssignment assignment =
               new TrustMarkFlowAssignment(UUID.randomUUID(), tm, flow);
           this.tmFlowAssignmentRepository.save(assignment);
+          this.auditAssigned(assignment.getAssignId(), flow, FlowAssignmentAuditDto.TargetType.TRUSTMARK,
+              tm.getTrustmarkId());
           return new AssignFlowResponse(assignment.getAssignId());
         });
   }
@@ -890,6 +955,8 @@ public class RegistrationFlowService {
         .filter(a -> a.getTrustMark().getTrustmarkId().equals(trustmarkId))
         .orElseThrow(() -> notFound);
     this.tmFlowAssignmentRepository.delete(assignment);
+    this.auditUnassigned(assignId, assignment.getRegistrationFlow(), FlowAssignmentAuditDto.TargetType.TRUSTMARK,
+        trustmarkId);
   }
 
 }
