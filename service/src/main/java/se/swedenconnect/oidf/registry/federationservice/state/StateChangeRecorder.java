@@ -17,8 +17,11 @@ package se.swedenconnect.oidf.registry.federationservice.state;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.PersistenceException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.dao.DataAccessException;
+import org.springframework.orm.jpa.vendor.HibernateJpaDialect;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -40,6 +43,10 @@ import java.util.UUID;
  * and written once: the rows of the affected instances are locked in the order of their IDs and one change per key is
  * appended. A failure rolls back the transaction, so a committed change always has its keys recorded.
  * <p>
+ * An exception from the flush or the change log is translated to a {@link DataAccessException}, as the transaction
+ * manager would at commit: one thrown from {@code beforeCommit} is passed on untranslated, and a write conflict with
+ * a concurrent request would otherwise not be answered with 409 Conflict.
+ * <p>
  * A {@code @TransactionalEventListener} is not used, since it is called once per event, and the keys of all events of
  * a transaction are to be written once.
  *
@@ -48,6 +55,8 @@ import java.util.UUID;
 @Slf4j
 @Component
 public class StateChangeRecorder {
+
+  private static final HibernateJpaDialect JPA_DIALECT = new HibernateJpaDialect();
 
   private final StateDependencies dependencies;
   private final StateChangeStore store;
@@ -102,6 +111,19 @@ public class StateChangeRecorder {
   }
 
   private void record(final List<FederationAuditEvent> events) {
+    try {
+      this.recordUntranslated(events);
+    }
+    catch (final PersistenceException e) {
+      final DataAccessException translated = JPA_DIALECT.translateExceptionIfPossible(e);
+      if (translated == null) {
+        throw e;
+      }
+      throw translated;
+    }
+  }
+
+  private void recordUntranslated(final List<FederationAuditEvent> events) {
     this.entityManager.flush();
     final StateDependencies.Changes changes = new StateDependencies.Changes();
     events.forEach(event -> this.dependencies.map(event, changes));
