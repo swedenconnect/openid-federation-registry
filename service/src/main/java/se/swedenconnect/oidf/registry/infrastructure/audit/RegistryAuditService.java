@@ -23,6 +23,7 @@ import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.organization.dto.DomainDto;
 import se.swedenconnect.oidf.registry.organization.dto.OrganizationDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestAuditDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationReviewDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
@@ -461,6 +462,40 @@ public interface RegistryAuditService {
    * @param review the decline, with no reviewer.
    */
   void registrationDeclinedAutomatically(UUID id, UUID instanceId, UUID organizationId, RegistrationReviewDto review);
+
+  /**
+   * Audits a member submitting a registration request.
+   *
+   * @param registrationId the unique identifier of the registration.
+   * @param instanceId the unique identifier of the instance the registration belongs to, may be {@code null}.
+   * @param organizationId the unique identifier of the organization that submitted the request.
+   * @param newData the request as it was submitted.
+   */
+  void registrationSubmitted(UUID registrationId, UUID instanceId, UUID organizationId,
+      RegistrationRequestAuditDto newData);
+
+  /**
+   * Audits a member resubmitting a registration request.
+   *
+   * @param registrationId the unique identifier of the registration.
+   * @param instanceId the unique identifier of the instance the registration belongs to, may be {@code null}.
+   * @param organizationId the unique identifier of the organization that submitted the request.
+   * @param oldData the registration as it was before the resubmission.
+   * @param newData the registration as it is after the resubmission.
+   */
+  void registrationUpdated(UUID registrationId, UUID instanceId, UUID organizationId,
+      RegistrationRequestAuditDto oldData, RegistrationRequestAuditDto newData);
+
+  /**
+   * Audits a registration request being deleted.
+   *
+   * @param registrationId the unique identifier of the registration.
+   * @param instanceId the unique identifier of the instance the registration belonged to, may be {@code null}.
+   * @param organizationId the unique identifier of the organization that owned the registration.
+   * @param deletedData the registration that was deleted.
+   */
+  void registrationDeleted(UUID registrationId, UUID instanceId, UUID organizationId,
+      RegistrationRequestAuditDto deletedData);
 
   /**
    * Trigger when a entity configuration resolve is made
