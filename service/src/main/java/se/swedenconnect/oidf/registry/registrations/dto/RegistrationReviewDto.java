@@ -31,6 +31,8 @@ import java.util.UUID;
  * @param reviewer who made the decision
  * @param reviewedAt when the decision was made
  * @param rejectionReason why the registration was rejected, {@code null} for an approval
+ * @param submittedBy the account that submitted the registration, {@code null} for a registration submitted before
+ *     the account was recorded
  * @author Felix Hellman
  */
 public record RegistrationReviewDto(
@@ -41,5 +43,6 @@ public record RegistrationReviewDto(
     String stepName,
     String reviewer,
     LocalDateTime reviewedAt,
-    String rejectionReason) {
+    String rejectionReason,
+    String submittedBy) {
 }

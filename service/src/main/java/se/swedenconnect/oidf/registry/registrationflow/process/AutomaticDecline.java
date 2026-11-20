@@ -31,7 +31,8 @@ import java.util.Optional;
  * so it does not wait for a review that never comes.
  *
  * <p>The decline is audited as {@code REGISTRATION_REJECTED}, as an operator's rejection is, but with the registry as
- * the principal and no reviewer: no user made the decision. The reason says it was automatic.</p>
+ * the principal and no reviewer: no user made the decision. The record names the account that submitted the
+ * registration, and the reason says it was automatic.</p>
  *
  * @author Felix Hellman
  */
@@ -75,6 +76,7 @@ public class AutomaticDecline {
         Optional.ofNullable(registration.getOrganization().getInstance()).map(Instance::getInstanceId).orElse(null),
         registration.getOrganization().getOrganizationId(),
         new RegistrationReviewDto(registration.getRegistrationId(), registration.getEntityId(),
-            registration.getRegistrationType(), null, null, null, decidedAt, reason));
+            registration.getRegistrationType(), null, null, null, decidedAt, reason,
+            registration.getCreatedBy()));
   }
 }

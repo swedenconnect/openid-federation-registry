@@ -24,6 +24,7 @@ import se.swedenconnect.oidf.registry.module.dto.TrustAnchorDto;
 import se.swedenconnect.oidf.registry.module.dto.TrustmarkIssuerDto;
 import se.swedenconnect.oidf.registry.organization.dto.DomainDto;
 import se.swedenconnect.oidf.registry.organization.dto.OrganizationDto;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestAuditDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationReviewDto;
 import se.swedenconnect.oidf.registry.subordinate.dto.SubordinateDto;
 import se.swedenconnect.oidf.registry.trustmark.dto.TrustmarkDto;
@@ -560,6 +561,51 @@ public abstract class RegistryAuditServiceAdapter implements RegistryAuditServic
             .organizationId(organizationId.toString())
             .extId(id.toString())
             .newData(this.toJson(review))
+            .build());
+  }
+
+  @Override
+  public void registrationSubmitted(final UUID registrationId, final UUID instanceId, final UUID organizationId,
+      final RegistrationRequestAuditDto newData) {
+    this.emitRegistrationRequest(RegistryAuditEventType.REGISTRATION_SUBMITTED, registrationId, instanceId,
+        organizationId, null, newData);
+  }
+
+  @Override
+  public void registrationUpdated(final UUID registrationId, final UUID instanceId, final UUID organizationId,
+      final RegistrationRequestAuditDto oldData, final RegistrationRequestAuditDto newData) {
+    this.emitRegistrationRequest(RegistryAuditEventType.REGISTRATION_UPDATED, registrationId, instanceId,
+        organizationId, oldData, newData);
+  }
+
+  @Override
+  public void registrationDeleted(final UUID registrationId, final UUID instanceId, final UUID organizationId,
+      final RegistrationRequestAuditDto deletedData) {
+    this.emitRegistrationRequest(RegistryAuditEventType.REGISTRATION_DELETED, registrationId, instanceId,
+        organizationId, deletedData, null);
+  }
+
+  /**
+   * Emits an event about a registration request.
+   *
+   * @param event the event type
+   * @param registrationId the registration the request belongs to
+   * @param instanceId the instance the registration belongs to, may be {@code null}
+   * @param organizationId the organization that owns the registration
+   * @param oldData the request before the change, {@code null} for a submission
+   * @param newData the request after the change, {@code null} for a deletion
+   */
+  private void emitRegistrationRequest(final RegistryAuditEventType event, final UUID registrationId,
+      final UUID instanceId, final UUID organizationId, final RegistrationRequestAuditDto oldData,
+      final RegistrationRequestAuditDto newData) {
+    this.emitEvent(
+        FederationAuditEvent.builder()
+            .event(event)
+            .instanceId(instanceId == null ? null : instanceId.toString())
+            .organizationId(organizationId.toString())
+            .extId(registrationId.toString())
+            .oldData(this.toJson(oldData))
+            .newData(this.toJson(newData))
             .build());
   }
 

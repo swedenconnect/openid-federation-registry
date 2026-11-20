@@ -14,6 +14,9 @@
   ([#408](https://github.com/swedenconnect/openid-federation-registry/issues/408)).
 - `signed_jwks_uri` is removed in the metadata policy of a hosted Relying Party
   ([#426](https://github.com/swedenconnect/openid-federation-registry/issues/426)).
+- Submitting, resubmitting and deleting a registration request is written to the audit log, and a record of the
+  registry's own decline names the account that submitted the request
+  ([#371](https://github.com/swedenconnect/openid-federation-registry/issues/371)).
 
 
 ### Version 1.0.1
