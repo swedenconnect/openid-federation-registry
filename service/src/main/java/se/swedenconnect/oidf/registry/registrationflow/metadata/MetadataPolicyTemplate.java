@@ -18,6 +18,11 @@ package se.swedenconnect.oidf.registry.registrationflow.metadata;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -116,6 +121,36 @@ public record MetadataPolicyTemplate(
   }
 
   /**
+   * The value a rule with {@link Source#STATIC} writes. The value is {@code null} when the rule removes the
+   * parameter, which is kept apart from a rule that gives no {@code static_value} at all: that rule has none.
+   *
+   * @param value the value, {@code null} when the rule removes the parameter
+   * @author Felix Hellman
+   */
+  @JsonDeserialize(using = StaticValue.Deserializer.class)
+  public record StaticValue(@JsonValue Object value) {
+
+    /** Reads the value, keeping {@code static_value: null} apart from a {@code static_value} that is not given. */
+    static final class Deserializer extends ValueDeserializer<StaticValue> {
+
+      @Override
+      public StaticValue deserialize(final JsonParser parser, final DeserializationContext context) {
+        return new StaticValue(context.readValue(parser, Object.class));
+      }
+
+      @Override
+      public StaticValue getNullValue(final DeserializationContext context) {
+        return new StaticValue(null);
+      }
+
+      @Override
+      public Object getAbsentValue(final DeserializationContext context) {
+        return null;
+      }
+    }
+  }
+
+  /**
    * A check made on a rule's values before registration.
    *
    * @author Felix Hellman
@@ -151,6 +186,7 @@ public record MetadataPolicyTemplate(
    * @param untagged where the value without a language tag comes from, for a multilingual parameter
    * @param untaggedOrganizationField the organization field, for {@link Untagged#ORGANIZATION}
    * @param checks the checks made on the values
+   * @param hostedOnly whether the rule applies only to an entity the registry hosts
    * @author Felix Hellman
    */
   @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -162,12 +198,23 @@ public record MetadataPolicyTemplate(
       @JsonProperty("organization_field") OrganizationField organizationField,
       @JsonProperty("icd") String icd,
       @JsonProperty("fallback") String fallback,
-      @JsonProperty("static_value") Object staticValue,
+      @JsonProperty("static_value") StaticValue staticValue,
       @JsonProperty("required") Boolean required,
       @JsonProperty("multilingual") Boolean multilingual,
       @JsonProperty("untagged") Untagged untagged,
       @JsonProperty("untagged_organization_field") OrganizationField untaggedOrganizationField,
-      @JsonProperty("checks") List<Check> checks) {
+      @JsonProperty("checks") List<Check> checks,
+      @JsonProperty("hosted_only") Boolean hostedOnly) {
+
+    /**
+     * Tells whether the rule applies only to an entity the registry hosts.
+     *
+     * @return {@code true} if the rule is for hosted entities only
+     */
+    @JsonIgnore
+    public boolean isHostedOnly() {
+      return Boolean.TRUE.equals(this.hostedOnly);
+    }
 
     /**
      * Tells whether a missing value is a failure.
@@ -344,7 +391,7 @@ public record MetadataPolicyTemplate(
       problems.add(at + ": static_value must be given for source static");
     }
     if ("essential".equals(rule.operator()) && rule.source() == Source.STATIC
-        && !(rule.staticValue() instanceof Boolean)) {
+        && (rule.staticValue() == null || !(rule.staticValue().value() instanceof Boolean))) {
       problems.add(at + ": the essential operator takes true or false");
     }
     if (rule.isMultilingual() && rule.source() != Source.ENTITY) {

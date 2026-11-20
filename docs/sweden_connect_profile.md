@@ -38,8 +38,8 @@ section 6.2):
 - `client_name` and `display_name` pinned with the `value` operator, `display_name` falling back to `client_name`.
 - `logo_uri` an HTTPS URL that answers with an image.
 - `sector_identifier_uri` pinned, an HTTPS URL to a JSON array that lists all the entity's `redirect_uris`.
-- `signed_jwks_uri` removed (`value: null`). Not supported yet: the registry leaves the rule out when it loads the
-  template, with a warning, see [#304](https://github.com/swedenconnect/openid-federation-registry/issues/304).
+- `signed_jwks_uri` removed (`value: null`) for a hosted Relying Party, with `hosted_only`; a self-hosted Relying
+  Party keeps the one it publishes itself.
 - For an OpenID Provider, `acr_values_supported` limited to the Swedish eID assurance levels 2–4.
 
 In the flow builder, open the settings of **MetadataPolicyCreationStep** and choose **Load template** →

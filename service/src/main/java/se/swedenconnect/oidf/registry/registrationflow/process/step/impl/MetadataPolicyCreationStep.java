@@ -167,11 +167,10 @@ public class MetadataPolicyCreationStep extends NoConfigStepAdapter implements R
         this.organizationService.find(organization).map(Organization::getLegalName).orElse(null),
         organization.orgNumber());
 
-    final String selfHostedEntityId = ctx.get(ContextKey.REQUEST_METADATA).isPresent()
-        ? null
-        : ctx.<String>get(ContextKey.ENTITY_ID).orElse(null);
+    final boolean hosted = ctx.get(ContextKey.REQUEST_METADATA).isPresent();
+    final String selfHostedEntityId = hosted ? null : ctx.<String>get(ContextKey.ENTITY_ID).orElse(null);
     final JSONObject fetched = ctx.<JSONObject>get(ContextKey.FETCHED_RESOURCES).orElseGet(JSONObject::new);
-    final MetadataPolicyGenerator.Result result = MetadataPolicyGenerator.generate(template, entityMetadata,
+    final MetadataPolicyGenerator.Result result = MetadataPolicyGenerator.generate(template, entityMetadata, hosted,
         organizationData, url -> {
           if (fetched.get(url) instanceof final Map<?, ?> known) {
             return FetchedResource.fromMap(known);

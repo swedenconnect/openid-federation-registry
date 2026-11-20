@@ -94,12 +94,13 @@ configured under `openid.federation.registry.templates`, see [Templates](configu
 | `organization_field`          | For source `organization`: `legal_name`, `organization_number` or `organization_identifier`.                 |
 | `icd`                         | ISO 6523 code for `organization_identifier` (`urn:glue:iso6523:<icd>:<number>`). Default `0007`.             |
 | `fallback`                    | For source `entity`: another parameter to take the value from when this one is not declared.                 |
-| `static_value`                | For source `static`: the value. `essential` takes `true` or `false`.                                         |
+| `static_value`                | For source `static`: the value. `null` removes the parameter, `essential` takes `true` or `false`. A rule without it is refused. |
 | `required`                    | A missing value is a failure.                                                                                |
 | `multilingual`                | The parameter is given per language in `languages`; a missing language is a failure.                         |
 | `untagged`                    | For multilingual parameters, the value without language tag: `none`, `default_language`, `entity_or_default` (the entity's own, else the default language) or `organization`. Default `default_language`. |
 | `untagged_organization_field` | For `untagged: organization`: the organization field.                                                        |
 | `checks`                      | Checks made on every value, see below.                                                                       |
+| `hosted_only`                 | The rule is applied only to an entity the registry hosts; a self-hosted entity is left alone.                |
 
 ### Checks
 

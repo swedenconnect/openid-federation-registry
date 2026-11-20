@@ -17,6 +17,7 @@ package se.swedenconnect.oidf.registry.registrationflow.metadata;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,7 @@ class MetadataPolicyTemplateTest {
   private static MetadataPolicyTemplate.Rule rule(final MetadataPolicyTemplate.Claim claim, final String operator,
       final MetadataPolicyTemplate.Source source, final Boolean multilingual) {
     return new MetadataPolicyTemplate.Rule("client_name", claim, operator, source, null, null, null, null, null,
-        multilingual, null, null, null);
+        multilingual, null, null, null, null);
   }
 
   @Test
@@ -64,16 +65,17 @@ class MetadataPolicyTemplateTest {
             new MetadataPolicyTemplate.Rule("organization_name", MetadataPolicyTemplate.Claim.METADATA, null,
                 MetadataPolicyTemplate.Source.ENTITY, null, null, null, null, null, true,
                 MetadataPolicyTemplate.Untagged.ORGANIZATION, MetadataPolicyTemplate.OrganizationField.LEGAL_NAME,
-                null),
+                null, null),
             new MetadataPolicyTemplate.Rule("display_name", MetadataPolicyTemplate.Claim.METADATA_POLICY, "value",
                 MetadataPolicyTemplate.Source.ENTITY, null, null, "client_name", null, null, true,
-                MetadataPolicyTemplate.Untagged.ENTITY_OR_DEFAULT, null, null),
+                MetadataPolicyTemplate.Untagged.ENTITY_OR_DEFAULT, null, null, null),
             new MetadataPolicyTemplate.Rule("logo_uri", MetadataPolicyTemplate.Claim.METADATA_POLICY, "value",
-                MetadataPolicyTemplate.Source.ENTITY, null, null, null, null, null, null, null, null, null),
+                MetadataPolicyTemplate.Source.ENTITY, null, null, null, null, null, null, null, null, null,
+                null),
             new MetadataPolicyTemplate.Rule("organization_number", MetadataPolicyTemplate.Claim.METADATA, null,
                 MetadataPolicyTemplate.Source.ORGANIZATION,
                 MetadataPolicyTemplate.OrganizationField.ORGANIZATION_NUMBER,
-                null, null, null, null, null, null, null, null))));
+                null, null, null, null, null, null, null, null, null))));
 
     assertThat(template.entityParameters("openid_relying_party", "organization_name")).isEmpty();
     assertThat(template.entityParameters("openid_relying_party", "organization_name#en"))
@@ -86,5 +88,25 @@ class MetadataPolicyTemplateTest {
     assertThat(template.entityParameters("openid_relying_party", "organization_number")).isEmpty();
     assertThat(template.entityParameters("openid_relying_party", "unknown")).isEmpty();
     assertThat(template.entityParameters("openid_provider", "logo_uri")).isEmpty();
+  }
+
+  @Test
+  @DisplayName("A rule that removes a parameter with static_value null can be used")
+  void removalWithNullStaticValueIsAllowed() {
+    assertThat(staticRule(", \"static_value\": null").problems()).isEmpty();
+  }
+
+  @Test
+  @DisplayName("A static rule that gives no static_value at all is reported")
+  void staticRuleWithoutStaticValueIsReported() {
+    assertThat(staticRule("").problems())
+        .containsExactly("openid_relying_party[0]: static_value must be given for source static");
+  }
+
+  private static MetadataPolicyTemplate staticRule(final String staticValue) {
+    return JsonMapper.builder().build().readValue("""
+        {"entity_types": {"openid_relying_party": [
+          {"parameter": "signed_jwks_uri", "claim": "metadata_policy", "operator": "value", "source": "static"%s}
+        ]}}""".formatted(staticValue), MetadataPolicyTemplate.class);
   }
 }

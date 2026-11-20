@@ -76,7 +76,7 @@ public class TemplateCatalog {
       final String read = read(at, resourceLoader.getResource(template.location()));
       final Supported supported = template.type() == TemplateProperties.Type.POLICY
           ? supportedPolicy(template.name(), read, jsonMapper)
-          : supportedStep(template.name(), read, jsonMapper);
+          : new Supported(read, List.of());
       final String content = supported.content();
       final List<String> problems = switch (template.type()) {
         case STEP -> metadataPolicyCreationStep.validateConfiguration(
@@ -132,43 +132,6 @@ public class TemplateCatalog {
         log.warn("Policy template '{}': left out {}, not supported", name, omitted));
     return new Supported(jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(supported.policy()),
         supported.omitted());
-  }
-
-  /**
-   * Leaves out the rules of a step template the registry cannot apply yet: a rule that removes a parameter with
-   * {@code value: null}. The template is assumed to follow the specification. Text that is not JSON is returned as it
-   * is, for the check to report.
-   */
-  @SuppressWarnings("unchecked")
-  private static Supported supportedStep(final String name, final String content, final JsonMapper jsonMapper) {
-    final Map<String, Object> template;
-    try {
-      template = jsonMapper.readValue(content, Map.class);
-    }
-    catch (final JacksonException e) {
-      return new Supported(content, List.of());
-    }
-    if (!(template.get("entity_types") instanceof final Map<?, ?> entityTypes)) {
-      return new Supported(content, List.of());
-    }
-    final List<String> omitted = new ArrayList<>();
-    entityTypes.forEach((type, rules) -> {
-      if (rules instanceof final List<?> list) {
-        ((List<Object>) list).removeIf(rule -> {
-          final boolean removesWithNull = rule instanceof final Map<?, ?> map
-              && map.containsKey("static_value") && map.get("static_value") == null;
-          if (removesWithNull) {
-            omitted.add("%s.%s (value null)".formatted(type, ((Map<?, ?>) rule).get("parameter")));
-          }
-          return removesWithNull;
-        });
-      }
-    });
-    if (omitted.isEmpty()) {
-      return new Supported(content, List.of());
-    }
-    omitted.forEach(rule -> log.warn("Step template '{}': left out {}, not supported yet", name, rule));
-    return new Supported(jsonMapper.writerWithDefaultPrettyPrinter().writeValueAsString(template), omitted);
   }
 
   /**

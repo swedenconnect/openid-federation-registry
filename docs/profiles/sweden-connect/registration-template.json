@@ -61,7 +61,8 @@
         "claim": "metadata_policy",
         "operator": "value",
         "source": "static",
-        "static_value": null
+        "static_value": null,
+        "hosted_only": true
       }
     ],
     "openid_provider": [
