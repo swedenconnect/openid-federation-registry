@@ -179,7 +179,7 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
     this.auditService.registrationRejected(reg.getRegistrationId(), instanceIdOf(reg),
         reg.getOrganization().getOrganizationId(), new RegistrationReviewDto(reg.getRegistrationId(),
             reg.getEntityId(), reg.getRegistrationType(), null, null, reviewer, reg.getReviewedAt(),
-            rejectionReason));
+            rejectionReason, reg.getCreatedBy()));
     final List<HostedEntityDto> hostedEntities = this.entityConfigService.listHostedEntity(reg.getEntityId());
     final boolean isHosted = !hostedEntities.isEmpty();
     final Map<String, Object> hostedMetadata = isHosted ? hostedEntities.getFirst().getMetadata() : null;
@@ -239,7 +239,8 @@ public class RegistrationAdminServiceImpl implements RegistrationAdminService {
     this.registrationFlowService.approveStep(reg, stepIndex, reviewer);
     this.auditService.registrationStepApproved(reg.getRegistrationId(), instanceIdOf(reg),
         reg.getOrganization().getOrganizationId(), new RegistrationReviewDto(reg.getRegistrationId(),
-            reg.getEntityId(), reg.getRegistrationType(), stepIndex, stepName, reviewer, reg.getReviewedAt(), null));
+            reg.getEntityId(), reg.getRegistrationType(), stepIndex, stepName, reviewer, reg.getReviewedAt(), null,
+            reg.getCreatedBy()));
     return this.getRegistrationById(organizationRecord, registrationId);
   }
 

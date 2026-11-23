@@ -19,10 +19,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import se.swedenconnect.oidf.registry.entity.dto.HostedEntityDto;
 import se.swedenconnect.oidf.registry.entity.service.EntityConfigService;
+import se.swedenconnect.oidf.registry.infrastructure.audit.RegistryAuditService;
 import se.swedenconnect.oidf.registry.infrastructure.auth.domain.OrganizationRecord;
 import se.swedenconnect.oidf.registry.infrastructure.error.ErrorTypes;
 import se.swedenconnect.oidf.registry.infrastructure.error.RegistryServerException;
 import se.swedenconnect.oidf.registry.infrastructure.validation.ValidateDto;
+import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.organization.service.OrganizationService;
 import se.swedenconnect.oidf.registry.registrationflow.RegistrationFlowService;
@@ -32,11 +34,13 @@ import se.swedenconnect.oidf.registry.registrationflow.model.StepModel;
 import se.swedenconnect.oidf.registry.registrationflow.process.ProcessReport;
 import se.swedenconnect.oidf.registry.registrationflow.process.review.ReviewableStep;
 import se.swedenconnect.oidf.registry.registrationflow.process.step.impl.MetadataPolicyCreationStep;
+import se.swedenconnect.oidf.registry.registrationflow.model.FlowAssignment;
 import se.swedenconnect.oidf.registry.registrationflow.repository.FlowAssignmentRepository;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationFlowInformationDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationJoinRequestDto;
 import se.swedenconnect.oidf.registry.registrations.dto.RegistrationMapper;
+import se.swedenconnect.oidf.registry.registrations.dto.RegistrationRequestAuditDto;
 import se.swedenconnect.oidf.registry.registrations.model.Registration;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationStatus;
 import se.swedenconnect.oidf.registry.registrations.model.RegistrationType;
@@ -67,6 +71,7 @@ public class RegistrationServiceImpl implements RegistrationService {
   private final EntityConfigService entityConfigService;
   private final OrganizationService organizationService;
   private final MetadataPolicyCreationStep metadataPolicyCreationStep;
+  private final RegistryAuditService auditService;
 
 
   /**
@@ -79,6 +84,7 @@ public class RegistrationServiceImpl implements RegistrationService {
    * @param entityConfigService service for deleting hosted entities and what points at them
    * @param organizationService service for resolving the calling organization
    * @param metadataPolicyCreationStep the step whose template tells where pinned values come from
+   * @param auditService service writing the audit record of a request
    */
   public RegistrationServiceImpl(final FlowAssignmentRepository flowAssignmentRepository,
       final RegistrationRepository registrationRepository,
@@ -86,7 +92,8 @@ public class RegistrationServiceImpl implements RegistrationService {
       final SubordinateService subordinateService,
       final EntityConfigService entityConfigService,
       final OrganizationService organizationService,
-      final MetadataPolicyCreationStep metadataPolicyCreationStep) {
+      final MetadataPolicyCreationStep metadataPolicyCreationStep,
+      final RegistryAuditService auditService) {
     this.flowAssignmentRepository = flowAssignmentRepository;
     this.registrationRepository = registrationRepository;
     this.registrationFlowService = registrationFlowService;
@@ -94,6 +101,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     this.entityConfigService = entityConfigService;
     this.organizationService = organizationService;
     this.metadataPolicyCreationStep = metadataPolicyCreationStep;
+    this.auditService = auditService;
   }
 
   /**
@@ -213,6 +221,8 @@ public class RegistrationServiceImpl implements RegistrationService {
         this.registrationRepository.findByParentRegistration_RegistrationId(registration.getRegistrationId())
             .stream()
             .collect(Collectors.toMap(Registration::getEntityId, Function.identity()));
+    this.auditService.registrationSubmitted(registration.getRegistrationId(), instanceOf(registration),
+        organizationOf(registration), submittedRequest(registration));
     return this.withPinnedMetadata(
         RegistrationMapper.toRegistrationRequestStatusDto(registration, report, isHosted, hostedMetadata,
             tmStatusByType),
@@ -230,7 +240,11 @@ public class RegistrationServiceImpl implements RegistrationService {
     }
     hostedEntities.forEach(hosted ->
         this.entityConfigService.deleteHostedEntity(organizationRecord, hosted.getEntityId(), true, true));
+    final RegistrationRequestAuditDto deleted = submittedRequest(reg);
+    final UUID instanceId = instanceOf(reg);
+    final UUID organizationId = organizationOf(reg);
     this.registrationRepository.delete(reg);
+    this.auditService.registrationDeleted(registrationId, instanceId, organizationId, deleted);
   }
 
   @Override
@@ -271,6 +285,7 @@ public class RegistrationServiceImpl implements RegistrationService {
   public RegistrationDto updateRegistrationRequest(final OrganizationRecord organizationRecord,
       final UUID registrationId, final RegistrationJoinRequestDto request) {
     final Registration existing = this.findOwnedRegistrationOrThrow(organizationRecord, registrationId);
+    final RegistrationRequestAuditDto before = submittedRequest(existing);
     request.setJoinId(existing.getFlowAssignment().getAssignId());
     ValidateDto.init(organizationRecord).validate(request);
     if (isHosted(request)) {
@@ -287,10 +302,35 @@ public class RegistrationServiceImpl implements RegistrationService {
         this.registrationRepository.findByParentRegistration_RegistrationId(registration.getRegistrationId())
             .stream()
             .collect(Collectors.toMap(Registration::getEntityId, Function.identity()));
+    this.auditService.registrationUpdated(registration.getRegistrationId(), instanceOf(registration),
+        organizationOf(registration), before, submittedRequest(registration));
     return this.withPinnedMetadata(
         RegistrationMapper.toRegistrationRequestStatusDto(registration, report, isHosted, hostedMetadata,
             tmStatusByType),
         registration);
+  }
+
+  /**
+   * The registration request as it is written to the audit log.
+   *
+   * @param registration the registration the request belongs to
+   * @return the request as a DTO
+   */
+  private static RegistrationRequestAuditDto submittedRequest(final Registration registration) {
+    return new RegistrationRequestAuditDto(registration.getRegistrationId(), registration.getEntityId(),
+        registration.getRegistrationType(), registration.getStatus(),
+        Optional.ofNullable(registration.getFlowAssignment()).map(FlowAssignment::getAssignId).orElse(null),
+        registration.getCreatedBy());
+  }
+
+  private static UUID instanceOf(final Registration registration) {
+    return Optional.ofNullable(registration.getOrganization().getInstance())
+        .map(Instance::getInstanceId)
+        .orElse(null);
+  }
+
+  private static UUID organizationOf(final Registration registration) {
+    return registration.getOrganization().getOrganizationId();
   }
 
   @Override
