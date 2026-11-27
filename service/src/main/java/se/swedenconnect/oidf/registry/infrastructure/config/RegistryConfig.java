@@ -48,6 +48,7 @@ import se.swedenconnect.oidf.registry.module.repository.TrustmarkIssuerRepositor
 import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.repository.InstanceRepository;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
+import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkSubjectRepository;
 import se.swedenconnect.security.credential.PkiCredential;
 import se.swedenconnect.security.credential.bundle.CredentialBundles;
 import se.swedenconnect.security.credential.nimbus.JwkTransformerFunction;
@@ -109,6 +110,7 @@ public class RegistryConfig {
    * @param taImRepository repository of Trust Anchors and Intermediates
    * @param trustmarkIssuerRepository repository of trust mark issuers
    * @param resolverRepository repository of resolvers
+   * @param trustMarkSubjectRepository repository of trust mark subjects
    * @return an instance of FederationApiService configured with the necessary dependencies.
    */
   @Bean
@@ -116,7 +118,8 @@ public class RegistryConfig {
       final Optional<CredentialBundles> credentialBundles,
       final TaImRepository taImRepository,
       final TrustmarkIssuerRepository trustmarkIssuerRepository,
-      final ResolverRepository resolverRepository) {
+      final ResolverRepository resolverRepository,
+      final TrustMarkSubjectRepository trustMarkSubjectRepository) {
 
     final RegistryProperties.FederationAPIProperties federationAPIProperties =
         this.registryProperties.federationServiceApi();
@@ -133,6 +136,8 @@ public class RegistryConfig {
         tokenExpiryDuration,
         this.registryProperties.effectiveHostedPathSegment(),
         this.registryProperties.crossOrganizationAuthorityHintInstances(),
+        trustMarkSubjectRepository,
+        this.registryProperties.crossOrganizationTrustMarkInstances(),
         taImRepository,
         trustmarkIssuerRepository,
         resolverRepository

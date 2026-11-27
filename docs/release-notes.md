@@ -6,6 +6,13 @@
 
 ---
 
+### Version 1.0.3
+
+- A trust mark the registry has granted a hosted entity is published in its Entity Configuration, and a registration
+  that asks for no trust marks no longer withdraws the ones the entity holds
+  ([#433](https://github.com/swedenconnect/openid-federation-registry/issues/433)).
+
+
 ### Version 1.0.2
 
 - New federation service endpoint `/changes` for reading changes in a sequence.

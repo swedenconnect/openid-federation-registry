@@ -156,21 +156,18 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter implements
     final OrganizationRecord orgWithRegistryPrefix = new OrganizationRecord(
         org.orgNumber(), org.orgName(), registryEntityPrefix, org.tenant());
 
-    final List<TrustmarkSourceDto> trustMarkSources = this.buildTrustMarkSources(ctx);
-
-    // Persist via service so audit fires
+    // The trust mark sources of the entity are left alone: a trust mark reaches the hosted Entity Configuration once
+    // it is granted, and a registration that asks for none must not withdraw the ones the entity holds.
     final List<HostedEntityDto> existing = this.entityConfigService.listHostedEntity(org, entityId);
     if (existing.isEmpty()) {
       final HostedEntityDto input = new HostedEntityDto();
       input.setEntityIdentifier(entityId);
       input.setMetadata(metadata);
-      input.setTrustMarkSources(trustMarkSources);
       this.entityConfigService.createHostedEntity(orgWithRegistryPrefix, UUID.randomUUID(), input);
     }
     else {
       final HostedEntityDto current = existing.getFirst();
       current.setMetadata(metadata);
-      current.setTrustMarkSources(trustMarkSources);
       this.entityConfigService.updateHostedEntity(orgWithRegistryPrefix, current.getEntityId(), current);
     }
 
@@ -196,7 +193,7 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter implements
         .map(jwks -> jwks.getKeys().size())
         .orElse(0);
 
-    final List<PreviewSection.Field> trustMarkSources = this.buildTrustMarkSources(ctx).stream()
+    final List<PreviewSection.Field> requestedTrustMarks = this.requestedTrustMarks(ctx).stream()
         .map(source -> new PreviewSection.Field(source.getTrustmarkId(), "issuer " + source.getTrustMarkIssuer()))
         .toList();
 
@@ -210,7 +207,8 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter implements
             new PreviewSection.Check(PreviewSection.CheckStatus.OK, "Join request contains metadata"),
             new PreviewSection.Check(PreviewSection.CheckStatus.INFO,
                 "Federation keys fetched from the service node: %d".formatted(keyCount)))))
-        .add(trustMarkSources.isEmpty() ? null : PreviewSection.fields("Trust mark sources", trustMarkSources))
+        .add(requestedTrustMarks.isEmpty() ? null
+            : PreviewSection.fields("Requested trust marks", requestedTrustMarks))
         .build();
   }
 
@@ -250,7 +248,11 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter implements
     return StepResult.success("Federation JWKS loaded for: " + entityId);
   }
 
-  private List<TrustmarkSourceDto> buildTrustMarkSources(final ProcessContext ctx) {
+  /**
+   * The trust marks the registration asks for, with the issuer of each resolved, for the reviewer to see. They are
+   * not written to the entity: a trust mark becomes a trust mark source of it when it is granted.
+   */
+  private List<TrustmarkSourceDto> requestedTrustMarks(final ProcessContext ctx) {
     final Optional<SerializableList<TrustmarkSource>> requested =
         ctx.get(ContextKey.TRUSTMARKS_REQUESTED);
     if (requested.isEmpty() || requested.get().isEmpty()) {
@@ -262,7 +264,7 @@ public class HostedEntityRegistrationStep extends NoConfigStepAdapter implements
         final List<TrustMark> matches =
             this.trustMarkRepository.findAllByTrustmarkType(status.trustmarkType());
         if (matches.isEmpty()) {
-          log.warn("HostedEntityRegistrationStep: no trust mark found for type {}, skipping source",
+          log.warn("HostedEntityRegistrationStep: no trust mark found for type {}, not shown in the preview",
               status.trustmarkType());
           continue;
         }

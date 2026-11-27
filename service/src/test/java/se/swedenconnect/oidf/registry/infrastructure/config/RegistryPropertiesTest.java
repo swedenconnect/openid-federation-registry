@@ -34,12 +34,12 @@ class RegistryPropertiesTest {
 
   private RegistryProperties.InstanceProperties instance(final String name, final String... functionGroups) {
     return new RegistryProperties.InstanceProperties(UUID.randomUUID(), name, TEST_BASE_URL, null,
-        List.of(functionGroups), null, null, null);
+        List.of(functionGroups), null, null, null, null);
   }
 
   private RegistryProperties.InstanceProperties instanceWithCrossOrganizationHints(final Boolean enabled) {
     return new RegistryProperties.InstanceProperties(UUID.randomUUID(), "Swedenconnect", TEST_BASE_URL, null,
-        List.of("swedenconnect"), null, null, enabled);
+        List.of("swedenconnect"), null, null, enabled, null);
   }
 
   private RegistryProperties.FederationAPIProperties federationApiProperties() {
@@ -191,7 +191,7 @@ class RegistryPropertiesTest {
   void blankOperatorOrganizationFailsValidation() {
     final RegistryProperties properties = this.propertiesWith(new RegistryProperties.InstanceProperties(
         UUID.randomUUID(), "Swedenconnect", TEST_BASE_URL, null, List.of("swedenconnect"),
-        List.of("5520001263", " "), null, null));
+        List.of("5520001263", " "), null, null, null));
 
     assertThatIllegalArgumentException()
         .isThrownBy(properties::validate)

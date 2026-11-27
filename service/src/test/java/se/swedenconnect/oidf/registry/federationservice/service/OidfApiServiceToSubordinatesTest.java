@@ -79,6 +79,8 @@ class OidfApiServiceToSubordinatesTest {
         this.instanceRepository,
         Duration.ofHours(1),
         "",
+        Set.of(),
+        null,
         Set.of()
     );
 

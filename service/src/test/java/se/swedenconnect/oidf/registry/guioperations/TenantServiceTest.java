@@ -78,13 +78,13 @@ class TenantServiceTest {
   private RegistryProperties.InstanceProperties instanceProperties(
       final UUID id, final String name, final String... functionGroups) {
     return new RegistryProperties.InstanceProperties(id, name, TEST_BASE_URL, null,
-        List.of(functionGroups), null, null, null);
+        List.of(functionGroups), null, null, null, null);
   }
 
   private RegistryProperties.InstanceProperties operatedInstanceProperties(
       final UUID id, final String name, final List<String> operatorOrganizations, final String... functionGroups) {
     return new RegistryProperties.InstanceProperties(id, name, TEST_BASE_URL, null,
-        List.of(functionGroups), operatorOrganizations, null, null);
+        List.of(functionGroups), operatorOrganizations, null, null, null);
   }
 
   private RegistryProperties registryPropertiesWith(final RegistryProperties.InstanceProperties... instances) {
