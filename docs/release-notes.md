@@ -6,6 +6,12 @@
 
 ---
 
+### Version 1.0.4
+
+- The frontend build no longer logs warnings as errors, and its development dependencies are updated
+  ([#442](https://github.com/swedenconnect/openid-federation-registry/issues/442)).
+
+
 ### Version 1.0.3
 
 - A trust mark the registry has granted a hosted entity is published in its Entity Configuration, and a registration

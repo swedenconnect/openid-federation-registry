@@ -17,10 +17,12 @@
 import {fileURLToPath, URL} from 'node:url';
 import {defineConfig} from 'vite';
 import vue from '@vitejs/plugin-vue';
+// Imports only the Vuetify components the templates use, instead of all of them.
+import vuetify from 'vite-plugin-vuetify';
 
 // https://vite.dev/config/
 export default defineConfig({
-    plugins: [vue()],
+    plugins: [vue(), vuetify({autoImport: true})],
     server: {
         proxy: {
             '/api': {
@@ -47,6 +49,22 @@ export default defineConfig({
         },
     },
     base: './',
+    build: {
+        // Vuetify and the remaining dependencies get chunks of their own, so that no chunk grows past the size
+        // vite warns about and a release only invalidates the chunks that changed.
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (id.includes('node_modules/vuetify')) {
+                        return 'vuetify';
+                    }
+                    if (id.includes('node_modules')) {
+                        return 'vendor';
+                    }
+                },
+            },
+        },
+    },
     // jsdom because the modules under test read the document at load time, e.g. the base href the paths are built
     // from and the XSRF-TOKEN cookie.
     test: {
@@ -57,7 +75,7 @@ export default defineConfig({
         // Node brings a localStorage of its own, which takes precedence over the one of the jsdom environment and
         // throws unless node is started with --localstorage-file. The test processes run without it.
         pool: 'forks',
-        poolOptions: {forks: {execArgv: ['--no-experimental-webstorage']}},
+        execArgv: ['--no-experimental-webstorage'],
         include: ['src/**/*.spec.js'],
     }
 });
