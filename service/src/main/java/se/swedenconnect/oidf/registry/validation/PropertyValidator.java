@@ -54,11 +54,11 @@ public interface PropertyValidator {
    * @return an Optional containing {@code PropertyValidationFailException} if validation fails, or an empty Optional if
    *     validation succeeds
    */
-  default Optional<PropertyValidationFailException> eval(String key, Object value) {
+  default Optional<PropertyValidationFailException> eval(final String key, final Object value) {
     try {
       this.ifFailThrow(key, value);
     }
-    catch (PropertyValidationFailException e) {
+    catch (final PropertyValidationFailException e) {
       return Optional.of(e);
     }
     return Optional.empty();
@@ -74,7 +74,7 @@ public interface PropertyValidator {
    * @return the ValidationStatus result
    * @throws PropertyValidationFailException if the validation for any property fails
    */
-  default ValidationStatus ifFailThrow(String key, Object value) {
+  default ValidationStatus ifFailThrow(final String key, final Object value) {
     if (value instanceof final List<?> values) {
       final List<ValidationStatus> statuses = new ArrayList<>();
       for (int i = 0; i < values.size(); i++) {

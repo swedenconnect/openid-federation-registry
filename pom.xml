@@ -70,10 +70,10 @@
         <java.version>25</java.version>
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
-        <spring.boot.version>4.1.1</spring.boot.version>
-        <credentials.support.version>2.2.1</credentials.support.version>
-        <bouncycastle.version>1.86</bouncycastle.version>
-        <tomcat.version>11.0.27</tomcat.version>
+        <spring.boot.version>4.2.0</spring.boot.version>
+        <credentials.support.version>2.3.0</credentials.support.version>
+        <bouncycastle.version>1.87</bouncycastle.version>
+        <tomcat.version>11.0.29</tomcat.version>
         <iam.security.version>0.9.8</iam.security.version>
         <nimbus.extensions.version>1.0.1</nimbus.extensions.version>
 
@@ -128,7 +128,7 @@
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
-                <version>1.18.42</version>
+                <version>1.18.48</version>
             </dependency>
             <dependency>
                 <groupId>se.swedenconnect.security</groupId>
@@ -148,12 +148,12 @@
             <dependency>
                 <groupId>com.nimbusds</groupId>
                 <artifactId>nimbus-jose-jwt</artifactId>
-                <version>10.5</version>
+                <version>10.10</version>
             </dependency>
             <dependency>
                 <groupId>com.nimbusds</groupId>
                 <artifactId>oauth2-oidc-sdk</artifactId>
-                <version>11.29.1</version>
+                <version>11.39</version>
             </dependency>
             <dependency>
                 <groupId>se.swedenconnect.oidf</groupId>
@@ -211,7 +211,7 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
-                            <version>1.18.42</version>
+                            <version>1.18.48</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
@@ -299,7 +299,7 @@
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
-                        <version>10.20.0</version>
+                        <version>14.4.0</version>
                     </dependency>
                 </dependencies>
                 <configuration>
@@ -350,7 +350,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.6.3</version>
+                <version>3.7.0</version>
                 <executions>
                     <execution>
                         <id>enforce</id>
@@ -376,7 +376,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
-                <version>1.8.0</version>
+                <version>1.10.0</version>
                 <!-- We do not want to force this plugin upon children -->
                 <inherited>false</inherited>
                 <configuration>
@@ -406,7 +406,7 @@
 
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.6.0</version>
+                <version>3.6.1</version>
                 <executions>
                     <execution>
                         <goals>
@@ -421,7 +421,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.15</version>
+                <version>0.8.16</version>
                 <executions>
                     <execution>
                         <goals>
@@ -509,7 +509,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.4.5</version>
+                <version>3.9.0</version>
             </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
