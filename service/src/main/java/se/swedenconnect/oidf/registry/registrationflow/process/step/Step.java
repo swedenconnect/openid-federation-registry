@@ -112,7 +112,7 @@ public interface Step {
    * @param config step-specific configuration
    * @return build result; return {@link StepResult#success()} if nothing to do
    */
-  default StepResult buildContext(ProcessContext ctx, StepConfig config) {
+  default StepResult buildContext(final ProcessContext ctx, final StepConfig config) {
     return StepResult.success("Context build skipped");
   }
 
@@ -125,7 +125,7 @@ public interface Step {
    * @param config step-specific configuration
    * @return {@code true} if the step should run, {@code false} to skip it
    */
-  default boolean canApply(ProcessContext ctx, StepConfig config) {
+  default boolean canApply(final ProcessContext ctx, final StepConfig config) {
     return true;
   }
 
