@@ -58,6 +58,7 @@ import se.swedenconnect.oidf.registry.subordinate.mapper.SubordinateMapper;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
 import se.swedenconnect.oidf.registry.trustmark.model.TrustMark;
+import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkSubjectRepository;
 
 import se.swedenconnect.oidf.registry.policy.MetadataPolicies;
 import java.time.Duration;
@@ -117,6 +118,10 @@ public class OidfApiService {
    * @param hostedPathSegment path segment of a calculated ec_location of a hosted entity, empty for none
    * @param crossOrganizationInstances the instances whose authority hints are resolved across every organization of
    *     the instance, empty for none
+   * @param trustMarkSubjectRepository the repository of trust mark subjects, giving the trust marks an entity has
+   *     been granted
+   * @param crossOrganizationTrustMarkInstances the instances whose trust marks are resolved across every organization
+   *     of the instance, empty for none
    */
   public OidfApiService(
       final JWK signKey,
@@ -126,9 +131,12 @@ public class OidfApiService {
       final InstanceRepository instanceRepository,
       final Duration jwkExpiryDuration,
       final String hostedPathSegment,
-      final Set<UUID> crossOrganizationInstances) {
+      final Set<UUID> crossOrganizationInstances,
+      final TrustMarkSubjectRepository trustMarkSubjectRepository,
+      final Set<UUID> crossOrganizationTrustMarkInstances) {
     this(signKey, subordinateRepository, entityRepository, jwkIssuer, instanceRepository, jwkExpiryDuration,
-        hostedPathSegment, crossOrganizationInstances, null, null, null);
+        hostedPathSegment, crossOrganizationInstances, trustMarkSubjectRepository,
+        crossOrganizationTrustMarkInstances, null, null, null);
   }
 
   /**
@@ -143,6 +151,10 @@ public class OidfApiService {
    * @param hostedPathSegment path segment of a calculated ec_location of a hosted entity, empty for none
    * @param crossOrganizationInstances the instances whose authority hints are resolved across every organization of
    *     the instance, empty for none
+   * @param trustMarkSubjectRepository the repository of trust mark subjects, giving the trust marks an entity has
+   *     been granted
+   * @param crossOrganizationTrustMarkInstances the instances whose trust marks are resolved across every organization
+   *     of the instance, empty for none
    * @param taImRepository the repository of Trust Anchors and Intermediates, {@code null} without rendering by key
    * @param trustmarkIssuerRepository the repository of trust mark issuers, {@code null} without rendering by key
    * @param resolverRepository the repository of resolvers, {@code null} without rendering by key
@@ -156,6 +168,8 @@ public class OidfApiService {
       final Duration jwkExpiryDuration,
       final String hostedPathSegment,
       final Set<UUID> crossOrganizationInstances,
+      final TrustMarkSubjectRepository trustMarkSubjectRepository,
+      final Set<UUID> crossOrganizationTrustMarkInstances,
       final TaImRepository taImRepository,
       final TrustmarkIssuerRepository trustmarkIssuerRepository,
       final ResolverRepository resolverRepository) {
@@ -169,8 +183,8 @@ public class OidfApiService {
     this.instanceRepository = instanceRepository;
     this.jwkExpiryDuration = jwkExpiryDuration;
     this.jwtSupport = new JWTSupport(signKey);
-    this.entityResponseFormatter =
-        new FederationMetadataCreator(subordinateRepository, hostedPathSegment, crossOrganizationInstances);
+    this.entityResponseFormatter = new FederationMetadataCreator(subordinateRepository, hostedPathSegment,
+        crossOrganizationInstances, trustMarkSubjectRepository, crossOrganizationTrustMarkInstances);
   }
 
   /**

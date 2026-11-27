@@ -29,6 +29,7 @@ import se.swedenconnect.oidf.registry.organization.model.Instance;
 import se.swedenconnect.oidf.registry.organization.model.Organization;
 import se.swedenconnect.oidf.registry.subordinate.model.Subordinate;
 import se.swedenconnect.oidf.registry.subordinate.repository.SubordinateRepository;
+import se.swedenconnect.oidf.registry.trustmark.repository.TrustMarkSubjectRepository;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,6 +58,8 @@ class FederationMetadataCreatorAuthorityHintsTest {
 
   @Mock
   private SubordinateRepository subordinateRepository;
+  @Mock
+  private TrustMarkSubjectRepository trustMarkSubjectRepository;
 
   private Instance instance;
 
@@ -68,7 +71,8 @@ class FederationMetadataCreatorAuthorityHintsTest {
 
   /** A creator where the given instances resolve authority hints across every organization of the instance. */
   private FederationMetadataCreator creator(final Set<UUID> crossOrganizationInstances) {
-    return new FederationMetadataCreator(this.subordinateRepository, "hosted", crossOrganizationInstances);
+    return new FederationMetadataCreator(this.subordinateRepository, "hosted", crossOrganizationInstances,
+        this.trustMarkSubjectRepository, Set.of());
   }
 
   @Test

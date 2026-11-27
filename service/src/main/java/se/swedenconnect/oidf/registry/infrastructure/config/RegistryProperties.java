@@ -98,6 +98,19 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
   }
 
   /**
+   * The instances that resolve the trust marks of an entity across every organization of the instance, see
+   * {@link InstanceProperties#crossOrganizationTrustMarksEnabled()}.
+   *
+   * @return the instance ids that have it turned on, empty if none has
+   */
+  public Set<UUID> crossOrganizationTrustMarkInstances() {
+    return this.instances.stream()
+        .filter(InstanceProperties::crossOrganizationTrustMarksEnabled)
+        .map(InstanceProperties::instanceId)
+        .collect(Collectors.toUnmodifiableSet());
+  }
+
+  /**
    * Whether entity identifiers resolving to local/private address ranges — and therefore {@code localhost} as an
    * organization domain — are accepted. Mirrors
    * {@code openid.federation.registry.entity-configuration-loader.enable-local-ip-address-ranges}.
@@ -256,6 +269,10 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
    *     organization of this instance. A subordinate belongs to the organization of its Trust Anchor or Intermediate,
    *     so an entity registered under an Intermediate of another organization gets no hint from it. Unset or
    *     {@code false} keeps the lookup within the entity's own organization
+   * @param crossOrganizationTrustMarks whether the trust mark sources of an entity pick up the trust marks it has been
+   *     granted by a trust mark issuer in every organization of this instance. A trust mark subject belongs to the
+   *     organization of its trust mark issuer, so an entity granted a trust mark by the issuer of another organization
+   *     gets no source from it. Unset or {@code false} keeps the lookup within the entity's own organization
    */
   public record InstanceProperties(UUID instanceId,
       String name,
@@ -264,7 +281,8 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
       List<String> functionGroups,
       List<String> operatorOrganizations,
       @NestedConfigurationProperty KeyEntry oidfServiceApiValidationKey,
-      Boolean crossOrganizationAuthorityHints) {
+      Boolean crossOrganizationAuthorityHints,
+      Boolean crossOrganizationTrustMarks) {
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
@@ -311,6 +329,17 @@ public record RegistryProperties(FederationAPIProperties federationServiceApi,
      */
     public boolean crossOrganizationAuthorityHintsEnabled() {
       return Optional.ofNullable(this.crossOrganizationAuthorityHints).orElse(false);
+    }
+
+    /**
+     * Whether the trust mark sources of an entity on this instance pick up the trust marks granted to it by a trust
+     * mark issuer of another organization of the instance. Disabled unless the instance turns it on, so an
+     * installation that has not configured anything keeps the lookup within the entity's own organization.
+     *
+     * @return true if trust marks are resolved across the organizations of this instance
+     */
+    public boolean crossOrganizationTrustMarksEnabled() {
+      return Optional.ofNullable(this.crossOrganizationTrustMarks).orElse(false);
     }
 
     /**

@@ -62,13 +62,13 @@ class InstancePlacementServiceTest {
   private RegistryProperties.InstanceProperties tenant(
       final UUID id, final String name, final String... functionGroups) {
     return new RegistryProperties.InstanceProperties(id, name, TEST_BASE_URL, null,
-        List.of(functionGroups), null, null, null);
+        List.of(functionGroups), null, null, null, null);
   }
 
   private RegistryProperties.InstanceProperties operatedTenant(
       final UUID id, final String name, final String... operatorOrganizations) {
     return new RegistryProperties.InstanceProperties(id, name, TEST_BASE_URL, null,
-        List.of("digg-admin"), List.of(operatorOrganizations), null, null);
+        List.of("digg-admin"), List.of(operatorOrganizations), null, null, null);
   }
 
   private RegistryProperties propertiesWith(final RegistryProperties.InstanceProperties... instances) {

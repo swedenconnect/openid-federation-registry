@@ -43,9 +43,10 @@ import java.util.stream.Stream;
  * <p>
  * Besides the record of the changed row itself, a record depends on:
  * <ul>
- *   <li>an entity record: the name of the organization (federation entities), the modules of the entity, and the
+ *   <li>an entity record: the name of the organization (federation entities), the modules of the entity, the
  *   subordinates in the organization whose entity identifier is the entity's, whose Trust Anchors give the authority
- *   hints;</li>
+ *   hints, and the trust mark subject entries naming the entity, which give the trust mark sources of a hosted
+ *   entity;</li>
  *   <li>a Trust Anchor: the entity identifier of its entity, and the active trust mark issuers of the organization and
  *   their trust mark types;</li>
  *   <li>a subordinate: the metadata policy and the active flag of its Trust Anchor, the hosted entity with its entity
@@ -259,6 +260,8 @@ public class StateDependencies {
 
   private void trustMarkSubject(final UUID instanceId, final UUID organizationId, final Map<String, Object> oldData,
       final Map<String, Object> newData, final Changes changes) {
+    // The entity record of the subject carries the trust mark as a trust mark source, so it changes with the entry.
+    this.hostedEntitiesNamed(strings(oldData, newData, "subject"), changes);
     boolean found = false;
     for (final UUID trustMarkId : uuids(oldData, newData, "trustmarkId")) {
       final List<Object[]> rows = this.entityManager.createQuery(
@@ -290,6 +293,18 @@ public class StateDependencies {
   }
 
   /** Subordinates with one of the entity identifiers, in any organization and instance. */
+  private void hostedEntitiesNamed(final Collection<String> entityIdentifiers, final Changes changes) {
+    if (entityIdentifiers.isEmpty()) {
+      return;
+    }
+    this.entityManager.createQuery("SELECT e.entityId, e.organization.instance.instanceId FROM FederationEntity e "
+            + "WHERE e.entityType = :entityType AND e.issuer IN :issuers", Object[].class)
+        .setParameter("entityType", EntityType.HOSTED_ENTITY)
+        .setParameter("issuers", entityIdentifiers)
+        .getResultList()
+        .forEach(row -> changes.upsert((UUID) row[1], StateKey.entity((UUID) row[0])));
+  }
+
   private void subordinatesNamed(final Collection<String> entityIdentifiers, final boolean automaticOnly,
       final Changes changes) {
     if (entityIdentifiers.isEmpty()) {

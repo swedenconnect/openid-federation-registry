@@ -75,7 +75,9 @@ There are two flow types (`Step.FlowType`):
    keyed by `entityId`. Fails the pipeline if a registration for this entity is already `PENDING_APPROVAL`.
 6. **MID — hosted or remote path (mutually exclusive via `canApply`):**
     - `HostedEntityRegistrationStep` runs when the request body contains `metadata`: creates/updates the hosted entity (
-      via `EntityConfigService`, so audit fires) and fetches the federation JWKS from the org's service node.
+      via `EntityConfigService`, so audit fires) and fetches the federation JWKS from the org's service node. The trust
+      marks of the entity are not touched here — a requested trust mark becomes a trust mark source of it when it is
+      granted (UC-6), so a registration that asks for none leaves the ones it holds in place.
     - `LoadEntityConfigurationStep` runs otherwise: fetches and signature-validates the entity statement at `entityId`,
       extracting `metadata` and JWKS.
 7. **MID — `TrustMarkIssuerRegistrationStep`** (only if trust marks were requested): for each requested trust mark type,
@@ -421,7 +423,11 @@ and, once approved, create a `TrustMarkSubject`.
       [Organizations and Domains](organization.md#effect-on-trust-mark-enrollment).
 4. **POST — `CreateTrustMarkSubjectStep`:** runs only when the proceed signal is set. Creates a `TrustMarkSubject` (
    idempotent — a no-op if one already exists for this trust mark + subject), fires an audit event, and sets the child
-   registration's status to `APPROVED`.
+   registration's status to `APPROVED`. For a hosted entity the trust mark is from now on a trust mark source of its
+   entity record, so it appears in the `trust_marks` of its hosted Entity Configuration, and it is withdrawn again
+   when the subject entry is revoked or removed. A trust mark granted by a trust mark issuer of another organization
+   of the instance is only included when the instance is configured for it
+   ([Configuration](configuration.md#instance-properties)).
 5. Each trust mark's outcome (`pending`, `failed`, `declined`, `already held`) is aggregated into the parent step's
    result message; a failure, pending or declined trust mark does **not** fail the parent `SUBORDINATE` registration.
    A trust mark that has no usable flow gets a `TRUST_MARK_SUBORDINATE` registration without running a sub-flow:
